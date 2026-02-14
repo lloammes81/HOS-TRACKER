@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HOS Tracker">
+<meta name="theme-color" content="#3b82f6">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
+<title>HOS Tracker - DOT Hours of Service</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);padding:20px;min-height:100vh;-webkit-user-select:none;user-select:none}
+.container{max-width:700px;margin:0 auto;background:white;padding:30px 20px;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3)}
+h1{color:#3b82f6;text-align:center;margin-bottom:10px;font-size:24px}
+.subtitle{text-align:center;color:#666;margin-bottom:20px;font-size:13px}
+.install-prompt{background:#4CAF50;color:white;padding:15px;border-radius:10px;margin-bottom:20px;text-align:center;display:none}
+.install-prompt.show{display:block}
+.install-btn{background:white;color:#4CAF50;border:none;padding:10px 20px;border-radius:8px;font-weight:bold;margin-top:10px;cursor:pointer}
+.form-group{margin-bottom:15px;position:relative}
+label{display:block;margin-bottom:8px;font-weight:600;color:#333;font-size:14px}
+input{width:100%;padding:12px 15px;border:2px solid #e0e0e0;border-radius:10px;font-size:16px}
+input:focus{outline:none;border-color:#3b82f6}
+.suggestions{position:absolute;top:100%;left:0;right:0;background:white;border:2px solid #e0e0e0;border-top:none;border-radius:0 0 10px 10px;max-height:200px;overflow-y:auto;z-index:1000;display:none;box-shadow:0 5px 15px rgba(0,0,0,0.1)}
+.suggestions.show{display:block}
+.suggestion-item{padding:12px 15px;cursor:pointer;border-bottom:1px solid #f0f0f0}
+.suggestion-item:hover,.suggestion-item:active{background:#f5f5f5}
+.city-name{font-weight:bold;color:#333}
+.city-detail{font-size:13px;color:#666}
+button{width:100%;padding:15px;background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);color:white;border:none;border-radius:10px;font-size:18px;font-weight:600;cursor:pointer;margin-top:10px;-webkit-tap-highlight-color:transparent}
+button:active{opacity:0.8}
+.results{margin-top:30px;padding:25px;background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);border-radius:15px;display:none}
+.results.show{display:block}
+.result-item{margin-bottom:15px;padding-bottom:15px;border-bottom:2px solid rgba(255,255,255,0.5)}
+.result-label{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.result-value{font-size:18px;font-weight:700;color:#333}
+.distance-big{font-size:40px;color:#3b82f6;text-align:center;margin:20px 0;font-weight:800}
+.error{background:#ffebee;color:#c62828;padding:15px;border-radius:10px;margin-top:20px;display:none;font-size:14px}
+.error.show{display:block}
+.warning{background:#fff3e0;color:#e65100;padding:15px;border-radius:10px;margin-top:20px;border-left:5px solid #ff9800;display:none;font-size:14px}
+.warning.show{display:block}
+.info-box{background:#e3f2fd;border-left:4px solid #2196f3;padding:12px 15px;border-radius:8px;margin-bottom:20px;font-size:13px;color:#1976d2}
+.schedule-item{background:white;padding:12px;border-radius:8px;margin-bottom:8px;border-left:4px solid #3b82f6;font-size:13px}
+.schedule-item.reset{border-left-color:#f44336;background:#ffebee}
+.schedule-day{font-weight:bold;color:#3b82f6;margin-bottom:5px;font-size:14px}
+.schedule-day.reset{color:#f44336}
+.hours-status{background:white;padding:15px;border-radius:10px;margin-bottom:15px;border-left:4px solid #4CAF50}
+.hours-status.exceeded{border-left-color:#f44336;background:#ffebee}
+.status-value{font-size:22px;font-weight:bold;color:#4CAF50}
+.status-value.exceeded{color:#f44336}
+.gps-window{position:fixed;bottom:20px;left:20px;right:20px;max-width:350px;margin:0 auto;background:white;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,0.4);padding:20px;display:none;z-index:2000;border:3px solid #4CAF50}
+.gps-window.show{display:block}
+.gps-header{font-size:16px;font-weight:bold;color:#4CAF50;margin-bottom:12px}
+.gps-data{background:#f5f5f5;padding:12px;border-radius:10px;margin-bottom:8px}
+.gps-label{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.gps-value{font-size:16px;font-weight:bold;color:#333}
+.gps-close{position:absolute;top:12px;right:12px;background:#f44336;color:white;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px;line-height:1}
+.btn-gps{width:100%;padding:12px;background:#4CAF50;color:white;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="install-prompt" id="installPrompt">
+<div style="font-size:18px;margin-bottom:5px">📱 Instalar App</div>
+<div style="font-size:13px;margin-bottom:10px">Agrega esta app a tu pantalla de inicio para acceso rápido</div>
+<button class="install-btn" id="installBtn">Instalar Ahora</button>
+<div style="font-size:11px;margin-top:10px;opacity:0.9">iPhone: Toca <strong>📤 Compartir</strong> → <strong>Agregar a pantalla de inicio</strong></div>
+</div>
+
+<div class="container">
+<h1>⏱️ HOS Tracker</h1>
+<p class="subtitle">Smart Route Planning for Truckers</p>
+<div class="info-box">💡 Escribe el nombre de la ciudad (100+ ciudades)</div>
+<form id="myForm" autocomplete="off">
+<div class="form-group">
+<label>Ciudad de Origen</label>
+<input type="text" id="fromCity" placeholder="Ej: West Palm Beach" required>
+<div id="fromSuggestions" class="suggestions"></div>
+</div>
+<div class="form-group">
+<label>Ciudad de Destino</label>
+<input type="text" id="toCity" placeholder="Ej: Miami" required>
+<div id="toSuggestions" class="suggestions"></div>
+</div>
+<div class="form-group">
+<label>Fecha y Hora de Salida</label>
+<input type="datetime-local" id="departureTime" required>
+</div>
+<div class="form-group">
+<label>Horas Restantes (Ciclo 70 hrs)</label>
+<input type="number" id="cycleHours" value="70" min="0" max="70" step="0.5" required>
+</div>
+<div class="form-group">
+<label>Velocidad (mph)</label>
+<input type="number" id="speedInput" value="60" min="30" max="70" required>
+</div>
+<button type="submit">🚛 Calcular Ruta</button>
+<button type="button" class="btn-gps" id="btnGPS" style="display:none">📍 Ver Mi Ubicación GPS</button>
+</form>
+<div class="error" id="errorBox"></div>
+<div class="warning" id="warningBox"></div>
+<div class="results" id="resultsBox">
+<div id="hoursStatus"></div>
+<div class="result-item"><div class="result-label">🚀 ORIGEN</div><div class="result-value" id="showFrom"></div></div>
+<div class="result-item"><div class="result-label">🏁 DESTINO</div><div class="result-value" id="showTo"></div></div>
+<div class="distance-big" id="showDistance">0 millas</div>
+<div class="result-item"><div class="result-label">⏰ SALIDA</div><div class="result-value" id="showDeparture"></div></div>
+<div class="result-item"><div class="result-label">🎯 LLEGADA</div><div class="result-value" id="showArrival"></div></div>
+<div class="result-item"><div class="result-label">⏱️ TIEMPO TOTAL</div><div class="result-value" id="showDuration"></div></div>
+<div class="result-item"><div class="result-label">📅 ITINERARIO</div><div id="scheduleDetails" style="margin-top:12px;"></div></div>
+</div>
+</div>
+<div class="gps-window" id="gpsWindow">
+<button class="gps-close" id="closeGPS">×</button>
+<div class="gps-header">📍 Mi Ubicación GPS</div>
+<div class="gps-data"><div class="gps-label">📍 Ubicación Actual</div><div class="gps-value" id="currentLocation">Cargando...</div></div>
+<div class="gps-data"><div class="gps-label">🎯 Destino</div><div class="gps-value" id="destinationName">-</div></div>
+<div class="gps-data"><div class="gps-label">📏 Distancia Restante</div><div class="gps-value" id="remainingDistance" style="color:#FF5722">-</div></div>
+<div class="gps-data"><div class="gps-label">⏱️ Horas Restantes</div><div class="gps-value" id="remainingHours" style="color:#4CAF50">-</div></div>
+</div>
+<script>
+var C=[{n:'New York',s:'NY',lat:40.75,lng:-73.99},{n:'Los Angeles',s:'CA',lat:33.97,lng:-118.24},{n:'Chicago',s:'IL',lat:41.88,lng:-87.61},{n:'Houston',s:'TX',lat:29.76,lng:-95.36},{n:'Phoenix',s:'AZ',lat:33.44,lng:-112.07},{n:'Philadelphia',s:'PA',lat:39.95,lng:-75.16},{n:'San Antonio',s:'TX',lat:29.42,lng:-98.49},{n:'San Diego',s:'CA',lat:32.71,lng:-117.16},{n:'Dallas',s:'TX',lat:32.78,lng:-96.79},{n:'San Jose',s:'CA',lat:37.33,lng:-121.88},{n:'Austin',s:'TX',lat:30.26,lng:-97.74},{n:'Jacksonville',s:'FL',lat:30.33,lng:-81.65},{n:'Fort Worth',s:'TX',lat:32.75,lng:-97.33},{n:'Columbus',s:'OH',lat:39.96,lng:-82.99},{n:'Charlotte',s:'NC',lat:35.22,lng:-80.84},{n:'San Francisco',s:'CA',lat:37.77,lng:-122.41},{n:'Indianapolis',s:'IN',lat:39.76,lng:-86.15},{n:'Seattle',s:'WA',lat:47.61,lng:-122.33},{n:'Denver',s:'CO',lat:39.73,lng:-104.99},{n:'Washington',s:'DC',lat:38.90,lng:-77.03},{n:'Boston',s:'MA',lat:42.37,lng:-71.02},{n:'Nashville',s:'TN',lat:36.16,lng:-86.78},{n:'Baltimore',s:'MD',lat:39.29,lng:-76.61},{n:'Oklahoma City',s:'OK',lat:35.46,lng:-97.51},{n:'Portland',s:'OR',lat:45.51,lng:-122.67},{n:'Las Vegas',s:'NV',lat:36.16,lng:-115.13},{n:'Milwaukee',s:'WI',lat:43.03,lng:-87.90},{n:'Albuquerque',s:'NM',lat:35.08,lng:-106.65},{n:'Tucson',s:'AZ',lat:32.22,lng:-110.97},{n:'Fresno',s:'CA',lat:36.73,lng:-119.78},{n:'Sacramento',s:'CA',lat:38.58,lng:-121.49},{n:'Kansas City',s:'MO',lat:39.09,lng:-94.57},{n:'Atlanta',s:'GA',lat:33.75,lng:-84.38},{n:'Miami',s:'FL',lat:25.77,lng:-80.19},{n:'Tampa',s:'FL',lat:27.95,lng:-82.45},{n:'Orlando',s:'FL',lat:28.53,lng:-81.37},{n:'West Palm Beach',s:'FL',lat:26.71,lng:-80.05},{n:'Palm Beach',s:'FL',lat:26.70,lng:-80.03},{n:'Boca Raton',s:'FL',lat:26.35,lng:-80.08},{n:'Fort Lauderdale',s:'FL',lat:26.12,lng:-80.13},{n:'Hollywood',s:'FL',lat:26.01,lng:-80.14},{n:'Pompano Beach',s:'FL',lat:26.23,lng:-80.12},{n:'Delray Beach',s:'FL',lat:26.46,lng:-80.07},{n:'Boynton Beach',s:'FL',lat:26.52,lng:-80.06},{n:'Lake Worth',s:'FL',lat:26.61,lng:-80.05},{n:'Wellington',s:'FL',lat:26.65,lng:-80.24},{n:'Jupiter',s:'FL',lat:26.93,lng:-80.09},{n:'Stuart',s:'FL',lat:27.19,lng:-80.25},{n:'Port St Lucie',s:'FL',lat:27.29,lng:-80.35},{n:'Vero Beach',s:'FL',lat:27.63,lng:-80.39},{n:'Melbourne',s:'FL',lat:28.08,lng:-80.60},{n:'Titusville',s:'FL',lat:28.61,lng:-80.80},{n:'Daytona Beach',s:'FL',lat:29.21,lng:-81.02},{n:'St Augustine',s:'FL',lat:29.89,lng:-81.31},{n:'Tallahassee',s:'FL',lat:30.43,lng:-84.28},{n:'Pensacola',s:'FL',lat:30.42,lng:-87.21},{n:'Panama City',s:'FL',lat:30.15,lng:-85.65},{n:'Fort Myers',s:'FL',lat:26.64,lng:-81.86},{n:'Naples',s:'FL',lat:26.14,lng:-81.79},{n:'Sarasota',s:'FL',lat:27.33,lng:-82.53},{n:'Bradenton',s:'FL',lat:27.49,lng:-82.57},{n:'St Petersburg',s:'FL',lat:27.77,lng:-82.64},{n:'Clearwater',s:'FL',lat:27.96,lng:-82.80},{n:'Lakeland',s:'FL',lat:28.03,lng:-81.94},{n:'Ocala',s:'FL',lat:29.18,lng:-82.14},{n:'Gainesville',s:'FL',lat:29.65,lng:-82.32}];
+var sel1=null,sel2=null,destCity=null,gpsInterval=null,speed=60;
+if('serviceWorker'in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}
+var deferredPrompt;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;document.getElementById('installPrompt').classList.add('show')});
+document.getElementById('installBtn').addEventListener('click',function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(function(){deferredPrompt=null;document.getElementById('installPrompt').classList.remove('show')})}});
+function setDT(){var d=new Date(),p=n=>n.toString().padStart(2,'0');document.getElementById('departureTime').value=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes())}
+setDT();
+function search(q){if(q.length<2)return[];var l=q.toLowerCase(),r=[];for(var i=0;i<C.length;i++){if(C[i].n.toLowerCase().indexOf(l)>=0){r.push(C[i]);if(r.length>=10)break}}return r}
+function setup(iid,sid,cb){var inp=document.getElementById(iid),sug=document.getElementById(sid);inp.addEventListener('input',function(){var q=this.value.trim();if(q.length<2){sug.classList.remove('show');sug.innerHTML='';return}var cs=search(q);sug.innerHTML='';if(cs.length===0){sug.innerHTML='<div class="suggestion-item">No encontrado</div>';sug.classList.add('show');return}cs.forEach(function(c){var d=document.createElement('div');d.className='suggestion-item';d.innerHTML='<div class="city-name">'+c.n+'</div><div class="city-detail">'+c.s+'</div>';d.addEventListener('click',function(){inp.value=c.n+', '+c.s;sug.classList.remove('show');sug.innerHTML='';cb(c)});sug.appendChild(d)});sug.classList.add('show')});document.addEventListener('click',function(e){if(e.target!==inp&&!sug.contains(e.target))sug.classList.remove('show')})}
+setup('fromCity','fromSuggestions',function(c){sel1=c});
+setup('toCity','toSuggestions',function(c){sel2=c});
+function dist(lat1,lon1,lat2,lon2){var R=3959,tr=d=>d*(Math.PI/180),dLat=tr(lat2-lat1),dLon=tr(lon2-lon1),a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(tr(lat1))*Math.cos(tr(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2),c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));return Math.round(R*c)}
+function calc(dd,dist,spd,cyc){var s=[],ct=new Date(dd.getTime()),rd=dist,rc=cyc,dn=1,rsc=0;while(rd>0){var ah=Math.min(11,rc);if(ah<=0){s.push({type:'reset',startTime:new Date(ct.getTime()),endTime:new Date(ct.getTime()+34*3600000),hours:34});ct=new Date(ct.getTime()+34*3600000);rc=70;rsc++;continue}var drd=Math.min(rd,spd*ah),dh=drd/spd,st=new Date(ct.getTime()),et=new Date(ct.getTime()+dh*3600000);s.push({day:dn,type:'drive',startTime:st,endTime:et,hours:dh,distance:drd,cb:rc,ca:rc-dh});rd-=drd;rc-=dh;ct=et;if(rd>0){s.push({day:dn,type:'rest',startTime:new Date(ct.getTime()),endTime:new Date(ct.getTime()+10*3600000),hours:10});ct=new Date(ct.getTime()+10*3600000);dn++}}return{schedule:s,resets:rsc}}
+function fmt(h){var tm=Math.round(h*60),hr=Math.floor(tm/60),mn=tm%60;if(hr===0)return mn+' min';if(mn===0)return hr+' hrs';return hr+'h '+mn+'min'}
+function fmtT(d){var h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM';h=h%12;h=h?h:12;m=m<10?'0'+m:m;return h+':'+m+' '+ap}
+function err(m){document.getElementById('errorBox').textContent='❌ '+m;document.getElementById('errorBox').classList.add('show')}
+function hideE(){document.getElementById('errorBox').classList.remove('show')}
+function warn(t,m){document.getElementById('warningBox').innerHTML='<div style="font-weight:bold;margin-bottom:5px">⚠️ '+t+'</div><div>'+m+'</div>';document.getElementById('warningBox').classList.add('show')}
+function hideW(){document.getElementById('warningBox').classList.remove('show')}
+function findCity(lat,lng){var min=999999,closest=null;for(var i=0;i<C.length;i++){var d=Math.sqrt(Math.pow(C[i].lat-lat,2)+Math.pow(C[i].lng-lng,2));if(d<min){min=d;closest=C[i]}}return closest}
+function updateGPS(){if(!destCity)return;navigator.geolocation.getCurrentPosition(function(pos){var clat=pos.coords.latitude,clng=pos.coords.longitude;var city=findCity(clat,clng);var rd=dist(clat,clng,destCity.lat,destCity.lng);var rh=rd/speed;document.getElementById('currentLocation').textContent=city.n+', '+city.s;document.getElementById('remainingDistance').textContent=rd.toLocaleString()+' millas';document.getElementById('remainingHours').textContent=fmt(rh)},function(){document.getElementById('currentLocation').textContent='GPS no disponible'})}
+document.getElementById('btnGPS').addEventListener('click',function(){document.getElementById('gpsWindow').classList.add('show');updateGPS()});
+document.getElementById('closeGPS').addEventListener('click',function(){document.getElementById('gpsWindow').classList.remove('show')});
+document.getElementById('myForm').addEventListener('submit',function(e){e.preventDefault();hideE();hideW();document.getElementById('resultsBox').classList.remove('show');if(!sel1){err('Selecciona ciudad de origen');return}if(!sel2){err('Selecciona ciudad de destino');return}var dt=document.getElementById('departureTime').value;speed=parseInt(document.getElementById('speedInput').value);var cyc=parseFloat(document.getElementById('cycleHours').value);if(cyc>70){err('Máximo 70 horas');return}destCity=sel2;document.getElementById('destinationName').textContent=sel2.n+', '+sel2.s;document.getElementById('btnGPS').style.display='block';var d=dist(sel1.lat,sel1.lng,sel2.lat,sel2.lng),dd=new Date(dt),hn=d/speed;if(hn>cyc)warn('RESET REQUERIDO','Requiere '+fmt(hn)+' pero tienes '+cyc+' hrs.');var r=calc(dd,d,speed,cyc),sc=r.schedule,tdh=0,trh=0,trsh=0,rp=0;sc.forEach(function(i){if(i.type==='drive')tdh+=i.hours;else if(i.type==='rest'){trh+=i.hours;rp++}else trsh+=i.hours});var fa=sc[sc.length-1].endTime,tth=tdh+trh+trsh;var hs='<div class="hours-status'+(hn>cyc?' exceeded':'')+'"><div class="status-value'+(hn>cyc?' exceeded':'')+'">'+fmt(hn)+' / '+cyc+' hrs</div>';if(r.resets>0)hs+='<div style="margin-top:8px;font-size:12px;color:#e65100">🔄 Resets: '+r.resets+'</div>';hs+='</div>';document.getElementById('hoursStatus').innerHTML=hs;document.getElementById('showFrom').textContent=sel1.n+', '+sel1.s;document.getElementById('showTo').textContent=sel2.n+', '+sel2.s;document.getElementById('showDistance').textContent=d.toLocaleString()+' mi';document.getElementById('showDeparture').textContent=dd.toLocaleString('es-ES',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});document.getElementById('showArrival').textContent=fa.toLocaleString('es-ES',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});document.getElementById('showDuration').textContent=fmt(tth)+' ('+fmt(tdh)+' manejando)';var sh='',cd=1;sc.forEach(function(i){if(i.type==='drive'){sh+='<div class="schedule-item"><div class="schedule-day">Día '+cd+' - Conducción</div><div style="color:#666">🚛 '+fmtT(i.startTime)+' → '+fmtT(i.endTime)+'<br>⏱️ '+fmt(i.hours)+' | 📏 '+Math.round(i.distance)+' mi</div></div>'}else if(i.type==='rest'){sh+='<div class="schedule-item"><div class="schedule-day">Día '+cd+' - Descanso</div><div style="color:#666">😴 10 horas DOT</div></div>';cd++}else{sh+='<div class="schedule-item reset"><div class="schedule-day reset">🔄 RESET 34 HRS</div><div style="color:#666">Recuperas 70 hrs</div></div>'}});document.getElementById('scheduleDetails').innerHTML=sh;document.getElementById('resultsBox').classList.add('show');if(gpsInterval)clearInterval(gpsInterval);gpsInterval=setInterval(updateGPS,10000)});
+</script>
+</body>
+</html>
