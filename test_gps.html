@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GPS Test</title>
+<style>
+body{font-family:Arial;padding:20px;background:#f0f0f0}
+.box{background:white;padding:20px;border-radius:10px;margin:10px 0;box-shadow:0 2px 10px rgba(0,0,0,.1)}
+button{width:100%;padding:15px;background:#3b82f6;color:white;border:none;border-radius:8px;font-size:16px;font-weight:bold;margin:10px 0;cursor:pointer}
+.info{font-size:14px;margin:5px 0;padding:10px;background:#f9f9f9;border-radius:5px}
+.success{background:#d1fae5;color:#065f46}
+.error{background:#fee2e2;color:#991b1b}
+</style>
+</head>
+<body>
+<h1>🧪 GPS Test</h1>
+
+<div class="box">
+<h3>Estado del GPS:</h3>
+<div id="status" class="info">Esperando...</div>
+</div>
+
+<div class="box">
+<button onclick="testGPS()">📍 Probar GPS Ahora</button>
+<button onclick="testPermissions()">🔐 Verificar Permisos</button>
+</div>
+
+<div class="box">
+<h3>Información:</h3>
+<div class="info" id="lat">Latitud: -</div>
+<div class="info" id="lng">Longitud: -</div>
+<div class="info" id="accuracy">Precisión: -</div>
+<div class="info" id="timestamp">Última actualización: -</div>
+</div>
+
+<div class="box">
+<h3>Log de Eventos:</h3>
+<div id="log" style="font-size:12px;max-height:200px;overflow-y:auto"></div>
+</div>
+
+<script>
+function addLog(msg) {
+    var log = document.getElementById('log');
+    var time = new Date().toLocaleTimeString();
+    log.innerHTML = '[' + time + '] ' + msg + '<br>' + log.innerHTML;
+}
+
+function testPermissions() {
+    addLog('Verificando permisos...');
+    
+    if (!navigator.geolocation) {
+        document.getElementById('status').className = 'info error';
+        document.getElementById('status').textContent = '❌ GPS no disponible en este navegador';
+        addLog('ERROR: Geolocation API no disponible');
+        return;
+    }
+    
+    addLog('✓ Geolocation API disponible');
+    
+    // Verificar permisos
+    if (navigator.permissions) {
+        navigator.permissions.query({name:'geolocation'}).then(function(result) {
+            addLog('Estado de permiso: ' + result.state);
+            
+            if (result.state === 'granted') {
+                document.getElementById('status').className = 'info success';
+                document.getElementById('status').textContent = '✅ Permiso concedido';
+            } else if (result.state === 'prompt') {
+                document.getElementById('status').className = 'info';
+                document.getElementById('status').textContent = '⏳ Se pedirá permiso';
+            } else {
+                document.getElementById('status').className = 'info error';
+                document.getElementById('status').textContent = '❌ Permiso denegado';
+            }
+        });
+    } else {
+        addLog('Permissions API no disponible - intentando obtener ubicación...');
+    }
+}
+
+function testGPS() {
+    addLog('Solicitando ubicación GPS...');
+    
+    document.getElementById('status').className = 'info';
+    document.getElementById('status').textContent = '⏳ Obteniendo ubicación...';
+    
+    var options = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+    };
+    
+    navigator.geolocation.getCurrentPosition(
+        function success(position) {
+            addLog('✓ ¡Ubicación obtenida!');
+            
+            document.getElementById('status').className = 'info success';
+            document.getElementById('status').textContent = '✅ GPS funcionando correctamente';
+            
+            document.getElementById('lat').textContent = 'Latitud: ' + position.coords.latitude;
+            document.getElementById('lng').textContent = 'Longitud: ' + position.coords.longitude;
+            document.getElementById('accuracy').textContent = 'Precisión: ' + Math.round(position.coords.accuracy) + ' metros';
+            document.getElementById('timestamp').textContent = 'Última actualización: ' + new Date(position.timestamp).toLocaleTimeString();
+            
+            addLog('Lat: ' + position.coords.latitude);
+            addLog('Lng: ' + position.coords.longitude);
+            addLog('Precisión: ' + Math.round(position.coords.accuracy) + 'm');
+        },
+        function error(err) {
+            addLog('❌ ERROR: ' + err.message + ' (código: ' + err.code + ')');
+            
+            document.getElementById('status').className = 'info error';
+            
+            if (err.code === 1) {
+                document.getElementById('status').textContent = '❌ Permiso denegado - Ve a Settings → Safari → Ubicación';
+                addLog('SOLUCIÓN: Settings → Safari → Location → Allow');
+            } else if (err.code === 2) {
+                document.getElementById('status').textContent = '❌ Ubicación no disponible - Verifica que GPS esté encendido';
+                addLog('SOLUCIÓN: Activa Location Services en Settings');
+            } else if (err.code === 3) {
+                document.getElementById('status').textContent = '❌ Timeout - Intenta de nuevo';
+                addLog('SOLUCIÓN: Intenta nuevamente o sal al exterior');
+            }
+        },
+        options
+    );
+}
+
+// Auto-test al cargar
+window.onload = function() {
+    addLog('Página cargada');
+    testPermissions();
+};
+</script>
+</body>
+</html>
