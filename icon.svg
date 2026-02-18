@@ -14,70 +14,79 @@
       <stop offset="100%" stop-color="#005BFF" stop-opacity="0.12"/>
     </radialGradient>
 
-    <!-- Sombra suave -->
-    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+    <!-- Sombra suave (puedes bajar flood-opacity si quieres menos halo) -->
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.35"/>
     </filter>
+
+    <!-- CLIP para que nada se salga del borde redondeado -->
+    <clipPath id="clipIcon">
+      <rect x="48" y="48" width="416" height="416" rx="92"/>
+    </clipPath>
   </defs>
 
-  <!-- Base del icono -->
-  <rect x="48" y="48" width="416" height="416" rx="92" fill="url(#bg)"/>
+  <!-- Todo lo que esté dentro se recorta al borde redondeado -->
+  <g clip-path="url(#clipIcon)">
+    <!-- Base del icono (AZUL) -->
+    <rect x="48" y="48" width="416" height="416" rx="92" fill="url(#bg)"/>
 
-  <!-- Contenido -->
-  <g filter="url(#softShadow)">
-    <!-- Reloj -->
-    <circle cx="332" cy="228" r="110" fill="none" stroke="#FFFFFF" stroke-width="22"/>
-    <!-- Marcas 12, 3, 9 -->
-    <rect x="326" y="128" width="12" height="28" rx="4" fill="#FFFFFF"/>
-    <rect x="432" y="222" width="28" height="12" rx="4" fill="#FFFFFF"/>
-    <rect x="204" y="222" width="28" height="12" rx="4" fill="#FFFFFF"/>
+    <!-- Contenido -->
+    <g filter="url(#softShadow)">
+      <!-- Reloj -->
+      <circle cx="332" cy="228" r="110" fill="none" stroke="#FFFFFF" stroke-width="22"/>
+      <!-- Marcas 12, 3, 9 -->
+      <rect x="326" y="128" width="12" height="28" rx="4" fill="#FFFFFF"/>
+      <rect x="432" y="222" width="28" height="12" rx="4" fill="#FFFFFF"/>
+      <rect x="204" y="222" width="28" height="12" rx="4" fill="#FFFFFF"/>
 
-    <!-- Manecillas -->
-    <path d="M332 228 L332 174" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
-    <path d="M332 228 L402 228" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
-    <circle cx="332" cy="228" r="14" fill="#FFFFFF"/>
+      <!-- Manecillas -->
+      <path d="M332 228 L332 174" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
+      <path d="M332 228 L402 228" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
+      <circle cx="332" cy="228" r="14" fill="#FFFFFF"/>
 
-    <!-- Camión -->
-    <g transform="translate(88,250)">
-      <!-- Cabina -->
-      <path d="M20 40 C20 20, 35 8, 60 8 H120
-               C150 8, 165 18, 170 36 L178 70 H20 Z"
-            fill="#FFFFFF"/>
-      <!-- Ventanas -->
-      <path d="M58 22 H112 C122 22, 130 28, 130 38 V52 H58 Z"
-            fill="#0B1B3A" opacity="0.9"/>
-      <path d="M40 26 H56 V52 H34 V38 C34 31, 36 28, 40 26 Z"
-            fill="#0B1B3A" opacity="0.9"/>
+      <!-- Camión -->
+      <g transform="translate(88,250)">
+        <!-- Cabina -->
+        <path d="M20 40 C20 20, 35 8, 60 8 H120
+                 C150 8, 165 18, 170 36 L178 70 H20 Z"
+              fill="#FFFFFF"/>
+        <!-- Ventanas -->
+        <path d="M58 22 H112 C122 22, 130 28, 130 38 V52 H58 Z"
+              fill="#0B1B3A" opacity="0.9"/>
+        <path d="M40 26 H56 V52 H34 V38 C34 31, 36 28, 40 26 Z"
+              fill="#0B1B3A" opacity="0.9"/>
 
-      <!-- Chasis -->
-      <path d="M20 70 H250 C266 70, 278 82, 278 98 V112 H20 Z"
-            fill="#FFFFFF"/>
+        <!-- Chasis -->
+        <path d="M20 70 H250 C266 70, 278 82, 278 98 V112 H20 Z"
+              fill="#FFFFFF"/>
 
-      <!-- Detalles -->
-      <rect x="20" y="92" width="90" height="12" rx="6" fill="#0B1B3A" opacity="0.18"/>
-      <rect x="140" y="92" width="70" height="12" rx="6" fill="#0B1B3A" opacity="0.18"/>
+        <!-- Detalles -->
+        <rect x="20" y="92" width="90" height="12" rx="6" fill="#0B1B3A" opacity="0.18"/>
+        <rect x="140" y="92" width="70" height="12" rx="6" fill="#0B1B3A" opacity="0.18"/>
 
-      <!-- Ruedas -->
-      <g>
-        <circle cx="110" cy="118" r="30" fill="#0B1B3A" opacity="0.55"/>
-        <circle cx="110" cy="118" r="22" fill="none" stroke="#00D2FF" stroke-width="10"/>
-        <circle cx="110" cy="118" r="18" fill="url(#wheelGlow)"/>
-        <circle cx="110" cy="118" r="6" fill="#0B1B3A" opacity="0.55"/>
+        <!-- Ruedas -->
+        <g>
+          <circle cx="110" cy="118" r="30" fill="#0B1B3A" opacity="0.55"/>
+          <circle cx="110" cy="118" r="22" fill="none" stroke="#00D2FF" stroke-width="10"/>
+          <circle cx="110" cy="118" r="18" fill="url(#wheelGlow)"/>
+          <circle cx="110" cy="118" r="6" fill="#0B1B3A" opacity="0.55"/>
 
-        <circle cx="220" cy="118" r="30" fill="#0B1B3A" opacity="0.55"/>
-        <circle cx="220" cy="118" r="22" fill="none" stroke="#00D2FF" stroke-width="10"/>
-        <circle cx="220" cy="118" r="18" fill="url(#wheelGlow)"/>
-        <circle cx="220" cy="118" r="6" fill="#0B1B3A" opacity="0.55"/>
+          <circle cx="220" cy="118" r="30" fill="#0B1B3A" opacity="0.55"/>
+          <circle cx="220" cy="118" r="22" fill="none" stroke="#00D2FF" stroke-width="10"/>
+          <circle cx="220" cy="118" r="18" fill="url(#wheelGlow)"/>
+          <circle cx="220" cy="118" r="6" fill="#0B1B3A" opacity="0.55"/>
+        </g>
+
+        <!-- Parachoques -->
+        <path d="M20 70 H60 V112 H20 Z" fill="#FFFFFF"/>
+        <rect x="26" y="86" width="26" height="8" rx="4" fill="#0B1B3A" opacity="0.25"/>
       </g>
 
-      <!-- Parachoques -->
-      <path d="M20 70 H60 V112 H20 Z" fill="#FFFFFF"/>
-      <rect x="26" y="86" width="26" height="8" rx="4" fill="#0B1B3A" opacity="0.25"/>
+      <!-- Arco superior del reloj -->
+      <path d="M332 118 A110 110 0 0 1 442 228"
+            fill="none" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round"/>
     </g>
-
-    <!-- Arco superior del reloj (efecto de superposición) -->
-    <path d="M332 118 A110 110 0 0 1 442 228"
-          fill="none" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round"/>
   </g>
 </svg>
+
 
