@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root{
-      --bg:#047857; --bg2:#065f46; --card:rgba(255,255,255,.97); --text:#111827; --muted:#6b7280;
+      --bg:#064e3b; --bg2:#065f46; --card:rgba(255,255,255,.97); --text:#111827; --muted:#6b7280;
       --accent:#10b981; --accent2:#3b82f6; --danger:#ef4444; --warning:#f59e0b; --line:#d1fae5;
       --soft:#f0fdf4; --header:rgba(255,255,255,.95);
     }
@@ -16,10 +16,36 @@
       --accent:#10b981; --accent2:#60a5fa; --danger:#ef4444; --warning:#f59e0b; --line:#334155;
       --soft:#334155; --header:rgba(30,41,59,.95);
     }
+
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh}
-    .container{max-width:980px;margin:0 auto;padding:14px}
-    .header{position:sticky;top:0;z-index:20;background:var(--header);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);border-radius:0 0 14px 14px;padding:12px 14px}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--text);
+      min-height:100vh; position:relative; overflow-x:hidden;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(16,185,129,.18), transparent 35%),
+        radial-gradient(circle at 90% 15%, rgba(59,130,246,.14), transparent 35%),
+        radial-gradient(circle at 20% 85%, rgba(245,158,11,.08), transparent 30%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+    }
+    body::before{
+      content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size:28px 28px;
+      opacity:.35;
+    }
+    .bg-icons{
+      position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+    }
+    .bg-icons span{
+      position:absolute; filter: blur(.2px);
+      text-shadow: 0 3px 8px rgba(0,0,0,.2);
+      user-select:none;
+    }
+
+    .container{max-width:980px;margin:0 auto;padding:14px; position:relative; z-index:1}
+    .header{position:sticky;top:0;z-index:20;background:var(--header);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);border-radius:0 0 14px 14px;padding:12px 14px}
     .row{display:flex;gap:10px;align-items:center}
     .between{justify-content:space-between}
     .logo{font-weight:800;font-size:18px;display:flex;align-items:center;gap:8px;color:var(--accent2)}
@@ -30,7 +56,7 @@
     .info{background:rgba(16,185,129,.12);border-left:4px solid var(--accent);padding:10px;border-radius:8px;margin-bottom:12px;color:var(--text);font-size:13px}
     label{display:block;font-size:13px;font-weight:700;margin:10px 0 7px}
     .inputwrap{position:relative}
-    input{width:100%;padding:14px 42px 14px 14px;border:2px solid var(--line);border-radius:12px;background:#fff;color:#111827;font-size:15px}
+    input{width:100%;padding:14px;border:2px solid var(--line);border-radius:12px;background:#fff;color:#111827;font-size:15px}
     body.dark input{background:#334155;color:#e2e8f0;border-color:#475569}
     .btn{border:none;border-radius:12px;padding:14px 14px;font-weight:700;color:#fff;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
     .btn:disabled{opacity:.7;cursor:not-allowed}
@@ -48,7 +74,7 @@
     body.dark .s-item:hover{background:rgba(96,165,250,.10)}
     .s-name{font-weight:700}
     .s-detail{font-size:12px;color:var(--muted)}
-    .mapbox{height:220px;border-radius:12px;overflow:hidden;margin-top:8px}
+    .mapbox{height:240px;border-radius:12px;overflow:hidden;margin-top:8px;border:1px solid var(--line)}
     .fullmap-overlay,.monitor-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:60}
     .fullmap-overlay.open,.monitor-overlay.open{display:block}
     .fullmap-card,.monitor-card{position:absolute;inset:12px;background:var(--card);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
@@ -71,6 +97,7 @@
     .bar > div{height:100%;background:var(--accent);width:0%}
     .muted{color:var(--muted)}
     .stack{display:flex;flex-direction:column;gap:10px}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px}
     @media (max-width: 720px){
       .grid2,.grid3{grid-template-columns:1fr}
       .container{padding:10px}
@@ -79,6 +106,19 @@
   </style>
 </head>
 <body>
+  <div class="bg-icons" aria-hidden="true">
+    <span style="top:4%;left:3%;font-size:58px;opacity:.10">🚛</span>
+    <span style="top:12%;right:8%;font-size:44px;opacity:.08">⏰</span>
+    <span style="top:24%;left:10%;font-size:36px;opacity:.08">🕐</span>
+    <span style="top:28%;right:14%;font-size:62px;opacity:.07">🚚</span>
+    <span style="top:42%;left:4%;font-size:46px;opacity:.07">⏱️</span>
+    <span style="top:54%;right:4%;font-size:64px;opacity:.08">🚛</span>
+    <span style="top:66%;left:14%;font-size:42px;opacity:.07">🕒</span>
+    <span style="top:78%;right:12%;font-size:38px;opacity:.08">⏰</span>
+    <span style="top:84%;left:6%;font-size:60px;opacity:.09">🚚</span>
+    <span style="top:88%;right:24%;font-size:34px;opacity:.07">🕙</span>
+  </div>
+
   <div class="container">
     <div class="header">
       <div class="row between">
@@ -96,6 +136,8 @@
         <div style="font-weight:800">🗺️ <span id="routeMapLabel">Route Map</span></div>
         <button class="smallbtn" id="openFullMap">Ver mapa completo</button>
       </div>
+      <div class="hint" id="roadRouteHint">Ruta terrestre real (carretera) si está disponible. Si el servicio falla, usa línea directa temporal.</div>
+      <div class="hint" id="routeSourceHint" style="margin-top:2px"></div>
       <div class="mapbox" id="miniMap"></div>
     </div>
 
@@ -204,24 +246,47 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const BACKEND_URL = '';
+    const BACKEND_URL = ''; // si tienes backend propio, ponlo aquí
     let lang = localStorage.getItem('hos_lang') || 'en';
     let isDark = localStorage.getItem('hos_theme') === 'dark';
 
     const T = {
-      en: {subtitle:'DOT Hours of Service Planner',info:'Type city name to search globally',lblFrom:'Origin',lblTo:'Destination',lblTime:'Departure',lblHours:'Hours Left',lblSpeed:'Speed (mph)',btnCalc:'Calculate Route',shareText:'Share Route',monitorText:'Start Live Tracking',stopText:'Stop Tracking',monitorTitle:'LIVE TRACKING',errSel:'Select origin and destination',err70:'Max 70 hours',errSpeed:'Invalid speed',day:'Day',drive:'Driving',rest:'Rest',reset:'34H RESET',from:'FROM',to:'TO',departure:'DEPARTURE',arrival:'ARRIVAL',totalTime:'TOTAL TIME',progress:'TRIP PROGRESS',traveled:'TRAVELED',remaining:'REMAINING',elapsed:'ELAPSED',eta:'ETA',currentLoc:'CURRENT LOCATION',currentSpeed:'CURRENT SPEED',routeMap:'Route Map',fullMap:'View Full Map',ready:'Ready',locating:'Locating...',driving:'Driving',stopped:'Stopped',arrived:'🎉 Arrived!',copied:'Route copied!',gpsDenied:'Allow location access in browser'},
-      es: {subtitle:'Planificador de Horas DOT',info:'Escribe nombre de ciudad para buscar',lblFrom:'Origen',lblTo:'Destino',lblTime:'Salida',lblHours:'Horas Restantes',lblSpeed:'Velocidad (mph)',btnCalc:'Calcular Ruta',shareText:'Compartir Ruta',monitorText:'Iniciar Rastreo',stopText:'Detener Rastreo',monitorTitle:'RASTREO EN VIVO',errSel:'Selecciona origen y destino',err70:'Máximo 70 horas',errSpeed:'Velocidad inválida',day:'Día',drive:'Manejo',rest:'Descanso',reset:'RESET 34H',from:'DESDE',to:'HASTA',departure:'SALIDA',arrival:'LLEGADA',totalTime:'TIEMPO TOTAL',progress:'PROGRESO DEL VIAJE',traveled:'RECORRIDO',remaining:'RESTANTE',elapsed:'TRANSCURRIDO',eta:'ETA',currentLoc:'UBICACIÓN ACTUAL',currentSpeed:'VELOCIDAD ACTUAL',routeMap:'Mapa de Ruta',fullMap:'Ver Mapa Completo',ready:'Listo',locating:'Localizando...',driving:'Manejando',stopped:'Detenido',arrived:'🎉 ¡Llegaste!',copied:'¡Ruta copiada!',gpsDenied:'Permite acceso a ubicación en tu navegador'}
+      en: {
+        subtitle:'DOT Hours of Service Planner', info:'Type city name to search globally',
+        lblFrom:'Origin', lblTo:'Destination', lblTime:'Departure', lblHours:'Hours Left', lblSpeed:'Speed (mph)',
+        btnCalc:'Calculate Route', shareText:'Share Route', monitorText:'Start Live Tracking', stopText:'Stop Tracking',
+        monitorTitle:'LIVE TRACKING', errSel:'Select origin and destination', err70:'Max 70 hours', errSpeed:'Invalid speed',
+        day:'Day', drive:'Driving', rest:'Rest', reset:'34H RESET', from:'FROM', to:'TO', departure:'DEPARTURE', arrival:'ARRIVAL',
+        totalTime:'TOTAL TIME', routeMap:'Route Map', fullMap:'View Full Map', roadHint:'Real road route when available',
+        currentLoc:'CURRENT LOCATION', currentSpeed:'CURRENT SPEED', progress:'TRIP PROGRESS', traveled:'TRAVELED', remaining:'REMAINING',
+        elapsed:'ELAPSED', eta:'ETA', copied:'Route copied!', locating:'Locating...', ready:'Ready', driving:'Driving', stopped:'Stopped',
+        gpsDenied:'Allow location access in your browser', arrived:'🎉 Arrived!', sourceRoad:'Road route source', sourceOsrm:'OSRM', sourceFallback:'Direct line fallback'
+      },
+      es: {
+        subtitle:'Planificador de Horas DOT', info:'Escribe nombre de ciudad para buscar',
+        lblFrom:'Origen', lblTo:'Destino', lblTime:'Salida', lblHours:'Horas Restantes', lblSpeed:'Velocidad (mph)',
+        btnCalc:'Calcular Ruta', shareText:'Compartir Ruta', monitorText:'Iniciar Rastreo', stopText:'Detener Rastreo',
+        monitorTitle:'RASTREO EN VIVO', errSel:'Selecciona origen y destino', err70:'Máximo 70 horas', errSpeed:'Velocidad inválida',
+        day:'Día', drive:'Manejo', rest:'Descanso', reset:'RESET 34H', from:'DESDE', to:'HASTA', departure:'SALIDA', arrival:'LLEGADA',
+        totalTime:'TIEMPO TOTAL', routeMap:'Mapa de Ruta', fullMap:'Ver Mapa Completo', roadHint:'Ruta terrestre real (carretera) si está disponible',
+        currentLoc:'UBICACIÓN ACTUAL', currentSpeed:'VELOCIDAD ACTUAL', progress:'PROGRESO DEL VIAJE', traveled:'RECORRIDO', remaining:'RESTANTE',
+        elapsed:'TRANSCURRIDO', eta:'ETA', copied:'¡Ruta copiada!', locating:'Localizando...', ready:'Listo', driving:'Manejando', stopped:'Detenido',
+        gpsDenied:'Permite el acceso a ubicación en tu navegador', arrived:'🎉 ¡Llegaste!', sourceRoad:'Fuente de ruta', sourceOsrm:'OSRM', sourceFallback:'Línea directa (respaldo)'
+      }
     };
 
     let state = {
       origin:null, destination:null, routeDistance:0, totalTime:0, arrival:null, schedule:[],
-      tripStart:null, watchId:null, tracking:false
+      tripStart:null, watchId:null, tracking:false,
+      roadGeometry:null, // array [ [lat,lon], ... ]
+      routeSource:null
     };
 
-    let miniMap=null, fullMap=null, miniLayer=null, fullLayer=null;
+    let miniMap=null, fullMap=null;
+    let miniRouteLayer=null, fullRouteLayer=null;
+    let miniMarkers=[], fullMarkers=[];
 
     const qs = s => document.querySelector(s);
-    const qsa = s => [...document.querySelectorAll(s)];
 
     function applyI18n(){
       const t=T[lang];
@@ -232,10 +297,13 @@
       qs('#btnCalc').textContent=t.btnCalc; qs('#shareText').textContent=t.shareText; qs('#monitorText').textContent=t.monitorText;
       qs('#stopText').textContent=t.stopText; qs('#monitorTitle').textContent=t.monitorTitle;
       qs('#routeMapLabel').textContent=t.routeMap; qs('#fullMapTitle').textContent=t.routeMap; qs('#openFullMap').textContent=t.fullMap;
+      qs('#roadRouteHint').textContent=t.roadHint;
       qs('#fromKey').textContent=t.from; qs('#toKey').textContent=t.to; qs('#depKey').textContent=t.departure; qs('#arrKey').textContent=t.arrival; qs('#totKey').textContent=t.totalTime;
       qs('#currentLocKey').textContent=t.currentLoc; qs('#currentSpeedKey').textContent=t.currentSpeed;
       qs('#progressKey').textContent=t.progress; qs('#traveledKey').textContent=t.traveled; qs('#remainingKey').textContent=t.remaining;
       qs('#elapsedKey').textContent=t.elapsed; qs('#etaKey').textContent=t.eta;
+      const srcLabel = state && state.routeSource ? (state.routeSource==='Fallback' ? t.sourceFallback : t.sourceOsrm) : '';
+      const srcEl = qs('#routeSourceHint'); if (srcEl) srcEl.textContent = srcLabel ? `🛣️ ${t.sourceRoad}: ${srcLabel}` : '';
       qs('#langBtn').textContent = lang==='en' ? '🇪🇸' : '🇺🇸';
     }
 
@@ -244,20 +312,15 @@
       qs('#themeBtn').textContent = isDark ? '☀️' : '🌙';
     }
 
-    function showError(msg){
-      const el=qs('#errorBox'); el.style.display='block'; el.textContent='❌ '+msg;
-    }
+    function showError(msg){ const el=qs('#errorBox'); el.style.display='block'; el.textContent='❌ '+msg; }
     function hideError(){ qs('#errorBox').style.display='none'; }
 
     function formatHours(h){
       const m=Math.round(h*60), hr=Math.floor(m/60), mn=m%60;
-      if(hr===0) return `${mn}m`;
-      if(mn===0) return `${hr}h`;
-      return `${hr}h ${mn}m`;
+      if(hr===0) return `${mn}m`; if(mn===0) return `${hr}h`; return `${hr}h ${mn}m`;
     }
     function formatTime(d){
-      const dt = new Date(d);
-      let h=dt.getHours(), m=dt.getMinutes(); const ap=h>=12?'PM':'AM'; const hh=h%12||12;
+      const dt = new Date(d); let h=dt.getHours(), m=dt.getMinutes(); const ap=h>=12?'PM':'AM'; const hh=h%12||12;
       return `${hh}:${String(m).padStart(2,'0')} ${ap}`;
     }
     function formatDateTime(d){
@@ -299,8 +362,8 @@
         if(!r.ok) throw new Error('autocomplete');
         return await r.json();
       }
-      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5`;
-      const r=await fetch(url); const data=await r.json();
+      const r=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5`);
+      const data=await r.json();
       return (data.features||[]).map(f=>({
         name:[f.properties.name,f.properties.city,f.properties.state,f.properties.country].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(', '),
         lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0]
@@ -320,60 +383,161 @@
       return { full_address: [p.name,p.city,p.state,p.country].filter(Boolean).join(', ') };
     }
 
+    // Ruta terrestre real con múltiples servicios (fallback)
+    async function fetchRoadRoute(origin, destination){
+      const services = [
+        {
+          name: 'OSRM',
+          url: `https://router.project-osrm.org/route/v1/driving/${origin.lon},${origin.lat};${destination.lon},${destination.lat}?overview=full&geometries=geojson`,
+          parse: async (r) => {
+            const data = await r.json();
+            const route = data.routes && data.routes[0];
+            if(!route) throw new Error('OSRM no route');
+            return {
+              coords: (route.geometry.coordinates || []).map(([lon,lat])=>[lat,lon]),
+              miles: Math.round((route.distance || 0) / 1609.344),
+              source: 'OSRM'
+            };
+          }
+        },
+        {
+          name: 'Geoapify',
+          // API pública demo limitada (puede fallar por rate limit, por eso es fallback)
+          url: `https://api.geoapify.com/v1/routing?waypoints=${origin.lat},${origin.lon}|${destination.lat},${destination.lon}&mode=drive&apiKey=YOUR_GEOAPIFY_KEY`,
+          parse: async (r) => {
+            const data = await r.json();
+            const feat = data.features && data.features[0];
+            if(!feat) throw new Error('Geoapify no route');
+            return {
+              coords: (feat.geometry.coordinates || []).map(([lon,lat])=>[lat,lon]),
+              miles: Math.round((feat.properties.distance || 0) / 1609.344),
+              source: 'Geoapify'
+            };
+          },
+          skip: true // activado sólo si agregas API key
+        },
+        {
+          name: 'StraightFallback',
+          local: true,
+          parse: async () => {
+            const straight = haversine(origin.lat,origin.lon,destination.lat,destination.lon);
+            return {
+              coords: [[origin.lat, origin.lon],[destination.lat, destination.lon]],
+              miles: Math.round(straight * 1.3),
+              source: 'Fallback'
+            };
+          }
+        }
+      ];
+
+      let lastErr = null;
+      for (const svc of services) {
+        try {
+          if (svc.skip) continue;
+          if (svc.local) return await svc.parse();
+          const r = await fetch(svc.url);
+          if (!r.ok) throw new Error(`${svc.name} HTTP ${r.status}`);
+          const result = await svc.parse(r);
+          return result;
+        } catch (e) {
+          console.warn(`Routing service failed: ${svc.name}`, e);
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error('No routing service available');
+    }
+
     function bindAutocomplete(inputEl, listEl, assignFn){
-      let timer=null, selected=false;
+      let timer=null;
       inputEl.addEventListener('input', ()=>{
-        selected=false;
         clearTimeout(timer);
         const q=inputEl.value.trim();
         if(q.length<2){ listEl.style.display='none'; return; }
         timer=setTimeout(async()=>{
           try{
             const items=await fetchAutocomplete(q);
-            listEl.innerHTML = items.map((it,i)=>`
-              <div class="s-item" data-i="${i}">
+            listEl.innerHTML = items.map((it,idx)=>`
+              <div class="s-item" data-i="${idx}">
                 <div class="s-name">${(it.name.split(',')[0]||it.name)}</div>
                 <div class="s-detail">${it.name.split(',').slice(1).join(',')}</div>
               </div>`).join('');
-            listEl.style.display = items.length?'block':'none';
-            qsa('.s-item', listEl);
+            listEl.style.display = items.length ? 'block' : 'none';
             [...listEl.children].forEach((node,idx)=>node.onclick=()=>{
-              inputEl.value = items[idx].name; listEl.style.display='none'; assignFn(items[idx]); updateMapPreview();
+              inputEl.value = items[idx].name;
+              assignFn(items[idx]);
+              listEl.style.display='none';
+              updateMapPreview();
             });
           }catch(e){ console.error(e); }
-        },300);
+        }, 300);
       });
       inputEl.addEventListener('focus', ()=>{ if(listEl.innerHTML.trim()) listEl.style.display='block'; });
       document.addEventListener('click', (e)=>{ if(!listEl.contains(e.target) && e.target!==inputEl) listEl.style.display='none'; });
     }
 
     function initMap(targetId){
-      const map = L.map(targetId,{zoomControl:true, attributionControl:true});
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+      const map = L.map(targetId,{zoomControl:true, attributionControl:true}).setView([39.5,-98.35], 4);
+      const tile = isDark
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      L.tileLayer(tile,{maxZoom:19}).addTo(map);
       return map;
     }
 
-    function drawRoute(map, origin, destination){
-      if(!map) return null;
-      map.eachLayer((layer)=>{ if(layer instanceof L.Marker || layer instanceof L.Polyline) map.removeLayer(layer); });
-      const line = L.polyline([[origin.lat, origin.lon],[destination.lat,destination.lon]], {color:'#10b981',weight:4,dashArray:'10,10'}).addTo(map);
-      L.marker([origin.lat, origin.lon]).addTo(map).bindPopup((lang==='es'?'Origen':'Origin')+': '+origin.name);
-      L.marker([destination.lat, destination.lon]).addTo(map).bindPopup((lang==='es'?'Destino':'Destination')+': '+destination.name);
-      const midLat=(origin.lat+destination.lat)/2, midLon=(origin.lon+destination.lon)/2;
-      L.marker([midLat, midLon], {icon: L.divIcon({className:'', html:'<div style="font-size:24px">🚛</div>'})}).addTo(map);
-      map.fitBounds(line.getBounds(), {padding:[30,30]});
-      return line;
+    function clearMapLayers(map, routeLayerRefName, markersRefName){
+      if(window[routeLayerRefName]){ map.removeLayer(window[routeLayerRefName]); window[routeLayerRefName]=null; }
+      (window[markersRefName]||[]).forEach(m=>map.removeLayer(m));
+      window[markersRefName]=[];
+    }
+
+    function drawRouteOnMap(map, routeCoords, origin, destination, target){
+      // target = 'mini' | 'full'
+      if(!map) return;
+      if(target==='mini'){
+        if(miniRouteLayer){ map.removeLayer(miniRouteLayer); miniRouteLayer=null; }
+        miniMarkers.forEach(m=>map.removeLayer(m)); miniMarkers=[];
+      } else {
+        if(fullRouteLayer){ map.removeLayer(fullRouteLayer); fullRouteLayer=null; }
+        fullMarkers.forEach(m=>map.removeLayer(m)); fullMarkers=[];
+      }
+
+      const coords = routeCoords && routeCoords.length ? routeCoords : [[origin.lat,origin.lon],[destination.lat,destination.lon]];
+      const layer = L.polyline(coords, {color:'#10b981', weight:5, opacity:.95}).addTo(map);
+      const shadow = L.polyline(coords, {color:'#065f46', weight:9, opacity:.22}).addTo(map);
+      shadow.bringToBack();
+
+      const o = L.marker([origin.lat, origin.lon]).addTo(map).bindPopup((lang==='es'?'Origen':'Origin')+': '+origin.name);
+      const d = L.marker([destination.lat, destination.lon]).addTo(map).bindPopup((lang==='es'?'Destino':'Destination')+': '+destination.name);
+      const mid = coords[Math.floor(coords.length/2)] || [(origin.lat+destination.lat)/2,(origin.lon+destination.lon)/2];
+      const truck = L.marker(mid, {icon: L.divIcon({className:'', html:'<div style="font-size:24px">🚛</div>'})}).addTo(map);
+
+      if(target==='mini'){ miniRouteLayer = layer; miniMarkers = [shadow,o,d,truck]; }
+      else { fullRouteLayer = layer; fullMarkers = [shadow,o,d,truck]; }
+
+      map.fitBounds(layer.getBounds(), {padding:[25,25]});
+    }
+
+    function rebuildMapsForTheme(){
+      if(miniMap){
+        miniMap.remove(); miniMap = null; miniRouteLayer = null; miniMarkers = [];
+      }
+      if(fullMap){
+        fullMap.remove(); fullMap = null; fullRouteLayer = null; fullMarkers = [];
+      }
+      if(state.origin && state.destination) updateMapPreview();
     }
 
     function updateMapPreview(){
       const show = !!(state.origin && state.destination);
-      qs('#mapPreviewCard').style.display = show ? 'block':'none';
+      qs('#mapPreviewCard').style.display = show ? 'block' : 'none';
       if(!show) return;
-      if(!miniMap){ miniMap = initMap('miniMap'); setTimeout(()=>miniMap.invalidateSize(),100); }
-      drawRoute(miniMap, state.origin, state.destination);
+      if(!miniMap){ miniMap = initMap('miniMap'); }
+      miniMap.invalidateSize();
+      drawRouteOnMap(miniMap, state.roadGeometry, state.origin, state.destination, 'mini');
+      setTimeout(()=>{ try{ miniMap.invalidateSize(); drawRouteOnMap(miniMap, state.roadGeometry, state.origin, state.destination, 'mini'); }catch(e){} }, 120);
     }
 
-    function calculateRoute(){
+    async function calculateRoute(){
       hideError();
       if(!state.origin || !state.destination){ showError(T[lang].errSel); return; }
       const hours = parseFloat(qs('#hoursInput').value);
@@ -382,28 +546,46 @@
       if(isNaN(speed) || speed<=0){ showError(T[lang].errSpeed); return; }
 
       const depart = new Date(qs('#departureInput').value || new Date());
-      const straight = haversine(state.origin.lat,state.origin.lon,state.destination.lat,state.destination.lon);
-      const distance = Math.round(straight * 1.3);
-      const schedule = calculateSchedule(depart, distance, speed, hours);
+      let distanceMiles = 0;
+      state.roadGeometry = null;
+
+      // Intenta ruta terrestre real
+      try{
+        const road = await fetchRoadRoute(state.origin, state.destination);
+        state.roadGeometry = road.coords;
+        state.routeSource = road.source;
+        distanceMiles = road.miles;
+      }catch(e){
+        console.warn('OSRM route failed, using fallback line', e);
+        // fallback si falla el servicio de ruta
+        const straight = haversine(state.origin.lat,state.origin.lon,state.destination.lat,state.destination.lon);
+        distanceMiles = Math.round(straight * 1.3);
+        state.roadGeometry = [[state.origin.lat, state.origin.lon],[state.destination.lat, state.destination.lon]];
+        state.routeSource = 'Fallback';
+      }
+
+      const schedule = calculateSchedule(depart, distanceMiles, speed, hours);
       const arrival = schedule.at(-1)?.end || depart;
       const total = schedule.reduce((a,s)=>a+(s.type==='drive'||s.type==='rest'?s.hours:0),0);
 
-      state.routeDistance = distance; state.schedule=schedule; state.arrival=arrival; state.totalTime=total;
+      state.routeDistance = distanceMiles; state.schedule=schedule; state.arrival=arrival; state.totalTime=total;
 
       qs('#resultButtons').style.display='grid';
       qs('#resultsCard').style.display='block';
 
-      const driveNeeded = distance/speed;
+      const driveNeeded = distanceMiles/speed;
       const status = qs('#statusPill');
       status.classList.toggle('danger', driveNeeded > hours);
       status.textContent = `${formatHours(driveNeeded)} / ${hours} hrs`;
 
-      qs('#distanceBig').textContent = distance.toLocaleString() + ' mi';
+      qs('#distanceBig').textContent = distanceMiles.toLocaleString() + ' mi';
       qs('#fromVal').textContent = state.origin.name;
       qs('#toVal').textContent = state.destination.name;
       qs('#depVal').textContent = formatDateTime(depart);
       qs('#arrVal').textContent = formatDateTime(arrival);
       qs('#totVal').textContent = formatHours(total);
+      const srcText = state.routeSource === 'Fallback' ? T[lang].sourceFallback : T[lang].sourceOsrm;
+      qs('#routeSourceHint').textContent = `🛣️ ${T[lang].sourceRoad}: ${srcText}`;
 
       const t=T[lang];
       qs('#scheduleList').innerHTML = schedule.map(s=>{
@@ -420,32 +602,26 @@
     }
 
     async function useGPS(){
-      try{
-        if(!navigator.geolocation) return alert('GPS not supported');
-        qs('#gpsBtn').disabled = true; qs('#gpsBtn').textContent = '...';
-        navigator.geolocation.getCurrentPosition(async(pos)=>{
-          const {latitude,longitude}=pos.coords;
-          const data = await reverseGeocode(latitude,longitude);
-          state.origin = {name:data.full_address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, lat:latitude, lon:longitude};
-          qs('#originInput').value = state.origin.name;
-          qs('#gpsBtn').disabled = false; qs('#gpsBtn').textContent = 'GPS';
-          updateMapPreview();
-        }, err=>{
-          alert(T[lang].gpsDenied);
-          qs('#gpsBtn').disabled = false; qs('#gpsBtn').textContent = 'GPS';
-        }, {enableHighAccuracy:true, timeout:10000, maximumAge:60000});
-      }catch(e){
+      if(!navigator.geolocation) return alert('GPS not supported');
+      qs('#gpsBtn').disabled = true; qs('#gpsBtn').textContent = '...';
+      navigator.geolocation.getCurrentPosition(async(pos)=>{
+        const {latitude,longitude}=pos.coords;
+        const data = await reverseGeocode(latitude,longitude);
+        state.origin = {name:data.full_address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, lat:latitude, lon:longitude};
+        qs('#originInput').value = state.origin.name;
         qs('#gpsBtn').disabled = false; qs('#gpsBtn').textContent = 'GPS';
-      }
+        updateMapPreview();
+      }, ()=>{
+        alert(T[lang].gpsDenied);
+        qs('#gpsBtn').disabled = false; qs('#gpsBtn').textContent = 'GPS';
+      }, {enableHighAccuracy:true, timeout:10000, maximumAge:60000});
     }
 
     async function shareRoute(){
       if(!state.origin || !state.destination) return;
       const msg = `🚛 HOS Tracker\n\n📍 ${state.origin.name}\n🎯 ${state.destination.name}\n📏 ${state.routeDistance.toLocaleString()} mi\n⏱️ ${formatHours(state.totalTime)}`;
-      if(navigator.share){
-        try { await navigator.share({title:'HOS Route', text:msg}); return; } catch(e){}
-      }
-      await navigator.clipboard.writeText(msg);
+      if(navigator.share){ try{ await navigator.share({title:'HOS Route', text:msg}); return; }catch(e){} }
+      if(navigator.clipboard) await navigator.clipboard.writeText(msg);
       alert(T[lang].copied);
     }
 
@@ -453,13 +629,14 @@
       if(!state.origin || !state.destination) return;
       qs('#fullMapOverlay').classList.add('open');
       if(!fullMap){ fullMap = initMap('fullMap'); }
-      setTimeout(()=>{ fullMap.invalidateSize(); drawRoute(fullMap, state.origin, state.destination); }, 50);
+      setTimeout(()=>{ fullMap.invalidateSize(); drawRouteOnMap(fullMap, state.roadGeometry, state.origin, state.destination, 'full'); }, 180);
     }
     function closeFullMap(){ qs('#fullMapOverlay').classList.remove('open'); }
 
     function startTracking(){
       if(!state.origin || !state.destination) return alert(T[lang].errSel);
       if(!navigator.geolocation) return alert('GPS not supported');
+
       state.tripStart = new Date(); state.tracking=true;
       qs('#monitorOverlay').classList.add('open');
       qs('#currentLocVal').textContent = T[lang].locating;
@@ -492,11 +669,8 @@
           qs('#currentLocVal').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
         }
 
-        if(remaining <= 5){
-          alert(T[lang].arrived);
-          stopTracking();
-        }
-      }, err=>{ console.log(err); }, {enableHighAccuracy:true, maximumAge:1000, timeout:10000});
+        if(remaining <= 5){ alert(T[lang].arrived); stopTracking(); }
+      }, ()=>{}, {enableHighAccuracy:true, maximumAge:1000, timeout:10000});
     }
 
     function stopTracking(){
@@ -506,7 +680,7 @@
     }
 
     function resetForm(){
-      state.origin=null; state.destination=null; state.routeDistance=0; state.totalTime=0; state.arrival=null; state.schedule=[];
+      state.origin=null; state.destination=null; state.routeDistance=0; state.totalTime=0; state.arrival=null; state.schedule=[]; state.roadGeometry=null; state.routeSource=null;
       qs('#originInput').value=''; qs('#destInput').value=''; qs('#hoursInput').value='70'; qs('#speedInput').value='60';
       hideError();
       qs('#resultsCard').style.display='none';
@@ -514,6 +688,9 @@
       qs('#mapPreviewCard').style.display='none';
       qs('#originSuggestions').style.display='none';
       qs('#destSuggestions').style.display='none';
+      if (qs('#routeSourceHint')) qs('#routeSourceHint').textContent='';
+      if(miniRouteLayer && miniMap){ miniMap.removeLayer(miniRouteLayer); miniRouteLayer=null; }
+      miniMarkers.forEach(m=>miniMap && miniMap.removeLayer(m)); miniMarkers=[];
     }
 
     function setDefaultDeparture(){
@@ -522,12 +699,11 @@
       qs('#departureInput').value = local;
     }
 
-    // Init
     bindAutocomplete(qs('#originInput'), qs('#originSuggestions'), (loc)=> state.origin = loc);
     bindAutocomplete(qs('#destInput'), qs('#destSuggestions'), (loc)=> state.destination = loc);
 
-    qs('#themeBtn').onclick = ()=>{ isDark=!isDark; localStorage.setItem('hos_theme', isDark?'dark':'light'); applyTheme(); updateMapPreview(); };
-    qs('#langBtn').onclick = ()=>{ lang = lang==='en'?'es':'en'; localStorage.setItem('hos_lang', lang); applyI18n(); if(state.schedule.length) calculateRoute(); };
+    qs('#themeBtn').onclick = ()=>{ isDark=!isDark; localStorage.setItem('hos_theme', isDark?'dark':'light'); applyTheme(); rebuildMapsForTheme(); };
+    qs('#langBtn').onclick = ()=>{ lang = lang==='en'?'es':'en'; localStorage.setItem('hos_lang', lang); applyI18n(); if(state.routeDistance>0) calculateRoute(); };
     qs('#calcBtn').onclick = calculateRoute;
     qs('#gpsBtn').onclick = useGPS;
     qs('#shareBtn').onclick = shareRoute;
