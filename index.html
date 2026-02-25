@@ -1,206 +1,548 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="HOS Tracker">
-<meta name="theme-color" content="#3b82f6">
-<link rel="apple-touch-icon" href="icon.svg">
-<link rel="manifest" href="manifest.json">
-<title>HOS Tracker - DOT Hours of Service</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;padding:20px;min-height:100vh;transition:all .3s}body.light{background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%)}body.dark{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%)}.container{max-width:700px;margin:0 auto;padding:25px 20px;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.3);transition:all .3s}.container.light{background:#fff;color:#333}.container.dark{background:#1e293b;color:#e2e8f0}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.settings-bar{display:flex;gap:8px}.theme-toggle,.lang-toggle{background:rgba(59,130,246,.1);border:1px solid #3b82f6;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:11px;color:#3b82f6;font-weight:600;transition:all .3s}.dark .theme-toggle,.dark .lang-toggle{background:rgba(59,130,246,.2);color:#60a5fa}h1{color:#3b82f6;text-align:center;margin-bottom:3px;font-size:22px}.dark h1{color:#60a5fa}.subtitle{text-align:center;color:#666;margin-bottom:3px;font-size:12px}.dark .subtitle{color:#94a3b8}.company{text-align:center;color:#999;font-size:9px;letter-spacing:.5px;margin-bottom:15px}.dark .company{color:#64748b}.truck-container{position:absolute;top:15px;left:15px;width:80px;height:50px;overflow:hidden;border-radius:8px}.road{position:absolute;bottom:0;left:0;width:200%;height:100%;animation:roadMove 3s linear infinite}.road-line{fill:none;stroke:#fff;stroke-width:1.5;stroke-dasharray:8,8;animation:dashMove 1s linear infinite;opacity:.8}.dark .road-line{stroke:#94a3b8}@keyframes roadMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}@keyframes dashMove{from{stroke-dashoffset:0}to{stroke-dashoffset:16}}.truck-icon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:38px;z-index:10;animation:engineVibrate .15s ease-in-out infinite}.truck-body{fill:#3b82f6;transition:fill .3s}.dark .truck-body{fill:#60a5fa}.truck-cabin{fill:#1e3a8a;transition:fill .3s}.dark .truck-cabin{fill:#3b82f6}.truck-window{fill:#87CEEB;opacity:.7}.dark .truck-window{fill:#60a5fa;opacity:.5}.smoke{fill:#94a3b8;opacity:.3;animation:smokeFlow 1.5s ease-out infinite}.dark .smoke{fill:#64748b}@keyframes engineVibrate{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(-50%,-50.5%)}75%{transform:translate(-50%,-49.5%)}}@keyframes smokeFlow{0%{opacity:.3;transform:translateX(0)translateY(0)scale(1)}100%{opacity:0;transform:translateX(-20px)translateY(-10px)scale(2)}}.truck-container:hover .road{animation:roadMove 1.5s linear infinite}.truck-container:hover .road-line{animation:dashMove .5s linear infinite}.truck-container:hover .truck-icon{animation:engineVibrate .08s ease-in-out infinite}.truck-container:hover .smoke{animation:smokeFlow .8s ease-out infinite}.form-group{margin-bottom:13px;position:relative}label{display:block;margin-bottom:6px;font-weight:600;font-size:13px}.dark label{color:#e2e8f0}input{width:100%;padding:10px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;transition:all .3s}.dark input{background:#334155;border-color:#475569;color:#e2e8f0}input:focus{outline:none;border-color:#3b82f6}.suggestions{position:absolute;top:100%;left:0;right:0;border:2px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;max-height:180px;overflow-y:auto;z-index:1000;display:none;transition:all .3s}.suggestions.light{background:#fff}.suggestions.dark{background:#334155;border-color:#475569}.suggestions.show{display:block}.suggestion-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #f0f0f0}.dark .suggestion-item{border-bottom-color:#475569}.suggestion-item:active{background:#f5f5f5}.dark .suggestion-item:active{background:#475569}.city-name{font-weight:700;font-size:13px}.light .city-name{color:#333}.dark .city-name{color:#e2e8f0}.city-detail{font-size:11px}.light .city-detail{color:#666}.dark .city-detail{color:#94a3b8}button{width:100%;padding:13px;background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;transition:all .3s}button:active{opacity:.8;transform:scale(.98)}.btn-share{background:linear-gradient(135deg,#10b981 0%,#059669 100%);display:none}.btn-share.show{display:block}.btn-monitor{background:linear-gradient(135deg,#059669 0%,#047857 100%);display:none}.btn-monitor.show{display:block}.btn-stop-monitor{width:100%;padding:12px;background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;display:none}.results{margin-top:25px;padding:20px;border-radius:12px;display:none;transition:all .3s}.results.light{background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%)}.results.dark{background:linear-gradient(135deg,#1e293b 0%,#334155 100%)}.results.show{display:block}.result-item{margin-bottom:12px;padding-bottom:12px;border-bottom:2px solid rgba(255,255,255,.5)}.dark .result-item{border-bottom-color:rgba(100,116,139,.5)}.result-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}.light .result-label{color:#666}.dark .result-label{color:#94a3b8}.result-value{font-size:16px;font-weight:700}.light .result-value{color:#333}.dark .result-value{color:#e2e8f0}.distance-big{font-size:36px;color:#3b82f6;text-align:center;margin:15px 0;font-weight:800}.dark .distance-big{color:#60a5fa}.error{padding:12px;border-radius:8px;margin-top:15px;display:none;font-size:13px}.error.light{background:#ffebee;color:#c62828}.error.dark{background:#7f1d1d;color:#fca5a5}.error.show{display:block}.warning{padding:12px;border-radius:8px;margin-top:15px;border-left:4px solid #ff9800;display:none;font-size:13px}.warning.light{background:#fff3e0;color:#e65100}.warning.dark{background:#78350f;color:#fed7aa}.warning.show{display:block}.info-box{border-left:3px solid #2196f3;padding:10px 12px;border-radius:8px;margin-bottom:15px;font-size:12px}.info-box.light{background:#e3f2fd;color:#1976d2}.info-box.dark{background:#1e3a5f;color:#93c5fd}.schedule-item{padding:10px;border-radius:8px;margin-bottom:6px;border-left:3px solid #3b82f6;font-size:12px;transition:all .3s}.schedule-item.light{background:#fff}.schedule-item.dark{background:#334155}.schedule-item.reset{border-left-color:#f44336}.schedule-item.reset.light{background:#ffebee}.schedule-item.reset.dark{background:#7f1d1d}.schedule-day{font-weight:700;color:#3b82f6;margin-bottom:4px;font-size:13px}.dark .schedule-day{color:#60a5fa}.schedule-day.reset{color:#f44336}.dark .schedule-day.reset{color:#fca5a5}.hours-status{padding:12px;border-radius:8px;margin-bottom:12px;border-left:3px solid #4CAF50;transition:all .3s}.hours-status.light{background:#fff}.hours-status.dark{background:#334155}.hours-status.exceeded{border-left-color:#f44336}.hours-status.exceeded.light{background:#ffebee}.hours-status.exceeded.dark{background:#7f1d1d}.status-value{font-size:20px;font-weight:700;color:#4CAF50}.dark .status-value{color:#86efac}.status-value.exceeded{color:#f44336}.dark .status-value.exceeded{color:#fca5a5}.gps-window{position:fixed;bottom:15px;left:15px;right:15px;max-width:330px;margin:0 auto;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.4);padding:15px;display:none;z-index:2000;border:3px solid #4CAF50;transition:all .3s}.gps-window.light{background:#fff}.gps-window.dark{background:#1e293b}.gps-window.show{display:block}.gps-header{font-size:14px;font-weight:700;color:#4CAF50;margin-bottom:10px}.dark .gps-header{color:#86efac}.gps-data{padding:10px;border-radius:8px;margin-bottom:6px}.gps-data.light{background:#f5f5f5}.gps-data.dark{background:#334155}.gps-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}.light .gps-label{color:#666}.dark .gps-label{color:#94a3b8}.gps-value{font-size:14px;font-weight:700}.light .gps-value{color:#333}.dark .gps-value{color:#e2e8f0}.gps-close{position:absolute;top:10px;right:10px;background:#f44336;color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;line-height:1}.btn-gps{width:100%;padding:10px;background:#4CAF50;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}.monitoring-panel{position:fixed;top:80px;left:20px;right:20px;max-width:400px;margin:0 auto;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,.5);padding:20px;display:none;z-index:3000;border:3px solid #10b981;transition:all .3s}.monitoring-panel.light{background:#fff;color:#333}.monitoring-panel.dark{background:#1e293b;color:#e2e8f0}.monitoring-panel.show{display:block}.monitor-header{font-size:16px;font-weight:700;color:#10b981;margin-bottom:15px;text-align:center}.dark .monitor-header{color:#86efac}.monitor-section{margin-bottom:12px;padding:10px;border-radius:8px}.monitor-section.light{background:#f5f5f5}.monitor-section.dark{background:#334155}.monitor-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;opacity:.7}.monitor-value{font-size:15px;font-weight:700}.progress-bar{width:100%;height:8px;border-radius:10px;margin:8px 0;overflow:hidden}.progress-bar.light{background:#e5e7eb}.progress-bar.dark{background:#475569}.progress-fill{height:100%;background:linear-gradient(90deg,#10b981,#059669);transition:width .5s;border-radius:10px}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>HOS Tracker</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root{
+      --bg:#047857; --bg2:#065f46; --card:rgba(255,255,255,.97); --text:#111827; --muted:#6b7280;
+      --accent:#10b981; --accent2:#3b82f6; --danger:#ef4444; --warning:#f59e0b; --line:#d1fae5;
+      --soft:#f0fdf4; --header:rgba(255,255,255,.95);
+    }
+    body.dark{
+      --bg:#0f172a; --bg2:#1e293b; --card:rgba(30,41,59,.97); --text:#e2e8f0; --muted:#94a3b8;
+      --accent:#10b981; --accent2:#60a5fa; --danger:#ef4444; --warning:#f59e0b; --line:#334155;
+      --soft:#334155; --header:rgba(30,41,59,.95);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh}
+    .container{max-width:980px;margin:0 auto;padding:14px}
+    .header{position:sticky;top:0;z-index:20;background:var(--header);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);border-radius:0 0 14px 14px;padding:12px 14px}
+    .row{display:flex;gap:10px;align-items:center}
+    .between{justify-content:space-between}
+    .logo{font-weight:800;font-size:18px;display:flex;align-items:center;gap:8px;color:var(--accent2)}
+    .subtitle{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
+    .iconbtn{border:none;background:rgba(16,185,129,.12);color:var(--text);width:38px;height:38px;border-radius:999px;cursor:pointer;font-size:18px}
+    body.dark .iconbtn{background:rgba(59,130,246,.18)}
+    .card{background:var(--card);border-radius:15px;padding:16px;margin-top:14px;box-shadow:0 8px 22px rgba(0,0,0,.08)}
+    .info{background:rgba(16,185,129,.12);border-left:4px solid var(--accent);padding:10px;border-radius:8px;margin-bottom:12px;color:var(--text);font-size:13px}
+    label{display:block;font-size:13px;font-weight:700;margin:10px 0 7px}
+    .inputwrap{position:relative}
+    input{width:100%;padding:14px 42px 14px 14px;border:2px solid var(--line);border-radius:12px;background:#fff;color:#111827;font-size:15px}
+    body.dark input{background:#334155;color:#e2e8f0;border-color:#475569}
+    .btn{border:none;border-radius:12px;padding:14px 14px;font-weight:700;color:#fff;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+    .btn:disabled{opacity:.7;cursor:not-allowed}
+    .btn-primary{background:var(--accent)}
+    .btn-blue{background:#3b82f6}
+    .btn-purple{background:#8b5cf6}
+    .btn-red{background:#ef4444}
+    .smallbtn{padding:8px 12px;border-radius:999px;font-size:12px;border:none;color:#fff;background:var(--accent);cursor:pointer}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid3{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:10px}
+    .error{background:rgba(239,68,68,.12);border-left:4px solid var(--danger);padding:10px;border-radius:8px;color:var(--danger);margin-top:10px}
+    .suggestions{position:absolute;top:100%;left:0;right:0;background:var(--card);border:2px solid var(--line);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;z-index:30}
+    .s-item{padding:12px;border-bottom:1px solid rgba(0,0,0,.05);cursor:pointer}
+    .s-item:hover{background:rgba(16,185,129,.08)}
+    body.dark .s-item:hover{background:rgba(96,165,250,.10)}
+    .s-name{font-weight:700}
+    .s-detail{font-size:12px;color:var(--muted)}
+    .mapbox{height:220px;border-radius:12px;overflow:hidden;margin-top:8px}
+    .fullmap-overlay,.monitor-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:60}
+    .fullmap-overlay.open,.monitor-overlay.open{display:block}
+    .fullmap-card,.monitor-card{position:absolute;inset:12px;background:var(--card);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+    .modal-head{padding:10px 12px;background:var(--bg2);color:#fff;display:flex;justify-content:space-between;align-items:center}
+    .modal-close{background:var(--danger);border:none;color:#fff;border-radius:999px;width:34px;height:34px;font-size:20px;cursor:pointer}
+    .fullmap{flex:1}
+    .results .big{font-size:42px;font-weight:900;color:var(--accent2);text-align:center}
+    .pill{padding:10px;border-radius:10px;border-left:4px solid var(--accent);background:rgba(16,185,129,.10);font-weight:800}
+    .pill.danger{border-left-color:var(--danger);background:rgba(239,68,68,.10);color:var(--danger)}
+    .kv{background:var(--soft);padding:12px;border-radius:12px;margin-top:10px}
+    .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700}
+    .v{font-size:15px;font-weight:700;margin-top:4px}
+    .schedule{margin-top:12px}
+    .sched{padding:10px;border-left:4px solid var(--accent);background:var(--soft);border-radius:10px;margin-bottom:8px}
+    .sched.rest{border-left-color:var(--warning)}
+    .sched.reset{border-left-color:var(--danger)}
+    .sched .t{font-weight:800}
+    .sched .d{color:var(--muted);font-size:13px;white-space:pre-line}
+    .bar{height:12px;background:rgba(0,0,0,.08);border-radius:999px;overflow:hidden}
+    .bar > div{height:100%;background:var(--accent);width:0%}
+    .muted{color:var(--muted)}
+    .stack{display:flex;flex-direction:column;gap:10px}
+    @media (max-width: 720px){
+      .grid2,.grid3{grid-template-columns:1fr}
+      .container{padding:10px}
+      .results .big{font-size:34px}
+    }
+  </style>
 </head>
-<body class="light">
-<div class="container light">
-<div class="header">
-<div class="truck-container">
-<svg class="road" viewBox="0 0 200 50" preserveAspectRatio="none">
-<rect x="0" y="25" width="200" height="25" fill="#2d3748"/>
-<line class="road-line" x1="0" y1="37" x2="200" y2="37"/>
-</svg>
-<svg class="truck-icon" viewBox="0 0 200 100">
-<defs>
-<linearGradient id="metalShine" x1="0%" x2="100%">
-<stop offset="0%" style="stop-color:#6b7280"/>
-<stop offset="50%" style="stop-color:#e5e7eb"/>
-<stop offset="100%" style="stop-color:#6b7280"/>
-</linearGradient>
-<linearGradient id="bluePaint" y2="100%">
-<stop offset="0%" style="stop-color:#3b82f6"/>
-<stop offset="100%" style="stop-color:#1e40af"/>
-</linearGradient>
-<linearGradient id="cabinPaint" y2="100%">
-<stop offset="0%" style="stop-color:#1e3a8a"/>
-<stop offset="100%" style="stop-color:#1e40af"/>
-</linearGradient>
-</defs>
-<rect x="25" y="35" width="105" height="38" rx="2" fill="url(#bluePaint)"/>
-<line x1="78" y1="37" x2="78" y2="71" stroke="#1e40af" stroke-width="1.5"/>
-<circle cx="40" cy="71" r="1.2" fill="#fbbf24"/>
-<circle cx="70" cy="71" r="1.2" fill="#fbbf24"/>
-<circle cx="100" cy="71" r="1.2" fill="#fbbf24"/>
-<rect x="25" y="73" width="105" height="3" fill="#374151"/>
-<circle cx="45" cy="85" r="7" fill="#1a1a1a"/>
-<circle cx="105" cy="85" r="7" fill="#1a1a1a"/>
-<circle cx="130" cy="74" r="3" fill="#4b5563"/>
-<rect x="135" y="25" width="3" height="25" rx="1.5" fill="url(#metalShine)"/>
-<circle class="smoke" cx="136" cy="20" r="2.5"/>
-<circle class="smoke" cx="134" cy="16" r="2" style="animation-delay:.2s"/>
-<rect x="130" y="30" width="25" height="20" rx="2" fill="url(#cabinPaint)"/>
-<rect x="155" y="38" width="28" height="35" rx="2" fill="url(#cabinPaint)"/>
-<rect x="183" y="45" width="20" height="28" rx="1" fill="url(#cabinPaint)"/>
-<circle cx="204" cy="50" r="2.5" fill="#fcd34d"/>
-<circle cx="204" cy="68" r="2.5" fill="#fcd34d"/>
-<circle cx="165" cy="85" r="7" fill="#1a1a1a"/>
-<circle cx="188" cy="85" r="7" fill="#1a1a1a"/>
-</svg>
-</div>
-<div style="flex:1"></div>
-<div class="settings-bar">
-<button class="theme-toggle" id="themeBtn">🌙 <span id="themeTxt">Dark</span></button>
-<button class="lang-toggle" id="langBtn"><span id="langFlag">🇪🇸</span> <span id="langTxt">ES</span></button>
-</div>
-</div>
-<h1>⏱️ HOS Tracker</h1>
-<p class="subtitle" id="subtitle">Smart Route Planning for Truckers</p>
-<div class="company">Powered by Fab-visual®</div>
-<div class="info-box light" id="infoMsg">💡 Type city name (100+ cities available)</div>
-<form id="myForm" autocomplete="off">
-<div class="form-group">
-<label id="lblFrom">Origin City</label>
-<input type="text" id="fromCity" placeholder="Ex: West Palm Beach" required>
-<div id="fromSuggestions" class="suggestions light"></div>
-</div>
-<div class="form-group">
-<label id="lblTo">Destination City</label>
-<input type="text" id="toCity" placeholder="Ex: Miami" required>
-<div id="toSuggestions" class="suggestions light"></div>
-</div>
-<div class="form-group">
-<label id="lblTime">Departure Date & Time</label>
-<input type="datetime-local" id="departureTime" required>
-</div>
-<div class="form-group">
-<label id="lblHours">Remaining Hours (70-hour cycle)</label>
-<input type="number" id="cycleHours" value="70" min="0" max="70" step="0.5" required>
-</div>
-<div class="form-group">
-<label id="lblSpeed">Average Speed (mph)</label>
-<input type="number" id="speedInput" value="60" min="30" max="70" required>
-</div>
-<button type="submit" id="btnCalc">🚛 <span id="btnTxt">Calculate Route</span></button>
-<button type="button" class="btn-share" id="btnShare" onclick="shareRoute()">📤 <span id="shareTxt">Share Route</span></button>
-<button type="button" class="btn-monitor" id="btnMonitor" onclick="startMonitoring()">📍 <span id="monitorTxt">Start Monitoring</span></button>
-<button type="button" class="btn-gps" id="btnGPS" style="display:none">📍 <span id="gpsT">View My GPS Location</span></button>
-</form>
-<div class="error light" id="errorBox"></div>
-<div class="warning light" id="warningBox"></div>
-<div class="results light" id="resultsBox">
-<div id="hoursStatus"></div>
-<div class="result-item"><div class="result-label" id="lbl1">🚀 ORIGIN</div><div class="result-value" id="showFrom"></div></div>
-<div class="result-item"><div class="result-label" id="lbl2">🏁 DESTINATION</div><div class="result-value" id="showTo"></div></div>
-<div class="distance-big" id="showDistance">0 miles</div>
-<div class="result-item"><div class="result-label" id="lbl3">⏰ DEPARTURE</div><div class="result-value" id="showDeparture"></div></div>
-<div class="result-item"><div class="result-label" id="lbl4">🎯 ARRIVAL</div><div class="result-value" id="showArrival"></div></div>
-<div class="result-item"><div class="result-label" id="lbl5">⏱️ TOTAL TIME</div><div class="result-value" id="showDuration"></div></div>
-<div class="result-item"><div class="result-label" id="lbl6">📅 ITINERARY</div><div id="scheduleDetails" style="margin-top:10px"></div></div>
-</div>
-</div>
-<div class="monitoring-panel light" id="monitoringPanel">
-<div class="monitor-header" id="monitorHeader">📍 LIVE TRIP MONITORING</div>
-<div class="monitor-section light">
-<div class="monitor-label" id="monLabel1">CURRENT LOCATION</div>
-<div class="monitor-value" id="monitorCurrentCity">-</div>
-</div>
-<div class="monitor-section light">
-<div class="monitor-label" id="monLabel2">PROGRESS</div>
-<div class="progress-bar light">
-<div class="progress-fill" id="monitorProgress" style="width:0%"></div>
-</div>
-<div class="monitor-value" id="monitorProgressText" style="text-align:center;font-size:20px">0%</div>
-</div>
-<div class="monitor-section light">
-<div class="monitor-label" id="monLabel3">DISTANCE</div>
-<div style="display:flex;justify-content:space-between">
-<div><span style="opacity:.6">✓</span> <span id="monitorTraveled">0 mi</span></div>
-<div><span style="opacity:.6">⏩</span> <span id="monitorRemaining">0 mi</span></div>
-</div>
-</div>
-<div class="monitor-section light">
-<div class="monitor-label" id="monLabel4">TIME</div>
-<div style="display:flex;justify-content:space-between">
-<div><span style="opacity:.6">✓</span> <span id="monitorElapsed">0h</span></div>
-<div><span style="opacity:.6">⏩</span> <span id="monitorETA">0h</span></div>
-</div>
-</div>
-<div class="monitor-section light">
-<div class="monitor-label" id="monLabel5">DRIVING HOURS</div>
-<div class="monitor-value" id="monitorHoursLeft">70 / 70 hrs</div>
-</div>
-<div class="monitor-section light">
-<div class="monitor-label" id="monLabel6">STATUS</div>
-<div class="monitor-value" id="monitorStatus">🚛 Ready</div>
-<div style="font-size:12px;margin-top:5px;opacity:.8" id="monitorNext">-</div>
-</div>
-<button type="button" class="btn-stop-monitor" id="btnStopMonitor" onclick="stopMonitoring()">🛑 <span id="stopMonitorTxt">Stop Monitoring</span></button>
-</div>
-<div class="gps-window light" id="gpsWindow">
-<button class="gps-close" id="closeGPS">×</button>
-<div class="gps-header" id="gpsH">📍 My GPS Location</div>
-<div class="gps-data light"><div class="gps-label" id="gpsL1">📍 CURRENT LOCATION</div><div class="gps-value" id="currentLocation">Loading...</div></div>
-<div class="gps-data light"><div class="gps-label" id="gpsL2">🎯 DESTINATION</div><div class="gps-value" id="destinationName">-</div></div>
-<div class="gps-data light"><div class="gps-label" id="gpsL3">📏 REMAINING DISTANCE</div><div class="gps-value" id="remainingDistance" style="color:#FF5722">-</div></div>
-<div class="gps-data light"><div class="gps-label" id="gpsL4">⏱️ REMAINING HOURS</div><div class="gps-value" id="remainingHours" style="color:#4CAF50">-</div></div>
-</div>
-<script>
-var C=[{n:'Miami',s:'FL',lat:25.77,lng:-80.19},{n:'Jacksonville',s:'FL',lat:30.33,lng:-81.65},{n:'Tampa',s:'FL',lat:27.95,lng:-82.45},{n:'Orlando',s:'FL',lat:28.53,lng:-81.37},{n:'West Palm Beach',s:'FL',lat:26.71,lng:-80.05},{n:'Fort Lauderdale',s:'FL',lat:26.12,lng:-80.13},{n:'Tallahassee',s:'FL',lat:30.43,lng:-84.28},{n:'Pensacola',s:'FL',lat:30.42,lng:-87.21},{n:'Fort Myers',s:'FL',lat:26.64,lng:-81.86},{n:'Naples',s:'FL',lat:26.14,lng:-81.79},{n:'Sarasota',s:'FL',lat:27.33,lng:-82.53},{n:'St Petersburg',s:'FL',lat:27.77,lng:-82.64},{n:'Clearwater',s:'FL',lat:27.96,lng:-82.80},{n:'Gainesville',s:'FL',lat:29.65,lng:-82.32},{n:'New York',s:'NY',lat:40.75,lng:-73.99},{n:'Los Angeles',s:'CA',lat:33.97,lng:-118.24},{n:'Chicago',s:'IL',lat:41.88,lng:-87.61},{n:'Houston',s:'TX',lat:29.76,lng:-95.36},{n:'Phoenix',s:'AZ',lat:33.44,lng:-112.07},{n:'Philadelphia',s:'PA',lat:39.95,lng:-75.16},{n:'San Antonio',s:'TX',lat:29.42,lng:-98.49},{n:'San Diego',s:'CA',lat:32.71,lng:-117.16},{n:'Dallas',s:'TX',lat:32.78,lng:-96.79},{n:'San Jose',s:'CA',lat:37.33,lng:-121.88},{n:'Austin',s:'TX',lat:30.26,lng:-97.74},{n:'Columbus',s:'OH',lat:39.96,lng:-82.99},{n:'Charlotte',s:'NC',lat:35.22,lng:-80.84},{n:'San Francisco',s:'CA',lat:37.77,lng:-122.41},{n:'Seattle',s:'WA',lat:47.61,lng:-122.33},{n:'Denver',s:'CO',lat:39.73,lng:-104.99},{n:'Washington',s:'DC',lat:38.90,lng:-77.03},{n:'Boston',s:'MA',lat:42.37,lng:-71.02},{n:'Atlanta',s:'GA',lat:33.75,lng:-84.38}];
-var sel1=null,sel2=null,destCity=null,gpsInterval=null,speed=60,lang='en',theme='light',lastSchedule=null,lastDistance=0,lastCycleHours=70;
-var activeTrip=null,monitoringInterval=null,tripStartTime=null,currentSegment=0;
-var driveTimeWarnings=[],notificationPermission=false,restAreas=[{name:'I-95 NB Mile 180',lat:29.5,lng:-81.2},{name:'I-95 SB Mile 225',lat:28.8,lng:-80.9},{name:'I-75 Mile 350',lat:28.2,lng:-82.5},{name:'FL Turnpike Plaza',lat:26.9,lng:-80.3}],restAreaInterval=null;
-var T={en:{subtitle:'Smart Route Planning for Truckers',info:'💡 Type city name (100+ cities available)',lblFrom:'Origin City',lblTo:'Destination City',lblTime:'Departure Date & Time',lblHours:'Remaining Hours (70-hour cycle)',lblSpeed:'Average Speed (mph)',btnCalc:'Calculate Route',shareBtn:'Share Route',monitorBtn:'Start Monitoring',stopMonitorBtn:'Stop Monitoring',gpsBtn:'View My GPS Location',gpsH:'My GPS Location',gpsL1:'CURRENT LOCATION',gpsL2:'DESTINATION',gpsL3:'REMAINING DISTANCE',gpsL4:'REMAINING HOURS',lbl1:'ORIGIN',lbl2:'DESTINATION',lbl3:'DEPARTURE',lbl4:'ARRIVAL',lbl5:'TOTAL TIME',lbl6:'ITINERARY',monitorHeader:'LIVE TRIP MONITORING',monLabel1:'CURRENT LOCATION',monLabel2:'PROGRESS',monLabel3:'DISTANCE',monLabel4:'TIME',monLabel5:'DRIVING HOURS',monLabel6:'STATUS',errSelect:'Please select a city from suggestions',err70:'Cannot exceed 70 hours',warnTitle:'34-HOUR RESET REQUIRED',warnMsg:'Requires HOURS but you only have CYCLE hrs. You will need a 34-hour RESET.',day:'Day',driving:'Driving',rest:'Rest',reset:'RESET 34 HOURS',restMsg:'10 hours DOT',resetMsg:'Recover 70 hrs',miles:'miles',driving2:'driving',loading:'Loading...'},es:{subtitle:'Planificación Inteligente de Rutas',info:'💡 Escribe el nombre de la ciudad (100+ ciudades)',lblFrom:'Ciudad de Origen',lblTo:'Ciudad de Destino',lblTime:'Fecha y Hora de Salida',lblHours:'Horas Restantes (Ciclo 70 hrs)',lblSpeed:'Velocidad Promedio (mph)',btnCalc:'Calcular Ruta',shareBtn:'Compartir Ruta',monitorBtn:'Iniciar Monitoreo',stopMonitorBtn:'Detener Monitoreo',gpsBtn:'Ver Mi Ubicación GPS',gpsH:'Mi Ubicación GPS',gpsL1:'UBICACIÓN ACTUAL',gpsL2:'DESTINO',gpsL3:'DISTANCIA RESTANTE',gpsL4:'HORAS RESTANTES',lbl1:'ORIGEN',lbl2:'DESTINO',lbl3:'SALIDA',lbl4:'LLEGADA',lbl5:'TIEMPO TOTAL',lbl6:'ITINERARIO',monitorHeader:'MONITOREO EN VIVO',monLabel1:'UBICACIÓN ACTUAL',monLabel2:'PROGRESO',monLabel3:'DISTANCIA',monLabel4:'TIEMPO',monLabel5:'HORAS MANEJANDO',monLabel6:'ESTADO',errSelect:'Selecciona una ciudad de las sugerencias',err70:'No puede exceder 70 horas',warnTitle:'RESET DE 34 HORAS REQUERIDO',warnMsg:'Requiere HOURS pero solo tienes CYCLE hrs. Necesitarás RESET de 34 horas.',day:'Día',driving:'Conducción',rest:'Descanso',reset:'RESET 34 HORAS',restMsg:'10 horas DOT',resetMsg:'Recuperas 70 hrs',miles:'millas',driving2:'manejando',loading:'Cargando...'}};
-function shareRoute(){if(!sel1||!sel2){alert(T[lang].errSelect);return}var t='🚛 HOS Tracker Route\n\n📍 From: '+sel1.n+', '+sel1.s+'\n🎯 To: '+sel2.n+', '+sel2.s+'\n📏 Distance: '+document.getElementById('showDistance').textContent+'\n⏱️ Duration: '+document.getElementById('showDuration').textContent+'\n🚀 Departure: '+document.getElementById('showDeparture').textContent+'\n🏁 Arrival: '+document.getElementById('showArrival').textContent+'\n\nPowered by Fab-visual®';if(navigator.share){navigator.share({title:'HOS Tracker Route',text:t}).catch(function(){})}else{navigator.clipboard.writeText(t).then(function(){alert(lang==='en'?'Route copied!':'¡Ruta copiada!')})}}
-function requestNotificationPermission(){if('Notification'in window){Notification.requestPermission().then(function(p){notificationPermission=p==='granted'})}}
-function scheduleTimeWarnings(sc){driveTimeWarnings=[];var now=new Date();sc.forEach(function(item){if(item.type==='drive'){var e=new Date(item.endTime),w30=new Date(e.getTime()-30*60000),w10=new Date(e.getTime()-10*60000);if(w30>now)driveTimeWarnings.push({time:w30,message:lang==='en'?'⚠️ 30 min until rest!':'⚠️ ¡30 min hasta descanso!',sent:false});if(w10>now)driveTimeWarnings.push({time:w10,message:lang==='en'?'🚨 10 min until rest!':'🚨 ¡10 min hasta descanso!',sent:false})}});startNotificationTimer()}
-var notificationInterval=null;
-function startNotificationTimer(){if(notificationInterval)clearInterval(notificationInterval);notificationInterval=setInterval(function(){var now=new Date();driveTimeWarnings.forEach(function(w){if(now>=w.time&&!w.sent){showNotification(w.message);w.sent=true}})},30000)}
-function showNotification(msg){if('vibrate'in navigator)navigator.vibrate([200,100,200]);try{var ctx=new(window.AudioContext||window.webkitAudioContext)(),osc=ctx.createOscillator();osc.connect(ctx.destination);osc.frequency.value=800;osc.start();setTimeout(function(){osc.stop()},200)}catch(e){}if(notificationPermission&&'Notification'in window){new Notification('HOS Tracker',{body:msg,icon:'icon.svg',vibrate:[200,100,200]})}alert(msg)}
-function startRestAreaAlerts(){if(restAreaInterval)clearInterval(restAreaInterval);restAreaInterval=setInterval(function(){if(!destCity)return;navigator.geolocation.getCurrentPosition(function(pos){var lat=pos.coords.latitude,lng=pos.coords.longitude;restAreas.forEach(function(a){var d=dist(lat,lng,a.lat,a.lng);if(d<=10&&d>=8&&!a.notified){showNotification((lang==='en'?'🅿️ Rest Area: ':'🅿️ Área: ')+a.name+' ('+Math.round(d)+' mi)');a.notified=true;setTimeout(function(){a.notified=false},3600000)}})})},60000)}
-function startMonitoring(){if(!sel1||!sel2){alert(T[lang].errSelect);return}activeTrip={from:sel1,to:sel2,schedule:lastSchedule,startTime:new Date(),currentLocation:null,progress:0,distanceTraveled:0,remainingDistance:lastDistance,totalDistance:lastDistance,status:'driving',hoursRemaining:lastCycleHours};tripStartTime=new Date();currentSegment=0;document.getElementById('monitoringPanel').classList.add('show');document.getElementById('btnMonitor').style.display='none';document.getElementById('btnStopMonitor').style.display='block';startLiveTracking();requestNotificationPermission()}
-function stopMonitoring(){if(confirm(lang==='en'?'Stop monitoring this trip?':'¿Detener monitoreo?')){if(monitoringInterval)clearInterval(monitoringInterval);activeTrip=null;tripStartTime=null;document.getElementById('monitoringPanel').classList.remove('show');document.getElementById('btnMonitor').style.display='block';document.getElementById('btnStopMonitor').style.display='none'}}
-function startLiveTracking(){if(monitoringInterval)clearInterval(monitoringInterval);var gpsOptions={enableHighAccuracy:true,timeout:15000,maximumAge:30000};monitoringInterval=setInterval(function(){navigator.geolocation.getCurrentPosition(function(pos){updateTripProgress(pos.coords.latitude,pos.coords.longitude)},function(err){var msg='⚠️ ';if(err.code===1)msg+=lang==='en'?'GPS permission denied':'Permiso GPS denegado';else if(err.code===2)msg+=lang==='en'?'GPS unavailable':'GPS no disponible';else msg+=lang==='en'?'GPS timeout':'GPS timeout';document.getElementById('monitorStatus').textContent=msg},gpsOptions)},30000);navigator.geolocation.getCurrentPosition(function(pos){updateTripProgress(pos.coords.latitude,pos.coords.longitude)},function(err){alert((lang==='en'?'GPS Error: ':'Error GPS: ')+(err.code===1?'Permission denied. Go to Settings → Safari → Location → Allow':'Position unavailable'))},gpsOptions)}
-function updateTripProgress(lat,lng){if(!activeTrip)return;activeTrip.currentLocation={lat:lat,lng:lng};var traveled=dist(activeTrip.from.lat,activeTrip.from.lng,lat,lng),remaining=dist(lat,lng,activeTrip.to.lat,activeTrip.to.lng);activeTrip.distanceTraveled=traveled;activeTrip.remainingDistance=remaining;activeTrip.progress=Math.round((traveled/activeTrip.totalDistance)*100);var currentCity=findCity(lat,lng),elapsed=(new Date()-tripStartTime)/3600000,hoursUsed=traveled/speed;activeTrip.hoursRemaining=lastCycleHours-hoursUsed;determineCurrentStatus(elapsed);updateMonitoringUI(currentCity,remaining,elapsed);if(remaining<=5)arrivedAtDestination()}
-function determineCurrentStatus(elapsedHours){if(!activeTrip||!activeTrip.schedule)return;var now=new Date(),schedule=activeTrip.schedule;for(var i=0;i<schedule.length;i++){var seg=schedule[i],start=new Date(seg.startTime),end=new Date(seg.endTime);if(now>=start&&now<=end){activeTrip.status=seg.type;currentSegment=i;if(seg.type==='rest'||seg.type==='reset'){showNotification((lang==='en'?'🛑 You should be resting now! (':'🛑 ¡Deberías descansar! (')+seg.hours+' hours)')}break}}}
-function updateMonitoringUI(city,remaining,elapsed){document.getElementById('monitorCurrentCity').textContent=city.n+', '+city.s;document.getElementById('monitorProgress').style.width=activeTrip.progress+'%';document.getElementById('monitorProgressText').textContent=activeTrip.progress+'%';document.getElementById('monitorTraveled').textContent=activeTrip.distanceTraveled.toLocaleString()+' '+T[lang].miles;document.getElementById('monitorRemaining').textContent=remaining.toLocaleString()+' '+T[lang].miles;document.getElementById('monitorElapsed').textContent=fmt(elapsed);var eta=remaining/speed;document.getElementById('monitorETA').textContent=fmt(eta);document.getElementById('monitorHoursLeft').textContent=fmt(activeTrip.hoursRemaining)+' / '+lastCycleHours+' hrs';var statusText='',statusColor='';if(activeTrip.status==='driving'){statusText=lang==='en'?'🚛 Driving':'🚛 Manejando';statusColor='#10b981'}else if(activeTrip.status==='rest'){statusText=lang==='en'?'😴 Rest Break (10h)':'😴 Descanso (10h)';statusColor='#f59e0b'}else{statusText=lang==='en'?'🔄 34-Hour Reset':'🔄 Reset 34 Horas';statusColor='#ef4444'}document.getElementById('monitorStatus').textContent=statusText;document.getElementById('monitorStatus').style.color=statusColor;if(currentSegment+1<activeTrip.schedule.length){var next=activeTrip.schedule[currentSegment+1],nextText='';if(next.type==='drive'){nextText=(lang==='en'?'Next: Drive ':'Próximo: Manejar ')+Math.round(next.distance)+' mi'}else if(next.type==='rest'){nextText=lang==='en'?'Next: 10h Rest':'Próximo: 10h Descanso'}else{nextText=lang==='en'?'Next: 34h Reset':'Próximo: Reset 34h'}document.getElementById('monitorNext').textContent=nextText}}
-function arrivedAtDestination(){if(monitoringInterval)clearInterval(monitoringInterval);showNotification(lang==='en'?'🎉 You arrived!':'🎉 ¡Llegaste!');var summary=(lang==='en'?'Trip Summary:\n📏 Distance: ':'Resumen:\n📏 Distancia: ')+activeTrip.totalDistance+' '+(lang==='en'?'miles\n⏱️ Time: ':'millas\n⏱️ Tiempo: ')+fmt((new Date()-tripStartTime)/3600000)+(lang==='en'?'\n🚛 Hours used: ':'\n🚛 Horas: ')+fmt(lastCycleHours-activeTrip.hoursRemaining);alert(summary);stopMonitoring()}
-function updateLang(){var t=T[lang];document.getElementById('subtitle').textContent=t.subtitle;document.getElementById('infoMsg').textContent=t.info;document.getElementById('lblFrom').textContent=t.lblFrom;document.getElementById('lblTo').textContent=t.lblTo;document.getElementById('lblTime').textContent=t.lblTime;document.getElementById('lblHours').textContent=t.lblHours;document.getElementById('lblSpeed').textContent=t.lblSpeed;document.getElementById('btnTxt').textContent=t.btnCalc;document.getElementById('shareTxt').textContent=t.shareBtn;document.getElementById('monitorTxt').textContent=t.monitorBtn;document.getElementById('stopMonitorTxt').textContent=t.stopMonitorBtn;document.getElementById('gpsT').textContent=t.gpsBtn;document.getElementById('gpsH').textContent=t.gpsH;document.getElementById('gpsL1').textContent=t.gpsL1;document.getElementById('gpsL2').textContent=t.gpsL2;document.getElementById('gpsL3').textContent=t.gpsL3;document.getElementById('gpsL4').textContent=t.gpsL4;document.getElementById('lbl1').textContent='🚀 '+t.lbl1;document.getElementById('lbl2').textContent='🏁 '+t.lbl2;document.getElementById('lbl3').textContent='⏰ '+t.lbl3;document.getElementById('lbl4').textContent='🎯 '+t.lbl4;document.getElementById('lbl5').textContent='⏱️ '+t.lbl5;document.getElementById('lbl6').textContent='📅 '+t.lbl6;document.getElementById('monitorHeader').textContent=t.monitorHeader;document.getElementById('monLabel1').textContent=t.monLabel1;document.getElementById('monLabel2').textContent=t.monLabel2;document.getElementById('monLabel3').textContent=t.monLabel3;document.getElementById('monLabel4').textContent=t.monLabel4;document.getElementById('monLabel5').textContent=t.monLabel5;document.getElementById('monLabel6').textContent=t.monLabel6;document.getElementById('currentLocation').textContent=t.loading}
-function toggleTheme(){theme=theme==='light'?'dark':'light';document.body.className=theme;var els=document.querySelectorAll('.container,.suggestions,.info-box,.error,.warning,.results,.schedule-item,.hours-status,.gps-window,.gps-data,.monitoring-panel,.monitor-section,.progress-bar');els.forEach(function(el){el.className=el.className.replace(/light|dark/g,theme)});document.getElementById('themeTxt').textContent=theme==='light'?'Dark':'Light';document.getElementById('themeBtn').innerHTML=(theme==='light'?'🌙':'☀️')+' <span id="themeTxt">'+(theme==='light'?'Dark':'Light')+'</span>'}
-function toggleLang(){lang=lang==='en'?'es':'en';document.getElementById('langFlag').textContent=lang==='en'?'🇪🇸':'🇺🇸';document.getElementById('langTxt').textContent=lang==='en'?'ES':'EN';updateLang()}
-document.getElementById('themeBtn').addEventListener('click',toggleTheme);
-document.getElementById('langBtn').addEventListener('click',toggleLang);
-function setDT(){var d=new Date(),p=n=>n.toString().padStart(2,'0');document.getElementById('departureTime').value=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes())}
-setDT();updateLang();
-function search(q){if(q.length<2)return[];var l=q.toLowerCase(),r=[];for(var i=0;i<C.length;i++){if(C[i].n.toLowerCase().indexOf(l)>=0){r.push(C[i]);if(r.length>=10)break}}return r}
-function setup(iid,sid,cb){var inp=document.getElementById(iid),sug=document.getElementById(sid);inp.addEventListener('input',function(){var q=this.value.trim();if(q.length<2){sug.classList.remove('show');sug.innerHTML='';return}var cs=search(q);sug.innerHTML='';if(cs.length===0){sug.classList.add('show');return}cs.forEach(function(c){var d=document.createElement('div');d.className='suggestion-item';d.innerHTML='<div class="city-name">'+c.n+'</div><div class="city-detail">'+c.s+'</div>';d.addEventListener('click',function(){inp.value=c.n+', '+c.s;sug.classList.remove('show');sug.innerHTML='';cb(c)});sug.appendChild(d)});sug.classList.add('show')});document.addEventListener('click',function(e){if(e.target!==inp&&!sug.contains(e.target))sug.classList.remove('show')})}
-setup('fromCity','fromSuggestions',function(c){sel1=c});
-setup('toCity','toSuggestions',function(c){sel2=c});
-function dist(lat1,lon1,lat2,lon2){var R=3959,tr=d=>d*(Math.PI/180),dLat=tr(lat2-lat1),dLon=tr(lon2-lon1),a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(tr(lat1))*Math.cos(tr(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2),c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));return Math.round(R*c)}
-function calc(dd,dist,spd,cyc){var s=[],ct=new Date(dd.getTime()),rd=dist,rc=cyc,dn=1;while(rd>0){var ah=Math.min(11,rc);if(ah<=0){s.push({type:'reset',startTime:new Date(ct.getTime()),endTime:new Date(ct.getTime()+34*3600000),hours:34});ct=new Date(ct.getTime()+34*3600000);rc=70;continue}var drd=Math.min(rd,spd*ah),dh=drd/spd,st=new Date(ct.getTime()),et=new Date(ct.getTime()+dh*3600000);s.push({day:dn,type:'drive',startTime:st,endTime:et,hours:dh,distance:drd,cb:rc,ca:rc-dh});rd-=drd;rc-=dh;ct=et;if(rd>0){s.push({day:dn,type:'rest',startTime:new Date(ct.getTime()),endTime:new Date(ct.getTime()+10*3600000),hours:10});ct=new Date(ct.getTime()+10*3600000);dn++}}return{schedule:s}}
-function fmt(h){var tm=Math.round(h*60),hr=Math.floor(tm/60),mn=tm%60;if(hr===0)return mn+' min';if(mn===0)return hr+' hrs';return hr+'h '+mn+'min'}
-function fmtT(d){var h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM';h=h%12;h=h?h:12;m=m<10?'0'+m:m;return h+':'+m+' '+ap}
-function err(m){document.getElementById('errorBox').textContent='❌ '+m;document.getElementById('errorBox').classList.add('show')}
-function hideE(){document.getElementById('errorBox').classList.remove('show')}
-function warn(t,m){document.getElementById('warningBox').innerHTML='<div style="font-weight:bold;margin-bottom:5px">⚠️ '+t+'</div><div>'+m+'</div>';document.getElementById('warningBox').classList.add('show')}
-function hideW(){document.getElementById('warningBox').classList.remove('show')}
-function findCity(lat,lng){var min=999999,closest=null;for(var i=0;i<C.length;i++){var d=Math.sqrt(Math.pow(C[i].lat-lat,2)+Math.pow(C[i].lng-lng,2));if(d<min){min=d;closest=C[i]}}return closest}
-function updateGPS(){if(!destCity)return;var options={enableHighAccuracy:true,timeout:15000,maximumAge:0};navigator.geolocation.getCurrentPosition(function(pos){var clat=pos.coords.latitude,clng=pos.coords.longitude,city=findCity(clat,clng),rd=dist(clat,clng,destCity.lat,destCity.lng),rh=rd/speed;document.getElementById('currentLocation').textContent=city.n+', '+city.s+' ('+pos.coords.accuracy.toFixed(0)+'m)';document.getElementById('remainingDistance').textContent=rd.toLocaleString()+' '+T[lang].miles;document.getElementById('remainingHours').textContent=fmt(rh)},function(err){var msg='GPS Error';if(err.code===1)msg=lang==='en'?'Permission denied':'Permiso denegado';else if(err.code===2)msg=lang==='en'?'Position unavailable':'GPS no disponible';else if(err.code===3)msg=lang==='en'?'Timeout':'Tiempo agotado';document.getElementById('currentLocation').textContent=msg},options)}
-document.getElementById('btnGPS').addEventListener('click',function(){document.getElementById('gpsWindow').classList.add('show');updateGPS()});
-document.getElementById('closeGPS').addEventListener('click',function(){document.getElementById('gpsWindow').classList.remove('show')});
-document.getElementById('myForm').addEventListener('submit',function(e){e.preventDefault();hideE();hideW();document.getElementById('resultsBox').classList.remove('show');if(!sel1||!sel2){err(T[lang].errSelect);return}var dt=document.getElementById('departureTime').value;speed=parseInt(document.getElementById('speedInput').value);var cyc=parseFloat(document.getElementById('cycleHours').value);if(cyc>70){err(T[lang].err70);return}destCity=sel2;document.getElementById('destinationName').textContent=sel2.n+', '+sel2.s;document.getElementById('btnGPS').style.display='block';var d=dist(sel1.lat,sel1.lng,sel2.lat,sel2.lng),dd=new Date(dt),hn=d/speed;if(hn>cyc)warn(T[lang].warnTitle,T[lang].warnMsg.replace('HOURS',fmt(hn)).replace('CYCLE',cyc));var r=calc(dd,d,speed,cyc),sc=r.schedule,tdh=0,trh=0;sc.forEach(function(i){if(i.type==='drive')tdh+=i.hours;else if(i.type==='rest')trh+=i.hours});var fa=sc[sc.length-1].endTime,tth=tdh+trh;document.getElementById('hoursStatus').innerHTML='<div class="hours-status '+theme+(hn>cyc?' exceeded':'')+'"><div class="status-value'+(hn>cyc?' exceeded':'')+'">'+fmt(hn)+' / '+cyc+' hrs</div></div>';document.getElementById('showFrom').textContent=sel1.n+', '+sel1.s;document.getElementById('showTo').textContent=sel2.n+', '+sel2.s;document.getElementById('showDistance').textContent=d.toLocaleString()+' '+T[lang].miles;document.getElementById('showDeparture').textContent=dd.toLocaleString(lang==='es'?'es-ES':'en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});document.getElementById('showArrival').textContent=fa.toLocaleString(lang==='es'?'es-ES':'en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});document.getElementById('showDuration').textContent=fmt(tth)+' ('+fmt(tdh)+' '+T[lang].driving2+')';var sh='',cd=1;sc.forEach(function(i){if(i.type==='drive'){sh+='<div class="schedule-item '+theme+'"><div class="schedule-day">'+T[lang].day+' '+cd+' - '+T[lang].driving+'</div><div style="color:#666;font-size:12px">🚛 '+fmtT(i.startTime)+' → '+fmtT(i.endTime)+'<br>⏱️ '+fmt(i.hours)+' | 📏 '+Math.round(i.distance)+' mi</div></div>'}else if(i.type==='rest'){sh+='<div class="schedule-item '+theme+'"><div class="schedule-day">'+T[lang].day+' '+cd+' - '+T[lang].rest+'</div><div style="color:#666;font-size:12px">😴 '+T[lang].restMsg+'</div></div>';cd++}else{sh+='<div class="schedule-item '+theme+' reset"><div class="schedule-day reset">🔄 '+T[lang].reset+'</div><div style="color:#666;font-size:12px">'+T[lang].resetMsg+'</div></div>'}});document.getElementById('scheduleDetails').innerHTML=sh;document.getElementById('resultsBox').classList.add('show');if(gpsInterval)clearInterval(gpsInterval);gpsInterval=setInterval(updateGPS,10000);document.getElementById('btnShare').classList.add('show');document.getElementById('btnMonitor').classList.add('show');lastSchedule=sc;lastDistance=d;lastCycleHours=cyc;requestNotificationPermission();scheduleTimeWarnings(sc);startRestAreaAlerts()});
-if('serviceWorker'in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}
-</script>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="row between">
+        <div class="logo">🚛 <span>HOS Tracker</span></div>
+        <div class="row">
+          <button class="iconbtn" id="themeBtn" title="Tema">🌙</button>
+          <button class="iconbtn" id="langBtn" title="Idioma">🇪🇸</button>
+        </div>
+      </div>
+      <div class="subtitle" id="subtitle">DOT Hours of Service Planner</div>
+    </div>
+
+    <div class="card" id="mapPreviewCard" style="display:none">
+      <div class="row between">
+        <div style="font-weight:800">🗺️ <span id="routeMapLabel">Route Map</span></div>
+        <button class="smallbtn" id="openFullMap">Ver mapa completo</button>
+      </div>
+      <div class="mapbox" id="miniMap"></div>
+    </div>
+
+    <div class="card">
+      <div class="info" id="infoText">💡 Type city name to search globally</div>
+
+      <div class="row between" style="align-items:end">
+        <label style="margin:0">📍 <span id="lblFrom">Origin</span></label>
+        <button class="smallbtn" id="gpsBtn">GPS</button>
+      </div>
+      <div class="inputwrap">
+        <input id="originInput" placeholder="Miami, FL" autocomplete="off" />
+        <div class="suggestions" id="originSuggestions" style="display:none"></div>
+      </div>
+
+      <label>🎯 <span id="lblTo">Destination</span></label>
+      <div class="inputwrap">
+        <input id="destInput" placeholder="Dallas, TX" autocomplete="off" />
+        <div class="suggestions" id="destSuggestions" style="display:none"></div>
+      </div>
+
+      <div class="grid3" style="margin-top:10px">
+        <div>
+          <label>🕐 <span id="lblTime">Departure</span></label>
+          <input id="departureInput" type="datetime-local" />
+        </div>
+        <div>
+          <label>⏱️ <span id="lblHours">Hours Left</span></label>
+          <input id="hoursInput" type="number" min="1" max="70" value="70" />
+        </div>
+        <div>
+          <label>🚀 <span id="lblSpeed">Speed (mph)</span></label>
+          <input id="speedInput" type="number" min="1" value="60" />
+        </div>
+      </div>
+
+      <div id="errorBox" class="error" style="display:none"></div>
+
+      <button class="btn btn-primary" id="calcBtn" style="margin-top:12px">🚛 <span id="btnCalc">Calculate Route</span></button>
+      <div class="grid2" id="resultButtons" style="display:none;margin-top:10px">
+        <button class="btn btn-blue" id="shareBtn">📤 <span id="shareText">Share Route</span></button>
+        <button class="btn btn-purple" id="trackBtn">📍 <span id="monitorText">Start Live Tracking</span></button>
+      </div>
+    </div>
+
+    <div class="card results" id="resultsCard" style="display:none">
+      <div class="pill" id="statusPill"></div>
+      <div class="big" id="distanceBig">0 mi</div>
+
+      <div class="grid2">
+        <div class="kv"><div class="k" id="fromKey">FROM</div><div class="v" id="fromVal">-</div></div>
+        <div class="kv"><div class="k" id="toKey">TO</div><div class="v" id="toVal">-</div></div>
+      </div>
+      <div class="grid2">
+        <div class="kv"><div class="k" id="depKey">DEPARTURE</div><div class="v" id="depVal">-</div></div>
+        <div class="kv"><div class="k" id="arrKey">ARRIVAL</div><div class="v" id="arrVal">-</div></div>
+      </div>
+      <div class="kv"><div class="k" id="totKey">TOTAL TIME</div><div class="v" id="totVal">-</div></div>
+
+      <div class="schedule" id="scheduleList"></div>
+
+      <button class="btn btn-red" id="resetBtn">🔄 New Route</button>
+    </div>
+  </div>
+
+  <div class="fullmap-overlay" id="fullMapOverlay">
+    <div class="fullmap-card">
+      <div class="modal-head">
+        <div>🗺️ <span id="fullMapTitle">Route Map</span></div>
+        <button class="modal-close" id="closeFullMap">×</button>
+      </div>
+      <div class="fullmap" id="fullMap"></div>
+    </div>
+  </div>
+
+  <div class="monitor-overlay" id="monitorOverlay">
+    <div class="monitor-card">
+      <div class="modal-head">
+        <div>📍 <span id="monitorTitle">LIVE TRACKING</span></div>
+        <button class="modal-close" id="closeMonitor">×</button>
+      </div>
+      <div style="padding:12px; overflow:auto" class="stack">
+        <div class="kv"><div class="k" id="currentLocKey">CURRENT LOCATION</div><div class="v" id="currentLocVal">-</div></div>
+        <div class="kv">
+          <div class="k" id="currentSpeedKey">CURRENT SPEED</div>
+          <div class="v"><span id="speedVal" style="font-size:40px;font-weight:900">0</span> <span class="muted">mph</span></div>
+          <div id="trackStatus" class="muted">Ready</div>
+        </div>
+        <div class="kv">
+          <div class="k" id="progressKey">TRIP PROGRESS</div>
+          <div class="bar"><div id="progressFill"></div></div>
+          <div class="v" id="progressText">0%</div>
+        </div>
+        <div class="grid2">
+          <div class="kv"><div class="k" id="traveledKey">TRAVELED</div><div class="v" id="traveledVal">0 mi</div></div>
+          <div class="kv"><div class="k" id="remainingKey">REMAINING</div><div class="v" id="remainingVal">0 mi</div></div>
+        </div>
+        <div class="grid2">
+          <div class="kv"><div class="k" id="elapsedKey">ELAPSED</div><div class="v" id="elapsedVal">0m</div></div>
+          <div class="kv"><div class="k" id="etaKey">ETA</div><div class="v" id="etaVal">0m</div></div>
+        </div>
+        <button class="btn btn-red" id="stopTrackBtn">🛑 <span id="stopText">Stop Tracking</span></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const BACKEND_URL = '';
+    let lang = localStorage.getItem('hos_lang') || 'en';
+    let isDark = localStorage.getItem('hos_theme') === 'dark';
+
+    const T = {
+      en: {subtitle:'DOT Hours of Service Planner',info:'Type city name to search globally',lblFrom:'Origin',lblTo:'Destination',lblTime:'Departure',lblHours:'Hours Left',lblSpeed:'Speed (mph)',btnCalc:'Calculate Route',shareText:'Share Route',monitorText:'Start Live Tracking',stopText:'Stop Tracking',monitorTitle:'LIVE TRACKING',errSel:'Select origin and destination',err70:'Max 70 hours',errSpeed:'Invalid speed',day:'Day',drive:'Driving',rest:'Rest',reset:'34H RESET',from:'FROM',to:'TO',departure:'DEPARTURE',arrival:'ARRIVAL',totalTime:'TOTAL TIME',progress:'TRIP PROGRESS',traveled:'TRAVELED',remaining:'REMAINING',elapsed:'ELAPSED',eta:'ETA',currentLoc:'CURRENT LOCATION',currentSpeed:'CURRENT SPEED',routeMap:'Route Map',fullMap:'View Full Map',ready:'Ready',locating:'Locating...',driving:'Driving',stopped:'Stopped',arrived:'🎉 Arrived!',copied:'Route copied!',gpsDenied:'Allow location access in browser'},
+      es: {subtitle:'Planificador de Horas DOT',info:'Escribe nombre de ciudad para buscar',lblFrom:'Origen',lblTo:'Destino',lblTime:'Salida',lblHours:'Horas Restantes',lblSpeed:'Velocidad (mph)',btnCalc:'Calcular Ruta',shareText:'Compartir Ruta',monitorText:'Iniciar Rastreo',stopText:'Detener Rastreo',monitorTitle:'RASTREO EN VIVO',errSel:'Selecciona origen y destino',err70:'Máximo 70 horas',errSpeed:'Velocidad inválida',day:'Día',drive:'Manejo',rest:'Descanso',reset:'RESET 34H',from:'DESDE',to:'HASTA',departure:'SALIDA',arrival:'LLEGADA',totalTime:'TIEMPO TOTAL',progress:'PROGRESO DEL VIAJE',traveled:'RECORRIDO',remaining:'RESTANTE',elapsed:'TRANSCURRIDO',eta:'ETA',currentLoc:'UBICACIÓN ACTUAL',currentSpeed:'VELOCIDAD ACTUAL',routeMap:'Mapa de Ruta',fullMap:'Ver Mapa Completo',ready:'Listo',locating:'Localizando...',driving:'Manejando',stopped:'Detenido',arrived:'🎉 ¡Llegaste!',copied:'¡Ruta copiada!',gpsDenied:'Permite acceso a ubicación en tu navegador'}
+    };
+
+    let state = {
+      origin:null, destination:null, routeDistance:0, totalTime:0, arrival:null, schedule:[],
+      tripStart:null, watchId:null, tracking:false
+    };
+
+    let miniMap=null, fullMap=null, miniLayer=null, fullLayer=null;
+
+    const qs = s => document.querySelector(s);
+    const qsa = s => [...document.querySelectorAll(s)];
+
+    function applyI18n(){
+      const t=T[lang];
+      qs('#subtitle').textContent=t.subtitle;
+      qs('#infoText').textContent='💡 '+t.info;
+      qs('#lblFrom').textContent=t.lblFrom; qs('#lblTo').textContent=t.lblTo; qs('#lblTime').textContent=t.lblTime;
+      qs('#lblHours').textContent=t.lblHours; qs('#lblSpeed').textContent=t.lblSpeed;
+      qs('#btnCalc').textContent=t.btnCalc; qs('#shareText').textContent=t.shareText; qs('#monitorText').textContent=t.monitorText;
+      qs('#stopText').textContent=t.stopText; qs('#monitorTitle').textContent=t.monitorTitle;
+      qs('#routeMapLabel').textContent=t.routeMap; qs('#fullMapTitle').textContent=t.routeMap; qs('#openFullMap').textContent=t.fullMap;
+      qs('#fromKey').textContent=t.from; qs('#toKey').textContent=t.to; qs('#depKey').textContent=t.departure; qs('#arrKey').textContent=t.arrival; qs('#totKey').textContent=t.totalTime;
+      qs('#currentLocKey').textContent=t.currentLoc; qs('#currentSpeedKey').textContent=t.currentSpeed;
+      qs('#progressKey').textContent=t.progress; qs('#traveledKey').textContent=t.traveled; qs('#remainingKey').textContent=t.remaining;
+      qs('#elapsedKey').textContent=t.elapsed; qs('#etaKey').textContent=t.eta;
+      qs('#langBtn').textContent = lang==='en' ? '🇪🇸' : '🇺🇸';
+    }
+
+    function applyTheme(){
+      document.body.classList.toggle('dark', isDark);
+      qs('#themeBtn').textContent = isDark ? '☀️' : '🌙';
+    }
+
+    function showError(msg){
+      const el=qs('#errorBox'); el.style.display='block'; el.textContent='❌ '+msg;
+    }
+    function hideError(){ qs('#errorBox').style.display='none'; }
+
+    function formatHours(h){
+      const m=Math.round(h*60), hr=Math.floor(m/60), mn=m%60;
+      if(hr===0) return `${mn}m`;
+      if(mn===0) return `${hr}h`;
+      return `${hr}h ${mn}m`;
+    }
+    function formatTime(d){
+      const dt = new Date(d);
+      let h=dt.getHours(), m=dt.getMinutes(); const ap=h>=12?'PM':'AM'; const hh=h%12||12;
+      return `${hh}:${String(m).padStart(2,'0')} ${ap}`;
+    }
+    function formatDateTime(d){
+      const dt = new Date(d);
+      return dt.toLocaleDateString(lang==='es'?'es-ES':'en-US',{month:'short',day:'numeric'})+' '+formatTime(dt);
+    }
+    function haversine(lat1,lon1,lat2,lon2){
+      const R=3959, toRad=(x)=>x*Math.PI/180;
+      const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+    }
+    function calculateSchedule(start,distance,speed,cycle){
+      const schedule=[]; let current=new Date(start), rem=distance, hours=cycle, day=1;
+      while(rem>0){
+        const available = Math.min(11,hours);
+        if(available<=0){
+          const end = new Date(current.getTime()+34*3600000);
+          schedule.push({type:'reset',day,start:new Date(current),end,hours:34});
+          current=end; hours=70; continue;
+        }
+        const driveDist = Math.min(rem, speed*available);
+        const driveTime = driveDist/speed;
+        const driveEnd = new Date(current.getTime()+driveTime*3600000);
+        schedule.push({type:'drive',day,start:new Date(current),end:driveEnd,hours:driveTime,distance:driveDist});
+        rem -= driveDist; hours -= driveTime; current = driveEnd;
+        if(rem>0){
+          const restEnd = new Date(current.getTime()+10*3600000);
+          schedule.push({type:'rest',day,start:new Date(current),end:restEnd,hours:10});
+          current = restEnd; day++;
+        }
+      }
+      return schedule;
+    }
+
+    async function fetchAutocomplete(q){
+      if (BACKEND_URL){
+        const r=await fetch(`${BACKEND_URL}/api/autocomplete?q=${encodeURIComponent(q)}&limit=5`);
+        if(!r.ok) throw new Error('autocomplete');
+        return await r.json();
+      }
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5`;
+      const r=await fetch(url); const data=await r.json();
+      return (data.features||[]).map(f=>({
+        name:[f.properties.name,f.properties.city,f.properties.state,f.properties.country].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(', '),
+        lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0]
+      })).filter(x=>x.name);
+    }
+
+    async function reverseGeocode(lat,lon){
+      if (BACKEND_URL){
+        const r=await fetch(`${BACKEND_URL}/api/reverse-geocode?lat=${lat}&lon=${lon}`);
+        if(r.ok) return await r.json();
+      }
+      const r=await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`);
+      const data=await r.json();
+      const feat = data.features?.[0];
+      if(!feat) return { full_address: `${lat.toFixed(4)}, ${lon.toFixed(4)}` };
+      const p=feat.properties||{};
+      return { full_address: [p.name,p.city,p.state,p.country].filter(Boolean).join(', ') };
+    }
+
+    function bindAutocomplete(inputEl, listEl, assignFn){
+      let timer=null, selected=false;
+      inputEl.addEventListener('input', ()=>{
+        selected=false;
+        clearTimeout(timer);
+        const q=inputEl.value.trim();
+        if(q.length<2){ listEl.style.display='none'; return; }
+        timer=setTimeout(async()=>{
+          try{
+            const items=await fetchAutocomplete(q);
+            listEl.innerHTML = items.map((it,i)=>`
+              <div class="s-item" data-i="${i}">
+                <div class="s-name">${(it.name.split(',')[0]||it.name)}</div>
+                <div class="s-detail">${it.name.split(',').slice(1).join(',')}</div>
+              </div>`).join('');
+            listEl.style.display = items.length?'block':'none';
+            qsa('.s-item', listEl);
+            [...listEl.children].forEach((node,idx)=>node.onclick=()=>{
+              inputEl.value = items[idx].name; listEl.style.display='none'; assignFn(items[idx]); updateMapPreview();
+            });
+          }catch(e){ console.error(e); }
+        },300);
+      });
+      inputEl.addEventListener('focus', ()=>{ if(listEl.innerHTML.trim()) listEl.style.display='block'; });
+      document.addEventListener('click', (e)=>{ if(!listEl.contains(e.target) && e.target!==inputEl) listEl.style.display='none'; });
+    }
+
+    function initMap(targetId){
+      const map = L.map(targetId,{zoomControl:true, attributionControl:true});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+      return map;
+    }
+
+    function drawRoute(map, origin, destination){
+      if(!map) return null;
+      map.eachLayer((layer)=>{ if(layer instanceof L.Marker || layer instanceof L.Polyline) map.removeLayer(layer); });
+      const line = L.polyline([[origin.lat, origin.lon],[destination.lat,destination.lon]], {color:'#10b981',weight:4,dashArray:'10,10'}).addTo(map);
+      L.marker([origin.lat, origin.lon]).addTo(map).bindPopup((lang==='es'?'Origen':'Origin')+': '+origin.name);
+      L.marker([destination.lat, destination.lon]).addTo(map).bindPopup((lang==='es'?'Destino':'Destination')+': '+destination.name);
+      const midLat=(origin.lat+destination.lat)/2, midLon=(origin.lon+destination.lon)/2;
+      L.marker([midLat, midLon], {icon: L.divIcon({className:'', html:'<div style="font-size:24px">🚛</div>'})}).addTo(map);
+      map.fitBounds(line.getBounds(), {padding:[30,30]});
+      return line;
+    }
+
+    function updateMapPreview(){
+      const show = !!(state.origin && state.destination);
+      qs('#mapPreviewCard').style.display = show ? 'block':'none';
+      if(!show) return;
+      if(!miniMap){ miniMap = initMap('miniMap'); setTimeout(()=>miniMap.invalidateSize(),100); }
+      drawRoute(miniMap, state.origin, state.destination);
+    }
+
+    function calculateRoute(){
+      hideError();
+      if(!state.origin || !state.destination){ showError(T[lang].errSel); return; }
+      const hours = parseFloat(qs('#hoursInput').value);
+      const speed = parseFloat(qs('#speedInput').value);
+      if(isNaN(hours) || hours<=0 || hours>70){ showError(T[lang].err70); return; }
+      if(isNaN(speed) || speed<=0){ showError(T[lang].errSpeed); return; }
+
+      const depart = new Date(qs('#departureInput').value || new Date());
+      const straight = haversine(state.origin.lat,state.origin.lon,state.destination.lat,state.destination.lon);
+      const distance = Math.round(straight * 1.3);
+      const schedule = calculateSchedule(depart, distance, speed, hours);
+      const arrival = schedule.at(-1)?.end || depart;
+      const total = schedule.reduce((a,s)=>a+(s.type==='drive'||s.type==='rest'?s.hours:0),0);
+
+      state.routeDistance = distance; state.schedule=schedule; state.arrival=arrival; state.totalTime=total;
+
+      qs('#resultButtons').style.display='grid';
+      qs('#resultsCard').style.display='block';
+
+      const driveNeeded = distance/speed;
+      const status = qs('#statusPill');
+      status.classList.toggle('danger', driveNeeded > hours);
+      status.textContent = `${formatHours(driveNeeded)} / ${hours} hrs`;
+
+      qs('#distanceBig').textContent = distance.toLocaleString() + ' mi';
+      qs('#fromVal').textContent = state.origin.name;
+      qs('#toVal').textContent = state.destination.name;
+      qs('#depVal').textContent = formatDateTime(depart);
+      qs('#arrVal').textContent = formatDateTime(arrival);
+      qs('#totVal').textContent = formatHours(total);
+
+      const t=T[lang];
+      qs('#scheduleList').innerHTML = schedule.map(s=>{
+        const cls = s.type==='rest'?'sched rest':s.type==='reset'?'sched reset':'sched';
+        let title = s.type==='reset' ? `🔄 ${t.reset}` : `${t.day} ${s.day} - ${s.type==='drive'?t.drive:t.rest}`;
+        let detail = s.type==='drive'
+          ? `🚛 ${formatTime(s.start)} → ${formatTime(s.end)}\n${formatHours(s.hours)} | ${Math.round(s.distance||0)} mi`
+          : s.type==='rest' ? `😴 10 hours DOT` : `Recover 70 hrs`;
+        return `<div class="${cls}"><div class="t">${title}</div><div class="d">${detail}</div></div>`;
+      }).join('');
+
+      updateMapPreview();
+      window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+    }
+
+    async function useGPS(){
+      try{
+        if(!navigator.geolocation) return alert('GPS not supported');
+        qs('#gpsBtn').disabled = true; qs('#gpsBtn').textContent = '...';
+        navigator.geolocation.getCurrentPosition(async(pos)=>{
+          const {latitude,longitude}=pos.coords;
+          const data = await reverseGeocode(latitude,longitude);
+          state.origin = {name:data.full_address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, lat:latitude, lon:longitude};
+          qs('#originInput').value = state.origin.name;
+          qs('#gpsBtn').disabled = false; qs('#gpsBtn').textContent = 'GPS';
+          updateMapPreview();
+        }, err=>{
+          alert(T[lang].gpsDenied);
+          qs('#gpsBtn').disabled = false; qs('#gpsBtn').textContent = 'GPS';
+        }, {enableHighAccuracy:true, timeout:10000, maximumAge:60000});
+      }catch(e){
+        qs('#gpsBtn').disabled = false; qs('#gpsBtn').textContent = 'GPS';
+      }
+    }
+
+    async function shareRoute(){
+      if(!state.origin || !state.destination) return;
+      const msg = `🚛 HOS Tracker\n\n📍 ${state.origin.name}\n🎯 ${state.destination.name}\n📏 ${state.routeDistance.toLocaleString()} mi\n⏱️ ${formatHours(state.totalTime)}`;
+      if(navigator.share){
+        try { await navigator.share({title:'HOS Route', text:msg}); return; } catch(e){}
+      }
+      await navigator.clipboard.writeText(msg);
+      alert(T[lang].copied);
+    }
+
+    function openFullMap(){
+      if(!state.origin || !state.destination) return;
+      qs('#fullMapOverlay').classList.add('open');
+      if(!fullMap){ fullMap = initMap('fullMap'); }
+      setTimeout(()=>{ fullMap.invalidateSize(); drawRoute(fullMap, state.origin, state.destination); }, 50);
+    }
+    function closeFullMap(){ qs('#fullMapOverlay').classList.remove('open'); }
+
+    function startTracking(){
+      if(!state.origin || !state.destination) return alert(T[lang].errSel);
+      if(!navigator.geolocation) return alert('GPS not supported');
+      state.tripStart = new Date(); state.tracking=true;
+      qs('#monitorOverlay').classList.add('open');
+      qs('#currentLocVal').textContent = T[lang].locating;
+      qs('#trackStatus').textContent = T[lang].ready;
+      const speedInput = parseFloat(qs('#speedInput').value)||60;
+
+      if(state.watchId != null) navigator.geolocation.clearWatch(state.watchId);
+      state.watchId = navigator.geolocation.watchPosition(async(pos)=>{
+        const lat=pos.coords.latitude, lon=pos.coords.longitude;
+        const gpsSpeed = pos.coords.speed != null && pos.coords.speed >= 0 ? Math.round(pos.coords.speed * 2.237) : 0;
+        qs('#speedVal').textContent = String(gpsSpeed);
+        qs('#trackStatus').textContent = gpsSpeed > 5 ? '🚛 '+T[lang].driving : '⏸️ '+T[lang].stopped;
+
+        const traveled = haversine(state.origin.lat,state.origin.lon,lat,lon);
+        const remaining = haversine(lat,lon,state.destination.lat,state.destination.lon);
+        const pct = Math.min(100, Math.round((traveled / Math.max(1,state.routeDistance))*100));
+        const elapsed = (Date.now() - state.tripStart.getTime()) / 3600000;
+
+        qs('#progressFill').style.width = pct + '%';
+        qs('#progressText').textContent = pct + '%';
+        qs('#traveledVal').textContent = traveled.toLocaleString() + ' mi';
+        qs('#remainingVal').textContent = remaining.toLocaleString() + ' mi';
+        qs('#elapsedVal').textContent = formatHours(elapsed);
+        qs('#etaVal').textContent = formatHours(remaining / Math.max(1,speedInput));
+
+        try{
+          const data = await reverseGeocode(lat,lon);
+          qs('#currentLocVal').textContent = data.full_address || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+        }catch{
+          qs('#currentLocVal').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+        }
+
+        if(remaining <= 5){
+          alert(T[lang].arrived);
+          stopTracking();
+        }
+      }, err=>{ console.log(err); }, {enableHighAccuracy:true, maximumAge:1000, timeout:10000});
+    }
+
+    function stopTracking(){
+      if(state.watchId != null){ navigator.geolocation.clearWatch(state.watchId); state.watchId = null; }
+      state.tracking=false;
+      qs('#monitorOverlay').classList.remove('open');
+    }
+
+    function resetForm(){
+      state.origin=null; state.destination=null; state.routeDistance=0; state.totalTime=0; state.arrival=null; state.schedule=[];
+      qs('#originInput').value=''; qs('#destInput').value=''; qs('#hoursInput').value='70'; qs('#speedInput').value='60';
+      hideError();
+      qs('#resultsCard').style.display='none';
+      qs('#resultButtons').style.display='none';
+      qs('#mapPreviewCard').style.display='none';
+      qs('#originSuggestions').style.display='none';
+      qs('#destSuggestions').style.display='none';
+    }
+
+    function setDefaultDeparture(){
+      const now = new Date();
+      const local = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      qs('#departureInput').value = local;
+    }
+
+    // Init
+    bindAutocomplete(qs('#originInput'), qs('#originSuggestions'), (loc)=> state.origin = loc);
+    bindAutocomplete(qs('#destInput'), qs('#destSuggestions'), (loc)=> state.destination = loc);
+
+    qs('#themeBtn').onclick = ()=>{ isDark=!isDark; localStorage.setItem('hos_theme', isDark?'dark':'light'); applyTheme(); updateMapPreview(); };
+    qs('#langBtn').onclick = ()=>{ lang = lang==='en'?'es':'en'; localStorage.setItem('hos_lang', lang); applyI18n(); if(state.schedule.length) calculateRoute(); };
+    qs('#calcBtn').onclick = calculateRoute;
+    qs('#gpsBtn').onclick = useGPS;
+    qs('#shareBtn').onclick = shareRoute;
+    qs('#trackBtn').onclick = startTracking;
+    qs('#stopTrackBtn').onclick = stopTracking;
+    qs('#closeMonitor').onclick = stopTracking;
+    qs('#resetBtn').onclick = resetForm;
+    qs('#openFullMap').onclick = openFullMap;
+    qs('#closeFullMap').onclick = closeFullMap;
+    qs('#fullMapOverlay').addEventListener('click', (e)=>{ if(e.target.id==='fullMapOverlay') closeFullMap(); });
+    qs('#monitorOverlay').addEventListener('click', (e)=>{ if(e.target.id==='monitorOverlay') stopTracking(); });
+
+    applyTheme();
+    applyI18n();
+    setDefaultDeparture();
+  </script>
 </body>
 </html>
