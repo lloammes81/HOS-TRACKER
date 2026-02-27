@@ -351,9 +351,37 @@
      MINI MAP
   ══════════════════════════════════════════ */
   .mapbox {
-    height: 190px; border-radius: var(--radius-sm);
+    height: 240px; border-radius: var(--radius-sm);
     overflow: hidden; margin-top: 12px;
   }
+  .poi-legend-bar {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .poi-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    border: 1.5px solid transparent;
+    transition: opacity .2s, transform .15s;
+    cursor: pointer; user-select: none;
+  }
+  .poi-badge:active { transform: scale(.95); }
+  .poi-badge.truck { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+  .poi-badge.rest  { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+  .poi-badge.restrict { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+  .poi-badge.off   { opacity: .4; }
+  body.dark .poi-badge.truck { background: #1e3a5f; color: #93c5fd; border-color: #1d4ed8; }
+  body.dark .poi-badge.rest  { background: #2e1a4a; color: #c4b5fd; border-color: #6d28d9; }
+  body.dark .poi-badge.restrict { background: #4c0519; color: #fda4af; border-color: #be123c; }
+  .poi-badge .poi-cnt {
+    background: currentColor; color: #fff;
+    border-radius: 999px; padding: 1px 6px;
+    font-size: 10px; min-width: 18px; text-align: center;
+    opacity: .85;
+  }
+  .poi-loading { animation: poi-pulse 1s ease-in-out infinite; }
+  @keyframes poi-pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
 
   /* ══════════════════════════════════════════
      MONITOR MODAL (legacy, hidden behind fullscreen)
@@ -1363,6 +1391,18 @@ z-index: 650;
         <div class="hint" id="roadHintTxt">Real road route when available</div>
         <div class="hint" id="routeSourceTxt"></div>
         <div class="mapbox" id="miniMap"></div>
+        <!-- POI legend under mini-map -->
+        <div class="poi-legend-bar" id="miniPoiLegend" style="display:none">
+          <div class="poi-badge truck poi-loading" id="miniBadgeTruck" onclick="toggleMiniPOI('truck')">
+            🚛 Truck Stops <span class="poi-cnt" id="miniTruckCnt">…</span>
+          </div>
+          <div class="poi-badge rest poi-loading" id="miniBadgeRest" onclick="toggleMiniPOI('rest')">
+            😴 Rest Areas <span class="poi-cnt" id="miniRestCnt">…</span>
+          </div>
+          <div class="poi-badge restrict poi-loading" id="miniBadgeRestrict" onclick="toggleMiniPOI('restrict')">
+            🚫 Restricciones <span class="poi-cnt" id="miniRestrictCnt">…</span>
+          </div>
+        </div>
       </div>
 
       <!-- FORM -->
@@ -1885,6 +1925,7 @@ z-index: 650;
     <div class="poi-chip" id="chipTruck"    onclick="togglePOI('truck')">🚛 Truck Stops</div>
     <div class="poi-chip" id="chipRest"     onclick="togglePOI('rest')">😴 Rest Areas</div>
     <div class="poi-chip" id="chipReport"   onclick="togglePOI('reports')">🚨 Reports</div>
+    <div class="poi-chip" id="chipRestrict" onclick="togglePOI('restrict')">🚫 Restrictions</div>
   </div>
 
   <!-- Auto-follow button -->
@@ -2339,6 +2380,10 @@ let roadGeometry = null, routeSource = null;
 let miniMap = null, fullMapInst = null;
 let miniLayer = null, fullLayer = null;
 let miniMarkersList = [], fullMarkersList = [];
+
+// Mini-map POI state
+let miniPoiMarkers = { truck: [], rest: [], restrict: [] };
+let miniPoiActive  = { truck: true, rest: true, restrict: true };
 
 let watchId = null;
 let tripStart = null;
@@ -2879,7 +2924,7 @@ function updateSpeedometer(mph) {
     num.className = 'speedo-num stopped';
     ring.className = 'speedo-ring stopped';
     arc.style.stroke = '#6b7280';
-    label.textContent = 'DETENIDO';
+    label.textContent = lang === 'es' ? 'DETENIDO' : 'STOPPED';
   }
 
   // Arc: max speed = 100mph = full circle (345 dasharray units)
@@ -3228,9 +3273,9 @@ async function fetchCheapFuel(lat, lon) {
 
     const best = fuelStations[0];
     const dist = haversine(lat, lon, best.lat, best.lon);
-    document.getElementById('fuelBestPrice').textContent = `$${best.price.toFixed(2)}`;
+    document.getElementById('fuelBestPrice').textContent = `~$${best.price.toFixed(2)}`;
     document.getElementById('fuelBestName').textContent = best.name;
-    document.getElementById('fuelBestDist').textContent = `📍 ${dist} mi · toca para ver más`;
+    document.getElementById('fuelBestDist').textContent = `📍 ${dist} mi · precio estimado`;
     document.getElementById('fuelWidget').classList.add('visible');
 
     // Add markers on map for top 5
@@ -3335,8 +3380,9 @@ function triggerSOS() {
     else alert('Agrega un número de emergencia en Ajustes.');
   };
   document.getElementById('sosSmsBtn').onclick = () => {
+    const coordsStr = (sosLat != null && sosLon != null) ? `https://maps.google.com/?q=${sosLat},${sosLon}` : 'Ubicación no disponible';
     const msg = encodeURIComponent(
-      `🆘 EMERGENCIA - HOS Tracker\n📍 https://maps.google.com/?q=${sosLat},${sosLon}\n\nNecesito ayuda en esta ubicación.`
+      `🆘 EMERGENCIA - HOS Tracker\n📍 ${coordsStr}\n\nNecesito ayuda en esta ubicación.`
     );
     const phone = sosContact.phone ? sosContact.phone.replace(/\s/g,'') : '';
     window.open(`sms:${phone}?body=${msg}`, '_self');
@@ -3805,7 +3851,7 @@ function drawRoute(map, coords, markersRef, layerRef) {
   const o = L.marker([origin.lat, origin.lon]).addTo(map).bindPopup('Origin: ' + origin.name);
   const d = L.marker([destination.lat, destination.lon]).addTo(map).bindPopup('Dest: ' + destination.name);
   const mid = coords[Math.floor(coords.length / 2)] || [(origin.lat + destination.lat)/2, (origin.lon + destination.lon)/2];
-  const truck = L.marker(mid, { icon: L.divIcon({ className: '', html: '<div style="font-size:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))"><svg viewBox="0 0 36 36" width="36" height="36"><rect x="14" y="7" width="16" height="14" rx="3" fill="#10b981" stroke="#fff" stroke-width="1.2"/><rect x="16" y="9" width="12" height="8" rx="1.5" fill="rgba(200,240,255,0.8)"/><rect x="2" y="11" width="14" height="10" rx="2" fill="#0d9488" stroke="#fff" stroke-width="1"/><circle cx="18" cy="23" r="4" fill="#1f2937" stroke="#10b981" stroke-width="1.2"/><circle cx="27" cy="23" r="4" fill="#1f2937" stroke="#10b981" stroke-width="1.2"/><circle cx="6" cy="23" r="3" fill="#1f2937" stroke="#0d9488" stroke-width="1"/><circle cx="12" cy="23" r="3" fill="#1f2937" stroke="#0d9488" stroke-width="1"/></svg></div>', iconAnchor:[18,18] }) }).addTo(map);
+  const truck = L.marker(mid, { icon: getTruckLeafletIcon() }).addTo(map);
 
   markersRef.list = [shadow, o, d, truck];
   map.fitBounds(layer.getBounds(), { padding: [25, 25] });
@@ -3890,6 +3936,208 @@ function fmtDateTime(d) {
   return dt.toLocaleDateString(lang==='es'?'es-ES':'en-US',{month:'short',day:'numeric'}) + ' ' + fmtTime(dt);
 }
 
+/* ════════════════════════════════════════════════════════════
+   🗺️  MINI-MAP POI SYSTEM — Truck Stops & Rest Areas
+════════════════════════════════════════════════════════════ */
+
+const MINI_POI_QUERIES = {
+  truck: (lat, lon, r) => `
+    [out:json][timeout:25];
+    (
+      node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+      node["amenity"="truck_stop"](around:${r},${lat},${lon});
+      node["name"~"Flying J|Pilot|Love's|TA Travel|Petro |Sapp Bros|Kwik Trip|Loves Travel",i](around:${r},${lat},${lon});
+      way["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+      way["amenity"="truck_stop"](around:${r},${lat},${lon});
+    );
+    out center;`,
+
+  rest: (lat, lon, r) => `
+    [out:json][timeout:25];
+    (
+      node["highway"="rest_area"](around:${r},${lat},${lon});
+      node["amenity"="rest_area"](around:${r},${lat},${lon});
+      node["highway"="services"]["hgv"="yes"](around:${r},${lat},${lon});
+      way["highway"="rest_area"](around:${r},${lat},${lon});
+      way["amenity"="rest_area"](around:${r},${lat},${lon});
+      relation["highway"="rest_area"](around:${r},${lat},${lon});
+    );
+    out center;`,
+};
+
+// Check if a point is within ~12 miles of any route segment
+function isNearRoute(lat, lon, routeGeom, maxMiles = 12) {
+  if (!routeGeom || routeGeom.length < 2) return true;
+  const step = Math.max(1, Math.floor(routeGeom.length / 80));
+  for (let i = 0; i < routeGeom.length; i += step) {
+    if (haversine(lat, lon, routeGeom[i][0], routeGeom[i][1]) <= maxMiles) return true;
+  }
+  return false;
+}
+
+async function loadMiniMapPOIs() {
+  if (!miniMap || !origin || !destination || !roadGeometry) return;
+
+  // Show legend with loading state
+  document.getElementById('miniPoiLegend').style.display = 'flex';
+
+  // Clear old markers
+  ['truck','rest'].forEach(type => {
+    miniPoiMarkers[type].forEach(m => { try { miniMap.removeLayer(m); } catch {} });
+    miniPoiMarkers[type] = [];
+  });
+
+  // Build waypoints every ~60 miles along the route
+  const waypoints = [];
+  const step = Math.max(1, Math.floor(roadGeometry.length / 8));
+  for (let i = 0; i < roadGeometry.length; i += step) {
+    waypoints.push({ lat: roadGeometry[i][0], lon: roadGeometry[i][1] });
+  }
+  // Always include destination
+  const last = roadGeometry[roadGeometry.length - 1];
+  if (!waypoints.find(w => w.lat === last[0])) waypoints.push({ lat: last[0], lon: last[1] });
+
+  // Deduplicate waypoints closer than 40 miles
+  const filtered = [waypoints[0]];
+  for (let i = 1; i < waypoints.length; i++) {
+    const prev = filtered[filtered.length - 1];
+    if (haversine(prev.lat, prev.lon, waypoints[i].lat, waypoints[i].lon) > 35) filtered.push(waypoints[i]);
+  }
+
+  const POI_CFG = {
+    truck: {
+      emoji: '🚛',
+      color: '#1d4ed8',
+      bg: '#2563eb',
+      label: 'Truck Stop',
+      labelEs: 'Truck Stop',
+    },
+    rest: {
+      emoji: '🅿️',
+      color: '#6d28d9',
+      bg: '#7c3aed',
+      label: 'Rest Area',
+      labelEs: 'Área de Descanso',
+    },
+  };
+
+  const radius = 35000; // 22 miles per waypoint
+
+  const loadType = async (type) => {
+    const cfg = POI_CFG[type];
+    const seen = new Set();
+    const allMarkers = [];
+
+    for (const wp of filtered) {
+      try {
+        const query = MINI_POI_QUERIES[type](wp.lat, wp.lon, radius);
+        const r = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          body: 'data=' + encodeURIComponent(query)
+        });
+        const data = await r.json();
+        const elements = data.elements || [];
+
+        elements.forEach(el => {
+          // Support node + way (way has center)
+          const elLat = el.lat ?? el.center?.lat;
+          const elLon = el.lon ?? el.center?.lon;
+          if (!elLat || !elLon) return;
+          if (seen.has(el.id)) return;
+          seen.add(el.id);
+
+          // Only keep POIs within 12 miles of the actual route
+          if (!isNearRoute(elLat, elLon, roadGeometry, 12)) return;
+
+          const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
+          const distFromOrigin = haversine(origin.lat, origin.lon, elLat, elLon);
+
+          // Build Leaflet divIcon
+          const iconHtml = `
+            <div style="
+              position:relative;
+              display:flex; flex-direction:column; align-items:center;
+            ">
+              <div style="
+                width:32px; height:32px;
+                background:${cfg.bg};
+                border:2.5px solid #fff;
+                border-radius:50%;
+                display:flex; align-items:center; justify-content:center;
+                font-size:15px; line-height:1;
+                box-shadow:0 3px 10px rgba(0,0,0,.45);
+                cursor:pointer;
+              ">${cfg.emoji}</div>
+              <div style="
+                margin-top:2px;
+                background:${cfg.bg};
+                color:#fff;
+                font-size:8px; font-weight:800;
+                padding:2px 5px; border-radius:4px;
+                white-space:nowrap;
+                font-family:'DM Sans',sans-serif;
+                box-shadow:0 1px 4px rgba(0,0,0,.35);
+                max-width:70px; overflow:hidden; text-overflow:ellipsis;
+              ">${name.split(',')[0].substring(0,14)}</div>
+            </div>`;
+
+          const icon = L.divIcon({
+            className: '',
+            html: iconHtml,
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -20]
+          });
+
+          const popupHtml = `
+            <div style="font-family:'DM Sans',sans-serif;min-width:160px;padding:2px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <div style="width:32px;height:32px;border-radius:50%;background:${cfg.bg}22;border:2px solid ${cfg.bg};display:flex;align-items:center;justify-content:center;font-size:16px">${cfg.emoji}</div>
+                <div>
+                  <div style="font-weight:800;font-size:14px">${name}</div>
+                  <div style="font-size:11px;color:#6b7280">${lang==='es'?cfg.labelEs:cfg.label}</div>
+                </div>
+              </div>
+              <div style="background:${cfg.bg}15;border:1px solid ${cfg.bg}40;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;color:${cfg.bg}">
+                📏 ${distFromOrigin} mi ${lang==='es'?'desde origen':'from origin'}
+              </div>
+              ${el.tags?.opening_hours ? `<div style="font-size:10px;color:#6b7280;margin-top:4px">🕐 ${el.tags.opening_hours}</div>` : ''}
+              ${el.tags?.phone ? `<div style="font-size:10px;color:#6b7280;margin-top:2px">📞 ${el.tags.phone}</div>` : ''}
+            </div>`;
+
+          const marker = L.marker([elLat, elLon], { icon })
+            .bindPopup(popupHtml, { maxWidth: 220 });
+
+          if (miniPoiActive[type]) marker.addTo(miniMap);
+          allMarkers.push(marker);
+        });
+      } catch(e) { /* ignore per-waypoint failures */ }
+    }
+
+    miniPoiMarkers[type] = allMarkers;
+
+    // Update badge
+    const badgeId = type === 'truck' ? 'miniBadgeTruck' : 'miniBadgeRest';
+    const cntId   = type === 'truck' ? 'miniTruckCnt'  : 'miniRestCnt';
+    const badge   = document.getElementById(badgeId);
+    const cnt     = document.getElementById(cntId);
+    if (badge) badge.classList.remove('poi-loading');
+    if (cnt)   cnt.textContent = allMarkers.length || '0';
+  };
+
+  // Load both types in parallel
+  await Promise.all([loadType('truck'), loadType('rest')]);
+}
+
+function toggleMiniPOI(type) {
+  miniPoiActive[type] = !miniPoiActive[type];
+  const badgeId = type === 'truck' ? 'miniBadgeTruck' : type === 'rest' ? 'miniBadgeRest' : 'miniBadgeRestrict';
+  document.getElementById(badgeId)?.classList.toggle('off', !miniPoiActive[type]);
+  miniPoiMarkers[type].forEach(m => {
+    if (miniPoiActive[type]) { try { m.addTo(miniMap); } catch {} }
+    else { try { miniMap.removeLayer(m); } catch {} }
+  });
+}
+
 async function calculateRoute() {
   hideError();
   if (!origin || !destination) { showError(t('errSel')); return; }
@@ -3910,7 +4158,7 @@ async function calculateRoute() {
 
   schedule = calculateSchedule(depart, routeDistance, speed, hours);
   arrivalTime = schedule.at(-1)?.end || depart;
-  totalTime = schedule.reduce((a,s) => a + (s.type==='drive'||s.type==='rest' ? s.hours : 0), 0);
+  totalTime = schedule.reduce((a,s) => a + (s.type==='drive'||s.type==='rest'||s.type==='reset'||s.type==='break30' ? s.hours : 0), 0);
 
   // Schedule HOS rest alarms
   scheduleRestAlarms(schedule, depart);
@@ -3936,6 +4184,19 @@ async function calculateRoute() {
     drawRoute(miniMap, roadGeometry, mRef, lRef);
     miniMarkersList = mRef.list;
     miniLayer = lRef.layer;
+    // Reset badge states
+    ['miniBadgeTruck','miniBadgeRest','miniBadgeRestrict'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('poi-loading');
+    });
+    document.getElementById('miniTruckCnt').textContent    = '…';
+    document.getElementById('miniRestCnt').textContent     = '…';
+    document.getElementById('miniRestrictCnt').textContent = '…';
+    miniPoiActive = { truck: true, rest: true, restrict: true };
+    ['miniBadgeTruck','miniBadgeRest','miniBadgeRestrict'].forEach(id => document.getElementById(id)?.classList.remove('off'));
+    // Load POIs along route (async, non-blocking)
+    loadMiniMapPOIs();
+    loadMiniMapRestrictions();
   }, 100);
 
   document.getElementById('routeSourceTxt').textContent =
@@ -4063,6 +4324,8 @@ let fmTripStart  = null;
 let fmClockTimer = null;
 let fmIsTracking = false;
 
+let fmLastGeocode = 0;
+
 // Auto-follow & zoom
 let fmFollowing     = true;   // whether map auto-follows truck
 let fmUserDragged   = false;  // user manually moved map
@@ -4072,9 +4335,9 @@ let fmPrevLat       = null;   // for calculating heading when GPS doesn't provid
 let fmPrevLon       = null;
 
 // POI layers
-const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [] };
-const fmPoiActive = { scale: true, truck: true, rest: true, reports: true };
-let   fmPoiLoaded = { scale: false, truck: false, rest: false };
+const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [] };
+const fmPoiActive = { scale: true, truck: true, rest: true, reports: true, restrict: true };
+let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false };
 
 // Community reports (stored in localStorage, shared within session)
 let communityReports = JSON.parse(localStorage.getItem('hos_reports') || '[]');
@@ -4131,6 +4394,7 @@ function openFullMapScreen() {
   }, 200);
 
   fmTickClock();
+  if (fmClockTimer) clearInterval(fmClockTimer);
   fmClockTimer = setInterval(fmTickClock, 1000);
 }
 
@@ -4447,8 +4711,6 @@ async function fmStartTracking() {
   }, { enableHighAccuracy: true, maximumAge: 1500, timeout: 15000 });
 }
 
-let fmLastGeocode = 0;
-
 function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   fmIsTracking = false;
@@ -4486,31 +4748,37 @@ const POI_ICONS = {
 // Overpass queries for each POI type
 const OVERPASS_QUERIES = {
   scale: (lat, lon, r) => `
-    [out:json][timeout:20];
+    [out:json][timeout:25];
     (
       node["amenity"="weigh_station"](around:${r},${lat},${lon});
       node["highway"="weigh_station"](around:${r},${lat},${lon});
       node["name"~"weigh",i](around:${r},${lat},${lon});
+      way["amenity"="weigh_station"](around:${r},${lat},${lon});
     );
-    out body;`,
+    out center;`,
 
   truck: (lat, lon, r) => `
-    [out:json][timeout:20];
+    [out:json][timeout:25];
     (
       node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
       node["amenity"="truck_stop"](around:${r},${lat},${lon});
-      node["name"~"Flying J|Pilot|Love's|TA Travel|Petro|Sapp Bros|Kwik Trip",i](around:${r},${lat},${lon});
+      node["name"~"Flying J|Pilot|Love's|TA Travel|Petro |Sapp Bros|Kwik Trip|Loves Travel",i](around:${r},${lat},${lon});
+      way["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+      way["amenity"="truck_stop"](around:${r},${lat},${lon});
     );
-    out body;`,
+    out center;`,
 
   rest: (lat, lon, r) => `
-    [out:json][timeout:20];
+    [out:json][timeout:25];
     (
       node["highway"="rest_area"](around:${r},${lat},${lon});
       node["amenity"="rest_area"](around:${r},${lat},${lon});
-      node["tourism"="picnic_site"]["highway"](around:${r},${lat},${lon});
+      node["highway"="services"]["hgv"="yes"](around:${r},${lat},${lon});
+      way["highway"="rest_area"](around:${r},${lat},${lon});
+      way["amenity"="rest_area"](around:${r},${lat},${lon});
+      relation["highway"="rest_area"](around:${r},${lat},${lon});
     );
-    out body;`,
+    out center;`,
 };
 
 async function loadPOI(type, lat, lon) {
@@ -4534,12 +4802,14 @@ async function loadPOI(type, lat, lon) {
 
     const cfg = POI_ICONS[type];
     elements.forEach(el => {
-      if (!el.lat || !el.lon) return;
+      const elLat = el.lat ?? el.center?.lat;
+      const elLon = el.lon ?? el.center?.lon;
+      if (!elLat || !elLon) return;
 
       // Calculate distance from current truck/origin position
       const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : (origin?.lat || centerLat);
       const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : (origin?.lon || centerLon);
-      const dist = haversine(truckLat, truckLon, el.lat, el.lon).toFixed(1);
+      const dist = haversine(truckLat, truckLon, elLat, elLon).toFixed(1);
 
       const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
       const amenity = el.tags?.amenity || el.tags?.highway || '';
@@ -4585,8 +4855,7 @@ async function loadPOI(type, lat, lon) {
         popupAnchor: [0, -16]
       });
 
-      const marker = L.marker([el.lat, el.lon], { icon })
-        .addTo(fmMapInst)
+      const marker = L.marker([elLat, elLon], { icon })
         .bindPopup(popupHtml, { maxWidth: 240 });
 
       if (fmPoiActive[type]) marker.addTo(fmMapInst);
@@ -4632,7 +4901,7 @@ async function loadAllPOIs(lat, lon) {
   }
 
   // Show loading indicator on chips
-  ['chipScale','chipTruck','chipRest'].forEach(id => {
+  ['chipScale','chipTruck','chipRest','chipRestrict'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.opacity = '0.5';
   });
@@ -4659,13 +4928,15 @@ async function loadAllPOIs(lat, lon) {
         const elements = data.elements || [];
 
         elements.forEach(el => {
-          if (!el.lat || !el.lon) return;
+          const elLat = el.lat ?? el.center?.lat;
+          const elLon = el.lon ?? el.center?.lon;
+          if (!elLat || !elLon) return;
           if (seen.has(el.id)) return;
           seen.add(el.id);
 
           const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : origin.lat;
           const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : origin.lon;
-          const dist = haversine(truckLat, truckLon, el.lat, el.lon);
+          const dist = haversine(truckLat, truckLon, elLat, elLon);
           const distStr = dist < 1000 ? dist.toFixed(0) + ' mi' : '999+ mi';
           const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
 
@@ -4714,7 +4985,7 @@ async function loadAllPOIs(lat, lon) {
             popupAnchor: [0, -18]
           });
 
-          const marker = L.marker([el.lat, el.lon], { icon })
+          const marker = L.marker([elLat, elLon], { icon })
             .bindPopup(popupHtml, { maxWidth: 260 });
           if (fmPoiActive[type]) marker.addTo(fmMapInst);
           fmPoiLayers[type].push(marker);
@@ -4723,12 +4994,13 @@ async function loadAllPOIs(lat, lon) {
     }
 
     fmPoiLoaded[type] = true;
-    const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck' : 'chipRest';
+    const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck' : type === 'rest' ? 'chipRest' : 'chipRestrict';
     const chip = document.getElementById(chipId);
     if (chip) {
       chip.style.opacity = '1';
       const count = fmPoiLayers[type].length;
-      chip.innerHTML = `${cfg.emoji} ${type === 'scale' ? 'Scales' : type === 'truck' ? 'Truck Stops' : 'Rest Areas'} <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:1px 6px;font-size:10px;margin-left:3px">${count}</span>`;
+      const label = type === 'scale' ? 'Scales' : type === 'truck' ? 'Truck Stops' : 'Rest Areas';
+      chip.innerHTML = `${type === 'scale' ? '⚖️' : type === 'truck' ? '🚛' : '😴'} ${label} <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:1px 6px;font-size:10px;margin-left:3px">${count}</span>`;
     }
     console.log(`✅ POI ${type}: ${fmPoiLayers[type].length} total along route`);
   };
@@ -4738,24 +5010,271 @@ async function loadAllPOIs(lat, lon) {
     loadFromWaypoints('scale'),
     loadFromWaypoints('truck'),
     loadFromWaypoints('rest'),
+    loadTruckRestrictionsFullMap(filtered),
   ]);
   renderCommunityReports();
 }
 
 function clearAllPOIs() {
-  ['scale','truck','rest','reports'].forEach(type => {
+  ['scale','truck','rest','reports','restrict'].forEach(type => {
     fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
     fmPoiLayers[type] = [];
   });
   Object.keys(fmPoiLoaded).forEach(k => fmPoiLoaded[k] = false);
 }
 
+/* ════════════════════════════════════════════════════════════
+   🚫  TRUCK RESTRICTION SEGMENTS
+   Draws red/orange polylines for roads with hgv bans,
+   weight limits, height limits, hazmat bans, etc.
+════════════════════════════════════════════════════════════ */
+
+// Build a human-readable restriction label from OSM tags
+function restrictionLabel(tags) {
+  const parts = [];
+  if (tags.hgv === 'no')            parts.push('🚫 No HGV');
+  if (tags.hgv === 'destination')   parts.push('⚠️ HGV: Local only');
+  if (tags.hgv === 'local')         parts.push('⚠️ HGV: Local only');
+  if (tags.maxweight)               parts.push(`⚖️ Max weight: ${tags.maxweight} t`);
+  if (tags.maxheight)               parts.push(`📏 Max height: ${tags.maxheight} m`);
+  if (tags.maxwidth)                parts.push(`↔️ Max width: ${tags.maxwidth} m`);
+  if (tags.maxlength)               parts.push(`↕️ Max length: ${tags.maxlength} m`);
+  if (tags.maxaxleload)             parts.push(`⚙️ Max axle: ${tags.maxaxleload} t`);
+  if (tags.hazmat === 'no')         parts.push('☣️ No hazmat');
+  if (tags.hazmat === 'designated') parts.push('☣️ Hazmat route');
+  if (tags.motor_vehicle === 'no')  parts.push('🚗 No motor vehicles');
+  if (tags.access === 'no')         parts.push('⛔ No access');
+  return parts.length ? parts : ['🚫 Truck restriction'];
+}
+
+// Determine polyline color by restriction severity
+function restrictionColor(tags) {
+  if (tags.hgv === 'no' || tags.access === 'no' || tags.motor_vehicle === 'no') return '#ef4444'; // red — banned
+  if (tags.hazmat === 'no') return '#f97316';    // orange — hazmat
+  if (tags.hgv === 'destination' || tags.hgv === 'local') return '#f59e0b'; // amber — limited
+  if (tags.maxheight || tags.maxwidth) return '#8b5cf6'; // purple — dimensional
+  if (tags.maxweight || tags.maxaxleload) return '#3b82f6'; // blue — weight
+  return '#ef4444';
+}
+
+// Build Overpass query for truck-restricted ways (returns full geometry)
+function buildRestrictionQuery(lat, lon, radiusM) {
+  return `
+    [out:json][timeout:30];
+    (
+      way["hgv"="no"](around:${radiusM},${lat},${lon});
+      way["hgv"="destination"](around:${radiusM},${lat},${lon});
+      way["hgv"="local"](around:${radiusM},${lat},${lon});
+      way["maxweight"](around:${radiusM},${lat},${lon});
+      way["maxheight"](around:${radiusM},${lat},${lon});
+      way["maxwidth"](around:${radiusM},${lat},${lon});
+      way["maxaxleload"](around:${radiusM},${lat},${lon});
+      way["hazmat"="no"](around:${radiusM},${lat},${lon});
+    );
+    out geom qt;`;
+}
+
+// Draw restriction polylines on a given Leaflet map instance
+// Returns array of Leaflet layers added
+function drawRestrictionWays(elements, mapInst, routeGeom, nearMiles) {
+  const layers = [];
+  const seen = new Set();
+
+  elements.forEach(way => {
+    if (seen.has(way.id)) return;
+    if (!way.geometry || way.geometry.length < 2) return;
+
+    // Only show ways close to the route
+    const midIdx = Math.floor(way.geometry.length / 2);
+    const midPt = way.geometry[midIdx];
+    if (routeGeom && !isNearRoute(midPt.lat, midPt.lon, routeGeom, nearMiles)) return;
+    seen.add(way.id);
+
+    const tags    = way.tags || {};
+    const color   = restrictionColor(tags);
+    const labels  = restrictionLabel(tags);
+    const name    = tags.name || tags['name:en'] || tags.ref || '';
+    const coords  = way.geometry.map(n => [n.lat, n.lon]);
+
+    // Shadow + main polyline (same style as route but red/orange)
+    const shadow = L.polyline(coords, {
+      color: color, weight: 10, opacity: 0.18
+    }).addTo(mapInst);
+
+    const line = L.polyline(coords, {
+      color: color, weight: 4, opacity: 0.92,
+      dashArray: tags.hgv === 'destination' ? '8 5' : null,
+    });
+
+    // Popup
+    const labelsHtml = labels.map(l =>
+      `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.06)">
+        <span style="font-size:15px">${l.split(' ')[0]}</span>
+        <span style="font-size:12px;font-weight:700">${l.split(' ').slice(1).join(' ')}</span>
+       </div>`
+    ).join('');
+
+    const popupHtml = `
+      <div style="font-family:'DM Sans',sans-serif;min-width:180px;max-width:240px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;box-shadow:0 0 0 2px ${color}44"></div>
+          <div style="font-weight:900;font-size:14px">${name || 'Restricted Road'}</div>
+        </div>
+        <div style="background:${color}10;border:1.5px solid ${color}50;border-radius:10px;padding:8px 10px;margin-bottom:6px">
+          ${labelsHtml}
+        </div>
+        <div style="font-size:10px;color:#9ca3af;text-align:center">
+          ${lang==='es'?'Toca para cerrar':'Tap to close'}
+        </div>
+      </div>`;
+
+    line.bindPopup(popupHtml, { maxWidth: 260 });
+
+    // Small icon label at midpoint
+    const midCoord = coords[Math.floor(coords.length / 2)];
+    const iconLabel = tags.maxheight ? `📏${tags.maxheight}m` :
+                      tags.maxweight ? `⚖️${tags.maxweight}t` :
+                      tags.hgv === 'no' ? '🚫HGV' :
+                      tags.hazmat === 'no' ? '☣️' :
+                      tags.hgv === 'destination' ? '⚠️Local' : '🚫';
+    const labelIcon = L.divIcon({
+      className: '',
+      html: `<div style="
+        background:${color};color:#fff;
+        font-size:9px;font-weight:900;
+        padding:2px 5px;border-radius:5px;
+        white-space:nowrap;font-family:'DM Sans',sans-serif;
+        box-shadow:0 1px 4px rgba(0,0,0,.35);
+        cursor:pointer;
+      ">${iconLabel}</div>`,
+      iconAnchor: [20, 10]
+    });
+    const labelMarker = L.marker(midCoord, { icon: labelIcon, interactive: false });
+
+    if (fmPoiActive['restrict'] || mapInst !== fmMapInst) {
+      line.addTo(mapInst);
+      labelMarker.addTo(mapInst);
+    }
+    layers.push(shadow, line, labelMarker);
+  });
+
+  return layers;
+}
+
+// Load restrictions for fullscreen map
+async function loadTruckRestrictionsFullMap(waypoints) {
+  if (!fmMapInst) return;
+  // Clear existing
+  fmPoiLayers.restrict.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+  fmPoiLayers.restrict = [];
+
+  const seen = new Set();
+  const radius = 20000; // 12.5 miles per waypoint (restrictions very close to route)
+  const allElements = [];
+
+  for (const wp of waypoints) {
+    try {
+      const q = buildRestrictionQuery(wp.lat, wp.lon, radius);
+      const r = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST', body: 'data=' + encodeURIComponent(q)
+      });
+      const data = await r.json();
+      (data.elements || []).forEach(el => {
+        if (!seen.has(el.id)) { seen.add(el.id); allElements.push(el); }
+      });
+    } catch(e) { console.warn('Restriction fetch failed:', e); }
+  }
+
+  const layers = drawRestrictionWays(allElements, fmMapInst, roadGeometry, 8);
+  fmPoiLayers.restrict = layers;
+  fmPoiLoaded.restrict = true;
+
+  // Update chip
+  const chip = document.getElementById('chipRestrict');
+  if (chip) {
+    chip.style.opacity = '1';
+    const count = allElements.filter(e => e.geometry).length;
+    chip.innerHTML = `🚫 Restrictions <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:1px 6px;font-size:10px;margin-left:3px">${count}</span>`;
+  }
+}
+
+// Load restrictions for mini-map
+async function loadMiniMapRestrictions() {
+  if (!miniMap || !roadGeometry || !origin || !destination) return;
+
+  // Clear old
+  miniPoiMarkers.restrict.forEach(m => { try { miniMap.removeLayer(m); } catch {} });
+  miniPoiMarkers.restrict = [];
+
+  // Waypoints along route
+  const waypoints = [];
+  const step = Math.max(1, Math.floor(roadGeometry.length / 8));
+  for (let i = 0; i < roadGeometry.length; i += step) waypoints.push({ lat: roadGeometry[i][0], lon: roadGeometry[i][1] });
+  const last = roadGeometry[roadGeometry.length - 1];
+  if (!waypoints.find(w => w.lat === last[0])) waypoints.push({ lat: last[0], lon: last[1] });
+
+  const seen = new Set();
+  const allElements = [];
+  for (const wp of waypoints) {
+    try {
+      const q = buildRestrictionQuery(wp.lat, wp.lon, 15000);
+      const r = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST', body: 'data=' + encodeURIComponent(q)
+      });
+      const data = await r.json();
+      (data.elements || []).forEach(el => {
+        if (!seen.has(el.id)) { seen.add(el.id); allElements.push(el); }
+      });
+    } catch {}
+  }
+
+  // Draw on mini-map (use same function but always visible since no fmPoiActive check)
+  allElements.forEach(way => {
+    if (!way.geometry || way.geometry.length < 2) return;
+    const midIdx = Math.floor(way.geometry.length / 2);
+    const midPt = way.geometry[midIdx];
+    if (!isNearRoute(midPt.lat, midPt.lon, roadGeometry, 8)) return;
+
+    const tags  = way.tags || {};
+    const color = restrictionColor(tags);
+    const coords = way.geometry.map(n => [n.lat, n.lon]);
+    const labels = restrictionLabel(tags);
+    const name   = tags.name || tags['name:en'] || tags.ref || '';
+
+    const shadow = L.polyline(coords, { color, weight: 9, opacity: 0.15 }).addTo(miniMap);
+    const line   = L.polyline(coords, {
+      color, weight: 3.5, opacity: 0.9,
+      dashArray: tags.hgv === 'destination' ? '8 5' : null,
+    });
+
+    const labelsHtml = labels.map(l =>
+      `<div style="padding:3px 0;font-size:12px;font-weight:700">${l}</div>`
+    ).join('');
+    const popupHtml = `
+      <div style="font-family:'DM Sans',sans-serif;min-width:160px">
+        <div style="font-weight:900;font-size:13px;margin-bottom:6px">${name || 'Restricted Road'}</div>
+        <div style="background:${color}12;border:1.5px solid ${color}44;border-radius:8px;padding:6px 10px">${labelsHtml}</div>
+      </div>`;
+    line.bindPopup(popupHtml, { maxWidth: 220 });
+
+    if (miniPoiActive.restrict) line.addTo(miniMap);
+    miniPoiMarkers.restrict.push(shadow, line);
+  });
+
+  // Update badge
+  const badge = document.getElementById('miniBadgeRestrict');
+  const cnt   = document.getElementById('miniRestrictCnt');
+  if (badge) badge.classList.remove('poi-loading');
+  if (cnt)   cnt.textContent = miniPoiMarkers.restrict.filter((_, i) => i % 2 === 1).length || '0';
+}
+
 function togglePOI(type) {
   fmPoiActive[type] = !fmPoiActive[type];
   const chip = document.getElementById(
-    type === 'scale'   ? 'chipScale'  :
-    type === 'truck'   ? 'chipTruck'  :
-    type === 'rest'    ? 'chipRest'   : 'chipReport'
+    type === 'scale'    ? 'chipScale'    :
+    type === 'truck'    ? 'chipTruck'    :
+    type === 'rest'     ? 'chipRest'     :
+    type === 'restrict' ? 'chipRestrict' : 'chipReport'
   );
   chip.classList.toggle('off', !fmPoiActive[type]);
 
@@ -5046,6 +5565,12 @@ function resetForm() {
   origin = null; destination = null;
   routeDistance = 0; schedule = []; arrivalTime = null; totalTime = 0;
   roadGeometry = null; routeSource = null;
+  // Clear mini-map POI markers
+  ['truck','rest','restrict'].forEach(type => {
+    miniPoiMarkers[type].forEach(m => { try { if(miniMap) miniMap.removeLayer(m); } catch {} });
+    miniPoiMarkers[type] = [];
+  });
+  document.getElementById('miniPoiLegend').style.display = 'none';
   document.getElementById('originInput').value = '';
   document.getElementById('destInput').value = '';
   document.getElementById('hoursInput').value = '70';
