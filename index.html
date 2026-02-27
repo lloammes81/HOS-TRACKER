@@ -792,17 +792,22 @@
      SPEED LIMIT WIDGET (map, top-right)
   ══════════════════════════════════════════ */
   #speedLimitWidget {
-    position: fixed;
+    left: 12px;
+    position: absolute;
     top: calc(var(--header-pt) + 8px);
-    right: calc(14px + env(safe-area-inset-right,0px));
-    z-index: 650;
+z-index: 650;
     display: none;
     flex-direction: column;
     align-items: center;
-    pointer-events: none;
+    pointer-events: auto;
+    opacity: .78;
+    cursor: grab;
+    touch-action: none;
   }
   #speedLimitWidget.visible { display: flex; }
+  #speedLimitWidget.dragging { cursor: grabbing; }
   .sl-sign {
+    opacity: .92;
     width: 64px; height: 72px;
     background: #fff;
     border: 4px solid #000;
@@ -916,8 +921,11 @@
   /* SOS button (visible on map) */
   #sosFab {
     position: fixed;
-    bottom: calc(var(--tab-h) + 90px);
+    /* Left-centered on the map/screen */
+    top: 50%;
+    transform: translateY(-50%);
     left: calc(14px + env(safe-area-inset-left,0px));
+    bottom: auto;
     z-index: 650;
     width: 54px; height: 54px;
     border-radius: 50%; border: 3px solid #fff;
@@ -925,6 +933,13 @@
     color: #fff; font-size: 11px; font-weight: 900;
     font-family: "DM Sans", sans-serif;
     display: none; align-items: center; justify-content: center;
+
+    z-index: 650;
+    width: 54px; height: 54px;
+    border-radius: 50%; border: 3px solid #fff;
+    background: #ef4444;
+    color: #fff; font-size: 11px; font-weight: 900;
+    font-family: "DM Sans", sans-serif;
     box-shadow: 0 4px 20px rgba(239,68,68,.6);
     cursor: pointer; letter-spacing: .5px;
     animation: sosFabPulse 2s ease-in-out infinite;
@@ -954,15 +969,21 @@
   #speedometerWidget {
     position: fixed;
     bottom: calc(var(--tab-h) + 16px);
-    left: 50%;
-    transform: translateX(-50%);
+    right: calc(16px + env(safe-area-inset-right, 0px));
+    left: auto;
+    top: auto;
+    transform: none;
     z-index: 600;
     display: none;
     flex-direction: column;
     align-items: center;
-    pointer-events: none;
+    pointer-events: auto;
+    opacity: .75;
+    cursor: grab;
+    touch-action: none;
   }
   #speedometerWidget.visible { display: flex; }
+  #speedometerWidget.dragging { cursor: grabbing; }
   .speedo-ring {
     width: 110px; height: 110px;
     border-radius: 50%;
@@ -1326,7 +1347,7 @@
                   <select class="menu-select" id="countrySelectMenu"></select>
                 </div>
               </div>
-            </div>
+</div>
           </div>
         </div>
         <div class="subtitle" id="subtitleTxt">DOT Hours of Service Planner</div>
@@ -1502,6 +1523,39 @@
           </div>
         </div>
       </div>
+  <div class="sett-section">
+    <div class="sett-section-title" id="settSecTruckIcon">Truck Icon</div>
+    <div class="sett-group" style="padding:14px 14px 10px">
+      <div style="font-weight:900;font-size:14px;margin-bottom:6px" id="truckIconTitle">Truck marker icon</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px" id="truckIconDesc">
+        Choose an icon or upload your own photo. This changes the truck marker on the route map.
+      </div>
+
+      <label style="margin-top:0" id="truckPickerLbl">Choose</label>
+      <select class="menu-select" id="truckIconSelect" style="width:100%;margin-top:6px">
+        <option value="emoji:🚛">🚛 Classic</option>
+        <option value="emoji:🚚">🚚 Delivery</option>
+        <option value="emoji:🛻">🛻 Pickup</option>
+        <option value="emoji:🚐">🚐 Van</option>
+        <option value="emoji:🚒">🚒 Fire</option>
+        <option value="emoji:🚌">🚌 Bus</option>
+        <option value="img:https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f69b.png">🖼️ Truck image</option>
+      </select>
+
+      <label id="truckUploadLbl">Upload photo</label>
+      <input type="file" id="truckUpload" accept="image/*"
+        style="margin-top:6px;width:100%;padding:10px;border:1.5px dashed var(--border);border-radius:10px;background:var(--bg);color:var(--text)"
+      />
+
+      <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
+        <div style="font-weight:800;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px" id="truckPreviewLbl">Preview</div>
+        <div id="truckPreview" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid var(--border);background:var(--surface)"></div>
+        <button class="chip-btn" id="truckResetBtn" style="padding:10px 10px">Reset</button>
+      </div>
+    </div>
+  </div>
+
+
 
       <div class="sett-section">
         <div class="sett-section-title" id="settSecAppear">Appearance</div>
@@ -1741,7 +1795,39 @@
         </div>
       </div>
 
-      <div class="sett-section">
+      
+  <div class="sett-section">
+    <div class="sett-section-title" id="settSecSpeedWidget">Speed Widget</div>
+    <div class="sett-group" style="padding:14px 14px 10px">
+      <div style="font-weight:900;font-size:14px;margin-bottom:6px" id="speedWidgetTitle">Speed Limit Widget</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px" id="speedWidgetDesc">
+        Drag the speed widget to place it. This is saved automatically.
+      </div>
+
+      <div id="speedWidgetStage" style="
+        position:relative;
+        height:190px;
+        border:1.5px dashed var(--border);
+        border-radius:14px;
+        background:var(--bg);
+        overflow:hidden;
+      ">
+        <div id="speedLimitWidget" class="visible">
+          <div class="sl-sign" id="slSign">
+            <div class="sl-num" id="slNum">65</div>
+          </div>
+          <div class="sl-state" id="slState">--</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button class="chip-btn" id="speedWidgetResetBtn" style="flex:1">Reset Position</button>
+        <button class="chip-btn" id="speedWidgetCenterBtn" style="flex:1">Center</button>
+      </div>
+    </div>
+  </div>
+
+<div class="sett-section">
         <div class="sett-section-title" id="settSecAbout">About</div>
         <div class="sett-group">
           <div class="sett-row">
@@ -2088,16 +2174,6 @@
 </div>
 
 <!-- ══════════════════════════════════════
-     SPEED LIMIT WIDGET
-══════════════════════════════════════ -->
-<div id="speedLimitWidget">
-  <div class="sl-sign" id="slSign">
-    <div class="sl-num" id="slNum">65</div>
-  </div>
-  <div class="sl-state" id="slState">--</div>
-</div>
-
-<!-- ══════════════════════════════════════
      SOS FAB BUTTON (on map)
 ══════════════════════════════════════ -->
 <button id="sosFab" onclick="triggerSOS()">SOS</button>
@@ -2249,6 +2325,10 @@ let isDark = localStorage.getItem('hos_theme') === 'dark';
 let use30min = localStorage.getItem('hos_30min') !== 'false';
 let selectedCountry = localStorage.getItem('hos_country') || '';
 let savedDrives = JSON.parse(localStorage.getItem('hos_drives') || '[]');
+let truckIconMode = localStorage.getItem('hos_truck_icon') || 'emoji:🚛'; // emoji:..., img:..., upload:dataurl
+let truckUploadData = localStorage.getItem('hos_truck_upload') || '';
+let speedWidgetPos = JSON.parse(localStorage.getItem('hos_speed_pos') || 'null');
+let speedometerPos = JSON.parse(localStorage.getItem('hos_speedometer_pos') || 'null');
 let defaultSpeed = parseInt(localStorage.getItem('hos_speed') || '60');
 let currentTab = 'plan';
 
@@ -3273,6 +3353,8 @@ function init() {
   applyLang();
   setDepartureNow();
   bindEvents();
+  initSpeedWidgetDrag();
+  initSpeedometerDrag();
   renderDrives();
   renderSummary();
   updateSettingsChecks();
@@ -3365,6 +3447,29 @@ function applyLang() {
   document.getElementById('langVal').textContent = lang === 'en' ? 'English' : 'Español';
   const country = COUNTRIES.find(c => c.code === selectedCountry);
   document.getElementById('countryVal').textContent = country ? (lang === 'es' ? country.es : country.en) : (lang === 'en' ? 'All' : 'Todos');
+  const swt = document.getElementById('settSecSpeedWidget');
+  if (swt) swt.textContent = (lang==='es') ? 'Widget de Velocidad' : 'Speed Widget';
+  const swTitle = document.getElementById('speedWidgetTitle');
+  if (swTitle) swTitle.textContent = (lang==='es') ? 'Widget Límite de Velocidad' : 'Speed Limit Widget';
+  const swDesc = document.getElementById('speedWidgetDesc');
+  if (swDesc) swDesc.textContent = (lang==='es') ? 'Arrastra el widget para colocarlo. Se guarda automáticamente.' : 'Drag the widget to place it. This is saved automatically.';
+  const swReset = document.getElementById('speedWidgetResetBtn');
+  if (swReset) swReset.textContent = (lang==='es') ? 'Restablecer' : 'Reset Position';
+  const swCenter = document.getElementById('speedWidgetCenterBtn');
+  if (swCenter) swCenter.textContent = (lang==='es') ? 'Centrar' : 'Center';
+
+  const stt = document.getElementById('settSecTruckIcon');
+  if (stt) stt.textContent = (lang==='es') ? 'Icono del Camión' : 'Truck Icon';
+  const tiTitle = document.getElementById('truckIconTitle');
+  if (tiTitle) tiTitle.textContent = (lang==='es') ? 'Icono del camión en el mapa' : 'Truck marker icon';
+  const tiDesc = document.getElementById('truckIconDesc');
+  if (tiDesc) tiDesc.textContent = (lang==='es') ? 'Elige un icono o sube una foto. Esto cambia el camión en el mapa de ruta.' : 'Choose an icon or upload your own photo. This changes the truck marker on the route map.';
+  const tp = document.getElementById('truckPickerLbl');
+  if (tp) tp.textContent = (lang==='es') ? 'Elegir' : 'Choose';
+  const tu = document.getElementById('truckUploadLbl');
+  if (tu) tu.textContent = (lang==='es') ? 'Subir foto' : 'Upload photo';
+  const tr = document.getElementById('truckResetBtn');
+  if (tr) tr.textContent = (lang==='es') ? 'Restablecer' : 'Reset';
   populateCountrySelects();
   renderDrives();
   renderSummary();
@@ -3375,6 +3480,214 @@ function updateSettingsChecks() {
   document.getElementById('checkEs').style.opacity = lang === 'es' ? '1' : '0';
   document.getElementById('breakToggle').classList.toggle('on', use30min);
 }
+
+function applySpeedWidgetPos() {
+  const w = document.getElementById('speedLimitWidget');
+  const stage = document.getElementById('speedWidgetStage');
+  if (!w || !stage) return;
+
+  let x = 12, y = 12;
+  if (speedWidgetPos && typeof speedWidgetPos.x === 'number' && typeof speedWidgetPos.y === 'number') {
+    x = speedWidgetPos.x; y = speedWidgetPos.y;
+  }
+
+  const sw = stage.clientWidth;
+  const sh = stage.clientHeight;
+  const ww = w.offsetWidth || 78;
+  const wh = w.offsetHeight || 118;
+  const pad = 6;
+
+  x = Math.max(pad, Math.min(sw - ww - pad, x));
+  y = Math.max(pad, Math.min(sh - wh - pad, y));
+
+  w.style.left = x + 'px';
+  w.style.top  = y + 'px';
+}
+
+function initSpeedWidgetDrag() {
+  const w = document.getElementById('speedLimitWidget');
+  const stage = document.getElementById('speedWidgetStage');
+  const resetBtn = document.getElementById('speedWidgetResetBtn');
+  const centerBtn = document.getElementById('speedWidgetCenterBtn');
+  if (!w || !stage) return;
+
+  applySpeedWidgetPos();
+
+  let dragging = false;
+  let startX = 0, startY = 0;
+  let origLeft = 0, origTop = 0;
+
+  const getPoint = (e) => {
+    const t = e.touches && e.touches[0];
+    return t ? { x: t.clientX, y: t.clientY } : { x: e.clientX, y: e.clientY };
+  };
+
+  const onDown = (e) => {
+    dragging = true;
+    w.classList.add('dragging');
+    const pt = getPoint(e);
+    startX = pt.x; startY = pt.y;
+
+    origLeft = parseFloat(w.style.left || '0') || 0;
+    origTop  = parseFloat(w.style.top  || '0') || 0;
+
+    e.preventDefault();
+  };
+
+  const onMove = (e) => {
+    if (!dragging) return;
+    const pt = getPoint(e);
+    const dx = pt.x - startX;
+    const dy = pt.y - startY;
+
+    const sw = stage.clientWidth;
+    const sh = stage.clientHeight;
+    const ww = w.offsetWidth;
+    const wh = w.offsetHeight;
+
+    let newLeft = origLeft + dx;
+    let newTop  = origTop + dy;
+
+    const pad = 6;
+    newLeft = Math.max(pad, Math.min(sw - ww - pad, newLeft));
+    newTop  = Math.max(pad, Math.min(sh - wh - pad, newTop));
+
+    w.style.left = newLeft + 'px';
+    w.style.top  = newTop + 'px';
+
+    speedWidgetPos = { x: Math.round(newLeft), y: Math.round(newTop) };
+    localStorage.setItem('hos_speed_pos', JSON.stringify(speedWidgetPos));
+
+    e.preventDefault();
+  };
+
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    w.classList.remove('dragging');
+  };
+
+  w.addEventListener('mousedown', onDown);
+  w.addEventListener('touchstart', onDown, { passive: false });
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchend', onUp);
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      speedWidgetPos = { x: 12, y: 12 };
+      localStorage.setItem('hos_speed_pos', JSON.stringify(speedWidgetPos));
+      applySpeedWidgetPos();
+    });
+  }
+  if (centerBtn) {
+    centerBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const x = Math.round((stage.clientWidth - w.offsetWidth) / 2);
+      const y = Math.round((stage.clientHeight - w.offsetHeight) / 2);
+      speedWidgetPos = { x, y };
+      localStorage.setItem('hos_speed_pos', JSON.stringify(speedWidgetPos));
+      applySpeedWidgetPos();
+    });
+  }
+}
+
+
+function applySpeedometerPos() {
+  const w = document.getElementById('speedometerWidget');
+  if (!w) return;
+
+  if (speedometerPos && typeof speedometerPos.x === 'number' && typeof speedometerPos.y === 'number') {
+    w.style.left = speedometerPos.x + 'px';
+    w.style.top  = speedometerPos.y + 'px';
+    w.style.right = 'auto';
+    w.style.bottom = 'auto';
+    w.style.transform = 'none';
+  }
+}
+
+function initSpeedometerDrag() {
+  const w = document.getElementById('speedometerWidget');
+  if (!w) return;
+
+  applySpeedometerPos();
+
+  let dragging = false;
+  let startX = 0, startY = 0;
+  let origLeft = 0, origTop = 0;
+
+  const getPoint = (e) => {
+    const t = e.touches && e.touches[0];
+    return t ? { x: t.clientX, y: t.clientY } : { x: e.clientX, y: e.clientY };
+  };
+
+  const onDown = (e) => {
+    // allow drag only when widget is visible
+    if (!w.classList.contains('visible')) return;
+    dragging = true;
+    w.classList.add('dragging');
+
+    const pt = getPoint(e);
+    startX = pt.x; startY = pt.y;
+
+    const rect = w.getBoundingClientRect();
+    origLeft = rect.left;
+    origTop  = rect.top;
+
+    w.style.left = origLeft + 'px';
+    w.style.top  = origTop + 'px';
+    w.style.right = 'auto';
+    w.style.bottom = 'auto';
+    w.style.transform = 'none';
+
+    e.preventDefault();
+  };
+
+  const onMove = (e) => {
+    if (!dragging) return;
+    const pt = getPoint(e);
+    const dx = pt.x - startX;
+    const dy = pt.y - startY;
+
+    const rect = w.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let newLeft = origLeft + dx;
+    let newTop  = origTop + dy;
+
+    const pad = 6;
+    const maxLeft = vw - rect.width - pad;
+    const maxTop  = vh - rect.height - pad;
+
+    newLeft = Math.max(pad, Math.min(maxLeft, newLeft));
+    newTop  = Math.max(pad, Math.min(maxTop, newTop));
+
+    w.style.left = newLeft + 'px';
+    w.style.top  = newTop + 'px';
+
+    speedometerPos = { x: Math.round(newLeft), y: Math.round(newTop) };
+    localStorage.setItem('hos_speedometer_pos', JSON.stringify(speedometerPos));
+
+    e.preventDefault();
+  };
+
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    w.classList.remove('dragging');
+  };
+
+  w.addEventListener('mousedown', onDown);
+  w.addEventListener('touchstart', onDown, { passive: false });
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchend', onUp);
+}
+
 
 let originDebounce, destDebounce;
 
@@ -3412,6 +3725,62 @@ function showSuggestions(containerId, items, onSelect) {
   });
   el.style.display = 'block';
 }
+
+
+// ==============================
+// TRUCK ICON (customizable)
+// ==============================
+function getTruckIconHTML(sizePx=26) {
+  // Priority: uploaded image if selected
+  if (truckIconMode && truckIconMode.startsWith('upload:') && truckUploadData) {
+    const s = Math.max(18, sizePx + 8);
+    return `<img alt="truck" src="${truckUploadData}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25));border-radius:10px" />`;
+  }
+  if (truckIconMode && truckIconMode.startsWith('img:')) {
+    const url = truckIconMode.slice(4);
+    const s = Math.max(18, sizePx + 8);
+    return `<img alt="truck" src="${url}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))" />`;
+  }
+  // Emoji
+  const emoji = (truckIconMode && truckIconMode.startsWith('emoji:')) ? truckIconMode.slice(6) : '🚛';
+  return `<div style="font-size:${sizePx}px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))">${emoji}</div>`;
+}
+
+function getTruckLeafletIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="display:flex;align-items:center;justify-content:center">${getTruckIconHTML(24)}</div>`,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22]
+  });
+}
+
+function renderTruckPreview() {
+  const pv = document.getElementById('truckPreview');
+  if (!pv) return;
+  pv.innerHTML = getTruckIconHTML(22);
+}
+
+function refreshTruckMarkers() {
+  // Re-draw current routes so the truck marker updates
+  try {
+    if (roadGeometry && origin && destination) {
+      if (miniMap) {
+        const mRef = { list: miniMarkersList };
+        const lRef = { layer: miniLayer };
+        drawRoute(miniMap, roadGeometry, mRef, lRef);
+        miniMarkersList = mRef.list; miniLayer = lRef.layer;
+      }
+      if (fullMapInst && document.getElementById('fullMapOverlay')?.classList.contains('open')) {
+        const mRef2 = { list: fullMarkersList };
+        const lRef2 = { layer: fullLayer };
+        drawRoute(fullMapInst, roadGeometry, mRef2, lRef2);
+        fullMarkersList = mRef2.list; fullLayer = lRef2.layer;
+      }
+    }
+  } catch {}
+}
+
 
 function initMap(containerId) {
   const map = L.map(containerId, { zoomControl: true }).setView([39.5, -98.35], 4);
