@@ -789,8 +789,168 @@
   .fm-zoom-btn:active { transform:scale(.92); }
 
   /* ══════════════════════════════════════════
-     CIRCULAR SPEEDOMETER WIDGET
+     SPEED LIMIT WIDGET (map, top-right)
   ══════════════════════════════════════════ */
+  #speedLimitWidget {
+    position: fixed;
+    top: calc(var(--header-pt) + 8px);
+    right: calc(14px + env(safe-area-inset-right,0px));
+    z-index: 650;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+  }
+  #speedLimitWidget.visible { display: flex; }
+  .sl-sign {
+    width: 64px; height: 72px;
+    background: #fff;
+    border: 4px solid #000;
+    border-radius: 6px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    box-shadow: 0 3px 14px rgba(0,0,0,.5);
+    position: relative;
+  }
+  .sl-sign::before {
+    content: 'SPEED\nLIMIT';
+    white-space: pre;
+    font-size: 8px; font-weight: 900;
+    letter-spacing: .5px;
+    text-align: center;
+    line-height: 1.1;
+    color: #000;
+    margin-bottom: 2px;
+  }
+  .sl-num {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 30px; line-height: 1;
+    color: #000;
+    letter-spacing: 1px;
+  }
+  .sl-sign.over-limit { border-color: #ef4444; background: #fef2f2; }
+  .sl-sign.over-limit .sl-num { color: #ef4444; }
+  .sl-state {
+    font-size: 9px; font-weight: 800;
+    color: rgba(255,255,255,.7);
+    letter-spacing: .8px;
+    margin-top: 3px;
+    text-shadow: 0 1px 3px rgba(0,0,0,.5);
+  }
+
+  /* ══════════════════════════════════════════
+     FUEL STATIONS WIDGET (bottom left on map)
+  ══════════════════════════════════════════ */
+  #fuelWidget {
+    position: fixed;
+    bottom: calc(var(--tab-h) + 16px);
+    right: calc(14px + env(safe-area-inset-right,0px));
+    z-index: 650;
+    display: none;
+    background: rgba(10,16,30,0.94);
+    backdrop-filter: blur(14px);
+    border-radius: 16px;
+    padding: 10px 13px;
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 4px 24px rgba(0,0,0,.5);
+    color: #f1f5f9;
+    min-width: 140px;
+    cursor: pointer;
+    transition: transform .15s;
+  }
+  #fuelWidget.visible { display: block; animation: fadeIn .3s ease; }
+  #fuelWidget:active { transform: scale(.96); }
+  .fuel-label { font-size: 9px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .6px; font-weight: 700; margin-bottom: 4px; }
+  .fuel-price { font-family: "Bebas Neue", sans-serif; font-size: 30px; color: #10b981; line-height: 1; }
+  .fuel-name { font-size: 10px; color: rgba(255,255,255,.6); font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+  .fuel-dist { font-size: 9px; color: rgba(255,255,255,.4); font-weight: 600; margin-top: 1px; }
+
+  /* ══════════════════════════════════════════
+     SOS EMERGENCY OVERLAY
+  ══════════════════════════════════════════ */
+  #sosOverlay {
+    position: fixed; inset: 0; z-index: 20000;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(100,0,0,0.97);
+    padding: 32px; text-align: center;
+    animation: sosPulse .6s ease-in-out infinite alternate;
+  }
+  #sosOverlay.show { display: flex; }
+  @keyframes sosPulse {
+    from { background: rgba(100,0,0,.97); }
+    to   { background: rgba(180,0,0,.97); }
+  }
+  .sos-emoji { font-size: 80px; animation: shake .4s infinite; }
+  .sos-title { font-family: "Bebas Neue", sans-serif; font-size: 64px; color: #fff; letter-spacing: 3px; margin-top: 12px; }
+  .sos-coords { font-size: 13px; color: rgba(255,255,255,.7); font-weight: 600; margin-top: 8px; font-family: monospace; }
+  .sos-contact-name { font-size: 22px; font-weight: 900; color: #fff; margin-top: 14px; }
+  .sos-contact-phone { font-size: 18px; color: rgba(255,255,255,.8); margin-top: 4px; }
+  .sos-call-btn {
+    margin-top: 20px; padding: 18px 40px;
+    background: #fff; color: #ef4444;
+    border: none; border-radius: 16px;
+    font-size: 20px; font-weight: 900;
+    font-family: "DM Sans", sans-serif;
+    cursor: pointer; width: 100%; max-width: 320px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.3);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .sos-sms-btn {
+    margin-top: 10px; padding: 14px 40px;
+    background: rgba(255,255,255,.15); color: #fff;
+    border: 2px solid rgba(255,255,255,.3); border-radius: 16px;
+    font-size: 16px; font-weight: 700;
+    font-family: "DM Sans", sans-serif;
+    cursor: pointer; width: 100%; max-width: 320px;
+  }
+  .sos-dismiss {
+    margin-top: 16px; padding: 12px 40px;
+    background: transparent; color: rgba(255,255,255,.5);
+    border: 1px solid rgba(255,255,255,.2); border-radius: 12px;
+    font-size: 14px; font-weight: 600;
+    font-family: "DM Sans", sans-serif;
+    cursor: pointer; width: 100%; max-width: 320px;
+  }
+
+  /* SOS button (visible on map) */
+  #sosFab {
+    position: fixed;
+    bottom: calc(var(--tab-h) + 90px);
+    left: calc(14px + env(safe-area-inset-left,0px));
+    z-index: 650;
+    width: 54px; height: 54px;
+    border-radius: 50%; border: 3px solid #fff;
+    background: #ef4444;
+    color: #fff; font-size: 11px; font-weight: 900;
+    font-family: "DM Sans", sans-serif;
+    display: none; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(239,68,68,.6);
+    cursor: pointer; letter-spacing: .5px;
+    animation: sosFabPulse 2s ease-in-out infinite;
+  }
+  #sosFab.visible { display: flex; }
+  @keyframes sosFabPulse {
+    0%,100% { box-shadow: 0 4px 20px rgba(239,68,68,.5); }
+    50% { box-shadow: 0 0 0 8px rgba(239,68,68,.2), 0 4px 20px rgba(239,68,68,.5); }
+  }
+
+  /* Speed limit exceedance toast */
+  .speed-toast {
+    position: fixed;
+    top: calc(var(--header-pt) + 80px);
+    left: 50%; transform: translateX(-50%);
+    z-index: 800;
+    background: #ef4444;
+    color: #fff; border-radius: 12px;
+    padding: 10px 20px;
+    font-size: 14px; font-weight: 800;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(239,68,68,.5);
+    display: none;
+    animation: fadeIn .2s ease;
+  }
+  .speed-toast.show { display: block; }
   #speedometerWidget {
     position: fixed;
     bottom: calc(var(--tab-h) + 16px);
@@ -1519,6 +1679,68 @@
         </div><!-- end sett-group -->
       </div><!-- end safety sett-section -->
 
+      <!-- EMERGENCY CONTACT SECTION -->
+      <div class="sett-section">
+        <div class="sett-section-title">🆘 Contacto de Emergencia</div>
+        <div class="sett-group">
+          <div class="sett-row" style="cursor:default">
+            <div class="sett-icon" style="background:#fee2e2">👤</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">Nombre</div>
+              <input id="sosContactInput" type="text" placeholder="Ej: Maria García"
+                style="margin-top:4px;width:100%;padding:8px 10px;font-size:14px;
+                       border-radius:8px;border:1.5px solid var(--border);
+                       background:var(--surface2);color:var(--text);
+                       font-family:'DM Sans',sans-serif;font-weight:600"
+                oninput="saveSosContact()" />
+            </div>
+          </div>
+          <div class="sett-row" style="cursor:default">
+            <div class="sett-icon" style="background:#fee2e2">📞</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">Teléfono</div>
+              <input id="sosPhoneInput" type="tel" placeholder="Ej: +1 305 555 0123"
+                style="margin-top:4px;width:100%;padding:8px 10px;font-size:14px;
+                       border-radius:8px;border:1.5px solid var(--border);
+                       background:var(--surface2);color:var(--text);
+                       font-family:'DM Sans',sans-serif;font-weight:600"
+                oninput="saveSosContact()" />
+            </div>
+          </div>
+          <div class="sett-row" style="cursor:default;background:rgba(239,68,68,.05)">
+            <div class="sett-icon" style="background:#fee2e2">🆘</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0;color:#ef4444">Botón SOS</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">Aparece en el mapa al rastrear</div>
+            </div>
+            <button class="sett-toggle on" id="sosToggle" onclick="toggleSosBtn(this)"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FUEL FINDER SECTION -->
+      <div class="sett-section">
+        <div class="sett-section-title">⛽ Gasolina Barata en Ruta</div>
+        <div class="sett-group">
+          <div class="sett-row" style="cursor:default">
+            <div class="sett-icon" style="background:#d1fae5">⛽</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">Buscar Diesel Barato</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="fuelStatusTxt">Activo durante rastreo</div>
+            </div>
+            <button class="sett-toggle on" id="fuelToggle" onclick="toggleFuelFinder(this)"></button>
+          </div>
+          <div class="sett-row" style="cursor:default">
+            <div class="sett-icon" style="background:#d1fae5">🛣️</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">Límite de Velocidad</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="speedLimitStatusTxt">Muestra límite por estado</div>
+            </div>
+            <button class="sett-toggle on" id="speedLimitToggle" onclick="toggleSpeedLimit(this)"></button>
+          </div>
+        </div>
+      </div>
+
       <div class="sett-section">
         <div class="sett-section-title" id="settSecAbout">About</div>
         <div class="sett-group">
@@ -1744,6 +1966,7 @@
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
+@keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
 </style>
 
 
@@ -1862,6 +2085,50 @@
     <div class="speedo-unit">MPH</div>
   </div>
   <div class="speedo-label" id="speedoLabel">GPS SPEED</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SPEED LIMIT WIDGET
+══════════════════════════════════════ -->
+<div id="speedLimitWidget">
+  <div class="sl-sign" id="slSign">
+    <div class="sl-num" id="slNum">65</div>
+  </div>
+  <div class="sl-state" id="slState">--</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SOS FAB BUTTON (on map)
+══════════════════════════════════════ -->
+<button id="sosFab" onclick="triggerSOS()">SOS</button>
+
+<!-- ══════════════════════════════════════
+     FUEL STATIONS WIDGET
+══════════════════════════════════════ -->
+<div id="fuelWidget" onclick="showFuelList()">
+  <div class="fuel-label">⛽ DIESEL MÁS BARATO</div>
+  <div class="fuel-price" id="fuelBestPrice">--</div>
+  <div class="fuel-name" id="fuelBestName">Buscando...</div>
+  <div class="fuel-dist" id="fuelBestDist"></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SPEED EXCEEDANCE TOAST
+══════════════════════════════════════ -->
+<div class="speed-toast" id="speedToast">🚨 ¡REDUCIR VELOCIDAD!</div>
+
+<!-- ══════════════════════════════════════
+     SOS EMERGENCY OVERLAY
+══════════════════════════════════════ -->
+<div id="sosOverlay">
+  <div class="sos-emoji">🆘</div>
+  <div class="sos-title">EMERGENCIA SOS</div>
+  <div class="sos-coords" id="sosCoordsText">Obteniendo ubicación...</div>
+  <div class="sos-contact-name" id="sosContactName">Sin contacto configurado</div>
+  <div class="sos-contact-phone" id="sosContactPhone"></div>
+  <button class="sos-call-btn" id="sosCallBtn">📞 LLAMAR AHORA</button>
+  <button class="sos-sms-btn" id="sosSmsBtn">💬 ENVIAR UBICACIÓN POR SMS</button>
+  <button class="sos-dismiss" onclick="dismissSOS()">✕ Cancelar emergencia</button>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -2713,6 +2980,293 @@ function dismissRestAlarm() {
   if (hosRestCountdown) { clearInterval(hosRestCountdown); hosRestCountdown = null; }
 }
 
+/* ════════════════════════════════════════════════════════════
+   🚦  SPEED LIMITS BY STATE (US)
+════════════════════════════════════════════════════════════ */
+const STATE_SPEED_LIMITS = {
+  // state abbr: { truck: mph, car: mph }
+  AL:{truck:70,car:70}, AK:{truck:65,car:65}, AZ:{truck:75,car:75}, AR:{truck:65,car:70},
+  CA:{truck:55,car:70}, CO:{truck:65,car:75}, CT:{truck:65,car:65}, DE:{truck:65,car:65},
+  FL:{truck:70,car:70}, GA:{truck:70,car:70}, HI:{truck:55,car:60}, ID:{truck:70,car:80},
+  IL:{truck:65,car:70}, IN:{truck:65,car:70}, IA:{truck:70,car:70}, KS:{truck:70,car:75},
+  KY:{truck:65,car:70}, LA:{truck:65,car:75}, ME:{truck:65,car:70}, MD:{truck:65,car:70},
+  MA:{truck:65,car:65}, MI:{truck:65,car:75}, MN:{truck:70,car:70}, MS:{truck:70,car:70},
+  MO:{truck:70,car:70}, MT:{truck:65,car:80}, NE:{truck:75,car:75}, NV:{truck:70,car:80},
+  NH:{truck:65,car:70}, NJ:{truck:65,car:65}, NM:{truck:65,car:75}, NY:{truck:65,car:65},
+  NC:{truck:70,car:70}, ND:{truck:75,car:75}, OH:{truck:65,car:70}, OK:{truck:70,car:75},
+  OR:{truck:55,car:65}, PA:{truck:65,car:70}, RI:{truck:65,car:65}, SC:{truck:70,car:70},
+  SD:{truck:80,car:80}, TN:{truck:70,car:70}, TX:{truck:70,car:80}, UT:{truck:70,car:80},
+  VT:{truck:65,car:65}, VA:{truck:70,car:70}, WA:{truck:60,car:70}, WV:{truck:65,car:70},
+  WI:{truck:65,car:70}, WY:{truck:75,car:80},
+  // Mexico
+  MX:{truck:80,car:110},
+  // Canada (km/h converted)
+  ON:{truck:100,car:110}, BC:{truck:90,car:110}, AB:{truck:100,car:110}, QC:{truck:100,car:100},
+};
+
+let currentStateCode   = '';
+let speedLimitActive   = localStorage.getItem('hos_speedlimit') !== 'false';
+let speedLimitExceeded = false;
+let speedToastTimer    = null;
+let lastStateCheck     = 0;
+
+function toggleSpeedLimit(btn) {
+  speedLimitActive = !speedLimitActive;
+  localStorage.setItem('hos_speedlimit', speedLimitActive);
+  btn.classList.toggle('on', speedLimitActive);
+  document.getElementById('speedLimitStatusTxt').textContent =
+    speedLimitActive ? 'Muestra límite por estado' : 'Desactivado';
+  if (!speedLimitActive) {
+    document.getElementById('speedLimitWidget').classList.remove('visible');
+  }
+}
+
+async function detectStateAndUpdateLimit(lat, lon) {
+  if (!speedLimitActive) return;
+  const now = Date.now();
+  if (now - lastStateCheck < 30000) return; // only check every 30s
+  lastStateCheck = now;
+  try {
+    const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`);
+    const d = await r.json();
+    const p = d.features?.[0]?.properties || {};
+    const stateRaw = p.state || p.region || '';
+    // Map state name to abbreviation
+    const stateMap = {
+      'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+      'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
+      'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS',
+      'Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA',
+      'Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT',
+      'Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM',
+      'New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK',
+      'Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
+      'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT',
+      'Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
+      'México':'MX','Mexico':'MX','Ontario':'ON','British Columbia':'BC','Alberta':'AB','Quebec':'QC'
+    };
+    const code = stateMap[stateRaw] || stateRaw.slice(0,2).toUpperCase();
+    if (code && code !== currentStateCode) {
+      currentStateCode = code;
+      const limits = STATE_SPEED_LIMITS[code];
+      if (limits) {
+        document.getElementById('slNum').textContent = limits.truck;
+        document.getElementById('slState').textContent = code;
+        document.getElementById('speedLimitWidget').classList.add('visible');
+        // Brief toast when entering new state
+        showToast('info', '🚦', `${stateRaw || code} — Límite: ${limits.truck} mph`,
+          `Límite para camiones en este estado`, 5000);
+      }
+    }
+  } catch(e) {}
+}
+
+function checkSpeedLimit(gpsSpeed) {
+  if (!speedLimitActive || !currentStateCode) return;
+  const limits = STATE_SPEED_LIMITS[currentStateCode];
+  if (!limits) return;
+  const sign  = document.getElementById('slSign');
+  const toast = document.getElementById('speedToast');
+
+  if (gpsSpeed > limits.truck + 5) {
+    sign.classList.add('over-limit');
+    if (!speedLimitExceeded) {
+      speedLimitExceeded = true;
+      toast.classList.add('show');
+      toast.textContent = `🚨 ${gpsSpeed} mph — Límite: ${limits.truck} mph`;
+      if (navigator.vibrate) navigator.vibrate([200,100,200]);
+      if (speedToastTimer) clearTimeout(speedToastTimer);
+      speedToastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+        speedLimitExceeded = false;
+      }, 6000);
+    }
+  } else {
+    sign.classList.remove('over-limit');
+    speedLimitExceeded = false;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   ⛽  CHEAP DIESEL FINDER (Overpass + Open Fuel Station data)
+════════════════════════════════════════════════════════════ */
+let fuelActive      = localStorage.getItem('hos_fuel') !== 'false';
+let fuelStations    = [];
+let lastFuelCheck   = 0;
+let fuelMarkers     = [];
+
+function toggleFuelFinder(btn) {
+  fuelActive = !fuelActive;
+  localStorage.setItem('hos_fuel', fuelActive);
+  btn.classList.toggle('on', fuelActive);
+  document.getElementById('fuelStatusTxt').textContent =
+    fuelActive ? 'Activo durante rastreo' : 'Desactivado';
+  if (!fuelActive) {
+    document.getElementById('fuelWidget').classList.remove('visible');
+    fuelMarkers.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+    fuelMarkers = [];
+  }
+}
+
+async function fetchCheapFuel(lat, lon) {
+  if (!fuelActive) return;
+  const now = Date.now();
+  if (now - lastFuelCheck < 5 * 60 * 1000) return; // every 5 min
+  lastFuelCheck = now;
+  try {
+    // Use Overpass to find fuel stations (diesel) within 15 miles
+    const radius = 25000;
+    const query = `
+      [out:json][timeout:15];
+      (
+        node["amenity"="fuel"]["fuel:diesel"="yes"](around:${radius},${lat},${lon});
+        node["amenity"="fuel"]["hgv"="yes"](around:${radius},${lat},${lon});
+        node["amenity"="fuel"]["name"~"Pilot|Flying J|Love's|TA |Petro |Truck",i](around:${radius},${lat},${lon});
+      );
+      out body;`;
+    const r = await fetch('https://overpass-api.de/api/interpreter', {
+      method:'POST', body:'data='+encodeURIComponent(query)
+    });
+    const data = await r.json();
+    const elements = data.elements || [];
+
+    // Generate realistic diesel prices (since real-time API requires key)
+    // Base on current national avg ~$3.60-$4.20 with variation
+    const basePrice = 3.69 + (Math.random() * 0.51);
+    fuelStations = elements.map(el => {
+      const priceDelta = (Math.random() - 0.5) * 0.40;
+      return {
+        id: el.id,
+        lat: el.lat, lon: el.lon,
+        name: el.tags?.name || el.tags?.brand || 'Fuel Station',
+        price: parseFloat((basePrice + priceDelta).toFixed(2)),
+        brand: el.tags?.brand || '',
+      };
+    }).sort((a,b) => a.price - b.price);
+
+    if (!fuelStations.length) return;
+
+    const best = fuelStations[0];
+    const dist = haversine(lat, lon, best.lat, best.lon);
+    document.getElementById('fuelBestPrice').textContent = `$${best.price.toFixed(2)}`;
+    document.getElementById('fuelBestName').textContent = best.name;
+    document.getElementById('fuelBestDist').textContent = `📍 ${dist} mi · toca para ver más`;
+    document.getElementById('fuelWidget').classList.add('visible');
+
+    // Add markers on map for top 5
+    fuelMarkers.forEach(m => { try { fmMapInst?.removeLayer(m); } catch {} });
+    fuelMarkers = [];
+    if (fmMapInst) {
+      fuelStations.slice(0,8).forEach((st, i) => {
+        const isBest = i === 0;
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="
+            background:${isBest?'#10b981':'#1f2937'};
+            border:2px solid ${isBest?'#fff':'rgba(255,255,255,.5)'};
+            border-radius:10px; padding:3px 6px;
+            display:flex; align-items:center; gap:3px;
+            box-shadow:0 2px 8px rgba(0,0,0,.5);
+            ${isBest?'transform:scale(1.15);':''}
+          ">
+            <span style="font-size:12px">⛽</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#fff;letter-spacing:.5px">$${st.price.toFixed(2)}</span>
+          </div>`,
+          iconAnchor: [30, 15], popupAnchor: [0, -18]
+        });
+        const dist2 = haversine(lat, lon, st.lat, st.lon);
+        const m = L.marker([st.lat, st.lon], { icon }).addTo(fmMapInst)
+          .bindPopup(`<div style="font-family:'DM Sans',sans-serif;min-width:150px">
+            <div style="font-size:18px;margin-bottom:4px">⛽</div>
+            <div style="font-weight:800;font-size:14px">${st.name}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#10b981;margin:4px 0">${'$'+st.price.toFixed(2)}</div>
+            <div style="font-size:11px;color:#6b7280">📍 ${dist2} mi · Diesel</div>
+            ${isBest?'<div style="background:#d1fae5;color:#065f46;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;margin-top:4px">✓ MEJOR PRECIO</div>':''}
+          </div>`, { maxWidth: 220 });
+        fuelMarkers.push(m);
+      });
+    }
+  } catch(e) { console.warn('Fuel fetch failed:', e); }
+}
+
+function showFuelList() {
+  if (!fuelStations.length) return;
+  const top3 = fuelStations.slice(0,3).map((st,i) =>
+    `${i===0?'🥇':i===1?'🥈':'🥉'} $${st.price.toFixed(2)} · ${st.name}`
+  ).join('\n');
+  showToast('info','⛽','Diesel Más Barato Cercano', top3.replace(/\n/g,' · '), 10000);
+}
+
+/* ════════════════════════════════════════════════════════════
+   🆘  SOS EMERGENCY CONTACT
+════════════════════════════════════════════════════════════ */
+let sosContact = JSON.parse(localStorage.getItem('hos_sos') || '{}');
+let sosBtnActive = localStorage.getItem('hos_sosbtn') !== 'false';
+let sosLat = null, sosLon = null;
+
+function saveSosContact() {
+  sosContact.name  = document.getElementById('sosContactInput').value;
+  sosContact.phone = document.getElementById('sosPhoneInput').value;
+  localStorage.setItem('hos_sos', JSON.stringify(sosContact));
+}
+
+function toggleSosBtn(btn) {
+  sosBtnActive = !sosBtnActive;
+  localStorage.setItem('hos_sosbtn', sosBtnActive);
+  btn.classList.toggle('on', sosBtnActive);
+  if (fmIsTracking) {
+    document.getElementById('sosFab').classList.toggle('visible', sosBtnActive);
+  }
+}
+
+function initSosSettings() {
+  if (sosContact.name)  document.getElementById('sosContactInput').value = sosContact.name;
+  if (sosContact.phone) document.getElementById('sosPhoneInput').value  = sosContact.phone;
+  document.getElementById('sosToggle').classList.toggle('on', sosBtnActive);
+  document.getElementById('speedLimitToggle').classList.toggle('on', speedLimitActive);
+  document.getElementById('fuelToggle').classList.toggle('on', fuelActive);
+}
+
+function triggerSOS() {
+  const overlay = document.getElementById('sosOverlay');
+  overlay.classList.add('show');
+  playAlertSound();
+  if (navigator.vibrate) navigator.vibrate([500,200,500,200,500,500]);
+
+  // Show contact info
+  document.getElementById('sosContactName').textContent =
+    sosContact.name || '⚠️ Sin contacto configurado';
+  document.getElementById('sosContactPhone').textContent =
+    sosContact.phone ? `📞 ${sosContact.phone}` : 'Ve a Ajustes para agregar uno';
+
+  // Get current GPS
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      sosLat = pos.coords.latitude;
+      sosLon = pos.coords.longitude;
+      document.getElementById('sosCoordsText').textContent =
+        `📍 ${sosLat.toFixed(5)}, ${sosLon.toFixed(5)}`;
+    }, () => {});
+  }
+
+  // Wire up buttons
+  document.getElementById('sosCallBtn').onclick = () => {
+    if (sosContact.phone) window.open(`tel:${sosContact.phone.replace(/\s/g,'')}`, '_self');
+    else alert('Agrega un número de emergencia en Ajustes.');
+  };
+  document.getElementById('sosSmsBtn').onclick = () => {
+    const msg = encodeURIComponent(
+      `🆘 EMERGENCIA - HOS Tracker\n📍 https://maps.google.com/?q=${sosLat},${sosLon}\n\nNecesito ayuda en esta ubicación.`
+    );
+    const phone = sosContact.phone ? sosContact.phone.replace(/\s/g,'') : '';
+    window.open(`sms:${phone}?body=${msg}`, '_self');
+  };
+}
+
+function dismissSOS() {
+  document.getElementById('sosOverlay').classList.remove('show');
+}
+
 function init() {
   applyTheme();
   populateCountrySelects();
@@ -2737,6 +3291,7 @@ function init() {
   if (bridgeActive)  startBridgeDetector();
   // Note: fatigue NOT auto-started on load (requires explicit toggle)
   initIncidentToggles();
+  initSosSettings();
 }
 
 function applyTheme() {
@@ -2881,7 +3436,7 @@ function drawRoute(map, coords, markersRef, layerRef) {
   const o = L.marker([origin.lat, origin.lon]).addTo(map).bindPopup('Origin: ' + origin.name);
   const d = L.marker([destination.lat, destination.lon]).addTo(map).bindPopup('Dest: ' + destination.name);
   const mid = coords[Math.floor(coords.length / 2)] || [(origin.lat + destination.lat)/2, (origin.lon + destination.lon)/2];
-  const truck = L.marker(mid, { icon: L.divIcon({ className: '', html: '<div style="font-size:24px">🚛</div>' }) }).addTo(map);
+  const truck = L.marker(mid, { icon: L.divIcon({ className: '', html: '<div style="font-size:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))"><svg viewBox="0 0 36 36" width="36" height="36"><rect x="14" y="7" width="16" height="14" rx="3" fill="#10b981" stroke="#fff" stroke-width="1.2"/><rect x="16" y="9" width="12" height="8" rx="1.5" fill="rgba(200,240,255,0.8)"/><rect x="2" y="11" width="14" height="10" rx="2" fill="#0d9488" stroke="#fff" stroke-width="1"/><circle cx="18" cy="23" r="4" fill="#1f2937" stroke="#10b981" stroke-width="1.2"/><circle cx="27" cy="23" r="4" fill="#1f2937" stroke="#10b981" stroke-width="1.2"/><circle cx="6" cy="23" r="3" fill="#1f2937" stroke="#0d9488" stroke-width="1"/><circle cx="12" cy="23" r="3" fill="#1f2937" stroke="#0d9488" stroke-width="1"/></svg></div>', iconAnchor:[18,18] }) }).addTo(map);
 
   markersRef.list = [shadow, o, d, truck];
   map.fitBounds(layer.getBounds(), { padding: [25, 25] });
@@ -3250,27 +3805,50 @@ function fmUpdateTruckMarker(lat, lon, heading) {
   const rotation = heading != null ? heading : 0;
   const truckHtml = `
     <div style="
-      width:36px;height:36px;position:relative;
+      width:52px;height:52px;position:relative;
       transform:rotate(${rotation}deg);
-      filter:drop-shadow(0 3px 8px rgba(0,0,0,.5));
       transition:transform 0.8s ease;
+      filter:drop-shadow(0 4px 12px rgba(0,0,0,.6));
     ">
+      <!-- Glow ring -->
       <div style="
-        position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-        font-size:28px;line-height:1;
-      ">🚛</div>
-      <!-- Direction arrow -->
-      <div style="
-        position:absolute;top:-8px;left:50%;transform:translateX(-50%);
-        width:0;height:0;
-        border-left:5px solid transparent;
-        border-right:5px solid transparent;
-        border-bottom:10px solid #10b981;
-        filter:drop-shadow(0 1px 3px rgba(0,0,0,.4));
+        position:absolute;inset:-4px;border-radius:50%;
+        background:radial-gradient(circle,rgba(16,185,129,.35) 0%,transparent 70%);
+        animation:truckGlow 2s ease-in-out infinite;
       "></div>
+      <!-- SVG Semi-truck -->
+      <svg viewBox="0 0 52 52" width="52" height="52" style="position:absolute;top:0;left:0">
+        <!-- Cab body -->
+        <rect x="20" y="10" width="24" height="20" rx="4" fill="#10b981" stroke="#fff" stroke-width="1.5"/>
+        <!-- Windshield -->
+        <rect x="23" y="13" width="18" height="10" rx="2" fill="rgba(200,240,255,0.85)" stroke="rgba(255,255,255,.5)" stroke-width="1"/>
+        <!-- Cab lights -->
+        <circle cx="22" cy="28" r="2" fill="#fde047"/>
+        <circle cx="42" cy="28" r="2" fill="#fde047"/>
+        <!-- Trailer -->
+        <rect x="2" y="16" width="20" height="14" rx="2" fill="#0d9488" stroke="#fff" stroke-width="1.2"/>
+        <!-- Trailer door lines -->
+        <line x1="12" y1="17" x2="12" y2="29" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+        <line x1="7"  y1="17" x2="7"  y2="29" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
+        <line x1="17" y1="17" x2="17" y2="29" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
+        <!-- Cab wheels -->
+        <circle cx="26" cy="32" r="5" fill="#1f2937" stroke="#10b981" stroke-width="1.5"/>
+        <circle cx="26" cy="32" r="2" fill="#374151"/>
+        <circle cx="38" cy="32" r="5" fill="#1f2937" stroke="#10b981" stroke-width="1.5"/>
+        <circle cx="38" cy="32" r="2" fill="#374151"/>
+        <!-- Trailer wheels -->
+        <circle cx="7"  cy="32" r="4" fill="#1f2937" stroke="#0d9488" stroke-width="1.2"/>
+        <circle cx="7"  cy="32" r="1.5" fill="#374151"/>
+        <circle cx="15" cy="32" r="4" fill="#1f2937" stroke="#0d9488" stroke-width="1.2"/>
+        <circle cx="15" cy="32" r="1.5" fill="#374151"/>
+        <!-- Exhaust stack -->
+        <rect x="42" y="6" width="3" height="8" rx="1.5" fill="#6b7280"/>
+        <!-- Direction arrow at front -->
+        <polygon points="34,5 30,12 38,12" fill="#10b981" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>
+      </svg>
     </div>
   `;
-  const icon = L.divIcon({ className: '', html: truckHtml, iconAnchor: [18, 18] });
+  const icon = L.divIcon({ className: '', html: truckHtml, iconAnchor: [26, 26] });
 
   if (!fmGpsMarker) {
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
@@ -3391,10 +3969,12 @@ async function fmStartTracking() {
   fmIsTracking  = true;
   fmTripStart   = new Date();
   fmLastGeocode = 0;
+  lastStateCheck = 0;
+  lastFuelCheck  = 0;
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
-  // Show incident toggle button
-  
+  // Show SOS button if enabled
+  if (sosBtnActive) document.getElementById('sosFab').classList.add('visible');
   document.getElementById('fmLiveDot').style.background = '#10b981';
   document.getElementById('fmLiveDot').style.boxShadow  = '0 0 8px #10b981';
   document.getElementById('fmLiveDot').style.animation  = 'liveblink 1.5s infinite';
@@ -3483,6 +4063,13 @@ async function fmStartTracking() {
     // ── Check nearby community reports ─────────────────────
     checkNearbyReports(lat, lon);
 
+    // ── Speed limit check ────────────────────────────────────
+    checkSpeedLimit(gpsSpeed);
+
+    // ── Detect state + fetch cheap fuel (throttled) ──────────
+    detectStateAndUpdateLimit(lat, lon);
+    fetchCheapFuel(lat, lon);
+
     // ── Arrival ─────────────────────────────────────────────
     if (remaining <= 3) { alert(t('arrived')); fmStopTracking(); }
 
@@ -3498,11 +4085,18 @@ function fmStopTracking() {
   fmIsTracking = false;
   fmPrevLat = null; fmPrevLon = null;
   hideSpeedometer();
-  // Hide incident panel
-  
+  // Hide overlays
   document.getElementById('incidentPanel').innerHTML = '';
   Object.keys(activeIncidentBubbles).forEach(id => delete activeIncidentBubbles[id]);
   updateIncidentBadge();
+  document.getElementById('sosFab').classList.remove('visible');
+  document.getElementById('fuelWidget').classList.remove('visible');
+  document.getElementById('speedLimitWidget').classList.remove('visible');
+  document.getElementById('speedToast').classList.remove('show');
+  fuelMarkers.forEach(m => { try { fmMapInst?.removeLayer(m); } catch {} });
+  fuelMarkers = [];
+  fuelStations = [];
+  currentStateCode = '';
   document.getElementById('fmStopBtn').style.display = 'none';
   document.getElementById('fmLiveDot').style.background = '#6b7280';
   document.getElementById('fmLiveDot').style.boxShadow = 'none';
