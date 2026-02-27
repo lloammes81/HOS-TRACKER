@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="HOS Tracker" />
+<meta name="apple-mobile-web-app-title" content="fab-visual™" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#10b981" />
-<title>HOS Tracker 🚛</title>
+<title>fab-visual™ 🚛</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
@@ -172,6 +172,8 @@
     display: flex; align-items: center; gap: 8px;
     line-height: 1;
   }
+  .logo span { background: linear-gradient(135deg, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .logo sup { font-size: 11px; font-family: "DM Sans", sans-serif; font-weight: 900; color: var(--accent); -webkit-text-fill-color: var(--accent); margin-top: -8px; letter-spacing: 0; }
   .subtitle {
     font-size: 11px; color: var(--muted);
     margin-top: 3px; font-weight: 600;
@@ -523,6 +525,579 @@
   @media (max-height: 500px) {
     .suggestions { max-height: 140px; }
   }
+
+  /* ══════════════════════════════════════════
+     SAFETY FEATURES — shared alert styles
+  ══════════════════════════════════════════ */
+
+  /* Full-screen danger flash overlay */
+  .danger-flash {
+    position: fixed; inset: 0; z-index: 9999;
+    pointer-events: none;
+    animation: dangerFlash .5s ease-in-out infinite;
+  }
+  @keyframes dangerFlash {
+    0%,100% { background: rgba(239,68,68,0); }
+    50%      { background: rgba(239,68,68,0.22); }
+  }
+
+  /* Toast alert banner */
+  .safety-toast {
+    position: fixed; top: calc(14px + env(safe-area-inset-top,0px));
+    left: 14px; right: 14px; z-index: 9000;
+    border-radius: 16px; padding: 14px 16px;
+    display: flex; align-items: flex-start; gap: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    transform: translateY(-120px); opacity: 0;
+    transition: transform .35s cubic-bezier(.16,1,.3,1), opacity .35s;
+    pointer-events: all;
+    max-width: 520px; margin: 0 auto;
+  }
+  .safety-toast.show { transform: translateY(0); opacity: 1; }
+  .safety-toast.danger  { background: #1a0505; border: 1.5px solid #ef4444; }
+  .safety-toast.warning { background: #1a1005; border: 1.5px solid #f59e0b; }
+  .safety-toast.info    { background: #05101a; border: 1.5px solid #3b82f6; }
+  .toast-icon { font-size: 28px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+  .toast-body { flex: 1; }
+  .toast-title { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 3px; }
+  .toast-msg   { font-size: 12px; color: rgba(255,255,255,.75); line-height: 1.4; }
+  .toast-close {
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,.12); color: #fff;
+    font-size: 16px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "DM Sans",sans-serif;
+  }
+
+  /* ── FATIGUE DETECTOR ─────────────────────── */
+  #fatigueOverlay {
+    position: fixed; inset: 0; z-index: 8000;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.92);
+    gap: 20px; padding: 24px;
+  }
+  #fatigueOverlay.active { display: flex; }
+  #fatigueVideo {
+    width: 120px; height: 120px; border-radius: 50%;
+    object-fit: cover; border: 3px solid #ef4444;
+    transform: scaleX(-1); /* mirror */
+  }
+  .fatigue-status-ring {
+    width: 140px; height: 140px; border-radius: 50%;
+    position: absolute;
+    border: 4px solid #ef4444;
+    animation: ringPulse 1s infinite;
+  }
+  @keyframes ringPulse {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.15); opacity: .4; }
+  }
+  #fatigueAlert {
+    position: fixed; inset: 0; z-index: 9500;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(180,0,0,0.97);
+    gap: 16px; padding: 32px; text-align: center;
+  }
+  #fatigueAlert.show { display: flex; animation: dangerFlash .4s ease-in-out 3; }
+  #fatigueAlert .alert-emoji { font-size: 80px; animation: shake .3s infinite; }
+  #fatigueAlert .alert-title { font-family:"Bebas Neue",sans-serif; font-size:52px; color:#fff; letter-spacing:2px; line-height:1; }
+  #fatigueAlert .alert-sub { font-size:18px; color:rgba(255,255,255,.85); font-weight:700; }
+  #fatigueAlert .alert-dismiss {
+    margin-top:16px; padding:16px 40px; border-radius:14px; border:none;
+    background:#fff; color:#ef4444; font-family:"DM Sans",sans-serif;
+    font-size:16px; font-weight:900; cursor:pointer;
+  }
+  @keyframes shake {
+    0%,100%{ transform:rotate(-8deg); }
+    50%    { transform:rotate(8deg); }
+  }
+
+  /* ── WEATHER WIDGET ──────────────────────── */
+  #weatherWidget {
+    position: fixed;
+    bottom: calc(var(--tab-h) + 12px);
+    right: 14px; right: calc(14px + env(safe-area-inset-right,0px));
+    z-index: 500;
+    background: rgba(15,23,42,0.88);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-radius: 16px; padding: 10px 14px;
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 4px 24px rgba(0,0,0,.4);
+    color: #f1f5f9;
+    min-width: 120px;
+    display: none;
+    cursor: pointer;
+    transition: transform .2s;
+  }
+  #weatherWidget:active { transform: scale(.96); }
+  #weatherWidget.visible { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .wx-row { display: flex; align-items: center; gap: 8px; }
+  .wx-icon { font-size: 26px; line-height: 1; }
+  .wx-temp { font-family:"Bebas Neue",sans-serif; font-size: 28px; line-height:1; }
+  .wx-desc { font-size: 10px; color: rgba(255,255,255,.6); font-weight:600; text-transform:uppercase; letter-spacing:.4px; margin-top:2px; }
+  .wx-danger { color: #ef4444 !important; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ── BRIDGE DETECTOR ─────────────────────── */
+  #bridgeInput {
+    position: fixed;
+    bottom: calc(var(--tab-h) + 12px);
+    left: 14px; left: calc(14px + env(safe-area-inset-left,0px));
+    z-index: 500;
+    background: rgba(15,23,42,0.88);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-radius: 16px; padding: 10px 14px;
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 4px 24px rgba(0,0,0,.4);
+    color: #f1f5f9; display: none;
+    min-width: 150px;
+  }
+  #bridgeInput.visible { display: block; animation: fadeIn .3s ease; }
+  .bridge-label { font-size: 9px; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; font-weight:700; }
+  .bridge-row { display:flex; align-items:center; gap:6px; }
+  .bridge-val { font-family:"Bebas Neue",sans-serif; font-size:26px; color:#f59e0b; line-height:1; }
+  .bridge-ft  { font-size:11px; color:rgba(255,255,255,.5); font-weight:600; }
+  .bridge-btns { display:flex; gap:4px; margin-top:6px; }
+  .bridge-btn {
+    flex:1; padding:5px; border-radius:8px; border:none;
+    font-family:"DM Sans",sans-serif; font-size:13px; font-weight:700;
+    cursor:pointer; background:rgba(255,255,255,.1); color:#fff;
+  }
+  .bridge-btn:active { background:rgba(255,255,255,.2); }
+
+  /* ══════════════════════════════════════════
+     MAP POI POPUPS & REPORT SYSTEM
+  ══════════════════════════════════════════ */
+  /* POI legend bar on fullscreen map */
+  #poiLegend {
+    position:absolute; top:calc(76px + env(safe-area-inset-top,0px));
+    left: calc(14px + env(safe-area-inset-left,0px));
+    right: calc(14px + env(safe-area-inset-right,0px));
+    z-index:10; display:none;
+    gap:6px; flex-wrap:wrap;
+    pointer-events:none;
+  }
+  #poiLegend.visible { display:flex; }
+  .poi-chip {
+    display:flex; align-items:center; gap:4px;
+    background:rgba(15,23,42,0.85); backdrop-filter:blur(8px);
+    border-radius:999px; padding:5px 10px;
+    font-size:11px; font-weight:700; color:#f1f5f9;
+    border:1px solid rgba(255,255,255,.1);
+    pointer-events:all; cursor:pointer;
+    transition:background .15s;
+  }
+  .poi-chip:active { background:rgba(255,255,255,.15); }
+  .poi-chip.off { opacity:.45; }
+
+  /* Report button (Waze-style FAB on map) */
+  #reportFab {
+    position:absolute;
+    right: calc(14px + env(safe-area-inset-right,0px));
+    bottom: 300px;
+    z-index:10;
+    width:52px; height:52px; border-radius:50%; border:none;
+    background:#f59e0b; color:#fff;
+    font-size:22px; cursor:pointer;
+    box-shadow:0 4px 16px rgba(245,158,11,.5);
+    display:none; align-items:center; justify-content:center;
+    transition:transform .15s;
+  }
+  #reportFab.visible { display:flex; }
+  #reportFab:active { transform:scale(.92); }
+
+  /* ── ACTIVE INCIDENT MINI ICON (settings) ───── */
+  .inc-mini-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border: 2px solid var(--border);
+    animation: iconPop .3s cubic-bezier(.34,1.56,.64,1);
+    cursor: default;
+    position: relative;
+  }
+  @keyframes iconPop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  /* Keep report panel CSS but hide the FAB */
+  #reportFab { display: none !important; }
+
+  /* Report panel */
+  #reportPanel {
+    position:absolute; bottom:0; left:0; right:0; z-index:20;
+    background:rgba(10,16,30,0.97); backdrop-filter:blur(20px);
+    border-radius:22px 22px 0 0;
+    padding:20px 16px calc(24px + env(safe-area-inset-bottom,0px));
+    transform:translateY(100%);
+    transition:transform .35s cubic-bezier(.16,1,.3,1);
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+  #reportPanel.open { transform:translateY(0); }
+  .report-handle { width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:999px;margin:0 auto 16px; }
+  .report-title { font-family:"Bebas Neue",sans-serif;font-size:22px;color:#fff;letter-spacing:1px;margin-bottom:14px;text-align:center; }
+  .report-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
+  .report-type {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px; padding:14px 8px; border-radius:14px;
+    border:1.5px solid rgba(255,255,255,.1); background:rgba(255,255,255,.05);
+    cursor:pointer; color:#f1f5f9; font-size:11px; font-weight:700;
+    text-align:center; transition:all .15s; min-height:72px;
+  }
+  .report-type:active { background:rgba(255,255,255,.15); transform:scale(.97); }
+  .report-type .rt-icon { font-size:26px; line-height:1; }
+  .report-cancel {
+    width:100%; padding:13px; border-radius:12px; border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.08); color:#f1f5f9;
+    font-family:"DM Sans",sans-serif; font-size:15px; font-weight:700; cursor:pointer;
+  }
+
+  /* Community alert banner on map */
+  .map-alert-banner {
+    position:absolute; z-index:15;
+    left: calc(14px + env(safe-area-inset-left,0px));
+    right: calc(14px + env(safe-area-inset-right,0px));
+    top:calc(140px + env(safe-area-inset-top,0px));
+    background:rgba(245,158,11,0.95); border-radius:14px; padding:10px 14px;
+    display:flex; align-items:center; gap:10px;
+    color:#000; font-weight:700; font-size:13px;
+    animation:slideDown .3s ease;
+    pointer-events:none;
+  }
+  @keyframes slideDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+  .map-alert-banner .ban-icon { font-size:22px; flex-shrink:0; }
+  .map-alert-banner .ban-txt { flex:1; line-height:1.3; }
+  .map-alert-banner .ban-dist { font-size:11px; opacity:.7; }
+
+  /* Zoom controls replacement — right side */
+  .fm-zoom-btns {
+    position:absolute;
+    right: calc(14px + env(safe-area-inset-right,0px));
+    top: 50%; transform:translateY(-50%);
+    z-index:10; display:flex; flex-direction:column; gap:6px;
+  }
+  .fm-zoom-btn {
+    width:40px; height:40px; border-radius:12px; border:none;
+    background:rgba(15,23,42,0.85); backdrop-filter:blur(8px);
+    color:#fff; font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 8px rgba(0,0,0,.3); transition:transform .12s;
+  }
+  .fm-zoom-btn:active { transform:scale(.92); }
+
+  /* ══════════════════════════════════════════
+     CIRCULAR SPEEDOMETER WIDGET
+  ══════════════════════════════════════════ */
+  #speedometerWidget {
+    position: fixed;
+    bottom: calc(var(--tab-h) + 16px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 600;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+  }
+  #speedometerWidget.visible { display: flex; }
+  .speedo-ring {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    background: rgba(10,16,30,0.95);
+    border: 3px solid #10b981;
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.15), 0 0 24px rgba(16,185,129,0.25), 0 8px 32px rgba(0,0,0,0.6);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative;
+    backdrop-filter: blur(16px);
+  }
+  .speedo-ring.moving {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.3), 0 0 30px rgba(16,185,129,0.4), 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .speedo-ring.stopped {
+    border-color: #6b7280;
+    box-shadow: 0 0 0 2px rgba(107,114,128,0.15), 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .speedo-svg {
+    position: absolute; top: -5px; left: -5px;
+    width: 120px; height: 120px;
+    pointer-events: none;
+  }
+  .speedo-num {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 42px; line-height: 1;
+    color: #10b981;
+    letter-spacing: 1px;
+    z-index: 1;
+  }
+  .speedo-num.stopped { color: #6b7280; }
+  .speedo-unit {
+    font-size: 10px; font-weight: 800;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    z-index: 1;
+    margin-top: -4px;
+  }
+  .speedo-label {
+    font-size: 9px; font-weight: 700;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: .8px;
+    margin-top: 3px;
+  }
+
+  /* ══════════════════════════════════════════
+     INCIDENT BUBBLES PANEL (left side, stacked)
+  ══════════════════════════════════════════ */
+  #incidentPanel {
+    position: fixed;
+    left: calc(10px + env(safe-area-inset-left, 0px));
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 700;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .incident-bubble {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 1px;
+    pointer-events: all;
+    cursor: pointer;
+    border: 2.5px solid #fff;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.55);
+    animation: bubbleIn .3s cubic-bezier(.34,1.56,.64,1);
+    position: relative;
+    transition: transform .15s;
+  }
+  .incident-bubble:active { transform: scale(0.93); }
+  @keyframes bubbleIn {
+    from { opacity: 0; transform: scale(0.4) translateX(-20px); }
+    to   { opacity: 1; transform: scale(1) translateX(0); }
+  }
+  .incident-bubble.police   { background: #1d3a8a; border-color: #93c5fd; }
+  .incident-bubble.accident { background: #7f1d1d; border-color: #fca5a5; }
+  .incident-bubble.traffic  { background: #78350f; border-color: #fcd34d; }
+  .incident-bubble.hazard   { background: #7c2d12; border-color: #fdba74; }
+  .incident-bubble.construction { background: #713f12; border-color: #fde68a; }
+  .incident-bubble.closure  { background: #450a0a; border-color: #f87171; }
+  .ib-emoji { font-size: 24px; line-height: 1; }
+  .ib-dist  { font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.9); letter-spacing: .4px; }
+  .ib-label { font-size: 7px; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: .3px; text-align: center; line-height: 1.2; max-width: 52px; }
+  /* dismiss X on bubble */
+  .ib-close {
+    position: absolute; top: -3px; right: -3px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.7);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    color: #fff; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900;
+  }
+  /* Toggle button for incident panel */
+  #incidentToggleBtn {
+    position: fixed;
+    left: calc(10px + env(safe-area-inset-left, 0px));
+    top: calc(var(--header-pt) + 60px);
+    z-index: 701;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: rgba(10,16,30,0.88);
+    backdrop-filter: blur(12px);
+    color: #fff; font-size: 18px;
+    display: none;
+    align-items: center; justify-content: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    cursor: pointer;
+    transition: background .2s;
+  }
+  #incidentToggleBtn.visible { display: flex; }
+  #incidentToggleBtn.has-incidents {
+    background: rgba(239,68,68,0.85);
+    border-color: rgba(255,255,255,0.4);
+    animation: incidentBtnPulse 2s ease-in-out infinite;
+  }
+  @keyframes incidentBtnPulse {
+    0%,100% { box-shadow: 0 2px 12px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(239,68,68,0.25), 0 2px 12px rgba(0,0,0,0.4); }
+  }
+  .incident-badge {
+    position: absolute; top: -4px; right: -4px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #ef4444; color: #fff;
+    font-size: 10px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #fff;
+  }
+
+  /* ══════════════════════════════════════════
+     FULL-SCREEN ALERT — only for HOS/weather/bridge
+  ══════════════════════════════════════════ */
+  #fullscreenAlertOverlay {
+    position: fixed; inset: 0; z-index: 19000;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 24px;
+    animation: alertPulse .6s ease-in-out infinite alternate;
+  }
+  #fullscreenAlertOverlay.show { display: flex; }
+  #fullscreenAlertOverlay.police {
+    background: rgba(30,40,80,0.98);
+    border: 4px solid #3b82f6;
+  }
+  #fullscreenAlertOverlay.danger-alert {
+    background: rgba(80,10,10,0.98);
+    border: 4px solid #ef4444;
+  }
+  #fullscreenAlertOverlay.warning-alert {
+    background: rgba(50,35,10,0.98);
+    border: 4px solid #f59e0b;
+  }
+  @keyframes alertPulse {
+    from { box-shadow: inset 0 0 0px rgba(255,255,255,0); }
+    to   { box-shadow: inset 0 0 60px rgba(255,255,255,0.04); }
+  }
+  .fs-alert-emoji {
+    font-size: 100px; line-height: 1;
+    filter: drop-shadow(0 0 20px rgba(255,255,255,0.3));
+    animation: alertBounce 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes alertBounce {
+    from { transform: scale(1); }
+    to   { transform: scale(1.1); }
+  }
+  .fs-alert-title {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 64px; color: #fff;
+    letter-spacing: 3px; line-height: 1;
+    margin-top: 16px;
+    text-shadow: 0 0 30px rgba(255,255,255,0.3);
+  }
+  .fs-alert-sub {
+    font-size: 20px; color: rgba(255,255,255,0.85);
+    font-weight: 700; margin-top: 10px;
+    line-height: 1.4; max-width: 320px;
+  }
+  .fs-alert-dist {
+    font-size: 16px; color: rgba(255,255,255,0.55);
+    margin-top: 8px; font-weight: 600;
+  }
+  .fs-alert-dismiss {
+    margin-top: 32px;
+    padding: 18px 48px;
+    border-radius: 16px; border: none;
+    font-family: "DM Sans", sans-serif;
+    font-size: 18px; font-weight: 900;
+    cursor: pointer;
+    min-width: 260px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    transition: transform .12s;
+  }
+  .fs-alert-dismiss:active { transform: scale(0.96); }
+  .fs-alert-dismiss.police-btn { background: #3b82f6; color: #fff; }
+  .fs-alert-dismiss.danger-btn { background: #ef4444; color: #fff; }
+  .fs-alert-dismiss.warning-btn { background: #f59e0b; color: #000; }
+  /* Flashing light bar for police */
+  .police-lightbar {
+    display: none;
+    width: 100%;
+    height: 18px;
+    position: absolute; top: 0; left: 0;
+    border-radius: 0;
+    overflow: hidden;
+  }
+  .fs-alert-overlay.police .police-lightbar { display: block; }
+  #fullscreenAlertOverlay.police .police-lightbar { display: flex; }
+  .police-lightbar-inner {
+    flex: 1;
+    animation: lightbarFlash 0.35s linear infinite alternate;
+  }
+  .police-lightbar-inner:nth-child(odd) {
+    background: #3b82f6;
+    animation-direction: alternate;
+  }
+  .police-lightbar-inner:nth-child(even) {
+    background: #ef4444;
+    animation-direction: alternate-reverse;
+  }
+  @keyframes lightbarFlash {
+    from { opacity: 1; }
+    to { opacity: 0.15; }
+  }
+
+  /* ══════════════════════════════════════════
+     REST ALARM OVERLAY
+  ══════════════════════════════════════════ */
+  #restAlarmOverlay {
+    position: fixed; inset: 0; z-index: 18000;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 24px;
+    background: rgba(5,30,50,0.97);
+    border: 4px solid #3b82f6;
+  }
+  #restAlarmOverlay.show { display: flex; }
+  .rest-alarm-emoji { font-size: 90px; animation: restPulse 1s ease-in-out infinite; }
+  @keyframes restPulse {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+  }
+  .rest-alarm-title {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 58px; color: #3b82f6;
+    letter-spacing: 2px; margin-top: 14px;
+  }
+  .rest-alarm-sub {
+    font-size: 18px; color: rgba(255,255,255,0.8);
+    font-weight: 700; margin-top: 8px; max-width: 300px;
+  }
+  .rest-alarm-timer {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 80px; color: #f59e0b;
+    letter-spacing: 2px; margin-top: 10px;
+    line-height: 1;
+  }
+  .rest-alarm-dismiss {
+    margin-top: 28px; padding: 18px 48px;
+    border-radius: 16px; border: none;
+    background: #3b82f6; color: #fff;
+    font-family: "DM Sans", sans-serif;
+    font-size: 18px; font-weight: 900; cursor: pointer;
+    min-width: 260px;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.5);
+  }
+
+  /* Auto-follow toggle button */
+  #fmFollowBtn {
+    position:absolute;
+    right: calc(14px + env(safe-area-inset-right,0px));
+    bottom: 360px; z-index:10;
+    width:44px; height:44px; border-radius:50%; border:none;
+    background:rgba(15,23,42,0.88); backdrop-filter:blur(8px);
+    color:#fff; font-size:20px; cursor:pointer;
+    box-shadow:0 2px 12px rgba(0,0,0,.4);
+    display:none; align-items:center; justify-content:center;
+    transition:background .2s;
+  }
+  #fmFollowBtn.active { background:#10b981; box-shadow:0 2px 12px rgba(16,185,129,.5); }
+  #fmFollowBtn.visible { display:flex; }
 </style>
 </head>
 
@@ -566,7 +1141,7 @@
     <div class="container">
       <div class="header">
         <div class="row between">
-          <div class="logo">🚛 <span>HOS Tracker</span></div>
+          <div class="logo">🚛 <span>fab-visual™</span></div>
           <div class="row">
             <button class="iconbtn" id="themeToggle" title="Theme">🌙</button>
             <button class="iconbtn" id="gpsBtn" title="GPS" style="font-size:16px">📍</button>
@@ -814,12 +1389,143 @@
         </div>
       </div>
 
+      <!-- SAFETY FEATURES SECTION -->
+      <div class="sett-section">
+        <div class="sett-section-title">🛡️ Safety Features</div>
+        <div class="sett-group">
+
+          <!-- Fatigue Detector -->
+          <div class="sett-row" style="cursor:default">
+            <div class="sett-icon" style="background:#fce7f3">😴</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">Fatigue Detector</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="fatigueStatusTxt">Camera off</div>
+            </div>
+            <button class="sett-toggle" id="fatigueToggle"></button>
+          </div>
+
+          <!-- Weather Alerts -->
+          <div class="sett-row" style="cursor:default">
+            <div class="sett-icon" style="background:#e0f2fe">⛈️</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">Weather Alerts</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="weatherStatusTxt">Off</div>
+            </div>
+            <button class="sett-toggle" id="weatherToggle"></button>
+          </div>
+
+          <!-- Bridge Detector -->
+          <div class="sett-row" style="cursor:default">
+            <div class="sett-icon" style="background:#fef3c7">🌉</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">Low Bridge Detector</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="bridgeStatusTxt">Off — set trailer height</div>
+            </div>
+            <button class="sett-toggle" id="bridgeToggle"></button>
+          </div>
+
+          <!-- Trailer height input (visible when bridge toggle is ON) -->
+          <div id="trailerHeightRow" class="sett-row" style="cursor:default;display:none;background:var(--surface2)">
+            <div class="sett-icon" style="background:#fef3c7">📐</div>
+            <div class="sett-label" style="font-size:14px">Trailer Height</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" id="trailerHeightInput" min="8" max="18" step="0.1" value="13.6"
+                style="width:70px;padding:6px 8px;font-size:15px;font-weight:700;text-align:center;
+                       border-radius:8px;border:1.5px solid var(--border);background:var(--bg);
+                       color:var(--text);font-family:'DM Sans',sans-serif" />
+              <span style="font-size:12px;color:var(--muted);font-weight:700">ft</span>
+            </div>
+          </div>
+
+          <!-- ─── INCIDENT REPORTS (inside same Safety group) ─── -->
+          <div style="padding:12px 16px 6px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">🚨 Reportar Incidentes</div>
+            <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:12px;line-height:1.4">
+              Activa el tipo de incidente que quieras reportar. Aparece como ícono en el mapa al activarlo.
+            </div>
+
+            <!-- Incident toggles grid -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+
+              <!-- Police -->
+              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
+                <div style="width:32px;height:32px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🚔</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:700;color:var(--text)">Policía</div>
+                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incPoliceStatus">Off</div>
+                </div>
+                <button class="sett-toggle" id="incPoliceToggle" onclick="toggleIncidentType('police',this)" style="transform:scale(0.85);flex-shrink:0"></button>
+              </div>
+
+              <!-- Accident -->
+              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
+                <div style="width:32px;height:32px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">💥</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:700;color:var(--text)">Accidente</div>
+                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incAccidentStatus">Off</div>
+                </div>
+                <button class="sett-toggle" id="incAccidentToggle" onclick="toggleIncidentType('accident',this)" style="transform:scale(0.85);flex-shrink:0"></button>
+              </div>
+
+              <!-- Traffic -->
+              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
+                <div style="width:32px;height:32px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🚦</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:700;color:var(--text)">Tráfico</div>
+                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incTrafficStatus">Off</div>
+                </div>
+                <button class="sett-toggle" id="incTrafficToggle" onclick="toggleIncidentType('traffic',this)" style="transform:scale(0.85);flex-shrink:0"></button>
+              </div>
+
+              <!-- Hazard -->
+              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
+                <div style="width:32px;height:32px;border-radius:50%;background:#ffedd5;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">⚠️</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:700;color:var(--text)">Peligro</div>
+                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incHazardStatus">Off</div>
+                </div>
+                <button class="sett-toggle" id="incHazardToggle" onclick="toggleIncidentType('hazard',this)" style="transform:scale(0.85);flex-shrink:0"></button>
+              </div>
+
+              <!-- Construction -->
+              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
+                <div style="width:32px;height:32px;border-radius:50%;background:#fef9c3;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🚧</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:700;color:var(--text)">Construcción</div>
+                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incConstructionStatus">Off</div>
+                </div>
+                <button class="sett-toggle" id="incConstructionToggle" onclick="toggleIncidentType('construction',this)" style="transform:scale(0.85);flex-shrink:0"></button>
+              </div>
+
+              <!-- Closure -->
+              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
+                <div style="width:32px;height:32px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🛑</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:700;color:var(--text)">Vía Cerrada</div>
+                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incClosureStatus">Off</div>
+                </div>
+                <button class="sett-toggle" id="incClosureToggle" onclick="toggleIncidentType('closure',this)" style="transform:scale(0.85);flex-shrink:0"></button>
+              </div>
+
+            </div>
+
+            <!-- Active incident mini icons -->
+            <div id="activeIncidentIcons" style="display:none;padding:8px 0 4px">
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Activos:</div>
+              <div id="activeIconsRow" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+            </div>
+
+          </div>
+
+        </div><!-- end sett-group -->
+      </div><!-- end safety sett-section -->
+
       <div class="sett-section">
         <div class="sett-section-title" id="settSecAbout">About</div>
         <div class="sett-group">
           <div class="sett-row">
             <div class="sett-icon" style="background:#d1fae5">🚛</div>
-            <div class="sett-label">HOS Tracker</div>
+            <div class="sett-label">fab-visual™</div>
             <div class="sett-value">v6.0</div>
           </div>
           <div class="sett-row" id="shareAppRow">
@@ -854,6 +1560,25 @@
     padding-bottom:0;
     pointer-events:none;
   ">
+
+  <!-- POI Filter chips -->
+  <div id="poiLegend">
+    <div class="poi-chip" id="chipScale"    onclick="togglePOI('scale')">⚖️ Scales</div>
+    <div class="poi-chip" id="chipTruck"    onclick="togglePOI('truck')">🚛 Truck Stops</div>
+    <div class="poi-chip" id="chipRest"     onclick="togglePOI('rest')">😴 Rest Areas</div>
+    <div class="poi-chip" id="chipReport"   onclick="togglePOI('reports')">🚨 Reports</div>
+  </div>
+
+  <!-- Auto-follow button -->
+  <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
+
+  <!-- Custom zoom buttons -->
+  <div class="fm-zoom-btns">
+    <button class="fm-zoom-btn" onclick="fmMapInst && fmMapInst.zoomIn()">+</button>
+    <button class="fm-zoom-btn" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
+  </div>
+
+
     <!-- Left: close btn -->
     <button id="closeFullMap" style="
       pointer-events:all;
@@ -995,10 +1720,12 @@
     </div>
 
     <!-- Stop button (only when tracking) -->
-    <button id="fmStopBtn" style="
-      display:none;width:100%;margin-top:12px;padding:12px;
+    <button id="fmStopBtn" onclick="fmStopTracking()" style="
+      display:none;width:100%;margin-top:12px;padding:14px;
       background:#ef4444;color:#fff;border:none;border-radius:12px;
-      font-family:'DM Sans',sans-serif;font-size:15px;font-weight:800;cursor:pointer;
+      font-family:'DM Sans',sans-serif;font-size:16px;font-weight:800;cursor:pointer;
+      touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+      box-shadow:0 4px 16px rgba(239,68,68,0.4);
     ">🛑 Detener Seguimiento</button>
   </div>
 </div>
@@ -1006,6 +1733,7 @@
 <style>
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 </style>
 
 
@@ -1038,6 +1766,133 @@
       <button class="btn btn-red" id="stopTrackBtn">🛑 Stop Tracking</button>
     </div>
   </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SAFETY OVERLAYS
+══════════════════════════════════════════════════════════ -->
+
+<!-- Toast notification (shared) -->
+<div class="safety-toast" id="safetyToast">
+  <div class="toast-icon" id="toastIcon">⚠️</div>
+  <div class="toast-body">
+    <div class="toast-title" id="toastTitle">Alert</div>
+    <div class="toast-msg" id="toastMsg"></div>
+  </div>
+  <button class="toast-close" onclick="hideToast()">×</button>
+</div>
+
+<!-- Screen flash -->
+<div class="danger-flash" id="dangerFlash" style="display:none"></div>
+
+<!-- ── FATIGUE DETECTOR overlay ──────────────────────────── -->
+<div id="fatigueOverlay">
+  <div style="position:relative;display:flex;align-items:center;justify-content:center">
+    <div class="fatigue-status-ring" id="fatigueRing" style="display:none"></div>
+    <video id="fatigueVideo" autoplay muted playsinline></video>
+  </div>
+  <div style="text-align:center;color:#fff">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:#10b981">FATIGUE MONITOR</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:4px" id="fatigueStateTxt">Initializing camera...</div>
+  </div>
+  <button onclick="toggleFatigueOverlay()" style="
+    padding:13px 32px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
+    background:rgba(255,255,255,.08);color:#fff;font-family:'DM Sans',sans-serif;
+    font-size:14px;font-weight:700;cursor:pointer">
+    ← Close Monitor
+  </button>
+</div>
+
+<!-- ── FATIGUE ALERT full screen ────────────────────────── -->
+<div id="fatigueAlert">
+  <div class="alert-emoji">😴</div>
+  <div class="alert-title">¡WAKE UP!</div>
+  <div class="alert-sub">Fatigue detected — Pull over safely now</div>
+  <button class="alert-dismiss" onclick="dismissFatigueAlert()">✅ I'M AWAKE — DISMISS</button>
+</div>
+
+<!-- ── WEATHER WIDGET ───────────────────────────────────── -->
+<div id="weatherWidget" onclick="showWeatherDetail()">
+  <div class="wx-row">
+    <div class="wx-icon" id="wxIcon">🌤️</div>
+    <div>
+      <div class="wx-temp" id="wxTemp">--°</div>
+    </div>
+  </div>
+  <div class="wx-desc" id="wxDesc">Loading...</div>
+  <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:4px" id="wxWind"></div>
+</div>
+
+<!-- ── BRIDGE WIDGET ────────────────────────────────────── -->
+<div id="bridgeInput">
+  <div class="bridge-label">🌉 TRAILER HEIGHT</div>
+  <div class="bridge-row">
+    <div class="bridge-val" id="bridgeDisplayVal">13.6</div>
+    <div class="bridge-ft">ft</div>
+  </div>
+  <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;line-height:1.3" id="bridgeNextTxt">Monitoring route...</div>
+  <div class="bridge-btns">
+    <button class="bridge-btn" onclick="adjustHeight(-0.1)">▼</button>
+    <button class="bridge-btn" onclick="adjustHeight(+0.1)">▲</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CIRCULAR SPEEDOMETER WIDGET
+══════════════════════════════════════ -->
+<div id="speedometerWidget">
+  <div class="speedo-ring stopped" id="speedoRing">
+    <svg class="speedo-svg" id="speedoSvg" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="55" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="6"/>
+      <circle cx="60" cy="60" r="55" fill="none" stroke="#10b981" stroke-width="6"
+              stroke-linecap="round" stroke-dasharray="0 345" id="speedoArc"
+              transform="rotate(-220 60 60)" style="transition:stroke-dasharray .5s ease"/>
+    </svg>
+    <div class="speedo-num stopped" id="speedoNum">0</div>
+    <div class="speedo-unit">MPH</div>
+  </div>
+  <div class="speedo-label" id="speedoLabel">GPS SPEED</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     INCIDENT BUBBLES PANEL (left side)
+══════════════════════════════════════ -->
+<div id="incidentPanel"></div>
+
+<!-- ══════════════════════════════════════
+     FULL-SCREEN ALERT (Police / Danger / Warning)
+══════════════════════════════════════ -->
+<div id="fullscreenAlertOverlay">
+  <div class="police-lightbar" id="policeLightbar">
+    <div class="police-lightbar-inner"></div>
+    <div class="police-lightbar-inner"></div>
+    <div class="police-lightbar-inner"></div>
+    <div class="police-lightbar-inner"></div>
+    <div class="police-lightbar-inner"></div>
+    <div class="police-lightbar-inner"></div>
+    <div class="police-lightbar-inner"></div>
+    <div class="police-lightbar-inner"></div>
+  </div>
+  <div class="fs-alert-emoji" id="fsAlertEmoji">🚔</div>
+  <div class="fs-alert-title" id="fsAlertTitle">POLICÍA ADELANTE</div>
+  <div class="fs-alert-sub" id="fsAlertSub">Reportado por conductor en la ruta</div>
+  <div class="fs-alert-dist" id="fsAlertDist"></div>
+  <button class="fs-alert-dismiss police-btn" id="fsAlertDismissBtn" onclick="dismissFullscreenAlert()">
+    ✅ ENTENDIDO — CONTINUAR
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════
+     REST ALARM OVERLAY
+══════════════════════════════════════ -->
+<div id="restAlarmOverlay">
+  <div class="rest-alarm-emoji" id="restAlarmEmoji">😴</div>
+  <div class="rest-alarm-title" id="restAlarmTitle">¡HORA DE DESCANSAR!</div>
+  <div class="rest-alarm-sub" id="restAlarmSub">Has manejado 8 horas. DOT requiere descanso de 10 horas.</div>
+  <div class="rest-alarm-timer" id="restAlarmTimer">10:00</div>
+  <button class="rest-alarm-dismiss" onclick="dismissRestAlarm()">
+    😴 INICIAR DESCANSO
+  </button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1131,6 +1986,723 @@ let miniMarkersList = [], fullMarkersList = [];
 let watchId = null;
 let tripStart = null;
 
+/* ── Safety feature states ────────────────────── */
+let fatigueActive   = localStorage.getItem('hos_fatigue')  !== 'false' ? false : false;
+let weatherActive   = localStorage.getItem('hos_weather')  === 'true';
+let bridgeActive    = localStorage.getItem('hos_bridge')   === 'true';
+let trailerHeight   = parseFloat(localStorage.getItem('hos_trailer') || '13.6');
+
+// Fatigue internals
+let fatigueStream   = null;
+let fatigueInterval = null;
+let fatigueEyeHistory = [];   // rolling window of "eyes open?" booleans
+let fatigueAlertActive = false;
+
+// Weather internals
+let weatherInterval = null;
+let lastWeatherLat  = null;
+let lastWeatherLon  = null;
+
+// Bridge internals
+let bridgeInterval  = null;
+let lastBridgeLat   = null;
+let lastBridgeLon   = null;
+
+/* ════════════════════════════════════════════════════════════
+   SHARED TOAST SYSTEM
+════════════════════════════════════════════════════════════ */
+let toastTimer = null;
+function showToast(type, icon, title, msg, autoDismiss = 6000) {
+  const el = document.getElementById('safetyToast');
+  el.className = `safety-toast ${type}`;
+  document.getElementById('toastIcon').textContent  = icon;
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent   = msg;
+  // Force reflow so transition plays
+  void el.offsetWidth;
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  if (autoDismiss) toastTimer = setTimeout(hideToast, autoDismiss);
+  if (navigator.vibrate) navigator.vibrate(type === 'danger' ? [200,80,200,80,400] : [100,50,100]);
+}
+function hideToast() {
+  document.getElementById('safetyToast').classList.remove('show');
+}
+
+function flashDanger(ms = 2000) {
+  const f = document.getElementById('dangerFlash');
+  f.style.display = 'block';
+  setTimeout(() => f.style.display = 'none', ms);
+}
+
+/* ════════════════════════════════════════════════════════════
+   😴  FATIGUE DETECTOR
+   Uses MediaPipe FaceMesh via @mediapipe/face_mesh CDN
+   to measure Eye Aspect Ratio (EAR). Falls back to a
+   simple blink-rate heuristic if MediaPipe is unavailable.
+════════════════════════════════════════════════════════════ */
+let faceMesh = null;
+let faceMeshReady = false;
+
+async function initFaceMesh() {
+  if (faceMeshReady) return;
+  try {
+    // Dynamically load MediaPipe FaceMesh
+    await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js');
+    faceMesh = new window.FaceMesh({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+    });
+    faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    faceMesh.onResults(onFaceMeshResults);
+    await faceMesh.initialize();
+    faceMeshReady = true;
+  } catch(e) {
+    // MediaPipe unavailable → use heuristic fallback
+    faceMeshReady = false;
+  }
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+// Eye Aspect Ratio from MediaPipe landmarks
+// Left eye: 33,160,158,133,153,144 | Right eye: 362,385,387,263,373,380
+function calcEAR(landmarks, pts) {
+  const p = i => landmarks[i];
+  const dist = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
+  const vert1 = dist(p(pts[1]), p(pts[5]));
+  const vert2 = dist(p(pts[2]), p(pts[4]));
+  const horiz = dist(p(pts[0]), p(pts[3]));
+  return (vert1 + vert2) / (2 * horiz);
+}
+
+const EAR_THRESHOLD = 0.21;   // below = eyes closed
+const EAR_FRAMES    = 20;     // ~2s at 10fps closed = alert
+
+let closedFrameCount = 0;
+
+function onFaceMeshResults(results) {
+  if (fatigueAlertActive) return;
+  if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+    // No face detected
+    document.getElementById('fatigueStateTxt').textContent = '⚠️ No face detected — look at camera';
+    return;
+  }
+  const lm = results.multiFaceLandmarks[0];
+  const earL = calcEAR(lm, [33,160,158,133,153,144]);
+  const earR = calcEAR(lm, [362,385,387,263,373,380]);
+  const ear  = (earL + earR) / 2;
+  const closed = ear < EAR_THRESHOLD;
+
+  if (closed) {
+    closedFrameCount++;
+    document.getElementById('fatigueRing').style.display = 'block';
+    document.getElementById('fatigueStateTxt').textContent = `😴 Eyes closing... (${closedFrameCount}/${EAR_FRAMES})`;
+  } else {
+    closedFrameCount = 0;
+    document.getElementById('fatigueRing').style.display = 'none';
+    document.getElementById('fatigueStateTxt').textContent = '✅ Eyes open — monitoring';
+  }
+
+  if (closedFrameCount >= EAR_FRAMES) triggerFatigueAlert();
+}
+
+// Heuristic fallback (no MediaPipe): detect head tilt via
+// DeviceOrientation — if phone tilts forward >25° for 3s = drowsy
+let headTiltTimer = null;
+function startHeuristicFatigue() {
+  document.getElementById('fatigueStateTxt').textContent = '📱 Tilt detection active (mount phone upright)';
+  window.addEventListener('deviceorientation', onDeviceOrientation);
+}
+function stopHeuristicFatigue() {
+  window.removeEventListener('deviceorientation', onDeviceOrientation);
+  if (headTiltTimer) { clearTimeout(headTiltTimer); headTiltTimer = null; }
+}
+function onDeviceOrientation(e) {
+  if (fatigueAlertActive) return;
+  const beta = Math.abs(e.beta || 0); // forward/backward tilt
+  // If phone tilts significantly (head drooping ≈ phone falls forward)
+  if (beta > 40) {
+    if (!headTiltTimer) {
+      headTiltTimer = setTimeout(() => {
+        triggerFatigueAlert();
+        headTiltTimer = null;
+      }, 3000);
+      document.getElementById('fatigueStateTxt').textContent = '⚠️ Head drooping detected...';
+    }
+  } else {
+    if (headTiltTimer) { clearTimeout(headTiltTimer); headTiltTimer = null; }
+    document.getElementById('fatigueStateTxt').textContent = '✅ Head position OK';
+  }
+}
+
+async function startFatigueDetector() {
+  document.getElementById('fatigueStatusTxt').textContent = lang === 'es' ? 'Iniciando cámara...' : 'Starting camera...';
+  try {
+    fatigueStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width:320, height:240 }, audio: false });
+    const video = document.getElementById('fatigueVideo');
+    video.srcObject = fatigueStream;
+    await video.play();
+
+    await initFaceMesh();
+
+    if (faceMeshReady) {
+      // Send frames to MediaPipe every 100ms
+      fatigueInterval = setInterval(async () => {
+        if (!fatigueActive || !faceMesh) return;
+        try { await faceMesh.send({ image: video }); } catch {}
+      }, 100);
+      document.getElementById('fatigueStateTxt').textContent = '✅ AI eye tracking active';
+    } else {
+      startHeuristicFatigue();
+    }
+    document.getElementById('fatigueStatusTxt').textContent = lang === 'es' ? '🟢 Activo' : '🟢 Active';
+  } catch(e) {
+    document.getElementById('fatigueStatusTxt').textContent = lang === 'es' ? '❌ Sin acceso a cámara' : '❌ Camera access denied';
+    fatigueActive = false;
+    document.getElementById('fatigueToggle').classList.remove('on');
+    showToast('warning','📷', 'Camera Required', 'Allow camera access to use Fatigue Detector.');
+  }
+}
+
+function stopFatigueDetector() {
+  if (fatigueInterval)  { clearInterval(fatigueInterval); fatigueInterval = null; }
+  stopHeuristicFatigue();
+  if (fatigueStream) {
+    fatigueStream.getTracks().forEach(t => t.stop());
+    fatigueStream = null;
+  }
+  const video = document.getElementById('fatigueVideo');
+  video.srcObject = null;
+  closedFrameCount = 0;
+  document.getElementById('fatigueStatusTxt').textContent = lang === 'es' ? 'Cámara apagada' : 'Camera off';
+  document.getElementById('fatigueStateTxt').textContent  = lang === 'es' ? 'Apagado' : 'Off';
+  document.getElementById('fatigueRing').style.display = 'none';
+  document.getElementById('fatigueOverlay').classList.remove('active');
+}
+
+function toggleFatigueDetector() {
+  fatigueActive = !fatigueActive;
+  localStorage.setItem('hos_fatigue', fatigueActive);
+  document.getElementById('fatigueToggle').classList.toggle('on', fatigueActive);
+  if (fatigueActive) {
+    startFatigueDetector();
+    toggleFatigueOverlay(true);
+  } else {
+    stopFatigueDetector();
+  }
+}
+
+function toggleFatigueOverlay(forceOpen) {
+  const ov = document.getElementById('fatigueOverlay');
+  if (forceOpen === true) { ov.classList.add('active'); return; }
+  ov.classList.toggle('active');
+}
+
+function triggerFatigueAlert() {
+  if (fatigueAlertActive) return;
+  fatigueAlertActive = true;
+  flashDanger(4000);
+  // Sound alert using Web Audio API
+  playAlertSound();
+  if (navigator.vibrate) navigator.vibrate([500,200,500,200,500,200,800]);
+  document.getElementById('fatigueAlert').classList.add('show');
+  // Also show on map HUD
+  showToast('danger','😴','⚠️ FATIGUE ALERT','Eyes closed too long — Pull over immediately!', 0);
+}
+
+function dismissFatigueAlert() {
+  fatigueAlertActive = false;
+  closedFrameCount = 0;
+  document.getElementById('fatigueAlert').classList.remove('show');
+  hideToast();
+  document.getElementById('fatigueRing').style.display = 'none';
+  document.getElementById('fatigueStateTxt').textContent = '✅ Monitoring resumed';
+}
+
+function playAlertSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const playBeep = (freq, start, dur) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur);
+    };
+    // SOS pattern
+    [0,.35,.7,1.1,1.5,1.9].forEach((t,i) => playBeep(i%2===0?880:660, t, .28));
+  } catch {}
+}
+
+/* ════════════════════════════════════════════════════════════
+   ⛈️  WEATHER ALERTS
+   Uses Open-Meteo (free, no API key needed)
+════════════════════════════════════════════════════════════ */
+const WX_DANGER_CODES = new Set([
+  // thunderstorm, heavy snow, freezing rain, heavy rain, blizzard, tornado, etc.
+  95,96,99,71,73,75,77,85,86,66,67,82
+]);
+const WX_WARNING_CODES = new Set([55,65,61,63,56,57,80,81,51,53]);
+
+const WX_DESC = {
+  0:'Clear sky', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast',
+  45:'Fog', 48:'Icy fog', 51:'Light drizzle', 53:'Moderate drizzle', 55:'Heavy drizzle',
+  56:'Freezing drizzle', 57:'Heavy freezing drizzle',
+  61:'Light rain', 63:'Moderate rain', 65:'Heavy rain',
+  66:'Freezing rain', 67:'Heavy freezing rain',
+  71:'Light snow', 73:'Moderate snow', 75:'Heavy snow', 77:'Snow grains',
+  80:'Light showers', 81:'Moderate showers', 82:'Violent showers',
+  85:'Snow showers', 86:'Heavy snow showers',
+  95:'⚡ Thunderstorm', 96:'Thunderstorm+hail', 99:'Heavy thunderstorm+hail'
+};
+
+const WX_ICONS = {
+  0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
+  45:'🌫️', 48:'🌫️❄️', 51:'🌦️', 53:'🌧️', 55:'🌧️',
+  56:'🌨️', 57:'🌨️', 61:'🌧️', 63:'🌧️', 65:'🌧️🌧️',
+  66:'🌧️❄️', 67:'🌧️❄️', 71:'❄️', 73:'❄️❄️', 75:'❄️❄️❄️', 77:'🌨️',
+  80:'🌦️', 81:'🌧️', 82:'⛈️', 85:'🌨️', 86:'🌨️❄️',
+  95:'⛈️', 96:'⛈️🌩️', 99:'⛈️🌩️❄️'
+};
+
+async function fetchWeather(lat, lon) {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&current=temperature_2m,weathercode,windspeed_10m,precipitation&wind_speed_unit=mph` +
+      `&temperature_unit=fahrenheit&timezone=auto`;
+    const r = await fetch(url);
+    const d = await r.json();
+    const c = d.current;
+    return {
+      code  : c.weathercode,
+      temp  : Math.round(c.temperature_2m),
+      wind  : Math.round(c.windspeed_10m),
+      precip: c.precipitation,
+      desc  : WX_DESC[c.weathercode] || 'Unknown'
+    };
+  } catch { return null; }
+}
+
+function updateWeatherWidget(wx) {
+  if (!wx) return;
+  const isDanger  = WX_DANGER_CODES.has(wx.code);
+  const isWarning = WX_WARNING_CODES.has(wx.code);
+  document.getElementById('wxIcon').textContent = WX_ICONS[wx.code] || '🌡️';
+  document.getElementById('wxTemp').textContent = `${wx.temp}°F`;
+  document.getElementById('wxDesc').textContent = wx.desc;
+  document.getElementById('wxWind').textContent = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
+  // Color the temp red if danger
+  document.getElementById('wxTemp').className = 'wx-temp' + (isDanger ? ' wx-danger' : '');
+  document.getElementById('wxDesc').className = 'wx-desc' + (isDanger ? ' wx-danger' : '');
+
+  if (isDanger) {
+    showToast('danger','⛈️','⚠️ DANGEROUS WEATHER',
+      `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Consider pulling over.`, 0);
+    flashDanger(3000);
+    if (navigator.vibrate) navigator.vibrate([300,100,300,100,300]);
+    // Also show full-screen
+    showFullscreenAlert('danger', '⛈️', '¡CLIMA PELIGROSO!',
+      `${wx.desc} — ${wx.temp}°F, vientos ${wx.wind}mph. Considera detenerte.`, '', 15000);
+  } else if (isWarning) {
+    showToast('warning','🌧️','Weather Alert',
+      `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Drive with caution.`, 8000);
+  }
+  // Wind warning independent
+  if (wx.wind >= 40 && !isDanger) {
+    showToast('warning','💨','High Wind Warning',
+      `${wx.wind}mph winds — Risk of rollover for high-profile trucks!`, 8000);
+  }
+  document.getElementById('weatherStatusTxt').textContent =
+    `${WX_ICONS[wx.code]||'🌡️'} ${wx.temp}°F · ${wx.desc}`;
+}
+
+async function startWeatherMonitor() {
+  document.getElementById('weatherWidget').classList.add('visible');
+  document.getElementById('weatherStatusTxt').textContent = 'Fetching weather...';
+  document.getElementById('wxDesc').textContent = 'Loading...';
+
+  const updateNow = async () => {
+    if (!weatherActive) return;
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      // Don't re-fetch if barely moved (<5 miles)
+      if (lastWeatherLat && haversine(lat,lon,lastWeatherLat,lastWeatherLon) < 5) return;
+      lastWeatherLat = lat; lastWeatherLon = lon;
+      const wx = await fetchWeather(lat, lon);
+      updateWeatherWidget(wx);
+    }, () => {}, { enableHighAccuracy: false, timeout: 10000 });
+  };
+
+  await updateNow();
+  weatherInterval = setInterval(updateNow, 10 * 60 * 1000); // every 10 min
+  document.getElementById('weatherToggle').classList.add('on');
+}
+
+function stopWeatherMonitor() {
+  if (weatherInterval) { clearInterval(weatherInterval); weatherInterval = null; }
+  document.getElementById('weatherWidget').classList.remove('visible');
+  document.getElementById('weatherStatusTxt').textContent = 'Off';
+  document.getElementById('weatherToggle').classList.remove('on');
+  lastWeatherLat = null; lastWeatherLon = null;
+}
+
+function toggleWeatherMonitor() {
+  weatherActive = !weatherActive;
+  localStorage.setItem('hos_weather', weatherActive);
+  document.getElementById('weatherToggle').classList.toggle('on', weatherActive);
+  if (weatherActive) startWeatherMonitor();
+  else stopWeatherMonitor();
+}
+
+function showWeatherDetail() {
+  if (!weatherActive) return;
+  const desc = document.getElementById('wxDesc').textContent;
+  const temp = document.getElementById('wxTemp').textContent;
+  const wind = document.getElementById('wxWind').textContent;
+  showToast('info','🌡️', `Weather Update`, `${desc} · ${temp} ${wind}`, 6000);
+}
+
+/* ════════════════════════════════════════════════════════════
+   🌉  LOW BRIDGE DETECTOR
+   Uses Overpass API to find bridges with maxheight tags
+   within 30 miles ahead on the route
+════════════════════════════════════════════════════════════ */
+async function fetchNearbyBridges(lat, lon, radiusMeters = 8000) {
+  try {
+    const query = `
+      [out:json][timeout:10];
+      (
+        way["maxheight"](around:${radiusMeters},${lat},${lon});
+        node["maxheight"](around:${radiusMeters},${lat},${lon});
+      );
+      out body; >; out skel qt;
+    `;
+    const r = await fetch('https://overpass-api.de/api/interpreter', {
+      method:'POST', body: 'data=' + encodeURIComponent(query)
+    });
+    const data = await r.json();
+    return (data.elements || []).map(el => {
+      const h = el.tags?.maxheight || '';
+      // Parse "13'6\"" or "4.1" or "4.1 m"
+      let feet = parseFloat(h);
+      if (h.includes("'")) {
+        const m = h.match(/(\d+)'?\s*(\d*)/);
+        if (m) feet = parseInt(m[1]) + (parseInt(m[2]||0)/12);
+      } else if (h.includes('m') || (!h.includes("'") && feet < 8)) {
+        feet = feet * 3.28084; // convert meters to feet
+      }
+      return { feet: isNaN(feet) ? null : Math.round(feet * 10)/10, raw: h, lat: el.lat, lon: el.lon };
+    }).filter(b => b.feet !== null);
+  } catch { return []; }
+}
+
+async function checkBridges() {
+  if (!bridgeActive) return;
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const { latitude: lat, longitude: lon } = pos.coords;
+    if (lastBridgeLat && haversine(lat,lon,lastBridgeLat,lastBridgeLon) < 1) return;
+    lastBridgeLat = lat; lastBridgeLon = lon;
+
+    const bridges = await fetchNearbyBridges(lat, lon);
+    if (!bridges.length) {
+      document.getElementById('bridgeNextTxt').textContent = 'No low bridges nearby';
+      return;
+    }
+
+    // Find lowest bridge ahead
+    const lowest = bridges.reduce((a,b) => (a.feet < b.feet ? a : b));
+    const clearance = lowest.feet;
+    const needed    = trailerHeight;
+    const margin    = clearance - needed;
+
+    document.getElementById('bridgeNextTxt').textContent =
+      `Nearest: ${clearance}ft clearance`;
+
+    if (margin < 0) {
+      // CANNOT PASS
+      showToast('danger','🚨','⚠️ LOW BRIDGE AHEAD!',
+        `Bridge clearance: ${clearance}ft — Your trailer: ${needed}ft. DO NOT ENTER!`, 0);
+      flashDanger(4000);
+      if (navigator.vibrate) navigator.vibrate([400,100,400,100,800]);
+      document.getElementById('bridgeNextTxt').textContent = `🚨 TOO LOW: ${clearance}ft`;
+      document.getElementById('bridgeNextTxt').style.color = '#ef4444';
+      showFullscreenAlert('danger', '🌉', '¡PUENTE MUY BAJO!',
+        `Clearance: ${clearance}ft — Tu tráiler: ${needed}ft. ¡NO ENTRES!`, '', 20000);
+    } else if (margin < 1.5) {
+      // TIGHT — warn
+      showToast('warning','⚠️','Bridge Warning',
+        `Low clearance: ${clearance}ft — Your trailer: ${needed}ft. Only ${margin.toFixed(1)}ft margin. Proceed carefully.`, 8000);
+      document.getElementById('bridgeNextTxt').textContent = `⚠️ Tight: ${clearance}ft`;
+      document.getElementById('bridgeNextTxt').style.color = '#f59e0b';
+    } else {
+      document.getElementById('bridgeNextTxt').style.color = 'rgba(255,255,255,.5)';
+    }
+    document.getElementById('bridgeStatusTxt').textContent =
+      `Active · ${needed}ft trailer · nearest ${clearance}ft`;
+  }, () => {}, { enableHighAccuracy: false, timeout: 10000 });
+}
+
+function startBridgeDetector() {
+  document.getElementById('bridgeInput').classList.add('visible');
+  document.getElementById('bridgeDisplayVal').textContent = trailerHeight.toFixed(1);
+  document.getElementById('bridgeStatusTxt').textContent = `Active · ${trailerHeight}ft trailer`;
+  document.getElementById('trailerHeightRow').style.display = 'flex';
+  checkBridges(); // immediate check
+  bridgeInterval = setInterval(checkBridges, 3 * 60 * 1000); // every 3 min
+}
+
+function stopBridgeDetector() {
+  if (bridgeInterval) { clearInterval(bridgeInterval); bridgeInterval = null; }
+  document.getElementById('bridgeInput').classList.remove('visible');
+  document.getElementById('bridgeStatusTxt').textContent = 'Off — set trailer height';
+  document.getElementById('trailerHeightRow').style.display = 'none';
+  lastBridgeLat = null; lastBridgeLon = null;
+}
+
+function toggleBridgeDetector() {
+  bridgeActive = !bridgeActive;
+  localStorage.setItem('hos_bridge', bridgeActive);
+  document.getElementById('bridgeToggle').classList.toggle('on', bridgeActive);
+  if (bridgeActive) startBridgeDetector();
+  else stopBridgeDetector();
+}
+
+function adjustHeight(delta) {
+  trailerHeight = Math.max(8, Math.min(18, Math.round((trailerHeight + delta) * 10) / 10));
+  localStorage.setItem('hos_trailer', trailerHeight);
+  document.getElementById('bridgeDisplayVal').textContent = trailerHeight.toFixed(1);
+  document.getElementById('trailerHeightInput').value = trailerHeight;
+  document.getElementById('bridgeStatusTxt').textContent = `Active · ${trailerHeight}ft trailer`;
+  checkBridges(); // recheck with new height
+}
+
+/* ════════════════════════════════════════════════════════════
+   🚀  CIRCULAR SPEEDOMETER
+════════════════════════════════════════════════════════════ */
+let speedoVisible = false;
+
+function showSpeedometer() {
+  document.getElementById('speedometerWidget').classList.add('visible');
+  speedoVisible = true;
+}
+
+function hideSpeedometer() {
+  document.getElementById('speedometerWidget').classList.remove('visible');
+  speedoVisible = false;
+}
+
+function updateSpeedometer(mph) {
+  if (!speedoVisible) return;
+  const num = document.getElementById('speedoNum');
+  const ring = document.getElementById('speedoRing');
+  const arc = document.getElementById('speedoArc');
+  const label = document.getElementById('speedoLabel');
+
+  num.textContent = Math.round(mph);
+  const moving = mph > 3;
+
+  if (moving) {
+    num.className = 'speedo-num';
+    ring.className = 'speedo-ring moving';
+    arc.style.stroke = mph > 75 ? '#ef4444' : mph > 55 ? '#f59e0b' : '#10b981';
+    label.textContent = 'GPS SPEED';
+  } else {
+    num.className = 'speedo-num stopped';
+    ring.className = 'speedo-ring stopped';
+    arc.style.stroke = '#6b7280';
+    label.textContent = 'DETENIDO';
+  }
+
+  // Arc: max speed = 100mph = full circle (345 dasharray units)
+  const maxSpeed = 100;
+  const pct = Math.min(1, mph / maxSpeed);
+  const dashLen = pct * 295; // ~295 is ~85% of the circumference for the arc
+  arc.setAttribute('stroke-dasharray', `${dashLen} 345`);
+}
+
+/* ════════════════════════════════════════════════════════════
+   🚨  FULL-SCREEN ALERT (Police / Danger / Warning)
+════════════════════════════════════════════════════════════ */
+let fsAlertActive = false;
+let fsAlertTimeout = null;
+
+function showFullscreenAlert(type, emoji, title, sub, distText, autoDismissMs) {
+  // type: 'police' | 'danger' | 'warning'
+  const overlay = document.getElementById('fullscreenAlertOverlay');
+  overlay.className = '';
+  overlay.classList.add('show', type === 'police' ? 'police' : type === 'danger' ? 'danger-alert' : 'warning-alert');
+
+  document.getElementById('fsAlertEmoji').textContent = emoji;
+  document.getElementById('fsAlertTitle').textContent = title;
+  document.getElementById('fsAlertSub').textContent = sub;
+  document.getElementById('fsAlertDist').textContent = distText || '';
+
+  const dismissBtn = document.getElementById('fsAlertDismissBtn');
+  dismissBtn.className = 'fs-alert-dismiss ' + (type === 'police' ? 'police-btn' : type === 'danger' ? 'danger-btn' : 'warning-btn');
+  dismissBtn.textContent = '✅ ENTENDIDO — CONTINUAR';
+
+  // Police lightbar
+  document.getElementById('policeLightbar').style.display = type === 'police' ? 'flex' : 'none';
+
+  fsAlertActive = true;
+  playAlertSound();
+  if (navigator.vibrate) {
+    if (type === 'police') navigator.vibrate([200,100,200,100,400,100,200,100,200]);
+    else navigator.vibrate([400,150,400,150,800]);
+  }
+
+  // Auto-dismiss
+  if (fsAlertTimeout) clearTimeout(fsAlertTimeout);
+  if (autoDismissMs && autoDismissMs > 0) {
+    fsAlertTimeout = setTimeout(dismissFullscreenAlert, autoDismissMs);
+  }
+}
+
+function dismissFullscreenAlert() {
+  fsAlertActive = false;
+  if (fsAlertTimeout) { clearTimeout(fsAlertTimeout); fsAlertTimeout = null; }
+  const overlay = document.getElementById('fullscreenAlertOverlay');
+  overlay.classList.remove('show', 'police', 'danger-alert', 'warning-alert');
+}
+
+/* ════════════════════════════════════════════════════════════
+   😴  REST ALARMS (HOS)
+════════════════════════════════════════════════════════════ */
+let hosRestTimers = [];
+let hosRestCountdown = null;
+let hosRestSecondsLeft = 0;
+let hosRestActive = false;
+let hosRestEndAlarmFired = false;
+
+// Called when a route is calculated — schedules alarms for each rest segment
+function scheduleRestAlarms(scheduleData, departureTime) {
+  // Clear any existing alarms
+  hosRestTimers.forEach(t => clearTimeout(t));
+  hosRestTimers = [];
+
+  const now = Date.now();
+  scheduleData.forEach(seg => {
+    if (seg.type !== 'rest' && seg.type !== 'break30' && seg.type !== 'reset') return;
+
+    const startMs = new Date(seg.start).getTime() - now;
+    const endMs   = new Date(seg.end).getTime() - now;
+
+    // Alarm when rest starts
+    if (startMs > 0) {
+      const t1 = setTimeout(() => {
+        triggerRestStartAlarm(seg);
+      }, startMs);
+      hosRestTimers.push(t1);
+
+      // Warn 15 min before rest
+      const warn15 = startMs - 15 * 60 * 1000;
+      if (warn15 > 0) {
+        const tw = setTimeout(() => {
+          showToast('warning', '⏰', '15 min para descansar',
+            `En 15 min deberás detenerte a descansar (${seg.type === 'break30' ? '30 min' : '10 horas'})`, 8000);
+          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        }, warn15);
+        hosRestTimers.push(tw);
+      }
+    }
+
+    // Alarm when rest ends
+    if (endMs > 0) {
+      const t2 = setTimeout(() => {
+        triggerRestEndAlarm(seg);
+      }, endMs);
+      hosRestTimers.push(t2);
+    }
+  });
+}
+
+function triggerRestStartAlarm(seg) {
+  if (hosRestActive) return;
+  hosRestActive = true;
+  hosRestEndAlarmFired = false;
+
+  const isShort = seg.type === 'break30';
+  const isReset = seg.type === 'reset';
+  const totalSecs = isShort ? 30 * 60 : isReset ? 34 * 3600 : 10 * 3600;
+  hosRestSecondsLeft = totalSecs;
+
+  const overlay = document.getElementById('restAlarmOverlay');
+  document.getElementById('restAlarmEmoji').textContent = isReset ? '🔄' : '😴';
+  document.getElementById('restAlarmTitle').textContent = isShort ? '¡PAUSA 30 MIN!' : isReset ? '¡RESET 34 HORAS!' : '¡HORA DE DESCANSAR!';
+  document.getElementById('restAlarmSub').textContent = isShort
+    ? 'Pausa obligatoria de 30 min (DOT HOS)'
+    : isReset
+    ? 'Reset de 34 horas para recuperar ciclo'
+    : 'Descanso obligatorio de 10 horas (DOT HOS)';
+
+  overlay.classList.add('show');
+  playAlertSound();
+  if (navigator.vibrate) navigator.vibrate([500,200,500,200,500,500,500]);
+
+  // Start countdown
+  if (hosRestCountdown) clearInterval(hosRestCountdown);
+  updateRestTimer(hosRestSecondsLeft);
+  hosRestCountdown = setInterval(() => {
+    hosRestSecondsLeft--;
+    updateRestTimer(hosRestSecondsLeft);
+    if (hosRestSecondsLeft <= 0) {
+      clearInterval(hosRestCountdown);
+      hosRestCountdown = null;
+    }
+  }, 1000);
+}
+
+function triggerRestEndAlarm(seg) {
+  if (hosRestEndAlarmFired) return;
+  hosRestEndAlarmFired = true;
+  hosRestActive = false;
+
+  // Dismiss the rest overlay if showing
+  document.getElementById('restAlarmOverlay').classList.remove('show');
+
+  const isShort = seg.type === 'break30';
+  const isReset = seg.type === 'reset';
+
+  showFullscreenAlert(
+    'warning',
+    isReset ? '🔄' : '✅',
+    isReset ? '¡RESET COMPLETADO!' : isShort ? '¡PAUSA TERMINADA!' : '¡DESCANSO COMPLETADO!',
+    isShort ? 'Ya puedes continuar manejando.' : isReset ? 'Tu ciclo de 70 horas fue renovado.' : 'Ya puedes continuar tu ruta.',
+    '',
+    10000
+  );
+  playAlertSound();
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+}
+
+function updateRestTimer(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  let txt = '';
+  if (h > 0) txt = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  else txt = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.getElementById('restAlarmTimer').textContent = txt;
+}
+
+function dismissRestAlarm() {
+  document.getElementById('restAlarmOverlay').classList.remove('show');
+  hosRestActive = false;
+  if (hosRestCountdown) { clearInterval(hosRestCountdown); hosRestCountdown = null; }
+}
+
 function init() {
   applyTheme();
   populateCountrySelects();
@@ -1143,6 +2715,18 @@ function init() {
   // Apply default speed
   document.getElementById('speedInput').value = defaultSpeed;
   document.getElementById('defaultSpeedInput').value = defaultSpeed;
+
+  // Apply saved safety feature states
+  document.getElementById('fatigueToggle').classList.toggle('on', fatigueActive);
+  document.getElementById('weatherToggle').classList.toggle('on', weatherActive);
+  document.getElementById('bridgeToggle').classList.toggle('on', bridgeActive);
+  document.getElementById('trailerHeightInput').value = trailerHeight;
+  document.getElementById('trailerHeightRow').style.display = bridgeActive ? 'flex' : 'none';
+
+  if (weatherActive) startWeatherMonitor();
+  if (bridgeActive)  startBridgeDetector();
+  // Note: fatigue NOT auto-started on load (requires explicit toggle)
+  initIncidentToggles();
 }
 
 function applyTheme() {
@@ -1394,6 +2978,9 @@ async function calculateRoute() {
   arrivalTime = schedule.at(-1)?.end || depart;
   totalTime = schedule.reduce((a,s) => a + (s.type==='drive'||s.type==='rest' ? s.hours : 0), 0);
 
+  // Schedule HOS rest alarms
+  scheduleRestAlarms(schedule, depart);
+
   const drive = {
     id: Date.now(),
     origin: origin.name, destination: destination.name,
@@ -1523,7 +3110,7 @@ function useGPS() {
 
 async function shareRoute() {
   if (!origin || !destination) return;
-  const msg = `🚛 HOS Tracker\n\n📍 ${origin.name}\n🎯 ${destination.name}\n📏 ${routeDistance.toLocaleString()} mi\n⏱️ ${fmtH(totalTime)}`;
+  const msg = `🚛 fab-visual™\n\n📍 ${origin.name}\n🎯 ${destination.name}\n📏 ${routeDistance.toLocaleString()} mi\n⏱️ ${fmtH(totalTime)}`;
   if (navigator.share) { try { await navigator.share({ title: 'HOS Route', text: msg }); return; } catch {} }
   if (navigator.clipboard) await navigator.clipboard.writeText(msg);
   alert(t('copied'));
@@ -1532,69 +3119,164 @@ async function shareRoute() {
 /* ============================================================
    FULLSCREEN MAP + LIVE TRACKING  (Google Maps style)
    ============================================================ */
-let fmMapInst = null;
-let fmMarkers = [];
-let fmLayer = null;
-let fmGpsMarker = null;
-let fmWatchId = null;
-let fmTripStart = null;
+let fmMapInst    = null;
+let fmMarkers    = [];
+let fmLayer      = null;
+let fmGpsMarker  = null;  // the animated truck
+let fmAccMarker  = null;  // accuracy circle
+let fmWatchId    = null;
+let fmTripStart  = null;
 let fmClockTimer = null;
 let fmIsTracking = false;
+
+// Auto-follow & zoom
+let fmFollowing     = true;   // whether map auto-follows truck
+let fmUserDragged   = false;  // user manually moved map
+let fmCurrentZoom   = 15;     // zoom level when following
+let fmLastHeading   = null;   // last GPS heading for truck rotation
+let fmPrevLat       = null;   // for calculating heading when GPS doesn't provide it
+let fmPrevLon       = null;
+
+// POI layers
+const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [] };
+const fmPoiActive = { scale: true, truck: true, rest: true, reports: true };
+let   fmPoiLoaded = { scale: false, truck: false, rest: false };
+
+// Community reports (stored in localStorage, shared within session)
+let communityReports = JSON.parse(localStorage.getItem('hos_reports') || '[]');
+// Remove reports older than 2 hours
+communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
+localStorage.setItem('hos_reports', JSON.stringify(communityReports));
 
 function openFullMapScreen() {
   const screen = document.getElementById('fullMapScreen');
   screen.style.display = 'flex';
   screen.style.flexDirection = 'column';
 
-  // Show banner asking about tracking
   document.getElementById('fmTrackBanner').style.display = 'block';
   document.getElementById('fmStopBtn').style.display = 'none';
+  document.getElementById('poiLegend').classList.add('visible');
+  document.getElementById('fmFollowBtn').classList.add('visible');
 
-  // Fill route labels
   if (origin) document.getElementById('fmFrom').textContent = origin.name.split(',')[0];
   if (destination) document.getElementById('fmTo').textContent = destination.name.split(',')[0];
 
-  // Init map if needed
   if (!fmMapInst) {
-    fmMapInst = L.map('fullMap', { zoomControl: false, attributionControl: false }).setView([39.5, -98.35], 4);
+    fmMapInst = L.map('fullMap', {
+      zoomControl: false,
+      attributionControl: false,
+      zoomAnimation: true,
+      fadeAnimation: true
+    }).setView([39.5, -98.35], 4);
+
     const tile = isDark
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
       : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     L.tileLayer(tile, { maxZoom: 19 }).addTo(fmMapInst);
-    L.control.zoom({ position: 'topright' }).addTo(fmMapInst);
+
+    // Detect when user drags map — pause auto-follow
+    fmMapInst.on('dragstart', () => {
+      fmUserDragged = true;
+      fmFollowing = false;
+      document.getElementById('fmFollowBtn').classList.remove('active');
+    });
   }
 
   setTimeout(() => {
     fmMapInst.invalidateSize();
     if (origin && destination) {
-      const coords = roadGeometry || [[origin.lat, origin.lon], [destination.lat, destination.lon]];
-      // Clear old layers
-      fmMarkers.forEach(m => fmMapInst.removeLayer(m));
-      fmMarkers = [];
-      if (fmLayer) fmMapInst.removeLayer(fmLayer);
-
-      const shadow = L.polyline(coords, { color: '#065f46', weight: 10, opacity: 0.18 }).addTo(fmMapInst);
-      fmLayer = L.polyline(coords, { color: '#10b981', weight: 5, opacity: 0.95 }).addTo(fmMapInst);
-
-      const oIcon = L.divIcon({ className:'', html:'<div style="width:14px;height:14px;background:#10b981;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>', iconAnchor:[7,7] });
-      const dIcon = L.divIcon({ className:'', html:'<div style="font-size:26px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))">📍</div>', iconAnchor:[13,26] });
-      const truckIcon = L.divIcon({ className:'', html:'<div style="font-size:28px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))">🚛</div>', iconAnchor:[14,14] });
-
-      const oMark = L.marker([origin.lat, origin.lon], { icon: oIcon }).addTo(fmMapInst);
-      const dMark = L.marker([destination.lat, destination.lon], { icon: dIcon }).addTo(fmMapInst);
-      const mid = coords[Math.floor(coords.length / 2)] || [(origin.lat+destination.lat)/2,(origin.lon+destination.lon)/2];
-      fmGpsMarker = L.marker(mid, { icon: truckIcon }).addTo(fmMapInst);
-
-      fmMarkers = [shadow, oMark, dMark, fmGpsMarker];
-      fmMapInst.fitBounds(fmLayer.getBounds(), { padding: [60, 60] });
+      fmRedrawRoute();
+      // Reset chip labels to show loading
+      document.getElementById('chipScale').innerHTML = '⚖️ Scales <span style="opacity:.5;font-size:10px">•••</span>';
+      document.getElementById('chipTruck').innerHTML = '🚛 Truck Stops <span style="opacity:.5;font-size:10px">•••</span>';
+      document.getElementById('chipRest').innerHTML  = '😴 Rest Areas <span style="opacity:.5;font-size:10px">•••</span>';
+      // Start loading POIs after route is drawn
+      setTimeout(() => loadAllPOIs(), 500);
     }
-    // Slide HUD up
     document.getElementById('fmHud').style.transform = 'translateY(0)';
   }, 200);
 
-  // Start clock
   fmTickClock();
   fmClockTimer = setInterval(fmTickClock, 1000);
+}
+
+// Draw/redraw the green route polyline + origin/destination markers
+function fmRedrawRoute(coords) {
+  const routeCoords = coords || roadGeometry || [
+    [origin.lat, origin.lon],
+    [destination.lat, destination.lon]
+  ];
+
+  // Remove only route + endpoint markers (keep POIs and truck)
+  fmMarkers.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+  fmMarkers = [];
+  if (fmLayer) { try { fmMapInst.removeLayer(fmLayer); } catch {} fmLayer = null; }
+
+  const shadow = L.polyline(routeCoords, { color: '#065f46', weight: 12, opacity: 0.15 }).addTo(fmMapInst);
+  fmLayer = L.polyline(routeCoords, { color: '#10b981', weight: 5, opacity: 0.9 }).addTo(fmMapInst);
+
+  const oIcon = L.divIcon({
+    className: '',
+    html: `<div style="width:16px;height:16px;background:#10b981;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(16,185,129,.25),0 2px 8px rgba(0,0,0,.5)"></div>`,
+    iconAnchor: [8, 8]
+  });
+  const dIcon = L.divIcon({
+    className: '',
+    html: `<div style="font-size:30px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))">📍</div>`,
+    iconAnchor: [15, 30]
+  });
+
+  const oMark = L.marker([origin.lat, origin.lon], { icon: oIcon }).addTo(fmMapInst)
+    .bindPopup(`<b>Origin</b><br>${origin.name}`);
+  const dMark = L.marker([destination.lat, destination.lon], { icon: dIcon }).addTo(fmMapInst)
+    .bindPopup(`<b>Destination</b><br>${destination.name}`);
+
+  fmMarkers = [shadow, oMark, dMark];
+  fmMapInst.fitBounds(fmLayer.getBounds(), { padding: [70, 70] });
+}
+
+// Make/update the truck marker with rotation based on heading
+function fmUpdateTruckMarker(lat, lon, heading) {
+  const rotation = heading != null ? heading : 0;
+  const truckHtml = `
+    <div style="
+      width:36px;height:36px;position:relative;
+      transform:rotate(${rotation}deg);
+      filter:drop-shadow(0 3px 8px rgba(0,0,0,.5));
+      transition:transform 0.8s ease;
+    ">
+      <div style="
+        position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+        font-size:28px;line-height:1;
+      ">🚛</div>
+      <!-- Direction arrow -->
+      <div style="
+        position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+        width:0;height:0;
+        border-left:5px solid transparent;
+        border-right:5px solid transparent;
+        border-bottom:10px solid #10b981;
+        filter:drop-shadow(0 1px 3px rgba(0,0,0,.4));
+      "></div>
+    </div>
+  `;
+  const icon = L.divIcon({ className: '', html: truckHtml, iconAnchor: [18, 18] });
+
+  if (!fmGpsMarker) {
+    fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
+  } else {
+    fmGpsMarker.setLatLng([lat, lon]);
+    fmGpsMarker.setIcon(icon);
+  }
+}
+
+// Calculate compass heading from two GPS points
+function calcHeading(lat1, lon1, lat2, lon2) {
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
+  const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180)
+           - Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
+  return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
 }
 
 function fmTickClock() {
@@ -1605,182 +3287,198 @@ function fmTickClock() {
 
 function closeFullMapScreen() {
   fmStopTracking();
+  clearAllPOIs();
   document.getElementById('fullMapScreen').style.display = 'none';
   document.getElementById('fmHud').style.transform = 'translateY(100%)';
+  document.getElementById('poiLegend').classList.remove('visible');
+  document.getElementById('fmFollowBtn').classList.remove('visible');
   if (fmClockTimer) { clearInterval(fmClockTimer); fmClockTimer = null; }
+}
+
+function toggleFollow() {
+  fmFollowing = !fmFollowing;
+  fmUserDragged = !fmFollowing;
+  const btn = document.getElementById('fmFollowBtn');
+  btn.classList.toggle('active', fmFollowing);
+  // If re-enabling follow, snap to truck immediately
+  if (fmFollowing && fmGpsMarker) {
+    fmMapInst.setView(fmGpsMarker.getLatLng(), fmCurrentZoom, { animate: true, duration: 0.8 });
+  }
 }
 
 async function fmStartTracking() {
   if (!navigator.geolocation) { alert(lang==='es'?'GPS no soportado':'GPS not supported'); return; }
 
-  // Update UI — show locating state immediately
   document.getElementById('fmTrackBanner').style.display = 'none';
   document.getElementById('fmLiveDot').style.background = '#f59e0b';
   document.getElementById('fmLiveDot').style.boxShadow = '0 0 6px #f59e0b';
   document.getElementById('fmLiveDot').style.animation = 'liveblink 1s infinite';
-  document.getElementById('fmLocVal').textContent = lang==='es' ? '📡 Obteniendo ubicación real...' : '📡 Getting your real location...';
-  document.getElementById('fmStatusChip').textContent = lang==='es' ? '📡 Localizando...' : '📡 Locating...';
+  document.getElementById('fmLocVal').textContent = lang==='es' ? '📡 Obteniendo ubicación real...' : '📡 Getting real location...';
+  document.getElementById('fmStatusChip').textContent = '📡 Locating...';
 
-  // ── STEP 1: Get real GPS position ──────────────────────────────
-  let realLat, realLon;
+  // ── STEP 1: Get precise GPS fix ───────────────────────────
+  let realLat, realLon, realAccuracy;
   try {
     const pos = await new Promise((res, rej) =>
       navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 15000 })
     );
     realLat = pos.coords.latitude;
     realLon = pos.coords.longitude;
-  } catch (e) {
-    document.getElementById('fmLocVal').textContent = lang==='es' ? '❌ Error de GPS — revisa permisos' : '❌ GPS error — check permissions';
+    realAccuracy = pos.coords.accuracy;
+  } catch {
+    document.getElementById('fmLocVal').textContent = '❌ GPS error — check permissions';
     document.getElementById('fmLiveDot').style.background = '#ef4444';
     return;
   }
 
-  // ── STEP 2: Reverse-geocode real position ──────────────────────
-  let realLocName = `${realLat.toFixed(4)}, ${realLon.toFixed(4)}`;
+  // ── STEP 2: Reverse geocode ───────────────────────────────
+  let realLocName = `${realLat.toFixed(5)}, ${realLon.toFixed(5)}`;
   try {
     const r = await fetch(`https://photon.komoot.io/reverse?lat=${realLat}&lon=${realLon}`);
-    const data = await r.json();
-    const p = data.features?.[0]?.properties || {};
+    const d = await r.json();
+    const p = d.features?.[0]?.properties || {};
     realLocName = [p.name, p.city, p.state].filter(Boolean).join(', ') || realLocName;
   } catch {}
 
-  document.getElementById('fmLocVal').textContent = (lang==='es'?'🔄 Recalculando ruta desde ':'🔄 Recalculating route from ') + realLocName + '...';
+  document.getElementById('fmLocVal').textContent = '🔄 Recalculating route...';
 
-  // ── STEP 3: Recalculate road route from real GPS → destination ──
+  // ── STEP 3: Recalculate route from real GPS ───────────────
   const realOrigin = { lat: realLat, lon: realLon, name: realLocName };
   const road = await fetchRoadRoute(realOrigin, destination);
   routeDistance = road.miles;
-  roadGeometry = road.coords;
-
-  // Update origin globally so all HOS calcs use real start
+  roadGeometry  = road.coords;
   origin = realOrigin;
+
   document.getElementById('fmFrom').textContent = realLocName.split(',')[0];
   document.getElementById('fmLocVal').textContent = realLocName;
 
-  // ── STEP 4: Redraw route on map from real location ──────────────
+  // ── STEP 4: Redraw route + place truck ────────────────────
   if (fmMapInst) {
-    // Remove old route layers & markers
-    fmMarkers.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
-    fmMarkers = [];
-    if (fmLayer) { try { fmMapInst.removeLayer(fmLayer); } catch {} fmLayer = null; }
+    fmRedrawRoute(roadGeometry);
 
-    const coords = roadGeometry;
-    const shadow = L.polyline(coords, { color: '#065f46', weight: 10, opacity: 0.18 }).addTo(fmMapInst);
-    fmLayer = L.polyline(coords, { color: '#10b981', weight: 5, opacity: 0.95 }).addTo(fmMapInst);
+    // Accuracy circle
+    if (fmAccMarker) { try { fmMapInst.removeLayer(fmAccMarker); } catch {} }
+    fmAccMarker = L.circle([realLat, realLon], {
+      radius: realAccuracy || 20,
+      color: '#3b82f6', fillColor: '#3b82f6',
+      fillOpacity: 0.08, weight: 1.5, opacity: 0.5
+    }).addTo(fmMapInst);
 
-    // Real position dot (green circle)
-    const posIcon = L.divIcon({
-      className: '',
-      html: `<div style="width:18px;height:18px;background:#10b981;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(16,185,129,.3),0 2px 8px rgba(0,0,0,.4)"></div>`,
-      iconAnchor: [9, 9]
-    });
-    // Destination pin
-    const dIcon = L.divIcon({
-      className: '',
-      html: `<div style="font-size:28px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))">📍</div>`,
-      iconAnchor: [14, 28]
-    });
-    // Truck marker (will move with GPS)
-    const truckIcon = L.divIcon({
-      className: '',
-      html: `<div style="font-size:30px;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.6))">🚛</div>`,
-      iconAnchor: [15, 15]
-    });
+    fmUpdateTruckMarker(realLat, realLon, null);
+    fmPrevLat = realLat; fmPrevLon = realLon;
 
-    const posMark = L.marker([realLat, realLon], { icon: posIcon }).addTo(fmMapInst)
-      .bindPopup(realLocName);
-    const dMark = L.marker([destination.lat, destination.lon], { icon: dIcon }).addTo(fmMapInst)
-      .bindPopup(destination.name);
-    fmGpsMarker = L.marker([realLat, realLon], { icon: truckIcon }).addTo(fmMapInst);
+    // AUTO-ZOOM: zoom in on truck at driving zoom level
+    fmFollowing = true;
+    document.getElementById('fmFollowBtn').classList.add('active');
+    fmCurrentZoom = 15;
+    fmMapInst.setView([realLat, realLon], fmCurrentZoom, { animate: true, duration: 1.2 });
 
-    fmMarkers = [shadow, posMark, dMark, fmGpsMarker];
-
-    // Fit map to new route and center on truck
-    fmMapInst.fitBounds(fmLayer.getBounds(), { padding: [70, 70] });
-    setTimeout(() => fmMapInst.panTo([realLat, realLon], { animate: true, duration: 1 }), 800);
+    // Reload POIs centered on new real position
+    setTimeout(() => loadAllPOIs(realLat, realLon), 800);
   }
 
-  // ── STEP 5: Start live watch ────────────────────────────────────
-  fmIsTracking = true;
-  fmTripStart = new Date();
+  // ── STEP 5: Live tracking ─────────────────────────────────
+  fmIsTracking  = true;
+  fmTripStart   = new Date();
+  fmLastGeocode = 0;
   document.getElementById('fmStopBtn').style.display = 'block';
+  showSpeedometer();
+  // Show incident toggle button
+  
   document.getElementById('fmLiveDot').style.background = '#10b981';
-  document.getElementById('fmLiveDot').style.boxShadow = '0 0 8px #10b981';
-  document.getElementById('fmLiveDot').style.animation = 'liveblink 1.5s infinite';
-
-  // Init progress display
-  document.getElementById('fmPct').textContent = '0%';
-  document.getElementById('fmBar').style.width = '0%';
-  document.getElementById('fmRem').textContent = routeDistance + ' mi';
-  document.getElementById('fm70Left').textContent = fmtH(parseFloat(document.getElementById('hoursInput').value));
-  document.getElementById('fmDriveLeft').textContent = '11h';
+  document.getElementById('fmLiveDot').style.boxShadow  = '0 0 8px #10b981';
+  document.getElementById('fmLiveDot').style.animation  = 'liveblink 1.5s infinite';
+  document.getElementById('fmPct').textContent  = '0%';
+  document.getElementById('fmBar').style.width  = '0%';
+  document.getElementById('fmRem').textContent  = routeDistance + ' mi';
 
   fmWatchId = navigator.geolocation.watchPosition(async pos => {
-    const lat = pos.coords.latitude, lon = pos.coords.longitude;
-    const gpsSpeed = pos.coords.speed != null && pos.coords.speed >= 0 ? Math.round(pos.coords.speed * 2.237) : 0;
-    const remaining = haversine(lat, lon, destination.lat, destination.lon);
-    const traveled = Math.max(0, routeDistance - remaining);
-    const pct = Math.min(100, Math.round(traveled / Math.max(1, routeDistance) * 100));
-    const elapsed = (Date.now() - fmTripStart.getTime()) / 3600000;
-    const speed = parseFloat(document.getElementById('speedInput').value) || defaultSpeed;
-    const etaH = remaining / Math.max(1, gpsSpeed > 5 ? gpsSpeed : speed);
-    const isMoving = gpsSpeed > 5;
+    const lat  = pos.coords.latitude;
+    const lon  = pos.coords.longitude;
+    const acc  = pos.coords.accuracy || 20;
+    const rawSpeed = pos.coords.speed;
+    const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
+    const isMoving = gpsSpeed > 3;
 
-    // ── Speed badge ──
+    // ── Heading: prefer GPS bearing, else calculate from movement ──
+    let heading = pos.coords.heading;
+    if ((!heading || heading < 0) && fmPrevLat != null && isMoving) {
+      heading = calcHeading(fmPrevLat, fmPrevLon, lat, lon);
+    }
+    if (isMoving) { fmPrevLat = lat; fmPrevLon = lon; }
+    fmLastHeading = heading;
+
+    // ── Update accuracy circle ───────────────────────────────
+    if (fmAccMarker) fmAccMarker.setLatLng([lat, lon]).setRadius(acc);
+
+    // ── Update truck marker with rotation ───────────────────
+    fmUpdateTruckMarker(lat, lon, heading);
+
+    // ── AUTO-ZOOM & FOLLOW ───────────────────────────────────
+    if (fmFollowing && fmMapInst) {
+      // Dynamic zoom: zoom in more when fast, a bit out when slow/stopped
+      if (isMoving) {
+        fmCurrentZoom = gpsSpeed > 50 ? 13 : gpsSpeed > 25 ? 14 : 15;
+      } else {
+        fmCurrentZoom = 16; // zoom in close when stopped
+      }
+      fmMapInst.setView([lat, lon], fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
+    }
+
+    // ── HUD stats ────────────────────────────────────────────
+    const remaining = haversine(lat, lon, destination.lat, destination.lon);
+    const traveled  = Math.max(0, routeDistance - remaining);
+    const pct       = Math.min(100, Math.round(traveled / Math.max(1, routeDistance) * 100));
+    const elapsed   = (Date.now() - fmTripStart.getTime()) / 3600000;
+    const avgSpeed  = parseFloat(document.getElementById('speedInput').value) || defaultSpeed;
+    const etaH      = remaining / Math.max(1, isMoving ? gpsSpeed : avgSpeed);
+
     document.getElementById('fmSpeedVal').textContent = gpsSpeed;
     document.getElementById('fmSpeedVal').style.color = isMoving ? '#10b981' : '#9ca3af';
+    updateSpeedometer(gpsSpeed);
 
-    // ── Status chip ──
     const chip = document.getElementById('fmStatusChip');
-    chip.textContent = isMoving
-      ? '🚛 ' + (lang==='es'?'Manejando':'Driving')
-      : '⏸ ' + (lang==='es'?'Detenido':'Stopped');
+    chip.textContent  = isMoving ? '🚛 ' + (lang==='es'?'Manejando':'Driving') : '⏸ ' + (lang==='es'?'Detenido':'Stopped');
     chip.style.background = isMoving ? 'rgba(16,185,129,0.2)' : 'rgba(107,114,128,0.2)';
-    chip.style.color = isMoving ? '#10b981' : '#9ca3af';
+    chip.style.color      = isMoving ? '#10b981' : '#9ca3af';
 
-    // ── Progress ──
     document.getElementById('fmPct').textContent = pct + '%';
     document.getElementById('fmBar').style.width = pct + '%';
-
-    // ── ETA & remaining ──
     document.getElementById('fmEta').textContent = fmtH(etaH);
-    document.getElementById('fmRem').textContent = remaining + ' mi';
+    document.getElementById('fmRem').textContent = remaining.toFixed(1) + ' mi';
 
-    // ── Drive time left (11h shift) ──
     const driveLeft = Math.max(0, 11 - elapsed);
     const driveEl = document.getElementById('fmDriveLeft');
     driveEl.textContent = fmtH(driveLeft);
     driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
 
-    // ── 70-hr cycle left ──
     const cycleLeft = Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
     const cyEl = document.getElementById('fm70Left');
     cyEl.textContent = fmtH(cycleLeft);
     cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
 
-    // ── Move truck on map & follow ──
-    if (fmGpsMarker) {
-      fmGpsMarker.setLatLng([lat, lon]);
-      if (isMoving) fmMapInst.panTo([lat, lon], { animate: true, duration: 1.5 });
-    }
-
-    // ── Location name (throttled: only update every ~10s to avoid rate limit) ──
+    // ── Location name throttled ──────────────────────────────
     const now = Date.now();
-    if (!fmLastGeocode || now - fmLastGeocode > 10000) {
+    if (now - fmLastGeocode > 12000) {
       fmLastGeocode = now;
       try {
         const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`);
-        const data = await r.json();
-        const p = data.features?.[0]?.properties || {};
-        const locName = [p.name, p.city, p.state].filter(Boolean).join(', ') || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-        document.getElementById('fmLocVal').textContent = locName;
+        const d = await r.json();
+        const p = d.features?.[0]?.properties || {};
+        document.getElementById('fmLocVal').textContent =
+          [p.name, p.city, p.state].filter(Boolean).join(', ') || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
       } catch { document.getElementById('fmLocVal').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`; }
     }
 
+    // ── Check nearby community reports ─────────────────────
+    checkNearbyReports(lat, lon);
+
+    // ── Arrival ─────────────────────────────────────────────
     if (remaining <= 3) { alert(t('arrived')); fmStopTracking(); }
-  }, err => {
-    document.getElementById('fmLocVal').textContent = lang==='es' ? '⚠️ Señal GPS débil' : '⚠️ Weak GPS signal';
-  }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
+
+  }, () => {
+    document.getElementById('fmLocVal').textContent = '⚠️ Weak GPS signal';
+  }, { enableHighAccuracy: true, maximumAge: 1500, timeout: 15000 });
 }
 
 let fmLastGeocode = 0;
@@ -1788,10 +3486,576 @@ let fmLastGeocode = 0;
 function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   fmIsTracking = false;
+  fmPrevLat = null; fmPrevLon = null;
+  hideSpeedometer();
+  // Hide incident panel
+  
+  document.getElementById('incidentPanel').innerHTML = '';
+  Object.keys(activeIncidentBubbles).forEach(id => delete activeIncidentBubbles[id]);
+  updateIncidentBadge();
   document.getElementById('fmStopBtn').style.display = 'none';
   document.getElementById('fmLiveDot').style.background = '#6b7280';
   document.getElementById('fmLiveDot').style.boxShadow = 'none';
   document.getElementById('fmLiveDot').style.animation = 'none';
+  if (fmAccMarker) { try { fmMapInst.removeLayer(fmAccMarker); } catch {} fmAccMarker = null; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   🗺️  POI SYSTEM — Weigh Stations, Truck Stops, Rest Areas
+   Uses Overpass API (OpenStreetMap)
+════════════════════════════════════════════════════════════ */
+const POI_ICONS = {
+  scale: { emoji:'⚖️', color:'#ef4444', label:'Weigh Station' },
+  truck: { emoji:'🚛', color:'#3b82f6', label:'Truck Stop' },
+  rest:  { emoji:'😴', color:'#8b5cf6', label:'Rest Area' },
+};
+
+// Overpass queries for each POI type
+const OVERPASS_QUERIES = {
+  scale: (lat, lon, r) => `
+    [out:json][timeout:20];
+    (
+      node["amenity"="weigh_station"](around:${r},${lat},${lon});
+      node["highway"="weigh_station"](around:${r},${lat},${lon});
+      node["name"~"weigh",i](around:${r},${lat},${lon});
+    );
+    out body;`,
+
+  truck: (lat, lon, r) => `
+    [out:json][timeout:20];
+    (
+      node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+      node["amenity"="truck_stop"](around:${r},${lat},${lon});
+      node["name"~"Flying J|Pilot|Love's|TA Travel|Petro|Sapp Bros|Kwik Trip",i](around:${r},${lat},${lon});
+    );
+    out body;`,
+
+  rest: (lat, lon, r) => `
+    [out:json][timeout:20];
+    (
+      node["highway"="rest_area"](around:${r},${lat},${lon});
+      node["amenity"="rest_area"](around:${r},${lat},${lon});
+      node["tourism"="picnic_site"]["highway"](around:${r},${lat},${lon});
+    );
+    out body;`,
+};
+
+async function loadPOI(type, lat, lon) {
+  if (!fmMapInst) return;
+  const radius = 80000; // 50 miles in meters
+  const centerLat = lat || (origin ? (origin.lat + destination.lat) / 2 : 39.5);
+  const centerLon = lon || (origin ? (origin.lon + destination.lon) / 2 : -98.35);
+
+  try {
+    const query = OVERPASS_QUERIES[type](centerLat, centerLon, radius);
+    const r = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query)
+    });
+    const data = await r.json();
+    const elements = data.elements || [];
+
+    // Clear existing markers for this type
+    fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+    fmPoiLayers[type] = [];
+
+    const cfg = POI_ICONS[type];
+    elements.forEach(el => {
+      if (!el.lat || !el.lon) return;
+
+      // Calculate distance from current truck/origin position
+      const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : (origin?.lat || centerLat);
+      const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : (origin?.lon || centerLon);
+      const dist = haversine(truckLat, truckLon, el.lat, el.lon).toFixed(1);
+
+      const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
+      const amenity = el.tags?.amenity || el.tags?.highway || '';
+
+      // Build popup content
+      let popupHtml = `
+        <div style="font-family:'DM Sans',sans-serif;min-width:160px;max-width:220px">
+          <div style="font-size:20px;margin-bottom:4px">${cfg.emoji}</div>
+          <div style="font-weight:800;font-size:14px;margin-bottom:4px">${name}</div>
+          <div style="color:#6b7280;font-size:12px;margin-bottom:6px">${cfg.label}</div>
+          <div style="background:#f0fdf4;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:#065f46">
+            📏 ${dist} mi away
+          </div>
+      `;
+      if (el.tags?.opening_hours) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:4px">🕐 ${el.tags.opening_hours}</div>`;
+      if (el.tags?.phone) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:2px">📞 ${el.tags.phone}</div>`;
+      if (el.tags?.['addr:city']) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:2px">📍 ${el.tags['addr:city']}</div>`;
+      popupHtml += '</div>';
+
+      const icon = L.divIcon({
+        className: '',
+        html: `
+          <div style="
+            background:${cfg.color};
+            border:2.5px solid #fff;
+            border-radius:50%;
+            width:28px; height:28px;
+            display:flex; align-items:center; justify-content:center;
+            font-size:13px; line-height:1;
+            box-shadow:0 2px 8px rgba(0,0,0,0.4);
+            cursor:pointer;
+          ">${cfg.emoji}</div>
+          <div style="
+            position:absolute; bottom:-18px; left:50%;
+            transform:translateX(-50%);
+            background:rgba(0,0,0,0.75); color:#fff;
+            font-size:9px; font-weight:700;
+            padding:2px 5px; border-radius:4px;
+            white-space:nowrap; font-family:'DM Sans',sans-serif;
+          ">${dist}mi</div>
+        `,
+        iconAnchor: [14, 14],
+        popupAnchor: [0, -16]
+      });
+
+      const marker = L.marker([el.lat, el.lon], { icon })
+        .addTo(fmMapInst)
+        .bindPopup(popupHtml, { maxWidth: 240 });
+
+      if (fmPoiActive[type]) marker.addTo(fmMapInst);
+      fmPoiLayers[type].push(marker);
+    });
+
+    fmPoiLoaded[type] = true;
+    console.log(`✅ POI ${type}: loaded ${elements.length} items`);
+  } catch (e) {
+    console.warn(`POI ${type} load failed:`, e);
+  }
+}
+
+async function loadAllPOIs(lat, lon) {
+  if (!origin || !destination) return;
+
+  // Build waypoints: sample the route geometry every ~40 miles + origin + midpoint + destination
+  let waypoints = [];
+  if (roadGeometry && roadGeometry.length > 2) {
+    const step = Math.max(1, Math.floor(roadGeometry.length / 6));
+    for (let i = 0; i < roadGeometry.length; i += step) {
+      waypoints.push({ lat: roadGeometry[i][0], lon: roadGeometry[i][1] });
+    }
+    // Always include destination
+    const last = roadGeometry[roadGeometry.length - 1];
+    waypoints.push({ lat: last[0], lon: last[1] });
+  } else {
+    // Fallback: origin, midpoint, destination
+    waypoints = [
+      { lat: origin.lat, lon: origin.lon },
+      { lat: (origin.lat + destination.lat) / 2, lon: (origin.lon + destination.lon) / 2 },
+      { lat: destination.lat, lon: destination.lon }
+    ];
+  }
+
+  // Remove duplicates that are too close (<30 miles apart)
+  const filtered = [waypoints[0]];
+  for (let i = 1; i < waypoints.length; i++) {
+    const prev = filtered[filtered.length - 1];
+    if (haversine(prev.lat, prev.lon, waypoints[i].lat, waypoints[i].lon) > 30) {
+      filtered.push(waypoints[i]);
+    }
+  }
+
+  // Show loading indicator on chips
+  ['chipScale','chipTruck','chipRest'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.opacity = '0.5';
+  });
+
+  // Load POIs from each waypoint (radius 25 miles = 40km)
+  const loadFromWaypoints = async (type) => {
+    if (!fmMapInst) return;
+    // Clear existing
+    fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+    fmPoiLayers[type] = [];
+
+    const seen = new Set(); // deduplicate by id
+    const radius = 40000; // 25 miles in meters
+    const cfg = POI_ICONS[type];
+
+    for (const wp of filtered) {
+      try {
+        const query = OVERPASS_QUERIES[type](wp.lat, wp.lon, radius);
+        const r = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          body: 'data=' + encodeURIComponent(query)
+        });
+        const data = await r.json();
+        const elements = data.elements || [];
+
+        elements.forEach(el => {
+          if (!el.lat || !el.lon) return;
+          if (seen.has(el.id)) return;
+          seen.add(el.id);
+
+          const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : origin.lat;
+          const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : origin.lon;
+          const dist = haversine(truckLat, truckLon, el.lat, el.lon);
+          const distStr = dist < 1000 ? dist.toFixed(0) + ' mi' : '999+ mi';
+          const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
+
+          let popupHtml = `
+            <div style="font-family:'DM Sans',sans-serif;min-width:170px;max-width:230px;padding:4px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <div style="width:36px;height:36px;border-radius:50%;background:${cfg.color}22;border:2px solid ${cfg.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${cfg.emoji}</div>
+                <div>
+                  <div style="font-weight:800;font-size:14px;line-height:1.2">${name}</div>
+                  <div style="color:#6b7280;font-size:11px;font-weight:600">${cfg.label}</div>
+                </div>
+              </div>
+              <div style="background:${cfg.color}15;border:1px solid ${cfg.color}40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:${cfg.color}">
+                📏 ${distStr} from start
+              </div>`;
+          if (el.tags?.opening_hours) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:6px">🕐 ${el.tags.opening_hours}</div>`;
+          if (el.tags?.phone) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:3px">📞 ${el.tags.phone}</div>`;
+          if (el.tags?.['addr:city']) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:3px">📍 ${el.tags['addr:city']}</div>`;
+          popupHtml += '</div>';
+
+          const icon = L.divIcon({
+            className: '',
+            html: `
+              <div style="position:relative">
+                <div style="
+                  background:${cfg.color};
+                  border:2.5px solid #fff;
+                  border-radius:50%;
+                  width:30px; height:30px;
+                  display:flex; align-items:center; justify-content:center;
+                  font-size:15px; line-height:1;
+                  box-shadow:0 3px 10px rgba(0,0,0,0.45);
+                  cursor:pointer;
+                ">${cfg.emoji}</div>
+                <div style="
+                  position:absolute; bottom:-16px; left:50%;
+                  transform:translateX(-50%);
+                  background:${cfg.color}; color:#fff;
+                  font-size:8px; font-weight:800;
+                  padding:2px 5px; border-radius:4px;
+                  white-space:nowrap; font-family:'DM Sans',sans-serif;
+                  box-shadow:0 1px 4px rgba(0,0,0,.3);
+                ">${dist < 1000 ? dist.toFixed(0)+'mi' : '~'}</div>
+              </div>`,
+            iconAnchor: [15, 15],
+            popupAnchor: [0, -18]
+          });
+
+          const marker = L.marker([el.lat, el.lon], { icon })
+            .bindPopup(popupHtml, { maxWidth: 260 });
+          if (fmPoiActive[type]) marker.addTo(fmMapInst);
+          fmPoiLayers[type].push(marker);
+        });
+      } catch(e) { console.warn(`POI ${type} from waypoint failed`, e); }
+    }
+
+    fmPoiLoaded[type] = true;
+    const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck' : 'chipRest';
+    const chip = document.getElementById(chipId);
+    if (chip) {
+      chip.style.opacity = '1';
+      const count = fmPoiLayers[type].length;
+      chip.innerHTML = `${cfg.emoji} ${type === 'scale' ? 'Scales' : type === 'truck' ? 'Truck Stops' : 'Rest Areas'} <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:1px 6px;font-size:10px;margin-left:3px">${count}</span>`;
+    }
+    console.log(`✅ POI ${type}: ${fmPoiLayers[type].length} total along route`);
+  };
+
+  // Load all in parallel
+  await Promise.all([
+    loadFromWaypoints('scale'),
+    loadFromWaypoints('truck'),
+    loadFromWaypoints('rest'),
+  ]);
+  renderCommunityReports();
+}
+
+function clearAllPOIs() {
+  ['scale','truck','rest','reports'].forEach(type => {
+    fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+    fmPoiLayers[type] = [];
+  });
+  Object.keys(fmPoiLoaded).forEach(k => fmPoiLoaded[k] = false);
+}
+
+function togglePOI(type) {
+  fmPoiActive[type] = !fmPoiActive[type];
+  const chip = document.getElementById(
+    type === 'scale'   ? 'chipScale'  :
+    type === 'truck'   ? 'chipTruck'  :
+    type === 'rest'    ? 'chipRest'   : 'chipReport'
+  );
+  chip.classList.toggle('off', !fmPoiActive[type]);
+
+  fmPoiLayers[type].forEach(m => {
+    if (fmPoiActive[type]) { try { m.addTo(fmMapInst); } catch {} }
+    else { try { fmMapInst.removeLayer(m); } catch {} }
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   🚨  COMMUNITY REPORTS — Police / Accidents / Hazards
+   Stored in localStorage, shared across browser sessions
+════════════════════════════════════════════════════════════ */
+const REPORT_ICONS = {
+  police:       { emoji:'🚔', color:'#3b82f6', label:'Police',        warn: true },
+  accident:     { emoji:'💥', color:'#ef4444', label:'Accident',      warn: true },
+  traffic:      { emoji:'🚦', color:'#f59e0b', label:'Heavy Traffic', warn: false },
+  hazard:       { emoji:'⚠️', color:'#f97316', label:'Road Hazard',   warn: true },
+  construction: { emoji:'🚧', color:'#f59e0b', label:'Construction',  warn: false },
+  closure:      { emoji:'🛑', color:'#ef4444', label:'Road Closed',   warn: true },
+};
+
+/* ════════════════════════════════════════════════════════════
+   🚨  INCIDENT TYPE TOGGLES (Settings-driven)
+════════════════════════════════════════════════════════════ */
+const INCIDENT_TYPES = {
+  police:       { emoji:'🚔', label:'Policía',        bg:'#1d3a8a', statusOn:'Activado — se reportará en el mapa' },
+  accident:     { emoji:'💥', label:'Accidente',      bg:'#7f1d1d', statusOn:'Activado — se reportará en el mapa' },
+  traffic:      { emoji:'🚦', label:'Tráfico Pesado', bg:'#78350f', statusOn:'Activado — se reportará en el mapa' },
+  hazard:       { emoji:'⚠️', label:'Peligro en Ruta',bg:'#7c2d12', statusOn:'Activado — se reportará en el mapa' },
+  construction: { emoji:'🚧', label:'Construcción',   bg:'#713f12', statusOn:'Activado — se reportará en el mapa' },
+  closure:      { emoji:'🛑', label:'Vía Cerrada',    bg:'#450a0a', statusOn:'Activado — se reportará en el mapa' },
+};
+
+// Load saved incident type states
+let activeIncidentTypes = JSON.parse(localStorage.getItem('hos_inc_types') || '{}');
+
+function toggleIncidentType(type, btn) {
+  activeIncidentTypes[type] = !activeIncidentTypes[type];
+  localStorage.setItem('hos_inc_types', JSON.stringify(activeIncidentTypes));
+
+  btn.classList.toggle('on', activeIncidentTypes[type]);
+  const statusEl = document.getElementById(`inc${type.charAt(0).toUpperCase()+type.slice(1)}Status`);
+  if (statusEl) {
+    statusEl.textContent = activeIncidentTypes[type]
+      ? INCIDENT_TYPES[type].statusOn
+      : 'Desactivado';
+  }
+
+  // When activated — immediately submit a report at current position (if tracking)
+  if (activeIncidentTypes[type] && fmIsTracking) {
+    const cfg = INCIDENT_TYPES[type];
+    submitIncident(type, cfg.emoji, cfg.label);
+  }
+
+  updateActiveIncidentIcons();
+}
+
+function updateActiveIncidentIcons() {
+  const row = document.getElementById('activeIconsRow');
+  const container = document.getElementById('activeIncidentIcons');
+  if (!row || !container) return;
+
+  row.innerHTML = '';
+  const active = Object.keys(activeIncidentTypes).filter(k => activeIncidentTypes[k]);
+
+  if (active.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'flex';
+
+  active.forEach(type => {
+    const cfg = INCIDENT_TYPES[type];
+    const icon = document.createElement('div');
+    icon.className = 'inc-mini-icon';
+    icon.style.background = cfg.bg + '22';
+    icon.style.borderColor = cfg.bg + '55';
+    icon.title = cfg.label;
+    icon.textContent = cfg.emoji;
+    row.appendChild(icon);
+  });
+}
+
+function initIncidentToggles() {
+  Object.keys(INCIDENT_TYPES).forEach(type => {
+    const togId = `inc${type.charAt(0).toUpperCase()+type.slice(1)}Toggle`;
+    const tog = document.getElementById(togId);
+    if (!tog) return;
+    const isOn = !!activeIncidentTypes[type];
+    tog.classList.toggle('on', isOn);
+    const statusEl = document.getElementById(`inc${type.charAt(0).toUpperCase()+type.slice(1)}Status`);
+    if (statusEl) statusEl.textContent = isOn ? INCIDENT_TYPES[type].statusOn : 'Desactivado';
+  });
+  updateActiveIncidentIcons();
+}
+
+function submitIncident(type, emoji, label) {
+  if (!fmMapInst) return;
+  let lat, lon;
+  if (fmGpsMarker) {
+    const ll = fmGpsMarker.getLatLng();
+    lat = ll.lat; lon = ll.lng;
+  } else {
+    const c = fmMapInst.getCenter();
+    lat = c.lat; lon = c.lng;
+  }
+  const report = { id: Date.now(), type, emoji, label, lat, lon, ts: Date.now() };
+  communityReports.push(report);
+  communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
+  localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+  addReportMarker(report);
+  addIncidentBubble(report);
+  
+  showToast('warning', emoji, `${label} Reportado`,
+    'Visible en el mapa de la ruta.', 4000);
+  if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+}
+
+// Legacy stubs (FAB removed but referenced in old bind)
+function openReportPanel() {}
+function closeReportPanel() {}
+function submitReport(type, emoji, label) { submitIncident(type, emoji, label); }
+
+function addReportMarker(report) {
+  if (!fmMapInst) return;
+  const cfg = REPORT_ICONS[report.type] || { emoji:'⚠️', color:'#f59e0b', label: report.label };
+  const age = Math.round((Date.now() - report.ts) / 60000);
+  const ageStr = age < 1 ? 'Just now' : age === 1 ? '1 min ago' : `${age} min ago`;
+
+  const icon = L.divIcon({
+    className: '',
+    html: `
+      <div style="
+        background:${cfg.color};
+        border:2.5px solid #fff;
+        border-radius:10px;
+        width:32px; height:32px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:16px; line-height:1;
+        box-shadow:0 3px 12px rgba(0,0,0,.5);
+        animation:reportPulse 2s ease-in-out 3;
+        cursor:pointer;
+      ">${cfg.emoji}</div>
+      <div style="
+        position:absolute; bottom:-18px; left:50%;
+        transform:translateX(-50%);
+        background:${cfg.color}; color:#fff;
+        font-size:9px; font-weight:800;
+        padding:2px 6px; border-radius:4px;
+        white-space:nowrap; font-family:'DM Sans',sans-serif;
+      ">${ageStr}</div>
+    `,
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -20]
+  });
+
+  const popupHtml = `
+    <div style="font-family:'DM Sans',sans-serif;min-width:160px">
+      <div style="font-size:24px;margin-bottom:6px;text-align:center">${cfg.emoji}</div>
+      <div style="font-weight:800;font-size:14px;text-align:center;margin-bottom:4px">${cfg.label}</div>
+      <div style="color:#6b7280;font-size:11px;text-align:center">Reported ${ageStr}</div>
+      <div style="color:#ef4444;font-size:11px;font-weight:700;text-align:center;margin-top:6px">
+        ⚠️ Use caution in this area
+      </div>
+    </div>`;
+
+  const marker = L.marker([report.lat, report.lon], { icon })
+    .addTo(fmMapInst)
+    .bindPopup(popupHtml);
+
+  fmPoiLayers.reports.push(marker);
+}
+
+function renderCommunityReports() {
+  // Clear old report markers
+  fmPoiLayers.reports.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+  fmPoiLayers.reports = [];
+  // Re-add all valid reports
+  communityReports.forEach(r => addReportMarker(r));
+}
+
+/* ════════════════════════════════════════════════════════════
+   🚨  INCIDENT BUBBLE PANEL
+   Small circular bubbles on the left — activatable/deactivatable
+════════════════════════════════════════════════════════════ */
+let incidentPanelVisible = true;
+let activeIncidentBubbles = {}; // id -> bubble element
+
+function addIncidentBubble(report) {
+  const panel = document.getElementById('incidentPanel');
+  if (!panel) return;
+  const cfg = REPORT_ICONS[report.type] || { emoji:'⚠️', color:'#f59e0b', label:'Alert' };
+  const dist = (fmGpsMarker
+    ? haversine(fmGpsMarker.getLatLng().lat, fmGpsMarker.getLatLng().lng, report.lat, report.lon)
+    : 0).toFixed(1);
+
+  const bubble = document.createElement('div');
+  bubble.className = `incident-bubble ${report.type}`;
+  bubble.id = `ib-${report.id}`;
+  bubble.title = cfg.label;
+  bubble.innerHTML = `
+    <div class="ib-emoji">${cfg.emoji}</div>
+    <div class="ib-dist">${dist}mi</div>
+    <div class="ib-label">${cfg.label}</div>
+    <div class="ib-close" onclick="removeIncidentBubble('${report.id}',event)">✕</div>
+  `;
+  bubble.addEventListener('click', () => showIncidentDetail(report, dist));
+
+  panel.appendChild(bubble);
+  activeIncidentBubbles[report.id] = bubble;
+
+  // Auto-remove after 30 min
+  setTimeout(() => removeIncidentBubble(report.id), 30 * 60 * 1000);
+}
+
+function removeIncidentBubble(id, e) {
+  if (e) e.stopPropagation();
+  const bubble = activeIncidentBubbles[id];
+  if (bubble) {
+    bubble.style.transition = 'opacity .2s, transform .2s';
+    bubble.style.opacity = '0';
+    bubble.style.transform = 'scale(0.3)';
+    setTimeout(() => { bubble.remove(); }, 200);
+    delete activeIncidentBubbles[id];
+  }
+}
+
+function updateIncidentBadge() {
+  // No-op — badge removed with toggle button
+}
+
+function showIncidentDetail(report, dist) {
+  const cfg = REPORT_ICONS[report.type] || { emoji:'⚠️', label:'Alert' };
+  const age = Math.round((Date.now() - report.ts) / 60000);
+  const ageStr = age < 1 ? 'Ahora mismo' : `Hace ${age} min`;
+  showToast(
+    cfg.warn ? 'danger' : 'warning',
+    cfg.emoji,
+    `${cfg.label} — ${dist}mi`,
+    `Reportado ${ageStr} · Maneja con precaución`,
+    6000
+  );
+}
+
+// Check if any reports are within 3 miles — show bubble (NOT fullscreen)
+let lastReportAlertId = null;
+function checkNearbyReports(lat, lon) {
+  communityReports.forEach(r => {
+    const dist = haversine(lat, lon, r.lat, r.lon);
+    if (dist < 5 && !activeIncidentBubbles[r.id]) {
+      // Show incident bubble on left panel
+      addIncidentBubble(r);
+      // Show toggle button if not visible
+      
+      // Small vibration for warning
+      const cfg = REPORT_ICONS[r.type] || {};
+      if (navigator.vibrate && cfg.warn) navigator.vibrate([100, 50, 100]);
+      // Show a small toast (not fullscreen)
+      showToast(
+        cfg.warn ? 'danger' : 'warning',
+        cfg.emoji || '⚠️',
+        `${cfg.label || r.label} — ${dist.toFixed(1)}mi`,
+        'Ver panel izquierdo para detalles',
+        5000
+      );
+    }
+    // Update distance on existing bubble
+    if (activeIncidentBubbles[r.id]) {
+      const distEl = activeIncidentBubbles[r.id].querySelector('.ib-dist');
+      if (distEl) distEl.textContent = dist.toFixed(1) + 'mi';
+    }
+  });
 }
 
 // Legacy startTracking/stopTracking still used by old monitor modal
@@ -1937,6 +4201,21 @@ function bindEvents() {
       defaultSpeed = val;
       localStorage.setItem('hos_speed', val);
       document.getElementById('speedInput').value = val;
+    }
+  });
+
+  // Safety feature toggles
+  document.getElementById('fatigueToggle').addEventListener('click', e => { e.stopPropagation(); toggleFatigueDetector(); });
+  document.getElementById('weatherToggle').addEventListener('click', e => { e.stopPropagation(); toggleWeatherMonitor(); });
+  document.getElementById('bridgeToggle').addEventListener('click',  e => { e.stopPropagation(); toggleBridgeDetector(); });
+  document.getElementById('trailerHeightInput').addEventListener('change', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v) && v >= 8 && v <= 18) {
+      trailerHeight = v;
+      localStorage.setItem('hos_trailer', v);
+      document.getElementById('bridgeDisplayVal').textContent = v.toFixed(1);
+      document.getElementById('bridgeStatusTxt').textContent = `Active · ${v}ft trailer`;
+      checkBridges();
     }
   });
   document.getElementById('closeMonitor').addEventListener('click', stopTracking);
