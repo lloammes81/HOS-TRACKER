@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="fab-visual™" />
+<meta name="apple-mobile-web-app-title" content="HOS Tracker" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#10b981" />
-<title>fab-visual™ 🚛</title>
+<title>HOS Tracker 🚛</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
@@ -172,8 +172,6 @@
     display: flex; align-items: center; gap: 8px;
     line-height: 1;
   }
-  .logo span { background: linear-gradient(135deg, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .logo sup { font-size: 11px; font-family: "DM Sans", sans-serif; font-weight: 900; color: var(--accent); -webkit-text-fill-color: var(--accent); margin-top: -8px; letter-spacing: 0; }
   .subtitle {
     font-size: 11px; color: var(--muted);
     margin-top: 3px; font-weight: 600;
@@ -1141,7 +1139,7 @@
     <div class="container">
       <div class="header">
         <div class="row between">
-          <div class="logo">🚛 <span>fab-visual™</span></div>
+          <div class="logo">🚛 <span>HOS Tracker</span></div>
           <div class="row">
             <button class="iconbtn" id="themeToggle" title="Theme">🌙</button>
             <button class="iconbtn" id="gpsBtn" title="GPS" style="font-size:16px">📍</button>
@@ -1172,6 +1170,7 @@
           </div>
         </div>
         <div class="subtitle" id="subtitleTxt">DOT Hours of Service Planner</div>
+        <div style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:1px;margin-top:2px">by <span style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;color:var(--accent)">fab-visual™</span></div>
       </div>
 
       <!-- MINI MAP -->
@@ -1525,7 +1524,10 @@
         <div class="sett-group">
           <div class="sett-row">
             <div class="sett-icon" style="background:#d1fae5">🚛</div>
-            <div class="sett-label">fab-visual™</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">HOS Tracker</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">DOT Hours of Service Planner</div>
+            </div>
             <div class="sett-value">v6.0</div>
           </div>
           <div class="sett-row" id="shareAppRow">
@@ -1535,6 +1537,14 @@
           </div>
         </div>
       </div>
+
+      <!-- fab-visual trademark footer -->
+      <div style="text-align:center;padding:12px 0 4px">
+        <div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.8px;text-transform:uppercase">Powered by</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--accent);margin-top:2px">fab-visual™</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px;font-weight:500">© 2025 fab-visual. All rights reserved.</div>
+      </div>
+
       <div style="height:20px"></div>
     </div>
   </div>
@@ -3110,7 +3120,7 @@ function useGPS() {
 
 async function shareRoute() {
   if (!origin || !destination) return;
-  const msg = `🚛 fab-visual™\n\n📍 ${origin.name}\n🎯 ${destination.name}\n📏 ${routeDistance.toLocaleString()} mi\n⏱️ ${fmtH(totalTime)}`;
+  const msg = `🚛 HOS Tracker\n\n📍 ${origin.name}\n🎯 ${destination.name}\n📏 ${routeDistance.toLocaleString()} mi\n⏱️ ${fmtH(totalTime)}\n\nby fab-visual™`;
   if (navigator.share) { try { await navigator.share({ title: 'HOS Route', text: msg }); return; } catch {} }
   if (navigator.clipboard) await navigator.clipboard.writeText(msg);
   alert(t('copied'));
