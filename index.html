@@ -383,6 +383,47 @@
   .poi-loading { animation: poi-pulse 1s ease-in-out infinite; }
   @keyframes poi-pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
 
+  /* ── NEARBY SEARCH ─────────────────────────────────────── */
+  .nearby-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 12px; border-radius: 999px;
+    font-size: 12px; font-weight: 700;
+    background: var(--surface2); color: var(--text);
+    border: 1.5px solid var(--border);
+    cursor: pointer; user-select: none;
+    transition: background .15s, border-color .15s;
+  }
+  .nearby-chip input[type=checkbox] { display: none; }
+  .nearby-chip:has(input:checked) {
+    background: #d1fae5; border-color: #10b981; color: #065f46;
+  }
+  body.dark .nearby-chip:has(input:checked) {
+    background: #064e3b; border-color: #10b981; color: #6ee7b7;
+  }
+  .nearby-result-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 12px;
+    background: var(--surface2); margin-bottom: 6px;
+    border: 1px solid var(--border);
+    cursor: pointer; transition: transform .1s;
+    touch-action: manipulation;
+  }
+  .nearby-result-item:active { transform: scale(.98); }
+  .nearby-result-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .nearby-result-name { font-size: 13px; font-weight: 800; line-height: 1.2; }
+  .nearby-result-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .nearby-dist-badge {
+    margin-left: auto; flex-shrink: 0;
+    background: var(--bg); border: 1.5px solid var(--border);
+    border-radius: 999px; padding: 3px 9px;
+    font-size: 11px; font-weight: 800; color: var(--text);
+    white-space: nowrap;
+  }
+
   /* ══════════════════════════════════════════
      MONITOR MODAL (legacy, hidden behind fullscreen)
   ══════════════════════════════════════════ */
@@ -641,29 +682,27 @@
   }
 
   /* ── WEATHER WIDGET ──────────────────────── */
+  /* Weather widget — compact card top-left of fullscreen map */
   #weatherWidget {
-    position: fixed;
-    bottom: calc(var(--tab-h) + 12px);
-    right: 14px; right: calc(14px + env(safe-area-inset-right,0px));
-    z-index: 500;
-    background: rgba(15,23,42,0.88);
+    background: rgba(15,23,42,0.87);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border-radius: 16px; padding: 10px 14px;
+    border-radius: 10px; padding: 6px 10px;
     border: 1px solid rgba(255,255,255,.1);
-    box-shadow: 0 4px 24px rgba(0,0,0,.4);
+    box-shadow: 0 3px 14px rgba(0,0,0,.4);
     color: #f1f5f9;
-    min-width: 120px;
     display: none;
     cursor: pointer;
-    transition: transform .2s;
+    transition: transform .15s;
+    pointer-events: all;
+    min-width: 80px;
   }
-  #weatherWidget:active { transform: scale(.96); }
+  #weatherWidget:active { transform: scale(.95); }
   #weatherWidget.visible { display: block; animation: fadeIn .3s ease; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-  .wx-row { display: flex; align-items: center; gap: 8px; }
-  .wx-icon { font-size: 26px; line-height: 1; }
-  .wx-temp { font-family:"Bebas Neue",sans-serif; font-size: 28px; line-height:1; }
-  .wx-desc { font-size: 10px; color: rgba(255,255,255,.6); font-weight:600; text-transform:uppercase; letter-spacing:.4px; margin-top:2px; }
+  .wx-row { display: flex; align-items: center; gap: 5px; }
+  .wx-icon { font-size: 18px; line-height: 1; }
+  .wx-temp { font-family:"Bebas Neue",sans-serif; font-size: 20px; line-height:1; }
+  .wx-desc { font-size: 9px; color: rgba(255,255,255,.55); font-weight:600; text-transform:uppercase; letter-spacing:.3px; margin-top:1px; }
   .wx-danger { color: #ef4444 !important; animation: blink 1s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
 
@@ -682,6 +721,33 @@
     min-width: 150px;
   }
   #bridgeInput.visible { display: block; animation: fadeIn .3s ease; }
+
+  /* ── BRIDGE MODE: hide all overlays ─────────────────────── */
+  #fullMapScreen.bridge-mode #fmHud,
+  #fullMapScreen.bridge-mode #fmTrackBanner,
+  #fullMapScreen.bridge-mode #speedometerWidget,
+  #fullMapScreen.bridge-mode #driveHoursWidget,
+  #fullMapScreen.bridge-mode #speedLimitWidget,
+  #fullMapScreen.bridge-mode #mapSpeedSign,
+  #fullMapScreen.bridge-mode #sosFab,
+  #fullMapScreen.bridge-mode #weatherWidget,
+  #fullMapScreen.bridge-mode #fuelWidget,
+  #fullMapScreen.bridge-mode #fmFollowBtn,
+  #fullMapScreen.bridge-mode .fm-zoom-btns,
+  #fullMapScreen.bridge-mode #reportFab,
+  #fullMapScreen.bridge-mode #reportSheet,
+  #fullMapScreen.bridge-mode #incidentPanel {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  /* Keep bridge widget and close button always visible */
+  #fullMapScreen.bridge-mode #bridgeInput,
+  #fullMapScreen.bridge-mode #closeFullMap { opacity: 1 !important; pointer-events: auto !important; }
+  /* Smooth transition */
+  #fullMapScreen #fmHud,
+  #fullMapScreen #speedometerWidget,
+  #fullMapScreen #driveHoursWidget,
+  #fullMapScreen #mapSpeedSign { transition: opacity .4s ease; }
   .bridge-label { font-size: 9px; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; font-weight:700; }
   .bridge-row { display:flex; align-items:center; gap:6px; }
   .bridge-val { font-family:"Bebas Neue",sans-serif; font-size:26px; color:#f59e0b; line-height:1; }
@@ -816,6 +882,94 @@
   }
   .fm-zoom-btn:active { transform:scale(.92); }
 
+  /* ── QUICK REPORT FAB + SHEET ─────────────────────────── */
+  #reportFab {
+    position: absolute;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    right: calc(14px + env(safe-area-inset-right, 0px));
+    z-index: 710;
+    width: 52px; height: 52px;
+    border-radius: 50%; border: 2.5px solid #fff;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff; font-size: 22px;
+    display: none; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(239,68,68,.55);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform .15s, box-shadow .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #reportFab.visible { display: flex; }
+  #reportFab:active  { transform: scale(.92); }
+  #reportFab.spinning { animation: reportFabSpin .3s ease; }
+  @keyframes reportFabSpin {
+    from { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(.85); }
+    to   { transform: rotate(360deg) scale(1); }
+  }
+
+  #reportSheet {
+    position: absolute;
+    bottom: calc(148px + env(safe-area-inset-bottom, 0px));
+    right: calc(14px + env(safe-area-inset-right, 0px));
+    z-index: 709;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  #reportSheet.open { display: flex; animation: sheetSlideIn .25s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes sheetSlideIn {
+    from { opacity: 0; transform: translateY(24px) scale(.85); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .rs-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 14px 9px 10px;
+    border-radius: 999px; border: none;
+    background: rgba(10,16,30,.93);
+    backdrop-filter: blur(14px);
+    color: #fff; cursor: pointer;
+    touch-action: manipulation;
+    box-shadow: 0 4px 16px rgba(0,0,0,.45);
+    transition: transform .12s;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .rs-btn:active { transform: scale(.95); }
+  .rs-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .rs-label { font-size: 13px; font-weight: 800; letter-spacing: .2px; }
+
+  /* ── TOP BAR ROUND REPORT BUTTONS ────────────────────── */
+  .top-rpt-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.8);
+    color: #fff; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,.5);
+    transition: transform .12s, box-shadow .12s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    animation: topRptIn .3s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .top-rpt-btn:active { transform: scale(.88); }
+  .top-rpt-btn:nth-child(1) { animation-delay: .00s; }
+  .top-rpt-btn:nth-child(2) { animation-delay: .04s; }
+  .top-rpt-btn:nth-child(3) { animation-delay: .08s; }
+  .top-rpt-btn:nth-child(4) { animation-delay: .12s; }
+  .top-rpt-btn:nth-child(5) { animation-delay: .16s; }
+  .top-rpt-btn:nth-child(6) { animation-delay: .20s; }
+  @keyframes topRptIn {
+    from { opacity:0; transform:scale(.4) translateY(-8px); }
+    to   { opacity:1; transform:scale(1) translateY(0); }
+  }
+
   /* ══════════════════════════════════════════
      SPEED LIMIT WIDGET (map, top-right)
   ══════════════════════════════════════════ */
@@ -874,26 +1028,27 @@
   /* ── MAP SPEED LIMIT SIGN (always on map, not draggable) ── */
   #mapSpeedSign {
     position: absolute;
-    bottom: 90px;
-    right: calc(14px + env(safe-area-inset-right,0px));
+    top: calc(70px + env(safe-area-inset-top, 0px));
+    right: calc(12px + env(safe-area-inset-right, 0px));
+    bottom: auto; left: auto;
     z-index: 650;
     display: none;
     flex-direction: column;
     align-items: center;
     pointer-events: none;
-    filter: drop-shadow(0 4px 16px rgba(0,0,0,.5));
+    filter: drop-shadow(0 3px 10px rgba(0,0,0,.5));
   }
   #mapSpeedSign.visible { display: flex; }
   .mss-post {
-    width: 5px; height: 18px;
+    width: 4px; height: 12px;
     background: #6b7280;
     border-radius: 0 0 2px 2px;
   }
   .mss-sign {
-    width: 72px; height: 82px;
+    width: 52px; height: 60px;
     background: #fff;
-    border: 5px solid #000;
-    border-radius: 7px;
+    border: 4px solid #000;
+    border-radius: 5px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     position: relative;
@@ -906,37 +1061,37 @@
     to   { transform: scale(1); opacity: 1; }
   }
   .mss-top {
-    font-size: 8px; font-weight: 900;
-    letter-spacing: .6px; line-height: 1.15;
+    font-size: 6px; font-weight: 900;
+    letter-spacing: .5px; line-height: 1.15;
     text-align: center; color: #000;
     white-space: pre;
   }
   .mss-num {
     font-family: "Bebas Neue", sans-serif;
-    font-size: 36px; line-height: .95;
+    font-size: 26px; line-height: .95;
     color: #000; letter-spacing: 1px;
     transition: color .3s;
   }
   .mss-sign.warn .mss-num { color: #ef4444; }
   .mss-truck-label {
-    font-size: 7px; font-weight: 900;
-    color: #6b7280; letter-spacing: .4px;
+    font-size: 6px; font-weight: 900;
+    color: #6b7280; letter-spacing: .3px;
     margin-top: 1px;
   }
   .mss-state-badge {
     background: rgba(10,16,30,.82);
     backdrop-filter: blur(6px);
     color: #f1f5f9;
-    font-size: 10px; font-weight: 800;
-    letter-spacing: .8px;
-    padding: 3px 10px;
+    font-size: 8px; font-weight: 800;
+    letter-spacing: .6px;
+    padding: 2px 7px;
     border-radius: 999px;
-    margin-top: 5px;
+    margin-top: 4px;
     white-space: nowrap;
   }
   .mss-diff {
-    font-size: 8px; font-weight: 700;
-    color: rgba(241,245,249,.6);
+    font-size: 7px; font-weight: 700;
+    color: rgba(241,245,249,.5);
     margin-top: 1px;
     white-space: nowrap;
   }
@@ -1045,34 +1200,22 @@
 
   /* SOS button (visible on map) */
   #sosFab {
-    position: fixed;
-    /* Left-centered on the map/screen */
-    top: 50%;
-    transform: translateY(-50%);
-    left: calc(14px + env(safe-area-inset-left,0px));
-    bottom: auto;
-    z-index: 650;
-    width: 54px; height: 54px;
-    border-radius: 50%; border: 3px solid #fff;
+    width: 44px; height: 44px;
+    border-radius: 50%; border: 2.5px solid #fff;
     background: #ef4444;
-    color: #fff; font-size: 11px; font-weight: 900;
+    color: #fff; font-size: 10px; font-weight: 900;
     font-family: "DM Sans", sans-serif;
     display: none; align-items: center; justify-content: center;
-
-    z-index: 650;
-    width: 54px; height: 54px;
-    border-radius: 50%; border: 3px solid #fff;
-    background: #ef4444;
-    color: #fff; font-size: 11px; font-weight: 900;
-    font-family: "DM Sans", sans-serif;
-    box-shadow: 0 4px 20px rgba(239,68,68,.6);
+    box-shadow: 0 4px 16px rgba(239,68,68,.6);
     cursor: pointer; letter-spacing: .5px;
     animation: sosFabPulse 2s ease-in-out infinite;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   #sosFab.visible { display: flex; }
   @keyframes sosFabPulse {
-    0%,100% { box-shadow: 0 4px 20px rgba(239,68,68,.5); }
-    50% { box-shadow: 0 0 0 8px rgba(239,68,68,.2), 0 4px 20px rgba(239,68,68,.5); }
+    0%,100% { box-shadow: 0 4px 16px rgba(239,68,68,.5); }
+    50% { box-shadow: 0 0 0 6px rgba(239,68,68,.2), 0 4px 16px rgba(239,68,68,.5); }
   }
 
   /* Speed limit exceedance toast */
@@ -1113,15 +1256,15 @@
   /* ── DRIVING HOURS WIDGET ───────────────────────────────── */
   #driveHoursWidget {
     position: fixed;
-    bottom: calc(var(--tab-h) + 16px);
-    left: calc(16px + env(safe-area-inset-left, 0px));
+    bottom: calc(var(--tab-h) + 120px);
+    left: calc(14px + env(safe-area-inset-left, 0px));
     right: auto; top: auto; transform: none;
     z-index: 600;
     display: none;
     flex-direction: column;
     align-items: center;
     pointer-events: auto;
-    opacity: .80;
+    opacity: .88;
     cursor: grab;
     touch-action: none;
     user-select: none;
@@ -1130,11 +1273,11 @@
   #driveHoursWidget.dragging { cursor: grabbing; opacity: 1; }
 
   .dh-ring {
-    width: 110px; height: 110px;
+    width: 64px; height: 64px;
     border-radius: 50%;
     background: rgba(10,16,30,0.95);
-    border: 3px solid #10b981;
-    box-shadow: 0 0 0 2px rgba(16,185,129,.15), 0 0 24px rgba(16,185,129,.22), 0 8px 32px rgba(0,0,0,.6);
+    border: 2.5px solid #10b981;
+    box-shadow: 0 0 0 1px rgba(16,185,129,.15), 0 0 14px rgba(16,185,129,.22), 0 4px 16px rgba(0,0,0,.6);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     position: relative;
@@ -1143,25 +1286,25 @@
   }
   .dh-ring.warn {
     border-color: #f59e0b;
-    box-shadow: 0 0 0 2px rgba(245,158,11,.3), 0 0 28px rgba(245,158,11,.35), 0 8px 32px rgba(0,0,0,.6);
+    box-shadow: 0 0 0 1px rgba(245,158,11,.3), 0 0 16px rgba(245,158,11,.35), 0 4px 16px rgba(0,0,0,.6);
   }
   .dh-ring.critical {
     border-color: #ef4444;
-    box-shadow: 0 0 0 2px rgba(239,68,68,.35), 0 0 28px rgba(239,68,68,.45), 0 8px 32px rgba(0,0,0,.6);
+    box-shadow: 0 0 0 1px rgba(239,68,68,.35), 0 0 16px rgba(239,68,68,.45), 0 4px 16px rgba(0,0,0,.6);
     animation: dhPulse 1.4s ease-in-out infinite;
   }
   @keyframes dhPulse {
-    0%,100% { box-shadow: 0 0 0 2px rgba(239,68,68,.35), 0 0 28px rgba(239,68,68,.45), 0 8px 32px rgba(0,0,0,.6); }
-    50%      { box-shadow: 0 0 0 5px rgba(239,68,68,.15), 0 0 44px rgba(239,68,68,.6),  0 8px 32px rgba(0,0,0,.6); }
+    0%,100% { box-shadow: 0 0 0 1px rgba(239,68,68,.35), 0 0 16px rgba(239,68,68,.45), 0 4px 16px rgba(0,0,0,.6); }
+    50%      { box-shadow: 0 0 0 3px rgba(239,68,68,.15), 0 0 26px rgba(239,68,68,.6),  0 4px 16px rgba(0,0,0,.6); }
   }
   .dh-svg {
-    position: absolute; top: -5px; left: -5px;
-    width: 120px; height: 120px;
+    position: absolute; top: -3px; left: -3px;
+    width: 70px; height: 70px;
     pointer-events: none;
   }
   .dh-hrs {
     font-family: "Bebas Neue", sans-serif;
-    font-size: 36px; line-height: 1;
+    font-size: 22px; line-height: 1;
     color: #10b981; letter-spacing: .5px;
     z-index: 1;
     transition: color .3s;
@@ -1169,14 +1312,14 @@
   .dh-hrs.warn     { color: #f59e0b; }
   .dh-hrs.critical { color: #ef4444; }
   .dh-unit {
-    font-size: 9px; font-weight: 800;
-    color: rgba(255,255,255,.4); letter-spacing: 1.5px;
-    text-transform: uppercase; z-index: 1; margin-top: -2px;
+    font-size: 7px; font-weight: 800;
+    color: rgba(255,255,255,.4); letter-spacing: 1px;
+    text-transform: uppercase; z-index: 1; margin-top: -1px;
   }
   .dh-label {
-    font-size: 9px; font-weight: 700;
-    color: rgba(255,255,255,.3); letter-spacing: .7px;
-    margin-top: 4px; text-align: center;
+    font-size: 8px; font-weight: 700;
+    color: rgba(255,255,255,.3); letter-spacing: .5px;
+    margin-top: 3px; text-align: center;
     white-space: nowrap;
   }
   .speedo-ring {
@@ -2034,6 +2177,47 @@
     </div>
   </div>
 
+
+<div class="sett-section">
+  <div class="sett-section-title">📍 Búsqueda Cercana</div>
+  <div class="sett-group" style="padding:14px 16px">
+    <!-- Filter checkboxes -->
+    <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">Buscar cerca de mi ubicación</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="nearbyFilterRow">
+      <label class="nearby-chip" id="nearbyChipTruck">
+        <input type="checkbox" id="nearbyTruck" checked onchange="runNearbySearch()"> 🚛 Truck Stops
+      </label>
+      <label class="nearby-chip" id="nearbyChipRest">
+        <input type="checkbox" id="nearbyRest" checked onchange="runNearbySearch()"> 😴 Rest Areas
+      </label>
+      <label class="nearby-chip" id="nearbyChipScale">
+        <input type="checkbox" id="nearbyScale" onchange="runNearbySearch()"> ⚖️ Scales
+      </label>
+    </div>
+
+    <!-- Search button -->
+    <button onclick="runNearbySearch()" id="nearbySearchBtn" style="
+      width:100%;padding:12px;border-radius:12px;border:none;
+      background:linear-gradient(135deg,#10b981,#3b82f6);
+      color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;
+      cursor:pointer;margin-bottom:14px;
+      box-shadow:0 4px 16px rgba(16,185,129,0.3);
+      touch-action:manipulation;
+    ">🔍 Buscar Ahora</button>
+
+    <!-- Results list -->
+    <div id="nearbyResultsList" style="display:none">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px" id="nearbyResultsTitle">Resultados cercanos</div>
+      <div id="nearbyResultsItems"></div>
+    </div>
+
+    <!-- Loading / status -->
+    <div id="nearbyStatus" style="text-align:center;color:var(--muted);font-size:12px;padding:8px 0;display:none">
+      📡 Obteniendo ubicación...
+    </div>
+  </div>
+</div>
+
 <div class="sett-section">
         <div class="sett-section-title" id="settSecAbout">About</div>
         <div class="sett-group">
@@ -2077,6 +2261,37 @@
 
   <!-- MAP SPEED LIMIT SIGN -->
   <div id="mapSpeedSign">
+
+  <!-- QUICK REPORT FAB -->
+  <button id="reportFab" onclick="toggleReportSheet()" title="Reportar incidente">⚠️</button>
+
+  <!-- QUICK REPORT ACTION SHEET -->
+  <div id="reportSheet">
+    <button class="rs-btn" onclick="quickReport('police','🚔','Policía')">
+      <div class="rs-icon" style="background:#1d3a8a">🚔</div>
+      <span class="rs-label">Policía</span>
+    </button>
+    <button class="rs-btn" onclick="quickReport('accident','🚗','Accidente')">
+      <div class="rs-icon" style="background:#7f1d1d">💥</div>
+      <span class="rs-label">Accidente</span>
+    </button>
+    <button class="rs-btn" onclick="quickReport('hazard','⚠️','Peligro en vía')">
+      <div class="rs-icon" style="background:#7c2d12">⚠️</div>
+      <span class="rs-label">Peligro en vía</span>
+    </button>
+    <button class="rs-btn" onclick="quickReport('traffic','🚦','Tráfico lento')">
+      <div class="rs-icon" style="background:#78350f">🚦</div>
+      <span class="rs-label">Tráfico lento</span>
+    </button>
+    <button class="rs-btn" onclick="quickReport('construction','🚧','Construcción')">
+      <div class="rs-icon" style="background:#713f12">🚧</div>
+      <span class="rs-label">Construcción</span>
+    </button>
+    <button class="rs-btn" onclick="quickReport('closure','🚫','Vía cerrada')">
+      <div class="rs-icon" style="background:#450a0a">🚫</div>
+      <span class="rs-label">Vía cerrada</span>
+    </button>
+  </div>
     <div class="mss-sign" id="mssSign">
       <div class="mss-top">SPEED&#10;LIMIT</div>
       <div class="mss-num" id="mssNum">65</div>
@@ -2087,19 +2302,18 @@
     <div class="mss-diff" id="mssDiff"></div>
   </div>
 
-  <!-- TOP BAR: close + live dot -->
+  <!-- TOP BAR -->
   <div style="
     position:absolute;top:0;left:0;right:0;z-index:10;
-    display:flex;align-items:center;justify-content:space-between;
-    padding-top:calc(14px + env(safe-area-inset-top, 0px));
-    padding-left:calc(14px + env(safe-area-inset-left, 0px));
-    padding-right:calc(14px + env(safe-area-inset-right, 0px));
-    padding-bottom:0;
+    padding-top:calc(10px + env(safe-area-inset-top, 0px));
+    padding-left:calc(10px + env(safe-area-inset-left, 0px));
+    padding-right:calc(10px + env(safe-area-inset-right, 0px));
     pointer-events:none;
+    display:flex; align-items:flex-start; justify-content:space-between;
   ">
 
-  <!-- POI Filter chips -->
-  <div id="poiLegend">
+  <!-- POI Filter chips - hidden, POIs load automatically by default -->
+  <div id="poiLegend" style="display:none!important">
     <div class="poi-chip" id="chipScale"    onclick="togglePOI('scale')">⚖️ Scales</div>
     <div class="poi-chip" id="chipTruck"    onclick="togglePOI('truck')">🚛 Truck Stops</div>
     <div class="poi-chip" id="chipRest"     onclick="togglePOI('rest')">😴 Rest Areas</div>
@@ -2116,43 +2330,72 @@
     <button class="fm-zoom-btn" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
   </div>
 
+    <!-- LEFT: close + weather + SOS -->
+    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:7px;pointer-events:all">
 
-    <!-- Left: close btn -->
-    <button id="closeFullMap" style="
-      pointer-events:all;
-      width:44px;height:44px;border-radius:50%;border:none;
-      background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
-      color:#fff;font-size:22px;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-      box-shadow:0 2px 12px rgba(0,0,0,0.4);
-      -webkit-tap-highlight-color:transparent;
-      touch-action:manipulation;
-    ">←</button>
+      <!-- Close button -->
+      <button id="closeFullMap" style="
+        width:40px;height:40px;border-radius:50%;border:none;
+        background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
+        color:#fff;font-size:20px;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 2px 12px rgba(0,0,0,0.4);
+        -webkit-tap-highlight-color:transparent;
+        touch-action:manipulation;
+      ">←</button>
 
-    <!-- Center: date/time pill -->
-    <div style="
-      pointer-events:none;
-      background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
-      border-radius:999px;padding:6px 14px;
-      display:flex;align-items:center;gap:8px;
-      box-shadow:0 2px 12px rgba(0,0,0,0.3);
-    ">
-      <div id="fmLiveDot" style="width:7px;height:7px;border-radius:50%;background:#6b7280;flex-shrink:0"></div>
-      <span id="fmClockTxt" style="font-size:13px;font-weight:700;color:#f1f5f9;white-space:nowrap">--:-- --</span>
-      <span style="color:rgba(255,255,255,0.3)">·</span>
-      <span id="fmDateTxt" style="font-size:11px;color:rgba(255,255,255,0.6);white-space:nowrap">---</span>
+      <!-- Weather compact card -->
+      <div id="weatherWidget" onclick="showWeatherDetail()">
+        <div class="wx-row">
+          <div class="wx-icon" id="wxIcon">🌤️</div>
+          <div class="wx-temp" id="wxTemp">--°</div>
+        </div>
+        <div class="wx-desc" id="wxDesc">Clima</div>
+      </div>
+
+      <!-- SOS button — below weather -->
+      <button id="sosFab" onclick="triggerSOS()" style="pointer-events:all">SOS</button>
     </div>
 
-    <!-- Right: speed badge -->
+    <!-- CENTER: clock + report buttons row -->
     <div style="
       pointer-events:none;
-      background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
-      border-radius:12px;padding:6px 12px;text-align:center;
-      box-shadow:0 2px 12px rgba(0,0,0,0.3);min-width:56px;
+      display:flex;flex-direction:column;align-items:center;gap:6px;
+      margin-top:2px;
     ">
-      <div id="fmSpeedVal" style="font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:#10b981">0</div>
-      <div style="font-size:9px;color:rgba(255,255,255,0.5);font-weight:700;letter-spacing:.5px">MPH</div>
+
+      <!-- Clock pill -->
+      <div style="
+        background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
+        border-radius:10px;padding:6px 12px;
+        display:flex;flex-direction:column;align-items:center;
+        box-shadow:0 2px 10px rgba(0,0,0,0.3);
+      ">
+        <div style="display:flex;align-items:center;gap:5px">
+          <div id="fmLiveDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0"></div>
+          <span id="fmClockTxt" style="font-size:13px;font-weight:700;color:#f1f5f9;white-space:nowrap">--:-- --</span>
+        </div>
+        <span id="fmDateTxt" style="font-size:10px;color:rgba(255,255,255,0.45);white-space:nowrap;margin-top:1px">---</span>
+      </div>
+
+      <!-- Quick report round buttons row -->
+      <div id="topReportBtns" style="
+        display:none;
+        align-items:center;gap:7px;
+        pointer-events:all;
+      ">
+        <button class="top-rpt-btn" style="background:#1d3a8a" onclick="quickReport('police','🚔','Policía')"        title="Policía">🚔</button>
+        <button class="top-rpt-btn" style="background:#7f1d1d" onclick="quickReport('accident','💥','Accidente')"   title="Accidente">💥</button>
+        <button class="top-rpt-btn" style="background:#7c2d12" onclick="quickReport('hazard','⚠️','Peligro')"       title="Peligro">⚠️</button>
+        <button class="top-rpt-btn" style="background:#78350f" onclick="quickReport('traffic','🚦','Tráfico')"      title="Tráfico">🚦</button>
+        <button class="top-rpt-btn" style="background:#713f12" onclick="quickReport('construction','🚧','Obra')"    title="Obra">🚧</button>
+        <button class="top-rpt-btn" style="background:#450a0a" onclick="quickReport('closure','🚫','Vía cerrada')"  title="Cerrada">🚫</button>
+      </div>
+
     </div>
+
+    <!-- RIGHT: spacer (speed sign is absolute top-right via CSS) -->
+    <div style="width:40px"></div>
   </div>
 
   <!-- CONFIRM TRACKING BANNER (shows when map opens, before tracking starts) -->
@@ -2351,17 +2594,6 @@
 </div>
 
 <!-- ── WEATHER WIDGET ───────────────────────────────────── -->
-<div id="weatherWidget" onclick="showWeatherDetail()">
-  <div class="wx-row">
-    <div class="wx-icon" id="wxIcon">🌤️</div>
-    <div>
-      <div class="wx-temp" id="wxTemp">--°</div>
-    </div>
-  </div>
-  <div class="wx-desc" id="wxDesc">Loading...</div>
-  <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:4px" id="wxWind"></div>
-</div>
-
 <!-- ── BRIDGE WIDGET ────────────────────────────────────── -->
 <div id="bridgeInput">
   <div class="bridge-label">🌉 TRAILER HEIGHT</div>
@@ -2382,21 +2614,21 @@
 <div id="driveHoursWidget">
   <div class="dh-ring" id="dhRing">
     <!-- Arc SVG — full circle track + colored arc -->
-    <svg class="dh-svg" viewBox="0 0 120 120">
+    <svg class="dh-svg" viewBox="0 0 70 70">
       <!-- Track -->
-      <circle cx="60" cy="60" r="55" fill="none"
-              stroke="rgba(255,255,255,0.07)" stroke-width="6"/>
+      <circle cx="35" cy="35" r="30" fill="none"
+              stroke="rgba(255,255,255,0.07)" stroke-width="4"/>
       <!-- Colored arc — starts at top, goes clockwise -->
-      <circle cx="60" cy="60" r="55" fill="none"
-              stroke="#10b981" stroke-width="6"
+      <circle cx="35" cy="35" r="30" fill="none"
+              stroke="#10b981" stroke-width="4"
               stroke-linecap="round"
-              stroke-dasharray="0 345"
+              stroke-dasharray="0 188"
               id="dhArc"
-              transform="rotate(-220 60 60)"
+              transform="rotate(-220 35 35)"
               style="transition:stroke-dasharray .6s ease, stroke .4s"/>
     </svg>
     <div class="dh-hrs" id="dhHrs">11h</div>
-    <div class="dh-unit">DRIVE</div>
+    <div class="dh-unit">HRS</div>
   </div>
   <div class="dh-label" id="dhLabel">DRIVING LEFT</div>
 </div>
@@ -2421,7 +2653,8 @@
 <!-- ══════════════════════════════════════
      SOS FAB BUTTON (on map)
 ══════════════════════════════════════ -->
-<button id="sosFab" onclick="triggerSOS()">SOS</button>
+<!-- sosFab is now inside the left top column -->
+<span id="fmSpeedVal" style="display:none">0</span>
 
 <!-- ══════════════════════════════════════
      FUEL STATIONS WIDGET
@@ -2908,7 +3141,8 @@ function updateWeatherWidget(wx) {
   document.getElementById('wxIcon').textContent = WX_ICONS[wx.code] || '🌡️';
   document.getElementById('wxTemp').textContent = `${wx.temp}°F`;
   document.getElementById('wxDesc').textContent = wx.desc;
-  document.getElementById('wxWind').textContent = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
+  const wxWindEl = document.getElementById('wxWind');
+  if (wxWindEl) wxWindEl.textContent = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
   // Color the temp red if danger
   document.getElementById('wxTemp').className = 'wx-temp' + (isDanger ? ' wx-danger' : '');
   document.getElementById('wxDesc').className = 'wx-desc' + (isDanger ? ' wx-danger' : '');
@@ -2977,87 +3211,163 @@ function showWeatherDetail() {
   if (!weatherActive) return;
   const desc = document.getElementById('wxDesc').textContent;
   const temp = document.getElementById('wxTemp').textContent;
-  const wind = document.getElementById('wxWind').textContent;
-  showToast('info','🌡️', `Weather Update`, `${desc} · ${temp} ${wind}`, 6000);
+  showToast('info', '🌡️', 'Clima actual', `${desc} · ${temp}`, 6000);
 }
 
 /* ════════════════════════════════════════════════════════════
    🌉  LOW BRIDGE DETECTOR
-   Uses Overpass API to find bridges with maxheight tags
-   within 30 miles ahead on the route
+   Only warns about bridges ON the planned route ahead,
+   within the next 30 miles of current position.
 ════════════════════════════════════════════════════════════ */
-async function fetchNearbyBridges(lat, lon, radiusMeters = 8000) {
-  try {
-    const query = `
-      [out:json][timeout:10];
-      (
-        way["maxheight"](around:${radiusMeters},${lat},${lon});
-        node["maxheight"](around:${radiusMeters},${lat},${lon});
-      );
-      out body; >; out skel qt;
-    `;
-    const r = await fetch('https://overpass-api.de/api/interpreter', {
-      method:'POST', body: 'data=' + encodeURIComponent(query)
-    });
-    const data = await r.json();
-    return (data.elements || []).map(el => {
-      const h = el.tags?.maxheight || '';
-      // Parse "13'6\"" or "4.1" or "4.1 m"
-      let feet = parseFloat(h);
-      if (h.includes("'")) {
-        const m = h.match(/(\d+)'?\s*(\d*)/);
-        if (m) feet = parseInt(m[1]) + (parseInt(m[2]||0)/12);
-      } else if (h.includes('m') || (!h.includes("'") && feet < 8)) {
-        feet = feet * 3.28084; // convert meters to feet
-      }
-      return { feet: isNaN(feet) ? null : Math.round(feet * 10)/10, raw: h, lat: el.lat, lon: el.lon };
-    }).filter(b => b.feet !== null);
-  } catch { return []; }
+
+// Convert maxheight tag to feet
+function parseHeightToFeet(h) {
+  if (!h) return null;
+  let feet = parseFloat(h);
+  if (h.includes("'")) {
+    const m = h.match(/(\d+)'?\s*(\d*)/);
+    if (m) feet = parseInt(m[1]) + (parseInt(m[2] || 0) / 12);
+  } else if (h.toLowerCase().includes('m') || (!h.includes("'") && feet < 10)) {
+    feet = feet * 3.28084;
+  }
+  return isNaN(feet) ? null : Math.round(feet * 10) / 10;
+}
+
+// Get route waypoints within next N miles from current position
+function getRouteAhead(currentLat, currentLon, aheadMiles = 30) {
+  if (!roadGeometry || roadGeometry.length < 2) return [];
+
+  // Find closest point on route
+  let closestIdx = 0, closestDist = Infinity;
+  const step = Math.max(1, Math.floor(roadGeometry.length / 200));
+  for (let i = 0; i < roadGeometry.length; i += step) {
+    const d = haversine(currentLat, currentLon, roadGeometry[i][0], roadGeometry[i][1]);
+    if (d < closestDist) { closestDist = d; closestIdx = i; }
+  }
+
+  // Collect waypoints ahead up to aheadMiles
+  const ahead = [];
+  let accumulated = 0;
+  for (let i = closestIdx; i < roadGeometry.length - 1; i++) {
+    ahead.push({ lat: roadGeometry[i][0], lon: roadGeometry[i][1] });
+    accumulated += haversine(roadGeometry[i][0], roadGeometry[i][1], roadGeometry[i+1][0], roadGeometry[i+1][1]);
+    if (accumulated >= aheadMiles) break;
+  }
+  return ahead;
+}
+
+async function fetchBridgesAlongRoute(routeWaypoints) {
+  if (!routeWaypoints.length) return [];
+  const seen = new Set();
+  const bridges = [];
+
+  // Sample every ~5 miles along ahead-route
+  const sampledWps = [];
+  let accumulated = 0;
+  for (let i = 0; i < routeWaypoints.length; i++) {
+    if (i === 0 || accumulated >= 4) {
+      sampledWps.push(routeWaypoints[i]);
+      accumulated = 0;
+    }
+    if (i < routeWaypoints.length - 1) {
+      accumulated += haversine(routeWaypoints[i].lat, routeWaypoints[i].lon, routeWaypoints[i+1].lat, routeWaypoints[i+1].lon);
+    }
+  }
+
+  for (const wp of sampledWps) {
+    try {
+      const query = `
+        [out:json][timeout:12];
+        (
+          way["maxheight"](around:800,${wp.lat},${wp.lon});
+          node["maxheight"](around:800,${wp.lat},${wp.lon});
+        );
+        out geom qt;`;
+      const resp = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST', body: 'data=' + encodeURIComponent(query)
+      });
+      const data = await resp.json();
+      (data.elements || []).forEach(el => {
+        if (seen.has(el.id)) return;
+        // Get coordinates (node has lat/lon, way has geometry)
+        const elLat = el.lat ?? el.geometry?.[0]?.lat;
+        const elLon = el.lon ?? el.geometry?.[0]?.lon;
+        if (!elLat || !elLon) return;
+
+        // Strict: must be within 0.25 miles of route
+        if (!isNearRoute(elLat, elLon, roadGeometry, 0.25)) return;
+        seen.add(el.id);
+
+        const feet = parseHeightToFeet(el.tags?.maxheight);
+        if (feet !== null) {
+          const name = el.tags?.name || el.tags?.ref || 'Bridge';
+          const distAhead = haversine(fmGpsMarker?.getLatLng().lat ?? elLat, fmGpsMarker?.getLatLng().lng ?? elLon, elLat, elLon);
+          bridges.push({ feet, raw: el.tags?.maxheight, lat: elLat, lon: elLon, name, distAhead });
+        }
+      });
+    } catch {}
+  }
+  return bridges;
 }
 
 async function checkBridges() {
   if (!bridgeActive) return;
+
   navigator.geolocation.getCurrentPosition(async pos => {
     const { latitude: lat, longitude: lon } = pos.coords;
-    if (lastBridgeLat && haversine(lat,lon,lastBridgeLat,lastBridgeLon) < 1) return;
+    if (lastBridgeLat && haversine(lat, lon, lastBridgeLat, lastBridgeLon) < 0.5) return;
     lastBridgeLat = lat; lastBridgeLon = lon;
 
-    const bridges = await fetchNearbyBridges(lat, lon);
-    if (!bridges.length) {
-      document.getElementById('bridgeNextTxt').textContent = 'No low bridges nearby';
+    // Only check bridges if we have a planned route
+    if (!roadGeometry || roadGeometry.length < 2) {
+      document.getElementById('bridgeNextTxt').textContent = 'Planifica una ruta para monitorear puentes';
       return;
     }
 
-    // Find lowest bridge ahead
-    const lowest = bridges.reduce((a,b) => (a.feet < b.feet ? a : b));
+    // Get route waypoints within next 30 miles
+    const aheadWaypoints = getRouteAhead(lat, lon, 30);
+    if (!aheadWaypoints.length) {
+      document.getElementById('bridgeNextTxt').textContent = 'No hay ruta por delante';
+      return;
+    }
+
+    const bridges = await fetchBridgesAlongRoute(aheadWaypoints);
+    if (!bridges.length) {
+      document.getElementById('bridgeNextTxt').textContent = '✅ Sin puentes bajos en ruta';
+      document.getElementById('bridgeNextTxt').style.color = 'rgba(255,255,255,.5)';
+      return;
+    }
+
+    // Sort by distance ahead
+    bridges.sort((a, b) => a.distAhead - b.distAhead);
+    const lowest  = bridges.reduce((a, b) => a.feet < b.feet ? a : b);
+    const nearest = bridges[0];
     const clearance = lowest.feet;
     const needed    = trailerHeight;
     const margin    = clearance - needed;
 
     document.getElementById('bridgeNextTxt').textContent =
-      `Nearest: ${clearance}ft clearance`;
+      `🌉 ${nearest.name}: ${nearest.feet}ft — ${nearest.distAhead.toFixed(1)}mi ahead`;
 
     if (margin < 0) {
-      // CANNOT PASS
-      showToast('danger','🚨','⚠️ LOW BRIDGE AHEAD!',
-        `Bridge clearance: ${clearance}ft — Your trailer: ${needed}ft. DO NOT ENTER!`, 0);
+      showToast('danger', '🚨', '⚠️ PUENTE MUY BAJO EN TU RUTA!',
+        `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. ¡DESVÍATE AHORA!`, 0);
       flashDanger(4000);
-      if (navigator.vibrate) navigator.vibrate([400,100,400,100,800]);
-      document.getElementById('bridgeNextTxt').textContent = `🚨 TOO LOW: ${clearance}ft`;
+      if (navigator.vibrate) navigator.vibrate([400, 100, 400, 100, 800]);
+      document.getElementById('bridgeNextTxt').textContent = `🚨 MUY BAJO: ${clearance}ft @ ${lowest.name}`;
       document.getElementById('bridgeNextTxt').style.color = '#ef4444';
-      showFullscreenAlert('danger', '🌉', '¡PUENTE MUY BAJO!',
-        `Clearance: ${clearance}ft — Tu tráiler: ${needed}ft. ¡NO ENTRES!`, '', 20000);
+      showFullscreenAlert('danger', '🌉', '¡PUENTE MUY BAJO EN RUTA!',
+        `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. ¡DESVÍATE!`, '', 20000);
     } else if (margin < 1.5) {
-      // TIGHT — warn
-      showToast('warning','⚠️','Bridge Warning',
-        `Low clearance: ${clearance}ft — Your trailer: ${needed}ft. Only ${margin.toFixed(1)}ft margin. Proceed carefully.`, 8000);
-      document.getElementById('bridgeNextTxt').textContent = `⚠️ Tight: ${clearance}ft`;
+      showToast('warning', '⚠️', 'Puente con poco espacio',
+        `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. Solo ${margin.toFixed(1)}ft de margen.`, 8000);
+      document.getElementById('bridgeNextTxt').textContent = `⚠️ Bajo: ${clearance}ft @ ${lowest.name}`;
       document.getElementById('bridgeNextTxt').style.color = '#f59e0b';
     } else {
       document.getElementById('bridgeNextTxt').style.color = 'rgba(255,255,255,.5)';
     }
     document.getElementById('bridgeStatusTxt').textContent =
-      `Active · ${needed}ft trailer · nearest ${clearance}ft`;
+      `Active · ${needed}ft trailer · ${bridges.length} bridge${bridges.length > 1 ? 's' : ''} en ruta`;
   }, () => {}, { enableHighAccuracy: false, timeout: 10000 });
 }
 
@@ -3082,6 +3392,9 @@ function toggleBridgeDetector() {
   bridgeActive = !bridgeActive;
   localStorage.setItem('hos_bridge', bridgeActive);
   document.getElementById('bridgeToggle').classList.toggle('on', bridgeActive);
+  // Toggle overlay-hide mode on fullscreen map
+  const screen = document.getElementById('fullMapScreen');
+  if (screen) screen.classList.toggle('bridge-mode', bridgeActive);
   if (bridgeActive) startBridgeDetector();
   else stopBridgeDetector();
 }
@@ -3157,10 +3470,10 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   const arcColor = isCritical ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981';
   arc.style.stroke = arcColor;
 
-  // Arc length: 295 units = full circle worth of arc
+  // Arc length: 188 units = full circle (r=30, circumference≈188)
   const pct    = Math.max(0, Math.min(1, hoursLeft / Math.max(1, maxHours)));
-  const dashLen = pct * 295;
-  arc.setAttribute('stroke-dasharray', `${dashLen.toFixed(1)} 345`);
+  const dashLen = pct * 162; // 162 ≈ 86% of circumference (matches -220deg start)
+  arc.setAttribute('stroke-dasharray', `${dashLen.toFixed(1)} 188`);
 
   // Label
   label.textContent = lang === 'es' ? 'HORAS DE MANEJO' : 'DRIVING LEFT';
@@ -4222,12 +4535,47 @@ function haversine(lat1, lon1, lat2, lon2) {
 }
 
 async function fetchRoadRoute(orig, dest) {
+  // ── Try OpenRouteService HGV profile (respects hgv=no, maxweight, maxheight) ──
+  try {
+    const orsUrl = 'https://api.openrouteservice.org/v2/directions/driving-hgv';
+    const orsBody = {
+      coordinates: [[orig.lon, orig.lat], [dest.lon, dest.lat]],
+      profile: 'driving-hgv',
+      format: 'geojson',
+      options: {
+        vehicle_type: 'hgv',
+        avoid_features: ['tollways', 'ferries']
+      },
+      geometry_simplify: false
+    };
+    // ORS requires API key — try without key first (public demo endpoint)
+    const orsResp = await fetch(orsUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(orsBody)
+    });
+    if (orsResp.ok) {
+      const orsData = await orsResp.json();
+      const feature = orsData.features?.[0];
+      if (feature) {
+        const coords = (feature.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
+        const dist   = feature.properties?.summary?.distance || 0;
+        if (coords.length > 1) {
+          console.log('✅ Route: ORS HGV (truck-safe)');
+          return { coords, miles: Math.round(dist / 1609.344), source: 'ORS-HGV' };
+        }
+      }
+    }
+  } catch {}
+
+  // ── Fall back: OSRM driving + post-process restriction warnings ──
   try {
     const url = `https://router.project-osrm.org/route/v1/driving/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson`;
-    const r = await fetch(url);
+    const r    = await fetch(url);
     const data = await r.json();
     const route = data.routes?.[0];
     if (!route) throw new Error('no route');
+    console.log('✅ Route: OSRM driving (no HGV filter)');
     return {
       coords: (route.geometry.coordinates || []).map(([lon,lat]) => [lat,lon]),
       miles: Math.round((route.distance || 0) / 1609.344),
@@ -4296,6 +4644,37 @@ function fmtDateTime(d) {
 /* ════════════════════════════════════════════════════════════
    🗺️  MINI-MAP POI SYSTEM — Truck Stops & Rest Areas
 ════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════
+   🚛  TRUCK BRAND LOGOS
+   Returns a colored emoji-badge per brand name
+════════════════════════════════════════════════════════════ */
+const TRUCK_BRAND_MAP = [
+  { match: /pilot/i,          logo: '✈️', color: '#d62a2a', short: 'Pilot' },
+  { match: /flying.?j/i,      logo: '🟡', color: '#f5a623', short: 'Flying J' },
+  { match: /love.?s/i,        logo: '❤️', color: '#e63946', short: "Love's" },
+  { match: /ta\b|travel.?center|truckstop/i, logo: '🔵', color: '#1d4ed8', short: 'TA' },
+  { match: /petro/i,          logo: '⛽', color: '#7c3aed', short: 'Petro' },
+  { match: /sapp.?bros/i,     logo: '🟢', color: '#15803d', short: 'Sapp Bros' },
+  { match: /kwik.?trip/i,     logo: '🔴', color: '#dc2626', short: 'Kwik Trip' },
+  { match: /speedway/i,       logo: '🏁', color: '#1e293b', short: 'Speedway' },
+  { match: /marathon/i,       logo: '🏅', color: '#1d4ed8', short: 'Marathon' },
+  { match: /loves.?travel/i,  logo: '❤️', color: '#e63946', short: "Love's" },
+  { match: /bp\b/i,           logo: '🌻', color: '#15803d', short: 'BP' },
+  { match: /chevron/i,        logo: '💙', color: '#1d4ed8', short: 'Chevron' },
+  { match: /shell/i,          logo: '🐚', color: '#f5a623', short: 'Shell' },
+  { match: /exxon/i,          logo: '🔷', color: '#1d4ed8', short: 'Exxon' },
+  { match: /mobil/i,          logo: '🔴', color: '#dc2626', short: 'Mobil' },
+  { match: /casey/i,          logo: '🏪', color: '#6d28d9', short: "Casey's" },
+];
+
+function getTruckBrand(name) {
+  if (!name) return null;
+  for (const b of TRUCK_BRAND_MAP) {
+    if (b.match.test(name)) return b;
+  }
+  return null;
+}
 
 const MINI_POI_QUERIES = {
   truck: (lat, lon, r) => `
@@ -4409,33 +4788,43 @@ async function loadMiniMapPOIs() {
           const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
           const distFromOrigin = haversine(origin.lat, origin.lon, elLat, elLon);
 
-          // Build Leaflet divIcon
+          // Brand detection for truck stops
+          const brand = type === 'truck' ? getTruckBrand(name) : null;
+          const markerColor = brand ? brand.color : cfg.bg;
+          const rawName = brand ? brand.short : name.split(',')[0].substring(0, 14);
+
+          // POI type config for icon appearance
+          const typeIcon = type === 'truck'
+            ? (brand ? brand.logo : '🚛')
+            : type === 'rest' ? '😴' : '⚖️';
+
+          // Build clean round marker with name label below
           const iconHtml = `
-            <div style="
-              position:relative;
-              display:flex; flex-direction:column; align-items:center;
-            ">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+              <!-- Circle badge -->
               <div style="
-                width:32px; height:32px;
-                background:${cfg.bg};
-                border:2.5px solid #fff;
+                width:34px; height:34px;
+                background:${markerColor};
                 border-radius:50%;
+                border:2.5px solid rgba(255,255,255,.95);
+                box-shadow:0 3px 10px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.08);
                 display:flex; align-items:center; justify-content:center;
                 font-size:15px; line-height:1;
-                box-shadow:0 3px 10px rgba(0,0,0,.45);
                 cursor:pointer;
-              ">${cfg.emoji}</div>
+              ">${typeIcon}</div>
+              <!-- Name pill -->
               <div style="
-                margin-top:2px;
-                background:${cfg.bg};
+                background:${markerColor};
                 color:#fff;
-                font-size:8px; font-weight:800;
-                padding:2px 5px; border-radius:4px;
+                font-size:8px; font-weight:900;
+                padding:2px 6px; border-radius:6px;
                 white-space:nowrap;
                 font-family:'DM Sans',sans-serif;
-                box-shadow:0 1px 4px rgba(0,0,0,.35);
-                max-width:70px; overflow:hidden; text-overflow:ellipsis;
-              ">${name.split(',')[0].substring(0,14)}</div>
+                box-shadow:0 2px 6px rgba(0,0,0,.4);
+                max-width:72px; overflow:hidden; text-overflow:ellipsis;
+                letter-spacing:.2px;
+                line-height:1.4;
+              ">${rawName}</div>
             </div>`;
 
           const icon = L.divIcon({
@@ -4678,6 +5067,8 @@ let fmGpsMarker  = null;  // the animated truck
 let fmAccMarker  = null;  // accuracy circle
 let fmWatchId    = null;
 let fmTripStart  = null;
+let fmDriveSeconds = 0;    // accumulated moving time in seconds
+let fmLastMoveTime = null; // timestamp of last GPS fix when moving
 let fmClockTimer = null;
 let fmIsTracking = false;
 
@@ -4706,6 +5097,9 @@ function openFullMapScreen() {
   const screen = document.getElementById('fullMapScreen');
   screen.style.display = 'flex';
   screen.style.flexDirection = 'column';
+
+  // Bridge mode: hide all overlays when height detector is on
+  screen.classList.toggle('bridge-mode', !!bridgeActive);
 
   document.getElementById('fmTrackBanner').style.display = 'block';
   document.getElementById('fmStopBtn').style.display = 'none';
@@ -5016,7 +5410,9 @@ async function fmStartTracking() {
 
   // ── STEP 5: Live tracking ─────────────────────────────────
   fmIsTracking  = true;
-  fmTripStart   = new Date();
+  fmTripStart    = new Date();
+  fmDriveSeconds = 0;
+  fmLastMoveTime = null;
   fmLastGeocode = 0;
   lastStateCheck = 0;
   lastFuelCheck  = 0;
@@ -5024,6 +5420,9 @@ async function fmStartTracking() {
   showSpeedometer();
   showDriveHoursWidget();
   updateDriveHoursWidget(11, 11); // initialize at full
+  document.getElementById('reportFab').classList.add('visible');
+  const trb = document.getElementById('topReportBtns');
+  if (trb) trb.style.display = 'flex';
   // Show SOS button if enabled
   if (sosBtnActive) document.getElementById('sosFab').classList.add('visible');
   document.getElementById('fmLiveDot').style.background = '#10b981';
@@ -5070,7 +5469,15 @@ async function fmStartTracking() {
     const remaining = haversine(lat, lon, destination.lat, destination.lon);
     const traveled  = Math.max(0, routeDistance - remaining);
     const pct       = Math.min(100, Math.round(traveled / Math.max(1, routeDistance) * 100));
-    const elapsed   = (Date.now() - fmTripStart.getTime()) / 3600000;
+
+    // Accumulate drive time ONLY when moving
+    const now = Date.now();
+    if (isMoving && fmLastMoveTime != null) {
+      fmDriveSeconds += (now - fmLastMoveTime) / 1000;
+    }
+    fmLastMoveTime = isMoving ? now : null;
+    const elapsed  = fmDriveSeconds / 3600; // hours actually driven
+
     const avgSpeed  = parseFloat(document.getElementById('speedInput').value) || defaultSpeed;
     const etaH      = remaining / Math.max(1, isMoving ? gpsSpeed : avgSpeed);
 
@@ -5101,9 +5508,9 @@ async function fmStartTracking() {
     cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
 
     // ── Location name throttled ──────────────────────────────
-    const now = Date.now();
-    if (now - fmLastGeocode > 12000) {
-      fmLastGeocode = now;
+    const nowGeo = Date.now();
+    if (nowGeo - fmLastGeocode > 12000) {
+      fmLastGeocode = nowGeo;
       try {
         const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`);
         const d = await r.json();
@@ -5115,6 +5522,10 @@ async function fmStartTracking() {
 
     // ── Check nearby community reports ─────────────────────
     checkNearbyReports(lat, lon);
+    checkNearbyRestrictions(lat, lon);
+
+    // ── Bridge check: also trigger from GPS when moving (in addition to timer) ──
+    if (bridgeActive && isMoving) checkBridges();
 
     // ── Speed limit check ────────────────────────────────────
     checkSpeedLimit(gpsSpeed);
@@ -5140,6 +5551,10 @@ function fmStopTracking() {
   truckFrom = null; truckTo = null;
   hideSpeedometer();
   hideDriveHoursWidget();
+  document.getElementById('reportFab').classList.remove('visible');
+  document.getElementById('reportSheet').classList.remove('open');
+  const trbStop = document.getElementById('topReportBtns');
+  if (trbStop) trbStop.style.display = 'none';
   // Hide overlays
   document.getElementById('incidentPanel').innerHTML = '';
   Object.keys(activeIncidentBubbles).forEach(id => delete activeIncidentBubbles[id]);
@@ -5382,32 +5797,44 @@ async function loadAllPOIs(lat, lon) {
           if (el.tags?.['addr:city']) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:3px">📍 ${el.tags['addr:city']}</div>`;
           popupHtml += '</div>';
 
+          // Brand detection for truck stops
+          const brand = type === 'truck' ? getTruckBrand(name) : null;
+          const markerBg   = brand ? brand.color : cfg.color;
+          const typeIcon   = type === 'truck'
+            ? (brand ? brand.logo : '🚛')
+            : type === 'rest' ? '😴' : '⚖️';
+          const shortName  = brand ? brand.short : name.split(',')[0].substring(0, 13);
+
           const icon = L.divIcon({
             className: '',
             html: `
-              <div style="position:relative">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                <!-- Round badge -->
                 <div style="
-                  background:${cfg.color};
-                  border:2.5px solid #fff;
+                  width:36px; height:36px;
+                  background:${markerBg};
                   border-radius:50%;
-                  width:30px; height:30px;
+                  border:2.5px solid rgba(255,255,255,.95);
+                  box-shadow:0 3px 12px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.08);
                   display:flex; align-items:center; justify-content:center;
-                  font-size:15px; line-height:1;
-                  box-shadow:0 3px 10px rgba(0,0,0,0.45);
+                  font-size:16px; line-height:1;
                   cursor:pointer;
-                ">${cfg.emoji}</div>
+                ">${typeIcon}</div>
+                <!-- Name pill -->
                 <div style="
-                  position:absolute; bottom:-16px; left:50%;
-                  transform:translateX(-50%);
-                  background:${cfg.color}; color:#fff;
-                  font-size:8px; font-weight:800;
-                  padding:2px 5px; border-radius:4px;
-                  white-space:nowrap; font-family:'DM Sans',sans-serif;
-                  box-shadow:0 1px 4px rgba(0,0,0,.3);
-                ">${dist < 1000 ? dist.toFixed(0)+'mi' : '~'}</div>
+                  background:${markerBg};
+                  color:#fff;
+                  font-size:9px; font-weight:900;
+                  padding:2px 7px; border-radius:7px;
+                  white-space:nowrap;
+                  font-family:'DM Sans',sans-serif;
+                  box-shadow:0 2px 6px rgba(0,0,0,.4);
+                  max-width:80px; overflow:hidden; text-overflow:ellipsis;
+                  letter-spacing:.2px;
+                ">${shortName}</div>
               </div>`,
-            iconAnchor: [15, 15],
-            popupAnchor: [0, -18]
+            iconAnchor: [18, 18],
+            popupAnchor: [0, -22]
           });
 
           const marker = L.marker([elLat, elLon], { icon })
@@ -5438,6 +5865,178 @@ async function loadAllPOIs(lat, lon) {
     loadTruckRestrictionsFullMap(filtered),
   ]);
   renderCommunityReports();
+
+  // ── Alert if any truck restrictions found directly ON the route ──
+  const restrictCount = fmPoiLayers.restrict.filter(l => l.getLatLngs).length;
+  if (restrictCount > 0) {
+    showToast('warning', '🚫',
+      `⚠️ ${restrictCount} restricción${restrictCount > 1 ? 'es' : ''} en tu ruta`,
+      'Hay tramos con restricciones para camiones en tu ruta. Revisa el mapa (líneas de colores).',
+      10000
+    );
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   📍  NEARBY SEARCH — from Settings panel
+════════════════════════════════════════════════════════════ */
+async function runNearbySearch() {
+  const wantTruck = document.getElementById('nearbyTruck')?.checked;
+  const wantRest  = document.getElementById('nearbyRest')?.checked;
+  const wantScale = document.getElementById('nearbyScale')?.checked;
+
+  if (!wantTruck && !wantRest && !wantScale) {
+    document.getElementById('nearbyResultsList').style.display = 'none';
+    return;
+  }
+
+  const statusEl  = document.getElementById('nearbyStatus');
+  const listEl    = document.getElementById('nearbyResultsList');
+  const itemsEl   = document.getElementById('nearbyResultsItems');
+  const titleEl   = document.getElementById('nearbyResultsTitle');
+
+  statusEl.style.display = 'block';
+  statusEl.textContent = '📡 Obteniendo ubicación...';
+  listEl.style.display = 'none';
+  itemsEl.innerHTML = '';
+
+  // Get current position
+  let userLat, userLon;
+  try {
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, maximumAge: 30000 })
+    );
+    userLat = pos.coords.latitude;
+    userLon = pos.coords.longitude;
+  } catch(e) {
+    statusEl.textContent = '❌ No se pudo obtener la ubicación. Activa el GPS.';
+    return;
+  }
+
+  statusEl.textContent = '🔍 Buscando lugares cercanos...';
+
+  const radius = 80000; // 50 miles
+  const seen = new Set();
+  const results = [];
+
+  // Build combined query
+  const parts = [];
+  if (wantTruck) parts.push(
+    `node["amenity"="fuel"]["hgv"="yes"](around:${radius},${userLat},${userLon});`,
+    `node["amenity"="truck_stop"](around:${radius},${userLat},${userLon});`,
+    `node["name"~"Flying J|Pilot|Love's|TA Travel|Petro |Sapp Bros|Kwik Trip|Loves Travel",i](around:${radius},${userLat},${userLon});`,
+    `way["amenity"="truck_stop"](around:${radius},${userLat},${userLon});`
+  );
+  if (wantRest) parts.push(
+    `node["highway"="rest_area"](around:${radius},${userLat},${userLon});`,
+    `node["amenity"="rest_area"](around:${radius},${userLat},${userLon});`,
+    `way["highway"="rest_area"](around:${radius},${userLat},${userLon});`
+  );
+  if (wantScale) parts.push(
+    `node["amenity"="weigh_station"](around:${radius},${userLat},${userLon});`,
+    `node["highway"="weigh_station"](around:${radius},${userLat},${userLon});`
+  );
+
+  const query = `[out:json][timeout:30];\n(\n${parts.join('\n')}\n);\nout center;`;
+
+  try {
+    const r    = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST', body: 'data=' + encodeURIComponent(query)
+    });
+    const data = await r.json();
+    const elements = data.elements || [];
+
+    elements.forEach(el => {
+      if (seen.has(el.id)) return;
+      const elLat = el.lat ?? el.center?.lat;
+      const elLon = el.lon ?? el.center?.lon;
+      if (!elLat || !elLon) return;
+      seen.add(el.id);
+
+      const name    = el.tags?.name || el.tags?.['name:en'] || '';
+      const amenity = el.tags?.amenity || el.tags?.highway || '';
+      const dist    = haversine(userLat, userLon, elLat, elLon);
+
+      // Classify
+      let poiType;
+      if (amenity === 'weigh_station' || el.tags?.highway === 'weigh_station') {
+        if (!wantScale) return;
+        poiType = 'scale';
+      } else if (amenity === 'rest_area' || el.tags?.highway === 'rest_area') {
+        if (!wantRest) return;
+        poiType = 'rest';
+      } else {
+        if (!wantTruck) return;
+        poiType = 'truck';
+      }
+
+      results.push({ name, dist, poiType, elLat, elLon, tags: el.tags || {} });
+    });
+  } catch(e) {
+    statusEl.textContent = '❌ Error al buscar. Verifica tu conexión.';
+    return;
+  }
+
+  // Sort by distance
+  results.sort((a, b) => a.dist - b.dist);
+
+  statusEl.style.display = 'none';
+  listEl.style.display = 'block';
+
+  if (results.length === 0) {
+    titleEl.textContent = 'No se encontraron lugares cercanos';
+    itemsEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:16px;font-size:13px">Intenta ampliar el radio o verificar los filtros.</div>';
+    return;
+  }
+
+  titleEl.textContent = `${results.length} lugares encontrados cerca`;
+
+  const POI_CFG_NEARBY = {
+    truck: { emoji: '🚛', color: '#2563eb', bg: '#eff6ff', label: 'Truck Stop' },
+    rest:  { emoji: '😴', color: '#7c3aed', bg: '#f5f3ff', label: 'Rest Area' },
+    scale: { emoji: '⚖️', color: '#dc2626', bg: '#fef2f2', label: 'Weigh Station' },
+  };
+
+  // Render up to 25 results
+  results.slice(0, 25).forEach(res => {
+    const cfg   = POI_CFG_NEARBY[res.poiType];
+    const brand = res.poiType === 'truck' ? getTruckBrand(res.name) : null;
+    const displayName = res.name || cfg.label;
+    const subLabel = res.tags?.['addr:city']
+      ? `${res.tags['addr:city']}${res.tags?.['addr:state'] ? ', ' + res.tags['addr:state'] : ''}`
+      : cfg.label;
+    const distLabel = res.dist < 1 ? `${Math.round(res.dist * 5280)} ft` : `${res.dist.toFixed(1)} mi`;
+
+    const item = document.createElement('div');
+    item.className = 'nearby-result-item';
+    item.innerHTML = `
+      <div class="nearby-result-icon" style="background:${cfg.bg};border:1.5px solid ${cfg.color}22">
+        ${brand ? brand.logo : cfg.emoji}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="nearby-result-name">${displayName}</div>
+        <div class="nearby-result-sub">${subLabel}</div>
+      </div>
+      <div class="nearby-dist-badge">📏 ${distLabel}</div>
+    `;
+
+    // Tap → open map to location
+    item.addEventListener('click', () => {
+      if (fmMapInst) {
+        // If fullscreen map is open, fly to location
+        fmMapInst.flyTo([res.elLat, res.elLon], 16, { duration: 1 });
+        L.popup({ maxWidth: 220 })
+          .setLatLng([res.elLat, res.elLon])
+          .setContent(`<div style="font-family:'DM Sans',sans-serif;font-weight:800;font-size:13px">${cfg.emoji} ${displayName}</div><div style="font-size:11px;color:#6b7280;margin-top:3px">${distLabel} de tu ubicación</div>`)
+          .openOn(fmMapInst);
+      } else {
+        // Open in external maps
+        window.open(`https://maps.google.com/?q=${res.elLat},${res.elLon}`, '_blank');
+      }
+    });
+
+    itemsEl.appendChild(item);
+  });
 }
 
 function clearAllPOIs() {
@@ -5509,7 +6108,7 @@ function drawRestrictionWays(elements, mapInst, routeGeom, nearMiles) {
     if (seen.has(way.id)) return;
     if (!way.geometry || way.geometry.length < 2) return;
 
-    // Only show ways close to the route
+    // Only show ways strictly on the route (0.35 miles = ~1850 ft corridor)
     const midIdx = Math.floor(way.geometry.length / 2);
     const midPt = way.geometry[midIdx];
     if (routeGeom && !isNearRoute(midPt.lat, midPt.lon, routeGeom, nearMiles)) return;
@@ -5521,7 +6120,7 @@ function drawRestrictionWays(elements, mapInst, routeGeom, nearMiles) {
     const name    = tags.name || tags['name:en'] || tags.ref || '';
     const coords  = way.geometry.map(n => [n.lat, n.lon]);
 
-    // Shadow + main polyline (same style as route but red/orange)
+    // Shadow + main polyline
     const shadow = L.polyline(coords, {
       color: color, weight: 10, opacity: 0.18
     }).addTo(mapInst);
@@ -5531,7 +6130,6 @@ function drawRestrictionWays(elements, mapInst, routeGeom, nearMiles) {
       dashArray: tags.hgv === 'destination' ? '8 5' : null,
     });
 
-    // Popup
     const labelsHtml = labels.map(l =>
       `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.06)">
         <span style="font-size:15px">${l.split(' ')[0]}</span>
@@ -5586,6 +6184,32 @@ function drawRestrictionWays(elements, mapInst, routeGeom, nearMiles) {
   return layers;
 }
 
+// Check if truck is approaching a restriction on route, alert if < 3 miles
+let lastRestrictionAlert = 0;
+function checkNearbyRestrictions(lat, lon) {
+  if (!roadGeometry || !fmPoiLayers.restrict?.length) return;
+  const now = Date.now();
+  if (now - lastRestrictionAlert < 60000) return; // max once per minute
+
+  // Sample restriction polylines — check their midpoints
+  for (const layer of fmPoiLayers.restrict) {
+    if (!layer.getLatLng) continue; // skip polylines, check label markers only
+    const latlng = layer.getLatLng();
+    const dist   = haversine(lat, lon, latlng.lat, latlng.lng);
+    if (dist > 0 && dist < 3 && isNearRoute(latlng.lat, latlng.lng, roadGeometry, 0.5)) {
+      lastRestrictionAlert = now;
+      const popup = layer.getTooltip?.() || layer.options?.title || '';
+      showToast('warning', '🚫',
+        '⚠️ RESTRICCIÓN EN TU RUTA',
+        `Hay una vía restringida para camiones a ${dist.toFixed(1)} millas. Verifica la ruta.`,
+        8000
+      );
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      break;
+    }
+  }
+}
+
 // Load restrictions for fullscreen map
 async function loadTruckRestrictionsFullMap(waypoints) {
   if (!fmMapInst) return;
@@ -5610,7 +6234,7 @@ async function loadTruckRestrictionsFullMap(waypoints) {
     } catch(e) { console.warn('Restriction fetch failed:', e); }
   }
 
-  const layers = drawRestrictionWays(allElements, fmMapInst, roadGeometry, 8);
+  const layers = drawRestrictionWays(allElements, fmMapInst, roadGeometry, 0.35);
   fmPoiLayers.restrict = layers;
   fmPoiLoaded.restrict = true;
 
@@ -5658,7 +6282,7 @@ async function loadMiniMapRestrictions() {
     if (!way.geometry || way.geometry.length < 2) return;
     const midIdx = Math.floor(way.geometry.length / 2);
     const midPt = way.geometry[midIdx];
-    if (!isNearRoute(midPt.lat, midPt.lon, roadGeometry, 8)) return;
+    if (!isNearRoute(midPt.lat, midPt.lon, roadGeometry, 0.35)) return;
 
     const tags  = way.tags || {};
     const color = restrictionColor(tags);
@@ -5795,6 +6419,81 @@ function initIncidentToggles() {
     if (statusEl) statusEl.textContent = isOn ? INCIDENT_TYPES[type].statusOn : 'Desactivado';
   });
   updateActiveIncidentIcons();
+}
+
+/* ════════════════════════════════════════════════════════════
+   ⚠️  QUICK REPORT FAB — tap to pin incident at GPS location
+════════════════════════════════════════════════════════════ */
+let reportSheetOpen = false;
+
+function toggleReportSheet() {
+  reportSheetOpen = !reportSheetOpen;
+  const sheet = document.getElementById('reportSheet');
+  const fab   = document.getElementById('reportFab');
+  fab.classList.add('spinning');
+  setTimeout(() => fab.classList.remove('spinning'), 320);
+  fab.textContent = reportSheetOpen ? '✕' : '⚠️';
+  sheet.classList.toggle('open', reportSheetOpen);
+  // Close on outside tap
+  if (reportSheetOpen) {
+    setTimeout(() => {
+      const close = (e) => {
+        if (!sheet.contains(e.target) && e.target !== fab) {
+          reportSheetOpen = false;
+          fab.textContent = '⚠️';
+          sheet.classList.remove('open');
+        }
+        document.removeEventListener('pointerdown', close, true);
+      };
+      document.addEventListener('pointerdown', close, true);
+    }, 100);
+  }
+}
+
+function quickReport(type, emoji, label) {
+  // Close FAB sheet if open
+  if (reportSheetOpen) {
+    reportSheetOpen = false;
+    document.getElementById('reportFab').textContent = '⚠️';
+    document.getElementById('reportSheet').classList.remove('open');
+  }
+
+  // Get exact GPS location — prefer live GPS marker, else map center
+  let lat, lon;
+  if (fmGpsMarker) {
+    const ll = fmGpsMarker.getLatLng();
+    lat = ll.lat; lon = ll.lng;
+  } else if (fmMapInst) {
+    const c = fmMapInst.getCenter();
+    lat = c.lat; lon = c.lng;
+  } else {
+    showToast('warning','⚠️','Sin ubicación','Activa el GPS primero.', 4000);
+    return;
+  }
+
+  const report = {
+    id: Date.now(),
+    type, emoji, label,
+    lat, lon,
+    ts: Date.now(),
+    userAgent: navigator.userAgent.substring(0, 50)
+  };
+
+  communityReports.push(report);
+  communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
+  localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+
+  addReportMarker(report);
+  addIncidentBubble(report);
+
+  // Fly map briefly to confirm placement
+  if (fmMapInst) {
+    fmMapInst.flyTo([lat, lon], Math.max(fmMapInst.getZoom(), 15), { duration: 0.8 });
+  }
+
+  showToast('warning', emoji, `${label} marcado`,
+    `Reportado en tu ubicación exacta. Visible para todos en esta ruta.`, 5000);
+  if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
 }
 
 function submitIncident(type, emoji, label) {
