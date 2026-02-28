@@ -1351,6 +1351,15 @@
     border-color: #6b7280;
     box-shadow: 0 0 0 2px rgba(107,114,128,0.15), 0 8px 32px rgba(0,0,0,0.6);
   }
+  .speedo-ring.over-limit {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239,68,68,.4), 0 0 28px rgba(239,68,68,.6), 0 8px 32px rgba(0,0,0,0.6) !important;
+    animation: speedoRed 0.9s ease-in-out infinite;
+  }
+  @keyframes speedoRed {
+    0%,100% { box-shadow: 0 0 0 3px rgba(239,68,68,.3), 0 0 26px rgba(239,68,68,.5), 0 8px 32px rgba(0,0,0,.6); }
+    50%     { box-shadow: 0 0 0 6px rgba(239,68,68,.12), 0 0 40px rgba(239,68,68,.75), 0 8px 32px rgba(0,0,0,.6); }
+  }
   .speedo-svg {
     position: absolute; top: -5px; left: -5px;
     width: 120px; height: 120px;
@@ -1893,13 +1902,12 @@
 
       <label style="margin-top:0" id="truckPickerLbl">Choose</label>
       <select class="menu-select" id="truckIconSelect" style="width:100%;margin-top:6px">
+        <option value="svg:pro18w">🚛 18-Wheeler Pro (nuevo)</option>
         <option value="emoji:🚛">🚛 Classic</option>
         <option value="emoji:🚚">🚚 Delivery</option>
         <option value="emoji:🛻">🛻 Pickup</option>
         <option value="emoji:🚐">🚐 Van</option>
-        <option value="emoji:🚒">🚒 Fire</option>
         <option value="emoji:🚌">🚌 Bus</option>
-        <option value="img:https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f69b.png">🖼️ Truck image</option>
       </select>
 
       <label id="truckUploadLbl">Upload photo</label>
@@ -2390,14 +2398,64 @@
     <div class="mss-diff" id="mssDiff"></div>
   </div>
 
-  <!-- TOP BAR -->
-  <div style="
+  <!-- ══ GPS NAV HEADER BAR (like real GPS unit) ══ -->
+  <div id="gpsNavHeader" style="
+    display:none;
+    position:absolute; top:0; left:0; right:0; z-index:20;
+    background:linear-gradient(180deg,#1a6e2e 0%,#1a5c26 100%);
+    padding: calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;
+    align-items:center; gap:10px;
+    box-shadow:0 3px 16px rgba(0,0,0,.5);
+  ">
+    <!-- Turn arrow -->
+    <div id="gpsNavArrow" style="
+      font-size:28px;flex-shrink:0;
+      filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));
+    ">▶</div>
+    <!-- Highway info -->
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div id="gpsNavDir" style="
+          font-family:'Bebas Neue',sans-serif;
+          font-size:28px;line-height:1;color:#fff;
+          letter-spacing:.5px;text-shadow:0 1px 4px rgba(0,0,0,.4);
+        ">Ruta</div>
+        <div id="gpsNavHwy" style="
+          background:#fff;color:#1a3a8f;
+          font-family:'Bebas Neue',sans-serif;
+          font-size:16px;font-weight:900;
+          padding:2px 8px;border-radius:4px;
+          border:2.5px solid #e63946;
+          box-shadow:0 1px 4px rgba(0,0,0,.3);
+          display:none;
+        ">I-40</div>
+        <div id="gpsNavDest" style="
+          font-family:'DM Sans',sans-serif;
+          font-size:20px;font-weight:800;color:#fff;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+          text-shadow:0 1px 3px rgba(0,0,0,.4);
+        "></div>
+      </div>
+    </div>
+    <!-- ETA mini -->
+    <div id="gpsNavEta" style="
+      text-align:right;flex-shrink:0;
+      display:flex;flex-direction:column;align-items:flex-end;
+    ">
+      <div style="font-size:9px;color:rgba(255,255,255,.6);font-weight:700;letter-spacing:.5px">LLEGADA</div>
+      <div id="gpsNavEtaVal" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;line-height:1">--:--</div>
+    </div>
+  </div>
+
+  <!-- TOP BAR — shifts down when GPS nav header is visible -->
+  <div id="fmTopBar" style="
     position:absolute;top:0;left:0;right:0;z-index:10;
     padding-top:calc(10px + env(safe-area-inset-top, 0px));
     padding-left:calc(10px + env(safe-area-inset-left, 0px));
     padding-right:calc(10px + env(safe-area-inset-right, 0px));
     pointer-events:none;
     display:flex; align-items:flex-start; justify-content:space-between;
+    transition:padding-top .3s ease;
   ">
 
   <!-- POI Filter chips - hidden, POIs load automatically by default -->
@@ -2552,23 +2610,62 @@
       </div>
     </div>
 
-    <!-- 4 stats -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px">
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
-        <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmEtaLbl">LLEGADA</div>
-        <div style="font-size:15px;font-weight:900;color:#f59e0b;line-height:1" id="fmEta">--</div>
+    <!-- ══ MINI GAUGE BAR ══ -->
+    <div id="miniGaugesBar">
+      <!-- ETA -->
+      <div class="mgauge" id="mg-eta" onclick="expandGauge('eta')">
+        <div class="mg-ring" id="mgRing-eta">
+          <svg class="mg-svg" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="5"/>
+            <circle cx="36" cy="36" r="30" fill="none" stroke="#f59e0b" stroke-width="5"
+                    stroke-linecap="round" stroke-dasharray="0 188" id="mgArc-eta"
+                    transform="rotate(-225 36 36)" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+          </svg>
+          <span class="mg-val" id="fmEta">--</span>
+        </div>
+        <span class="mg-lbl" id="fmEtaLbl">LLEGADA</span>
       </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
-        <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmRemLbl">RESTANTE</div>
-        <div style="font-size:15px;font-weight:900;color:#3b82f6;line-height:1" id="fmRem">--</div>
+
+      <!-- RESTANTE -->
+      <div class="mgauge" id="mg-rem" onclick="expandGauge('rem')">
+        <div class="mg-ring" id="mgRing-rem">
+          <svg class="mg-svg" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="5"/>
+            <circle cx="36" cy="36" r="30" fill="none" stroke="#3b82f6" stroke-width="5"
+                    stroke-linecap="round" stroke-dasharray="0 188" id="mgArc-rem"
+                    transform="rotate(-225 36 36)" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+          </svg>
+          <span class="mg-val" id="fmRem">--</span>
+        </div>
+        <span class="mg-lbl" id="fmRemLbl">RESTANTE</span>
       </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
-        <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmDriveLbl">MANEJO</div>
-        <div style="font-size:15px;font-weight:900;color:#10b981;line-height:1" id="fmDriveLeft">11h</div>
+
+      <!-- MANEJO -->
+      <div class="mgauge" id="mg-drive" onclick="expandGauge('drive')">
+        <div class="mg-ring" id="mgRing-drive">
+          <svg class="mg-svg" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="5"/>
+            <circle cx="36" cy="36" r="30" fill="none" stroke="#10b981" stroke-width="5"
+                    stroke-linecap="round" stroke-dasharray="0 188" id="mgArc-drive"
+                    transform="rotate(-225 36 36)" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+          </svg>
+          <span class="mg-val" id="fmDriveLeft">11h</span>
+        </div>
+        <span class="mg-lbl" id="fmDriveLbl">MANEJO</span>
       </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
-        <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fm70Lbl">70 HRS</div>
-        <div style="font-size:15px;font-weight:900;color:#8b5cf6;line-height:1" id="fm70Left">70h</div>
+
+      <!-- 70 HRS -->
+      <div class="mgauge" id="mg-70" onclick="expandGauge('70')">
+        <div class="mg-ring" id="mgRing-70">
+          <svg class="mg-svg" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="5"/>
+            <circle cx="36" cy="36" r="30" fill="none" stroke="#8b5cf6" stroke-width="5"
+                    stroke-linecap="round" stroke-dasharray="0 188" id="mgArc-70"
+                    transform="rotate(-225 36 36)" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+          </svg>
+          <span class="mg-val" id="fm70Left">70h</span>
+        </div>
+        <span class="mg-lbl" id="fm70Lbl">70 HRS</span>
       </div>
     </div>
 
@@ -2601,6 +2698,58 @@
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
+
+/* ══ MINI GAUGE BAR ══ */
+#miniGaugesBar {
+  display:flex; justify-content:space-between; align-items:flex-end;
+  gap:6px; margin-bottom:12px;
+}
+.mgauge {
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+  transition:transform .28s cubic-bezier(.34,1.56,.64,1);
+  transform-origin:bottom center;
+}
+.mgauge.expanded {
+  transform:scale(1.62) translateY(-12px);
+  z-index:10; position:relative;
+}
+.mg-ring {
+  width:58px; height:58px; border-radius:50%;
+  background:rgba(10,16,30,.95);
+  border:2px solid rgba(255,255,255,.08);
+  display:flex; align-items:center; justify-content:center; position:relative;
+  backdrop-filter:blur(12px);
+  box-shadow:0 2px 10px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04);
+  transition:border-color .3s, box-shadow .3s;
+}
+.mg-ring.over-limit {
+  border-color:#ef4444 !important;
+  box-shadow:0 0 0 2px rgba(239,68,68,.4),0 0 20px rgba(239,68,68,.55),0 2px 10px rgba(0,0,0,.5) !important;
+  animation:mgPulseRed 1s ease-in-out infinite;
+}
+@keyframes mgPulseRed {
+  0%,100% { box-shadow:0 0 0 2px rgba(239,68,68,.3),0 0 18px rgba(239,68,68,.45),0 2px 10px rgba(0,0,0,.5); }
+  50%     { box-shadow:0 0 0 4px rgba(239,68,68,.12),0 0 30px rgba(239,68,68,.7),0 2px 10px rgba(0,0,0,.5); }
+}
+.mg-svg {
+  position:absolute; top:-5px; left:-5px;
+  width:68px; height:68px; pointer-events:none;
+}
+.mg-val {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px; line-height:1; color:#f1f5f9;
+  letter-spacing:.5px; z-index:1; text-align:center;
+  max-width:52px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.mg-lbl {
+  font-size:7px; font-weight:800; color:rgba(255,255,255,.35);
+  letter-spacing:.8px; text-transform:uppercase; text-align:center; white-space:nowrap;
+}
+.mgauge.expanded .mg-ring {
+  border-color:rgba(255,255,255,.18) !important;
+  box-shadow:0 6px 24px rgba(0,0,0,.75),0 0 0 2px rgba(255,255,255,.1) !important;
+}
 </style>
 
 
@@ -2888,7 +3037,7 @@ let isDark = localStorage.getItem('hos_theme') === 'dark';
 let use30min = localStorage.getItem('hos_30min') !== 'false';
 let selectedCountry = localStorage.getItem('hos_country') || '';
 let savedDrives = JSON.parse(localStorage.getItem('hos_drives') || '[]');
-let truckIconMode = localStorage.getItem('hos_truck_icon') || 'emoji:🚛'; // emoji:..., img:..., upload:dataurl
+let truckIconMode = localStorage.getItem('hos_truck_icon') || 'svg:pro18w';
 let truckUploadData = localStorage.getItem('hos_truck_upload') || '';
 let speedWidgetPos = JSON.parse(localStorage.getItem('hos_speed_pos') || 'null');
 let speedometerPos   = JSON.parse(localStorage.getItem('hos_speedometer_pos')  || 'null');
@@ -3935,6 +4084,102 @@ function hideMapSpeedSign() {
   document.getElementById('mapSpeedSign')?.classList.remove('visible');
 }
 
+/* ════════════════════════════════════════════════════════════
+   🔵  MINI GAUGES  — tap to expand, arc progress
+════════════════════════════════════════════════════════════ */
+let expandedGauge = null;
+
+function expandGauge(id) {
+  const el = document.getElementById('mg-' + id);
+  if (!el) return;
+  if (expandedGauge === id) {
+    // Collapse
+    el.classList.remove('expanded');
+    expandedGauge = null;
+    return;
+  }
+  // Collapse previous
+  if (expandedGauge) {
+    const prev = document.getElementById('mg-' + expandedGauge);
+    if (prev) prev.classList.remove('expanded');
+  }
+  el.classList.add('expanded');
+  expandedGauge = id;
+}
+
+// Auto-collapse gauge on tap outside
+document.addEventListener('click', (e) => {
+  if (!expandedGauge) return;
+  if (!e.target.closest('.mgauge')) {
+    const el = document.getElementById('mg-' + expandedGauge);
+    if (el) el.classList.remove('expanded');
+    expandedGauge = null;
+  }
+}, { passive: true });
+
+// Update mini gauge arc (maxVal is the max for the gauge type)
+// arcTotal = full circumference portion = 188 (270° arc on r=30)
+function setMgArc(id, val, maxVal, color) {
+  const arc = document.getElementById('mgArc-' + id);
+  if (!arc) return;
+  const pct = maxVal > 0 ? Math.min(1, val / maxVal) : 0;
+  const dash = (pct * 188).toFixed(1);
+  arc.setAttribute('stroke-dasharray', dash + ' 188');
+  if (color) arc.style.stroke = color;
+}
+
+// Called after route loads to set initial arcs
+function initMiniGauges(totalMiles, totalHours, cycleMax) {
+  // Route progress (RESTANTE) = 0% at start
+  setMgArc('rem', 0, 100, '#3b82f6');
+  // Drive time — start at 0 elapsed
+  setMgArc('drive', 0, 11, '#10b981');
+  // 70h cycle
+  setMgArc('70', 0, cycleMax || 70, '#8b5cf6');
+  // ETA — show full ring until we know elapsed
+  setMgArc('eta', 0, 100, '#f59e0b');
+}
+
+// Mark speedometer ring over-limit
+function setSpeedometerOverLimit(over) {
+  const ring = document.getElementById('speedoRing');
+  if (ring) ring.classList.toggle('over-limit', over);
+  // Also pulse the main arc red
+  const arc = document.getElementById('speedoArc');
+  if (arc) arc.style.stroke = over ? '#ef4444' : (ring?.classList.contains('stopped') ? '#6b7280' : '#10b981');
+}
+
+/* ════════════════════════════════════════════════════════════
+   🛣️  GPS NAV HEADER  — highway name + destination
+════════════════════════════════════════════════════════════ */
+function updateGpsNavHwy() {
+  const hwyEl = document.getElementById('gpsNavHwy');
+  if (!hwyEl || !currentStateCode) return;
+  // Try to detect current highway from reverse geocode or known state
+  const stateHwy = {
+    TX:'I-10', CA:'I-5', IL:'I-90', FL:'I-75', NY:'I-87',
+    OK:'I-40', AZ:'I-40', NM:'I-40', TN:'I-40', NC:'I-40',
+    OH:'I-71', PA:'I-76', GA:'I-75', MI:'I-75'
+  };
+  const hwy = stateHwy[currentStateCode];
+  if (hwy) {
+    hwyEl.textContent = hwy;
+    hwyEl.style.display = 'block';
+  }
+}
+
+// Update GPS nav header ETA each tick
+function updateGpsNavEta(etaH) {
+  const el = document.getElementById('gpsNavEtaVal');
+  if (!el) return;
+  const fmtH = h => {
+    const hr = Math.floor(h);
+    const mn = Math.round((h - hr) * 60);
+    return hr > 0 ? `${hr}h ${mn}m` : `${mn}m`;
+  };
+  el.textContent = fmtH(etaH);
+}
+
 function checkSpeedLimit(gpsSpeed) {
   if (!speedLimitActive || !currentStateCode) return;
   const limits = STATE_SPEED_LIMITS[currentStateCode];
@@ -3948,6 +4193,7 @@ function checkSpeedLimit(gpsSpeed) {
   if (mssSign) mssSign.classList.toggle('warn', overLimit);
 
   if (overLimit) {
+    setSpeedometerOverLimit(true);
     if (!speedLimitExceeded) {
       speedLimitExceeded = true;
       toast.classList.add('show');
@@ -3960,6 +4206,7 @@ function checkSpeedLimit(gpsSpeed) {
       }, 6000);
     }
   } else {
+    setSpeedometerOverLimit(false);
     sign?.classList.remove('over-limit');
     mssSign?.classList.remove('warn');
     speedLimitExceeded = false;
@@ -4532,18 +4779,26 @@ function showSuggestions(containerId, items, onSelect) {
 // TRUCK ICON (customizable)
 // ==============================
 function getTruckIconHTML(sizePx=26) {
-  // Priority: uploaded image if selected
-  if (truckIconMode && truckIconMode.startsWith('upload:') && truckUploadData) {
+  // Pro 18-wheeler SVG preview
+  if (!truckIconMode || truckIconMode === 'svg:pro18w') {
+    const s = Math.max(24, sizePx);
+    return buildTruckIconHTML(0, true).replace(
+      'width:64px;height:96px',
+      `width:${Math.round(s*0.67)}px;height:${s}px`
+    );
+  }
+  // Uploaded image
+  if (truckIconMode.startsWith('upload:') && truckUploadData) {
     const s = Math.max(18, sizePx + 8);
     return `<img alt="truck" src="${truckUploadData}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25));border-radius:10px" />`;
   }
-  if (truckIconMode && truckIconMode.startsWith('img:')) {
+  if (truckIconMode.startsWith('img:')) {
     const url = truckIconMode.slice(4);
     const s = Math.max(18, sizePx + 8);
     return `<img alt="truck" src="${url}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))" />`;
   }
   // Emoji
-  const emoji = (truckIconMode && truckIconMode.startsWith('emoji:')) ? truckIconMode.slice(6) : '🚛';
+  const emoji = truckIconMode.startsWith('emoji:') ? truckIconMode.slice(6) : '🚛';
   return `<div style="font-size:${sizePx}px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))">${emoji}</div>`;
 }
 
@@ -4585,10 +4840,12 @@ function refreshTruckMarkers() {
 
 function initMap(containerId) {
   const map = L.map(containerId, { zoomControl: true }).setView([39.5, -98.35], 4);
-  const tile = isDark
-    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  L.tileLayer(tile, { maxZoom: 19 }).addTo(map);
+  // GPS-style dark map: CartoDB Dark Matter with labels (includes highway shields, city names, state borders)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    attribution: '©OpenStreetMap ©CartoDB',
+    subdomains: 'abcd'
+  }).addTo(map);
   return map;
 }
 
@@ -4598,9 +4855,9 @@ function drawRoute(map, coords, markersRef, layerRef) {
   markersRef.list.forEach(m => map.removeLayer(m));
   markersRef.list = [];
 
-  const shadow = L.polyline(coords, { color: '#065f46', weight: 9, opacity: 0.22 }).addTo(map);
+  const shadow = L.polyline(coords, { color: '#000', weight: 10, opacity: 0.2 }).addTo(map);
   shadow.bringToBack();
-  const layer = L.polyline(coords, { color: '#10b981', weight: 5, opacity: 0.95 }).addTo(map);
+  const layer = L.polyline(coords, { color: '#e61cff', weight: 4, opacity: 0.9 }).addTo(map);
   layerRef.layer = layer;
 
   const o = L.marker([origin.lat, origin.lon]).addTo(map).bindPopup('Origin: ' + origin.name);
@@ -5202,10 +5459,19 @@ function openFullMapScreen() {
       fadeAnimation: true
     }).setView([39.5, -98.35], 4);
 
-    const tile = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-    L.tileLayer(tile, { maxZoom: 19 }).addTo(fmMapInst);
+    // ── GPS-style dark map: 2-layer approach ──────────────────
+    // Layer 1: Dark base roads (no labels) - CartoDB Dark Matter
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd'
+    }).addTo(fmMapInst);
+
+    // Layer 2: Labels only on top (city names, highway shields, state borders)
+    const labelsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+      zIndex: 650   // above route polyline so labels show over everything
+    }).addTo(fmMapInst);
 
     // Detect when user drags map — pause auto-follow
     fmMapInst.on('dragstart', () => {
@@ -5246,8 +5512,10 @@ function fmRedrawRoute(coords) {
   fmMarkers = [];
   if (fmLayer) { try { fmMapInst.removeLayer(fmLayer); } catch {} fmLayer = null; }
 
-  const shadow = L.polyline(routeCoords, { color: '#065f46', weight: 12, opacity: 0.15 }).addTo(fmMapInst);
-  fmLayer = L.polyline(routeCoords, { color: '#10b981', weight: 5, opacity: 0.9 }).addTo(fmMapInst);
+  // GPS-style: hot magenta/pink route with white border + glow
+  const shadow = L.polyline(routeCoords, { color: '#000', weight: 14, opacity: 0.25 }).addTo(fmMapInst);
+  const outline = L.polyline(routeCoords, { color: '#fff', weight: 9, opacity: 0.18 }).addTo(fmMapInst);
+  fmLayer = L.polyline(routeCoords, { color: '#e61cff', weight: 6, opacity: 0.95 }).addTo(fmMapInst);
 
   const oIcon = L.divIcon({
     className: '',
@@ -5265,7 +5533,7 @@ function fmRedrawRoute(coords) {
   const dMark = L.marker([destination.lat, destination.lon], { icon: dIcon }).addTo(fmMapInst)
     .bindPopup(`<b>Destination</b><br>${destination.name}`);
 
-  fmMarkers = [shadow, oMark, dMark];
+  fmMarkers = [shadow, outline, oMark, dMark];
   fmMapInst.fitBounds(fmLayer.getBounds(), { padding: [70, 70] });
 }
 
@@ -5275,42 +5543,156 @@ function fmRedrawRoute(coords) {
    Interpolates 60fps between GPS fixes
 ════════════════════════════════════════════════════════════ */
 let truckAnimFrame = null;       // requestAnimationFrame handle
-let truckFrom = null;            // { lat, lon, heading }
-let truckTo   = null;            // { lat, lon, heading }
-let truckAnimStart  = 0;
-const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
-
-// The static truck icon element — we reuse the same DOM, only move/rotate
-let fmTruckEl = null;  // the inner div element for rotation
-
 function buildTruckIconHTML(heading, isMoving) {
   const rot = heading != null ? heading : 0;
-  return `
-    <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
-         style="transform:rotate(${rot}deg);transition:transform 0.6s cubic-bezier(.4,0,.2,1)">
-      <div class="truck-glow"></div>
-      <div class="truck-pulse"></div>
-      <svg viewBox="0 0 52 52" width="52" height="52" style="position:relative;z-index:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))">
-        <rect x="20" y="10" width="24" height="20" rx="4" fill="${isMoving?'#10b981':'#6b7280'}" stroke="#fff" stroke-width="1.5"/>
-        <rect x="23" y="13" width="18" height="10" rx="2" fill="rgba(200,240,255,0.85)" stroke="rgba(255,255,255,.5)" stroke-width="1"/>
-        <circle cx="22" cy="28" r="2" fill="${isMoving?'#fde047':'#4b5563'}"/>
-        <circle cx="42" cy="28" r="2" fill="${isMoving?'#fde047':'#4b5563'}"/>
-        <rect x="2" y="16" width="20" height="14" rx="2" fill="${isMoving?'#0d9488':'#4b5563'}" stroke="#fff" stroke-width="1.2"/>
-        <line x1="12" y1="17" x2="12" y2="29" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
-        <line x1="7"  y1="17" x2="7"  y2="29" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
-        <line x1="17" y1="17" x2="17" y2="29" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
-        <circle cx="26" cy="32" r="5" fill="#1f2937" stroke="${isMoving?'#10b981':'#6b7280'}" stroke-width="1.5"/>
-        <circle cx="26" cy="32" r="2" fill="#374151"/>
-        <circle cx="38" cy="32" r="5" fill="#1f2937" stroke="${isMoving?'#10b981':'#6b7280'}" stroke-width="1.5"/>
-        <circle cx="38" cy="32" r="2" fill="#374151"/>
-        <circle cx="7"  cy="32" r="4" fill="#1f2937" stroke="${isMoving?'#0d9488':'#4b5563'}" stroke-width="1.2"/>
-        <circle cx="7"  cy="32" r="1.5" fill="#374151"/>
-        <circle cx="15" cy="32" r="4" fill="#1f2937" stroke="${isMoving?'#0d9488':'#4b5563'}" stroke-width="1.2"/>
-        <circle cx="15" cy="32" r="1.5" fill="#374151"/>
-        <rect x="42" y="6" width="3" height="8" rx="1.5" fill="#6b7280"/>
-        <polygon points="34,5 30,12 38,12" fill="${isMoving?'#10b981':'#9ca3af'}" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>
-      </svg>
-    </div>`;
+
+  const cabColor  = isMoving ? '#0f4c81' : '#334155';
+  const cab2      = isMoving ? '#1a6db5' : '#475569';
+  const cabShine  = isMoving ? '#3b9eff' : '#94a3b8';
+  const trailerC  = isMoving ? '#1e3a5f' : '#1e293b';
+  const trailer2  = isMoving ? '#0f2742' : '#111827';
+  const wheelCol  = '#0f172a';
+  const wheelRim  = isMoving ? '#cbd5e1' : '#64748b';
+  const hubCol    = isMoving ? '#94a3b8' : '#475569';
+  const ledColor  = isMoving ? '#fde68a' : '#6b7280';
+  const ledRear   = '#dc2626';
+  const runLight  = isMoving ? '#f97316' : '#374151';
+  const glow      = isMoving ? 'rgba(59,158,255,0.45)' : 'rgba(100,116,139,0.15)';
+  const exhaust   = '#4b5563';
+  const chrome    = '#e2e8f0';
+  const windshield= 'rgba(186,230,253,0.82)';
+  const glare     = 'rgba(255,255,255,0.35)';
+
+  const svg = `<svg viewBox="0 0 60 104" width="60" height="104" xmlns="http://www.w3.org/2000/svg"
+  style="filter:drop-shadow(0 6px 18px rgba(0,0,0,.75)) drop-shadow(0 2px 4px rgba(0,0,0,.5))">
+  <defs>
+    <linearGradient id="cabG" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="${cab2}"/>
+      <stop offset="45%"  stop-color="${cabShine}"/>
+      <stop offset="100%" stop-color="${cabColor}"/>
+    </linearGradient>
+    <linearGradient id="cabTopG" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"  stop-color="${cabShine}"/>
+      <stop offset="100%" stop-color="${cabColor}"/>
+    </linearGradient>
+    <linearGradient id="trailerG" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="${trailer2}"/>
+      <stop offset="50%"  stop-color="${trailerC}"/>
+      <stop offset="100%" stop-color="${trailer2}"/>
+    </linearGradient>
+    <linearGradient id="wheelG" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#334155"/>
+      <stop offset="100%" stop-color="${wheelCol}"/>
+    </linearGradient>
+    <filter id="ledGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowSoft" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3"/>
+    </filter>
+  </defs>
+
+  <!-- GLOW HALO -->
+  ${isMoving ? `<ellipse cx="30" cy="52" rx="26" ry="50" fill="${glow}" filter="url(#glowSoft)" opacity="0.5"/>` : ''}
+
+  <!-- ═══ TRAILER ═══ -->
+  <rect x="9" y="30" width="42" height="60" rx="2" fill="url(#trailerG)" stroke="#0f172a" stroke-width="0.8"/>
+  <rect x="9" y="30" width="3"  height="60" fill="rgba(255,255,255,.05)" rx="1"/>
+  <rect x="48" y="30" width="3" height="60" fill="rgba(255,255,255,.05)" rx="1"/>
+  <line x1="9" y1="46" x2="51" y2="46" stroke="rgba(255,255,255,.07)" stroke-width="0.7"/>
+  <line x1="9" y1="58" x2="51" y2="58" stroke="rgba(255,255,255,.07)" stroke-width="0.7"/>
+  <line x1="9" y1="70" x2="51" y2="70" stroke="rgba(255,255,255,.07)" stroke-width="0.7"/>
+  <line x1="9" y1="82" x2="51" y2="82" stroke="rgba(255,255,255,.07)" stroke-width="0.7"/>
+  <line x1="30" y1="30" x2="30" y2="90" stroke="rgba(255,255,255,.04)" stroke-width="0.5"/>
+  <!-- Rear bumper -->
+  <rect x="9" y="88" width="42" height="2" rx="1" fill="${chrome}" opacity="0.45"/>
+  <!-- Rear brake lights -->
+  <rect x="9"  y="86.5" width="10" height="3.5" rx="1" fill="${ledRear}" opacity="0.95" ${isMoving ? 'filter="url(#ledGlow)"' : ''}/>
+  <rect x="41" y="86.5" width="10" height="3.5" rx="1" fill="${ledRear}" opacity="0.95" ${isMoving ? 'filter="url(#ledGlow)"' : ''}/>
+  <rect x="9"  y="84.5" width="4" height="1.8" rx="0.7" fill="${runLight}" opacity="0.8"/>
+  <rect x="47" y="84.5" width="4" height="1.8" rx="0.7" fill="${runLight}" opacity="0.8"/>
+
+  <!-- ═══ 18 WHEELS (top-down ellipses) ═══ -->
+  <!-- Trailer rear tandem A -->
+  <ellipse cx="4.5" cy="76" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${wheelRim}" stroke-width="0.9"/>
+  <ellipse cx="4.5" cy="76" rx="2" ry="1.4" fill="${hubCol}"/>
+  <ellipse cx="4.5" cy="83" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${wheelRim}" stroke-width="0.9"/>
+  <ellipse cx="4.5" cy="83" rx="2" ry="1.4" fill="${hubCol}"/>
+  <ellipse cx="55.5" cy="76" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${wheelRim}" stroke-width="0.9"/>
+  <ellipse cx="55.5" cy="76" rx="2" ry="1.4" fill="${hubCol}"/>
+  <ellipse cx="55.5" cy="83" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${wheelRim}" stroke-width="0.9"/>
+  <ellipse cx="55.5" cy="83" rx="2" ry="1.4" fill="${hubCol}"/>
+  <!-- Trailer rear tandem B -->
+  <ellipse cx="4.5" cy="61" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${wheelRim}" stroke-width="0.9"/>
+  <ellipse cx="4.5" cy="61" rx="2" ry="1.4" fill="${hubCol}"/>
+  <ellipse cx="4.5" cy="68" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${wheelRim}" stroke-width="0.9"/>
+  <ellipse cx="4.5" cy="68" rx="2" ry="1.4" fill="${hubCol}"/>
+  <ellipse cx="55.5" cy="61" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${wheelRim}" stroke-width="0.9"/>
+  <ellipse cx="55.5" cy="61" rx="2" ry="1.4" fill="${hubCol}"/>
+  <ellipse cx="55.5" cy="68" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${wheelRim}" stroke-width="0.9"/>
+  <ellipse cx="55.5" cy="68" rx="2" ry="1.4" fill="${hubCol}"/>
+  <!-- Tractor drive tandem -->
+  <ellipse cx="4.5" cy="40" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${isMoving ? '#60a5fa' : wheelRim}" stroke-width="1"/>
+  <ellipse cx="4.5" cy="40" rx="2" ry="1.4" fill="${hubCol}"/>
+  <ellipse cx="4.5" cy="47" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${isMoving ? '#60a5fa' : wheelRim}" stroke-width="1"/>
+  <ellipse cx="4.5" cy="47" rx="2" ry="1.4" fill="${hubCol}"/>
+  <ellipse cx="55.5" cy="40" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${isMoving ? '#60a5fa' : wheelRim}" stroke-width="1"/>
+  <ellipse cx="55.5" cy="40" rx="2" ry="1.4" fill="${hubCol}"/>
+  <ellipse cx="55.5" cy="47" rx="4.5" ry="3.2" fill="url(#wheelG)" stroke="${isMoving ? '#60a5fa' : wheelRim}" stroke-width="1"/>
+  <ellipse cx="55.5" cy="47" rx="2" ry="1.4" fill="${hubCol}"/>
+  <!-- Steer axle -->
+  <ellipse cx="5" cy="17" rx="5" ry="3.5" fill="url(#wheelG)" stroke="${chrome}" stroke-width="1.1"/>
+  <ellipse cx="5" cy="17" rx="2.2" ry="1.6" fill="${hubCol}"/>
+  <ellipse cx="55" cy="17" rx="5" ry="3.5" fill="url(#wheelG)" stroke="${chrome}" stroke-width="1.1"/>
+  <ellipse cx="55" cy="17" rx="2.2" ry="1.6" fill="${hubCol}"/>
+
+  <!-- Fifth wheel -->
+  <ellipse cx="30" cy="31.5" rx="7" ry="3.5" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
+  <ellipse cx="30" cy="31.5" rx="3" ry="1.5" fill="#334155" stroke="#64748b" stroke-width="0.5"/>
+
+  <!-- ═══ CAB ═══ -->
+  <path d="M15,29 L15,8 Q15,2 30,2 Q45,2 45,8 L45,29 Z" fill="url(#cabG)" stroke="#0f172a" stroke-width="0.8"/>
+  <path d="M17,7 Q17,4 30,4 Q43,4 43,7 L43,24 L17,24 Z" fill="url(#cabTopG)" opacity="0.9"/>
+  <!-- Windshield -->
+  <path d="M18,7.5 Q18,5.5 30,5.5 Q42,5.5 42,7.5 L42,20 L18,20 Z" fill="${windshield}" stroke="rgba(255,255,255,.4)" stroke-width="0.6"/>
+  <line x1="18" y1="18" x2="42" y2="18" stroke="rgba(0,0,0,.25)" stroke-width="0.5"/>
+  <path d="M20,7.5 L34,7.5 L28,14 L20,14 Z" fill="${glare}" opacity="0.5"/>
+  <path d="M36,7.5 L42,7.5 L42,13 L36,13 Z" fill="${glare}" opacity="0.22"/>
+  <!-- A-pillars -->
+  <line x1="18" y1="6" x2="18" y2="24" stroke="rgba(0,0,0,.3)" stroke-width="1.1"/>
+  <line x1="42" y1="6" x2="42" y2="24" stroke="rgba(0,0,0,.3)" stroke-width="1.1"/>
+  <!-- Mirrors -->
+  <rect x="9"  y="8" width="6" height="4" rx="1.5" fill="${cabColor}" stroke="${chrome}" stroke-width="0.7"/>
+  <rect x="45" y="8" width="6" height="4" rx="1.5" fill="${cabColor}" stroke="${chrome}" stroke-width="0.7"/>
+  <!-- Exhaust stacks -->
+  <rect x="14" y="2" width="3" height="8" rx="1.5" fill="${exhaust}" stroke="${chrome}" stroke-width="0.6"/>
+  <rect x="43" y="2" width="3" height="8" rx="1.5" fill="${exhaust}" stroke="${chrome}" stroke-width="0.6"/>
+  <rect x="14" y="1" width="3" height="2.5" rx="1.5" fill="${chrome}" opacity="0.65"/>
+  <rect x="43" y="1" width="3" height="2.5" rx="1.5" fill="${chrome}" opacity="0.65"/>
+  <!-- Chrome bumper -->
+  <rect x="15" y="25.5" width="30" height="3.5" rx="1.5" fill="${chrome}" stroke="${cab2}" stroke-width="0.4" opacity="0.85"/>
+  <line x1="17" y1="26.5" x2="43" y2="26.5" stroke="${cabColor}" stroke-width="0.5" opacity="0.5"/>
+  <line x1="17" y1="28"   x2="43" y2="28"   stroke="${cabColor}" stroke-width="0.5" opacity="0.5"/>
+  <!-- LED headlight bar -->
+  ${isMoving ? `<rect x="15" y="22.5" width="30" height="2.5" rx="1.2" fill="${ledColor}" filter="url(#ledGlow)" opacity="0.5"/>` : ''}
+  <rect x="16" y="22" width="10" height="3" rx="1.2" fill="${ledColor}" opacity="${isMoving ? '1' : '0.35'}" ${isMoving ? 'filter="url(#ledGlow)"' : ''}/>
+  <rect x="34" y="22" width="10" height="3" rx="1.2" fill="${ledColor}" opacity="${isMoving ? '1' : '0.35'}" ${isMoving ? 'filter="url(#ledGlow)"' : ''}/>
+  <circle cx="17.5" cy="20.5" r="1.2" fill="${ledColor}" opacity="${isMoving ? '0.85' : '0.25'}"/>
+  <circle cx="42.5" cy="20.5" r="1.2" fill="${ledColor}" opacity="${isMoving ? '0.85' : '0.25'}"/>
+  <!-- Cab running lights -->
+  <circle cx="15.5" cy="5" r="1.1" fill="${runLight}" opacity="0.85"/>
+  <circle cx="44.5" cy="5" r="1.1" fill="${runLight}" opacity="0.85"/>
+  <!-- Direction chevron -->
+  ${isMoving ? `<polygon points="30,0 25.5,4 30,2.5 34.5,4" fill="#60a5fa" opacity="0.95" filter="url(#ledGlow)"/>` : ''}
+</svg>`;
+
+  return `<div id="truckWrapper"
+    style="transform:rotate(${rot}deg);
+           transition:transform 0.5s cubic-bezier(.4,0,.2,1);
+           width:60px;height:104px;position:relative;display:flex;align-items:center;justify-content:center">
+    ${svg}
+  </div>`;
 }
 
 // Linear interpolation
@@ -5361,7 +5743,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   if (!fmGpsMarker) {
     // First placement — create marker
     const html  = buildTruckIconHTML(heading, isMoving);
-    const icon  = L.divIcon({ className: '', html, iconAnchor: [26, 26], iconSize: [52, 52] });
+    const icon  = L.divIcon({ className: '', html, iconAnchor: [32, 48], iconSize: [64, 96] });
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
 
@@ -5374,7 +5756,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
     } else {
       // Wrapper gone (rare) — recreate icon
       const html = buildTruckIconHTML(heading, isMoving);
-      const icon = L.divIcon({ className: '', html, iconAnchor: [26, 26], iconSize: [52, 52] });
+      const icon = L.divIcon({ className: '', html, iconAnchor: [32, 48], iconSize: [64, 96] });
       fmGpsMarker.setIcon(icon);
       truckFrom = { lat, lon, heading: heading ?? 0 };
     }
@@ -5517,6 +5899,20 @@ async function fmStartTracking() {
   document.getElementById('fmBar').style.width  = '0%';
   document.getElementById('fmRem').textContent  = routeDistance + ' mi';
 
+  // Show GPS nav header
+  const navHdr = document.getElementById('gpsNavHeader');
+  if (navHdr && destination) {
+    navHdr.style.display = 'flex';
+    const destShort = destination.name.split(',')[0];
+    document.getElementById('gpsNavDest').textContent = destShort;
+    document.getElementById('gpsNavDir').textContent  = 'Hacia';
+    document.getElementById('gpsNavArrow').textContent = '▶';
+    // Shift top bar down to not overlap nav header
+    const tb = document.getElementById('fmTopBar');
+    if (tb) tb.style.paddingTop = 'calc(74px + env(safe-area-inset-top,0px))';
+    updateGpsNavHwy();
+  }
+
   fmWatchId = navigator.geolocation.watchPosition(async pos => {
     const lat  = pos.coords.latitude;
     const lon  = pos.coords.longitude;
@@ -5579,18 +5975,34 @@ async function fmStartTracking() {
     document.getElementById('fmBar').style.width = pct + '%';
     document.getElementById('fmEta').textContent = fmtH(etaH);
     document.getElementById('fmRem').textContent = remaining.toFixed(1) + ' mi';
+    updateGpsNavEta(etaH);
+    updateGpsNavHwy();
+
+    // ── Update mini gauge arcs ──────────────────────────────
+    // ETA arc: pct of trip time elapsed (inverse — remaining = low = arc filled)
+    const etaArcPct = routeDistance > 0 ? (1 - remaining / routeDistance) : 0;
+    setMgArc('eta', etaArcPct * 100, 100, pct >= 80 ? '#ef4444' : pct >= 50 ? '#f59e0b' : '#f59e0b');
+    // Remaining distance arc (filled = how much you've traveled)
+    setMgArc('rem', routeDistance - remaining, routeDistance, '#3b82f6');
 
     const driveLeft = Math.max(0, 11 - elapsed);
     const driveEl = document.getElementById('fmDriveLeft');
     driveEl.textContent = fmtH(driveLeft);
-    driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+    // Mini gauge arc for drive (elapsed / 11h)
+    const driveColor = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+    driveEl.style.color = driveColor;
+    setMgArc('drive', elapsed, 11, driveColor);
+    document.getElementById('mgRing-drive').style.borderColor = driveColor + '55';
     // Update circular widget on the map
     updateDriveHoursWidget(driveLeft, 11);
 
-    const cycleLeft = Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
+    const cycleMax  = parseFloat(document.getElementById('hoursInput').value) || 70;
+    const cycleLeft = Math.max(0, cycleMax - elapsed);
     const cyEl = document.getElementById('fm70Left');
     cyEl.textContent = fmtH(cycleLeft);
-    cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
+    const cycleColor = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
+    cyEl.style.color = cycleColor;
+    setMgArc('70', cycleMax - cycleLeft, cycleMax, cycleColor);
 
     // ── Location name throttled ──────────────────────────────
     const nowGeo = Date.now();
@@ -5657,6 +6069,10 @@ function fmStopTracking() {
   document.getElementById('fmLiveDot').style.background = '#6b7280';
   document.getElementById('fmLiveDot').style.boxShadow = 'none';
   document.getElementById('fmLiveDot').style.animation = 'none';
+  const navHdrStop = document.getElementById('gpsNavHeader');
+  if (navHdrStop) navHdrStop.style.display = 'none';
+  const tbStop = document.getElementById('fmTopBar');
+  if (tbStop) tbStop.style.paddingTop = 'calc(10px + env(safe-area-inset-top,0px))';
   if (fmAccMarker) { try { fmMapInst.removeLayer(fmAccMarker); } catch {} fmAccMarker = null; }
 }
 
@@ -6709,33 +7125,54 @@ function addReportMarker(report) {
   const age = Math.round((Date.now() - report.ts) / 60000);
   const ageStr = age < 1 ? 'Ahora' : age === 1 ? 'Hace 1 min' : `Hace ${age} min`;
 
-  // Pulsing circle + emoji marker
+  // ── FULL ICON (visible for 5 seconds) ──
+  const iconId = 'ri-' + report.id;
   const icon = L.divIcon({
     className: '',
     html: `
-      <div style="position:relative;display:flex;flex-direction:column;align-items:center">
+      <div id="${iconId}" style="
+        position:relative;display:flex;flex-direction:column;align-items:center;
+        transition:opacity .6s ease, transform .6s ease;
+      ">
         <div style="
           background:${cfg.color};
           border:2.5px solid #fff;
           border-radius:50%;
-          width:36px; height:36px;
+          width:38px; height:38px;
           display:flex; align-items:center; justify-content:center;
-          font-size:18px; line-height:1;
-          box-shadow:0 3px 14px rgba(0,0,0,.55);
-          animation:reportPulse 2s ease-in-out 4;
+          font-size:20px; line-height:1;
+          box-shadow:0 3px 14px rgba(0,0,0,.6), 0 0 0 3px ${cfg.color}44;
+          animation:reportPulse 1.5s ease-in-out 3;
           cursor:pointer;
         ">${cfg.emoji}</div>
         <div style="
-          margin-top:2px;
+          margin-top:3px;
           background:${cfg.color};color:#fff;
-          font-size:8px;font-weight:900;
-          padding:2px 6px;border-radius:5px;
+          font-size:9px;font-weight:900;
+          padding:2px 8px;border-radius:6px;
           white-space:nowrap;font-family:'DM Sans',sans-serif;
           box-shadow:0 1px 4px rgba(0,0,0,.4);
+          letter-spacing:.3px;
         ">${cfg.label}</div>
       </div>`,
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -24]
+    iconAnchor: [19, 19],
+    popupAnchor: [0, -28]
+  });
+
+  // ── PERSISTENT DOT (stays on map permanently after icon fades) ──
+  const dotIcon = L.divIcon({
+    className: '',
+    html: `
+      <div style="
+        width:10px;height:10px;
+        background:${cfg.color};
+        border:2px solid #fff;
+        border-radius:50%;
+        box-shadow:0 1px 6px rgba(0,0,0,.5), 0 0 0 2px ${cfg.color}55;
+        cursor:pointer;
+      " title="${cfg.label}"></div>`,
+    iconAnchor: [5, 5],
+    popupAnchor: [0, -10]
   });
 
   const popupHtml = `
@@ -6746,11 +7183,36 @@ function addReportMarker(report) {
       <div style="color:#ef4444;font-size:11px;font-weight:700;margin-top:6px">⚠️ Precaución en esta área</div>
     </div>`;
 
+  // Add full icon marker
   const marker = L.marker([report.lat, report.lon], { icon })
-    .addTo(fmMapInst)          // Always add — stays on map permanently
+    .addTo(fmMapInst)
     .bindPopup(popupHtml);
 
   fmPoiLayers.reports.push(marker);
+
+  // After 5 seconds: fade out and replace with small persistent dot
+  setTimeout(() => {
+    // Fade the icon element
+    const el = document.getElementById(iconId);
+    if (el) {
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.3)';
+    }
+    setTimeout(() => {
+      // Remove full icon marker
+      try { fmMapInst.removeLayer(marker); } catch {}
+      const idx = fmPoiLayers.reports.indexOf(marker);
+      if (idx > -1) fmPoiLayers.reports.splice(idx, 1);
+
+      // Add persistent small dot (only if map still active)
+      if (fmMapInst) {
+        const dot = L.marker([report.lat, report.lon], { icon: dotIcon })
+          .addTo(fmMapInst)
+          .bindPopup(popupHtml);
+        fmPoiLayers.reports.push(dot);
+      }
+    }, 650); // wait for fade animation
+  }, 5000);
 }
 
 function renderCommunityReports() {
