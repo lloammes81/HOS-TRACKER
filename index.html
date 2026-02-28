@@ -823,7 +823,7 @@
     left: 12px;
     position: absolute;
     top: calc(var(--header-pt) + 8px);
-z-index: 650;
+    z-index: 650;
     display: none;
     flex-direction: column;
     align-items: center;
@@ -869,6 +869,103 @@ z-index: 650;
     letter-spacing: .8px;
     margin-top: 3px;
     text-shadow: 0 1px 3px rgba(0,0,0,.5);
+  }
+
+  /* ── MAP SPEED LIMIT SIGN (always on map, not draggable) ── */
+  #mapSpeedSign {
+    position: absolute;
+    bottom: 90px;
+    right: calc(14px + env(safe-area-inset-right,0px));
+    z-index: 650;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,.5));
+  }
+  #mapSpeedSign.visible { display: flex; }
+  .mss-post {
+    width: 5px; height: 18px;
+    background: #6b7280;
+    border-radius: 0 0 2px 2px;
+  }
+  .mss-sign {
+    width: 72px; height: 82px;
+    background: #fff;
+    border: 5px solid #000;
+    border-radius: 7px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative;
+    transition: border-color .3s, background .3s;
+  }
+  .mss-sign.warn  { border-color: #ef4444; background: #fff5f5; }
+  .mss-sign.new   { animation: signPop .4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes signPop {
+    from { transform: scale(.7); opacity: .3; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  .mss-top {
+    font-size: 8px; font-weight: 900;
+    letter-spacing: .6px; line-height: 1.15;
+    text-align: center; color: #000;
+    white-space: pre;
+  }
+  .mss-num {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 36px; line-height: .95;
+    color: #000; letter-spacing: 1px;
+    transition: color .3s;
+  }
+  .mss-sign.warn .mss-num { color: #ef4444; }
+  .mss-truck-label {
+    font-size: 7px; font-weight: 900;
+    color: #6b7280; letter-spacing: .4px;
+    margin-top: 1px;
+  }
+  .mss-state-badge {
+    background: rgba(10,16,30,.82);
+    backdrop-filter: blur(6px);
+    color: #f1f5f9;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: .8px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-top: 5px;
+    white-space: nowrap;
+  }
+  .mss-diff {
+    font-size: 8px; font-weight: 700;
+    color: rgba(241,245,249,.6);
+    margin-top: 1px;
+    white-space: nowrap;
+  }
+
+  /* ── SMOOTH TRUCK WRAPPER (CSS rotation transition) ─────── */
+  .truck-smooth-wrapper {
+    width: 60px; height: 60px;
+    position: relative;
+    /* rotation handled by JS inline style for smooth GPU transition */
+  }
+  .truck-smooth-wrapper .truck-glow {
+    position: absolute; inset: -8px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(16,185,129,.4) 0%, transparent 68%);
+    animation: truckGlow 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .truck-smooth-wrapper.stopped .truck-glow {
+    background: radial-gradient(circle, rgba(107,114,128,.25) 0%, transparent 68%);
+  }
+  /* Pulse ring under the truck when moving */
+  .truck-smooth-wrapper .truck-pulse {
+    position: absolute; inset: -2px; border-radius: 50%;
+    border: 2px solid rgba(16,185,129,.5);
+    animation: truckPulse 1.5s ease-out infinite;
+  }
+  .truck-smooth-wrapper.stopped .truck-pulse { display: none; }
+  @keyframes truckPulse {
+    0%   { transform: scale(1); opacity: .6; }
+    100% { transform: scale(1.9); opacity: 0; }
   }
 
   /* ══════════════════════════════════════════
@@ -1012,6 +1109,76 @@ z-index: 650;
   }
   #speedometerWidget.visible { display: flex; }
   #speedometerWidget.dragging { cursor: grabbing; }
+
+  /* ── DRIVING HOURS WIDGET ───────────────────────────────── */
+  #driveHoursWidget {
+    position: fixed;
+    bottom: calc(var(--tab-h) + 16px);
+    left: calc(16px + env(safe-area-inset-left, 0px));
+    right: auto; top: auto; transform: none;
+    z-index: 600;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+    opacity: .80;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+  #driveHoursWidget.visible  { display: flex; }
+  #driveHoursWidget.dragging { cursor: grabbing; opacity: 1; }
+
+  .dh-ring {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    background: rgba(10,16,30,0.95);
+    border: 3px solid #10b981;
+    box-shadow: 0 0 0 2px rgba(16,185,129,.15), 0 0 24px rgba(16,185,129,.22), 0 8px 32px rgba(0,0,0,.6);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative;
+    backdrop-filter: blur(16px);
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .dh-ring.warn {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245,158,11,.3), 0 0 28px rgba(245,158,11,.35), 0 8px 32px rgba(0,0,0,.6);
+  }
+  .dh-ring.critical {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239,68,68,.35), 0 0 28px rgba(239,68,68,.45), 0 8px 32px rgba(0,0,0,.6);
+    animation: dhPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes dhPulse {
+    0%,100% { box-shadow: 0 0 0 2px rgba(239,68,68,.35), 0 0 28px rgba(239,68,68,.45), 0 8px 32px rgba(0,0,0,.6); }
+    50%      { box-shadow: 0 0 0 5px rgba(239,68,68,.15), 0 0 44px rgba(239,68,68,.6),  0 8px 32px rgba(0,0,0,.6); }
+  }
+  .dh-svg {
+    position: absolute; top: -5px; left: -5px;
+    width: 120px; height: 120px;
+    pointer-events: none;
+  }
+  .dh-hrs {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 36px; line-height: 1;
+    color: #10b981; letter-spacing: .5px;
+    z-index: 1;
+    transition: color .3s;
+  }
+  .dh-hrs.warn     { color: #f59e0b; }
+  .dh-hrs.critical { color: #ef4444; }
+  .dh-unit {
+    font-size: 9px; font-weight: 800;
+    color: rgba(255,255,255,.4); letter-spacing: 1.5px;
+    text-transform: uppercase; z-index: 1; margin-top: -2px;
+  }
+  .dh-label {
+    font-size: 9px; font-weight: 700;
+    color: rgba(255,255,255,.3); letter-spacing: .7px;
+    margin-top: 4px; text-align: center;
+    white-space: nowrap;
+  }
   .speedo-ring {
     width: 110px; height: 110px;
     border-radius: 50%;
@@ -1908,6 +2075,18 @@ z-index: 650;
   <!-- MAP fills entire screen -->
   <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
 
+  <!-- MAP SPEED LIMIT SIGN -->
+  <div id="mapSpeedSign">
+    <div class="mss-sign" id="mssSign">
+      <div class="mss-top">SPEED&#10;LIMIT</div>
+      <div class="mss-num" id="mssNum">65</div>
+      <div class="mss-truck-label">TRUCKS</div>
+    </div>
+    <div class="mss-post"></div>
+    <div class="mss-state-badge" id="mssState">-- STATE</div>
+    <div class="mss-diff" id="mssDiff"></div>
+  </div>
+
   <!-- TOP BAR: close + live dot -->
   <div style="
     position:absolute;top:0;left:0;right:0;z-index:10;
@@ -2198,6 +2377,31 @@ z-index: 650;
 </div>
 
 <!-- ══════════════════════════════════════
+     DRIVING HOURS WIDGET (left side)
+══════════════════════════════════════ -->
+<div id="driveHoursWidget">
+  <div class="dh-ring" id="dhRing">
+    <!-- Arc SVG — full circle track + colored arc -->
+    <svg class="dh-svg" viewBox="0 0 120 120">
+      <!-- Track -->
+      <circle cx="60" cy="60" r="55" fill="none"
+              stroke="rgba(255,255,255,0.07)" stroke-width="6"/>
+      <!-- Colored arc — starts at top, goes clockwise -->
+      <circle cx="60" cy="60" r="55" fill="none"
+              stroke="#10b981" stroke-width="6"
+              stroke-linecap="round"
+              stroke-dasharray="0 345"
+              id="dhArc"
+              transform="rotate(-220 60 60)"
+              style="transition:stroke-dasharray .6s ease, stroke .4s"/>
+    </svg>
+    <div class="dh-hrs" id="dhHrs">11h</div>
+    <div class="dh-unit">DRIVE</div>
+  </div>
+  <div class="dh-label" id="dhLabel">DRIVING LEFT</div>
+</div>
+
+<!-- ══════════════════════════════════════
      CIRCULAR SPEEDOMETER WIDGET
 ══════════════════════════════════════ -->
 <div id="speedometerWidget">
@@ -2369,7 +2573,8 @@ let savedDrives = JSON.parse(localStorage.getItem('hos_drives') || '[]');
 let truckIconMode = localStorage.getItem('hos_truck_icon') || 'emoji:🚛'; // emoji:..., img:..., upload:dataurl
 let truckUploadData = localStorage.getItem('hos_truck_upload') || '';
 let speedWidgetPos = JSON.parse(localStorage.getItem('hos_speed_pos') || 'null');
-let speedometerPos = JSON.parse(localStorage.getItem('hos_speedometer_pos') || 'null');
+let speedometerPos   = JSON.parse(localStorage.getItem('hos_speedometer_pos')  || 'null');
+let driveHoursPos    = JSON.parse(localStorage.getItem('hos_drivehours_pos')   || 'null');
 let defaultSpeed = parseInt(localStorage.getItem('hos_speed') || '60');
 let currentTab = 'plan';
 
@@ -2905,6 +3110,118 @@ function hideSpeedometer() {
   speedoVisible = false;
 }
 
+/* ── DRIVING HOURS WIDGET ─────────────────────────────────── */
+function showDriveHoursWidget() {
+  document.getElementById('driveHoursWidget').classList.add('visible');
+  applyDriveHoursPos();
+}
+
+function hideDriveHoursWidget() {
+  document.getElementById('driveHoursWidget').classList.remove('visible');
+}
+
+function applyDriveHoursPos() {
+  const w = document.getElementById('driveHoursWidget');
+  if (!w) return;
+  if (driveHoursPos && typeof driveHoursPos.x === 'number') {
+    w.style.left   = driveHoursPos.x + 'px';
+    w.style.top    = driveHoursPos.y + 'px';
+    w.style.bottom = 'auto';
+    w.style.right  = 'auto';
+    w.style.transform = 'none';
+  }
+}
+
+// hoursLeft: decimal hours remaining (e.g. 8.5)
+// maxHours: the starting maximum (11 for daily drive limit)
+function updateDriveHoursWidget(hoursLeft, maxHours) {
+  const ring  = document.getElementById('dhRing');
+  const hrs   = document.getElementById('dhHrs');
+  const arc   = document.getElementById('dhArc');
+  const label = document.getElementById('dhLabel');
+  if (!ring) return;
+
+  // Format label
+  const totalMins = Math.round(hoursLeft * 60);
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  hrs.textContent = h > 0 ? `${h}h${m > 0 ? m : ''}` : `${m}m`;
+
+  // Severity state
+  const isWarn     = hoursLeft < 4 && hoursLeft >= 2;
+  const isCritical = hoursLeft < 2;
+  ring.className  = 'dh-ring' + (isCritical ? ' critical' : isWarn ? ' warn' : '');
+  hrs.className   = 'dh-hrs'  + (isCritical ? ' critical' : isWarn ? ' warn' : '');
+
+  // Arc color
+  const arcColor = isCritical ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981';
+  arc.style.stroke = arcColor;
+
+  // Arc length: 295 units = full circle worth of arc
+  const pct    = Math.max(0, Math.min(1, hoursLeft / Math.max(1, maxHours)));
+  const dashLen = pct * 295;
+  arc.setAttribute('stroke-dasharray', `${dashLen.toFixed(1)} 345`);
+
+  // Label
+  label.textContent = lang === 'es' ? 'HORAS DE MANEJO' : 'DRIVING LEFT';
+}
+
+function initDriveHoursDrag() {
+  const w = document.getElementById('driveHoursWidget');
+  if (!w) return;
+
+  applyDriveHoursPos();
+
+  let dragging = false, startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+  const getPoint = (e) => {
+    const t = e.touches && e.touches[0];
+    return t ? { x: t.clientX, y: t.clientY } : { x: e.clientX, y: e.clientY };
+  };
+
+  const onDown = (e) => {
+    if (!w.classList.contains('visible')) return;
+    dragging = true;
+    w.classList.add('dragging');
+    const pt   = getPoint(e);
+    startX = pt.x; startY = pt.y;
+    const rect = w.getBoundingClientRect();
+    origLeft   = rect.left;
+    origTop    = rect.top;
+    w.style.left   = origLeft + 'px';
+    w.style.top    = origTop  + 'px';
+    w.style.bottom = 'auto';
+    w.style.right  = 'auto';
+    w.style.transform = 'none';
+    e.preventDefault();
+  };
+
+  const onMove = (e) => {
+    if (!dragging) return;
+    const pt  = getPoint(e);
+    const rect = w.getBoundingClientRect();
+    const pad  = 6;
+    let newLeft = origLeft + (pt.x - startX);
+    let newTop  = origTop  + (pt.y - startY);
+    newLeft = Math.max(pad, Math.min(window.innerWidth  - rect.width  - pad, newLeft));
+    newTop  = Math.max(pad, Math.min(window.innerHeight - rect.height - pad, newTop));
+    w.style.left = newLeft + 'px';
+    w.style.top  = newTop  + 'px';
+    driveHoursPos = { x: Math.round(newLeft), y: Math.round(newTop) };
+    localStorage.setItem('hos_drivehours_pos', JSON.stringify(driveHoursPos));
+    e.preventDefault();
+  };
+
+  const onUp = () => { if (!dragging) return; dragging = false; w.classList.remove('dragging'); };
+
+  w.addEventListener('mousedown',  onDown);
+  w.addEventListener('touchstart', onDown, { passive: false });
+  window.addEventListener('mousemove',  onMove);
+  window.addEventListener('touchmove',  onMove, { passive: false });
+  window.addEventListener('mouseup',    onUp);
+  window.addEventListener('touchend',   onUp);
+}
+
 function updateSpeedometer(mph) {
   if (!speedoVisible) return;
   const num = document.getElementById('speedoNum');
@@ -3149,14 +3466,13 @@ function toggleSpeedLimit(btn) {
 async function detectStateAndUpdateLimit(lat, lon) {
   if (!speedLimitActive) return;
   const now = Date.now();
-  if (now - lastStateCheck < 30000) return; // only check every 30s
+  if (now - lastStateCheck < 20000) return; // check every 20s
   lastStateCheck = now;
   try {
     const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`);
     const d = await r.json();
     const p = d.features?.[0]?.properties || {};
     const stateRaw = p.state || p.region || '';
-    // Map state name to abbreviation
     const stateMap = {
       'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
       'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
@@ -3175,26 +3491,65 @@ async function detectStateAndUpdateLimit(lat, lon) {
       currentStateCode = code;
       const limits = STATE_SPEED_LIMITS[code];
       if (limits) {
+        // --- Settings widget (draggable) ---
         document.getElementById('slNum').textContent = limits.truck;
         document.getElementById('slState').textContent = code;
         document.getElementById('speedLimitWidget').classList.add('visible');
-        // Brief toast when entering new state
-        showToast('info', '🚦', `${stateRaw || code} — Límite: ${limits.truck} mph`,
-          `Límite para camiones en este estado`, 5000);
+
+        // --- Map speed sign ---
+        updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
+
+        // Toast when entering new state
+        const unit = code === 'ON' || code === 'BC' || code === 'AB' || code === 'QC' ? 'km/h' : 'mph';
+        showToast('info', '🚦', `${stateRaw || code} — Truck limit: ${limits.truck} ${unit}`,
+          `Car: ${limits.car} ${unit}${limits.truck < limits.car ? ' · Trucks must go slower' : ''}`, 6000);
       }
     }
   } catch(e) {}
+}
+
+function updateMapSpeedSign(truckMph, carMph, code, stateName) {
+  const sign  = document.getElementById('mapSpeedSign');
+  const mssSign = document.getElementById('mssSign');
+  const num   = document.getElementById('mssNum');
+  const stBadge = document.getElementById('mssState');
+  const diff  = document.getElementById('mssDiff');
+  if (!sign) return;
+
+  num.textContent = truckMph;
+  stBadge.textContent = (stateName && stateName !== code ? stateName : code);
+
+  const unit = (code === 'ON' || code === 'BC' || code === 'AB' || code === 'QC') ? 'km/h' : 'mph';
+  if (carMph !== truckMph) {
+    diff.textContent = `Cars: ${carMph} ${unit}`;
+  } else {
+    diff.textContent = `Trucks & cars: ${truckMph} ${unit}`;
+  }
+
+  sign.classList.add('visible');
+  // Trigger pop animation
+  mssSign.classList.remove('new');
+  void mssSign.offsetWidth; // reflow
+  mssSign.classList.add('new');
+}
+
+function hideMapSpeedSign() {
+  document.getElementById('mapSpeedSign')?.classList.remove('visible');
 }
 
 function checkSpeedLimit(gpsSpeed) {
   if (!speedLimitActive || !currentStateCode) return;
   const limits = STATE_SPEED_LIMITS[currentStateCode];
   if (!limits) return;
-  const sign  = document.getElementById('slSign');
-  const toast = document.getElementById('speedToast');
+  const sign    = document.getElementById('slSign');
+  const mssSign = document.getElementById('mssSign');
+  const toast   = document.getElementById('speedToast');
+  const overLimit = gpsSpeed > limits.truck + 5;
 
-  if (gpsSpeed > limits.truck + 5) {
-    sign.classList.add('over-limit');
+  if (sign)    sign.classList.toggle('over-limit', overLimit);
+  if (mssSign) mssSign.classList.toggle('warn', overLimit);
+
+  if (overLimit) {
     if (!speedLimitExceeded) {
       speedLimitExceeded = true;
       toast.classList.add('show');
@@ -3207,7 +3562,8 @@ function checkSpeedLimit(gpsSpeed) {
       }, 6000);
     }
   } else {
-    sign.classList.remove('over-limit');
+    sign?.classList.remove('over-limit');
+    mssSign?.classList.remove('warn');
     speedLimitExceeded = false;
   }
 }
@@ -3401,6 +3757,7 @@ function init() {
   bindEvents();
   initSpeedWidgetDrag();
   initSpeedometerDrag();
+  initDriveHoursDrag();
   renderDrives();
   renderSummary();
   updateSettingsChecks();
@@ -4434,61 +4791,120 @@ function fmRedrawRoute(coords) {
 }
 
 // Make/update the truck marker with rotation based on heading
-function fmUpdateTruckMarker(lat, lon, heading) {
-  const rotation = heading != null ? heading : 0;
-  const truckHtml = `
-    <div style="
-      width:52px;height:52px;position:relative;
-      transform:rotate(${rotation}deg);
-      transition:transform 0.8s ease;
-      filter:drop-shadow(0 4px 12px rgba(0,0,0,.6));
-    ">
-      <!-- Glow ring -->
-      <div style="
-        position:absolute;inset:-4px;border-radius:50%;
-        background:radial-gradient(circle,rgba(16,185,129,.35) 0%,transparent 70%);
-        animation:truckGlow 2s ease-in-out infinite;
-      "></div>
-      <!-- SVG Semi-truck -->
-      <svg viewBox="0 0 52 52" width="52" height="52" style="position:absolute;top:0;left:0">
-        <!-- Cab body -->
-        <rect x="20" y="10" width="24" height="20" rx="4" fill="#10b981" stroke="#fff" stroke-width="1.5"/>
-        <!-- Windshield -->
+/* ════════════════════════════════════════════════════════════
+   🚛  SMOOTH TRUCK MARKER — Google Maps style
+   Interpolates 60fps between GPS fixes
+════════════════════════════════════════════════════════════ */
+let truckAnimFrame = null;       // requestAnimationFrame handle
+let truckFrom = null;            // { lat, lon, heading }
+let truckTo   = null;            // { lat, lon, heading }
+let truckAnimStart  = 0;
+const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
+
+// The static truck icon element — we reuse the same DOM, only move/rotate
+let fmTruckEl = null;  // the inner div element for rotation
+
+function buildTruckIconHTML(heading, isMoving) {
+  const rot = heading != null ? heading : 0;
+  return `
+    <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
+         style="transform:rotate(${rot}deg);transition:transform 0.6s cubic-bezier(.4,0,.2,1)">
+      <div class="truck-glow"></div>
+      <div class="truck-pulse"></div>
+      <svg viewBox="0 0 52 52" width="52" height="52" style="position:relative;z-index:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))">
+        <rect x="20" y="10" width="24" height="20" rx="4" fill="${isMoving?'#10b981':'#6b7280'}" stroke="#fff" stroke-width="1.5"/>
         <rect x="23" y="13" width="18" height="10" rx="2" fill="rgba(200,240,255,0.85)" stroke="rgba(255,255,255,.5)" stroke-width="1"/>
-        <!-- Cab lights -->
-        <circle cx="22" cy="28" r="2" fill="#fde047"/>
-        <circle cx="42" cy="28" r="2" fill="#fde047"/>
-        <!-- Trailer -->
-        <rect x="2" y="16" width="20" height="14" rx="2" fill="#0d9488" stroke="#fff" stroke-width="1.2"/>
-        <!-- Trailer door lines -->
+        <circle cx="22" cy="28" r="2" fill="${isMoving?'#fde047':'#4b5563'}"/>
+        <circle cx="42" cy="28" r="2" fill="${isMoving?'#fde047':'#4b5563'}"/>
+        <rect x="2" y="16" width="20" height="14" rx="2" fill="${isMoving?'#0d9488':'#4b5563'}" stroke="#fff" stroke-width="1.2"/>
         <line x1="12" y1="17" x2="12" y2="29" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
         <line x1="7"  y1="17" x2="7"  y2="29" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
         <line x1="17" y1="17" x2="17" y2="29" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
-        <!-- Cab wheels -->
-        <circle cx="26" cy="32" r="5" fill="#1f2937" stroke="#10b981" stroke-width="1.5"/>
+        <circle cx="26" cy="32" r="5" fill="#1f2937" stroke="${isMoving?'#10b981':'#6b7280'}" stroke-width="1.5"/>
         <circle cx="26" cy="32" r="2" fill="#374151"/>
-        <circle cx="38" cy="32" r="5" fill="#1f2937" stroke="#10b981" stroke-width="1.5"/>
+        <circle cx="38" cy="32" r="5" fill="#1f2937" stroke="${isMoving?'#10b981':'#6b7280'}" stroke-width="1.5"/>
         <circle cx="38" cy="32" r="2" fill="#374151"/>
-        <!-- Trailer wheels -->
-        <circle cx="7"  cy="32" r="4" fill="#1f2937" stroke="#0d9488" stroke-width="1.2"/>
+        <circle cx="7"  cy="32" r="4" fill="#1f2937" stroke="${isMoving?'#0d9488':'#4b5563'}" stroke-width="1.2"/>
         <circle cx="7"  cy="32" r="1.5" fill="#374151"/>
-        <circle cx="15" cy="32" r="4" fill="#1f2937" stroke="#0d9488" stroke-width="1.2"/>
+        <circle cx="15" cy="32" r="4" fill="#1f2937" stroke="${isMoving?'#0d9488':'#4b5563'}" stroke-width="1.2"/>
         <circle cx="15" cy="32" r="1.5" fill="#374151"/>
-        <!-- Exhaust stack -->
         <rect x="42" y="6" width="3" height="8" rx="1.5" fill="#6b7280"/>
-        <!-- Direction arrow at front -->
-        <polygon points="34,5 30,12 38,12" fill="#10b981" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>
+        <polygon points="34,5 30,12 38,12" fill="${isMoving?'#10b981':'#9ca3af'}" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>
       </svg>
-    </div>
-  `;
-  const icon = L.divIcon({ className: '', html: truckHtml, iconAnchor: [26, 26] });
+    </div>`;
+}
+
+// Linear interpolation
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+// Shortest-path heading interpolation (handles 359→1 case)
+function lerpHeading(a, b, t) {
+  let diff = b - a;
+  if (diff > 180)  diff -= 360;
+  if (diff < -180) diff += 360;
+  return a + diff * t;
+}
+
+function easeInOut(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+// Called every rAF tick — moves marker smoothly
+function truckAnimTick(ts) {
+  if (!truckFrom || !truckTo || !fmGpsMarker) return;
+  const elapsed = ts - truckAnimStart;
+  const raw_t   = Math.min(1, elapsed / TRUCK_ANIM_MS);
+  const t       = easeInOut(raw_t);
+
+  const lat = lerp(truckFrom.lat, truckTo.lat, t);
+  const lon = lerp(truckFrom.lon, truckTo.lon, t);
+
+  fmGpsMarker.setLatLng([lat, lon]);
+
+  // Smooth rotation via CSS on the wrapper element
+  const wrapper = document.getElementById('truckWrapper');
+  if (wrapper && truckTo.heading != null) {
+    const h = lerpHeading(truckFrom.heading ?? truckTo.heading, truckTo.heading, t);
+    wrapper.style.transform = `rotate(${h.toFixed(1)}deg)`;
+  }
+
+  if (t < 1) {
+    truckAnimFrame = requestAnimationFrame(truckAnimTick);
+  } else {
+    truckFrom = { ...truckTo };
+    truckAnimFrame = null;
+  }
+}
+
+function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
+  // Update target
+  if (truckTo) truckFrom = { ...truckTo };
+  truckTo = { lat, lon, heading: heading ?? truckFrom?.heading ?? 0 };
 
   if (!fmGpsMarker) {
+    // First placement — create marker
+    const html  = buildTruckIconHTML(heading, isMoving);
+    const icon  = L.divIcon({ className: '', html, iconAnchor: [26, 26], iconSize: [52, 52] });
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
+    truckFrom   = { lat, lon, heading: heading ?? 0 };
+
   } else {
-    fmGpsMarker.setLatLng([lat, lon]);
-    fmGpsMarker.setIcon(icon);
+    // Refresh icon if moving state changed (to swap colors/pulse)
+    const wrapper = document.getElementById('truckWrapper');
+    if (wrapper) {
+      // Toggle moving/stopped classes without rebuilding full icon
+      wrapper.classList.toggle('stopped', !isMoving);
+    } else {
+      // Wrapper gone (rare) — recreate icon
+      const html = buildTruckIconHTML(heading, isMoving);
+      const icon = L.divIcon({ className: '', html, iconAnchor: [26, 26], iconSize: [52, 52] });
+      fmGpsMarker.setIcon(icon);
+      truckFrom = { lat, lon, heading: heading ?? 0 };
+    }
   }
+
+  // Cancel previous animation and start fresh
+  if (truckAnimFrame) { cancelAnimationFrame(truckAnimFrame); truckAnimFrame = null; }
+  truckAnimStart = performance.now();
+  truckAnimFrame = requestAnimationFrame(truckAnimTick);
 }
 
 // Calculate compass heading from two GPS points
@@ -4585,7 +5001,7 @@ async function fmStartTracking() {
       fillOpacity: 0.08, weight: 1.5, opacity: 0.5
     }).addTo(fmMapInst);
 
-    fmUpdateTruckMarker(realLat, realLon, null);
+    fmUpdateTruckMarker(realLat, realLon, null, false);
     fmPrevLat = realLat; fmPrevLon = realLon;
 
     // AUTO-ZOOM: zoom in on truck at driving zoom level
@@ -4606,6 +5022,8 @@ async function fmStartTracking() {
   lastFuelCheck  = 0;
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
+  showDriveHoursWidget();
+  updateDriveHoursWidget(11, 11); // initialize at full
   // Show SOS button if enabled
   if (sosBtnActive) document.getElementById('sosFab').classList.add('visible');
   document.getElementById('fmLiveDot').style.background = '#10b981';
@@ -4635,7 +5053,7 @@ async function fmStartTracking() {
     if (fmAccMarker) fmAccMarker.setLatLng([lat, lon]).setRadius(acc);
 
     // ── Update truck marker with rotation ───────────────────
-    fmUpdateTruckMarker(lat, lon, heading);
+    fmUpdateTruckMarker(lat, lon, heading, isMoving);
 
     // ── AUTO-ZOOM & FOLLOW ───────────────────────────────────
     if (fmFollowing && fmMapInst) {
@@ -4674,6 +5092,8 @@ async function fmStartTracking() {
     const driveEl = document.getElementById('fmDriveLeft');
     driveEl.textContent = fmtH(driveLeft);
     driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+    // Update circular widget on the map
+    updateDriveHoursWidget(driveLeft, 11);
 
     const cycleLeft = Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
     const cyEl = document.getElementById('fm70Left');
@@ -4715,7 +5135,11 @@ function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   fmIsTracking = false;
   fmPrevLat = null; fmPrevLon = null;
+  // Stop smooth animation
+  if (truckAnimFrame) { cancelAnimationFrame(truckAnimFrame); truckAnimFrame = null; }
+  truckFrom = null; truckTo = null;
   hideSpeedometer();
+  hideDriveHoursWidget();
   // Hide overlays
   document.getElementById('incidentPanel').innerHTML = '';
   Object.keys(activeIncidentBubbles).forEach(id => delete activeIncidentBubbles[id]);
@@ -4724,6 +5148,7 @@ function fmStopTracking() {
   document.getElementById('fuelWidget').classList.remove('visible');
   document.getElementById('speedLimitWidget').classList.remove('visible');
   document.getElementById('speedToast').classList.remove('show');
+  hideMapSpeedSign();
   fuelMarkers.forEach(m => { try { fmMapInst?.removeLayer(m); } catch {} });
   fuelMarkers = [];
   fuelStations = [];
