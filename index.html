@@ -1625,6 +1625,77 @@
   }
   #fmFollowBtn.active { background:#10b981; box-shadow:0 2px 12px rgba(16,185,129,.5); }
   #fmFollowBtn.visible { display:flex; }
+
+  /* ── TAP TOGGLE ZOOM (widgets + stats) ─────────────────── */
+  .tap-zoom{
+    transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s, filter .18s;
+    transform-origin: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tap-zoom.zoomed{
+    transform: scale(1.28);
+    box-shadow: 0 12px 34px rgba(0,0,0,.55);
+    z-index: 9999;
+    filter: brightness(1.08);
+  }
+  /* Persistent zoom for the 4 HUD circles */
+  #fmHud.compact .fm-stat.zoomed{
+    transform: scale(1.28) !important;
+    filter: brightness(1.08);
+    z-index: 9999;
+  }
+
+
+
+  /* ── CENTER BUTTON + NAV INSTRUCTION (mobile) ───────────── */
+  .map-fab{
+    position:absolute;
+    right: calc(14px + env(safe-area-inset-right,0px));
+    bottom: 210px;
+    z-index: 9999;
+    width:52px;height:52px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,.85);
+    background:rgba(10,16,30,.92);
+    color:#fff;
+    font-size:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 6px 22px rgba(0,0,0,.45);
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition: transform .15s;
+  }
+  .map-fab:active{ transform:scale(.92); }
+
+  .nav-next{
+    position:absolute;
+    left: calc(14px + env(safe-area-inset-left,0px));
+    right: calc(14px + env(safe-area-inset-right,0px));
+    top: calc(110px + env(safe-area-inset-top,0px));
+    z-index: 9999;
+    background:rgba(10,16,30,.88);
+    color:#fff;
+    padding:12px 14px;
+    border-radius:14px;
+    font-weight:900;
+    font-size:14px;
+    line-height:1.25;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 6px 22px rgba(0,0,0,.35);
+    pointer-events:none;
+  }
+  .nav-next .sub{
+    display:block;
+    margin-top:4px;
+    font-size:12px;
+    font-weight:700;
+    color:rgba(255,255,255,.75);
+  }
 </style>
 
 <style id="fmHudCompactStyles">
@@ -2407,6 +2478,13 @@
   <!-- MAP fills entire screen -->
   <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
 
+  <!-- CENTER ON MY LOCATION -->
+  <button id="btnCenter" class="map-fab" title="Centralizar">🎯</button>
+
+  <!-- NEXT TURN / EXIT INSTRUCTION -->
+  <div id="navNext" class="nav-next" style="display:none">🧭</div>
+
+
   <!-- MAP SPEED LIMIT SIGN -->
   <div id="mapSpeedSign">
 
@@ -2959,6 +3037,11 @@ let currentTab = 'plan';
 let origin = null, destination = null;
 let routeDistance = 0, schedule = [], arrivalTime = null, totalTime = 0;
 let roadGeometry = null, routeSource = null;
+
+// ── TURN-BY-TURN (local) ───────────────────────────────────
+let navSteps = [];
+let navStepIdx = 0;
+
 
 let miniMap = null, fullMapInst = null;
 let miniLayer = null, fullLayer = null;
@@ -4715,7 +4798,7 @@ async function fetchRoadRoute(orig, dest) {
 
   // ── Fall back: OSRM driving + post-process restriction warnings ──
   try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson`;
+    const url = `https://router.project-osrm.org/route/v1/driving/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true`;
     const r    = await fetch(url);
     const data = await r.json();
     const route = data.routes?.[0];
@@ -4724,6 +4807,7 @@ async function fetchRoadRoute(orig, dest) {
     return {
       coords: (route.geometry.coordinates || []).map(([lon,lat]) => [lat,lon]),
       miles: Math.round((route.distance || 0) / 1609.344),
+      steps: route.legs?.[0]?.steps || [],
       source: 'OSRM'
     };
   } catch {
@@ -4775,6 +4859,68 @@ function calculateSchedule(start, distance, speed, cycle) {
 function fmtH(h) {
   const m = Math.round(h*60), hr = Math.floor(m/60), mn = m%60;
   if (hr===0) return `${mn}m`; if (mn===0) return `${hr}h`; return `${hr}h ${mn}m`;
+}
+
+
+// ── TURN-BY-TURN UI helpers ────────────────────────────────
+function milesToPretty(mi){
+  if (mi == null || !isFinite(mi)) return '';
+  if (mi < 0.2) return `${Math.round(mi*5280)} ft`;
+  return `${mi.toFixed(1)} mi`;
+}
+function osrmStepText(step){
+  if (!step) return '';
+  const man = step.maneuver || {};
+  const name = (step.name || '').trim();
+  const mod = man.modifier ? man.modifier.replace('_',' ') : '';
+  const type = man.type || '';
+  const exits = man.exit || step.exits || '';
+  const ref = step.ref || '';
+  // Build a human-ish instruction without relying on nonstandard fields
+  let txt = '';
+  if (type === 'arrive') txt = (lang==='es' ? 'Llegaste a tu destino' : 'Arrive at destination');
+  else if (type === 'roundabout') txt = (lang==='es' ? `Rotonda ${exits?(' (salida '+exits+')'):''}` : `Roundabout ${exits?('(exit '+exits+')'):''}`);
+  else if (type === 'take') txt = (lang==='es' ? 'Toma' : 'Take');
+  else if (type === 'turn') txt = (lang==='es' ? 'Gira' : 'Turn');
+  else if (type === 'continue') txt = (lang==='es' ? 'Continúa' : 'Continue');
+  else if (type === 'fork') txt = (lang==='es' ? 'Mantente' : 'Keep');
+  else if (type === 'merge') txt = (lang==='es' ? 'Incorpórate' : 'Merge');
+  else if (type === 'new name') txt = (lang==='es' ? 'Continúa por' : 'Continue on');
+  else if (type === 'on ramp') txt = (lang==='es' ? 'Toma la rampa' : 'Take the ramp');
+  else if (type === 'off ramp') txt = (lang==='es' ? 'Toma la salida' : 'Take the exit');
+  else txt = (lang==='es' ? 'Sigue' : 'Proceed');
+
+  if (mod) txt += ` ${mod}`;
+  if (ref) txt += ` ${ref}`;
+  if (name && !txt.includes(name)) txt += ` · ${name}`;
+  return txt.trim();
+}
+function updateNavInstruction(curLat, curLon){
+  const box = document.getElementById('navNext');
+  if (!box) return;
+  if (!navSteps || !navSteps.length) { box.style.display='none'; return; }
+  box.style.display='block';
+
+  // advance step when close to its maneuver location
+  for (let i = navStepIdx; i < navSteps.length; i++){
+    const loc = navSteps[i]?.maneuver?.location; // [lon,lat]
+    if (!loc) continue;
+    const dMi = haversine(curLat, curLon, loc[1], loc[0]);
+    if (dMi < 0.03) { // ~160ft
+      navStepIdx = Math.min(i+1, navSteps.length-1);
+    }
+    break;
+  }
+
+  const step = navSteps[navStepIdx];
+  const loc = step?.maneuver?.location;
+  let distTxt = '';
+  if (loc) {
+    const dMi = haversine(curLat, curLon, loc[1], loc[0]);
+    distTxt = milesToPretty(dMi);
+  }
+  const line1 = osrmStepText(step) || (lang==='es'?'Calculando...':'Calculating...');
+  box.innerHTML = `${line1}${distTxt ? `<span class="sub">${lang==='es'?'En':'In'} ${distTxt}</span>`:''}`;
 }
 function fmtTime(d) {
   const dt = new Date(d); let h = dt.getHours(); const m = dt.getMinutes();
@@ -5273,6 +5419,28 @@ function openFullMapScreen() {
       fmFollowing = false;
       document.getElementById('fmFollowBtn').classList.remove('active');
     });
+
+    // Detect when user zooms (pinch) — pause auto-follow
+    fmMapInst.on('zoomstart', () => {
+      fmUserDragged = true;
+      fmFollowing = false;
+      const fb = document.getElementById('fmFollowBtn');
+      if (fb) fb.classList.remove('active');
+    });
+
+    // Center button — re-enable follow and center on last GPS fix
+    const centerBtn = document.getElementById('btnCenter');
+    if (centerBtn && !centerBtn.dataset.bound) {
+      centerBtn.dataset.bound = '1';
+      centerBtn.addEventListener('click', () => {
+        if (!window.lastFixFm) return;
+        fmFollowing = true;
+        fmUserDragged = false;
+        const fb = document.getElementById('fmFollowBtn');
+        if (fb) fb.classList.add('active');
+        fmMapInst.setView([window.lastFixFm.lat, window.lastFixFm.lon], Math.max(fmMapInst.getZoom(), 15), { animate:true, duration:0.7, noMoveStart:true });
+      });
+    }
   }
 
   setTimeout(() => {
@@ -5523,6 +5691,13 @@ async function fmStartTracking() {
   const road = await fetchRoadRoute(realOrigin, destination);
   routeDistance = road.miles;
   roadGeometry  = road.coords;
+
+  // ── Turn-by-turn steps (if available) ────────────────────
+  navSteps = Array.isArray(road.steps) ? road.steps : [];
+  navStepIdx = 0;
+  const navBox = document.getElementById('navNext');
+  if (navBox) navBox.style.display = navSteps.length ? 'block' : 'none';
+
   origin = realOrigin;
 
   document.getElementById('fmFrom').textContent = realLocName.split(',')[0];
@@ -5581,6 +5756,9 @@ async function fmStartTracking() {
     const lat  = pos.coords.latitude;
     const lon  = pos.coords.longitude;
     const acc  = pos.coords.accuracy || 20;
+    // save last GPS fix for center button
+    window.lastFixFm = { lat, lon, acc, ts: Date.now() };
+
     const rawSpeed = pos.coords.speed;
     const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
     const isMoving = gpsSpeed > 3;
@@ -5610,7 +5788,10 @@ async function fmStartTracking() {
       fmMapInst.setView([lat, lon], fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
     }
 
-    // ── HUD stats ────────────────────────────────────────────
+    
+    // ── NEXT TURN / EXIT (local) ───────────────────────────
+    updateNavInstruction(lat, lon);
+// ── HUD stats ────────────────────────────────────────────
     const remaining = haversine(lat, lon, destination.lat, destination.lon);
     const traveled  = Math.max(0, routeDistance - remaining);
     const pct       = Math.min(100, Math.round(traveled / Math.max(1, routeDistance) * 100));
@@ -5646,6 +5827,24 @@ async function fmStartTracking() {
     driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
     // Update circular widget on the map
     updateDriveHoursWidget(driveLeft, 11);
+    // ✅ Daily driving-hours notice (shows only what you can still drive today)
+    try {
+      const todayKey = new Date().toDateString();
+      const warnedKey = localStorage.getItem('hos_drive_warn_day');
+      if (driveLeft < 11 && warnedKey !== todayKey) {
+        showToast(
+          'info',
+          '⏱️',
+          (typeof lang !== 'undefined' && lang === 'es' ? 'Horas de manejo' : 'Driving hours'),
+          (typeof lang !== 'undefined' && lang === 'es'
+            ? `Hoy solo puedes manejar ${fmtH(driveLeft)}.`
+            : `Today you can only drive ${fmtH(driveLeft)}.`),
+          5000
+        );
+        localStorage.setItem('hos_drive_warn_day', todayKey);
+      }
+    } catch(e) {}
+
 
     const cycleLeft = Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
     const cyEl = document.getElementById('fm70Left');
@@ -7147,20 +7346,32 @@ window.addEventListener('resize', () => {
         box.classList.add('fm-stat');
         box.setAttribute('role','button');
         box.setAttribute('tabindex','0');
-        const pop = ()=>{
-          box.classList.add('fm-pop');
-          setTimeout(()=>box.classList.remove('fm-pop'), 220);
+        
+        // Tap once to enlarge, tap again to shrink (and collapse others)
+        box.classList.add('tap-zoom');
+        const toggleZoom = () => {
+          const row = box.parentElement;
+          if (row) row.querySelectorAll('.fm-stat.zoomed').forEach(el => { if (el !== box) el.classList.remove('zoomed'); });
+          box.classList.toggle('zoomed');
         };
-        box.addEventListener('click', pop, {passive:true});
-        box.addEventListener('touchstart', pop, {passive:true});
-        box.addEventListener('keydown', (e)=>{
-          if(e.key==='Enter' || e.key===' ') { e.preventDefault(); pop(); }
-        });
+        box.addEventListener('click', (e)=>{ e.stopPropagation(); toggleZoom(); }, {passive:false});
+        box.addEventListener('touchstart', (e)=>{ e.stopPropagation(); toggleZoom(); }, {passive:false});
+        box.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); toggleZoom(); } });
+
       });
     }
 
     // Enable compact mode (transparent background, only circles visible)
     hud.classList.add('compact');
+    // Toggle zoom on floating widgets (tap to enlarge/shrink)
+    ['driveHoursWidget','speedometerWidget','weatherWidget'].forEach((id)=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.classList.add('tap-zoom');
+      el.addEventListener('click', (e)=>{ e.stopPropagation(); el.classList.toggle('zoomed'); }, {passive:false});
+      el.addEventListener('touchstart', (e)=>{ e.stopPropagation(); el.classList.toggle('zoomed'); }, {passive:false});
+    });
+
   }
 
   if(document.readyState === 'loading'){
