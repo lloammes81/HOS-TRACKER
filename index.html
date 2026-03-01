@@ -1705,6 +1705,14 @@
     box-shadow:0 6px 22px rgba(0,0,0,.35);
     pointer-events:none;
   }
+.nav-next.blink{
+  animation: navBlink .9s ease-in-out infinite;
+}
+@keyframes navBlink{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%{ opacity:.35; transform:scale(1.03); }
+}
+
   .nav-next .sub{
     display:block;
     margin-top:4px;
@@ -1737,6 +1745,127 @@
   position:relative;z-index:2;
   transform: translateY(1px);
 }
+
+
+/* ============================
+   MOBILE UI ALIGNMENT OVERRIDES
+   (stack: Drive Hours + SOS + Weather)
+============================ */
+:root{
+  --stack-right: calc(14px + env(safe-area-inset-right,0px));
+  --stack-gap: 10px;
+  --stack-base: calc(var(--tab-h) + 16px);
+  --stack-size: 52px;
+}
+
+/* Put these widgets into one vertical stack on the RIGHT */
+#driveHoursWidget,
+#sosFab,
+#weatherWidget{
+  right: var(--stack-right) !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+}
+
+/* Sizes + spacing */
+#driveHoursWidget{
+  bottom: calc(var(--stack-base) + 0px) !important;
+}
+#sosFab{
+  position: fixed !important;
+  bottom: calc(var(--stack-base) + (var(--stack-size) + var(--stack-gap)) * 1) !important;
+}
+#weatherWidget{
+  position: fixed !important;
+  bottom: calc(var(--stack-base) + (var(--stack-size) + var(--stack-gap)) * 2) !important;
+  min-width: 120px !important;
+}
+
+/* Make widgets visually consistent */
+#weatherWidget{
+  border-radius: 16px !important;
+  padding: 10px 12px !important;
+}
+#driveHoursWidget .dh-ring{
+  width: 58px !important;
+  height: 58px !important;
+}
+#driveHoursWidget .dh-svg{
+  width: 64px !important;
+  height: 64px !important;
+}
+#driveHoursWidget .dh-hrs{
+  font-size: 20px !important;
+}
+
+/* Reduce route instruction banner a bit more */
+#navNext, .nav-next{
+  font-size: 13px !important;
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+  left: 12px !important;
+  right: 12px !important;
+  top: calc(96px + env(safe-area-inset-top,0px)) !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+}
+
+/* Lower the speed limit window/sign a bit */
+#mapSpeedSign{
+  top: calc(96px + env(safe-area-inset-top, 0px)) !important;
+}
+#speedLimitWidget{
+  top: calc(var(--header-pt) + 28px) !important;
+}
+
+/* Keep stack above other floating buttons if present */
+#driveHoursWidget, #sosFab, #weatherWidget{
+  z-index: 900 !important;
+}
+
+
+
+  /* ==== UI OVERRIDES (Top-left stack + compact nav) ==== */
+  #driveHoursWidget{
+    top: calc(10px + env(safe-area-inset-top,0px));
+    left: calc(12px + env(safe-area-inset-left,0px));
+    bottom: auto !important;
+    right: auto !important;
+  }
+  /* weather was missing positioning */
+  #weatherWidget{
+    position: fixed;
+    top: calc(92px + env(safe-area-inset-top,0px));
+    left: calc(12px + env(safe-area-inset-left,0px));
+    z-index: 650;
+  }
+  #sosFab{
+    position: fixed;
+    top: calc(168px + env(safe-area-inset-top,0px));
+    left: calc(12px + env(safe-area-inset-left,0px));
+    z-index: 651;
+  }
+  /* Keep them aligned */
+  #driveHoursWidget, #weatherWidget, #sosFab{
+    margin: 0;
+  }
+
+  /* Compact next-turn window (only shows near turns; JS controls display) */
+  .nav-next{
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    border-radius: 12px !important;
+    max-width: 320px;
+    left: calc(12px + env(safe-area-inset-left,0px)) !important;
+    right: auto !important;
+    top: calc(228px + env(safe-area-inset-top,0px)) !important;
+  }
+
+  /* Move speed sign down a bit more */
+  #mapSpeedSign{
+    top: calc(120px + env(safe-area-inset-top,0px)) !important;
+  }
 
 </style>
 
@@ -4865,6 +4994,16 @@ function addInterstateMarkers(map, steps, isFull){
   }
 }
 
+
+async function fetchOsrmStepsOnly(orig, dest){
+  try{
+    const url = `https://router.project-osrm.org/route/v1/driving/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=false&steps=true`;
+    const r = await fetch(url);
+    const data = await r.json();
+    const route = data.routes?.[0];
+    return route?.legs?.[0]?.steps || [];
+  }catch{ return []; }
+}
 async function fetchRoadRoute(orig, dest) {
   // ── Try OpenRouteService HGV profile (respects hgv=no, maxweight, maxheight) ──
   try {
@@ -4893,7 +5032,7 @@ async function fetchRoadRoute(orig, dest) {
         const dist   = feature.properties?.summary?.distance || 0;
         if (coords.length > 1) {
           console.log('✅ Route: ORS HGV (truck-safe)');
-          return { coords, miles: Math.round(dist / 1609.344), source: 'ORS-HGV' };
+          return { coords, miles: Math.round(dist / 1609.344), steps: await fetchOsrmStepsOnly(orig, dest), source: 'ORS-HGV' };
         }
       }
     }
@@ -5001,8 +5140,7 @@ function osrmStepText(step){
 function updateNavInstruction(curLat, curLon){
   const box = document.getElementById('navNext');
   if (!box) return;
-  if (!navSteps || !navSteps.length) { box.style.display='none'; return; }
-  box.style.display='block';
+  if (!navSteps || !navSteps.length) { box.style.display='none'; box.classList.remove('blink'); return; }
 
   // advance step when close to its maneuver location
   for (let i = navStepIdx; i < navSteps.length; i++){
@@ -5017,13 +5155,33 @@ function updateNavInstruction(curLat, curLon){
 
   const step = navSteps[navStepIdx];
   const loc = step?.maneuver?.location;
-  let distTxt = '';
-  if (loc) {
-    const dMi = haversine(curLat, curLon, loc[1], loc[0]);
-    distTxt = milesToPretty(dMi);
-  }
+
+  // ✅ Show guidance ONLY when within 1 mile of the next maneuver
+  if (!loc) { box.style.display='none'; box.classList.remove('blink'); return; }
+  const dMi = haversine(curLat, curLon, loc[1], loc[0]);
+  if (dMi > 1.0) { box.style.display='none'; box.classList.remove('blink'); return; }
+
+  
+  // Blink when guidance is active (within 1 mile)
+  box.classList.add('blink');
+
+  // Also blink when arriving to destination (within 1 mile)
+  try{
+    if (typeof destination === 'object' && destination && typeof destination.lat === 'number') {
+      const dDest = haversine(curLat, curLon, destination.lat, destination.lon);
+      if (dDest <= 1.0 && navStepIdx >= (navSteps.length-2)) {
+        box.style.display = 'block';
+        box.classList.add('blink');
+        const distTxt2 = milesToPretty(dDest);
+        box.innerHTML = `${lang==='es'?'📍 Llegando a tu destino':'📍 Arriving at your destination'}<span class="sub">${lang==='es'?'En':'In'} ${distTxt2}</span>`;
+        return;
+      }
+    }
+  }catch{}
+  box.style.display = 'block';
+  const distTxt = milesToPretty(dMi);
   const line1 = osrmStepText(step) || (lang==='es'?'Calculando...':'Calculating...');
-  box.innerHTML = `${line1}${distTxt ? `<span class="sub">${lang==='es'?'En':'In'} ${distTxt}</span>`:''}`;
+  box.innerHTML = `${line1}<span class="sub">${lang==='es'?'En':'In'} ${distTxt}</span>`;
 }
 function fmtTime(d) {
   const dt = new Date(d); let h = dt.getHours(); const m = dt.getMinutes();
