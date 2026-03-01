@@ -707,9 +707,15 @@
     50%    { transform:rotate(8deg); }
   }
 
+  
   /* ── WEATHER WIDGET ──────────────────────── */
   /* Weather widget — compact card top-left of fullscreen map */
   #weatherWidget {
+    position: fixed;
+    top: calc(14px + env(safe-area-inset-top,0px));
+    left: calc(14px + env(safe-area-inset-left,0px));
+    z-index: 900;
+
     background: rgba(15,23,42,0.87);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     border-radius: 10px; padding: 6px 10px;
@@ -721,6 +727,11 @@
     transition: transform .15s;
     pointer-events: all;
     min-width: 80px;
+
+    /* prevent accidental full width */
+    width: auto !important;
+    max-width: 160px !important;
+    height: auto !important;
   }
   #weatherWidget:active { transform: scale(.95); }
   #weatherWidget.visible { display: block; animation: fadeIn .3s ease; }
@@ -1866,6 +1877,73 @@
   #mapSpeedSign{
     top: calc(120px + env(safe-area-inset-top,0px)) !important;
   }
+
+
+/* ===== UI STACK TOP-LEFT (SOS + Weather + Speedometer + Drive Hours) ===== */
+:root{
+  --stack-x: calc(env(safe-area-inset-left,0px) + 10px);
+  --stack-y: calc(env(safe-area-inset-top,0px) + 10px);
+  --stack-gap: 10px;
+}
+
+/* SOS above Weather */
+#sosFab{
+  position: fixed !important;
+  top: var(--stack-y) !important;
+  left: var(--stack-x) !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 20001 !important;
+}
+
+/* Weather under SOS (keep compact size) */
+#weatherWidget{
+  position: fixed !important;
+  top: calc(var(--stack-y) + 52px + var(--stack-gap)) !important;
+  left: var(--stack-x) !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 20000 !important;
+  width: auto !important;
+  max-width: 160px !important;
+  min-width: 80px !important;
+}
+
+/* Speedometer under Weather — NO !important on top/left so it remains draggable */
+#speedometerWidget{
+  position: fixed !important;
+  top: calc(var(--stack-y) + 52px + var(--stack-gap) + 54px + var(--stack-gap)) ;
+  left: var(--stack-x) ;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 20000 !important;
+}
+
+/* Drive Hours under Speedometer — NO !important on top/left so it remains draggable */
+#driveHoursWidget{
+  position: fixed !important;
+  top: calc(var(--stack-y) + 52px + var(--stack-gap) + 54px + var(--stack-gap) + 92px + var(--stack-gap)) ;
+  left: var(--stack-x) ;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 20000 !important;
+}
+
+
+/* Speedometer turns red when over state truck limit */
+#speedometerWidget.over-limit .speedo-ring{ border-color:#ef4444 !important; box-shadow:0 0 0 2px rgba(239,68,68,.25), 0 0 18px rgba(239,68,68,.35), 0 4px 18px rgba(0,0,0,.6) !important; }
+#speedometerWidget.over-limit .speedo-num{ color:#ef4444 !important; }
+#speedometerWidget.over-limit .speedo-label{ color:rgba(255,255,255,.85) !important; }
+
+/* Drive hours: grow when driving starts + blink near limit */
+#driveHoursWidget.boost{ transform: scale(1.25) !important; opacity:1 !important; }
+#driveHoursWidget{ transition: transform .18s cubic-bezier(.34,1.56,.64,1), opacity .18s; transform-origin: left top; }
+#driveHoursWidget.blink{ animation: dhBlink 1s infinite; }
+@keyframes dhBlink{ 0%,100%{ filter:none; } 50%{ filter: drop-shadow(0 0 10px rgba(239,68,68,.7)); } }
+
+
+  /* Weather widget hard override (keep compact) */
+  #weatherWidget{ right:auto !important; bottom:auto !important; inset:auto !important; }
 
 </style>
 
@@ -3811,6 +3889,9 @@ function adjustHeight(delta) {
    🚀  CIRCULAR SPEEDOMETER
 ════════════════════════════════════════════════════════════ */
 let speedoVisible = false;
+let currentTruckSpeedLimit = null; // mph from state limits
+let wasMoving = false;
+
 
 function showSpeedometer() {
   document.getElementById('speedometerWidget').classList.add('visible');
@@ -3944,7 +4025,22 @@ function updateSpeedometer(mph) {
   num.textContent = Math.round(mph);
   const moving = mph > 3;
 
-  if (moving) {
+  
+  // Over-limit based on state truck speed limit (if available)
+  const over = (currentTruckSpeedLimit != null) && (mph > (currentTruckSpeedLimit + 0.5));
+  const spw = document.getElementById('speedometerWidget');
+  if (spw) spw.classList.toggle('over-limit', !!over);
+
+  // Drive-hours widget boost when you start moving
+  if (moving && !wasMoving) {
+    const dhw = document.getElementById('driveHoursWidget');
+    if (dhw) {
+      dhw.classList.add('boost');
+      setTimeout(() => dhw.classList.remove('boost'), 1200);
+    }
+  }
+  wasMoving = moving;
+if (moving) {
     num.className = 'speedo-num';
     ring.className = 'speedo-ring moving';
     arc.style.stroke = mph > 75 ? '#ef4444' : mph > 55 ? '#f59e0b' : '#10b981';
@@ -4221,6 +4317,8 @@ async function detectStateAndUpdateLimit(lat, lon) {
 }
 
 function updateMapSpeedSign(truckMph, carMph, code, stateName) {
+  currentTruckSpeedLimit = Number(truckMph) || null;
+
   const sign  = document.getElementById('mapSpeedSign');
   const mssSign = document.getElementById('mssSign');
   const num   = document.getElementById('mssNum');
@@ -6088,7 +6186,11 @@ async function fmStartTracking() {
     driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
     // Update circular widget on the map
     updateDriveHoursWidget(driveLeft, 11);
-    // ✅ Daily driving-hours notice (shows only what you can still drive today)
+    
+    // Blink drive-hours widget when approaching the daily limit
+    const dhw = document.getElementById('driveHoursWidget');
+    if (dhw) dhw.classList.toggle('blink', driveLeft <= 1.0);
+// ✅ Daily driving-hours notice (shows only what you can still drive today)
     try {
       const todayKey = new Date().toDateString();
       const warnedKey = localStorage.getItem('hos_drive_warn_day');
