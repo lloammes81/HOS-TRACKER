@@ -768,6 +768,7 @@
   #fullMapScreen.bridge-mode #fmTrackBanner,
   #fullMapScreen.bridge-mode #speedometerWidget,
   #fullMapScreen.bridge-mode #driveHoursWidget,
+  #fullMapScreen.bridge-mode #milesRemainingWidget,
   #fullMapScreen.bridge-mode #speedLimitWidget,
   #fullMapScreen.bridge-mode #mapSpeedSign,
   #fullMapScreen.bridge-mode #sosFab,
@@ -1900,7 +1901,7 @@
   --stack-size: 52px;
 }
 
-/* Put these widgets into one vertical stack on the RIGHT */
+/* Right stack (portrait/mobile) — Drive Hours + SOS + Weather from bottom */
 #driveHoursWidget,
 #sosFab,
 #weatherWidget{
@@ -1910,7 +1911,7 @@
   transform: none !important;
 }
 
-/* Sizes + spacing */
+/* Sizes + spacing — bottom-right stack (portrait) */
 #driveHoursWidget{
   bottom: calc(var(--stack-base) + 0px) !important;
 }
@@ -1968,30 +1969,7 @@
 
 
 
-  /* ==== UI OVERRIDES (Top-left stack + compact nav) ==== */
-  #driveHoursWidget{
-    top: calc(10px + env(safe-area-inset-top,0px));
-    left: calc(12px + env(safe-area-inset-left,0px));
-    bottom: auto !important;
-    right: auto !important;
-  }
-  /* weather was missing positioning */
-  #weatherWidget{
-    position: fixed;
-    top: calc(92px + env(safe-area-inset-top,0px));
-    left: calc(12px + env(safe-area-inset-left,0px));
-    z-index: 650;
-  }
-  #sosFab{
-    position: fixed;
-    top: calc(168px + env(safe-area-inset-top,0px));
-    left: calc(12px + env(safe-area-inset-left,0px));
-    z-index: 651;
-  }
-  /* Keep them aligned */
-  #driveHoursWidget, #weatherWidget, #sosFab{
-    margin: 0;
-  }
+  /* ==== UI OVERRIDES — positions handled by the main left-stack CSS ==== */
 
   /* Compact next-turn window (only shows near turns; JS controls display) */
   .nav-next{
@@ -2010,54 +1988,60 @@
   }
 
 
-/* ===== UI STACK TOP-LEFT (SOS + Weather + Speedometer + Drive Hours) ===== */
+/* ===================================================
+   UI STACK TOP-LEFT — solo cuando el mapa fullscreen está abierto
+   Order top→bottom: SOS · Clima · Millas · Velocímetro · Horas
+   =================================================== */
 :root{
-  --stack-x: calc(env(safe-area-inset-left,0px) + 10px);
-  --stack-y: calc(env(safe-area-inset-top,0px) + 10px);
-  --stack-gap: 10px;
+  --sl-x:   calc(env(safe-area-inset-left,0px) + 12px);
+  --sl-y:   calc(env(safe-area-inset-top,0px)  + 12px);
+  --sl-gap: 8px;
 }
 
-/* SOS above Weather */
-#sosFab{
+body.map-active #sosFab{
   position: fixed !important;
-  top: var(--stack-y) !important;
-  left: var(--stack-x) !important;
-  right: auto !important;
+  top:    var(--sl-y) !important;
+  left:   var(--sl-x) !important;
+  right:  auto !important;
   bottom: auto !important;
-  z-index: 20001 !important;
+  z-index: 20010 !important;
 }
 
-/* Weather under SOS (keep compact size) */
-#weatherWidget{
+body.map-active #weatherWidget{
   position: fixed !important;
-  top: calc(var(--stack-y) + 52px + var(--stack-gap)) !important;
-  left: var(--stack-x) !important;
-  right: auto !important;
+  top:    calc(var(--sl-y) + 44px + var(--sl-gap)) !important;
+  left:   var(--sl-x) !important;
+  right:  auto !important;
   bottom: auto !important;
-  z-index: 20000 !important;
+  z-index: 20009 !important;
   width: auto !important;
-  max-width: 160px !important;
-  min-width: 80px !important;
+  max-width: 150px !important;
+  min-width: 76px !important;
 }
 
-/* Speedometer under Weather — NO !important on top/left so it remains draggable */
-#speedometerWidget{
+body.map-active #milesRemainingWidget{
   position: fixed !important;
-  top: calc(var(--stack-y) + 52px + var(--stack-gap) + 54px + var(--stack-gap)) ;
-  left: var(--stack-x) ;
-  right: auto !important;
+  top:    calc(var(--sl-y) + 44px + var(--sl-gap) + 52px + var(--sl-gap)) !important;
+  left:   var(--sl-x) !important;
+  right:  auto !important;
   bottom: auto !important;
-  z-index: 20000 !important;
+  z-index: 20008 !important;
 }
 
-/* Drive Hours under Speedometer — NO !important on top/left so it remains draggable */
-#driveHoursWidget{
-  position: fixed !important;
-  top: calc(var(--stack-y) + 52px + var(--stack-gap) + 54px + var(--stack-gap) + 92px + var(--stack-gap)) ;
-  left: var(--stack-x) ;
+/* speedometerWidget position is managed entirely by drag JS — no CSS override */
+body.map-active #speedometerWidget{
+  z-index: 20007 !important;
   right: auto !important;
   bottom: auto !important;
-  z-index: 20000 !important;
+}
+
+body.map-active #driveHoursWidget{
+  position: fixed !important;
+  top:    calc(var(--sl-y) + 44px + var(--sl-gap) + 52px + var(--sl-gap) + 56px + var(--sl-gap) + 88px + var(--sl-gap)) !important;
+  left:   var(--sl-x) !important;
+  right:  auto !important;
+  bottom: auto !important;
+  z-index: 20006 !important;
 }
 
 
@@ -2066,31 +2050,47 @@
 #speedometerWidget.over-limit .speedo-num{ color:#ef4444 !important; }
 #speedometerWidget.over-limit .speedo-label{ color:rgba(255,255,255,.85) !important; }
 
-/* Drive hours: grow when driving starts + blink near limit */
+/* Drive hours: grow MUCH more when driving */
 #driveHoursWidget.boost{ transform: scale(1.25) !important; opacity:1 !important; }
-#driveHoursWidget.driving-active{ transform: scale(1.35) !important; opacity:1 !important; }
-#driveHoursWidget{ transition: transform .18s cubic-bezier(.34,1.56,.64,1), opacity .18s; transform-origin: left top; }
+#driveHoursWidget.driving-active{
+  transform: scale(1.65) !important;
+  opacity:1 !important;
+  filter: drop-shadow(0 0 14px rgba(16,185,129,.55));
+}
+#driveHoursWidget{ transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s, filter .3s; transform-origin: left top; }
 #driveHoursWidget.blink{ animation: dhBlink 1s infinite; }
 @keyframes dhBlink{ 0%,100%{ filter:none; } 50%{ filter: drop-shadow(0 0 10px rgba(239,68,68,.7)); } }
 
-
-  /* Weather widget hard override (keep compact) */
-  #weatherWidget{ right:auto !important; bottom:auto !important; inset:auto !important; }
+/* Miles remaining widget — compact for mobile */
+#milesRemainingWidget{
+  display:none;
+  position:fixed;
+  z-index:20000;
+  background:rgba(10,16,30,0.9);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-radius:12px;
+  border:1.5px solid rgba(59,130,246,.4);
+  padding:6px 10px;
+  min-width:70px;
+  text-align:center;
+  box-shadow:0 4px 14px rgba(0,0,0,.5);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s, box-shadow .3s;
+  transform-origin:right center;
+}
+#milesRemainingWidget.visible{ display:block; }
+#milesRemainingWidget.moving{
+  transform:scale(1.12);
+  border-color:rgba(59,130,246,.85);
+  box-shadow:0 4px 20px rgba(59,130,246,.4), 0 4px 14px rgba(0,0,0,.5);
+}
+#mrVal{ font-size:18px; font-weight:900; color:#60a5fa; line-height:1; }
+#mrUnit{ font-size:8px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.6px; margin-top:1px; }
+#mrLabel{ font-size:8px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:.4px; margin-top:2px; }
 
 
 /* ── OVERRIDES (layout fixes) ───────────────────────────── */
-#sosFab{
-  position: fixed !important;
-  top: calc(14px + env(safe-area-inset-top,0px)) !important;
-  left: calc(14px + env(safe-area-inset-left,0px)) !important;
-  z-index: 920 !important;
-}
-#weatherWidget{
-  position: fixed !important;
-  top: calc(14px + env(safe-area-inset-top,0px) + 54px) !important; /* debajo del SOS */
-  left: calc(14px + env(safe-area-inset-left,0px)) !important;
-  z-index: 910 !important;
-}
+/* SOS and Weather positions handled by the left-stack CSS above — no override needed */
 #btnCenter{
   top: 50% !important;
   bottom: auto !important;
@@ -2107,6 +2107,22 @@
 }
 #btnMapColor:active{
   transform: scale(.92) !important;
+}
+
+/* ── MAP TILE CLARITY — brighter, more contrast, sharper on mobile ── */
+#miniMap .leaflet-tile-pane,
+#fullMap .leaflet-tile-pane {
+  filter: brightness(1.18) contrast(1.12) saturate(1.08);
+}
+/* Night mode: don't over-brighten dark tiles */
+body.dark #miniMap .leaflet-tile-pane,
+body.dark #fullMap .leaflet-tile-pane {
+  filter: brightness(1.05) contrast(1.1) saturate(0.95);
+}
+/* Satellite/hybrid: boost saturation more */
+#miniMap.satellite-style .leaflet-tile-pane,
+#fullMap.satellite-style .leaflet-tile-pane {
+  filter: brightness(1.1) contrast(1.15) saturate(1.25);
 }
 
 </style>
@@ -2943,15 +2959,19 @@
   <!-- QUICK REPORT FAB -->
   <button id="reportFab" onclick="toggleReportSheet()" title="Reportar incidente">⚠️</button>
 
-  <!-- PROFILE FAB BUTTON -->
+  <!-- PROFILE FAB BUTTON — below speed limit sign, right side -->
   <button id="profileFab" onclick="openProfileModal()" title="Mi Perfil" style="
-    position:fixed;bottom:90px;right:16px;z-index:4001;
-    width:50px;height:50px;border-radius:50%;border:none;
+    position:fixed;
+    top:calc(70px + env(safe-area-inset-top,0px) + 72px + 10px);
+    right:calc(8px + env(safe-area-inset-right,0px));
+    z-index:4001;
+    width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.15);
     background:linear-gradient(135deg,#3b82f6,#6366f1);
     color:#fff;font-size:20px;cursor:pointer;
     box-shadow:0 4px 14px rgba(59,130,246,0.5);
     display:none;align-items:center;justify-content:center;
     transition:transform .2s;font-family:'DM Sans',sans-serif;
+    overflow:hidden;
   ">👤</button>
 
   <!-- QUICK REPORT ACTION SHEET -->
@@ -3156,8 +3176,8 @@
       </div>
     </div>
 
-    <!-- 4 stats -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px">
+    <!-- 3 stats (drive hours removed — shown in circular widget) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
       <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
         <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmEtaLbl">LLEGADA</div>
         <div style="font-size:15px;font-weight:900;color:#f59e0b;line-height:1" id="fmEta">--</div>
@@ -3167,14 +3187,13 @@
         <div style="font-size:15px;font-weight:900;color:#3b82f6;line-height:1" id="fmRem">--</div>
       </div>
       <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
-        <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmDriveLbl">MANEJO</div>
-        <div style="font-size:15px;font-weight:900;color:#10b981;line-height:1" id="fmDriveLeft">11h</div>
-      </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
         <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fm70Lbl">70 HRS</div>
         <div style="font-size:15px;font-weight:900;color:#8b5cf6;line-height:1" id="fm70Left">70h</div>
       </div>
     </div>
+    <!-- hidden fmDriveLeft — still updated by JS but not shown here -->
+    <span id="fmDriveLeft" style="display:none">11h</span>
+    <span id="fmDriveLbl" style="display:none">MANEJO</span>
 
     <!-- Route from → to -->
     <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:12px">
@@ -3640,6 +3659,15 @@
 <div class="speed-toast" id="speedToast">🚨 ¡REDUCIR VELOCIDAD!</div>
 
 <!-- ══════════════════════════════════════
+     MILES REMAINING WIDGET
+══════════════════════════════════════ -->
+<div id="milesRemainingWidget">
+  <div id="mrVal">--</div>
+  <div id="mrUnit">mi restantes</div>
+  <div id="mrLabel">AL DESTINO</div>
+</div>
+
+<!-- ══════════════════════════════════════
      SOS EMERGENCY OVERLAY
 ══════════════════════════════════════ -->
 <div id="sosOverlay">
@@ -3788,7 +3816,7 @@ const MAP_STYLES = {
   light:    { label:'Light',   emoji:'☀️',  url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', options:{ maxZoom:19, attribution:'© CARTO' } },
   nav:      { label:'Nav',     emoji:'📍',  url:'https://mt{s}.google.com/vt/lyrs=r&x={x}&y={y}&z={z}',    options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
 };
-let currentMapStyle = localStorage.getItem('hos_map_style') || (isDark ? 'dark' : 'voyager');
+let currentMapStyle = localStorage.getItem('hos_map_style') || (isDark ? 'dark' : 'nav');
 let fmTileLayer = null;
 
 let origin = null, destination = null;
@@ -4404,6 +4432,8 @@ let wasMoving = false;
 function showSpeedometer() {
   document.getElementById('speedometerWidget').classList.add('visible');
   speedoVisible = true;
+  // Apply saved/default position so it's draggable immediately
+  setTimeout(applySpeedometerPos, 30);
 }
 
 function hideSpeedometer() {
@@ -5117,6 +5147,13 @@ function changeMapStyle(styleKey) {
     L.tileLayer(styleUrl, styleOpts).addTo(miniMap);
   }
 
+  // Apply satellite class for CSS filter differentiation
+  const isSat = (styleKey === 'satellite');
+  const fullMapEl = document.getElementById('fullMap');
+  const miniMapEl = document.getElementById('miniMap');
+  if (fullMapEl) fullMapEl.classList.toggle('satellite-style', isSat);
+  if (miniMapEl) miniMapEl.classList.toggle('satellite-style', isSat);
+
   // Update button highlights
   document.querySelectorAll('.map-style-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.style === styleKey);
@@ -5387,13 +5424,16 @@ function initSpeedWidgetDrag() {
 function applySpeedometerPos() {
   const w = document.getElementById('speedometerWidget');
   if (!w) return;
+  // Default position: left stack, below miles remaining widget
+  const safeTop  = (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sl-y')) || 0);
+  const defaultX = 12 + (window.safeAreaLeft || 0);
+  // 44(sos) + 8(gap) + 52(weather) + 8(gap) + 56(miles) + 8(gap) = 176
+  const defaultY = 12 + (window.safeAreaTop || 0) + 176;
 
   if (speedometerPos && typeof speedometerPos.x === 'number' && typeof speedometerPos.y === 'number') {
-    w.style.left = speedometerPos.x + 'px';
-    w.style.top  = speedometerPos.y + 'px';
-    w.style.right = 'auto';
-    w.style.bottom = 'auto';
-    w.style.transform = 'none';
+    w.style.cssText += ';position:fixed !important;left:' + speedometerPos.x + 'px !important;top:' + speedometerPos.y + 'px !important;right:auto !important;bottom:auto !important;transform:none !important';
+  } else {
+    w.style.cssText += ';position:fixed !important;left:' + defaultX + 'px !important;top:' + defaultY + 'px !important;right:auto !important;bottom:auto !important;transform:none !important';
   }
 }
 
@@ -5401,37 +5441,37 @@ function initSpeedometerDrag() {
   const w = document.getElementById('speedometerWidget');
   if (!w) return;
 
+  // Re-apply position now and whenever it becomes visible
   applySpeedometerPos();
 
   let dragging = false;
   let startX = 0, startY = 0;
   let origLeft = 0, origTop = 0;
+  let longPressTimer = null;
 
   const getPoint = (e) => {
     const t = e.touches && e.touches[0];
     return t ? { x: t.clientX, y: t.clientY } : { x: e.clientX, y: e.clientY };
   };
 
-  const onDown = (e) => {
-    // allow drag only when widget is visible
+  const startDrag = (e) => {
     if (!w.classList.contains('visible')) return;
     dragging = true;
     w.classList.add('dragging');
-
     const pt = getPoint(e);
     startX = pt.x; startY = pt.y;
-
     const rect = w.getBoundingClientRect();
     origLeft = rect.left;
     origTop  = rect.top;
-
-    w.style.left = origLeft + 'px';
-    w.style.top  = origTop + 'px';
-    w.style.right = 'auto';
-    w.style.bottom = 'auto';
-    w.style.transform = 'none';
-
+    // Force inline with !important to beat any CSS class
+    w.style.cssText += ';position:fixed !important;left:' + origLeft + 'px !important;top:' + origTop + 'px !important;right:auto !important;bottom:auto !important;transform:none !important';
     e.preventDefault();
+  };
+
+  const onDown = (e) => {
+    if (!w.classList.contains('visible')) return;
+    // Start drag immediately on touch
+    startDrag(e);
   };
 
   const onMove = (e) => {
@@ -5439,27 +5479,16 @@ function initSpeedometerDrag() {
     const pt = getPoint(e);
     const dx = pt.x - startX;
     const dy = pt.y - startY;
-
-    const rect = w.getBoundingClientRect();
+    const ww = w.offsetWidth  || 90;
+    const wh = w.offsetHeight || 90;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-
-    let newLeft = origLeft + dx;
-    let newTop  = origTop + dy;
-
     const pad = 6;
-    const maxLeft = vw - rect.width - pad;
-    const maxTop  = vh - rect.height - pad;
-
-    newLeft = Math.max(pad, Math.min(maxLeft, newLeft));
-    newTop  = Math.max(pad, Math.min(maxTop, newTop));
-
-    w.style.left = newLeft + 'px';
-    w.style.top  = newTop + 'px';
-
+    let newLeft = Math.max(pad, Math.min(vw - ww - pad, origLeft + dx));
+    let newTop  = Math.max(pad, Math.min(vh - wh - pad, origTop  + dy));
+    w.style.cssText += ';left:' + newLeft + 'px !important;top:' + newTop + 'px !important';
     speedometerPos = { x: Math.round(newLeft), y: Math.round(newTop) };
     localStorage.setItem('hos_speedometer_pos', JSON.stringify(speedometerPos));
-
     e.preventDefault();
   };
 
@@ -6235,6 +6264,19 @@ async function calculateRoute() {
   if (isNaN(hours)||hours<=0||hours>70) { showError(t('err70')); return; }
   if (isNaN(speed)||speed<=0) { showError(t('errSpeed')); return; }
 
+  // 🚨 Safety: block if vehicle is currently moving
+  if (fmVehicleMoving && fmCurrentSpeed > 3) {
+    showToast('danger','🚨',
+      lang === 'es' ? '¡Vehículo en movimiento!' : 'Vehicle in Motion!',
+      lang === 'es'
+        ? `Por tu seguridad no puedes calcular una ruta a ${fmCurrentSpeed} mph. Detente para usar esta función.`
+        : `For your safety, you cannot calculate a route at ${fmCurrentSpeed} mph. Please stop the vehicle first.`,
+      8000
+    );
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+    return;
+  }
+
   const calcBtn = document.getElementById('calcBtn');
   calcBtn.textContent = '⏳ Calculating...';
   calcBtn.disabled = true;
@@ -6416,6 +6458,8 @@ let fmDriveSeconds = 0;    // accumulated moving time in seconds
 let fmLastMoveTime = null; // timestamp of last GPS fix when moving
 let fmClockTimer = null;
 let fmIsTracking = false;
+let fmCurrentSpeed = 0;    // global current GPS speed (mph)
+let fmVehicleMoving = false; // global moving state
 
 let fmLastGeocode = 0;
 
@@ -6445,6 +6489,7 @@ function openFullMapScreen() {
   const screen = document.getElementById('fullMapScreen');
   screen.style.display = 'flex';
   screen.style.flexDirection = 'column';
+  document.body.classList.add('map-active');
 
   // Bridge mode: hide all overlays when height detector is on
   screen.classList.toggle('bridge-mode', !!bridgeActive);
@@ -6730,6 +6775,7 @@ function closeFullMapScreen() {
   document.getElementById('fmHud').style.transform = 'translateY(100%)';
   document.getElementById('poiLegend').classList.remove('visible');
   document.getElementById('fmFollowBtn').classList.remove('visible');
+  document.body.classList.remove('map-active');
   if (fmClockTimer) { clearInterval(fmClockTimer); fmClockTimer = null; }
 }
 
@@ -6861,6 +6907,9 @@ async function fmStartTracking() {
     const rawSpeed = pos.coords.speed;
     const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
     const isMoving = gpsSpeed > 3;
+    // Expose globally so calculateRoute can check
+    fmCurrentSpeed = gpsSpeed;
+    fmVehicleMoving = isMoving;
 
     // ── Heading: prefer GPS bearing, else calculate from movement ──
     let heading = pos.coords.heading;
@@ -6919,6 +6968,16 @@ async function fmStartTracking() {
     document.getElementById('fmBar').style.width = pct + '%';
     document.getElementById('fmEta').textContent = fmtH(etaH);
     document.getElementById('fmRem').textContent = remaining.toFixed(1) + ' mi';
+
+    // ── Miles remaining widget on map ────────────────────────
+    const mrWidget = document.getElementById('milesRemainingWidget');
+    if (mrWidget && destination) {
+      mrWidget.classList.add('visible');
+      mrWidget.classList.toggle('moving', isMoving);
+      document.getElementById('mrVal').textContent = remaining < 10 ? remaining.toFixed(1) : Math.round(remaining).toLocaleString();
+      document.getElementById('mrUnit').textContent = lang === 'es' ? 'mi restantes' : 'mi remaining';
+      document.getElementById('mrLabel').textContent = lang === 'es' ? 'AL DESTINO' : 'TO DESTINATION';
+    }
 
     const driveMax = Math.min(11, Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 70));
     const driveLeft = Math.max(0, driveMax - elapsed);
@@ -7019,12 +7078,17 @@ async function fmStartTracking() {
 function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   fmIsTracking = false;
+  fmVehicleMoving = false;
+  fmCurrentSpeed = 0;
   fmPrevLat = null; fmPrevLon = null;
   // Stop smooth animation
   if (truckAnimFrame) { cancelAnimationFrame(truckAnimFrame); truckAnimFrame = null; }
   truckFrom = null; truckTo = null;
   hideSpeedometer();
   hideDriveHoursWidget();
+  // Hide miles remaining widget
+  const mrw = document.getElementById('milesRemainingWidget');
+  if (mrw) { mrw.classList.remove('visible', 'moving'); }
   document.getElementById('reportFab').classList.remove('visible');
   document.getElementById('reportSheet').classList.remove('open');
   const trbStop = document.getElementById('topReportBtns');
@@ -8581,13 +8645,13 @@ window.addEventListener('resize', () => {
     // Enable compact mode (transparent background, only circles visible)
     hud.classList.add('compact');
     // Toggle zoom on floating widgets (tap to enlarge/shrink)
-    ['driveHoursWidget','speedometerWidget','weatherWidget'].forEach((id)=>{
+    ['driveHoursWidget','weatherWidget'].forEach((id)=>{
       const el = document.getElementById(id);
       if(!el) return;
       el.classList.add('tap-zoom');
       el.addEventListener('click', (e)=>{ e.stopPropagation(); el.classList.toggle('zoomed'); }, {passive:false});
-      el.addEventListener('touchstart', (e)=>{ e.stopPropagation(); el.classList.toggle('zoomed'); }, {passive:false});
     });
+    // speedometerWidget is draggable — no tap-zoom
 
   }
 
@@ -9279,6 +9343,7 @@ function openProManageModal() {
   const modal = document.getElementById('proManageModal');
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+  window._proManagePendingPhoto = undefined; // reset pending photo
   const sub = JSON.parse(localStorage.getItem('hos_pro_status') || '{}');
   // Fill plan label
   const planTxt = sub.plan === 'annual' ? 'Plan Anual — $79.99/año' : 'Plan Mensual — $9.99/mes';
@@ -9286,14 +9351,16 @@ function openProManageModal() {
   document.getElementById('pmPlanLabel').textContent = planTxt + (sinceDate ? ' · Desde ' + sinceDate : '');
   // Fill user info
   const u = currentUser || {};
-  document.getElementById('pmName').value = u.name || '';
+  document.getElementById('pmName').value = sub.name || u.name || '';
   document.getElementById('pmEmail').value = sub.email || u.email || '';
   document.getElementById('pmPhone').value = sub.phone || '';
-  // Photo
+  // Photo — prefer user photo, fallback to sub photo
+  const photoSrc = u.photoData || sub.photoData || '';
   const pmPP = document.getElementById('pmPhotoPreview');
-  if (u.photoData) {
-    pmPP.innerHTML = `<img src="${u.photoData}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
+  if (photoSrc) {
+    pmPP.innerHTML = `<img src="${photoSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
   } else {
+    pmPP.innerHTML = '';
     pmPP.textContent = u.avatar || '👤';
   }
   // Card
@@ -9343,7 +9410,8 @@ function handleProManagePhoto(file) {
     const data = String(reader.result || '');
     const pmPP = document.getElementById('pmPhotoPreview');
     pmPP.innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
-    pmPP.dataset.photoData = data;
+    // Store in a module-level variable to avoid dataset loss
+    window._proManagePendingPhoto = data;
   };
   reader.readAsDataURL(file);
 }
@@ -9352,35 +9420,46 @@ function removeProManagePhoto() {
   const pmPP = document.getElementById('pmPhotoPreview');
   pmPP.innerHTML = '';
   pmPP.textContent = '👤';
-  pmPP.dataset.photoData = '';
+  window._proManagePendingPhoto = '';
 }
 
 function saveProManageInfo() {
   const name  = document.getElementById('pmName').value.trim();
   const email = document.getElementById('pmEmail').value.trim();
   const phone = document.getElementById('pmPhone').value.trim();
-  const photoData = document.getElementById('pmPhotoPreview').dataset.photoData;
+
+  // Get photo: use pending upload if set, otherwise keep existing
+  const pendingPhoto = window._proManagePendingPhoto;
+  const hasNewPhoto  = (pendingPhoto !== undefined && pendingPhoto !== null);
+  const photoData    = hasNewPhoto ? pendingPhoto : (currentUser ? currentUser.photoData || '' : '');
 
   if (!name) { showToast('warn','⚠️','Falta el nombre','Ingresa tu nombre.',3000); return; }
 
   // Update subscription record
   const sub = JSON.parse(localStorage.getItem('hos_pro_status') || '{}');
-  sub.email = email; sub.phone = phone;
+  sub.email = email;
+  sub.phone = phone;
+  if (hasNewPhoto) sub.photoData = photoData; // also persist photo in sub record
   localStorage.setItem('hos_pro_status', JSON.stringify(sub));
 
-  // Update user profile
+  // Update user profile (create minimal one if not logged in)
   if (currentUser) {
     currentUser.name = name;
     if (email) currentUser.email = email;
-    if (photoData !== undefined && photoData !== null) {
-      currentUser.photoData = photoData || '';
-    }
+    currentUser.photoData = photoData;
     persistCurrentUserToProfiles();
     applyUserIconToMap();
-    showProfileView(); // refresh profile view
+    showProfileView();
+  } else {
+    // No active session — save name/email directly to sub record
+    sub.name  = name;
+    sub.email = email;
+    localStorage.setItem('hos_pro_status', JSON.stringify(sub));
   }
 
-  // Update pro section labels
+  // Reset pending photo
+  window._proManagePendingPhoto = undefined;
+
   updateProUI();
   closeProManageModal();
   showToast('success','✅','Cambios guardados','Tu información ha sido actualizada.',3000);
