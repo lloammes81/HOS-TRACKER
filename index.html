@@ -29,6 +29,10 @@
     --muted: #6b7280;
     --accent: #10b981;
     --accent2: #059669;
+    --road-name-color: #374151; /* road name labels (overlay) */
+    --interstate-top: #b91c1c;  /* interstate shield top (muted red) */
+    --interstate-bottom: #1e40af; /* interstate shield bottom (deep blue) */
+    --interstate-text: #ffffff;
     --danger: #ef4444;
     --blue: #3b82f6;
     --purple: #8b5cf6;
@@ -1739,15 +1743,15 @@
   align-items:center; justify-content:flex-end;
   padding-bottom:4px;
   position:relative;
-  color:#fff;
+  color:var(--interstate-text);
   filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));
 }
 .interstate-shield::before{
   content:'';
   position:absolute; inset:0;
   background: linear-gradient(180deg,
-    #cc0000 0%, #cc0000 28%,
-    #003299 28%, #003299 100%);
+    var(--interstate-top) 0%, var(--interstate-top) 28%,
+    var(--interstate-bottom) 28%, var(--interstate-bottom) 100%);
   clip-path: polygon(50% 0%, 100% 12%, 100% 100%, 0% 100%, 0% 12%);
   border-radius:3px;
 }
@@ -1763,17 +1767,35 @@
   position:absolute; top:3px; left:0; right:0;
   text-align:center; z-index:3;
   font-size:6px; font-weight:900; letter-spacing:.6px;
-  color:#fff; text-transform:uppercase; line-height:1;
+  color:var(--interstate-text); text-transform:uppercase; line-height:1;
   text-shadow:0 1px 2px rgba(0,0,0,.5);
 }
 .interstate-shield .body{ display:none; }
 .interstate-shield .num{
   position:relative; z-index:3;
   font-size:18px; font-weight:900; line-height:1;
-  color:#fff; letter-spacing:1px;
+  color:var(--interstate-text); letter-spacing:1px;
   text-shadow:0 1px 3px rgba(0,0,0,.7);
   font-family:'Arial Black','Arial',sans-serif;
   margin-bottom:1px;
+}
+
+/* ── Road-name labels along route (overlay) ───────────────── */
+.roadname-pill{
+  display:inline-flex;
+  align-items:center;
+  padding:3px 8px;
+  border-radius:999px;
+  background: rgba(0,0,0,.58);
+  border: 1px solid rgba(255,255,255,.25);
+  color: var(--road-name-color);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.2px;
+  font-family:'DM Sans',sans-serif;
+  text-shadow:0 1px 2px rgba(0,0,0,.55);
+  box-shadow:0 3px 10px rgba(0,0,0,.35);
+  white-space:nowrap;
 }
 
 /* ── US Route shield ──────────────────────────────────────── */
@@ -2785,8 +2807,41 @@
       </div>
     </div>
 
+    <!-- Pro activo (visible solo si es Pro) -->
+    <div id="proActiveSection" style="
+      display:none;
+      margin:0 16px 14px;
+      background:linear-gradient(135deg,#064e3b,#065f46);
+      border-radius:14px;padding:16px;
+      border:1px solid rgba(16,185,129,.35);
+      position:relative;overflow:hidden;
+    ">
+      <div style="position:absolute;top:-15px;right:-15px;font-size:70px;opacity:.08;pointer-events:none">✅</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="font-size:26px">⭐</div>
+        <div>
+          <div style="font-size:15px;font-weight:900;color:#fff">HOS Tracker Pro</div>
+          <div id="proStatusLabel" style="font-size:11px;color:rgba(255,255,255,.6);margin-top:1px">Plan activo</div>
+        </div>
+        <div style="
+          margin-left:auto;
+          background:rgba(16,185,129,.25);
+          color:#6ee7b7;font-size:11px;font-weight:900;
+          padding:4px 12px;border-radius:999px;border:1px solid rgba(16,185,129,.4);
+        ">✓ ACTIVO</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button onclick="openProManageModal()" style="
+          width:100%;padding:11px;border-radius:10px;border:none;
+          background:rgba(255,255,255,.12);
+          color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;
+          cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+        ">💳 Gestionar suscripción y pago</button>
+      </div>
+    </div>
+
     <!-- Pro plan -->
-    <div style="
+    <div id="proUpgradeSection" style="
       margin:0 16px 14px;
       background:linear-gradient(135deg,#7c3aed,#4f46e5);
       border-radius:14px;padding:16px;
@@ -3209,7 +3264,51 @@
         </div>
 
         <div>
-          <label style="color:#94a3b8;font-size:12px;font-weight:700;display:block;margin-bottom:6px">NOMBRE / APODO *</label>
+<!-- Foto de perfil (opcional) + Menú al lado de ubicación -->
+        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-top:-6px">
+          <div style="flex:1;min-width:200px">
+            <div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+                <div style="color:#94a3b8;font-size:12px;font-weight:800">FOTO DE PERFIL</div>
+                <div style="color:#64748b;font-size:11px">se usa como icono en el mapa</div>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:12px">
+                <div id="regPhotoPreview" style="
+                  width:52px;height:52px;border-radius:14px;
+                  background:#0b1220;border:1px solid #334155;
+                  display:flex;align-items:center;justify-content:center;
+                  overflow:hidden;color:#64748b;font-size:20px">📷</div>
+
+                <div style="flex:1">
+                  <input id="regPhotoInput" type="file" accept="image/*" style="display:none"
+                         onchange="handleRegisterPhoto(this.files && this.files[0])" />
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button type="button" onclick="document.getElementById('regPhotoInput').click()" style="
+                      background:linear-gradient(135deg,#22c55e,#10b981);
+                      color:#fff;border:none;border-radius:10px;padding:10px 12px;
+                      font-weight:900;font-size:12px;cursor:pointer">
+                      📷 Subir foto
+                    </button>
+                    <button type="button" onclick="clearRegisterPhoto()" style="
+                      background:rgba(255,255,255,0.08);
+                      color:#cbd5e1;border:1px solid #334155;border-radius:10px;padding:10px 12px;
+                      font-weight:900;font-size:12px;cursor:pointer">
+                      🗑️ Quitar
+                    </button>
+                  </div>
+                  <div style="color:#64748b;font-size:11px;margin-top:8px;line-height:1.2">
+                    Tip: usa una imagen cuadrada (JPG/PNG). Se guarda en este dispositivo.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+</div>
+
+<div>
+  <label style="color:#94a3b8;font-size:12px;font-weight:700;display:block;margin-bottom:6px">NOMBRE / APODO *</label>
           <input id="regName" type="text" placeholder="Ej: El Coyote, TruckerMike..." style="
             width:100%;padding:12px;border-radius:10px;border:1px solid #334155;
             background:#0f172a;color:#f1f5f9;font-size:14px;font-family:'DM Sans',sans-serif;
@@ -3313,6 +3412,26 @@
         <div id="pvAvatar" style="font-size:52px;margin-bottom:8px">🚛</div>
         <div id="pvName" style="color:#f1f5f9;font-weight:900;font-size:20px"></div>
         <div id="pvCompany" style="color:#64748b;font-size:13px;margin-top:2px"></div>
+        <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <input id="pvPhotoInput" type="file" accept="image/*" style="display:none"
+                 onchange="handleProfilePhotoUpload(this.files && this.files[0])" />
+          <button type="button" onclick="document.getElementById('pvPhotoInput').click()" style="
+            background:linear-gradient(135deg,#22c55e,#10b981);
+            color:#fff;border:none;border-radius:12px;padding:10px 12px;
+            font-weight:900;font-size:12px;cursor:pointer">
+            📷 Cambiar foto
+          </button>
+          <button type="button" onclick="removeProfilePhoto()" style="
+            background:rgba(255,255,255,0.08);
+            color:#cbd5e1;border:1px solid #334155;border-radius:12px;padding:10px 12px;
+            font-weight:900;font-size:12px;cursor:pointer">
+            🗑️ Quitar
+          </button>
+        </div>
+        <div style="text-align:center;color:#64748b;font-size:11px;margin-top:8px">
+          La foto se usa como tu <b>icono en el mapa</b>.
+        </div>
+
       </div>
       
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
@@ -3335,6 +3454,23 @@
       </div>
 
       <div style="display:flex;flex-direction:column;gap:8px">
+        <!-- Pro status inside profile -->
+        <div id="pvProBadge" style="display:none;
+          background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(79,70,229,.2));
+          border:1px solid rgba(139,92,246,.4);
+          border-radius:12px;padding:12px 14px;margin-bottom:2px;
+          display:none;align-items:center;gap:10px;
+        ">
+          <span style="font-size:20px">⭐</span>
+          <div>
+            <div style="color:#c4b5fd;font-size:13px;font-weight:900">Pro Activo</div>
+            <div id="pvProPlan" style="color:#6b7280;font-size:11px;margin-top:1px"></div>
+          </div>
+          <button onclick="openProManageModal()" style="
+            margin-left:auto;background:rgba(139,92,246,.25);border:1px solid rgba(139,92,246,.4);
+            color:#c4b5fd;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;
+          ">Gestionar</button>
+        </div>
         <button onclick="logoutUser()" style="
           background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);
           border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">
@@ -3645,12 +3781,12 @@ let currentTab = 'plan';
 
 // ── MAP STYLE ────────────────────────────────────────────────
 const MAP_STYLES = {
-  voyager:  { label:'Road',    emoji:'🛣️',  url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' },
-  dark:     { label:'Night',   emoji:'🌙',  url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' },
-  satellite:{ label:'Hybrid',  emoji:'🛰️',  url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' },
-  topo:     { label:'Terrain', emoji:'⛰️',  url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png' },
-  light:    { label:'Light',   emoji:'☀️',  url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png' },
-  nav:      { label:'Nav',     emoji:'📍',  url:'https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png' },
+  voyager:  { label:'Road',    emoji:'🛣️',  url:'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',    options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
+  dark:     { label:'Night',   emoji:'🌙',  url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', options:{ maxZoom:19, attribution:'© CARTO' } },
+  satellite:{ label:'Hybrid',  emoji:'🛰️',  url:'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',    options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
+  topo:     { label:'Terrain', emoji:'⛰️',  url:'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',    options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
+  light:    { label:'Light',   emoji:'☀️',  url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', options:{ maxZoom:19, attribution:'© CARTO' } },
+  nav:      { label:'Nav',     emoji:'📍',  url:'https://mt{s}.google.com/vt/lyrs=r&x={x}&y={y}&z={z}',    options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
 };
 let currentMapStyle = localStorage.getItem('hos_map_style') || (isDark ? 'dark' : 'voyager');
 let fmTileLayer = null;
@@ -4964,19 +5100,21 @@ function changeMapStyle(styleKey) {
   currentMapStyle = styleKey;
   localStorage.setItem('hos_map_style', styleKey);
 
-  const styleUrl = MAP_STYLES[styleKey].url;
+  const styleConf = MAP_STYLES[styleKey];
+  const styleUrl = styleConf.url;
+  const styleOpts = styleConf.options || { maxZoom: 19 };
 
   // Update fullscreen map
   if (fmMapInst) {
     if (fmTileLayer) { try { fmMapInst.removeLayer(fmTileLayer); } catch {} }
-    fmTileLayer = L.tileLayer(styleUrl, { maxZoom: 19 }).addTo(fmMapInst);
+    fmTileLayer = L.tileLayer(styleUrl, styleOpts).addTo(fmMapInst);
     fmTileLayer.bringToBack();
   }
 
   // Update minimap
   if (miniMap) {
     miniMap.eachLayer(l => { if (l._url) { try { miniMap.removeLayer(l); } catch {} } });
-    L.tileLayer(styleUrl, { maxZoom: 19 }).addTo(miniMap);
+    L.tileLayer(styleUrl, styleOpts).addTo(miniMap);
   }
 
   // Update button highlights
@@ -4986,6 +5124,11 @@ function changeMapStyle(styleKey) {
 
   // Update dark/light mode flag
   isDark = styleKey === 'dark';
+
+  // Make road labels match the selected basemap (less "chillón")
+  try {
+    document.documentElement.style.setProperty('--road-name-color', isDark ? '#e5e7eb' : '#374151');
+  } catch {}
 }
 
 function toggleMapStylePanel() {
@@ -5430,8 +5573,8 @@ function refreshTruckMarkers() {
 
 function initMap(containerId) {
   const map = L.map(containerId, { zoomControl: true }).setView([39.5, -98.35], 4);
-  const styleUrl = MAP_STYLES[currentMapStyle]?.url || MAP_STYLES.voyager.url;
-  L.tileLayer(styleUrl, { maxZoom: 19, attribution: '© CARTO © OSM' }).addTo(map);
+  const styleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
+  L.tileLayer(styleConf.url, styleConf.options || { maxZoom: 19 }).addTo(map);
   return map;
 }
 
@@ -5452,10 +5595,11 @@ function drawRoute(map, coords, markersRef, layerRef) {
   const mid = coords[Math.floor(coords.length/2)] || [(origin.lat+destination.lat)/2,(origin.lon+destination.lon)/2];
   const truck = L.marker(mid, { icon: getTruckLeafletIcon() }).addTo(map);
 
-  try {
-    const isFull = (typeof fullMapInst !== 'undefined' && map === fullMapInst);
+  // Interstate & US Route shields
+  const isFull = (map === fullMapInst);
+  if (Array.isArray(navSteps) && navSteps.length) {
     addInterstateMarkers(map, navSteps, isFull);
-  } catch {}
+  }
 
   markersRef.list = [glow, casing, o, d, truck];
   map.fitBounds(layer.getBounds(), { padding:[25,25] });
@@ -5471,6 +5615,10 @@ function haversine(lat1, lon1, lat2, lon2) {
 // ── Interstate markers (I-10, I-95, etc) ────────────────────
 let interstateMarkersMini = [];
 let interstateMarkersFull = [];
+
+let roadNameMarkersMini = [];
+let roadNameMarkersFull = [];
+
 
 function makeInterstateDivIcon(num){
   const html = `<div class="interstate-shield">
@@ -5631,6 +5779,79 @@ async function fetchRoadRoute(orig, dest) {
     };
   }
 }
+// ── Road-name markers (labels) ──────────────────────────────
+function extractRoadLabel(step){
+  const ref  = (step?.ref || '').trim();
+  const name = (step?.name || '').trim();
+  const road = (step?.road || '').trim();
+  const dest = (step?.destinations || '').trim();
+  // Prefer refs (I-10, US-1, SR-...), then names
+  const base = ref || name || road || dest;
+  if (!base) return null;
+
+  // Clean up common noise
+  const cleaned = base
+    .replace(/\s+/g,' ')
+    .replace(/\b(?:toward|towards|to|exit|ramp|merge|continue)\b/ig,'')
+    .trim();
+
+  // Avoid tiny/meaningless labels
+  if (cleaned.length < 3) return null;
+  return cleaned;
+}
+
+function makeRoadNameDivIcon(label){
+  const safe = String(label).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return L.divIcon({
+    className:'',
+    html:`<div class="roadname-pill">🛣️ ${safe}</div>`,
+    iconSize:null
+  });
+}
+
+function clearRoadNameMarkers(isFull){
+  const arr = isFull ? roadNameMarkersFull : roadNameMarkersMini;
+  arr.forEach(m => { try { (isFull?fullMapInst:miniMap).removeLayer(m); } catch {} });
+  arr.length = 0;
+}
+
+function addRoadNameMarkers(map, steps, isFull){
+  if (!map || !Array.isArray(steps) || !steps.length) return;
+
+  // Clear old
+  const arr = isFull ? roadNameMarkersFull : roadNameMarkersMini;
+  arr.forEach(m => { try { map.removeLayer(m); } catch {} });
+  arr.length = 0;
+
+  let last = '';
+  let added = 0;
+
+  for (let i = 0; i < steps.length; i++){
+    const step = steps[i];
+    const loc = step?.maneuver?.location; // [lon,lat]
+    if (!loc || !isFinite(loc[0]) || !isFinite(loc[1])) continue;
+
+    const label = extractRoadLabel(step);
+    if (!label) continue;
+
+    // Only add when road changes (prevents spam)
+    if (label.toLowerCase() === last.toLowerCase()) continue;
+    last = label;
+
+    // Cap markers to keep map clean
+    if (added >= 18) break;
+
+    const marker = L.marker([loc[1], loc[0]], {
+      icon: makeRoadNameDivIcon(label),
+      interactive: false
+    });
+
+    marker.addTo(map);
+    arr.push(marker);
+    added++;
+  }
+}
+
 
 function calculateSchedule(start, distance, speed, cycle) {
   const sched = [];
@@ -6023,6 +6244,8 @@ async function calculateRoute() {
   roadGeometry = road.coords;
   routeSource = road.source;
   routeDistance = road.miles;
+  navSteps = Array.isArray(road.steps) ? road.steps : [];
+  navStepIdx = 0;
 
   schedule = calculateSchedule(depart, routeDistance, speed, hours);
   arrivalTime = schedule.at(-1)?.end || depart;
@@ -6260,8 +6483,8 @@ function openFullMapScreen() {
       fadeAnimation: true
     }).setView([39.5, -98.35], 4);
 
-    const styleUrl = MAP_STYLES[currentMapStyle]?.url || MAP_STYLES.voyager.url;
-    fmTileLayer = L.tileLayer(styleUrl, { maxZoom: 19 }).addTo(fmMapInst);
+    const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
+    fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
 
     // Detect when user drags map — pause auto-follow
     fmMapInst.on('dragstart', () => {
@@ -6323,6 +6546,9 @@ function fmRedrawRoute(coords) {
   fmMarkers.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
   fmMarkers = [];
   if (fmLayer) { try { fmMapInst.removeLayer(fmLayer); } catch {} fmLayer = null; }
+  // Clear old interstate shields
+  interstateMarkersFull.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+  interstateMarkersFull.length = 0;
 
   // ── Glow exterior (muy grueso, muy transparente)
   const glow   = L.polyline(routeCoords,{ color:'#10b981', weight:22, opacity:0.11, interactive:false }).addTo(fmMapInst);
@@ -6361,7 +6587,7 @@ function fmRedrawRoute(coords) {
 
   // ── Escudos de Interstate y US Route sobre la ruta
   if (Array.isArray(navSteps) && navSteps.length){
-    setTimeout(() => addInterstateMarkers(fmMapInst, navSteps, true), 100);
+    addInterstateMarkers(fmMapInst, navSteps, true);
   }
 }
 
@@ -7283,8 +7509,34 @@ async function runNearbySearch() {
 }
 
 function showSubscribeModal() {
-  showToast('info', '⭐', 'Suscripción Pro',
-    'Próximamente: pago en línea. Escríbenos a soporte@hostrack.app para activar tu cuenta Pro.', 6000);
+  document.getElementById('subscribeModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeSubscribeModal() {
+  document.getElementById('subscribeModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function handleSubscribeSubmit() {
+  const name  = document.getElementById('subName').value.trim();
+  const email = document.getElementById('subEmail').value.trim();
+  const plan  = document.querySelector('input[name="subPlan"]:checked')?.value || 'monthly';
+  if (!name || !email) {
+    showToast('warn','⚠️','Completa los campos','Ingresa tu nombre y correo para continuar.',3000);
+    return;
+  }
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRe.test(email)) {
+    showToast('warn','⚠️','Correo inválido','Ingresa un correo electrónico válido.',3000);
+    return;
+  }
+  // Save pending subscription
+  const sub = { name, email, plan, date: new Date().toISOString(), status: 'pending' };
+  const subs = JSON.parse(localStorage.getItem('hos_subscriptions') || '[]');
+  subs.push(sub);
+  localStorage.setItem('hos_subscriptions', JSON.stringify(subs));
+  // Show success state
+  document.getElementById('subFormContent').style.display = 'none';
+  document.getElementById('subSuccessContent').style.display = 'flex';
 }
 
 // Add a nearby search result as a pinned stop on the map
@@ -8350,6 +8602,8 @@ window.addEventListener('resize', () => {
    👤 USER PROFILE SYSTEM
 ════════════════════════════════════════════════════════ */
 let selectedAvatarEmoji = '🚛';
+let selectedAvatarImageData = '';
+
 let profileModalMode = 'register'; // 'register' | 'login' | 'profile'
 
 function openProfileModal() {
@@ -8424,13 +8678,33 @@ function showProfileView() {
   document.getElementById('profileView').style.display = 'block';
   document.getElementById('profileTabBar').style.display = 'none';
   document.getElementById('profileModalTitle').textContent = 'Mi Perfil';
-  document.getElementById('profileModalIcon').textContent = currentUser.avatar || '👤';
+  // Render profile icon (emoji or photo)
+  const pIcon = document.getElementById('profileModalIcon');
+  if (pIcon) {
+    if (currentUser.photoData) pIcon.innerHTML = `<img alt="foto" src="${currentUser.photoData}" style="width:28px;height:28px;border-radius:10px;object-fit:cover" />`;
+    else pIcon.textContent = currentUser.avatar || '👤';
+  }
 
-  document.getElementById('pvAvatar').textContent = currentUser.avatar || '🚛';
+  const pvA = document.getElementById('pvAvatar');
+  if (pvA) {
+    if (currentUser.photoData) {
+      pvA.style.fontSize = '0px';
+      pvA.innerHTML = `<img alt="foto" src="${currentUser.photoData}" style="width:74px;height:74px;border-radius:22px;object-fit:cover;border:1px solid rgba(255,255,255,0.12);box-shadow:0 10px 25px rgba(0,0,0,.35)" />`;
+    } else {
+      pvA.style.fontSize = '52px';
+      pvA.textContent = currentUser.avatar || '🚛';
+    }
+  }
   document.getElementById('pvName').textContent = currentUser.name;
   document.getElementById('pvCompany').textContent = currentUser.company || 'Conductor Independiente';
   document.getElementById('pvState').textContent = currentUser.state || '—';
   document.getElementById('pvTruck').textContent = currentUser.truckType || '—';
+
+  // Update pro badge in profile
+  if (typeof updateProUI === 'function') updateProUI();
+
+  // Sync map icon with this user
+  applyUserIconToMap();
 
   // Count reports by this user
   const myReports = communityReports.filter(r => r.reportedBy === currentUser.id).length;
@@ -8438,8 +8712,7 @@ function showProfileView() {
   document.getElementById('pvConfirms').textContent = currentUser.totalConfirms || 0;
 
   // Update profile FAB to show avatar
-  const pfab = document.getElementById('profileFab');
-  if (pfab) pfab.textContent = currentUser.avatar || '👤';
+  syncProfileFab();
 }
 
 function loadSavedProfilesList() {
@@ -8458,7 +8731,7 @@ function loadSavedProfilesList() {
           display:flex;align-items:center;gap:10px;
           background:#0f172a;border-radius:10px;padding:10px;cursor:pointer;
           border:1px solid #1e293b;transition:border-color .2s">
-          <span style="font-size:24px">${p.avatar || '🚛'}</span>
+          <span style="font-size:24px">${p.photoData ? `<img alt="foto" src="${p.photoData}" style="width:28px;height:28px;border-radius:10px;object-fit:cover" />` : (p.avatar || '🚛')}</span>
           <div>
             <div style="color:#f1f5f9;font-weight:700;font-size:14px">${p.name}</div>
             <div style="color:#64748b;font-size:11px">${p.company || 'Independiente'}</div>
@@ -8476,6 +8749,97 @@ function quickLoginProfile(profileId) {
   // Pre-fill login form
   document.getElementById('loginName').value = profile.name;
   document.getElementById('loginPin').focus();
+}
+
+
+// ==============================
+// USER PROFILE PHOTO (per user)
+// ==============================
+function handleRegisterPhoto(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    selectedAvatarImageData = String(reader.result || '');
+    const box = document.getElementById('regPhotoPreview');
+    if (box) {
+      box.innerHTML = `<img alt="foto" src="${selectedAvatarImageData}" style="width:100%;height:100%;object-fit:cover" />`;
+    }
+    // Show a neutral avatar emoji while photo is set (emoji is still stored too)
+    if (!selectedAvatarEmoji) selectedAvatarEmoji = '👤';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearRegisterPhoto() {
+  selectedAvatarImageData = '';
+  const box = document.getElementById('regPhotoPreview');
+  if (box) box.textContent = '📷';
+  const input = document.getElementById('regPhotoInput');
+  if (input) input.value = '';
+}
+
+function persistCurrentUserToProfiles() {
+  // Update current user in hos_profiles list (without pin hash changes)
+  const allProfiles = JSON.parse(localStorage.getItem('hos_profiles') || '[]');
+  const idx = allProfiles.findIndex(p => p.id === currentUser.id);
+  if (idx >= 0) {
+    const keepPinHash = allProfiles[idx].pinHash; // preserve
+    allProfiles[idx] = { ...allProfiles[idx], ...currentUser, pinHash: keepPinHash };
+    localStorage.setItem('hos_profiles', JSON.stringify(allProfiles));
+  }
+  localStorage.setItem('hos_user', JSON.stringify(currentUser));
+}
+
+function syncProfileFab() {
+  if (!currentUser) return;
+  const pfab = document.getElementById('profileFab');
+  if (!pfab) return;
+  if (currentUser.photoData) {
+    pfab.innerHTML = `<img alt="foto" src="${currentUser.photoData}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;display:block;" />`;
+  } else {
+    pfab.textContent = currentUser.avatar || '👤';
+  }
+}
+
+function applyUserIconToMap() {
+  // If user has photo, use it as truck icon upload; otherwise use emoji
+  if (currentUser && currentUser.photoData) {
+    truckUploadData = currentUser.photoData;
+    truckIconMode = 'upload:profile';
+    localStorage.setItem('hos_truck_upload', truckUploadData);
+    localStorage.setItem('hos_truck_icon', truckIconMode);
+  } else if (currentUser && currentUser.avatar) {
+    truckUploadData = '';
+    truckIconMode = 'emoji:' + currentUser.avatar;
+    localStorage.setItem('hos_truck_upload', '');
+    localStorage.setItem('hos_truck_icon', truckIconMode);
+  }
+  // Always sync the FAB button icon
+  syncProfileFab();
+  try { renderTruckPreview(); } catch {}
+  try { refreshTruckMarkers(); } catch {}
+}
+
+function handleProfilePhotoUpload(file) {
+  if (!file || !currentUser) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    currentUser.photoData = String(reader.result || '');
+    persistCurrentUserToProfiles();
+    applyUserIconToMap();
+    showProfileView();
+    showToast('success','📷','Foto actualizada','Tu foto ahora aparece como icono del mapa.', 3500);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeProfilePhoto() {
+  if (!currentUser) return;
+  currentUser.photoData = '';
+  persistCurrentUserToProfiles();
+  applyUserIconToMap();
+  showProfileView();
+  showToast('success','🗑️','Foto eliminada','Volvimos al icono con emoji.', 3000);
 }
 
 function registerUser() {
@@ -8499,6 +8863,7 @@ function registerUser() {
     id: 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2,5),
     name,
     avatar: selectedAvatarEmoji,
+    photoData: selectedAvatarImageData || '',
     company,
     state,
     truckType,
@@ -8583,6 +8948,535 @@ function incrementUserReports() {
   const idx = allProfiles.findIndex(p => p.id === currentUser.id);
   if (idx >= 0) { allProfiles[idx].totalReports = currentUser.totalReports; localStorage.setItem('hos_profiles', JSON.stringify(allProfiles)); }
 }
+</script>
+
+<!-- ══════════════ PRO SUBSCRIBE MODAL ══════════════ -->
+<div id="subscribeModal" style="
+  display:none;position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;padding:16px;
+" onclick="if(event.target===this)closeSubscribeModal()">
+  <div style="
+    width:100%;max-width:420px;border-radius:24px;
+    background:linear-gradient(160deg,#1e1b4b 0%,#0f172a 100%);
+    border:1px solid rgba(139,92,246,.35);
+    box-shadow:0 24px 80px rgba(124,58,237,.4);
+    overflow:hidden;position:relative;
+  ">
+    <!-- Decorative bg star -->
+    <div style="position:absolute;top:-30px;right:-30px;font-size:130px;opacity:.06;pointer-events:none;user-select:none">⭐</div>
+
+    <!-- Header -->
+    <div style="
+      background:linear-gradient(135deg,#7c3aed,#4f46e5);
+      padding:22px 22px 18px;position:relative;
+    ">
+      <button onclick="closeSubscribeModal()" style="
+        position:absolute;top:12px;right:12px;
+        background:rgba(255,255,255,.15);border:none;
+        color:#fff;font-size:18px;cursor:pointer;
+        width:32px;height:32px;border-radius:50%;
+        display:flex;align-items:center;justify-content:center;
+      ">×</button>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:38px">⭐</div>
+        <div>
+          <div style="color:#fff;font-size:20px;font-weight:900;letter-spacing:-.3px">HOS Tracker Pro</div>
+          <div style="color:rgba(255,255,255,.7);font-size:12px;margin-top:2px">Desbloquea todas las funciones</div>
+        </div>
+      </div>
+      <!-- Feature pills -->
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">
+        <span style="background:rgba(255,255,255,.15);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px">🚫 Sin anuncios</span>
+        <span style="background:rgba(255,255,255,.15);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px">🛣️ Rutas ilimitadas</span>
+        <span style="background:rgba(255,255,255,.15);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px">🔔 Alertas avanzadas</span>
+        <span style="background:rgba(255,255,255,.15);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px">🌤️ Clima en tiempo real</span>
+        <span style="background:rgba(255,255,255,.15);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px">📋 Historial 90 días</span>
+        <span style="background:rgba(255,255,255,.15);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px">💬 Soporte 24/7</span>
+      </div>
+    </div>
+
+    <!-- Form content -->
+    <div id="subFormContent" style="padding:20px 22px 22px">
+
+      <!-- Plan selector -->
+      <div style="margin-bottom:18px">
+        <div style="color:#94a3b8;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">Elige tu plan</div>
+        <div style="display:flex;gap:10px">
+          <!-- Monthly -->
+          <label style="flex:1;cursor:pointer">
+            <input type="radio" name="subPlan" value="monthly" checked style="display:none" onchange="updatePlanUI()">
+            <div id="planMonthly" style="
+              border-radius:14px;padding:14px 12px;text-align:center;
+              border:2px solid #7c3aed;background:rgba(124,58,237,.12);
+              transition:all .2s;
+            ">
+              <div style="color:#c4b5fd;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Mensual</div>
+              <div style="color:#fff;font-size:22px;font-weight:900;margin:4px 0">$9.99</div>
+              <div style="color:#94a3b8;font-size:10px">/ mes</div>
+            </div>
+          </label>
+          <!-- Annual -->
+          <label style="flex:1;cursor:pointer;position:relative">
+            <input type="radio" name="subPlan" value="annual" style="display:none" onchange="updatePlanUI()">
+            <div id="planAnnual" style="
+              border-radius:14px;padding:14px 12px;text-align:center;
+              border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);
+              transition:all .2s;
+            ">
+              <div style="color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Anual</div>
+              <div style="color:#fff;font-size:22px;font-weight:900;margin:4px 0">$79.99</div>
+              <div style="color:#94a3b8;font-size:10px">/ año</div>
+              <div style="
+                position:absolute;top:-8px;right:8px;
+                background:linear-gradient(90deg,#10b981,#059669);
+                color:#fff;font-size:9px;font-weight:900;
+                padding:2px 8px;border-radius:999px;
+              ">33% OFF</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Name field -->
+      <div style="margin-bottom:12px">
+        <label style="color:#94a3b8;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;display:block;margin-bottom:6px">Nombre completo</label>
+        <input id="subName" type="text" placeholder="Ej: Juan García" style="
+          width:100%;box-sizing:border-box;
+          background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);
+          color:#f1f5f9;border-radius:12px;padding:12px 14px;
+          font-size:14px;font-family:'DM Sans',sans-serif;
+          outline:none;transition:border .2s;
+        " onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='rgba(255,255,255,.12)'" />
+      </div>
+
+      <!-- Email field -->
+      <div style="margin-bottom:18px">
+        <label style="color:#94a3b8;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;display:block;margin-bottom:6px">Correo electrónico</label>
+        <input id="subEmail" type="email" placeholder="tu@correo.com" style="
+          width:100%;box-sizing:border-box;
+          background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);
+          color:#f1f5f9;border-radius:12px;padding:12px 14px;
+          font-size:14px;font-family:'DM Sans',sans-serif;
+          outline:none;transition:border .2s;
+        " onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='rgba(255,255,255,.12)'" />
+      </div>
+
+      <!-- CTA Button -->
+      <button onclick="handleSubscribeSubmit()" style="
+        width:100%;padding:14px;border-radius:14px;border:none;
+        background:linear-gradient(135deg,#7c3aed,#4f46e5);
+        color:#fff;font-family:'DM Sans',sans-serif;
+        font-size:15px;font-weight:900;cursor:pointer;
+        box-shadow:0 6px 20px rgba(124,58,237,.5);
+        letter-spacing:.2px;transition:transform .15s,box-shadow .15s;
+      " onmousedown="this.style.transform='scale(.98)'" onmouseup="this.style.transform='scale(1)'">
+        🚀 Registrarme y Activar Pro
+      </button>
+      <div style="text-align:center;color:rgba(255,255,255,.4);font-size:10px;margin-top:10px">
+        🔒 Pago seguro · Cancela cuando quieras · Sin compromisos
+      </div>
+      <div style="text-align:center;color:rgba(255,255,255,.35);font-size:10px;margin-top:4px">
+        Al registrarte, te contactaremos por correo con las instrucciones de pago.
+      </div>
+    </div>
+
+    <!-- Success content (hidden initially) -->
+    <div id="subSuccessContent" style="
+      display:none;flex-direction:column;align-items:center;
+      padding:36px 22px 32px;text-align:center;
+    ">
+      <div style="font-size:56px;margin-bottom:14px;animation:bounceIn .5s ease">🎉</div>
+      <div style="color:#fff;font-size:20px;font-weight:900;margin-bottom:8px">¡Te has registrado!</div>
+      <div style="color:#94a3b8;font-size:13px;line-height:1.5;margin-bottom:22px;max-width:280px">
+        Recibimos tu solicitud. En breve recibirás un correo con los detalles para activar tu cuenta <strong style="color:#c4b5fd">HOS Tracker Pro</strong>.
+      </div>
+      <div style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:12px 16px;margin-bottom:22px;font-size:12px;color:#6ee7b7;width:100%;box-sizing:border-box">
+        📧 Revisa tu bandeja de entrada y spam
+      </div>
+      <button onclick="closeSubscribeModal()" style="
+        padding:12px 32px;border-radius:12px;border:none;
+        background:linear-gradient(135deg,#7c3aed,#4f46e5);
+        color:#fff;font-family:'DM Sans',sans-serif;
+        font-size:14px;font-weight:900;cursor:pointer;
+        box-shadow:0 4px 14px rgba(124,58,237,.4);
+      ">Entendido ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function updatePlanUI() {
+  const monthly = document.querySelector('input[name="subPlan"][value="monthly"]').checked;
+  document.getElementById('planMonthly').style.border = monthly ? '2px solid #7c3aed' : '2px solid rgba(255,255,255,.1)';
+  document.getElementById('planMonthly').style.background = monthly ? 'rgba(124,58,237,.12)' : 'rgba(255,255,255,.04)';
+  document.getElementById('planAnnual').style.border = !monthly ? '2px solid #7c3aed' : '2px solid rgba(255,255,255,.1)';
+  document.getElementById('planAnnual').style.background = !monthly ? 'rgba(124,58,237,.12)' : 'rgba(255,255,255,.04)';
+}
+</script>
+
+<!-- ══════════════ PRO MANAGE MODAL ══════════════ -->
+<div id="proManageModal" style="
+  display:none;position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;padding:16px;
+" onclick="if(event.target===this)closeProManageModal()">
+  <div style="
+    width:100%;max-width:400px;border-radius:22px;
+    background:#0f172a;border:1px solid rgba(139,92,246,.3);
+    box-shadow:0 24px 80px rgba(124,58,237,.35);
+    overflow:hidden;
+  ">
+    <!-- Header -->
+    <div style="
+      background:linear-gradient(135deg,#1e1b4b,#312e81);
+      padding:18px 20px;display:flex;align-items:center;gap:12px;
+      border-bottom:1px solid rgba(139,92,246,.2);
+    ">
+      <span style="font-size:28px">⭐</span>
+      <div style="flex:1">
+        <div style="color:#fff;font-size:17px;font-weight:900">Mi Suscripción Pro</div>
+        <div id="pmPlanLabel" style="color:#a78bfa;font-size:11px;margin-top:2px"></div>
+      </div>
+      <button onclick="closeProManageModal()" style="
+        background:rgba(255,255,255,.1);border:none;color:#fff;
+        font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;
+      ">×</button>
+    </div>
+
+    <div style="padding:20px">
+      <!-- Account info -->
+      <div style="margin-bottom:18px">
+        <div style="color:#94a3b8;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">Información de cuenta</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <!-- Photo -->
+          <div style="display:flex;align-items:center;gap:12px;background:#1e293b;border-radius:12px;padding:12px">
+            <div id="pmPhotoPreview" style="
+              width:52px;height:52px;border-radius:14px;
+              background:#334155;display:flex;align-items:center;justify-content:center;
+              font-size:26px;overflow:hidden;flex-shrink:0;
+              border:2px solid rgba(139,92,246,.3);
+            ">👤</div>
+            <div style="flex:1">
+              <div style="color:#f1f5f9;font-size:13px;font-weight:700;margin-bottom:4px">Foto de perfil</div>
+              <div style="color:#64748b;font-size:11px">Aparece en el mapa bajo tu nombre</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <input id="pmPhotoInput" type="file" accept="image/*" style="display:none" onchange="handleProManagePhoto(this.files[0])">
+              <button onclick="document.getElementById('pmPhotoInput').click()" style="
+                background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;
+                color:#fff;border-radius:8px;padding:7px 11px;font-size:11px;font-weight:700;cursor:pointer;
+              ">📷 Cambiar</button>
+              <button onclick="removeProManagePhoto()" style="
+                background:rgba(255,255,255,.06);border:1px solid #334155;
+                color:#94a3b8;border-radius:8px;padding:5px 11px;font-size:10px;cursor:pointer;
+              ">🗑️ Quitar</button>
+            </div>
+          </div>
+          <!-- Name -->
+          <div>
+            <label style="color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Nombre</label>
+            <input id="pmName" type="text" style="
+              width:100%;box-sizing:border-box;
+              background:#1e293b;border:1.5px solid #334155;color:#f1f5f9;
+              border-radius:10px;padding:10px 12px;font-size:13px;
+              font-family:'DM Sans',sans-serif;outline:none;transition:border .2s;
+            " onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#334155'">
+          </div>
+          <!-- Email -->
+          <div>
+            <label style="color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Correo electrónico</label>
+            <input id="pmEmail" type="email" style="
+              width:100%;box-sizing:border-box;
+              background:#1e293b;border:1.5px solid #334155;color:#f1f5f9;
+              border-radius:10px;padding:10px 12px;font-size:13px;
+              font-family:'DM Sans',sans-serif;outline:none;transition:border .2s;
+            " onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#334155'">
+          </div>
+          <!-- Phone (optional) -->
+          <div>
+            <label style="color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Teléfono (opcional)</label>
+            <input id="pmPhone" type="tel" placeholder="+1 555 000 0000" style="
+              width:100%;box-sizing:border-box;
+              background:#1e293b;border:1.5px solid #334155;color:#f1f5f9;
+              border-radius:10px;padding:10px 12px;font-size:13px;
+              font-family:'DM Sans',sans-serif;outline:none;transition:border .2s;
+            " onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#334155'">
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment method -->
+      <div style="margin-bottom:18px">
+        <div style="color:#94a3b8;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">Método de pago</div>
+        <div style="background:#1e293b;border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:24px">💳</div>
+          <div style="flex:1">
+            <div id="pmCardDisplay" style="color:#f1f5f9;font-size:13px;font-weight:700">No registrado</div>
+            <div style="color:#64748b;font-size:11px;margin-top:2px">Últimos 4 dígitos de tu tarjeta</div>
+          </div>
+          <button onclick="openCardEdit()" style="
+            background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.4);
+            color:#c4b5fd;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;
+          ">Editar</button>
+        </div>
+        <!-- Card edit (hidden by default) -->
+        <div id="cardEditSection" style="display:none;margin-top:10px;background:#1e293b;border-radius:12px;padding:14px">
+          <div style="color:#94a3b8;font-size:11px;font-weight:700;margin-bottom:8px">Tarjeta de crédito/débito</div>
+          <input id="pmCard" type="text" maxlength="19" placeholder="1234 5678 9012 3456"
+            oninput="formatCardInput(this)"
+            style="width:100%;box-sizing:border-box;background:#0f172a;border:1.5px solid #334155;color:#f1f5f9;
+              border-radius:8px;padding:9px 12px;font-size:14px;font-family:monospace;outline:none;margin-bottom:8px;">
+          <div style="display:flex;gap:8px">
+            <input id="pmExpiry" type="text" maxlength="5" placeholder="MM/YY"
+              oninput="formatExpiryInput(this)"
+              style="flex:1;background:#0f172a;border:1.5px solid #334155;color:#f1f5f9;
+                border-radius:8px;padding:9px 12px;font-size:13px;outline:none;">
+            <input id="pmCvv" type="text" maxlength="4" placeholder="CVV"
+              style="flex:1;background:#0f172a;border:1.5px solid #334155;color:#f1f5f9;
+                border-radius:8px;padding:9px 12px;font-size:13px;outline:none;">
+          </div>
+          <div style="color:#475569;font-size:10px;margin-top:8px;display:flex;align-items:center;gap:4px">
+            🔒 Solo guardamos los últimos 4 dígitos localmente
+          </div>
+          <button onclick="saveCardInfo()" style="
+            width:100%;margin-top:10px;padding:10px;border-radius:9px;border:none;
+            background:linear-gradient(135deg,#7c3aed,#4f46e5);
+            color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;
+          ">Guardar tarjeta</button>
+        </div>
+      </div>
+
+      <!-- Save info button -->
+      <button onclick="saveProManageInfo()" style="
+        width:100%;padding:13px;border-radius:12px;border:none;
+        background:linear-gradient(135deg,#7c3aed,#4f46e5);
+        color:#fff;font-family:'DM Sans',sans-serif;
+        font-size:14px;font-weight:900;cursor:pointer;
+        box-shadow:0 4px 16px rgba(124,58,237,.4);margin-bottom:10px;
+      ">💾 Guardar cambios</button>
+
+      <!-- Cancel subscription -->
+      <button onclick="confirmCancelPro()" style="
+        width:100%;padding:10px;border-radius:10px;border:1px solid rgba(239,68,68,.25);
+        background:rgba(239,68,68,.08);
+        color:#f87171;font-family:'DM Sans',sans-serif;
+        font-size:12px;font-weight:700;cursor:pointer;
+      ">Cancelar suscripción</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Pro Management ── */
+function isUserPro() {
+  const sub = JSON.parse(localStorage.getItem('hos_pro_status') || 'null');
+  return sub && sub.active;
+}
+
+function openProManageModal() {
+  const modal = document.getElementById('proManageModal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  const sub = JSON.parse(localStorage.getItem('hos_pro_status') || '{}');
+  // Fill plan label
+  const planTxt = sub.plan === 'annual' ? 'Plan Anual — $79.99/año' : 'Plan Mensual — $9.99/mes';
+  const sinceDate = sub.date ? new Date(sub.date).toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'}) : '';
+  document.getElementById('pmPlanLabel').textContent = planTxt + (sinceDate ? ' · Desde ' + sinceDate : '');
+  // Fill user info
+  const u = currentUser || {};
+  document.getElementById('pmName').value = u.name || '';
+  document.getElementById('pmEmail').value = sub.email || u.email || '';
+  document.getElementById('pmPhone').value = sub.phone || '';
+  // Photo
+  const pmPP = document.getElementById('pmPhotoPreview');
+  if (u.photoData) {
+    pmPP.innerHTML = `<img src="${u.photoData}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
+  } else {
+    pmPP.textContent = u.avatar || '👤';
+  }
+  // Card
+  const card = sub.cardLast4 ? `•••• •••• •••• ${sub.cardLast4}` : 'No registrado';
+  document.getElementById('pmCardDisplay').textContent = card;
+}
+
+function closeProManageModal() {
+  document.getElementById('proManageModal').style.display = 'none';
+  document.body.style.overflow = '';
+  document.getElementById('cardEditSection').style.display = 'none';
+}
+
+function openCardEdit() {
+  const s = document.getElementById('cardEditSection');
+  s.style.display = s.style.display === 'none' ? 'block' : 'none';
+}
+
+function formatCardInput(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,16);
+  el.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatExpiryInput(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,4);
+  if (v.length >= 3) v = v.substring(0,2) + '/' + v.substring(2);
+  el.value = v;
+}
+
+function saveCardInfo() {
+  const raw = document.getElementById('pmCard').value.replace(/\s/g,'');
+  if (raw.length < 13) {
+    showToast('warn','⚠️','Tarjeta inválida','Ingresa un número de tarjeta válido.',3000); return;
+  }
+  const last4 = raw.slice(-4);
+  const sub = JSON.parse(localStorage.getItem('hos_pro_status') || '{}');
+  sub.cardLast4 = last4;
+  localStorage.setItem('hos_pro_status', JSON.stringify(sub));
+  document.getElementById('pmCardDisplay').textContent = `•••• •••• •••• ${last4}`;
+  document.getElementById('cardEditSection').style.display = 'none';
+  showToast('success','💳','Tarjeta guardada',`Terminada en ${last4}.`,3000);
+}
+
+function handleProManagePhoto(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const data = String(reader.result || '');
+    const pmPP = document.getElementById('pmPhotoPreview');
+    pmPP.innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
+    pmPP.dataset.photoData = data;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeProManagePhoto() {
+  const pmPP = document.getElementById('pmPhotoPreview');
+  pmPP.innerHTML = '';
+  pmPP.textContent = '👤';
+  pmPP.dataset.photoData = '';
+}
+
+function saveProManageInfo() {
+  const name  = document.getElementById('pmName').value.trim();
+  const email = document.getElementById('pmEmail').value.trim();
+  const phone = document.getElementById('pmPhone').value.trim();
+  const photoData = document.getElementById('pmPhotoPreview').dataset.photoData;
+
+  if (!name) { showToast('warn','⚠️','Falta el nombre','Ingresa tu nombre.',3000); return; }
+
+  // Update subscription record
+  const sub = JSON.parse(localStorage.getItem('hos_pro_status') || '{}');
+  sub.email = email; sub.phone = phone;
+  localStorage.setItem('hos_pro_status', JSON.stringify(sub));
+
+  // Update user profile
+  if (currentUser) {
+    currentUser.name = name;
+    if (email) currentUser.email = email;
+    if (photoData !== undefined && photoData !== null) {
+      currentUser.photoData = photoData || '';
+    }
+    persistCurrentUserToProfiles();
+    applyUserIconToMap();
+    showProfileView(); // refresh profile view
+  }
+
+  // Update pro section labels
+  updateProUI();
+  closeProManageModal();
+  showToast('success','✅','Cambios guardados','Tu información ha sido actualizada.',3000);
+}
+
+function confirmCancelPro() {
+  if (!confirm('¿Cancelar tu suscripción Pro? Perderás acceso a las funciones premium.')) return;
+  const sub = JSON.parse(localStorage.getItem('hos_pro_status') || '{}');
+  sub.active = false;
+  localStorage.setItem('hos_pro_status', JSON.stringify(sub));
+  if (currentUser) { currentUser.isPro = false; persistCurrentUserToProfiles(); }
+  updateProUI();
+  closeProManageModal();
+  showToast('info','ℹ️','Suscripción cancelada','Tu plan Pro ha sido cancelado.',4000);
+}
+
+function updateProUI() {
+  const pro = isUserPro();
+  const upgradeSection = document.getElementById('proUpgradeSection');
+  const activeSection  = document.getElementById('proActiveSection');
+  const pvBadge        = document.getElementById('pvProBadge');
+
+  if (upgradeSection) upgradeSection.style.display = pro ? 'none' : 'block';
+  if (activeSection)  activeSection.style.display  = pro ? 'block' : 'none';
+
+  if (pvBadge) {
+    pvBadge.style.display = pro ? 'flex' : 'none';
+    if (pro) {
+      const sub = JSON.parse(localStorage.getItem('hos_pro_status') || '{}');
+      const planTxt = sub.plan === 'annual' ? 'Plan Anual · $79.99/año' : 'Plan Mensual · $9.99/mes';
+      const pvPlanEl = document.getElementById('pvProPlan');
+      if (pvPlanEl) pvPlanEl.textContent = planTxt;
+    }
+  }
+  // Label in active section
+  if (pro && activeSection) {
+    const sub = JSON.parse(localStorage.getItem('hos_pro_status') || '{}');
+    const lbl = document.getElementById('proStatusLabel');
+    if (lbl) lbl.textContent = sub.plan === 'annual' ? 'Plan Anual — $79.99/año' : 'Plan Mensual — $9.99/mes';
+  }
+}
+
+// ── Override handleSubscribeSubmit to mark as Pro ──
+function handleSubscribeSubmit() {
+  const name  = document.getElementById('subName').value.trim();
+  const email = document.getElementById('subEmail').value.trim();
+  const plan  = document.querySelector('input[name="subPlan"]:checked')?.value || 'monthly';
+  if (!name || !email) {
+    showToast('warn','⚠️','Completa los campos','Ingresa tu nombre y correo para continuar.',3000); return;
+  }
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRe.test(email)) {
+    showToast('warn','⚠️','Correo inválido','Ingresa un correo válido.',3000); return;
+  }
+  // Save pro status
+  const sub = {
+    name, email, plan, active: true,
+    date: new Date().toISOString(), status: 'pending_payment'
+  };
+  localStorage.setItem('hos_pro_status', JSON.stringify(sub));
+  // Also mark in currentUser if logged in
+  if (currentUser) {
+    currentUser.isPro = true;
+    persistCurrentUserToProfiles();
+  }
+  updateProUI();
+  // Show success state
+  document.getElementById('subFormContent').style.display = 'none';
+  document.getElementById('subSuccessContent').style.display = 'flex';
+}
+
+// ── Pre-fill subscribe form with logged-in user name ──
+const _origShowSubscribeModal = window.showSubscribeModal;
+window.showSubscribeModal = function() {
+  // If already Pro, open manage instead
+  if (isUserPro()) { openProManageModal(); return; }
+  document.getElementById('subscribeModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  // Pre-fill name if logged in
+  if (currentUser) {
+    const nameInput = document.getElementById('subName');
+    if (nameInput && !nameInput.value) nameInput.value = currentUser.name || '';
+  }
+  // Reset to form view
+  const fc = document.getElementById('subFormContent');
+  const sc = document.getElementById('subSuccessContent');
+  if (fc) fc.style.display = 'block';
+  if (sc) sc.style.display = 'none';
+};
+
+// Run on load
+document.addEventListener('DOMContentLoaded', function() {
+  updateProUI();
+});
+// Also run immediately in case DOM is ready
+updateProUI();
 </script>
 
 </body>
