@@ -2888,6 +2888,17 @@
   <!-- QUICK REPORT FAB -->
   <button id="reportFab" onclick="toggleReportSheet()" title="Reportar incidente">⚠️</button>
 
+  <!-- PROFILE FAB BUTTON -->
+  <button id="profileFab" onclick="openProfileModal()" title="Mi Perfil" style="
+    position:fixed;bottom:90px;right:16px;z-index:4001;
+    width:50px;height:50px;border-radius:50%;border:none;
+    background:linear-gradient(135deg,#3b82f6,#6366f1);
+    color:#fff;font-size:20px;cursor:pointer;
+    box-shadow:0 4px 14px rgba(59,130,246,0.5);
+    display:none;align-items:center;justify-content:center;
+    transition:transform .2s;font-family:'DM Sans',sans-serif;
+  ">👤</button>
+
   <!-- QUICK REPORT ACTION SHEET -->
   <div id="reportSheet">
     <button class="rs-btn" onclick="quickReport('police','🚔','Policía')">
@@ -3141,6 +3152,204 @@
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
 </style>
 
+
+<!-- ═══════════════════════════════════════════════════
+     👤 USER PROFILE / REGISTER MODAL
+═══════════════════════════════════════════════════ -->
+<div id="profileModal" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center; padding:16px;">
+  <div style="
+    background:#1e293b; border-radius:20px; width:100%; max-width:400px;
+    max-height:90vh; overflow-y:auto; padding:24px;
+    box-shadow:0 25px 60px rgba(0,0,0,0.6); font-family:'DM Sans',sans-serif;
+    border:1px solid rgba(255,255,255,0.1);">
+    
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="profileModalIcon" style="font-size:28px">👤</div>
+        <div>
+          <div id="profileModalTitle" style="color:#f1f5f9;font-weight:900;font-size:18px">Crear Perfil</div>
+          <div style="color:#64748b;font-size:12px">TruckerTrack Community</div>
+        </div>
+      </div>
+      <button onclick="closeProfileModal()" style="
+        background:rgba(255,255,255,0.1);border:none;border-radius:50%;
+        width:32px;height:32px;color:#94a3b8;cursor:pointer;font-size:16px">✕</button>
+    </div>
+
+    <!-- Tab switcher (Register / Login) -->
+    <div id="profileTabBar" style="display:flex;gap:4px;background:#0f172a;border-radius:12px;padding:4px;margin-bottom:20px">
+      <button id="tabRegister" onclick="switchProfileTab('register')" style="
+        flex:1;padding:8px;border:none;border-radius:8px;
+        background:#3b82f6;color:#fff;font-weight:700;font-size:13px;cursor:pointer">
+        Registrarse
+      </button>
+      <button id="tabLogin" onclick="switchProfileTab('login')" style="
+        flex:1;padding:8px;border:none;border-radius:8px;
+        background:transparent;color:#64748b;font-weight:700;font-size:13px;cursor:pointer">
+        Iniciar Sesión
+      </button>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="registerForm">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        
+        <!-- Avatar selector -->
+        <div style="text-align:center;margin-bottom:4px">
+          <div style="color:#94a3b8;font-size:12px;margin-bottom:8px">Elige tu avatar</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center" id="avatarPicker">
+            <span>🚛</span><span>🚜</span><span>🏗️</span><span>⛽</span>
+            <span>🔧</span><span>🦅</span><span>⭐</span><span>🌟</span>
+          </div>
+          <div id="selectedAvatar" style="font-size:40px;margin-top:8px">🚛</div>
+        </div>
+
+        <div>
+          <label style="color:#94a3b8;font-size:12px;font-weight:700;display:block;margin-bottom:6px">NOMBRE / APODO *</label>
+          <input id="regName" type="text" placeholder="Ej: El Coyote, TruckerMike..." style="
+            width:100%;padding:12px;border-radius:10px;border:1px solid #334155;
+            background:#0f172a;color:#f1f5f9;font-size:14px;font-family:'DM Sans',sans-serif;
+            box-sizing:border-box;outline:none">
+        </div>
+
+        <div>
+          <label style="color:#94a3b8;font-size:12px;font-weight:700;display:block;margin-bottom:6px">EMPRESA (opcional)</label>
+          <input id="regCompany" type="text" placeholder="Nombre de la empresa..." style="
+            width:100%;padding:12px;border-radius:10px;border:1px solid #334155;
+            background:#0f172a;color:#f1f5f9;font-size:14px;font-family:'DM Sans',sans-serif;
+            box-sizing:border-box;outline:none">
+        </div>
+
+        <div>
+          <label style="color:#94a3b8;font-size:12px;font-weight:700;display:block;margin-bottom:6px">ESTADO / REGIÓN</label>
+          <select id="regState" style="
+            width:100%;padding:12px;border-radius:10px;border:1px solid #334155;
+            background:#0f172a;color:#f1f5f9;font-size:14px;font-family:'DM Sans',sans-serif;
+            box-sizing:border-box;outline:none">
+            <option value="">Seleccionar estado...</option>
+            <option>California</option><option>Texas</option><option>Florida</option>
+            <option>New York</option><option>Illinois</option><option>Pennsylvania</option>
+            <option>Ohio</option><option>Georgia</option><option>Arizona</option>
+            <option>Tennessee</option><option>Nevada</option><option>Colorado</option>
+            <option>Washington</option><option>Oregon</option><option>Otro</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="color:#94a3b8;font-size:12px;font-weight:700;display:block;margin-bottom:6px">TIPO DE CAMIÓN</label>
+          <select id="regTruckType" style="
+            width:100%;padding:12px;border-radius:10px;border:1px solid #334155;
+            background:#0f172a;color:#f1f5f9;font-size:14px;font-family:'DM Sans',sans-serif;
+            box-sizing:border-box;outline:none">
+            <option value="">Seleccionar tipo...</option>
+            <option>18 Wheeler / Semi</option>
+            <option>Flatbed</option>
+            <option>Tanker / Cisterna</option>
+            <option>Refrigerado / Reefer</option>
+            <option>Volquete / Dump</option>
+            <option>Mudanzas / Moving</option>
+            <option>Otro</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="color:#94a3b8;font-size:12px;font-weight:700;display:block;margin-bottom:6px">PIN DE ACCESO (4 dígitos) *</label>
+          <input id="regPin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" style="
+            width:100%;padding:12px;border-radius:10px;border:1px solid #334155;
+            background:#0f172a;color:#f1f5f9;font-size:18px;font-family:'DM Sans',sans-serif;
+            box-sizing:border-box;outline:none;letter-spacing:8px;text-align:center">
+          <div style="color:#64748b;font-size:10px;margin-top:4px">Este PIN lo usarás para iniciar sesión</div>
+        </div>
+
+        <button onclick="registerUser()" style="
+          background:linear-gradient(135deg,#3b82f6,#6366f1);
+          color:#fff;border:none;border-radius:12px;padding:14px;
+          font-size:15px;font-weight:900;cursor:pointer;
+          box-shadow:0 4px 15px rgba(59,130,246,0.4);margin-top:4px">
+          🚛 Crear Mi Perfil
+        </button>
+      </div>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm" style="display:none">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        
+        <div id="savedProfilesList" style="margin-bottom:8px"></div>
+
+        <div>
+          <label style="color:#94a3b8;font-size:12px;font-weight:700;display:block;margin-bottom:6px">NOMBRE / APODO</label>
+          <input id="loginName" type="text" placeholder="Tu nombre..." style="
+            width:100%;padding:12px;border-radius:10px;border:1px solid #334155;
+            background:#0f172a;color:#f1f5f9;font-size:14px;font-family:'DM Sans',sans-serif;
+            box-sizing:border-box;outline:none">
+        </div>
+
+        <div>
+          <label style="color:#94a3b8;font-size:12px;font-weight:700;display:block;margin-bottom:6px">PIN (4 dígitos)</label>
+          <input id="loginPin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" style="
+            width:100%;padding:12px;border-radius:10px;border:1px solid #334155;
+            background:#0f172a;color:#f1f5f9;font-size:18px;font-family:'DM Sans',sans-serif;
+            box-sizing:border-box;outline:none;letter-spacing:8px;text-align:center">
+        </div>
+
+        <button onclick="loginUser()" style="
+          background:linear-gradient(135deg,#10b981,#059669);
+          color:#fff;border:none;border-radius:12px;padding:14px;
+          font-size:15px;font-weight:900;cursor:pointer;
+          box-shadow:0 4px 15px rgba(16,185,129,0.4)">
+          🔓 Iniciar Sesión
+        </button>
+      </div>
+    </div>
+
+    <!-- PROFILE VIEW (when logged in) -->
+    <div id="profileView" style="display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div id="pvAvatar" style="font-size:52px;margin-bottom:8px">🚛</div>
+        <div id="pvName" style="color:#f1f5f9;font-weight:900;font-size:20px"></div>
+        <div id="pvCompany" style="color:#64748b;font-size:13px;margin-top:2px"></div>
+      </div>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:#0f172a;border-radius:12px;padding:12px;text-align:center">
+          <div id="pvReports" style="color:#3b82f6;font-size:24px;font-weight:900">0</div>
+          <div style="color:#64748b;font-size:11px;margin-top:2px">Reportes</div>
+        </div>
+        <div style="background:#0f172a;border-radius:12px;padding:12px;text-align:center">
+          <div id="pvConfirms" style="color:#10b981;font-size:24px;font-weight:900">0</div>
+          <div style="color:#64748b;font-size:11px;margin-top:2px">Confirmaciones</div>
+        </div>
+        <div style="background:#0f172a;border-radius:12px;padding:12px;text-align:center">
+          <div id="pvState" style="color:#f59e0b;font-size:14px;font-weight:700">—</div>
+          <div style="color:#64748b;font-size:11px;margin-top:2px">Estado</div>
+        </div>
+        <div style="background:#0f172a;border-radius:12px;padding:12px;text-align:center">
+          <div id="pvTruck" style="color:#a78bfa;font-size:13px;font-weight:700">—</div>
+          <div style="color:#64748b;font-size:11px;margin-top:2px">Camión</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button onclick="logoutUser()" style="
+          background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);
+          border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">
+          🚪 Cerrar Sesión
+        </button>
+        <button onclick="deleteUserProfile()" style="
+          background:transparent;color:#475569;border:none;
+          padding:8px;font-size:12px;cursor:pointer">
+          Eliminar perfil
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <div class="monitor-overlay" id="monitorOverlay">
   <div class="monitor-card">
@@ -6006,6 +6215,9 @@ let communityReports = JSON.parse(localStorage.getItem('hos_reports') || '[]');
 communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
 localStorage.setItem('hos_reports', JSON.stringify(communityReports));
 
+// Current logged-in user
+let currentUser = JSON.parse(localStorage.getItem('hos_user') || 'null');
+
 function openFullMapScreen() {
   const screen = document.getElementById('fullMapScreen');
   screen.style.display = 'flex';
@@ -6400,6 +6612,8 @@ async function fmStartTracking() {
   const initDriveMax = Math.min(11, initCycleHours);
   updateDriveHoursWidget(initDriveMax, initDriveMax);
   document.getElementById('reportFab').classList.add('visible');
+  const pfab = document.getElementById('profileFab');
+  if (pfab) pfab.style.display = 'flex';
   const trb = document.getElementById('topReportBtns');
   if (trb) trb.style.display = 'flex';
   // Show SOS button if enabled
@@ -7589,7 +7803,12 @@ function quickReport(type, emoji, label) {
     type, emoji, label,
     lat, lon,
     ts: Date.now(),
-    userAgent: navigator.userAgent.substring(0, 50)
+    userAgent: navigator.userAgent.substring(0, 50),
+    reportedBy: currentUser ? currentUser.id : 'anonymous',
+    reportedByName: currentUser ? currentUser.name : 'Anónimo',
+    confirmations: [],   // array of user ids who confirmed it's still there
+    denials: [],         // array of user ids who said it's gone
+    confirmed: false     // removed from map when denials >= 2
   };
 
   communityReports.push(report);
@@ -7599,6 +7818,7 @@ function quickReport(type, emoji, label) {
   addReportMarker(report);
   // Incident bubble auto-dismisses from screen after 2 seconds
   addIncidentBubble(report, 2000);
+  incrementUserReports();
 
   // Fly map briefly to confirm placement
   if (fmMapInst) {
@@ -7621,7 +7841,10 @@ function submitIncident(type, emoji, label) {
     const c = fmMapInst.getCenter();
     lat = c.lat; lon = c.lng;
   }
-  const report = { id: Date.now(), type, emoji, label, lat, lon, ts: Date.now() };
+  const report = { id: Date.now(), type, emoji, label, lat, lon, ts: Date.now(),
+    reportedBy: currentUser ? currentUser.id : 'anonymous',
+    reportedByName: currentUser ? currentUser.name : 'Anónimo',
+    confirmations: [], denials: [], confirmed: false };
   communityReports.push(report);
   communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
@@ -7673,12 +7896,33 @@ function addReportMarker(report) {
     popupAnchor: [0, -24]
   });
 
+  const confirmCount = report.confirmations ? report.confirmations.length : 0;
+  const denyCount = report.denials ? report.denials.length : 0;
+  const reporterName = report.reportedByName || 'Anónimo';
   const popupHtml = `
-    <div style="font-family:'DM Sans',sans-serif;min-width:150px;text-align:center;padding:4px">
+    <div style="font-family:'DM Sans',sans-serif;min-width:180px;text-align:center;padding:4px">
       <div style="font-size:26px;margin-bottom:4px">${cfg.emoji}</div>
       <div style="font-weight:900;font-size:14px">${cfg.label}</div>
       <div style="color:#6b7280;font-size:11px;margin-top:3px">${ageStr}</div>
+      <div style="color:#6b7280;font-size:10px;margin-top:2px">Reportado por: ${reporterName}</div>
       <div style="color:#ef4444;font-size:11px;font-weight:700;margin-top:6px">⚠️ Precaución en esta área</div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
+        <div style="font-size:11px;color:#374151;font-weight:700;margin-bottom:6px">¿Sigue aquí?</div>
+        <div style="display:flex;gap:6px;justify-content:center">
+          <button onclick="confirmReport('${report.id}', true)" style="
+            background:#10b981;color:#fff;border:none;border-radius:8px;
+            padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;
+            display:flex;align-items:center;gap:3px">
+            ✅ Sí (${confirmCount})
+          </button>
+          <button onclick="confirmReport('${report.id}', false)" style="
+            background:#ef4444;color:#fff;border:none;border-radius:8px;
+            padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;
+            display:flex;align-items:center;gap:3px">
+            ❌ No (${denyCount})
+          </button>
+        </div>
+      </div>
     </div>`;
 
   const marker = L.marker([report.lat, report.lon], { icon })
@@ -7692,8 +7936,53 @@ function renderCommunityReports() {
   // Clear old report markers
   fmPoiLayers.reports.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
   fmPoiLayers.reports = [];
-  // Re-add all valid reports
-  communityReports.forEach(r => addReportMarker(r));
+  // Re-add all valid reports (skip ones that have been denied by 2+ drivers)
+  communityReports.forEach(r => {
+    const denyCount = r.denials ? r.denials.length : 0;
+    if (denyCount < 2) addReportMarker(r);
+  });
+}
+
+function confirmReport(reportId, isStillThere) {
+  const userId = currentUser ? currentUser.id : ('anon_' + (localStorage.getItem('hos_anonid') || (() => {
+    const id = Math.random().toString(36).substr(2,9);
+    localStorage.setItem('hos_anonid', id);
+    return id;
+  })()));
+
+  const report = communityReports.find(r => String(r.id) === String(reportId));
+  if (!report) return;
+
+  // Initialize arrays if missing
+  if (!report.confirmations) report.confirmations = [];
+  if (!report.denials) report.denials = [];
+
+  // Remove from both arrays first (re-vote)
+  report.confirmations = report.confirmations.filter(id => id !== userId);
+  report.denials = report.denials.filter(id => id !== userId);
+
+  if (isStillThere) {
+    report.confirmations.push(userId);
+    showToast('success','✅','Confirmado','Gracias por confirmar el aviso.', 2500);
+  } else {
+    report.denials.push(userId);
+    if (report.denials.length >= 2) {
+      // Remove from map — 2 drivers said it's gone
+      showToast('info','🗑️','Aviso eliminado','2 choferes confirmaron que ya no está.', 3000);
+      communityReports = communityReports.filter(r => String(r.id) !== String(reportId));
+      localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+      renderCommunityReports();
+      return;
+    } else {
+      showToast('warning','❌','Voto registrado',`${report.denials.length}/2 choferes dicen que ya no está.`, 2500);
+    }
+  }
+
+  localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+  // Refresh markers to update counts
+  renderCommunityReports();
+  // Close popup
+  if (fmMapInst) fmMapInst.closePopup();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -8056,6 +8345,244 @@ window.addEventListener('resize', () => {
     makeCompactHud();
   }
 })();
+
+/* ════════════════════════════════════════════════════════
+   👤 USER PROFILE SYSTEM
+════════════════════════════════════════════════════════ */
+let selectedAvatarEmoji = '🚛';
+let profileModalMode = 'register'; // 'register' | 'login' | 'profile'
+
+function openProfileModal() {
+  const modal = document.getElementById('profileModal');
+  modal.style.display = 'flex';
+  if (currentUser) {
+    showProfileView();
+  } else {
+    switchProfileTab('register');
+    loadSavedProfilesList();
+  }
+  // Setup avatar picker
+  setupAvatarPicker();
+}
+
+function closeProfileModal() {
+  document.getElementById('profileModal').style.display = 'none';
+}
+
+function setupAvatarPicker() {
+  const picker = document.getElementById('avatarPicker');
+  if (!picker || picker.dataset.setup) return;
+  picker.dataset.setup = '1';
+  const emojis = ['🚛','🚜','🏗️','⛽','🔧','🦅','⭐','🌟','🏔️','🌊','🔥','⚡'];
+  picker.innerHTML = emojis.map(e => `
+    <span onclick="selectAvatar('${e}')" style="
+      font-size:24px;cursor:pointer;padding:6px;border-radius:8px;
+      transition:background .2s;display:inline-block;
+      ${e === selectedAvatarEmoji ? 'background:rgba(59,130,246,0.3);border:2px solid #3b82f6;' : 'border:2px solid transparent;'}
+    ">${e}</span>
+  `).join('');
+}
+
+function selectAvatar(emoji) {
+  selectedAvatarEmoji = emoji;
+  document.getElementById('selectedAvatar').textContent = emoji;
+  // Re-highlight in picker
+  const spans = document.getElementById('avatarPicker').querySelectorAll('span');
+  spans.forEach(s => {
+    if (s.textContent === emoji) {
+      s.style.background = 'rgba(59,130,246,0.3)';
+      s.style.border = '2px solid #3b82f6';
+    } else {
+      s.style.background = 'transparent';
+      s.style.border = '2px solid transparent';
+    }
+  });
+}
+
+function switchProfileTab(tab) {
+  const btnReg = document.getElementById('tabRegister');
+  const btnLog = document.getElementById('tabLogin');
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('profileView').style.display = 'none';
+
+  if (tab === 'register') {
+    btnReg.style.background = '#3b82f6'; btnReg.style.color = '#fff';
+    btnLog.style.background = 'transparent'; btnLog.style.color = '#64748b';
+    document.getElementById('profileModalTitle').textContent = 'Crear Perfil';
+  } else {
+    btnLog.style.background = '#10b981'; btnLog.style.color = '#fff';
+    btnReg.style.background = 'transparent'; btnReg.style.color = '#64748b';
+    document.getElementById('profileModalTitle').textContent = 'Iniciar Sesión';
+    loadSavedProfilesList();
+  }
+}
+
+function showProfileView() {
+  document.getElementById('registerForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('profileView').style.display = 'block';
+  document.getElementById('profileTabBar').style.display = 'none';
+  document.getElementById('profileModalTitle').textContent = 'Mi Perfil';
+  document.getElementById('profileModalIcon').textContent = currentUser.avatar || '👤';
+
+  document.getElementById('pvAvatar').textContent = currentUser.avatar || '🚛';
+  document.getElementById('pvName').textContent = currentUser.name;
+  document.getElementById('pvCompany').textContent = currentUser.company || 'Conductor Independiente';
+  document.getElementById('pvState').textContent = currentUser.state || '—';
+  document.getElementById('pvTruck').textContent = currentUser.truckType || '—';
+
+  // Count reports by this user
+  const myReports = communityReports.filter(r => r.reportedBy === currentUser.id).length;
+  document.getElementById('pvReports').textContent = currentUser.totalReports || myReports;
+  document.getElementById('pvConfirms').textContent = currentUser.totalConfirms || 0;
+
+  // Update profile FAB to show avatar
+  const pfab = document.getElementById('profileFab');
+  if (pfab) pfab.textContent = currentUser.avatar || '👤';
+}
+
+function loadSavedProfilesList() {
+  const allProfiles = JSON.parse(localStorage.getItem('hos_profiles') || '[]');
+  const container = document.getElementById('savedProfilesList');
+  if (!container) return;
+  if (allProfiles.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = `
+    <div style="color:#94a3b8;font-size:12px;font-weight:700;margin-bottom:8px">PERFILES GUARDADOS</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+      ${allProfiles.map(p => `
+        <div onclick="quickLoginProfile('${p.id}')" style="
+          display:flex;align-items:center;gap:10px;
+          background:#0f172a;border-radius:10px;padding:10px;cursor:pointer;
+          border:1px solid #1e293b;transition:border-color .2s">
+          <span style="font-size:24px">${p.avatar || '🚛'}</span>
+          <div>
+            <div style="color:#f1f5f9;font-weight:700;font-size:14px">${p.name}</div>
+            <div style="color:#64748b;font-size:11px">${p.company || 'Independiente'}</div>
+          </div>
+          <div style="margin-left:auto;color:#3b82f6;font-size:12px">→</div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function quickLoginProfile(profileId) {
+  const allProfiles = JSON.parse(localStorage.getItem('hos_profiles') || '[]');
+  const profile = allProfiles.find(p => p.id === profileId);
+  if (!profile) return;
+  // Pre-fill login form
+  document.getElementById('loginName').value = profile.name;
+  document.getElementById('loginPin').focus();
+}
+
+function registerUser() {
+  const name = document.getElementById('regName').value.trim();
+  const pin = document.getElementById('regPin').value.trim();
+  const company = document.getElementById('regCompany').value.trim();
+  const state = document.getElementById('regState').value;
+  const truckType = document.getElementById('regTruckType').value;
+
+  if (!name) { showToast('danger','⚠️','Error','Por favor ingresa tu nombre o apodo.', 3000); return; }
+  if (pin.length !== 4 || !/^\d{4}$/.test(pin)) { showToast('danger','⚠️','Error','El PIN debe ser de 4 dígitos.', 3000); return; }
+
+  // Check if name already exists
+  const allProfiles = JSON.parse(localStorage.getItem('hos_profiles') || '[]');
+  if (allProfiles.find(p => p.name.toLowerCase() === name.toLowerCase())) {
+    showToast('danger','⚠️','Nombre en uso','Ese nombre ya existe. Elige otro o inicia sesión.', 4000);
+    return;
+  }
+
+  const newUser = {
+    id: 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2,5),
+    name,
+    avatar: selectedAvatarEmoji,
+    company,
+    state,
+    truckType,
+    pinHash: btoa(pin + '_hos_salt_2025'),
+    createdAt: Date.now(),
+    totalReports: 0,
+    totalConfirms: 0
+  };
+
+  allProfiles.push(newUser);
+  localStorage.setItem('hos_profiles', JSON.stringify(allProfiles));
+
+  // Auto login
+  const userForSession = {...newUser};
+  delete userForSession.pinHash;
+  currentUser = userForSession;
+  localStorage.setItem('hos_user', JSON.stringify(currentUser));
+
+  showToast('success', newUser.avatar, `¡Bienvenido ${name}!`, 'Perfil creado exitosamente 🚛', 4000);
+  if (navigator.vibrate) navigator.vibrate([50, 30, 100]);
+  showProfileView();
+}
+
+function loginUser() {
+  const nameInput = document.getElementById('loginName').value.trim();
+  const pin = document.getElementById('loginPin').value.trim();
+
+  if (!nameInput || !pin) { showToast('danger','⚠️','Error','Ingresa tu nombre y PIN.', 3000); return; }
+
+  const allProfiles = JSON.parse(localStorage.getItem('hos_profiles') || '[]');
+  const profile = allProfiles.find(p => p.name.toLowerCase() === nameInput.toLowerCase());
+
+  if (!profile) { showToast('danger','❌','No encontrado','No existe perfil con ese nombre.', 3000); return; }
+
+  const expectedHash = btoa(pin + '_hos_salt_2025');
+  if (profile.pinHash !== expectedHash) { showToast('danger','🔒','PIN incorrecto','Intenta de nuevo.', 3000); return; }
+
+  const userForSession = {...profile};
+  delete userForSession.pinHash;
+  currentUser = userForSession;
+  localStorage.setItem('hos_user', JSON.stringify(currentUser));
+
+  showToast('success', profile.avatar, `¡Hola ${profile.name}!`, 'Sesión iniciada correctamente.', 3000);
+  if (navigator.vibrate) navigator.vibrate([50, 30, 100]);
+  showProfileView();
+}
+
+function logoutUser() {
+  currentUser = null;
+  localStorage.removeItem('hos_user');
+  document.getElementById('profileTabBar').style.display = 'flex';
+  const pfab = document.getElementById('profileFab');
+  if (pfab) pfab.textContent = '👤';
+  switchProfileTab('login');
+  showToast('info','👋','Sesión cerrada','Hasta pronto.', 2500);
+}
+
+function deleteUserProfile() {
+  if (!currentUser) return;
+  if (!confirm(`¿Eliminar el perfil de ${currentUser.name}? Esta acción no se puede deshacer.`)) return;
+
+  let allProfiles = JSON.parse(localStorage.getItem('hos_profiles') || '[]');
+  allProfiles = allProfiles.filter(p => p.id !== currentUser.id);
+  localStorage.setItem('hos_profiles', JSON.stringify(allProfiles));
+
+  currentUser = null;
+  localStorage.removeItem('hos_user');
+  document.getElementById('profileTabBar').style.display = 'flex';
+  const pfab = document.getElementById('profileFab');
+  if (pfab) pfab.textContent = '👤';
+  switchProfileTab('register');
+  showToast('info','🗑️','Perfil eliminado','Tu perfil ha sido eliminado.', 3000);
+}
+
+// Update user stats when they submit reports
+function incrementUserReports() {
+  if (!currentUser) return;
+  currentUser.totalReports = (currentUser.totalReports || 0) + 1;
+  localStorage.setItem('hos_user', JSON.stringify(currentUser));
+  // Update stored profile too
+  const allProfiles = JSON.parse(localStorage.getItem('hos_profiles') || '[]');
+  const idx = allProfiles.findIndex(p => p.id === currentUser.id);
+  if (idx >= 0) { allProfiles[idx].totalReports = currentUser.totalReports; localStorage.setItem('hos_profiles', JSON.stringify(allProfiles)); }
+}
 </script>
 
 </body>
