@@ -1734,15 +1734,14 @@
 
 /* ── Interstate shields along route ───────────────────────── */
 .interstate-shield{
-  width:48px; height:56px;
+  width:36px; height:42px;
   display:flex; flex-direction:column;
   align-items:center; justify-content:flex-end;
-  padding-bottom:6px;
+  padding-bottom:4px;
   position:relative;
   color:#fff;
-  filter:drop-shadow(0 4px 8px rgba(0,0,0,.65));
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));
 }
-/* Pentagon / real highway sign shape via SVG background */
 .interstate-shield::before{
   content:'';
   position:absolute; inset:0;
@@ -1756,35 +1755,35 @@
   content:'';
   position:absolute; inset:2px;
   clip-path: polygon(50% 0%, 100% 12%, 100% 100%, 0% 100%, 0% 12%);
-  border:2px solid rgba(255,255,255,.9);
+  border:1.5px solid rgba(255,255,255,.9);
   border-radius:2px;
   pointer-events:none;
 }
 .interstate-shield .top{
-  position:absolute; top:4px; left:0; right:0;
+  position:absolute; top:3px; left:0; right:0;
   text-align:center; z-index:3;
-  font-size:7.5px; font-weight:900; letter-spacing:.8px;
+  font-size:6px; font-weight:900; letter-spacing:.6px;
   color:#fff; text-transform:uppercase; line-height:1;
   text-shadow:0 1px 2px rgba(0,0,0,.5);
 }
 .interstate-shield .body{ display:none; }
 .interstate-shield .num{
   position:relative; z-index:3;
-  font-size:24px; font-weight:900; line-height:1;
+  font-size:18px; font-weight:900; line-height:1;
   color:#fff; letter-spacing:1px;
-  text-shadow:0 1px 4px rgba(0,0,0,.7);
+  text-shadow:0 1px 3px rgba(0,0,0,.7);
   font-family:'Arial Black','Arial',sans-serif;
-  margin-bottom:2px;
+  margin-bottom:1px;
 }
 
 /* ── US Route shield ──────────────────────────────────────── */
 .us-route-shield{
-  width:38px; height:44px;
+  width:30px; height:36px;
   display:flex; flex-direction:column;
   align-items:center; justify-content:flex-end;
-  padding-bottom:5px;
+  padding-bottom:4px;
   position:relative;
-  filter:drop-shadow(0 3px 6px rgba(0,0,0,.55));
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));
 }
 .us-route-shield::before{
   content:'';
@@ -1792,18 +1791,18 @@
   background:#fff;
   clip-path: polygon(50% 0%, 100% 14%, 100% 100%, 0% 100%, 0% 14%);
   border-radius:2px;
-  box-shadow:0 0 0 2px #000;
+  box-shadow:0 0 0 1.5px #000;
 }
 .us-route-shield::after{
   content:'US';
-  position:absolute; top:7px; left:0; right:0;
+  position:absolute; top:6px; left:0; right:0;
   text-align:center; z-index:3;
-  font-size:7px; font-weight:900; letter-spacing:.6px;
+  font-size:6px; font-weight:900; letter-spacing:.5px;
   color:#000; text-transform:uppercase; line-height:1;
 }
 .us-route-shield .us-num{
   position:relative; z-index:3;
-  font-size:18px; font-weight:900; line-height:1;
+  font-size:14px; font-weight:900; line-height:1;
   color:#000; letter-spacing:.5px;
   font-family:'Arial Black','Arial',sans-serif;
 }
@@ -1819,6 +1818,54 @@
 }
 .hw-tooltip::before{ display:none!important; }
 
+
+/* ── Map Style Picker ────────────────────────────────────── */
+#mapStyleBtn{
+  width:40px; height:40px; border-radius:50%; border:none;
+  background:rgba(15,23,42,0.85); backdrop-filter:blur(8px);
+  color:#fff; font-size:18px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 12px rgba(0,0,0,.4);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+#mapStylePanel{
+  position:absolute;
+  bottom:calc(var(--tab-h) + 80px);
+  left:50%; transform:translateX(-50%) translateY(20px);
+  background:rgba(10,18,35,0.96);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  padding:14px 16px;
+  display:flex; gap:10px; flex-wrap:wrap;
+  justify-content:center;
+  z-index:9999;
+  opacity:0; pointer-events:none;
+  transition:opacity .22s, transform .22s;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+}
+#mapStylePanel.visible{
+  opacity:1; pointer-events:all;
+  transform:translateX(-50%) translateY(0);
+}
+.map-style-btn{
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  background:rgba(255,255,255,.07);
+  border:2px solid rgba(255,255,255,.12);
+  border-radius:13px; padding:9px 12px;
+  cursor:pointer; color:#fff; font-family:'DM Sans',sans-serif;
+  min-width:62px; transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.map-style-btn:active{ transform:scale(.94); }
+.map-style-btn.active{
+  background:rgba(16,185,129,.18);
+  border-color:#10b981;
+  box-shadow:0 0 0 1px #10b981;
+}
+.map-style-btn .msb-emoji{ font-size:22px; }
+.map-style-btn .msb-label{ font-size:10px; font-weight:700; letter-spacing:.3px; opacity:.85; }
 
 /* ============================
    MOBILE UI ALIGNMENT OVERRIDES
@@ -2812,6 +2859,9 @@
   <!-- MAP fills entire screen -->
   <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
 
+  <!-- Map Style Picker Panel -->
+  <div id="mapStylePanel"></div>
+
   <!-- CENTER ON MY LOCATION -->
   <button id="btnCenter" class="map-fab" title="Centralizar">🎯</button>
 
@@ -2903,6 +2953,9 @@
         -webkit-tap-highlight-color:transparent;
         touch-action:manipulation;
       ">←</button>
+
+      <!-- Map style button -->
+      <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Change map style">🗺️</button>
 
       <!-- Weather compact card -->
       <div id="weatherWidget" onclick="showWeatherDetail()">
@@ -3360,13 +3413,25 @@ let isDark = localStorage.getItem('hos_theme') === 'dark';
 let use30min = localStorage.getItem('hos_30min') !== 'false';
 let selectedCountry = localStorage.getItem('hos_country') || '';
 let savedDrives = JSON.parse(localStorage.getItem('hos_drives') || '[]');
-let truckIconMode = localStorage.getItem('hos_truck_icon') || 'emoji:🚛'; // emoji:..., img:..., upload:dataurl
+let truckIconMode = localStorage.getItem('hos_truck_icon') || 'emoji:🚛';
 let truckUploadData = localStorage.getItem('hos_truck_upload') || '';
 let speedWidgetPos = JSON.parse(localStorage.getItem('hos_speed_pos') || 'null');
 let speedometerPos   = JSON.parse(localStorage.getItem('hos_speedometer_pos')  || 'null');
 let driveHoursPos    = JSON.parse(localStorage.getItem('hos_drivehours_pos')   || 'null');
 let defaultSpeed = parseInt(localStorage.getItem('hos_speed') || '60');
 let currentTab = 'plan';
+
+// ── MAP STYLE ────────────────────────────────────────────────
+const MAP_STYLES = {
+  voyager:  { label:'Road',    emoji:'🛣️',  url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' },
+  dark:     { label:'Night',   emoji:'🌙',  url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' },
+  satellite:{ label:'Hybrid',  emoji:'🛰️',  url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' },
+  topo:     { label:'Terrain', emoji:'⛰️',  url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png' },
+  light:    { label:'Light',   emoji:'☀️',  url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png' },
+  nav:      { label:'Nav',     emoji:'📍',  url:'https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png' },
+};
+let currentMapStyle = localStorage.getItem('hos_map_style') || (isDark ? 'dark' : 'voyager');
+let fmTileLayer = null;
 
 let origin = null, destination = null;
 let routeDistance = 0, schedule = [], arrivalTime = null, totalTime = 0;
@@ -4674,6 +4739,40 @@ function init() {
   initSosSettings();
 }
 
+function changeMapStyle(styleKey) {
+  if (!MAP_STYLES[styleKey]) return;
+  currentMapStyle = styleKey;
+  localStorage.setItem('hos_map_style', styleKey);
+
+  const styleUrl = MAP_STYLES[styleKey].url;
+
+  // Update fullscreen map
+  if (fmMapInst) {
+    if (fmTileLayer) { try { fmMapInst.removeLayer(fmTileLayer); } catch {} }
+    fmTileLayer = L.tileLayer(styleUrl, { maxZoom: 19 }).addTo(fmMapInst);
+    fmTileLayer.bringToBack();
+  }
+
+  // Update minimap
+  if (miniMap) {
+    miniMap.eachLayer(l => { if (l._url) { try { miniMap.removeLayer(l); } catch {} } });
+    L.tileLayer(styleUrl, { maxZoom: 19 }).addTo(miniMap);
+  }
+
+  // Update button highlights
+  document.querySelectorAll('.map-style-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.style === styleKey);
+  });
+
+  // Update dark/light mode flag
+  isDark = styleKey === 'dark';
+}
+
+function toggleMapStylePanel() {
+  const panel = document.getElementById('mapStylePanel');
+  if (panel) panel.classList.toggle('visible');
+}
+
 function applyTheme() {
   document.body.classList.toggle('dark', isDark);
   document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
@@ -5082,10 +5181,8 @@ function refreshTruckMarkers() {
 
 function initMap(containerId) {
   const map = L.map(containerId, { zoomControl: true }).setView([39.5, -98.35], 4);
-  const tile = isDark
-    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-  L.tileLayer(tile, { maxZoom: 19, attribution: '© CARTO © OSM' }).addTo(map);
+  const styleUrl = MAP_STYLES[currentMapStyle]?.url || MAP_STYLES.voyager.url;
+  L.tileLayer(styleUrl, { maxZoom: 19, attribution: '© CARTO © OSM' }).addTo(map);
   return map;
 }
 
@@ -5131,14 +5228,14 @@ function makeInterstateDivIcon(num){
       <div class="top">INTERSTATE</div>
       <div class="num">${num}</div>
     </div>`;
-  return L.divIcon({ html, className:'', iconSize:[48,56], iconAnchor:[24,28] });
+  return L.divIcon({ html, className:'', iconSize:[36,42], iconAnchor:[18,21] });
 }
 
 function makeUSRouteDivIcon(num){
   const html = `<div class="us-route-shield">
       <div class="us-num">${num}</div>
     </div>`;
-  return L.divIcon({ html, className:'', iconSize:[38,44], iconAnchor:[19,22] });
+  return L.divIcon({ html, className:'', iconSize:[30,36], iconAnchor:[15,18] });
 }
 
 function extractInterstateNumber(step){
@@ -5885,6 +5982,24 @@ function openFullMapScreen() {
   if (origin) document.getElementById('fmFrom').textContent = origin.name.split(',')[0];
   if (destination) document.getElementById('fmTo').textContent = destination.name.split(',')[0];
 
+  // Build map style panel buttons (once)
+  const stylePanel = document.getElementById('mapStylePanel');
+  if (stylePanel && !stylePanel.dataset.built) {
+    stylePanel.dataset.built = '1';
+    Object.entries(MAP_STYLES).forEach(([key, s]) => {
+      const btn = document.createElement('button');
+      btn.className = 'map-style-btn' + (key === currentMapStyle ? ' active' : '');
+      btn.dataset.style = key;
+      btn.innerHTML = `<span class="msb-emoji">${s.emoji}</span><span class="msb-label">${s.label}</span>`;
+      btn.onclick = () => { changeMapStyle(key); };
+      stylePanel.appendChild(btn);
+    });
+    // Close panel on outside tap
+    document.getElementById('fullMap').addEventListener('click', () => {
+      stylePanel.classList.remove('visible');
+    }, { passive: true });
+  }
+
   if (!fmMapInst) {
     fmMapInst = L.map('fullMap', {
       zoomControl: false,
@@ -5893,10 +6008,8 @@ function openFullMapScreen() {
       fadeAnimation: true
     }).setView([39.5, -98.35], 4);
 
-    const tile = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-    L.tileLayer(tile, { maxZoom: 19 }).addTo(fmMapInst);
+    const styleUrl = MAP_STYLES[currentMapStyle]?.url || MAP_STYLES.voyager.url;
+    fmTileLayer = L.tileLayer(styleUrl, { maxZoom: 19 }).addTo(fmMapInst);
 
     // Detect when user drags map — pause auto-follow
     fmMapInst.on('dragstart', () => {
@@ -6564,18 +6677,16 @@ async function loadPOI(type, lat, lon) {
 async function loadAllPOIs(lat, lon) {
   if (!origin || !destination) return;
 
-  // Build waypoints: sample the route geometry every ~40 miles + origin + midpoint + destination
+  // Build waypoints: sample route every ~25 miles para cobertura completa en 200 millas
   let waypoints = [];
   if (roadGeometry && roadGeometry.length > 2) {
-    const step = Math.max(1, Math.floor(roadGeometry.length / 6));
+    const step = Math.max(1, Math.floor(roadGeometry.length / 14));
     for (let i = 0; i < roadGeometry.length; i += step) {
       waypoints.push({ lat: roadGeometry[i][0], lon: roadGeometry[i][1] });
     }
-    // Always include destination
     const last = roadGeometry[roadGeometry.length - 1];
     waypoints.push({ lat: last[0], lon: last[1] });
   } else {
-    // Fallback: origin, midpoint, destination
     waypoints = [
       { lat: origin.lat, lon: origin.lon },
       { lat: (origin.lat + destination.lat) / 2, lon: (origin.lon + destination.lon) / 2 },
@@ -6583,11 +6694,11 @@ async function loadAllPOIs(lat, lon) {
     ];
   }
 
-  // Remove duplicates that are too close (<30 miles apart)
+  // Remove duplicates that are too close (<20 miles apart)
   const filtered = [waypoints[0]];
   for (let i = 1; i < waypoints.length; i++) {
     const prev = filtered[filtered.length - 1];
-    if (haversine(prev.lat, prev.lon, waypoints[i].lat, waypoints[i].lon) > 30) {
+    if (haversine(prev.lat, prev.lon, waypoints[i].lat, waypoints[i].lon) > 20) {
       filtered.push(waypoints[i]);
     }
   }
@@ -6598,15 +6709,14 @@ async function loadAllPOIs(lat, lon) {
     if (el) el.style.opacity = '0.5';
   });
 
-  // Load POIs from each waypoint (radius 25 miles = 40km)
+  // Load POIs from each waypoint (radius 30 miles = 48km per waypoint)
   const loadFromWaypoints = async (type) => {
     if (!fmMapInst) return;
-    // Clear existing
     fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
     fmPoiLayers[type] = [];
 
-    const seen = new Set(); // deduplicate by id
-    const radius = 40000; // 25 miles in meters
+    const seen = new Set();
+    const radius = 48000; // 30 miles per waypoint
     const cfg = POI_ICONS[type];
 
     for (const wp of filtered) {
@@ -6625,8 +6735,8 @@ async function loadAllPOIs(lat, lon) {
           if (!elLat || !elLon) return;
           if (seen.has(el.id)) return;
 
-          // Only keep POIs within 15 miles of the actual route geometry
-          if (roadGeometry && roadGeometry.length > 1 && !isNearRoute(elLat, elLon, roadGeometry, 15)) return;
+          // Keep POIs within 30 miles of the actual route geometry
+          if (roadGeometry && roadGeometry.length > 1 && !isNearRoute(elLat, elLon, roadGeometry, 30)) return;
 
           seen.add(el.id);
 
@@ -6653,44 +6763,35 @@ async function loadAllPOIs(lat, lon) {
           if (el.tags?.['addr:city']) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:3px">📍 ${el.tags['addr:city']}</div>`;
           popupHtml += '</div>';
 
-          // Brand detection for truck stops
           const brand = type === 'truck' ? getTruckBrand(name) : null;
-          const markerBg   = brand ? brand.color : cfg.color;
-          const typeIcon   = type === 'truck'
-            ? (brand ? brand.logo : '🚛')
-            : type === 'rest' ? '😴' : '⚖️';
-          const shortName  = brand ? brand.short : name.split(',')[0].substring(0, 13);
+          const markerBg  = brand ? brand.color : cfg.color;
+          const typeIcon  = type === 'truck' ? (brand ? brand.logo : '🚛') : type === 'rest' ? '😴' : '⚖️';
+          const shortName = brand ? brand.short : name.split(',')[0].substring(0, 13);
 
           const icon = L.divIcon({
             className: '',
             html: `
               <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-                <!-- Round badge -->
                 <div style="
-                  width:36px; height:36px;
+                  width:34px; height:34px;
                   background:${markerBg};
                   border-radius:50%;
                   border:2.5px solid rgba(255,255,255,.95);
-                  box-shadow:0 3px 12px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.08);
+                  box-shadow:0 3px 12px rgba(0,0,0,.5);
                   display:flex; align-items:center; justify-content:center;
-                  font-size:16px; line-height:1;
-                  cursor:pointer;
+                  font-size:15px; line-height:1; cursor:pointer;
                 ">${typeIcon}</div>
-                <!-- Name pill -->
                 <div style="
-                  background:${markerBg};
-                  color:#fff;
-                  font-size:9px; font-weight:900;
-                  padding:2px 7px; border-radius:7px;
-                  white-space:nowrap;
-                  font-family:'DM Sans',sans-serif;
-                  box-shadow:0 2px 6px rgba(0,0,0,.4);
-                  max-width:80px; overflow:hidden; text-overflow:ellipsis;
-                  letter-spacing:.2px;
+                  background:${markerBg}; color:#fff;
+                  font-size:8px; font-weight:900;
+                  padding:2px 6px; border-radius:6px;
+                  white-space:nowrap; font-family:'DM Sans',sans-serif;
+                  box-shadow:0 2px 5px rgba(0,0,0,.4);
+                  max-width:75px; overflow:hidden; text-overflow:ellipsis;
                 ">${shortName}</div>
               </div>`,
-            iconAnchor: [18, 18],
-            popupAnchor: [0, -22]
+            iconAnchor: [17, 17],
+            popupAnchor: [0, -20]
           });
 
           const marker = L.marker([elLat, elLon], { icon })
@@ -6713,7 +6814,6 @@ async function loadAllPOIs(lat, lon) {
     console.log(`✅ POI ${type}: ${fmPoiLayers[type].length} total along route`);
   };
 
-  // Load all in parallel
   await Promise.all([
     loadFromWaypoints('scale'),
     loadFromWaypoints('truck'),
@@ -6722,7 +6822,6 @@ async function loadAllPOIs(lat, lon) {
   ]);
   renderCommunityReports();
 
-  // ── Alert if any truck restrictions found directly ON the route ──
   const restrictCount = fmPoiLayers.restrict.filter(l => l.getLatLngs).length;
   if (restrictCount > 0) {
     showToast('warning', '🚫',
