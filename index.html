@@ -1734,28 +1734,90 @@
 
 /* ── Interstate shields along route ───────────────────────── */
 .interstate-shield{
-  width:46px;height:46px;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:900;font-size:16px;line-height:1;
+  width:48px; height:56px;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-end;
+  padding-bottom:6px;
+  position:relative;
   color:#fff;
-  text-shadow:0 1px 2px rgba(0,0,0,.6);
-  border-radius:10px;
-  border:2px solid rgba(255,255,255,.95);
-  box-shadow:0 6px 18px rgba(0,0,0,.45);
-  overflow:hidden;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.65));
+}
+/* Pentagon / real highway sign shape via SVG background */
+.interstate-shield::before{
+  content:'';
+  position:absolute; inset:0;
+  background: linear-gradient(180deg,
+    #cc0000 0%, #cc0000 28%,
+    #003299 28%, #003299 100%);
+  clip-path: polygon(50% 0%, 100% 12%, 100% 100%, 0% 100%, 0% 12%);
+  border-radius:3px;
+}
+.interstate-shield::after{
+  content:'';
+  position:absolute; inset:2px;
+  clip-path: polygon(50% 0%, 100% 12%, 100% 100%, 0% 100%, 0% 12%);
+  border:2px solid rgba(255,255,255,.9);
+  border-radius:2px;
+  pointer-events:none;
 }
 .interstate-shield .top{
-  position:absolute;top:0;left:0;right:0;height:14px;
-  background:#b91c1c;
+  position:absolute; top:4px; left:0; right:0;
+  text-align:center; z-index:3;
+  font-size:7.5px; font-weight:900; letter-spacing:.8px;
+  color:#fff; text-transform:uppercase; line-height:1;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
 }
-.interstate-shield .body{
-  position:absolute;top:14px;left:0;right:0;bottom:0;
-  background:#1d4ed8;
-}
+.interstate-shield .body{ display:none; }
 .interstate-shield .num{
-  position:relative;z-index:2;
-  transform: translateY(1px);
+  position:relative; z-index:3;
+  font-size:24px; font-weight:900; line-height:1;
+  color:#fff; letter-spacing:1px;
+  text-shadow:0 1px 4px rgba(0,0,0,.7);
+  font-family:'Arial Black','Arial',sans-serif;
+  margin-bottom:2px;
 }
+
+/* ── US Route shield ──────────────────────────────────────── */
+.us-route-shield{
+  width:38px; height:44px;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-end;
+  padding-bottom:5px;
+  position:relative;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.55));
+}
+.us-route-shield::before{
+  content:'';
+  position:absolute; inset:0;
+  background:#fff;
+  clip-path: polygon(50% 0%, 100% 14%, 100% 100%, 0% 100%, 0% 14%);
+  border-radius:2px;
+  box-shadow:0 0 0 2px #000;
+}
+.us-route-shield::after{
+  content:'US';
+  position:absolute; top:7px; left:0; right:0;
+  text-align:center; z-index:3;
+  font-size:7px; font-weight:900; letter-spacing:.6px;
+  color:#000; text-transform:uppercase; line-height:1;
+}
+.us-route-shield .us-num{
+  position:relative; z-index:3;
+  font-size:18px; font-weight:900; line-height:1;
+  color:#000; letter-spacing:.5px;
+  font-family:'Arial Black','Arial',sans-serif;
+}
+
+/* ── Tooltip de carretera ─────────────────────────────────── */
+.hw-tooltip{
+  background:rgba(10,15,30,0.92)!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  border-radius:8px!important; color:#f0f4ff!important;
+  font-size:11px!important; font-weight:700!important;
+  padding:4px 9px!important; white-space:nowrap!important;
+  box-shadow:0 3px 12px rgba(0,0,0,.45)!important;
+}
+.hw-tooltip::before{ display:none!important; }
 
 
 /* ============================
@@ -1968,66 +2030,6 @@
   transform: translateY(-50%) scale(.92) !important;
 }
 
-
-/* ── Truck GPS Top Bar ───────────────────────────────────── */
-#topNavBar{
-  position:absolute;
-  top:10px; left:10px; right:10px;
-  height:54px;
-  display:none;
-  align-items:center;
-  justify-content:space-between;
-  padding:10px 12px;
-  border-radius:14px;
-  background: rgba(16, 90, 74, 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 10px 26px rgba(0,0,0,.35);
-  z-index: 1200;
-  color:#fff;
-  gap:10px;
-}
-#topNavBar.show{ display:flex; }
-#topNavBar.blink{ animation: tnBlink .9s infinite; }
-@keyframes tnBlink{ 0%,100%{ filter:none; } 50%{ filter:brightness(1.35); } }
-
-.tn-left{ display:flex; align-items:center; gap:10px; min-width: 92px; }
-.tn-dist{ font-family:"Bebas Neue",sans-serif; font-size:28px; letter-spacing:.5px; line-height:1; opacity:.95; }
-.tn-arrow{ font-size:26px; line-height:1; }
-
-.tn-mid{ flex:1; display:flex; align-items:center; gap:10px; overflow:hidden; white-space:nowrap; }
-.tn-dir{ font-weight:900; opacity:.9; }
-.tn-road{ font-weight:900; overflow:hidden; text-overflow:ellipsis; }
-.tn-shield{
-  width:34px; height:26px;
-  display:inline-flex; align-items:center; justify-content:center;
-  background: linear-gradient(180deg,#b91c1c,#7f1d1d);
-  border: 2px solid rgba(255,255,255,.9);
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  box-shadow: inset 0 2px 0 rgba(255,255,255,.25), 0 3px 10px rgba(0,0,0,.25);
-  flex:0 0 auto;
-}
-.tn-shield span{
-  font-family:"Bebas Neue",sans-serif;
-  font-size:18px;
-  line-height:1;
-  transform: translateY(1px);
-}
-
-.tn-right{ display:flex; align-items:center; gap:10px; }
-.tn-dest{ font-weight:900; opacity:.95; }
-.tn-cam{
-  width:44px; height:38px;
-  border-radius:10px;
-  border: 1px solid rgba(255,255,255,.25);
-  background: rgba(15,23,42,.35);
-  display:flex; align-items:center; justify-content:center;
-  font-size:18px;
-}
-
 </style>
 
 <style id="fmHudCompactStyles">
@@ -2087,66 +2089,6 @@
   #fmHud.compact .fm-stat > div:last-child{
     font-size: 18px !important;
   }
-
-/* ── Truck GPS Top Bar ───────────────────────────────────── */
-#topNavBar{
-  position:absolute;
-  top:10px; left:10px; right:10px;
-  height:54px;
-  display:none;
-  align-items:center;
-  justify-content:space-between;
-  padding:10px 12px;
-  border-radius:14px;
-  background: rgba(16, 90, 74, 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 10px 26px rgba(0,0,0,.35);
-  z-index: 1200;
-  color:#fff;
-  gap:10px;
-}
-#topNavBar.show{ display:flex; }
-#topNavBar.blink{ animation: tnBlink .9s infinite; }
-@keyframes tnBlink{ 0%,100%{ filter:none; } 50%{ filter:brightness(1.35); } }
-
-.tn-left{ display:flex; align-items:center; gap:10px; min-width: 92px; }
-.tn-dist{ font-family:"Bebas Neue",sans-serif; font-size:28px; letter-spacing:.5px; line-height:1; opacity:.95; }
-.tn-arrow{ font-size:26px; line-height:1; }
-
-.tn-mid{ flex:1; display:flex; align-items:center; gap:10px; overflow:hidden; white-space:nowrap; }
-.tn-dir{ font-weight:900; opacity:.9; }
-.tn-road{ font-weight:900; overflow:hidden; text-overflow:ellipsis; }
-.tn-shield{
-  width:34px; height:26px;
-  display:inline-flex; align-items:center; justify-content:center;
-  background: linear-gradient(180deg,#b91c1c,#7f1d1d);
-  border: 2px solid rgba(255,255,255,.9);
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  box-shadow: inset 0 2px 0 rgba(255,255,255,.25), 0 3px 10px rgba(0,0,0,.25);
-  flex:0 0 auto;
-}
-.tn-shield span{
-  font-family:"Bebas Neue",sans-serif;
-  font-size:18px;
-  line-height:1;
-  transform: translateY(1px);
-}
-
-.tn-right{ display:flex; align-items:center; gap:10px; }
-.tn-dest{ font-weight:900; opacity:.95; }
-.tn-cam{
-  width:44px; height:38px;
-  border-radius:10px;
-  border: 1px solid rgba(255,255,255,.25);
-  background: rgba(15,23,42,.35);
-  display:flex; align-items:center; justify-content:center;
-  font-size:18px;
-}
-
 </style>
 
 </head>
@@ -2867,22 +2809,7 @@
   display:none; position:fixed; inset:0; z-index:500;
   background:#000; flex-direction:column;
 ">
-  
-    <div id="topNavBar">
-      <div class="tn-left">
-        <div class="tn-dist" id="tnDist">--mi</div>
-        <div class="tn-arrow" id="tnArrow">↑</div>
-      </div>
-      <div class="tn-mid">
-        <div class="tn-dir" id="tnDir">—</div>
-        <div class="tn-road" id="tnRoad">—</div>
-      </div>
-      <div class="tn-right">
-        <div class="tn-dest" id="tnDest">—</div>
-        <div class="tn-cam" title="Camera">📷</div>
-      </div>
-    </div>
-<!-- MAP fills entire screen -->
+  <!-- MAP fills entire screen -->
   <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
 
   <!-- CENTER ON MY LOCATION -->
@@ -3146,66 +3073,6 @@
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
-
-/* ── Truck GPS Top Bar ───────────────────────────────────── */
-#topNavBar{
-  position:absolute;
-  top:10px; left:10px; right:10px;
-  height:54px;
-  display:none;
-  align-items:center;
-  justify-content:space-between;
-  padding:10px 12px;
-  border-radius:14px;
-  background: rgba(16, 90, 74, 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 10px 26px rgba(0,0,0,.35);
-  z-index: 1200;
-  color:#fff;
-  gap:10px;
-}
-#topNavBar.show{ display:flex; }
-#topNavBar.blink{ animation: tnBlink .9s infinite; }
-@keyframes tnBlink{ 0%,100%{ filter:none; } 50%{ filter:brightness(1.35); } }
-
-.tn-left{ display:flex; align-items:center; gap:10px; min-width: 92px; }
-.tn-dist{ font-family:"Bebas Neue",sans-serif; font-size:28px; letter-spacing:.5px; line-height:1; opacity:.95; }
-.tn-arrow{ font-size:26px; line-height:1; }
-
-.tn-mid{ flex:1; display:flex; align-items:center; gap:10px; overflow:hidden; white-space:nowrap; }
-.tn-dir{ font-weight:900; opacity:.9; }
-.tn-road{ font-weight:900; overflow:hidden; text-overflow:ellipsis; }
-.tn-shield{
-  width:34px; height:26px;
-  display:inline-flex; align-items:center; justify-content:center;
-  background: linear-gradient(180deg,#b91c1c,#7f1d1d);
-  border: 2px solid rgba(255,255,255,.9);
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  box-shadow: inset 0 2px 0 rgba(255,255,255,.25), 0 3px 10px rgba(0,0,0,.25);
-  flex:0 0 auto;
-}
-.tn-shield span{
-  font-family:"Bebas Neue",sans-serif;
-  font-size:18px;
-  line-height:1;
-  transform: translateY(1px);
-}
-
-.tn-right{ display:flex; align-items:center; gap:10px; }
-.tn-dest{ font-weight:900; opacity:.95; }
-.tn-cam{
-  width:44px; height:38px;
-  border-radius:10px;
-  border: 1px solid rgba(255,255,255,.25);
-  background: rgba(15,23,42,.35);
-  display:flex; align-items:center; justify-content:center;
-  font-size:18px;
-}
-
 </style>
 
 
@@ -5217,35 +5084,35 @@ function initMap(containerId) {
   const map = L.map(containerId, { zoomControl: true }).setView([39.5, -98.35], 4);
   const tile = isDark
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  L.tileLayer(tile, { maxZoom: 19 }).addTo(map);
+    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+  L.tileLayer(tile, { maxZoom: 19, attribution: '© CARTO © OSM' }).addTo(map);
   return map;
 }
 
 function drawRoute(map, coords, markersRef, layerRef) {
   if (!map) return;
   if (layerRef.layer) map.removeLayer(layerRef.layer);
-  markersRef.list.forEach(m => map.removeLayer(m));
+  markersRef.list.forEach(m => { try{ map.removeLayer(m); }catch{} });
   markersRef.list = [];
 
-  const shadow = L.polyline(coords, { color: '#065f46', weight: 9, opacity: 0.22 }).addTo(map);
-  shadow.bringToBack();
-  const layer = L.polyline(coords, { color: '#10b981', weight: 5, opacity: 0.95 }).addTo(map);
+  const glow   = L.polyline(coords,{ color:'#10b981', weight:14, opacity:0.12, interactive:false }).addTo(map);
+  glow.bringToBack();
+  const casing = L.polyline(coords,{ color:'#064e3b', weight:8,  opacity:0.45, interactive:false }).addTo(map);
+  const layer  = L.polyline(coords,{ color:'#10b981', weight:5,  opacity:0.95 }).addTo(map);
   layerRef.layer = layer;
 
   const o = L.marker([origin.lat, origin.lon]).addTo(map).bindPopup('Origin: ' + origin.name);
   const d = L.marker([destination.lat, destination.lon]).addTo(map).bindPopup('Dest: ' + destination.name);
-  const mid = coords[Math.floor(coords.length / 2)] || [(origin.lat + destination.lat)/2, (origin.lon + destination.lon)/2];
+  const mid = coords[Math.floor(coords.length/2)] || [(origin.lat+destination.lat)/2,(origin.lon+destination.lon)/2];
   const truck = L.marker(mid, { icon: getTruckLeafletIcon() }).addTo(map);
 
-  // Add interstate shields along the route (OSRM steps)
   try {
     const isFull = (typeof fullMapInst !== 'undefined' && map === fullMapInst);
     addInterstateMarkers(map, navSteps, isFull);
   } catch {}
 
-  markersRef.list = [shadow, o, d, truck];
-  map.fitBounds(layer.getBounds(), { padding: [25, 25] });
+  markersRef.list = [glow, casing, o, d, truck];
+  map.fitBounds(layer.getBounds(), { padding:[25,25] });
 }
 
 function haversine(lat1, lon1, lat2, lon2) {
@@ -5260,53 +5127,94 @@ let interstateMarkersMini = [];
 let interstateMarkersFull = [];
 
 function makeInterstateDivIcon(num){
-  const html = `<div class="interstate-shield" style="position:relative;">
-      <div class="top"></div><div class="body"></div>
+  const html = `<div class="interstate-shield">
+      <div class="top">INTERSTATE</div>
       <div class="num">${num}</div>
     </div>`;
-  return L.divIcon({ html, className: '', iconSize:[46,46], iconAnchor:[23,23] });
+  return L.divIcon({ html, className:'', iconSize:[48,56], iconAnchor:[24,28] });
+}
+
+function makeUSRouteDivIcon(num){
+  const html = `<div class="us-route-shield">
+      <div class="us-num">${num}</div>
+    </div>`;
+  return L.divIcon({ html, className:'', iconSize:[38,44], iconAnchor:[19,22] });
 }
 
 function extractInterstateNumber(step){
-  const s = [step?.ref, step?.name, step?.road, step?.mode].filter(Boolean).join(' ');
-  const m = s.match(/\bI\s*[-–]?\s*(\d{1,3})\b/i);
+  const s = [step?.ref, step?.name, step?.road, step?.destinations].filter(Boolean).join(' ');
+  const m = s.match(/(?:\bI[-–\s]?(\d{1,3})\b|\bInterstate\s+(\d{1,3})\b)/i);
+  if (m) return m[1] || m[2];
+  return null;
+}
+
+function extractUSRouteNumber(step){
+  const s = [step?.ref, step?.name, step?.road].filter(Boolean).join(' ');
+  const m = s.match(/\bUS[-–\s]?(\d{1,3})\b/i);
   return m ? m[1] : null;
 }
 
 function addInterstateMarkers(map, steps, isFull){
   if (!map || !Array.isArray(steps) || !steps.length) return;
 
-  // clear previous
   const list = isFull ? interstateMarkersFull : interstateMarkersMini;
-  list.forEach(m => { try{ map.removeLayer(m);}catch{} });
+  list.forEach(m => { try{ map.removeLayer(m); }catch{} });
   list.length = 0;
 
-  const seen = new Set();
-  let lastLat=null, lastLon=null;
+  const seenI  = new Set();
+  const seenUS = new Set();
+  let lastILat=null,  lastILon=null;
+  let lastUSLat=null, lastUSLon=null;
+  const minMi = isFull ? 6 : 10; // mostrar más escudos en full-map
 
   for (const step of steps){
-    const num = extractInterstateNumber(step);
-    if (!num) continue;
-
     const loc = step?.maneuver?.location;
     if (!Array.isArray(loc) || loc.length < 2) continue;
     const lon = loc[0], lat = loc[1];
 
-    // avoid duplicates + clutter
-    const key = `${num}-${Math.round(lat*1000)}-${Math.round(lon*1000)}`;
-    if (seen.has(key)) continue;
-
-    if (lastLat !== null){
-      const miles = haversine(lastLat,lastLon,lat,lon);
-      if (miles < 5) continue; // keep spacing
+    // ── Interstate ───────────────────────────────────────────
+    const intNum = extractInterstateNumber(step);
+    if (intNum){
+      const key = `I${intNum}-${Math.round(lat*80)}-${Math.round(lon*80)}`;
+      if (!seenI.has(key)){
+        const tooClose = lastILat !== null && haversine(lastILat,lastILon,lat,lon) < minMi;
+        if (!tooClose){
+          const marker = L.marker([lat,lon],{
+            icon: makeInterstateDivIcon(intNum),
+            interactive:true, zIndexOffset:600
+          });
+          marker.bindTooltip(`Interstate ${intNum}`,{
+            permanent:false, direction:'top', className:'hw-tooltip', offset:[0,-30]
+          });
+          marker.addTo(map);
+          list.push(marker);
+          seenI.add(key);
+          lastILat=lat; lastILon=lon;
+        }
+      }
     }
 
-    const marker = L.marker([lat,lon], { icon: makeInterstateDivIcon(num), interactive:false });
-    marker.addTo(map);
-
-    list.push(marker);
-    seen.add(key);
-    lastLat = lat; lastLon = lon;
+    // ── US Route ─────────────────────────────────────────────
+    const usNum = extractUSRouteNumber(step);
+    if (usNum){
+      const key = `US${usNum}-${Math.round(lat*80)}-${Math.round(lon*80)}`;
+      if (!seenUS.has(key)){
+        const tooClose = lastUSLat !== null && haversine(lastUSLat,lastUSLon,lat,lon) < minMi;
+        if (!tooClose){
+          const marker = L.marker([lat,lon],{
+            icon: makeUSRouteDivIcon(usNum),
+            interactive:true, zIndexOffset:500
+          });
+          marker.bindTooltip(`US Route ${usNum}`,{
+            permanent:false, direction:'top', className:'hw-tooltip', offset:[0,-24]
+          });
+          marker.addTo(map);
+          list.push(marker);
+          seenUS.add(key);
+          lastUSLat=lat; lastUSLon=lon;
+        }
+      }
+    }
   }
 }
 
@@ -5453,91 +5361,16 @@ function osrmStepText(step){
   if (name && !txt.includes(name)) txt += ` · ${name}`;
   return txt.trim();
 }
-
-
-function prettyMilesNoSpace(mi){
-  if (mi === null || mi === undefined || Number.isNaN(mi)) return '--mi';
-  const m = Math.max(0, mi);
-  if (m >= 10) return `${Math.round(m)}mi`;
-  if (m >= 1)  return `${m.toFixed(1)}mi`;
-  return `${Math.round(m*5280)}ft`;
-}
-function arrowFromStep(step){
-  const type = (step?.maneuver?.type || '').toLowerCase();
-  const mod  = (step?.maneuver?.modifier || '').toLowerCase();
-  if (type.includes('uturn')) return '⤵︎';
-  if (type.includes('roundabout')) return '⟲';
-  if (mod.includes('left'))  return mod.includes('slight') ? '↖' : (mod.includes('sharp') ? '↙' : '←');
-  if (mod.includes('right')) return mod.includes('slight') ? '↗' : (mod.includes('sharp') ? '↘' : '→');
-  return '↑';
-}
-function extractInterstateNum(step){
-  const ref = (step?.ref || step?.name || '').toString();
-  const m = ref.match(/\bI[-\s]?([0-9]{1,3})\b/i);
-  return m ? m[1] : '';
-}
-function directionWord(step){
-  const s = ((step?.ref||'') + ' ' + (step?.name||'')).toLowerCase();
-  if (s.includes(' west') || s.startsWith('west')) return (lang==='es'?'Oeste':'West');
-  if (s.includes(' east') || s.startsWith('east')) return (lang==='es'?'Este':'East');
-  if (s.includes(' north')|| s.startsWith('north'))return (lang==='es'?'Norte':'North');
-  if (s.includes(' south')|| s.startsWith('south'))return (lang==='es'?'Sur':'South');
-  return '—';
-}
-function buildRoadLabelTop(step){
-  const num = extractInterstateNum(step);
-  const name = (step?.name || '').toString().trim();
-  const ref  = (step?.ref  || '').toString().trim();
-  const base = (ref && !ref.toLowerCase().includes('i-')) ? ref : (name || ref || '');
-  if (num){
-    return `<span class="tn-shield"><span>${num}</span></span> ${base}`.trim();
-  }
-  return base || '—';
-}
-function updateTopNavBar(distMi, step, curLat, curLon){
-  const bar = document.getElementById('topNavBar');
-  if (!bar) return;
-  if (!step || distMi == null || !isFinite(distMi)){
-    bar.classList.remove('show','blink');
-    bar.style.display = 'none';
-    return;
-  }
-  bar.style.display = 'flex';
-  bar.classList.add('show');
-
-  const distEl = document.getElementById('tnDist');
-  const arrEl  = document.getElementById('tnArrow');
-  const dirEl  = document.getElementById('tnDir');
-  const roadEl = document.getElementById('tnRoad');
-  const destEl = document.getElementById('tnDest');
-
-  distEl.textContent = prettyMilesNoSpace(distMi);
-  arrEl.textContent  = arrowFromStep(step);
-  dirEl.textContent  = directionWord(step);
-  roadEl.innerHTML   = buildRoadLabelTop(step);
-
-  const d = (document.getElementById('destinationInput')?.value || '').trim();
-  if (d){
-    const city = d.split(',')[0].trim();
-    destEl.textContent = city || d;
-  } else {
-    destEl.textContent = '—';
-  }
-
-  bar.classList.toggle('blink', distMi <= 1.0);
-}
-
 function updateNavInstruction(curLat, curLon){
   const box = document.getElementById('navNext');
   if (!box) return;
-  if (!navSteps || !navSteps.length) { box.style.display='none'; box.classList.remove('blink'); try{ updateTopNavBar(null, null, curLat, curLon); }catch{} return; }
+  if (!navSteps || !navSteps.length) { box.style.display='none'; box.classList.remove('blink'); return; }
 
   // advance step when close to its maneuver location
   for (let i = navStepIdx; i < navSteps.length; i++){
     const loc = navSteps[i]?.maneuver?.location; // [lon,lat]
     if (!loc) continue;
     const dMi = haversine(curLat, curLon, loc[1], loc[0]);
-  try{ updateTopNavBar(dMi, step, curLat, curLon); }catch{}
     if (dMi < 0.03) { // ~160ft
       navStepIdx = Math.min(i+1, navSteps.length-1);
     }
@@ -5548,7 +5381,7 @@ function updateNavInstruction(curLat, curLon){
   const loc = step?.maneuver?.location;
 
   // ✅ Show guidance ONLY when within 1 mile of the next maneuver
-  if (!loc) { box.style.display='none'; box.classList.remove('blink'); try{ updateTopNavBar(null, null, curLat, curLon); }catch{} return; }
+  if (!loc) { box.style.display='none'; box.classList.remove('blink'); return; }
   const dMi = haversine(curLat, curLon, loc[1], loc[0]);
   if (dMi > 1.0) { box.style.display='none'; box.classList.remove('blink'); return; }
 
@@ -6126,27 +5959,45 @@ function fmRedrawRoute(coords) {
   fmMarkers = [];
   if (fmLayer) { try { fmMapInst.removeLayer(fmLayer); } catch {} fmLayer = null; }
 
-  const shadow = L.polyline(routeCoords, { color: '#065f46', weight: 12, opacity: 0.15 }).addTo(fmMapInst);
-  fmLayer = L.polyline(routeCoords, { color: '#10b981', weight: 5, opacity: 0.9 }).addTo(fmMapInst);
+  // ── Glow exterior (muy grueso, muy transparente)
+  const glow   = L.polyline(routeCoords,{ color:'#10b981', weight:22, opacity:0.11, interactive:false }).addTo(fmMapInst);
+  // ── Casing oscuro (borde de la ruta)
+  const casing = L.polyline(routeCoords,{ color:'#064e3b', weight:9,  opacity:0.60, interactive:false }).addTo(fmMapInst);
+  // ── Ruta principal brillante
+  fmLayer = L.polyline(routeCoords,{ color:'#10b981', weight:5, opacity:0.97 }).addTo(fmMapInst);
 
+  // ── Marcador origen (dot verde)
   const oIcon = L.divIcon({
     className: '',
-    html: `<div style="width:16px;height:16px;background:#10b981;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(16,185,129,.25),0 2px 8px rgba(0,0,0,.5)"></div>`,
-    iconAnchor: [8, 8]
+    html: `<div style="width:18px;height:18px;background:#10b981;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(16,185,129,.3),0 3px 10px rgba(0,0,0,.55)"></div>`,
+    iconAnchor: [9, 9]
   });
+  // ── Marcador destino (pin con etiqueta)
+  const destLabel = (destination?.name||'').split(',')[0].substring(0,18);
   const dIcon = L.divIcon({
     className: '',
-    html: `<div style="font-size:30px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))">📍</div>`,
-    iconAnchor: [15, 30]
+    html: `<div style="position:relative;text-align:center;display:inline-block">
+      <div style="font-size:34px;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.7))">📍</div>
+      <div style="position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);
+        background:rgba(10,20,40,.92);color:#fff;font-size:9px;font-weight:800;
+        padding:2px 7px;border-radius:5px;white-space:nowrap;
+        font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.4)
+      ">${destLabel}</div></div>`,
+    iconAnchor: [17, 34]
   });
 
-  const oMark = L.marker([origin.lat, origin.lon], { icon: oIcon }).addTo(fmMapInst)
+  const oMark = L.marker([origin.lat, origin.lon], { icon: oIcon, zIndexOffset:800 }).addTo(fmMapInst)
     .bindPopup(`<b>Origin</b><br>${origin.name}`);
-  const dMark = L.marker([destination.lat, destination.lon], { icon: dIcon }).addTo(fmMapInst)
+  const dMark = L.marker([destination.lat, destination.lon], { icon: dIcon, zIndexOffset:800 }).addTo(fmMapInst)
     .bindPopup(`<b>Destination</b><br>${destination.name}`);
 
-  fmMarkers = [shadow, oMark, dMark];
+  fmMarkers = [glow, casing, oMark, dMark];
   fmMapInst.fitBounds(fmLayer.getBounds(), { padding: [70, 70] });
+
+  // ── Escudos de Interstate y US Route sobre la ruta
+  if (Array.isArray(navSteps) && navSteps.length){
+    setTimeout(() => addInterstateMarkers(fmMapInst, navSteps, true), 100);
+  }
 }
 
 // Make/update the truck marker with rotation based on heading
