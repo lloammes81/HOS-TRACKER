@@ -3313,6 +3313,80 @@ body.dark #fullMap .leaflet-tile-pane {
     border-radius: 999px; padding: 1px 7px; font-size: 9px;
   }
 
+
+  /* ════════════════════════════════════════════════════════════
+     🚨  LOCAL MODE STATE WARNING BANNER
+  ════════════════════════════════════════════════════════════ */
+  .local-state-warning {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    background: linear-gradient(135deg, #b45309, #92400e);
+    color: #fff;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 14px;
+    animation: slideDownIn .3s cubic-bezier(.16,1,.3,1);
+    box-shadow: 0 4px 24px rgba(0,0,0,.4);
+  }
+  @keyframes slideDownIn {
+    from { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+  }
+  .lsw-inner {
+    display: flex; align-items: flex-start; gap: 12px; max-width: 540px; margin: 0 auto;
+  }
+  .lsw-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+  .lsw-body { flex: 1; }
+  .lsw-title { font-size: 14px; font-weight: 900; letter-spacing: .3px; margin-bottom: 3px; }
+  .lsw-sub   { font-size: 12px; opacity: .85; line-height: 1.4; font-weight: 600; }
+  .lsw-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .lsw-btn {
+    flex: 1; padding: 9px 8px; border-radius: 9px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 800;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .lsw-btn.primary { background: #fff; color: #92400e; }
+  .lsw-btn.secondary { background: rgba(255,255,255,.15); color: #fff; }
+  .lsw-close { font-size: 20px; opacity: .7; cursor: pointer; flex-shrink: 0; padding: 2px; }
+
+  /* ════════════════════════════════════════════════════════════
+     🚨  COMMUNITY ROUTE ALERT BANNER (in page + map)
+  ════════════════════════════════════════════════════════════ */
+  .comm-route-alert {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: linear-gradient(135deg, rgba(220,38,38,.12), rgba(239,68,68,.08));
+    border: 1.5px solid rgba(239,68,68,.35);
+    border-radius: 14px; padding: 13px 14px; margin-bottom: 12px;
+    position: relative; overflow: hidden;
+  }
+  .comm-route-alert::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: linear-gradient(180deg, #ef4444, #dc2626);
+    border-radius: 4px 0 0 4px;
+  }
+  .comm-alert-icon { font-size: 22px; flex-shrink: 0; }
+  .comm-alert-body { flex: 1; }
+  .comm-alert-title { font-size: 13px; font-weight: 900; color: #ef4444; margin-bottom: 3px; }
+  .comm-alert-detail { font-size: 11px; color: var(--text); font-weight: 600; line-height: 1.5; }
+  .comm-alert-meta   { font-size: 10px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+  .comm-alert-dismiss {
+    position: absolute; top: 10px; right: 12px;
+    font-size: 16px; color: var(--muted); cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  /* Map floating alert pill */
+  #routeAlertPill {
+    position: absolute; top: 58px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: #fff; font-size: 12px; font-weight: 800;
+    padding: 7px 16px; border-radius: 999px;
+    z-index: 500; cursor: pointer;
+    box-shadow: 0 3px 16px rgba(220,38,38,.5);
+    white-space: nowrap; display: none;
+    animation: heroPulse 2s ease-in-out infinite;
+    letter-spacing: .3px;
+  }
+
 </style>
 
 <style id="fmHudCompactStyles">
@@ -4410,6 +4484,7 @@ body.dark #fullMap .leaflet-tile-pane {
         <div style="flex:1"></div>
         <button onclick="refreshCommPage()" style="background:none;border:none;color:var(--accent);font-size:11px;font-weight:800;cursor:pointer;padding:0;touch-action:manipulation">🔄 Refresh</button>
       </div>
+      <div id="commAlertBanners"></div>
       <div id="commPageList"></div>
 
     </div>
@@ -4769,6 +4844,7 @@ body.dark #fullMap .leaflet-tile-pane {
   <!-- MAP fills entire screen -->
   <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
     <div class="local-radius-info" id="localRadiusInfo" style="display:none">📍 Local Mode — 100 mi radius</div>
+    <div id="routeAlertPill" onclick="switchTab('community')">🚨 Alert on your route — tap</div>
 
   <!-- Map Style Picker Panel -->
   <div id="mapStylePanel"></div>
@@ -7363,6 +7439,7 @@ async function fetchAutocomplete(q) {
       .filter(Boolean).filter((v,i,a) => a.indexOf(v) === i).join(', '),
     lat: f.geometry.coordinates[1],
     lon: f.geometry.coordinates[0],
+    state: (f.properties.state || '').trim(),
     country_code: (f.properties.countrycode || '').toUpperCase()
   })).filter(x => x.name);
   if (selectedCountry) items = items.filter(x => x.country_code === selectedCountry);
@@ -10356,7 +10433,7 @@ function bindEvents() {
     if (v.length < 2) { document.getElementById('destSugg').style.display = 'none'; return; }
     destDebounce = setTimeout(async () => {
       const items = await fetchAutocomplete(v).catch(() => []);
-      showSuggestions('destSugg', items, it => { destination = it; document.getElementById('destInput').value = it.name; });
+      showSuggestions('destSugg', items, it => { setDestinationWithLocalCheck(it); });
     }, 300);
   });
 
@@ -12007,6 +12084,259 @@ openFullMapScreen = function() {
 function initDriverProfile() {
   loadDriverProfile();
 }
+
+
+/* ════════════════════════════════════════════════════════════
+   🏙️  LOCAL MODE — DESTINATION STATE VALIDATION
+════════════════════════════════════════════════════════════ */
+
+let _localStateWarningEl = null;
+let _dismissedAlerts = new Set();
+
+function getOriginState() {
+  // Try to extract state from origin name string (e.g. "Houston, Texas, USA")
+  if (!origin) return null;
+  const name = origin.name || '';
+  // State is usually the 2nd or 3rd part
+  const parts = name.split(',').map(s => s.trim()).filter(Boolean);
+  // Return the state part (usually 2nd-to-last before country)
+  if (parts.length >= 2) return parts[parts.length - 2];
+  return null;
+}
+
+function setDestinationWithLocalCheck(it) {
+  const jobType = driverProfile?.jobType || 'interstate';
+
+  if (jobType === 'local') {
+    const originState = getOriginState();
+    const destState   = it.state || extractStateFromName(it.name);
+
+    if (originState && destState && !statesMatch(originState, destState)) {
+      // Show warning — different state detected
+      showLocalStateWarning(it, originState, destState);
+      return; // Don't set destination yet — user must confirm or change job type
+    }
+  }
+
+  // OK — set destination normally
+  destination = it;
+  document.getElementById('destInput').value = it.name;
+  document.getElementById('destSugg').style.display = 'none';
+}
+
+function extractStateFromName(name) {
+  const parts = name.split(',').map(s => s.trim()).filter(Boolean);
+  if (parts.length >= 2) return parts[parts.length - 2];
+  return null;
+}
+
+function statesMatch(a, b) {
+  if (!a || !b) return true; // can't verify — allow
+  const normalize = s => s.toLowerCase().replace(/[^a-z]/g, '');
+  return normalize(a) === normalize(b);
+}
+
+function showLocalStateWarning(destItem, originState, destState) {
+  // Remove existing warning
+  dismissLocalWarning();
+
+  const el = document.createElement('div');
+  el.className = 'local-state-warning';
+  el.id = 'localStateWarning';
+  el.innerHTML = `
+    <div class="lsw-inner">
+      <div class="lsw-icon">⚠️</div>
+      <div class="lsw-body">
+        <div class="lsw-title">Destination is in another state</div>
+        <div class="lsw-sub">
+          You're in <strong>${originState}</strong> but selected a destination in <strong>${destState}</strong>.
+          Your job type is set to <strong>Local (100 mi)</strong>.
+          Local drivers are limited to their home state area.
+        </div>
+        <div class="lsw-actions">
+          <button class="lsw-btn primary" onclick="forceSetDest(${JSON.stringify(JSON.stringify(destItem))})">
+            Use anyway
+          </button>
+          <button class="lsw-btn secondary" onclick="changeJobTypeFromWarning()">
+            Change to Interstate
+          </button>
+          <button class="lsw-btn secondary" onclick="dismissLocalWarning()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(el);
+  _localStateWarningEl = el;
+
+  if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
+}
+
+function forceSetDest(destJsonStr) {
+  const it = JSON.parse(destJsonStr);
+  destination = it;
+  document.getElementById('destInput').value = it.name;
+  document.getElementById('destSugg').style.display = 'none';
+  dismissLocalWarning();
+}
+
+function changeJobTypeFromWarning() {
+  // Switch job type to interstate
+  const sel = document.getElementById('jobTypeSelect');
+  if (sel) {
+    sel.value = 'interstate';
+    driverProfile.jobType = 'interstate';
+    localStorage.setItem('hos_driver_profile', JSON.stringify(driverProfile));
+    updateProfileDisplay();
+    applyJobMode('interstate');
+  }
+  dismissLocalWarning();
+  showToast('info', '🛣️', 'Switched to Interstate', 'You can now route to any state', 3000);
+}
+
+function dismissLocalWarning() {
+  if (_localStateWarningEl) {
+    _localStateWarningEl.remove();
+    _localStateWarningEl = null;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   🚨  COMMUNITY ROUTE ALERTS — AUTO DETECTION
+════════════════════════════════════════════════════════════ */
+
+const ALERT_TYPES = new Set(['police', 'inspection', 'accident', 'hazard']);
+let   _lastAlertCheckTs  = 0;
+let   _activeRouteAlerts = [];
+let   _alertCheckInterval = null;
+
+function startRouteAlertMonitor() {
+  if (_alertCheckInterval) clearInterval(_alertCheckInterval);
+  checkRouteAlerts(); // immediate check
+  _alertCheckInterval = setInterval(checkRouteAlerts, 60 * 1000); // every 60s
+}
+
+function stopRouteAlertMonitor() {
+  if (_alertCheckInterval) { clearInterval(_alertCheckInterval); _alertCheckInterval = null; }
+}
+
+function checkRouteAlerts() {
+  if (!roadGeometry || roadGeometry.length < 2) return;
+
+  const newAlerts = communityReports.filter(r => {
+    if (!ALERT_TYPES.has(r.type)) return false;
+    if (_dismissedAlerts.has(r.id)) return false;
+    if (Date.now() - r.ts > 7200000) return false; // older than 2h
+    return isReportOnRoute(r, 10); // within 10 miles of route
+  });
+
+  // Find newly appeared alerts (not in previous check)
+  const prevIds = new Set(_activeRouteAlerts.map(r => r.id));
+  const brandNew = newAlerts.filter(r => !prevIds.has(r.id));
+  _activeRouteAlerts = newAlerts;
+
+  // Update map pill
+  updateRouteAlertPill(newAlerts);
+
+  // Show toast for each new alert
+  brandNew.forEach(r => {
+    const cfg = COMM_TYPE_CFG[r.type] || { emoji: '⚠️', label: r.type, color: '#ef4444' };
+    const dist = window.lastFixFm
+      ? haversine(window.lastFixFm.lat, window.lastFixFm.lon, r.lat, r.lon).toFixed(1) + ' mi ahead'
+      : 'on your route';
+    showToast(
+      'warning',
+      cfg.emoji,
+      cfg.label + ' on your route!',
+      (r.comment ? '"' + r.comment + '"' : '') + ' · ' + dist + (r.userName ? ' · by ' + r.userName : ''),
+      6000
+    );
+    if (navigator.vibrate) navigator.vibrate([40, 20, 40, 20, 40]);
+  });
+
+  // Update community page alert banners
+  renderRouteAlertBanners();
+}
+
+function updateRouteAlertPill(alerts) {
+  const pill = document.getElementById('routeAlertPill');
+  if (!pill) return;
+  if (alerts.length === 0) {
+    pill.style.display = 'none';
+    return;
+  }
+  // Show highest priority type
+  const priority = ['accident', 'inspection', 'police', 'hazard'];
+  const top = priority.map(t => alerts.find(r => r.type === t)).find(Boolean) || alerts[0];
+  const cfg = COMM_TYPE_CFG[top.type] || { emoji: '⚠️', label: top.type };
+  pill.textContent = cfg.emoji + ' ' + cfg.label + ' on your route — tap';
+  pill.style.display = 'block';
+}
+
+function renderRouteAlertBanners() {
+  const target = document.getElementById('commPageList');
+  if (!target || currentTab !== 'community') return;
+
+  // Remove existing alert banners
+  document.querySelectorAll('.comm-route-alert').forEach(el => el.remove());
+
+  if (_activeRouteAlerts.length === 0) return;
+
+  const container = document.getElementById('commPageList');
+  const bannerArea = document.getElementById('commAlertBanners');
+  if (!bannerArea) return;
+
+  bannerArea.innerHTML = _activeRouteAlerts.map(r => {
+    const cfg  = COMM_TYPE_CFG[r.type] || { emoji: '⚠️', label: r.type };
+    const age  = formatReportAge(r.ts);
+    const dist = window.lastFixFm && r.lat
+      ? haversine(window.lastFixFm.lat, window.lastFixFm.lon, r.lat, r.lon).toFixed(1) + ' mi ahead'
+      : 'on your route';
+    const user = r.userName || r.reportedByName || 'Anonymous';
+    const comment = r.comment ? '"' + r.comment + '"' : '';
+
+    return '<div class="comm-route-alert">' +
+      '<div class="comm-alert-icon">' + cfg.emoji + '</div>' +
+      '<div class="comm-alert-body">' +
+        '<div class="comm-alert-title">🛣️ ' + cfg.label + ' on your route</div>' +
+        '<div class="comm-alert-detail">' + (comment ? comment + '<br>' : '') + dist + '</div>' +
+        '<div class="comm-alert-meta">Posted by ' + user + ' · ' + age + '</div>' +
+      '</div>' +
+      '<div class="comm-alert-dismiss" onclick="dismissRouteAlert(' + r.id + ')">✕</div>' +
+    '</div>';
+  }).join('');
+}
+
+function dismissRouteAlert(id) {
+  _dismissedAlerts.add(id);
+  _activeRouteAlerts = _activeRouteAlerts.filter(r => r.id !== id);
+  updateRouteAlertPill(_activeRouteAlerts);
+  renderRouteAlertBanners();
+}
+
+/* ── Hook: start monitor when route is calculated ── */
+const _origCalcRoute2 = calculateRoute;
+calculateRoute = async function() {
+  await _origCalcRoute2();
+  // Start monitoring after route geometry is available
+  setTimeout(() => {
+    if (roadGeometry && roadGeometry.length > 1) {
+      startRouteAlertMonitor();
+    }
+  }, 1500);
+};
+
+/* ── Hook: switch to community tab refreshes alerts ── */
+const _origSwitchTab2 = switchTab;
+switchTab = function(tab) {
+  _origSwitchTab2(tab);
+  if (tab === 'community') {
+    refreshCommPage();
+    renderRouteAlertBanners();
+    checkRouteAlerts();
+  }
+};
 
 init();
 
