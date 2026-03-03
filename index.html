@@ -4909,6 +4909,7 @@ body.dark #fullMap .leaflet-tile-pane {
 
   <!-- PROFILE FAB BUTTON — below speed limit sign, right side -->
   <button id="profileFab" onclick="openProfileModal()" title="Mi Perfil" style="
+    display:none;
     position:fixed;
     top:calc(70px + env(safe-area-inset-top,0px) + 72px + 10px);
     right:calc(8px + env(safe-area-inset-right,0px));
@@ -5132,11 +5133,24 @@ body.dark #fullMap .leaflet-tile-pane {
       </div>
     </div>
 
-    <!-- 3 stats (drive hours removed — shown in circular widget) -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
+    <!-- 4 stat bubbles: LLEGADA · MANEJO-ring · RESTANTE · 70 HRS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:12px">
       <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
         <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmEtaLbl">LLEGADA</div>
         <div style="font-size:15px;font-weight:900;color:#f59e0b;line-height:1" id="fmEta">--</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:6px 3px;text-align:center">
+        <div style="font-size:7px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px" id="fmDriveLbl">MANEJO</div>
+        <div style="position:relative;width:34px;height:34px;margin:0 auto">
+          <svg viewBox="0 0 36 36" width="34" height="34" style="transform:rotate(-90deg)">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="3"/>
+            <circle id="hudDhArc" cx="18" cy="18" r="14" fill="none" stroke="#10b981" stroke-width="3"
+                    stroke-linecap="round" stroke-dasharray="0 88" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span id="fmDriveLeft" style="font-size:10px;font-weight:900;color:#10b981;line-height:1">11h</span>
+          </div>
+        </div>
       </div>
       <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
         <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmRemLbl">RESTANTE</div>
@@ -5147,9 +5161,6 @@ body.dark #fullMap .leaflet-tile-pane {
         <div style="font-size:15px;font-weight:900;color:#8b5cf6;line-height:1" id="fm70Left">70h</div>
       </div>
     </div>
-    <!-- hidden fmDriveLeft — still updated by JS but not shown here -->
-    <span id="fmDriveLeft" style="display:none">11h</span>
-    <span id="fmDriveLbl" style="display:none">MANEJO</span>
 
     <!-- Route from → to -->
     <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:12px">
@@ -5184,10 +5195,10 @@ body.dark #fullMap .leaflet-tile-pane {
 
 
 <!-- ═══════════════════════════════════════════════════
-     👤 USER PROFILE / REGISTER MODAL
+     👤 USER PROFILE / REGISTER MODAL — HIDDEN
 ═══════════════════════════════════════════════════ -->
 <div id="profileModal" style="
-  display:none; position:fixed; inset:0; z-index:9999;
+  display:none!important; position:fixed; inset:0; z-index:9999;
   background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);
   align-items:center; justify-content:center; padding:16px;">
   <div style="
@@ -5765,14 +5776,14 @@ let currentTab = 'plan';
 
 // ── MAP STYLE ────────────────────────────────────────────────
 const MAP_STYLES = {
-  voyager:  { label:'Road',    emoji:'🛣️',  url:'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',    options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
-  dark:     { label:'Night',   emoji:'🌙',  url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', options:{ maxZoom:19, attribution:'© CARTO' } },
-  satellite:{ label:'Hybrid',  emoji:'🛰️',  url:'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',    options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
-  topo:     { label:'Terrain', emoji:'⛰️',  url:'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',    options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
-  light:    { label:'Light',   emoji:'☀️',  url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', options:{ maxZoom:19, attribution:'© CARTO' } },
-  nav:      { label:'Nav',     emoji:'📍',  url:'https://mt{s}.google.com/vt/lyrs=r&x={x}&y={y}&z={z}',    options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
+  dark:     { label:'Night',   emoji:'🌙',  url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',            options:{ maxZoom:19, attribution:'© CARTO' } },
+  nav:      { label:'Nav',     emoji:'🛣️',  url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', options:{ maxZoom:19, attribution:'© CARTO' } },
+  light:    { label:'Light',   emoji:'☀️',  url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',           options:{ maxZoom:19, attribution:'© CARTO' } },
+  satellite:{ label:'Hybrid',  emoji:'🛰️',  url:'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',                   options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
+  topo:     { label:'Terrain', emoji:'⛰️',  url:'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',                   options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
+  voyager:  { label:'Road',    emoji:'📍',  url:'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',                   options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
 };
-let currentMapStyle = localStorage.getItem('hos_map_style') || (isDark ? 'dark' : 'nav');
+let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 let fmTileLayer = null;
 
 let origin = null, destination = null;
@@ -6451,6 +6462,22 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
 
   // Label
   label.textContent = lang === 'es' ? 'HORAS DE MANEJO' : 'DRIVING LEFT';
+
+  // Also update mini HUD ring (in the compact bubble strip)
+  const hudArc = document.getElementById('hudDhArc');
+  const hudText = document.getElementById('fmDriveLeft');
+  if (hudArc) {
+    hudArc.style.stroke = arcColor;
+    const hudPct = Math.max(0, Math.min(1, hoursLeft / Math.max(1, maxHours)));
+    const hudDash = hudPct * 87.96; // r=14 circumference ≈ 87.96
+    hudArc.setAttribute('stroke-dasharray', `${hudDash.toFixed(1)} 88`);
+  }
+  if (hudText) {
+    const tm = Math.round(hoursLeft * 60);
+    const hh = Math.floor(tm / 60), mm = tm % 60;
+    hudText.textContent = hh > 0 ? `${hh}h${mm > 0 ? mm : ''}` : `${mm}m`;
+    hudText.style.color = arcColor;
+  }
 }
 
 function initDriveHoursDrag() {
@@ -7652,6 +7679,7 @@ function extractUSRouteNumber(step){
 
 function addInterstateMarkers(map, steps, isFull){
   if (!showInterstateShields) return;
+  if (!showInterstateShields) return;
   if (!map || !Array.isArray(steps) || !steps.length) return;
 
   const list = isFull ? interstateMarkersFull : interstateMarkersMini;
@@ -8507,6 +8535,7 @@ function openFullMapScreen() {
 
     // Detect when user drags map — pause auto-follow
     fmMapInst.on('dragstart', () => {
+      if (window._fmProgrammaticMove) return; // ignore programmatic pans
       fmUserDragged = true;
       fmFollowing = false;
       document.getElementById('fmFollowBtn').classList.remove('active');
@@ -8514,6 +8543,7 @@ function openFullMapScreen() {
 
     // Detect when user zooms (pinch) — pause auto-follow
     fmMapInst.on('zoomstart', () => {
+      if (window._fmProgrammaticMove) return; // ignore programmatic zoom
       fmUserDragged = true;
       fmFollowing = false;
       const fb = document.getElementById('fmFollowBtn');
@@ -8542,7 +8572,7 @@ function openFullMapScreen() {
       const routeKey = (origin.lat||0).toFixed(4) + ',' + (destination.lat||0).toFixed(4) + ',' + (roadGeometry?.length||0);
       if (routeKey !== fmLastRouteKey) {
         fmLastRouteKey = routeKey;
-        fmLastStepsHash = ''; // force shields to re-add
+        fmLastStepsHash = showInterstateShields ? '' : 'disabled'; // re-add only if shields on
         fmRedrawRoute();
         // Reset chip labels to show loading
         document.getElementById('chipScale').innerHTML = '⚖️ Scales <span style="opacity:.5;font-size:10px">•••</span>';
@@ -8577,7 +8607,7 @@ function fmRedrawRoute(coords) {
   // Clear old interstate shields
   interstateMarkersFull.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
   interstateMarkersFull.length = 0;
-  fmLastStepsHash = ''; // force re-add shields after route clear
+  fmLastStepsHash = showInterstateShields ? '' : 'disabled'; // only re-add if shields on
 
   // ── Glow exterior (muy grueso, muy transparente)
   const glow   = L.polyline(routeCoords,{ color:'#10b981', weight:22, opacity:0.11, interactive:false }).addTo(fmMapInst);
@@ -8617,9 +8647,11 @@ function fmRedrawRoute(coords) {
   // ── Escudos de Interstate y US Route sobre la ruta (only when steps change)
   if (Array.isArray(navSteps) && navSteps.length){
     const stepsHash = navSteps.length + '|' + (navSteps[0]?.maneuver?.location || []);
-    if (stepsHash !== fmLastStepsHash) {
+    if (stepsHash !== fmLastStepsHash && showInterstateShields) {
       fmLastStepsHash = stepsHash;
       addInterstateMarkers(fmMapInst, navSteps, true);
+    } else if (stepsHash !== fmLastStepsHash) {
+      fmLastStepsHash = stepsHash; // update hash but don't draw (shields off)
     }
   }
 }
@@ -8739,6 +8771,44 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   if (truckAnimFrame) { cancelAnimationFrame(truckAnimFrame); truckAnimFrame = null; }
   truckAnimStart = performance.now();
   truckAnimFrame = requestAnimationFrame(truckAnimTick);
+}
+
+// Route snapping — keep truck marker on the road
+function snapToRoute(rawLat, rawLon) {
+  if (!roadGeometry || roadGeometry.length < 2) return { lat: rawLat, lon: rawLon, snapped: false, dist: 0 };
+  var bestDist = Infinity, bestLat = rawLat, bestLon = rawLon;
+  for (var j = 0; j < roadGeometry.length - 1; j++) {
+    var ax = roadGeometry[j][0], ay = roadGeometry[j][1];
+    var bx = roadGeometry[j+1][0], by = roadGeometry[j+1][1];
+    var dx = bx - ax, dy = by - ay, ls = dx*dx + dy*dy;
+    var t = ls > 0 ? ((rawLat-ax)*dx + (rawLon-ay)*dy) / ls : 0;
+    t = Math.max(0, Math.min(1, t));
+    var px = ax + t*dx, py = ay + t*dy;
+    var dt = Math.sqrt((rawLat-px)*(rawLat-px) + (rawLon-py)*(rawLon-py));
+    if (dt < bestDist) { bestDist = dt; bestLat = px; bestLon = py; }
+  }
+  var sn = bestDist < 0.00072; // ~80m threshold
+  return { lat: sn ? bestLat : rawLat, lon: sn ? bestLon : rawLon, snapped: sn, dist: bestDist };
+}
+
+var _orc = 0, _lrr = 0;
+async function handleOffRoute(rl, ro) {
+  _orc++;
+  if (_orc < 4) return;
+  var now2 = Date.now();
+  if (now2 - _lrr < 50000) return;
+  _lrr = now2; _orc = 0;
+  showToast('info', '🔄', lang === 'es' ? 'Recalculando ruta...' : 'Recalculating...', lang === 'es' ? 'GPS fuera de ruta' : 'Off route', 4000);
+  try {
+    var no = { lat: rl, lon: ro, name: origin ? origin.name : 'GPS' };
+    var road2 = await fetchRoadRoute(no, destination);
+    if (!road2 || !road2.coords || road2.coords.length < 2) return;
+    roadGeometry = road2.coords; routeDistance = road2.miles;
+    navSteps = Array.isArray(road2.steps) ? road2.steps : []; navStepIdx = 0;
+    origin = no;
+    if (fmMapInst) fmRedrawRoute(roadGeometry);
+    showToast('success', '✅', road2.miles.toFixed(0) + ' mi', '', 3000);
+  } catch(e) {}
 }
 
 // Calculate compass heading from two GPS points
@@ -8899,29 +8969,43 @@ async function fmStartTracking() {
     fmCurrentSpeed = gpsSpeed;
     fmVehicleMoving = isMoving;
 
-    // ── Heading: prefer GPS bearing, else calculate from movement ──
+    // ── Heading: prefer GPS bearing ─────────────────────────
     let heading = pos.coords.heading;
-    if ((!heading || heading < 0) && fmPrevLat != null && isMoving) {
-      heading = calcHeading(fmPrevLat, fmPrevLon, lat, lon);
-    }
-    if (isMoving) { fmPrevLat = lat; fmPrevLon = lon; }
     fmLastHeading = heading;
 
-    // ── Update accuracy circle ───────────────────────────────
+    // ── Update accuracy circle (raw GPS) ────────────────────
     if (fmAccMarker) fmAccMarker.setLatLng([lat, lon]).setRadius(acc);
 
-    // ── Update truck marker with rotation ───────────────────
-    fmUpdateTruckMarker(lat, lon, heading, isMoving);
+    // ── Route snapping: keep truck on road ──────────────────
+    const snap = (typeof snapToRoute === 'function') ? snapToRoute(lat, lon) : { lat, lon, snapped: true };
+    const snapLat = snap.lat, snapLon = snap.lon;
 
-    // ── AUTO-ZOOM & FOLLOW ───────────────────────────────────
+    // Off-route detection
+    if (isMoving && destination && roadGeometry) {
+      if (!snap.snapped) { if (typeof handleOffRoute === 'function') handleOffRoute(lat, lon); }
+      else { if (typeof _orc !== 'undefined') _orc = 0; }
+    }
+
+    // Recalculate heading from snapped position for accurate rotation
+    if ((!heading || heading < 0) && fmPrevLat != null && isMoving) {
+      heading = calcHeading(fmPrevLat, fmPrevLon, snapLat, snapLon);
+    }
+    if (isMoving) { fmPrevLat = snapLat; fmPrevLon = snapLon; }
+    fmLastHeading = heading;
+
+    // ── Update truck marker at snapped on-road position ─────
+    fmUpdateTruckMarker(snapLat, snapLon, heading, isMoving);
+
+    // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
-      // Dynamic zoom: zoom in more when fast, a bit out when slow/stopped
       if (isMoving) {
         fmCurrentZoom = gpsSpeed > 50 ? 13 : gpsSpeed > 25 ? 14 : 15;
       } else {
-        fmCurrentZoom = 16; // zoom in close when stopped
+        fmCurrentZoom = 16;
       }
-      fmMapInst.setView([lat, lon], fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
+      window._fmProgrammaticMove = true;
+      fmMapInst.setView([snapLat, snapLon], fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
+      setTimeout(() => { window._fmProgrammaticMove = false; }, 1200);
     }
 
     
@@ -12404,7 +12488,7 @@ function dismissRouteAlert(id) {
 const _origCalcRoute2 = calculateRoute;
 calculateRoute = async function() {
   fmLastRouteKey = ''; // force full redraw on next map open
-  fmLastStepsHash = '';
+  fmLastStepsHash = showInterstateShields ? '' : 'disabled';
   _shownNearbyIds = new Set(); // reset nearby alerts for new route
   clearAllIncidentBubbles();
   await _origCalcRoute2();
