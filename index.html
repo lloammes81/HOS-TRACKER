@@ -3875,6 +3875,21 @@ body.dark #fullMap .leaflet-tile-pane {
         </div>
       </div>
   <div class="sett-section">
+    <div class="sett-section-title">🗺️ Map Display</div>
+    <div class="sett-group">
+      <!-- Highway Shields toggle -->
+      <div class="sett-row" onclick="toggleInterstateShields(!showInterstateShields)" style="cursor:pointer">
+        <div class="sett-icon" style="background:#dbeafe">🛣️</div>
+        <div style="flex:1">
+          <div class="sett-label" id="shieldToggleLabel" style="margin:0">Highway shields</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Show I-10, I-95 signs on map</div>
+        </div>
+        <div class="comm-toggle-switch" id="shieldToggleSwitch"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sett-section">
     <div class="sett-section-title" id="settSecTruckIcon">Truck Icon</div>
     <div class="sett-group" style="padding:14px 14px 10px">
       <div style="font-weight:900;font-size:14px;margin-bottom:6px" id="truckIconTitle">Truck marker icon</div>
@@ -7070,6 +7085,13 @@ function init() {
   checkFirstLaunch();
   initCommTabBadge();
   initDriverProfile();
+  // Sync shield toggle UI on load
+  const shSw = document.getElementById('shieldToggleSwitch');
+  if (shSw) shSw.classList.toggle('on', showInterstateShields);
+  const shLbl = document.getElementById('shieldToggleLabel');
+  if (shLbl) shLbl.textContent = showInterstateShields ? 'Highway shields: On' : 'Highway shields: Off';
+  // If shields were off, mark hash as disabled to prevent auto-re-add
+  if (!showInterstateShields) fmLastStepsHash = 'disabled';
 }
 
 function changeMapStyle(styleKey) {
@@ -7572,10 +7594,10 @@ function drawRoute(map, coords, markersRef, layerRef) {
   const mid = coords[Math.floor(coords.length/2)] || [(origin.lat+destination.lat)/2,(origin.lon+destination.lon)/2];
   const truck = L.marker(mid, { icon: getTruckLeafletIcon() }).addTo(map);
 
-  // Interstate & US Route shields
+  // Interstate & US Route shields (only add once per route calculation)
   const isFull = (map === fullMapInst);
   if (Array.isArray(navSteps) && navSteps.length) {
-    addInterstateMarkers(map, navSteps, isFull);
+    if (!isFull) addInterstateMarkers(map, navSteps, isFull); // mini-map: always ok
   }
 
   markersRef.list = [glow, casing, o, d, truck];
@@ -7592,6 +7614,9 @@ function haversine(lat1, lon1, lat2, lon2) {
 // ── Interstate markers (I-10, I-95, etc) ────────────────────
 let interstateMarkersMini = [];
 let interstateMarkersFull = [];
+let fmLastStepsHash = '';
+let fmLastRouteKey  = '';
+let showInterstateShields = localStorage.getItem('hos_show_shields') !== 'false';
 
 let roadNameMarkersMini = [];
 let roadNameMarkersFull = [];
@@ -7626,6 +7651,7 @@ function extractUSRouteNumber(step){
 }
 
 function addInterstateMarkers(map, steps, isFull){
+  if (!showInterstateShields) return;
   if (!map || !Array.isArray(steps) || !steps.length) return;
 
   const list = isFull ? interstateMarkersFull : interstateMarkersMini;
@@ -8512,13 +8538,22 @@ function openFullMapScreen() {
   setTimeout(() => {
     fmMapInst.invalidateSize();
     if (origin && destination) {
-      fmRedrawRoute();
-      // Reset chip labels to show loading
-      document.getElementById('chipScale').innerHTML = '⚖️ Scales <span style="opacity:.5;font-size:10px">•••</span>';
-      document.getElementById('chipTruck').innerHTML = '🚛 Truck Stops <span style="opacity:.5;font-size:10px">•••</span>';
-      document.getElementById('chipRest').innerHTML  = '😴 Rest Areas <span style="opacity:.5;font-size:10px">•••</span>';
-      // Start loading POIs after route is drawn
-      setTimeout(() => loadAllPOIs(), 500);
+      // Only redraw if route geometry changed (not on every open)
+      const routeKey = (origin.lat||0).toFixed(4) + ',' + (destination.lat||0).toFixed(4) + ',' + (roadGeometry?.length||0);
+      if (routeKey !== fmLastRouteKey) {
+        fmLastRouteKey = routeKey;
+        fmLastStepsHash = ''; // force shields to re-add
+        fmRedrawRoute();
+        // Reset chip labels to show loading
+        document.getElementById('chipScale').innerHTML = '⚖️ Scales <span style="opacity:.5;font-size:10px">•••</span>';
+        document.getElementById('chipTruck').innerHTML = '🚛 Truck Stops <span style="opacity:.5;font-size:10px">•••</span>';
+        document.getElementById('chipRest').innerHTML  = '😴 Rest Areas <span style="opacity:.5;font-size:10px">•••</span>';
+        // Start loading POIs after route is drawn
+        setTimeout(() => loadAllPOIs(), 500);
+      } else {
+        // Route hasn't changed — just ensure map is sized correctly
+        // Shields are already on the map, don't re-add
+      }
     }
     document.getElementById('fmHud').style.transform = 'translateY(0)';
   }, 200);
@@ -8542,6 +8577,7 @@ function fmRedrawRoute(coords) {
   // Clear old interstate shields
   interstateMarkersFull.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
   interstateMarkersFull.length = 0;
+  fmLastStepsHash = ''; // force re-add shields after route clear
 
   // ── Glow exterior (muy grueso, muy transparente)
   const glow   = L.polyline(routeCoords,{ color:'#10b981', weight:22, opacity:0.11, interactive:false }).addTo(fmMapInst);
@@ -8578,9 +8614,13 @@ function fmRedrawRoute(coords) {
   fmMarkers = [glow, casing, oMark, dMark];
   fmMapInst.fitBounds(fmLayer.getBounds(), { padding: [70, 70] });
 
-  // ── Escudos de Interstate y US Route sobre la ruta
+  // ── Escudos de Interstate y US Route sobre la ruta (only when steps change)
   if (Array.isArray(navSteps) && navSteps.length){
-    addInterstateMarkers(fmMapInst, navSteps, true);
+    const stepsHash = navSteps.length + '|' + (navSteps[0]?.maneuver?.location || []);
+    if (stepsHash !== fmLastStepsHash) {
+      fmLastStepsHash = stepsHash;
+      addInterstateMarkers(fmMapInst, navSteps, true);
+    }
   }
 }
 
@@ -10125,8 +10165,7 @@ function submitIncident(type, emoji, label) {
   communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
   addReportMarker(report);
-  addIncidentBubble(report);
-  
+  // No bubble on screen — report goes straight to map
   showToast('warning', emoji, `${label} Reportado`,
     'Visible en el mapa de la ruta.', 4000);
   if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
@@ -10268,7 +10307,10 @@ function confirmReport(reportId, isStillThere) {
 let incidentPanelVisible = true;
 let activeIncidentBubbles = {}; // id -> bubble element
 
-function addIncidentBubble(report, autoRemoveMs = 30 * 60 * 1000) {
+function addIncidentBubble(report, autoRemoveMs = 5000) {
+  // RULE: Only 1 bubble visible at a time — clear all existing first
+  clearAllIncidentBubbles();
+
   const panel = document.getElementById('incidentPanel');
   if (!panel) return;
   const cfg = REPORT_ICONS[report.type] || { emoji:'⚠️', color:'#f59e0b', label:'Alerta' };
@@ -10286,13 +10328,21 @@ function addIncidentBubble(report, autoRemoveMs = 30 * 60 * 1000) {
     <div class="ib-label">${cfg.label}</div>
     <div class="ib-close" onclick="removeIncidentBubble('${report.id}',event)">✕</div>
   `;
-  bubble.addEventListener('click', () => showIncidentDetail(report, dist));
+  bubble.addEventListener('click', () => { showIncidentDetail(report, dist); removeIncidentBubble(report.id); });
 
   panel.appendChild(bubble);
   activeIncidentBubbles[report.id] = bubble;
 
-  // Auto-remove from screen after specified time (default 30 min, quick reports use 2s)
+  // Auto-dismiss after autoRemoveMs (default 5 seconds)
   setTimeout(() => removeIncidentBubble(report.id), autoRemoveMs);
+}
+
+function clearAllIncidentBubbles() {
+  Object.keys(activeIncidentBubbles).forEach(id => {
+    const b = activeIncidentBubbles[id];
+    if (b) { b.remove(); }
+    delete activeIncidentBubbles[id];
+  });
 }
 
 function removeIncidentBubble(id, e) {
@@ -10324,34 +10374,40 @@ function showIncidentDetail(report, dist) {
   );
 }
 
-// Check if any reports are within 3 miles — show bubble (NOT fullscreen)
+// Check if any reports are within 5 miles — show ONE bubble for closest priority alert
 let lastReportAlertId = null;
+let _shownNearbyIds = new Set();
 function checkNearbyReports(lat, lon) {
-  communityReports.forEach(r => {
-    const dist = haversine(lat, lon, r.lat, r.lon);
-    if (dist < 5 && !activeIncidentBubbles[r.id]) {
-      // Show incident bubble on left panel
-      addIncidentBubble(r);
-      // Show toggle button if not visible
-      
-      // Small vibration for warning
-      const cfg = REPORT_ICONS[r.type] || {};
-      if (navigator.vibrate && cfg.warn) navigator.vibrate([100, 50, 100]);
-      // Show a small toast (not fullscreen)
-      showToast(
-        cfg.warn ? 'danger' : 'warning',
-        cfg.emoji || '⚠️',
-        `${cfg.label || r.label} — ${dist.toFixed(1)}mi`,
-        'Ver panel izquierdo para detalles',
-        5000
-      );
-    }
-    // Update distance on existing bubble
-    if (activeIncidentBubbles[r.id]) {
-      const distEl = activeIncidentBubbles[r.id].querySelector('.ib-dist');
-      if (distEl) distEl.textContent = dist.toFixed(1) + 'mi';
-    }
+  // Find all nearby reports not yet shown
+  const nearby = communityReports
+    .filter(r => haversine(lat, lon, r.lat, r.lon) < 5 && !_shownNearbyIds.has(r.id))
+    .sort((a, b) => {
+      // Priority order: accident > police > inspection > hazard > others
+      const pri = ['accident','police','inspection','hazard'];
+      const pa = pri.indexOf(a.type), pb = pri.indexOf(b.type);
+      if (pa !== pb) return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb);
+      return haversine(lat, lon, a.lat, a.lon) - haversine(lat, lon, b.lat, b.lon);
+    });
+
+  if (!nearby.length) return;
+
+  // Mark all as seen so they don't repeat
+  nearby.forEach(r => _shownNearbyIds.add(r.id));
+
+  // Show ONE bubble for the top priority report
+  const top = nearby[0];
+  addIncidentBubble(top, 6000);
+
+  // Show toast for remaining (up to 2 more)
+  nearby.slice(1, 3).forEach(r => {
+    const cfg = REPORT_ICONS[r.type] || { emoji:'⚠️', label: r.type };
+    const dist = haversine(lat, lon, r.lat, r.lon).toFixed(1);
+    showToast('warning', cfg.emoji, cfg.label, dist + ' mi ahead', 4000);
   });
+
+  // Vibrate for high-priority
+  const cfg = REPORT_ICONS[top.type] || {};
+  if (navigator.vibrate && cfg.warn) navigator.vibrate([30, 20, 60]);
 }
 
 // Legacy startTracking/stopTracking still used by old monitor modal
@@ -12347,6 +12403,10 @@ function dismissRouteAlert(id) {
 /* ── Hook: start monitor when route is calculated ── */
 const _origCalcRoute2 = calculateRoute;
 calculateRoute = async function() {
+  fmLastRouteKey = ''; // force full redraw on next map open
+  fmLastStepsHash = '';
+  _shownNearbyIds = new Set(); // reset nearby alerts for new route
+  clearAllIncidentBubbles();
   await _origCalcRoute2();
   // Start monitoring after route geometry is available
   setTimeout(() => {
@@ -12450,6 +12510,34 @@ function voteReportClear(id, btn) {
     showToast('info','✅','All clear vote registered',
       clearCount + '/4 drivers say it\'s gone', 2500);
   }
+}
+
+
+/* ── Highway Shield Toggle ── */
+function toggleInterstateShields(on) {
+  showInterstateShields = on;
+  localStorage.setItem('hos_show_shields', on ? 'true' : 'false');
+
+  if (!on) {
+    // Remove all existing shield markers immediately
+    interstateMarkersFull.forEach(m => { try { if(fmMapInst) fmMapInst.removeLayer(m); } catch {} });
+    interstateMarkersFull.length = 0;
+    interstateMarkersMini.forEach(m => { try { const map = document.querySelector('#miniMap')?._leaflet_map; if(map) map.removeLayer(m); } catch {} });
+    interstateMarkersMini.length = 0;
+    fmLastStepsHash = 'disabled'; // prevent auto-re-add
+  } else {
+    // Re-enable — force redraw on next map interaction
+    fmLastStepsHash = '';
+    if (fmMapInst && navSteps?.length) {
+      addInterstateMarkers(fmMapInst, navSteps, true);
+    }
+  }
+
+  // Update settings toggle UI
+  const sw = document.getElementById('shieldToggleSwitch');
+  if (sw) sw.classList.toggle('on', on);
+  const lbl = document.getElementById('shieldToggleLabel');
+  if (lbl) lbl.textContent = on ? 'Highway shields: On' : 'Highway shields: Off';
 }
 
 init();
