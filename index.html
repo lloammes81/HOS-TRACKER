@@ -3414,6 +3414,15 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .comm-clear-btn.clear.voted-clear .comm-vote-cnt { color: #ef4444; }
 
+/* ── HUD MANEJO ring states ───────────────────────────── */
+#driveHoursWidget { display:none !important; }
+#profileFab { display:none !important; visibility:hidden !important; pointer-events:none !important; }
+#hudManejoCell { transition:transform .4s cubic-bezier(.34,1.56,.64,1),background .4s,box-shadow .4s,border-color .4s; transform-origin:center; }
+#hudManejoCell.driving { transform:scale(1.3); background:rgba(10,16,30,0.98) !important; border-color:#10b981 !important; box-shadow:0 0 0 2px rgba(16,185,129,.25),0 0 18px rgba(16,185,129,.5); }
+#hudManejoCell.warn    { border-color:#f59e0b !important; box-shadow:0 0 0 2px rgba(245,158,11,.25),0 0 14px rgba(245,158,11,.45); }
+#hudManejoCell.critical { border-color:#ef4444 !important; box-shadow:0 0 0 2px rgba(239,68,68,.3),0 0 16px rgba(239,68,68,.55); animation:hudDhPulse 1.3s ease-in-out infinite; }
+@keyframes hudDhPulse { 0%,100%{box-shadow:0 0 0 2px rgba(239,68,68,.3),0 0 16px rgba(239,68,68,.55)} 50%{box-shadow:0 0 0 4px rgba(239,68,68,.15),0 0 28px rgba(239,68,68,.7)} }
+
 </style>
 
 <style id="fmHudCompactStyles">
@@ -4908,20 +4917,7 @@ body.dark #fullMap .leaflet-tile-pane {
   <button id="reportFab" onclick="toggleReportSheet()" title="Reportar incidente">⚠️</button>
 
   <!-- PROFILE FAB BUTTON — below speed limit sign, right side -->
-  <button id="profileFab" onclick="openProfileModal()" title="Mi Perfil" style="
-    display:none;
-    position:fixed;
-    top:calc(70px + env(safe-area-inset-top,0px) + 72px + 10px);
-    right:calc(8px + env(safe-area-inset-right,0px));
-    z-index:4001;
-    width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.15);
-    background:linear-gradient(135deg,#3b82f6,#6366f1);
-    color:#fff;font-size:20px;cursor:pointer;
-    box-shadow:0 4px 14px rgba(59,130,246,0.5);
-    display:none;align-items:center;justify-content:center;
-    transition:transform .2s;font-family:'DM Sans',sans-serif;
-    overflow:hidden;
-  ">👤</button>
+  <!-- profileFab REMOVED -->
 
   <!-- QUICK REPORT ACTION SHEET -->
   <div id="reportSheet">
@@ -5149,21 +5145,21 @@ body.dark #fullMap .leaflet-tile-pane {
     </div>
 
     <!-- 4 stat bubbles: LLEGADA · MANEJO-ring · RESTANTE · 70 HRS -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:12px">
+    <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr 1fr;gap:4px;margin-bottom:12px;align-items:center">
       <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
         <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmEtaLbl">LLEGADA</div>
         <div style="font-size:15px;font-weight:900;color:#f59e0b;line-height:1" id="fmEta">--</div>
       </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:6px 3px;text-align:center">
-        <div style="font-size:7px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px" id="fmDriveLbl">MANEJO</div>
-        <div style="position:relative;width:34px;height:34px;margin:0 auto">
-          <svg viewBox="0 0 36 36" width="34" height="34" style="transform:rotate(-90deg)">
-            <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="3"/>
-            <circle id="hudDhArc" cx="18" cy="18" r="14" fill="none" stroke="#10b981" stroke-width="3"
-                    stroke-linecap="round" stroke-dasharray="0 88" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+      <div id="hudManejoCell" style="background:rgba(10,16,30,0.9);border:2px solid rgba(16,185,129,0.3);border-radius:14px;padding:7px 4px;text-align:center;transition:transform .4s cubic-bezier(.34,1.56,.64,1),background .4s,box-shadow .4s,border-color .4s;transform-origin:center">
+        <div style="font-size:7px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px" id="fmDriveLbl">MANEJO</div>
+        <div style="position:relative;width:46px;height:46px;margin:0 auto">
+          <svg viewBox="0 0 50 50" width="46" height="46" style="transform:rotate(-90deg)">
+            <circle cx="25" cy="25" r="20" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="4"/>
+            <circle id="hudDhArc" cx="25" cy="25" r="20" fill="none" stroke="#10b981" stroke-width="4"
+                    stroke-linecap="round" stroke-dasharray="0 126" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
-            <span id="fmDriveLeft" style="font-size:10px;font-weight:900;color:#10b981;line-height:1">11h</span>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <span id="fmDriveLeft" style="font-size:13px;font-weight:900;color:#10b981;line-height:1;font-family:'Bebas Neue',sans-serif;letter-spacing:.5px">11h</span>
           </div>
         </div>
       </div>
@@ -6426,8 +6422,8 @@ function hideSpeedometer() {
 
 /* ── DRIVING HOURS WIDGET ─────────────────────────────────── */
 function showDriveHoursWidget() {
-  document.getElementById('driveHoursWidget').classList.add('visible');
-  applyDriveHoursPos();
+  // driveHoursWidget removed from map — ring lives in HUD bottom bar
+  // document.getElementById('driveHoursWidget').classList.add('visible');
 }
 
 function hideDriveHoursWidget() {
@@ -6480,19 +6476,25 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   label.textContent = lang === 'es' ? 'HORAS DE MANEJO' : 'DRIVING LEFT';
 
   // Also update mini HUD ring (in the compact bubble strip)
-  const hudArc = document.getElementById('hudDhArc');
+  const hudArc  = document.getElementById('hudDhArc');
   const hudText = document.getElementById('fmDriveLeft');
+  const hudCell = document.getElementById('hudManejoCell');
   if (hudArc) {
     hudArc.style.stroke = arcColor;
-    const hudPct = Math.max(0, Math.min(1, hoursLeft / Math.max(1, maxHours)));
-    const hudDash = hudPct * 87.96; // r=14 circumference ≈ 87.96
-    hudArc.setAttribute('stroke-dasharray', `${hudDash.toFixed(1)} 88`);
+    const hudPct  = Math.max(0, Math.min(1, hoursLeft / Math.max(1, maxHours)));
+    const hudDash = hudPct * 125.66; // r=20, circumference = 2π×20 ≈ 125.66
+    hudArc.setAttribute('stroke-dasharray', `${hudDash.toFixed(1)} 126`);
   }
   if (hudText) {
     const tm = Math.round(hoursLeft * 60);
     const hh = Math.floor(tm / 60), mm = tm % 60;
     hudText.textContent = hh > 0 ? `${hh}h${mm > 0 ? mm : ''}` : `${mm}m`;
     hudText.style.color = arcColor;
+  }
+  // Color-code the HUD cell border to match severity
+  if (hudCell) {
+    hudCell.classList.toggle('warn',     isWarn && !isCritical);
+    hudCell.classList.toggle('critical', isCritical);
   }
 }
 
@@ -8718,30 +8720,53 @@ let fmTruckEl = null;  // the inner div element for rotation
 
 function buildTruckIconHTML(heading, isMoving) {
   const rot = heading != null ? heading : 0;
+  const cab  = isMoving ? '#10b981' : '#6b7280';   // cab color matches speedometer green
+  const trl  = isMoving ? '#0d9488' : '#4b5563';   // trailer slightly darker
+  const glow = isMoving ? 'rgba(16,185,129,0.55)' : 'rgba(107,114,128,0.3)';
+  const tire  = isMoving ? '#10b981' : '#6b7280';
   return `
     <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
          style="transform:rotate(${rot}deg);transition:transform 0.6s cubic-bezier(.4,0,.2,1)">
       <div class="truck-glow"></div>
       <div class="truck-pulse"></div>
-      <svg viewBox="0 0 52 52" width="52" height="52" style="position:relative;z-index:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))">
-        <rect x="20" y="10" width="24" height="20" rx="4" fill="${isMoving?'#10b981':'#6b7280'}" stroke="#fff" stroke-width="1.5"/>
-        <rect x="23" y="13" width="18" height="10" rx="2" fill="rgba(200,240,255,0.85)" stroke="rgba(255,255,255,.5)" stroke-width="1"/>
-        <circle cx="22" cy="28" r="2" fill="${isMoving?'#fde047':'#4b5563'}"/>
-        <circle cx="42" cy="28" r="2" fill="${isMoving?'#fde047':'#4b5563'}"/>
-        <rect x="2" y="16" width="20" height="14" rx="2" fill="${isMoving?'#0d9488':'#4b5563'}" stroke="#fff" stroke-width="1.2"/>
-        <line x1="12" y1="17" x2="12" y2="29" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
-        <line x1="7"  y1="17" x2="7"  y2="29" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
-        <line x1="17" y1="17" x2="17" y2="29" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
-        <circle cx="26" cy="32" r="5" fill="#1f2937" stroke="${isMoving?'#10b981':'#6b7280'}" stroke-width="1.5"/>
-        <circle cx="26" cy="32" r="2" fill="#374151"/>
-        <circle cx="38" cy="32" r="5" fill="#1f2937" stroke="${isMoving?'#10b981':'#6b7280'}" stroke-width="1.5"/>
-        <circle cx="38" cy="32" r="2" fill="#374151"/>
-        <circle cx="7"  cy="32" r="4" fill="#1f2937" stroke="${isMoving?'#0d9488':'#4b5563'}" stroke-width="1.2"/>
-        <circle cx="7"  cy="32" r="1.5" fill="#374151"/>
-        <circle cx="15" cy="32" r="4" fill="#1f2937" stroke="${isMoving?'#0d9488':'#4b5563'}" stroke-width="1.2"/>
-        <circle cx="15" cy="32" r="1.5" fill="#374151"/>
-        <rect x="42" y="6" width="3" height="8" rx="1.5" fill="#6b7280"/>
-        <polygon points="34,5 30,12 38,12" fill="${isMoving?'#10b981':'#9ca3af'}" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>
+      <svg viewBox="0 0 40 72" width="40" height="72" style="position:relative;z-index:1;filter:drop-shadow(0 3px 10px rgba(0,0,0,.65))">
+        <!-- ── TRAILER body ── -->
+        <rect x="8" y="22" width="24" height="38" rx="2" fill="${trl}" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+        <!-- trailer ribs -->
+        <line x1="8" y1="32" x2="32" y2="32" stroke="rgba(255,255,255,.12)" stroke-width=".8"/>
+        <line x1="8" y1="42" x2="32" y2="42" stroke="rgba(255,255,255,.12)" stroke-width=".8"/>
+        <line x1="8" y1="52" x2="32" y2="52" stroke="rgba(255,255,255,.12)" stroke-width=".8"/>
+        <!-- trailer rear reflector strip -->
+        <rect x="8" y="57" width="24" height="2" rx="1" fill="rgba(255,200,0,0.7)"/>
+        <!-- ── rear axle tires (dual) ── -->
+        <rect x="4"  y="48" width="4" height="8" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
+        <rect x="32" y="48" width="4" height="8" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
+        <rect x="4"  y="56" width="4" height="8" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
+        <rect x="32" y="56" width="4" height="8" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
+        <!-- ── fifth wheel coupling ── -->
+        <ellipse cx="20" cy="24" rx="5" ry="3" fill="rgba(0,0,0,.4)" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
+        <!-- ── CAB body ── -->
+        <rect x="9" y="4" width="22" height="20" rx="4" fill="${cab}" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
+        <!-- cab windshield -->
+        <rect x="12" y="7" width="16" height="9" rx="2" fill="rgba(180,230,255,0.75)" stroke="rgba(255,255,255,.4)" stroke-width=".8"/>
+        <!-- cab hood bulge -->
+        <rect x="13" y="3" width="14" height="5" rx="2" fill="${cab}" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+        <!-- ── front bumper ── -->
+        <rect x="10" y="1" width="20" height="3" rx="1.5" fill="rgba(255,255,255,.5)"/>
+        <!-- ── headlights ── -->
+        <ellipse cx="13" cy="2.5" rx="2.5" ry="1.5" fill="${isMoving?'#fef08a':'#d1d5db'}"/>
+        <ellipse cx="27" cy="2.5" rx="2.5" ry="1.5" fill="${isMoving?'#fef08a':'#d1d5db'}"/>
+        <!-- ── front axle tires ── -->
+        <rect x="4"  y="16" width="5" height="7" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
+        <rect x="31" y="16" width="5" height="7" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
+        <!-- ── exhaust stacks (top of cab) ── -->
+        <rect x="10" y="5" width="2" height="6" rx="1" fill="#374151" stroke="rgba(255,255,255,.2)" stroke-width=".5"/>
+        <rect x="28" y="5" width="2" height="6" rx="1" fill="#374151" stroke="rgba(255,255,255,.2)" stroke-width=".5"/>
+        ${isMoving ? `<!-- exhaust smoke -->
+        <circle cx="11" cy="4" r="1.5" fill="rgba(200,200,200,0.4)"/>
+        <circle cx="29" cy="4" r="1.5" fill="rgba(200,200,200,0.4)"/>` : ''}
+        <!-- ── direction arrow on cab ── -->
+        <polygon points="20,0 17,5 23,5" fill="${isMoving?'#fef08a':'rgba(255,255,255,.4)'}"/>
       </svg>
     </div>`;
 }
@@ -8794,7 +8819,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   if (!fmGpsMarker) {
     // First placement — create marker
     const html  = buildTruckIconHTML(heading, isMoving);
-    const icon  = L.divIcon({ className: '', html, iconAnchor: [26, 26], iconSize: [52, 52] });
+    const icon  = L.divIcon({ className: '', html, iconAnchor: [20, 36], iconSize: [40, 72] });
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
 
@@ -9112,6 +9137,10 @@ async function fmStartTracking() {
     chip.textContent  = isMoving ? '🚛 ' + (lang==='es'?'Manejando':'Driving') : '⏸ ' + (lang==='es'?'Detenido':'Stopped');
     chip.style.background = isMoving ? 'rgba(16,185,129,0.2)' : 'rgba(107,114,128,0.2)';
     chip.style.color      = isMoving ? '#10b981' : '#9ca3af';
+
+    // HUD MANEJO ring — scale up when truck is moving
+    const _hudCell = document.getElementById('hudManejoCell');
+    if (_hudCell) _hudCell.classList.toggle('driving', isMoving);
 
     document.getElementById('fmPct').textContent = pct + '%';
     document.getElementById('fmBar').style.width = pct + '%';
