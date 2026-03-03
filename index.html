@@ -2852,9 +2852,6 @@ body.dark #fullMap .leaflet-tile-pane {
   /* ════════════════════════════════════════════════════════════
      🛠️  TOOLS PAGE
   ════════════════════════════════════════════════════════════ */
-  #page-tools { display: none; }
-  #page-tools.active { display: block; }
-
   .tools-page-header {
     padding: 16px 16px 12px;
     background: linear-gradient(160deg, #091525 0%, #0a2015 100%);
@@ -2902,9 +2899,6 @@ body.dark #fullMap .leaflet-tile-pane {
   /* ════════════════════════════════════════════════════════════
      👥  COMMUNITY PAGE
   ════════════════════════════════════════════════════════════ */
-  #page-community { display: none; }
-  #page-community.active { display: block; }
-
   .comm-page-header {
     padding: 16px 16px 14px;
     background: linear-gradient(160deg, #13082a 0%, #1a0a35 100%);
@@ -2961,6 +2955,54 @@ body.dark #fullMap .leaflet-tile-pane {
   .comm-add-btn.accident { background: rgba(127,29,29,.15); border: 1.5px solid rgba(239,68,68,.3); color: #ef4444; }
   .comm-add-btn.hazard   { background: rgba(124,45,18,.15); border: 1.5px solid rgba(245,158,11,.3); color: #f59e0b; }
   .comm-add-btn.traffic  { background: rgba(20,83,45,.12); border: 1.5px solid rgba(16,185,129,.3); color: #10b981; }
+
+
+  /* ════════════════════════════════════════════════════════════
+     🔘  TOOL PAGE BUTTONS (Tools & Community tabs)
+  ════════════════════════════════════════════════════════════ */
+  .tool-page-btn {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; padding: 16px 14px;
+    background: var(--tcbg, var(--surface2));
+    border: 1.5px solid var(--tcbdr, var(--border));
+    border-radius: 16px;
+    cursor: pointer; touch-action: manipulation;
+    margin-bottom: 12px;
+    transition: transform .12s, border-color .15s;
+    -webkit-tap-highlight-color: transparent;
+    text-align: left;
+  }
+  .tool-page-btn:active { transform: scale(.97); }
+  .tpb-icon {
+    width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.25);
+  }
+  .tpb-info { flex: 1; min-width: 0; }
+  .tpb-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 800; color: var(--text); line-height: 1.1;
+    margin-bottom: 3px;
+  }
+  .tpb-sub {
+    font-size: 11px; color: var(--muted); font-weight: 600; line-height: 1.4;
+  }
+  .tpb-arrow {
+    font-size: 22px; color: var(--tclr, var(--muted));
+    font-weight: 300; flex-shrink: 0; position: relative;
+    line-height: 1;
+  }
+
+  /* Active reset indicator on arrow */
+  .tpb-arrow.reset-active { color: #ef4444; }
+  .tpb-arrow.reset-active::before {
+    content: '';
+    position: absolute; top: -2px; right: -2px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ef4444;
+    animation: heroPulse 1.8s infinite;
+  }
 
 </style>
 
@@ -3042,28 +3084,28 @@ body.dark #fullMap .leaflet-tile-pane {
 <div class="App" data-scroll>
   <!-- TAB BAR -->
   <div class="tab-bar">
-    <button class="tab-btn active" data-tab="plan">
+    <button class="tab-btn active" data-tab="plan" onclick="switchTab('plan')">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span id="tabLblPlan">Plan</span>
     </button>
-    <button class="tab-btn" data-tab="drives">
+    <button class="tab-btn" data-tab="drives" onclick="switchTab('drives')">
       <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
       <span id="tabLblDrives">Drives</span>
     </button>
-    <button class="tab-btn" data-tab="summary">
+    <button class="tab-btn" data-tab="summary" onclick="switchTab('summary')">
       <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       <span id="tabLblSummary">Summary</span>
     </button>
-    <button class="tab-btn" data-tab="tools">
+    <button class="tab-btn" data-tab="tools" onclick="switchTab('tools')">
       <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
       <span>Tools</span>
     </button>
-    <button class="tab-btn" data-tab="community">
+    <button class="tab-btn" data-tab="community" onclick="switchTab('community')">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <span id="commTabLbl">Community</span>
       <span class="comm-count-badge" id="commTabBadge" style="top:3px;right:calc(50% - 18px)"></span>
     </button>
-    <button class="tab-btn" data-tab="settings">
+    <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span id="tabLblSettings">Settings</span>
     </button>
@@ -3191,9 +3233,6 @@ body.dark #fullMap .leaflet-tile-pane {
             </div>
           </div>
 
-          <!-- Dynamic waypoints will be inserted here by JS -->
-          <div id="waypointsArea"></div>
-
           <!-- Destination -->
           <div class="stop-row" id="stopRowDest">
             <div class="stop-dot dest">🏁</div>
@@ -3202,6 +3241,9 @@ body.dark #fullMap .leaflet-tile-pane {
               <div class="suggestions" id="destSugg" style="display:none"></div>
             </div>
           </div>
+
+          <!-- Dynamic waypoints are inserted BELOW destination by JS -->
+          <div id="waypointsArea"></div>
         </div>
 
         <!-- Add stop button -->
@@ -3860,158 +3902,72 @@ body.dark #fullMap .leaflet-tile-pane {
 
       <div style="height:20px"></div>
     </div>
+  </div>
+
   <!-- TOOLS PAGE -->
   <div class="page" id="page-tools">
     <div class="container">
+
+      <!-- Header -->
       <div class="tools-page-header">
         <div class="tools-page-title">🛠️ Driver Tools</div>
-        <div class="tools-page-sub">Freight Calculator · DOT Lookup · HOS Reset</div>
+        <div class="tools-page-sub">Freight · DOT Lookup · HOS Reset</div>
       </div>
 
-      <!-- FREIGHT CALCULATOR -->
-      <div class="tool-inline-card">
-        <div class="tool-inline-hdr">
-          <div class="tool-inline-icon" style="background:linear-gradient(135deg,#10b981,#059669)">💰</div>
-          <div>
-            <div class="tool-inline-title">Freight Calculator</div>
-            <div class="tool-inline-sub">Estimate trip earnings &amp; fuel cost</div>
-          </div>
+      <!-- Tool Buttons -->
+      <button class="tool-page-btn" onclick="openFreightCalc()" style="--tclr:#10b981;--tcbg:rgba(16,185,129,.1);--tcbdr:rgba(16,185,129,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#10b981,#059669)">💰</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Freight Calculator</div>
+          <div class="tpb-sub">Estimate earnings, fuel cost &amp; net rate per mile</div>
         </div>
-        <div class="tool-inline-body">
-          <div class="frt-row">
-            <div class="frt-field">
-              <div class="frt-label">Miles</div>
-              <input class="frt-input" type="number" id="frtMiles2" placeholder="0" min="1" oninput="calcFreightInline()" inputmode="decimal"/>
-            </div>
-            <div class="frt-field">
-              <div class="frt-label">Rate / Mile</div>
-              <div class="frt-prefix-wrap"><span class="frt-prefix">$</span>
-                <input class="frt-input" type="number" id="frtRate2" placeholder="2.50" step="0.01" oninput="calcFreightInline()" inputmode="decimal"/>
-              </div>
-            </div>
-          </div>
-          <div class="frt-row">
-            <div class="frt-field">
-              <div class="frt-label">Fuel / Gallon</div>
-              <div class="frt-prefix-wrap"><span class="frt-prefix">$</span>
-                <input class="frt-input" type="number" id="frtFuelPrice2" placeholder="3.80" step="0.01" oninput="calcFreightInline()" inputmode="decimal"/>
-              </div>
-            </div>
-            <div class="frt-field">
-              <div class="frt-label">MPG</div>
-              <input class="frt-input" type="number" id="frtMpg2" placeholder="6.5" step="0.1" min="1" oninput="calcFreightInline()" inputmode="decimal"/>
-            </div>
-          </div>
-          <div class="frt-row" style="grid-template-columns:1fr">
-            <div class="frt-field">
-              <div class="frt-label">Other Expenses (tolls, etc.)</div>
-              <div class="frt-prefix-wrap"><span class="frt-prefix">$</span>
-                <input class="frt-input" type="number" id="frtOther2" placeholder="0" min="0" oninput="calcFreightInline()" inputmode="decimal"/>
-              </div>
-            </div>
-          </div>
-          <div class="frt-result">
-            <div class="frt-result-label">Net Earnings</div>
-            <div class="frt-result-main" id="frtNet2">$0.00</div>
-            <div class="frt-result-sub" id="frtNetSub2">Enter values above to calculate</div>
-          </div>
-          <div class="frt-breakdown">
-            <div class="frt-break-card"><div class="frt-break-val" id="frtGross2">$0</div><div class="frt-break-lbl">Gross</div></div>
-            <div class="frt-break-card"><div class="frt-break-val" id="frtFuelCost2">$0</div><div class="frt-break-lbl">Fuel</div></div>
-            <div class="frt-break-card"><div class="frt-break-val" id="frtPerMile2">$0</div><div class="frt-break-lbl">Net/Mile</div></div>
-          </div>
-        </div>
-      </div>
+        <div class="tpb-arrow">›</div>
+      </button>
 
-      <!-- DOT LOOKUP -->
-      <div class="tool-inline-card">
-        <div class="tool-inline-hdr">
-          <div class="tool-inline-icon" style="background:linear-gradient(135deg,#1d4ed8,#2563eb)">🔍</div>
-          <div>
-            <div class="tool-inline-title">DOT Lookup</div>
-            <div class="tool-inline-sub">Search carrier by DOT number</div>
-          </div>
+      <button class="tool-page-btn" onclick="openDotLookup()" style="--tclr:#3b82f6;--tcbg:rgba(59,130,246,.1);--tcbdr:rgba(59,130,246,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#1d4ed8,#2563eb)">🔍</div>
+        <div class="tpb-info">
+          <div class="tpb-title">DOT Number Lookup</div>
+          <div class="tpb-sub">Search carrier info from FMCSA database</div>
         </div>
-        <div class="tool-inline-body">
-          <div class="dot-search-row">
-            <input class="dot-search-input" type="number" id="dotInput2" placeholder="Enter DOT number (e.g. 123456)" inputmode="numeric"/>
-            <button class="dot-search-btn" onclick="searchDOTInline()">Search</button>
-          </div>
-          <div class="dot-error" id="dotError2"></div>
-          <div class="dot-loading" id="dotLoading2">🔍 Searching FMCSA database...</div>
-          <div class="dot-result" id="dotResult2">
-            <div class="dot-result-hdr">
-              <div class="dot-badge">DOT</div>
-              <div class="dot-company" id="dotCompanyName2">—</div>
-            </div>
-            <div class="dot-row"><span class="dot-key">DOT Number</span><span class="dot-val" id="dotNumber2">—</span></div>
-            <div class="dot-row"><span class="dot-key">MC Number</span><span class="dot-val" id="dotMC2">—</span></div>
-            <div class="dot-row"><span class="dot-key">Status</span><span class="dot-val" id="dotStatus2">—</span></div>
-            <div class="dot-row"><span class="dot-key">Safety Rating</span><span class="dot-val" id="dotSafety2">—</span></div>
-            <div class="dot-row"><span class="dot-key">Power Units</span><span class="dot-val" id="dotUnits2">—</span></div>
-            <div class="dot-row"><span class="dot-key">Drivers</span><span class="dot-val" id="dotDrivers2">—</span></div>
-            <div class="dot-row"><span class="dot-key">State</span><span class="dot-val" id="dotState2">—</span></div>
-          </div>
-          <div class="dot-disclaimer" style="margin-top:10px">⚠️ Always verify at <strong>safer.fmcsa.dot.gov</strong></div>
-        </div>
-      </div>
+        <div class="tpb-arrow">›</div>
+      </button>
 
-      <!-- 34-HOUR RESET -->
-      <div class="tool-inline-card">
-        <div class="tool-inline-hdr">
-          <div class="tool-inline-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626)">⏰</div>
-          <div>
-            <div class="tool-inline-title">34-Hour Reset</div>
-            <div class="tool-inline-sub">FMCSA Cycle Restart · 34 CFR 395.3</div>
-          </div>
+      <button class="tool-page-btn" onclick="openResetSheet()" style="--tclr:#ef4444;--tcbg:rgba(239,68,68,.1);--tcbdr:rgba(239,68,68,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626)">⏰</div>
+        <div class="tpb-info">
+          <div class="tpb-title">34-Hour Reset</div>
+          <div class="tpb-sub">Countdown timer &amp; FMCSA cycle restart rules</div>
         </div>
-        <div class="tool-inline-body">
-          <div class="reset-big-timer">
-            <div class="reset-big-label" id="resetTimerLabel2">Time Until Reset Complete</div>
-            <div class="reset-big-time" id="resetBigTime2">34:00:00</div>
-            <div class="reset-big-sub" id="resetBigSub2">Start your 34-hour off-duty period</div>
-          </div>
-          <div class="reset-info-grid">
-            <div class="reset-info-card">
-              <div class="reset-info-val">70h</div>
-              <div class="reset-info-lbl">Hours Regained</div>
-            </div>
-            <div class="reset-info-card">
-              <div class="reset-info-val" id="resetEndTime2">--:--</div>
-              <div class="reset-info-lbl">Reset Completes</div>
-            </div>
-          </div>
-          <div class="reset-rules">
-            <div class="reset-rules-title">📋 Key FMCSA Rules</div>
-            <div class="reset-rule-item"><div class="reset-rule-dot"></div><div class="reset-rule-text">34 consecutive hours off-duty required</div></div>
-            <div class="reset-rule-item"><div class="reset-rule-dot"></div><div class="reset-rule-text">Must include two 1AM–5AM periods (home terminal)</div></div>
-            <div class="reset-rule-item"><div class="reset-rule-dot"></div><div class="reset-rule-text">Only one restart per 168-hour period allowed</div></div>
-          </div>
-          <button class="reset-start-btn" id="resetStartBtn2" onclick="startResetCountdownInline()">⏰ Start 34-Hour Reset Now</button>
-          <button class="reset-cancel-btn" id="resetCancelBtn2" style="display:none" onclick="cancelResetCountdownInline()">✕ Cancel Reset</button>
-        </div>
-      </div>
+        <div class="tpb-arrow" id="resetArrowStatus">›</div>
+      </button>
+
     </div>
   </div>
 
   <!-- COMMUNITY PAGE -->
   <div class="page" id="page-community">
     <div class="container">
+
+      <!-- Header -->
       <div class="comm-page-header">
         <div style="padding-top:calc(var(--header-pt) - 8px)"></div>
-        <div class="comm-page-title">👥 Community Reports</div>
+        <div class="comm-page-title">👥 Community</div>
         <div class="comm-page-sub" id="commPageSub">Live road conditions from truckers</div>
-        <div class="comm-page-chips">
-          <div class="comm-page-chip active" data-filter="all"        onclick="filterCommPage(this,'all')">All</div>
-          <div class="comm-page-chip" data-filter="police"     onclick="filterCommPage(this,'police')">🚔 Police</div>
-          <div class="comm-page-chip" data-filter="accident"   onclick="filterCommPage(this,'accident')">💥 Accident</div>
-          <div class="comm-page-chip" data-filter="hazard"     onclick="filterCommPage(this,'hazard')">⚠️ Hazard</div>
-          <div class="comm-page-chip" data-filter="traffic"    onclick="filterCommPage(this,'traffic')">🚦 Traffic</div>
-          <div class="comm-page-chip" data-filter="inspection" onclick="filterCommPage(this,'inspection')">🔍 Inspection</div>
-        </div>
       </div>
 
-      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px">📍 Quick Report</div>
+      <!-- Open Panel Button -->
+      <button class="tool-page-btn" onclick="openCommunityPanel()" style="--tclr:#a78bfa;--tcbg:rgba(124,58,237,.1);--tcbdr:rgba(124,58,237,.3);margin-bottom:16px">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">👥</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Community Reports</div>
+          <div class="tpb-sub" id="commBtnSub">See reports near you · add your own</div>
+        </div>
+        <div class="tpb-arrow" style="position:relative">›<span class="comm-count-badge" id="commPageBtnBadge" style="top:-8px;right:-6px"></span></div>
+      </button>
+
+      <!-- Quick report shortcuts -->
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px">⚡ Quick Report</div>
       <div class="comm-add-report-row">
         <button class="comm-add-btn police"   onclick="quickReportPage('police','🚔','Police')">🚔 Police</button>
         <button class="comm-add-btn accident" onclick="quickReportPage('accident','💥','Accident')">💥 Crash</button>
@@ -4019,16 +3975,16 @@ body.dark #fullMap .leaflet-tile-pane {
         <button class="comm-add-btn traffic"  onclick="quickReportPage('traffic','🚦','Traffic')">🚦 Traffic</button>
       </div>
 
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;color:var(--muted)" id="commPageStats">Loading…</div>
-        <button onclick="refreshCommPage()" style="background:none;border:none;color:var(--accent);font-size:12px;font-weight:800;cursor:pointer;padding:4px 8px">🔄 Refresh</button>
+      <!-- Recent reports preview -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)">📡 Recent Reports</div>
+        <button onclick="refreshCommPage()" style="background:none;border:none;color:var(--accent);font-size:12px;font-weight:800;cursor:pointer;padding:4px 8px;touch-action:manipulation">🔄 Refresh</button>
       </div>
-
       <div id="commPageList"></div>
+
     </div>
   </div>
 
-  </div>
 </div>
 
 <!-- ============================================================
@@ -11154,9 +11110,21 @@ function refreshCommPage() {
 
 function updateCommTabBadge(count) {
   const b = document.getElementById('commTabBadge');
-  if (!b) return;
-  if (count > 0) { b.textContent = count > 9 ? '9+' : count; b.style.display = 'block'; }
-  else { b.style.display = 'none'; }
+  if (b) {
+    if (count > 0) { b.textContent = count > 9 ? '9+' : count; b.style.display = 'block'; }
+    else { b.style.display = 'none'; }
+  }
+  // Also update page button badge
+  const b2 = document.getElementById('commPageBtnBadge');
+  if (b2) {
+    if (count > 0) { b2.textContent = count > 9 ? '9+' : count; b2.style.display = 'block'; }
+    else { b2.style.display = 'none'; }
+  }
+  // Update sub text
+  const sub = document.getElementById('commBtnSub');
+  if (sub) sub.textContent = count > 0
+    ? count + ' active report' + (count !== 1 ? 's' : '') + ' near you'
+    : 'See reports near you · add your own';
 }
 
 function renderCommPage() {
@@ -11228,13 +11196,13 @@ switchTab = function(tab) {
   if (tab === 'community') {
     refreshCommPage();
   }
-  if (tab === 'tools' && resetActive && resetEndTime) {
-    // Sync reset button states
-    document.getElementById('resetStartBtn2').style.display = 'none';
-    document.getElementById('resetCancelBtn2').style.display = 'block';
-    const end = new Date(resetEndTime);
-    document.getElementById('resetEndTime2').textContent = end.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    startInlineResetSync();
+  if (tab === 'tools') {
+    // Show active reset indicator on arrow
+    const arrow = document.getElementById('resetArrowStatus');
+    if (arrow) {
+      if (resetActive) { arrow.classList.add('reset-active'); arrow.textContent = ''; }
+      else { arrow.classList.remove('reset-active'); arrow.textContent = '›'; }
+    }
   }
 };
 
