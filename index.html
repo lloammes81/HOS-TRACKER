@@ -1311,19 +1311,8 @@
     touch-action: none;
     user-select: none;
   }
-  #driveHoursWidget, #driveHoursWidget.visible  { display: none !important; } /* ring moved to HUD */
-  /* driveHoursWidget removed from map — ring lives in HUD */
-#driveHoursWidget { display:none !important; }
-/* profileFab permanently hidden */
-#profileFab { display:none !important; visibility:hidden !important; pointer-events:none !important; }
-/* HUD MANEJO ring — bigger when moving */
-#hudManejoCell.driving {
-  transform: scale(1.22);
-  background: rgba(16,185,129,0.18) !important;
-  border-color: rgba(16,185,129,0.5) !important;
-  box-shadow: 0 0 14px rgba(16,185,129,0.35);
-}
-
+  #driveHoursWidget.visible  { display: flex; }
+  #driveHoursWidget.dragging { cursor: grabbing; opacity: 1; }
 
   .dh-ring {
     width: 64px; height: 64px;
@@ -4918,8 +4907,21 @@ body.dark #fullMap .leaflet-tile-pane {
   <!-- QUICK REPORT FAB -->
   <button id="reportFab" onclick="toggleReportSheet()" title="Reportar incidente">⚠️</button>
 
-  <!-- PROFILE FAB BUTTON — REMOVED -->
-  <button id="profileFab" style="display:none!important;visibility:hidden!important;position:fixed!important;top:-9999px!important;pointer-events:none!important" title="Mi Perfil" aria-hidden="true">👤</button>
+  <!-- PROFILE FAB BUTTON — below speed limit sign, right side -->
+  <button id="profileFab" onclick="openProfileModal()" title="Mi Perfil" style="
+    display:none;
+    position:fixed;
+    top:calc(70px + env(safe-area-inset-top,0px) + 72px + 10px);
+    right:calc(8px + env(safe-area-inset-right,0px));
+    z-index:4001;
+    width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.15);
+    background:linear-gradient(135deg,#3b82f6,#6366f1);
+    color:#fff;font-size:20px;cursor:pointer;
+    box-shadow:0 4px 14px rgba(59,130,246,0.5);
+    display:none;align-items:center;justify-content:center;
+    transition:transform .2s;font-family:'DM Sans',sans-serif;
+    overflow:hidden;
+  ">👤</button>
 
   <!-- QUICK REPORT ACTION SHEET -->
   <div id="reportSheet">
@@ -4956,15 +4958,24 @@ body.dark #fullMap .leaflet-tile-pane {
     <div class="mss-post"></div>
     <div class="mss-state-badge" id="mssState">-- STATE</div>
     <div class="mss-diff" id="mssDiff"></div>
-    <!-- Map style button — below speed sign -->
-    <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Change map style" style="
+    <!-- Map style + Compass buttons stacked below speed sign -->
+    <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Cambiar estilo de mapa" style="
       display:flex;align-items:center;justify-content:center;
       width:44px;height:44px;border-radius:50%;border:none;
       background:rgba(15,23,42,0.88);backdrop-filter:blur(10px);
-      color:#fff;font-size:20px;cursor:pointer;margin-top:6px;
+      color:#fff;font-size:20px;cursor:pointer;margin-top:8px;
       box-shadow:0 2px 12px rgba(0,0,0,0.45);
       -webkit-tap-highlight-color:transparent;touch-action:manipulation;
     ">🗺️</button>
+    <button id="compassBtn" onclick="toggleHeadingUp()" title="Heading-up / North-up" style="
+      display:flex;align-items:center;justify-content:center;
+      width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,0.12);
+      background:rgba(15,23,42,0.88);backdrop-filter:blur(10px);
+      color:#fff;font-size:22px;cursor:pointer;margin-top:6px;
+      box-shadow:0 2px 12px rgba(0,0,0,0.45);
+      transition:border-color .3s,background .3s,transform .5s;
+      -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+    ">🧭</button>
   </div>
 
   <!-- TOP BAR -->
@@ -5137,22 +5148,22 @@ body.dark #fullMap .leaflet-tile-pane {
       </div>
     </div>
 
-    <!-- 4 stat bubbles: LLEGADA · MANEJO-ring(bigger when moving) · RESTANTE · 70 HRS -->
-    <div style="display:grid;grid-template-columns:1fr 1.3fr 1fr 1fr;gap:4px;margin-bottom:12px;align-items:center">
+    <!-- 4 stat bubbles: LLEGADA · MANEJO-ring · RESTANTE · 70 HRS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:12px">
       <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
         <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmEtaLbl">LLEGADA</div>
         <div style="font-size:15px;font-weight:900;color:#f59e0b;line-height:1" id="fmEta">--</div>
       </div>
-      <div id="hudManejoCell" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:8px 4px;text-align:center;transition:all .4s ease">
-        <div style="font-size:7px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmDriveLbl">MANEJO</div>
-        <div style="position:relative;width:50px;height:50px;margin:0 auto">
-          <svg viewBox="0 0 56 56" width="50" height="50" style="transform:rotate(-90deg)">
-            <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="4"/>
-            <circle id="hudDhArc" cx="28" cy="28" r="23" fill="none" stroke="#10b981" stroke-width="4"
-                    stroke-linecap="round" stroke-dasharray="0 145" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:6px 3px;text-align:center">
+        <div style="font-size:7px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px" id="fmDriveLbl">MANEJO</div>
+        <div style="position:relative;width:34px;height:34px;margin:0 auto">
+          <svg viewBox="0 0 36 36" width="34" height="34" style="transform:rotate(-90deg)">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="3"/>
+            <circle id="hudDhArc" cx="18" cy="18" r="14" fill="none" stroke="#10b981" stroke-width="3"
+                    stroke-linecap="round" stroke-dasharray="0 88" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-            <span id="fmDriveLeft" style="font-size:13px;font-weight:900;color:#10b981;line-height:1">11h</span>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <span id="fmDriveLeft" style="font-size:10px;font-weight:900;color:#10b981;line-height:1">11h</span>
           </div>
         </div>
       </div>
@@ -5195,15 +5206,6 @@ body.dark #fullMap .leaflet-tile-pane {
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
-/* HUD MANEJO bubble — glows and grows when truck is moving */
-#hudManejoCell.moving {
-  background: rgba(16,185,129,0.18) !important;
-  border-color: rgba(16,185,129,0.5) !important;
-  box-shadow: 0 0 14px rgba(16,185,129,0.3), inset 0 0 8px rgba(16,185,129,0.1);
-  transform: scale(1.08);
-}
-#hudManejoCell.warn { background:rgba(245,158,11,0.15)!important; border-color:rgba(245,158,11,0.4)!important; }
-#hudManejoCell.critical { background:rgba(239,68,68,0.15)!important; border-color:rgba(239,68,68,0.4)!important; animation:dhBlink 1s infinite; }
 </style>
 
 
@@ -5703,6 +5705,7 @@ body.dark #fullMap .leaflet-tile-pane {
 </div>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
 <script>
 const T = {
@@ -6476,25 +6479,20 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   // Label
   label.textContent = lang === 'es' ? 'HORAS DE MANEJO' : 'DRIVING LEFT';
 
-  // Also update mini HUD ring (bigger ring r=23, circumference ≈ 144.5)
+  // Also update mini HUD ring (in the compact bubble strip)
   const hudArc = document.getElementById('hudDhArc');
   const hudText = document.getElementById('fmDriveLeft');
-  const hudCell = document.getElementById('hudManejoCell');
   if (hudArc) {
     hudArc.style.stroke = arcColor;
     const hudPct = Math.max(0, Math.min(1, hoursLeft / Math.max(1, maxHours)));
-    const hudDash = hudPct * 144.5; // r=23, circumference ≈ 144.5
-    hudArc.setAttribute('stroke-dasharray', `${hudDash.toFixed(1)} 145`);
+    const hudDash = hudPct * 87.96; // r=14 circumference ≈ 87.96
+    hudArc.setAttribute('stroke-dasharray', `${hudDash.toFixed(1)} 88`);
   }
   if (hudText) {
     const tm = Math.round(hoursLeft * 60);
     const hh = Math.floor(tm / 60), mm = tm % 60;
     hudText.textContent = hh > 0 ? `${hh}h${mm > 0 ? mm : ''}` : `${mm}m`;
     hudText.style.color = arcColor;
-  }
-  if (hudCell) {
-    hudCell.classList.toggle('warn', isWarn);
-    hudCell.classList.toggle('critical', isCritical);
   }
 }
 
@@ -7772,61 +7770,87 @@ async function fetchOsrmStepsOnly(orig, dest){
   }catch{ return []; }
 }
 async function fetchRoadRoute(orig, dest) {
-  // ── Try OpenRouteService HGV profile (respects hgv=no, maxweight, maxheight) ──
-  try {
-    const orsUrl = 'https://api.openrouteservice.org/v2/directions/driving-hgv';
-    const orsBody = {
-      coordinates: [[orig.lon, orig.lat], [dest.lon, dest.lat]],
-      profile: 'driving-hgv',
-      format: 'geojson',
-      options: {
-        vehicle_type: 'hgv',
-        avoid_features: ['tollways', 'ferries']
-      },
-      geometry_simplify: false
-    };
-    // ORS requires API key — try without key first (public demo endpoint)
-    const orsResp = await fetch(orsUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(orsBody)
-    });
-    if (orsResp.ok) {
-      const orsData = await orsResp.json();
-      const feature = orsData.features?.[0];
-      if (feature) {
-        const coords = (feature.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-        const dist   = feature.properties?.summary?.distance || 0;
-        if (coords.length > 1) {
-          console.log('✅ Route: ORS HGV (truck-safe)');
-          return { coords, miles: Math.round(dist / 1609.344), steps: await fetchOsrmStepsOnly(orig, dest), source: 'ORS-HGV' };
+  // ── 1. Try OSRM truck profile first (best for real truck routing) ──────────
+  // truck profile respects: max weight, height, low bridges, hgv restrictions
+  return (async () => {
+    const coords = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
+    const osrmBase = 'https://router.project-osrm.org/route/v1';
+
+    // Try profiles in order: truck → driving (fallback)
+    const profiles = ['truck', 'driving'];
+    for (const profile of profiles) {
+      try {
+        const url = `${osrmBase}/${profile}/${coords}?overview=full&geometries=geojson&steps=true&alternatives=true`;
+        const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (!r.ok) continue;
+        const data = await r.json();
+        if (data.code !== 'Ok') continue;
+
+        // Pick best route — prefer least distance that avoids cities (fewer turns ≈ highway-biased)
+        const routes = data.routes || [];
+        let best = routes[0];
+        if (routes.length > 1) {
+          // Prefer route with more distance (likely highways over city streets for trucks)
+          // but cap at 20% longer than shortest
+          const shortest = routes[0].distance;
+          const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
+            rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
+          if (highway) best = highway;
         }
+
+        const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
+        const miles = Math.round((best.distance || 0) / 1609.344);
+        const steps = best.legs?.[0]?.steps || [];
+
+        console.log(`✅ Route: OSRM-${profile} | ${miles} mi | ${routeCoords.length} pts`);
+        return { coords: routeCoords, miles, steps, source: `OSRM-${profile}` };
+      } catch (e) {
+        console.warn(`OSRM ${profile} failed:`, e.message);
       }
     }
-  } catch {}
 
-  // ── Fall back: OSRM driving + post-process restriction warnings ──
-  try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true`;
-    const r    = await fetch(url);
-    const data = await r.json();
-    const route = data.routes?.[0];
-    if (!route) throw new Error('no route');
-    console.log('✅ Route: OSRM driving (no HGV filter)');
-    return {
-      coords: (route.geometry.coordinates || []).map(([lon,lat]) => [lat,lon]),
-      miles: Math.round((route.distance || 0) / 1609.344),
-      steps: route.legs?.[0]?.steps || [],
-      source: 'OSRM'
-    };
-  } catch {
+    // ── 2. Try OpenRouteService HGV (requires key but has free tier) ──────────
+    try {
+      const orsUrl = 'https://api.openrouteservice.org/v2/directions/driving-hgv';
+      const orsBody = {
+        coordinates: [[orig.lon, orig.lat], [dest.lon, dest.lat]],
+        profile: 'driving-hgv',
+        format: 'geojson',
+        options: { vehicle_type: 'hgv', avoid_features: ['ferries'] },
+        geometry_simplify: false
+      };
+      const orsResp = await fetch(orsUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(orsBody),
+        signal: AbortSignal.timeout(10000)
+      });
+      if (orsResp.ok) {
+        const orsData = await orsResp.json();
+        const feature = orsData.features?.[0];
+        if (feature) {
+          const routeCoords = (feature.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
+          const dist = feature.properties?.summary?.distance || 0;
+          if (routeCoords.length > 1) {
+            console.log('✅ Route: ORS HGV (truck-restricted)');
+            return { coords: routeCoords, miles: Math.round(dist / 1609.344), steps: [], source: 'ORS-HGV' };
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('ORS HGV failed:', e.message);
+    }
+
+    // ── 3. Straight-line fallback ─────────────────────────────────────────────
+    console.warn('⚠️ All routing APIs failed — using straight line');
     const straight = haversine(orig.lat, orig.lon, dest.lat, dest.lon);
     return {
       coords: [[orig.lat, orig.lon], [dest.lat, dest.lon]],
-      miles: Math.round(straight * 1.3),
+      miles: Math.round(straight * 1.35),
+      steps: [],
       source: 'Fallback'
     };
-  }
+  })();
 }
 // ── Road-name markers (labels) ──────────────────────────────
 function extractRoadLabel(step){
@@ -8545,7 +8569,11 @@ function openFullMapScreen() {
       zoomControl: false,
       attributionControl: false,
       zoomAnimation: true,
-      fadeAnimation: true
+      fadeAnimation: true,
+      rotate: true,          // leaflet-rotate plugin
+      bearing: 0,
+      touchRotate: false,    // disable touch-rotate gesture (GPS drives it)
+      rotateControl: false
     }).setView([39.5, -98.35], 4);
 
     const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
@@ -8855,6 +8883,26 @@ function closeFullMapScreen() {
   if (fmClockTimer) { clearInterval(fmClockTimer); fmClockTimer = null; }
 }
 
+let fmHeadingUpMode = true; // heading-up on by default while tracking
+
+function toggleHeadingUp() {
+  fmHeadingUpMode = !fmHeadingUpMode;
+  const btn = document.getElementById('compassBtn');
+  if (btn) {
+    btn.style.background = fmHeadingUpMode ? 'rgba(16,185,129,0.3)' : 'rgba(15,23,42,0.88)';
+    btn.style.borderColor = fmHeadingUpMode ? 'rgba(16,185,129,0.6)' : 'rgba(255,255,255,0.12)';
+    btn.title = fmHeadingUpMode ? 'Heading-up (activo)' : 'North-up (activo)';
+  }
+  // If switching to north-up, immediately reset bearing
+  if (!fmHeadingUpMode && fmMapInst && typeof fmMapInst.setBearing === 'function') {
+    fmMapInst.setBearing(0);
+  }
+  showToast('info', fmHeadingUpMode ? '🧭' : '🔼',
+    fmHeadingUpMode ? 'Heading-Up activado' : 'North-Up activado',
+    fmHeadingUpMode ? 'El mapa gira con la dirección del camión' : 'El mapa apunta al norte siempre',
+    2500);
+}
+
 function toggleFollow() {
   fmFollowing = !fmFollowing;
   fmUserDragged = !fmFollowing;
@@ -8954,16 +9002,14 @@ async function fmStartTracking() {
   lastFuelCheck  = 0;
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
-  // driveHoursWidget hidden on map — shown in HUD bubble instead
-  // showDriveHoursWidget();
+  showDriveHoursWidget();
   // Use available cycle hours (max 11 per day, but limited by 70hr cycle)
   const initCycleHours = Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 70);
   const initDriveMax = Math.min(11, initCycleHours);
   updateDriveHoursWidget(initDriveMax, initDriveMax);
   document.getElementById('reportFab').classList.add('visible');
-  // profileFab removed from map UI
-  // const pfab = document.getElementById('profileFab');
-  // if (pfab) pfab.style.display = 'flex';
+  const pfab = document.getElementById('profileFab');
+  if (pfab) pfab.style.display = 'flex';
   const trb = document.getElementById('topReportBtns');
   if (trb) trb.style.display = 'flex';
   // Show SOS button if enabled
@@ -9016,10 +9062,6 @@ async function fmStartTracking() {
     // ── Update truck marker at snapped on-road position ─────
     fmUpdateTruckMarker(snapLat, snapLon, heading, isMoving);
 
-    // ── HUD MANEJO ring — grow/glow when moving ──────────────
-    const hudCell = document.getElementById('hudManejoCell');
-    if (hudCell) hudCell.classList.toggle('moving', isMoving);
-
     // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
       if (isMoving) {
@@ -9029,6 +9071,17 @@ async function fmStartTracking() {
       }
       window._fmProgrammaticMove = true;
       fmMapInst.setView([snapLat, snapLon], fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
+      // ── Heading-up: rotate map to match truck direction ──
+      if (fmHeadingUpMode && isMoving && heading != null && heading >= 0) {
+        if (typeof fmMapInst.setBearing === 'function') {
+          fmMapInst.setBearing(heading);
+        }
+      } else if (!fmHeadingUpMode || !isMoving) {
+        // North-up when stopped or user disabled heading-up
+        if (typeof fmMapInst.setBearing === 'function') {
+          fmMapInst.setBearing(0);
+        }
+      }
       setTimeout(() => { window._fmProgrammaticMove = false; }, 1200);
     }
 
@@ -9059,10 +9112,6 @@ async function fmStartTracking() {
     chip.textContent  = isMoving ? '🚛 ' + (lang==='es'?'Manejando':'Driving') : '⏸ ' + (lang==='es'?'Detenido':'Stopped');
     chip.style.background = isMoving ? 'rgba(16,185,129,0.2)' : 'rgba(107,114,128,0.2)';
     chip.style.color      = isMoving ? '#10b981' : '#9ca3af';
-
-    // HUD MANEJO ring — scale up visually when truck is moving
-    const hudManejoEl = document.getElementById('hudManejoCell');
-    if (hudManejoEl) hudManejoEl.classList.toggle('driving', isMoving);
 
     document.getElementById('fmPct').textContent = pct + '%';
     document.getElementById('fmBar').style.width = pct + '%';
@@ -9184,6 +9233,10 @@ function fmStopTracking() {
   // Stop smooth animation
   if (truckAnimFrame) { cancelAnimationFrame(truckAnimFrame); truckAnimFrame = null; }
   truckFrom = null; truckTo = null;
+  // Reset map to north-up when stopped
+  if (fmMapInst && typeof fmMapInst.setBearing === 'function') {
+    fmMapInst.setBearing(0);
+  }
   hideSpeedometer();
   hideDriveHoursWidget();
   // Hide miles remaining widget
