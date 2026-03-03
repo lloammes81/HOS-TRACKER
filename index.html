@@ -1311,8 +1311,19 @@
     touch-action: none;
     user-select: none;
   }
-  #driveHoursWidget.visible  { display: flex; }
-  #driveHoursWidget.dragging { cursor: grabbing; opacity: 1; }
+  #driveHoursWidget, #driveHoursWidget.visible  { display: none !important; } /* ring moved to HUD */
+  /* driveHoursWidget removed from map — ring lives in HUD */
+#driveHoursWidget { display:none !important; }
+/* profileFab permanently hidden */
+#profileFab { display:none !important; visibility:hidden !important; pointer-events:none !important; }
+/* HUD MANEJO ring — bigger when moving */
+#hudManejoCell.driving {
+  transform: scale(1.22);
+  background: rgba(16,185,129,0.18) !important;
+  border-color: rgba(16,185,129,0.5) !important;
+  box-shadow: 0 0 14px rgba(16,185,129,0.35);
+}
+
 
   .dh-ring {
     width: 64px; height: 64px;
@@ -4907,21 +4918,8 @@ body.dark #fullMap .leaflet-tile-pane {
   <!-- QUICK REPORT FAB -->
   <button id="reportFab" onclick="toggleReportSheet()" title="Reportar incidente">⚠️</button>
 
-  <!-- PROFILE FAB BUTTON — below speed limit sign, right side -->
-  <button id="profileFab" onclick="openProfileModal()" title="Mi Perfil" style="
-    display:none;
-    position:fixed;
-    top:calc(70px + env(safe-area-inset-top,0px) + 72px + 10px);
-    right:calc(8px + env(safe-area-inset-right,0px));
-    z-index:4001;
-    width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.15);
-    background:linear-gradient(135deg,#3b82f6,#6366f1);
-    color:#fff;font-size:20px;cursor:pointer;
-    box-shadow:0 4px 14px rgba(59,130,246,0.5);
-    display:none;align-items:center;justify-content:center;
-    transition:transform .2s;font-family:'DM Sans',sans-serif;
-    overflow:hidden;
-  ">👤</button>
+  <!-- PROFILE FAB BUTTON — REMOVED -->
+  <button id="profileFab" style="display:none!important;visibility:hidden!important;position:fixed!important;top:-9999px!important;pointer-events:none!important" title="Mi Perfil" aria-hidden="true">👤</button>
 
   <!-- QUICK REPORT ACTION SHEET -->
   <div id="reportSheet">
@@ -4958,6 +4956,15 @@ body.dark #fullMap .leaflet-tile-pane {
     <div class="mss-post"></div>
     <div class="mss-state-badge" id="mssState">-- STATE</div>
     <div class="mss-diff" id="mssDiff"></div>
+    <!-- Map style button — below speed sign -->
+    <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Change map style" style="
+      display:flex;align-items:center;justify-content:center;
+      width:44px;height:44px;border-radius:50%;border:none;
+      background:rgba(15,23,42,0.88);backdrop-filter:blur(10px);
+      color:#fff;font-size:20px;cursor:pointer;margin-top:6px;
+      box-shadow:0 2px 12px rgba(0,0,0,0.45);
+      -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+    ">🗺️</button>
   </div>
 
   <!-- TOP BAR -->
@@ -5009,9 +5016,6 @@ body.dark #fullMap .leaflet-tile-pane {
         -webkit-tap-highlight-color:transparent;
         touch-action:manipulation;
       ">←</button>
-
-      <!-- Map style button -->
-      <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Change map style">🗺️</button>
 
       <!-- Weather compact card -->
       <div id="weatherWidget" onclick="showWeatherDetail()">
@@ -5133,22 +5137,22 @@ body.dark #fullMap .leaflet-tile-pane {
       </div>
     </div>
 
-    <!-- 4 stat bubbles: LLEGADA · MANEJO-ring · RESTANTE · 70 HRS -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:12px">
+    <!-- 4 stat bubbles: LLEGADA · MANEJO-ring(bigger when moving) · RESTANTE · 70 HRS -->
+    <div style="display:grid;grid-template-columns:1fr 1.3fr 1fr 1fr;gap:4px;margin-bottom:12px;align-items:center">
       <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
         <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmEtaLbl">LLEGADA</div>
         <div style="font-size:15px;font-weight:900;color:#f59e0b;line-height:1" id="fmEta">--</div>
       </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:6px 3px;text-align:center">
-        <div style="font-size:7px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px" id="fmDriveLbl">MANEJO</div>
-        <div style="position:relative;width:34px;height:34px;margin:0 auto">
-          <svg viewBox="0 0 36 36" width="34" height="34" style="transform:rotate(-90deg)">
-            <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="3"/>
-            <circle id="hudDhArc" cx="18" cy="18" r="14" fill="none" stroke="#10b981" stroke-width="3"
-                    stroke-linecap="round" stroke-dasharray="0 88" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+      <div id="hudManejoCell" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:8px 4px;text-align:center;transition:all .4s ease">
+        <div style="font-size:7px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmDriveLbl">MANEJO</div>
+        <div style="position:relative;width:50px;height:50px;margin:0 auto">
+          <svg viewBox="0 0 56 56" width="50" height="50" style="transform:rotate(-90deg)">
+            <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="4"/>
+            <circle id="hudDhArc" cx="28" cy="28" r="23" fill="none" stroke="#10b981" stroke-width="4"
+                    stroke-linecap="round" stroke-dasharray="0 145" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
-            <span id="fmDriveLeft" style="font-size:10px;font-weight:900;color:#10b981;line-height:1">11h</span>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <span id="fmDriveLeft" style="font-size:13px;font-weight:900;color:#10b981;line-height:1">11h</span>
           </div>
         </div>
       </div>
@@ -5191,6 +5195,15 @@ body.dark #fullMap .leaflet-tile-pane {
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
+/* HUD MANEJO bubble — glows and grows when truck is moving */
+#hudManejoCell.moving {
+  background: rgba(16,185,129,0.18) !important;
+  border-color: rgba(16,185,129,0.5) !important;
+  box-shadow: 0 0 14px rgba(16,185,129,0.3), inset 0 0 8px rgba(16,185,129,0.1);
+  transform: scale(1.08);
+}
+#hudManejoCell.warn { background:rgba(245,158,11,0.15)!important; border-color:rgba(245,158,11,0.4)!important; }
+#hudManejoCell.critical { background:rgba(239,68,68,0.15)!important; border-color:rgba(239,68,68,0.4)!important; animation:dhBlink 1s infinite; }
 </style>
 
 
@@ -6463,20 +6476,25 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   // Label
   label.textContent = lang === 'es' ? 'HORAS DE MANEJO' : 'DRIVING LEFT';
 
-  // Also update mini HUD ring (in the compact bubble strip)
+  // Also update mini HUD ring (bigger ring r=23, circumference ≈ 144.5)
   const hudArc = document.getElementById('hudDhArc');
   const hudText = document.getElementById('fmDriveLeft');
+  const hudCell = document.getElementById('hudManejoCell');
   if (hudArc) {
     hudArc.style.stroke = arcColor;
     const hudPct = Math.max(0, Math.min(1, hoursLeft / Math.max(1, maxHours)));
-    const hudDash = hudPct * 87.96; // r=14 circumference ≈ 87.96
-    hudArc.setAttribute('stroke-dasharray', `${hudDash.toFixed(1)} 88`);
+    const hudDash = hudPct * 144.5; // r=23, circumference ≈ 144.5
+    hudArc.setAttribute('stroke-dasharray', `${hudDash.toFixed(1)} 145`);
   }
   if (hudText) {
     const tm = Math.round(hoursLeft * 60);
     const hh = Math.floor(tm / 60), mm = tm % 60;
     hudText.textContent = hh > 0 ? `${hh}h${mm > 0 ? mm : ''}` : `${mm}m`;
     hudText.style.color = arcColor;
+  }
+  if (hudCell) {
+    hudCell.classList.toggle('warn', isWarn);
+    hudCell.classList.toggle('critical', isCritical);
   }
 }
 
@@ -8936,14 +8954,16 @@ async function fmStartTracking() {
   lastFuelCheck  = 0;
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
-  showDriveHoursWidget();
+  // driveHoursWidget hidden on map — shown in HUD bubble instead
+  // showDriveHoursWidget();
   // Use available cycle hours (max 11 per day, but limited by 70hr cycle)
   const initCycleHours = Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 70);
   const initDriveMax = Math.min(11, initCycleHours);
   updateDriveHoursWidget(initDriveMax, initDriveMax);
   document.getElementById('reportFab').classList.add('visible');
-  const pfab = document.getElementById('profileFab');
-  if (pfab) pfab.style.display = 'flex';
+  // profileFab removed from map UI
+  // const pfab = document.getElementById('profileFab');
+  // if (pfab) pfab.style.display = 'flex';
   const trb = document.getElementById('topReportBtns');
   if (trb) trb.style.display = 'flex';
   // Show SOS button if enabled
@@ -8996,6 +9016,10 @@ async function fmStartTracking() {
     // ── Update truck marker at snapped on-road position ─────
     fmUpdateTruckMarker(snapLat, snapLon, heading, isMoving);
 
+    // ── HUD MANEJO ring — grow/glow when moving ──────────────
+    const hudCell = document.getElementById('hudManejoCell');
+    if (hudCell) hudCell.classList.toggle('moving', isMoving);
+
     // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
       if (isMoving) {
@@ -9035,6 +9059,10 @@ async function fmStartTracking() {
     chip.textContent  = isMoving ? '🚛 ' + (lang==='es'?'Manejando':'Driving') : '⏸ ' + (lang==='es'?'Detenido':'Stopped');
     chip.style.background = isMoving ? 'rgba(16,185,129,0.2)' : 'rgba(107,114,128,0.2)';
     chip.style.color      = isMoving ? '#10b981' : '#9ca3af';
+
+    // HUD MANEJO ring — scale up visually when truck is moving
+    const hudManejoEl = document.getElementById('hudManejoCell');
+    if (hudManejoEl) hudManejoEl.classList.toggle('driving', isMoving);
 
     document.getElementById('fmPct').textContent = pct + '%';
     document.getElementById('fmBar').style.width = pct + '%';
