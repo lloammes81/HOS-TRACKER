@@ -4239,7 +4239,7 @@ body.dark #fullMap .leaflet-tile-pane {
         <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:2px">HOS Tracker · fab-visual™ · Last updated 2025</div>
       </div>
     </div>
-    <div style="flex:1;overflow-y:auto;padding:18px 20px;-webkit-overflow-scrolling:touch">
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 20px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain">
       <div style="font-size:13px;color:var(--muted);line-height:1.7">
         <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text);margin:0 0 6px">1. Acceptance</p>
         <p style="margin:0 0 14px">By using HOS Tracker you agree to these terms in full. If you disagree with any part, do not use the application.</p>
@@ -10911,11 +10911,11 @@ function initMultiStopAndHistory() {
 ════════════════════════════════════════════════════════════ */
 function openTCModal() {
   const el = document.getElementById('tcOverlay');
-  if (el) { el.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  if (el) { el.style.display = 'flex'; }
 }
 function closeTCModal() {
   const el = document.getElementById('tcOverlay');
-  if (el) { el.style.display = 'none'; document.body.style.overflow = ''; }
+  if (el) { el.style.display = 'none'; }
 }
 function acceptTerms() {
   localStorage.setItem('hos_tc_accepted', '1');
@@ -11237,7 +11237,8 @@ document.addEventListener('click', e => {
 
 // Prevent rubber-band scroll on the root but allow inside scrollable areas
 document.body.addEventListener('touchmove', e => {
-  if (!e.target.closest('.suggestions, .page, [data-scroll]')) e.preventDefault();
+  // Allow scrolling inside modals, sheets, and scrollable containers
+  if (!e.target.closest('.suggestions, .page, [data-scroll], #tcSheet, #supportSheet, #historySheet, #resetPanel, #communityPanel, .tool-sheet, .hist-body, .faq-a, .hist-body *, #tcSheet *')) e.preventDefault();
 }, { passive: false });
 
 // Lock orientation is not strictly needed but add a viewport meta refresh on resize
