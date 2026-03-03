@@ -3387,6 +3387,33 @@ body.dark #fullMap .leaflet-tile-pane {
     letter-spacing: .3px;
   }
 
+
+  /* ════════════════════════════════════════════════════════════
+     🗳️  REPORT VOTE BUTTONS (Still There / Clear)
+  ════════════════════════════════════════════════════════════ */
+  .comm-card-actions {
+    display: flex; flex-direction: column; gap: 5px; align-items: stretch; flex-shrink: 0;
+  }
+  .comm-clear-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 6px 9px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surface); cursor: pointer; touch-action: manipulation;
+    font-size: 14px; transition: all .12s; min-width: 44px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .comm-clear-btn:active { transform: scale(.92); }
+  .comm-vote-cnt { font-size: 9px; font-weight: 800; color: var(--muted); line-height: 1; }
+  .comm-clear-btn.still { border-color: rgba(16,185,129,.25); }
+  .comm-clear-btn.still:hover, .comm-clear-btn.still.voted-still {
+    background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.4);
+  }
+  .comm-clear-btn.still.voted-still .comm-vote-cnt { color: #10b981; }
+  .comm-clear-btn.clear { border-color: rgba(239,68,68,.2); }
+  .comm-clear-btn.clear:hover, .comm-clear-btn.clear.voted-clear {
+    background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.35);
+  }
+  .comm-clear-btn.clear.voted-clear .comm-vote-cnt { color: #ef4444; }
+
 </style>
 
 <style id="fmHudCompactStyles">
@@ -10215,7 +10242,7 @@ function confirmReport(reportId, isStillThere) {
     showToast('success','✅','Confirmado','Gracias por confirmar el aviso.', 2500);
   } else {
     report.denials.push(userId);
-    if (report.denials.length >= 2) {
+    if (report.denials.length >= 4) {
       // Remove from map — 2 drivers said it's gone
       showToast('info','🗑️','Aviso eliminado','2 choferes confirmaron que ya no está.', 3000);
       communityReports = communityReports.filter(r => String(r.id) !== String(reportId));
@@ -10223,7 +10250,7 @@ function confirmReport(reportId, isStillThere) {
       renderCommunityReports();
       return;
     } else {
-      showToast('warning','❌','Voto registrado',`${report.denials.length}/2 choferes dicen que ya no está.`, 2500);
+      showToast('warning','❌','Voto registrado',`${report.denials.length}/4 choferes dicen que ya no está.`, 2500);
     }
   }
 
@@ -11748,9 +11775,8 @@ function submitCommReport() {
   communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
 
-  // Also add marker on full map
+  // Add marker on full map only (no screen bubble)
   addReportMarker(report);
-  addIncidentBubble(report, 3000);
 
   // Clear form
   document.getElementById('commCommentInput').value = '';
@@ -11868,9 +11894,12 @@ function renderCommPage() {
             '</div>' +
           '</div>' +
           '<div class="comm-card-actions">' +
-            '<div class="comm-upvote-mini' + (voted ? ' voted' : '') + '" onclick="upvoteCommCard(' + (r.id || idx) + ',this)">' +
-              '👍<div class="comm-upvote-count">' + votes + '</div>' +
-            '</div>' +
+            '<button class="comm-clear-btn still" onclick="voteReportStill(' + (r.id||idx) + ',this)" title="Sigue ahí">' +
+              '👍<span class="comm-vote-cnt" id="vc-still-' + (r.id||idx) + '">' + (r.confirmations?.length||0) + '</span>' +
+            '</button>' +
+            '<button class="comm-clear-btn clear" onclick="voteReportClear(' + (r.id||idx) + ',this)" title="Ya no está">' +
+              '✅<span class="comm-vote-cnt" id="vc-clear-' + (r.id||idx) + '">' + (r.denials?.length||0) + '</span>' +
+            '</button>' +
           '</div>' +
         '</div>' +
       '</div>'
@@ -12337,6 +12366,91 @@ switchTab = function(tab) {
     checkRouteAlerts();
   }
 };
+
+
+/* ════════════════════════════════════════════════════════════
+   🗳️  COMMUNITY VOTE — STILL THERE / ALL CLEAR
+════════════════════════════════════════════════════════════ */
+
+let _myVotedStill = new Set(JSON.parse(localStorage.getItem('hos_voted_still') || '[]'));
+let _myVotedClear = new Set(JSON.parse(localStorage.getItem('hos_voted_clear') || '[]'));
+
+function voteReportStill(id, btn) {
+  if (_myVotedStill.has(id) || _myVotedClear.has(id)) return; // already voted
+  const report = communityReports.find(r => (r.id||0) === id);
+  if (!report) return;
+  if (!report.confirmations) report.confirmations = [];
+  report.confirmations.push('me');
+  _myVotedStill.add(id);
+  localStorage.setItem('hos_voted_still', JSON.stringify([..._myVotedStill]));
+  localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+
+  // Update UI
+  btn.classList.add('voted-still');
+  const cnt = document.getElementById('vc-still-' + id);
+  if (cnt) cnt.textContent = report.confirmations.length;
+
+  if (navigator.vibrate) navigator.vibrate(15);
+  showToast('info','👍','Reported as still active',
+    report.confirmations.length + ' driver' + (report.confirmations.length!==1?'s':'') + ' confirmed', 2500);
+}
+
+function voteReportClear(id, btn) {
+  if (_myVotedStill.has(id) || _myVotedClear.has(id)) return; // already voted
+  const report = communityReports.find(r => (r.id||0) === id);
+  if (!report) return;
+  if (!report.denials) report.denials = [];
+  report.denials.push('me');
+  _myVotedClear.add(id);
+  localStorage.setItem('hos_voted_clear', JSON.stringify([..._myVotedClear]));
+
+  const clearCount = report.denials.length;
+  const cfg = COMM_TYPE_CFG[report.type] || { emoji:'⚠️', label: report.type };
+
+  if (clearCount >= 4) {
+    // 4 drivers confirmed clear — remove report
+    communityReports = communityReports.filter(r => (r.id||0) !== id);
+    localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+
+    // Remove map marker
+    if (typeof fmReportMarkers !== 'undefined') {
+      fmReportMarkers = fmReportMarkers.filter(m => {
+        if (m._reportId === id) { if (fmMapInst) fmMapInst.removeLayer(m); return false; }
+        return true;
+      });
+    }
+
+    // Remove from active alerts
+    _activeRouteAlerts = _activeRouteAlerts.filter(r => (r.id||0) !== id);
+    updateRouteAlertPill(_activeRouteAlerts);
+
+    // Remove card from DOM
+    const card = btn.closest('.comm-report-card');
+    if (card) {
+      card.style.transition = 'opacity .3s, transform .3s';
+      card.style.opacity = '0';
+      card.style.transform = 'translateX(20px)';
+      setTimeout(() => card.remove(), 320);
+    }
+
+    updateCommBadge(communityReports.length);
+    updateCommTabBadge(communityReports.length);
+    renderRouteAlertBanners();
+
+    if (navigator.vibrate) navigator.vibrate([20,10,20,10,40]);
+    showToast('success','✅', cfg.label + ' cleared!',
+      '4 drivers confirmed the road is clear. Alert removed.', 4000);
+  } else {
+    localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+    btn.classList.add('voted-clear');
+    const cnt = document.getElementById('vc-clear-' + id);
+    if (cnt) cnt.textContent = clearCount;
+
+    if (navigator.vibrate) navigator.vibrate(20);
+    showToast('info','✅','All clear vote registered',
+      clearCount + '/4 drivers say it\'s gone', 2500);
+  }
+}
 
 init();
 
