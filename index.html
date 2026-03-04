@@ -2011,9 +2011,10 @@
 
 body.map-active #sosFab{
   position: fixed !important;
-  top:    var(--sl-y) !important;
-  left:   var(--sl-x) !important;
-  right:  auto !important;
+  /* Right side — below the compass button (approx 390px from top on most phones) */
+  top:    calc(env(safe-area-inset-top,0px) + 390px) !important;
+  right:  calc(env(safe-area-inset-right,0px) + 8px) !important;
+  left:   auto !important;
   bottom: auto !important;
   z-index: 20010 !important;
 }
@@ -5441,6 +5442,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       transition:border-color .3s,background .3s,transform .5s;
       -webkit-tap-highlight-color:transparent;touch-action:manipulation;
     ">🧭</button>
+    <!-- SOS button — right column below compass -->
+    <button id="sosFab" onclick="triggerSOS()" style="margin-top:6px;pointer-events:all">SOS</button>
   </div>
 
   <!-- TOP BAR -->
@@ -5482,7 +5485,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <!-- LEFT: close + weather + SOS -->
     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:7px;pointer-events:all">
 
-      <!-- Close button -->
+      <!-- Back button — minimizes map but keeps route & notifications -->
       <button id="closeFullMap" style="
         width:40px;height:40px;border-radius:50%;border:none;
         background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
@@ -5491,7 +5494,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         box-shadow:0 2px 12px rgba(0,0,0,0.4);
         -webkit-tap-highlight-color:transparent;
         touch-action:manipulation;
-      ">←</button>
+      ">‹</button>
 
       <!-- Weather compact card -->
       <div id="weatherWidget" onclick="showWeatherDetail()">
@@ -5502,8 +5505,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="wx-desc" id="wxDesc">Clima</div>
       </div>
 
-      <!-- SOS button — below weather -->
-      <button id="sosFab" onclick="triggerSOS()" style="pointer-events:all">SOS</button>
     </div>
 
     <!-- CENTER: clock + report buttons row -->
@@ -9367,15 +9368,70 @@ function fmTickClock() {
 }
 
 function closeFullMapScreen() {
-  fmStopTracking();
-  clearAllPOIs();
+  minimizeMap();
+}
+
+function minimizeMap() {
+  // Hide map UI but keep GPS tracking, route, and notifications alive
   document.getElementById('fullMapScreen').style.display = 'none';
   document.getElementById('fmHud').style.transform = 'translateY(100%)';
   document.getElementById('poiLegend').classList.remove('visible');
   document.getElementById('fmFollowBtn').classList.remove('visible');
   document.body.classList.remove('map-active');
-  if (fmClockTimer) { clearInterval(fmClockTimer); fmClockTimer = null; }
+  // GPS tracking continues — fmStopTracking() NOT called
+  // Route line stays on map — fmRouteLayer NOT cleared
+  // Show a persistent notification bar so user knows tracking is active
+  showMinimizedBanner();
 }
+
+function showMinimizedBanner() {
+  // Create or update minimized banner
+  let banner = document.getElementById('fmMiniBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'fmMiniBanner';
+    banner.style.cssText = [
+      'position:fixed','bottom:calc(80px + env(safe-area-inset-bottom,0px))',
+      'left:50%','transform:translateX(-50%)',
+      'background:rgba(16,185,129,0.95)','color:#fff',
+      'padding:10px 20px','border-radius:999px','z-index:9999',
+      'display:flex','align-items:center','gap:10px',
+      'box-shadow:0 4px 20px rgba(16,185,129,0.4)',
+      'font-family:\'DM Sans\',sans-serif','font-size:13px','font-weight:800',
+      'cursor:pointer','backdrop-filter:blur(10px)',
+      'animation:heroPulse 2s ease-in-out infinite'
+    ].join(';');
+    banner.innerHTML = '<span>🛣️</span><span id="fmMiniBannerText">Rastreo activo — toca para volver</span>';
+    banner.onclick = () => { banner.remove(); reopenMap(); };
+    document.body.appendChild(banner);
+  }
+  // Update banner with live info
+  const updateBanner = () => {
+    const txt = document.getElementById('fmMiniBannerText');
+    if (!txt || !document.getElementById('fmMiniBanner')) return;
+    const eta = document.getElementById('fmEta')?.textContent || '--';
+    const rem = document.getElementById('fmDistRemaining')?.textContent || '--';
+    txt.textContent = `🛣️ ${rem} restantes · ETA ${eta} — toca para volver`;
+  };
+  updateBanner();
+  const bannerTimer = setInterval(() => {
+    if (!document.getElementById('fmMiniBanner')) { clearInterval(bannerTimer); return; }
+    updateBanner();
+  }, 10000);
+}
+
+function reopenMap() {
+  document.getElementById('fullMapScreen').style.display = 'block';
+  document.getElementById('fmHud').style.transform = 'translateY(0)';
+  document.body.classList.add('map-active');
+  const banner = document.getElementById('fmMiniBanner');
+  if (banner) banner.remove();
+  // Re-center on current position if tracking
+  if (fmGpsMarker && fmMapInst) {
+    fmMapInst.setView(fmGpsMarker.getLatLng(), fmMapInst.getZoom());
+  }
+}
+
 
 let fmHeadingUpMode = true; // heading-up on by default while tracking
 
@@ -14269,7 +14325,10 @@ window.showSubscribeModal = function() {
   // Reset to form view
   const fc = document.getElementById('subFormContent');
   const sc = document.getElementById('subSuccessContent');
-  if (fc) fc.sty
+  if (fc) fc.style.display = 'flex';
+  if (sc) sc.style.display = 'none';
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  📡 ELD BLUETOOTH — Web Bluetooth API
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14855,3 +14914,6 @@ async function sendScanEmail() {
   showToast('info','📧','Email abierto','El archivo fue descargado — adjúntalo al correo',5000);
 }
 
+
+</script>
+}
