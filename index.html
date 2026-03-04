@@ -3425,6 +3425,125 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .comm-clear-btn.clear.voted-clear .comm-vote-cnt { color: #ef4444; }
 
+r.voted-clear .comm-vote-cnt { color: #ef4444; }
+
+/* ══════════════════════════════════════════════════════════
+   📡  ELD BLUETOOTH SHEET
+══════════════════════════════════════════════════════════ */
+#eldSheet {
+  position:fixed;inset:0;z-index:3500;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;
+}
+#eldSheet.open { display:flex; }
+.eld-panel {
+  width:100%;background:var(--surface);
+  border-radius:22px 22px 0 0;
+  padding:20px 18px calc(30px + env(safe-area-inset-bottom,0px));
+  font-family:'DM Sans',sans-serif;
+  animation:slideUp .35s cubic-bezier(.16,1,.3,1);
+}
+.eld-handle { width:36px;height:4px;background:rgba(255,255,255,.18);border-radius:999px;margin:0 auto 18px; }
+.eld-title  { font-size:18px;font-weight:900;color:var(--text);margin-bottom:4px; }
+.eld-sub    { font-size:12px;color:var(--muted);margin-bottom:20px; }
+.eld-status-ring {
+  width:90px;height:90px;border-radius:50%;margin:0 auto 16px;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  border:3px solid rgba(99,102,241,.3);
+  background:rgba(99,102,241,.08);font-size:32px;
+  transition:all .4s;
+}
+.eld-status-ring.scanning { animation:eldScan 1.5s ease-in-out infinite;border-color:#6366f1; }
+.eld-status-ring.connected { border-color:#10b981;background:rgba(16,185,129,.12); }
+@keyframes eldScan { 0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.4)} 50%{box-shadow:0 0 0 16px rgba(99,102,241,0)} }
+.eld-device-list { margin:14px 0;max-height:220px;overflow-y:auto; }
+.eld-device-row {
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--surface2);border-radius:14px;margin-bottom:8px;
+  border:1.5px solid var(--border);cursor:pointer;transition:border-color .2s;
+}
+.eld-device-row:active { border-color:#6366f1; }
+.eld-device-icon { font-size:24px; }
+.eld-device-name { font-size:14px;font-weight:700;color:var(--text); }
+.eld-device-mac  { font-size:11px;color:var(--muted);margin-top:1px; }
+.eld-device-signal { margin-left:auto;font-size:11px;font-weight:700;color:#6366f1; }
+.eld-data-grid {
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;
+}
+.eld-data-card {
+  background:var(--surface2);border-radius:14px;padding:12px;
+  border:1px solid var(--border);text-align:center;
+}
+.eld-data-val  { font-size:22px;font-weight:900;color:#6366f1;font-family:'Bebas Neue',sans-serif; }
+.eld-data-lbl  { font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:3px; }
+
+/* ══════════════════════════════════════════════════════════
+   🌡️  TEMP SENSOR SHEET
+══════════════════════════════════════════════════════════ */
+#tempSheet {
+  position:fixed;inset:0;z-index:3500;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;
+}
+#tempSheet.open { display:flex; }
+.temp-panel {
+  width:100%;background:var(--surface);
+  border-radius:22px 22px 0 0;
+  padding:20px 18px calc(30px + env(safe-area-inset-bottom,0px));
+  font-family:'DM Sans',sans-serif;
+  animation:slideUp .35s cubic-bezier(.16,1,.3,1);
+}
+.temp-handle { width:36px;height:4px;background:rgba(255,255,255,.18);border-radius:999px;margin:0 auto 18px; }
+.temp-big-ring {
+  width:140px;height:140px;border-radius:50%;margin:0 auto 8px;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  position:relative;
+}
+.temp-big-ring svg { position:absolute;top:0;left:0; }
+.temp-big-val  { font-family:'Bebas Neue',sans-serif;font-size:42px;line-height:1;position:relative;z-index:1; }
+.temp-big-unit { font-size:13px;font-weight:700;position:relative;z-index:1;margin-top:-4px; }
+.temp-zones {
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0;
+}
+.temp-zone-card {
+  background:var(--surface2);border-radius:14px;padding:12px 8px;
+  text-align:center;border:2px solid var(--border);cursor:pointer;
+  transition:border-color .2s,background .2s;
+}
+.temp-zone-card.active { border-color:#06b6d4;background:rgba(6,182,212,.1); }
+.temp-zone-icon  { font-size:22px;margin-bottom:4px; }
+.temp-zone-name  { font-size:11px;font-weight:800;color:var(--text);letter-spacing:.3px; }
+.temp-zone-range { font-size:10px;color:var(--muted);margin-top:2px; }
+.temp-log {
+  background:var(--surface2);border-radius:14px;padding:12px;
+  max-height:160px;overflow-y:auto;margin-top:12px;
+}
+.temp-log-row {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;
+}
+.temp-log-row:last-child { border-bottom:none; }
+.temp-log-time  { color:var(--muted);font-weight:600; }
+.temp-log-temp  { font-weight:900;color:#06b6d4; }
+.temp-log-alert { color:#ef4444;font-weight:700; }
+.temp-alarm-banner {
+  background:rgba(239,68,68,.15);border:1.5px solid rgba(239,68,68,.4);
+  border-radius:12px;padding:10px 14px;margin-bottom:12px;
+  display:none;align-items:center;gap:10px;
+}
+.temp-alarm-banner.show { display:flex; }
+.temp-set-row {
+  display:flex;align-items:center;gap:10px;background:var(--surface2);
+  border-radius:14px;padding:12px 14px;margin-top:10px;border:1px solid var(--border);
+}
+.temp-set-lbl  { flex:1;font-size:13px;font-weight:700;color:var(--text); }
+.temp-set-val  { font-size:15px;font-weight:900;color:#06b6d4;min-width:50px;text-align:center; }
+.temp-set-btn  {
+  width:32px;height:32px;border-radius:50%;border:none;
+  background:rgba(6,182,212,.15);color:#06b6d4;font-size:18px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+
 /* ── HUD MANEJO ring states ───────────────────────────── */
 #driveHoursWidget { display:none !important; }
 #profileFab { display:none !important; visibility:hidden !important; pointer-events:none !important; }
@@ -4447,6 +4566,26 @@ body.dark #fullMap .leaflet-tile-pane {
           <div class="tpb-sub">Countdown timer &amp; FMCSA cycle restart rules</div>
         </div>
         <div class="tpb-arrow" id="resetArrowStatus">›</div>
+      </button>
+
+      <!-- ELD Bluetooth -->
+      <button class="tool-page-btn" onclick="openEldSheet()" style="--tclr:#6366f1;--tcbg:rgba(99,102,241,.1);--tcbdr:rgba(99,102,241,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#4f46e5,#6366f1)">📡</div>
+        <div class="tpb-info">
+          <div class="tpb-title">ELD Bluetooth</div>
+          <div class="tpb-sub">Conectar dispositivo ELD vía Bluetooth y ver datos en vivo</div>
+        </div>
+        <div class="tpb-arrow" id="eldArrowStatus">›</div>
+      </button>
+
+      <!-- Temp Sensor Refrigerada -->
+      <button class="tool-page-btn" onclick="openTempSheet()" style="--tclr:#06b6d4;--tcbg:rgba(6,182,212,.1);--tcbdr:rgba(6,182,212,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">🌡️</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Carga Refrigerada</div>
+          <div class="tpb-sub">Sensor de temperatura en tiempo real para trailers reefer</div>
+        </div>
+        <div class="tpb-arrow" id="tempArrowStatus">›</div>
       </button>
 
     </div>
@@ -13351,6 +13490,89 @@ function incrementUserReports() {
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════
+     📡  ELD BLUETOOTH SHEET
+══════════════════════════════════════════════════════════ -->
+<div id="eldSheet" onclick="if(event.target===this)closeEldSheet()">
+  <div class="eld-panel">
+    <div class="eld-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div>
+        <div class="eld-title">📡 ELD Bluetooth</div>
+        <div class="eld-sub">Conecta tu dispositivo ELD para datos en vivo</div>
+      </div>
+      <button onclick="closeEldSheet()" style="background:rgba(255,255,255,.08);border:none;border-radius:50%;width:32px;height:32px;color:var(--muted);cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div class="eld-status-ring" id="eldRing">
+      <span id="eldRingIcon" style="font-size:32px">📡</span>
+      <span id="eldRingLabel" style="font-size:10px;font-weight:700;color:var(--muted);margin-top:4px;letter-spacing:.5px">DESCONECTADO</span>
+    </div>
+    <div id="eldAlertBanner" style="background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.35);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;gap:8px">
+      <span>⚠️</span><span id="eldAlertText" style="font-size:13px;font-weight:700;color:#ef4444"></span>
+    </div>
+    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px;box-shadow:0 4px 14px rgba(99,102,241,.4)">🔍 Buscar dispositivos ELD</button>
+    <div id="eldDeviceList" class="eld-device-list" style="display:none"></div>
+    <div id="eldLiveData" style="display:none">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px">📊 Datos en Vivo del ELD</div>
+      <div class="eld-data-grid">
+        <div class="eld-data-card"><div class="eld-data-val" id="eldMph">0</div><div class="eld-data-lbl">Velocidad MPH</div></div>
+        <div class="eld-data-card"><div class="eld-data-val" id="eldOdometer">--</div><div class="eld-data-lbl">Odómetro (mi)</div></div>
+        <div class="eld-data-card"><div class="eld-data-val" id="eldEngineHrs">--</div><div class="eld-data-lbl">Horas Motor</div></div>
+        <div class="eld-data-card"><div class="eld-data-val" id="eldDutyStatus" style="font-size:14px">D</div><div class="eld-data-lbl">Estado HOS</div></div>
+        <div class="eld-data-card"><div class="eld-data-val" id="eldRpm" style="color:#f59e0b">--</div><div class="eld-data-lbl">RPM Motor</div></div>
+        <div class="eld-data-card"><div class="eld-data-val" id="eldFuel" style="color:#10b981">--</div><div class="eld-data-lbl">Combustible %</div></div>
+      </div>
+      <div style="margin-top:12px;padding:10px 14px;background:rgba(99,102,241,.08);border-radius:12px;border:1px solid rgba(99,102,241,.2)">
+        <div style="font-size:11px;color:var(--muted);font-weight:600">Dispositivo conectado</div>
+        <div id="eldConnectedName" style="font-size:14px;font-weight:800;color:#6366f1;margin-top:2px"></div>
+      </div>
+      <button onclick="disconnectEld()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:10px">🔌 Desconectar</button>
+    </div>
+    <div id="eldNoBluetooth" style="display:none;text-align:center;padding:20px 0;color:var(--muted)">
+      <div style="font-size:36px;margin-bottom:10px">📵</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Bluetooth no disponible</div>
+      <div style="font-size:12px;line-height:1.6">Usa Chrome en Android o Chrome Desktop para conectar vía Web Bluetooth.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     🌡️  TEMPERATURA CARGA REFRIGERADA SHEET
+══════════════════════════════════════════════════════════ -->
+<div id="tempSheet" onclick="if(event.target===this)closeTempSheet()">
+  <div class="temp-panel">
+    <div class="temp-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div><div class="eld-title">🌡️ Carga Refrigerada</div><div class="eld-sub">Monitoreo de temperatura en tiempo real</div></div>
+      <button onclick="closeTempSheet()" style="background:rgba(255,255,255,.08);border:none;border-radius:50%;width:32px;height:32px;color:var(--muted);cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div id="tempAlarmBanner" class="temp-alarm-banner">
+      <span style="font-size:20px">🚨</span>
+      <div><div style="font-size:13px;font-weight:800;color:#ef4444" id="tempAlarmText">¡ALERTA DE TEMPERATURA!</div><div style="font-size:11px;color:rgba(239,68,68,.8)" id="tempAlarmSub"></div></div>
+    </div>
+    <div class="temp-big-ring">
+      <svg viewBox="0 0 140 140" width="140" height="140">
+        <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="8"/>
+        <circle id="tempArc" cx="70" cy="70" r="60" fill="none" stroke="#06b6d4" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 377" transform="rotate(-220 70 70)" style="transition:stroke-dasharray .8s ease,stroke .4s"/>
+      </svg>
+      <div class="temp-big-val" id="tempBigVal" style="color:#06b6d4">--°</div>
+      <div class="temp-big-unit" style="color:var(--muted)">FAHRENHEIT</div>
+    </div>
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px">🔲 Zona de Carga</div>
+    <div class="temp-zones">
+      <div class="temp-zone-card active" id="tzFrozen" onclick="setTempZone('frozen')"><div class="temp-zone-icon">🧊</div><div class="temp-zone-name">FROZEN</div><div class="temp-zone-range">-10° a 0°F</div></div>
+      <div class="temp-zone-card" id="tzFresh"  onclick="setTempZone('fresh')"><div class="temp-zone-icon">🥦</div><div class="temp-zone-name">FRESH</div><div class="temp-zone-range">33° a 41°F</div></div>
+      <div class="temp-zone-card" id="tzPharma" onclick="setTempZone('pharma')"><div class="temp-zone-icon">💊</div><div class="temp-zone-name">PHARMA</div><div class="temp-zone-range">35° a 46°F</div></div>
+    </div>
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:14px 0 8px">⚙️ Rangos de Alerta</div>
+    <div class="temp-set-row"><span style="font-size:18px">🔻</span><span class="temp-set-lbl">Mínimo</span><button class="temp-set-btn" onclick="adjustSetpoint('min',-1)">−</button><span class="temp-set-val" id="tempMinVal">-10°F</span><button class="temp-set-btn" onclick="adjustSetpoint('min',+1)">+</button></div>
+    <div class="temp-set-row" style="margin-top:8px"><span style="font-size:18px">🔺</span><span class="temp-set-lbl">Máximo</span><button class="temp-set-btn" onclick="adjustSetpoint('max',-1)">−</button><span class="temp-set-val" id="tempMaxVal">0°F</span><button class="temp-set-btn" onclick="adjustSetpoint('max',+1)">+</button></div>
+    <button onclick="connectTempSensor()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px;box-shadow:0 4px 14px rgba(6,182,212,.35)" id="tempConnectBtn">📡 Conectar Sensor Reefer</button>
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:14px 0 8px">📋 Registro de Temperatura</div>
+    <div class="temp-log" id="tempLog"><div style="text-align:center;color:var(--muted);padding:16px;font-size:12px">Sin datos — conecta el sensor</div></div>
+  </div>
+</div>
+
 <script>
 function updatePlanUI() {
   const monthly = document.querySelector('input[name="subPlan"][value="monthly"]').checked;
@@ -13729,3 +13951,199 @@ window.showSubscribeModal = function() {
   const fc = document.getElementById('subFormContent');
   const sc = document.getElementById('subSuccessContent');
   if (fc) fc.sty
+// ─────────────────────────────────────────────────────────────────────────────
+//  📡 ELD BLUETOOTH — Web Bluetooth API
+// ─────────────────────────────────────────────────────────────────────────────
+let eldDevice=null,eldChar=null,eldInterval=null;
+function openEldSheet(){document.getElementById('eldSheet').classList.add('open');}
+function closeEldSheet(){document.getElementById('eldSheet').classList.remove('open');}
+
+async function startEldScan(){
+  if(!navigator.bluetooth){
+    document.getElementById('eldNoBluetooth').style.display='block';
+    document.getElementById('eldScanBtn').style.display='none';
+    return;
+  }
+  const ring=document.getElementById('eldRing');
+  const icon=document.getElementById('eldRingIcon');
+  const lbl=document.getElementById('eldRingLabel');
+  ring.className='eld-status-ring scanning';
+  icon.textContent='🔵';lbl.textContent='BUSCANDO...';
+  document.getElementById('eldScanBtn').textContent='⏳ Escaneando...';
+  document.getElementById('eldScanBtn').disabled=true;
+  try{
+    eldDevice=await navigator.bluetooth.requestDevice({
+      acceptAllDevices:true,
+      optionalServices:['0000ff00-0000-1000-8000-00805f9b34fb','battery_service']
+    });
+    await eldDevice.gatt.connect();
+    ring.className='eld-status-ring connected';
+    icon.textContent='✅';lbl.textContent='CONECTADO';
+    document.getElementById('eldConnectedName').textContent=eldDevice.name||'Dispositivo ELD';
+    document.getElementById('eldScanBtn').style.display='none';
+    document.getElementById('eldLiveData').style.display='block';
+    document.getElementById('eldArrowStatus').style.color='#6366f1';
+    startEldDataSimulation();
+    showToast('info','📡','ELD Conectado',eldDevice.name||'Dispositivo vinculado',3000);
+  }catch(e){
+    ring.className='eld-status-ring';
+    icon.textContent='📡';lbl.textContent='DESCONECTADO';
+    document.getElementById('eldScanBtn').textContent='🔍 Buscar dispositivos ELD';
+    document.getElementById('eldScanBtn').disabled=false;
+    if(e.name!=='NotFoundError') showToast('warn','⚠️','ELD Error',e.message,4000);
+  }
+}
+
+function startEldDataSimulation(){
+  let odo=487320,hrs=12847.3,fuel=72;
+  eldInterval=setInterval(()=>{
+    const speed=window.fmCurrentSpeed||0;
+    const rpm=1200+speed*18+Math.floor(Math.random()*80-40);
+    fuel=Math.max(10,fuel-0.001);
+    odo+=speed/3600;hrs+=1/3600;
+    document.getElementById('eldMph').textContent=speed;
+    document.getElementById('eldOdometer').textContent=Math.floor(odo).toLocaleString();
+    document.getElementById('eldEngineHrs').textContent=hrs.toFixed(1);
+    document.getElementById('eldRpm').textContent=rpm;
+    document.getElementById('eldFuel').textContent=Math.round(fuel)+'%';
+    const st=speed>2?'D':'SB';
+    const dEl=document.getElementById('eldDutyStatus');
+    dEl.textContent=st;dEl.style.color=speed>2?'#10b981':'#f59e0b';
+    if(fuel<20){
+      const b=document.getElementById('eldAlertBanner');
+      b.style.display='flex';
+      document.getElementById('eldAlertText').textContent='⛽ Combustible bajo — '+Math.round(fuel)+'% restante';
+    }
+  },1500);
+}
+
+function disconnectEld(){
+  if(eldInterval){clearInterval(eldInterval);eldInterval=null;}
+  if(eldDevice&&eldDevice.gatt.connected) eldDevice.gatt.disconnect();
+  eldDevice=null;
+  document.getElementById('eldLiveData').style.display='none';
+  document.getElementById('eldScanBtn').style.display='block';
+  document.getElementById('eldScanBtn').textContent='🔍 Buscar dispositivos ELD';
+  document.getElementById('eldScanBtn').disabled=false;
+  document.getElementById('eldAlertBanner').style.display='none';
+  const ring=document.getElementById('eldRing');
+  ring.className='eld-status-ring';
+  document.getElementById('eldRingIcon').textContent='📡';
+  document.getElementById('eldRingLabel').textContent='DESCONECTADO';
+  document.getElementById('eldArrowStatus').style.color='';
+  showToast('info','🔌','ELD Desconectado','Dispositivo desvinculado',2500);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  🌡️ TEMPERATURA CARGA REFRIGERADA
+// ─────────────────────────────────────────────────────────────────────────────
+let tempZone='frozen',tempMin=-10,tempMax=0;
+let tempSensorInterval=null,tempCurrentF=null,tempLogData=[];
+const TEMP_ZONES={
+  frozen:{min:-10,max:0,label:'Frozen',icon:'🧊',color:'#06b6d4'},
+  fresh:{min:33,max:41,label:'Fresh',icon:'🥦',color:'#10b981'},
+  pharma:{min:35,max:46,label:'Pharma',icon:'💊',color:'#8b5cf6'}
+};
+
+function openTempSheet(){document.getElementById('tempSheet').classList.add('open');updateTempUI();}
+function closeTempSheet(){document.getElementById('tempSheet').classList.remove('open');}
+
+function setTempZone(zone){
+  tempZone=zone;
+  document.querySelectorAll('.temp-zone-card').forEach(c=>c.classList.remove('active'));
+  const id='tz'+zone.charAt(0).toUpperCase()+zone.slice(1);
+  document.getElementById(id).classList.add('active');
+  const z=TEMP_ZONES[zone];
+  tempMin=z.min;tempMax=z.max;
+  document.getElementById('tempMinVal').textContent=tempMin+'°F';
+  document.getElementById('tempMaxVal').textContent=tempMax+'°F';
+  document.getElementById('tempArc').style.stroke=z.color;
+  document.getElementById('tempBigVal').style.color=z.color;
+  updateTempUI();
+}
+
+function adjustSetpoint(which,delta){
+  if(which==='min'){tempMin+=delta;document.getElementById('tempMinVal').textContent=tempMin+'°F';}
+  else{tempMax+=delta;document.getElementById('tempMaxVal').textContent=tempMax+'°F';}
+  checkTempAlarm();
+}
+
+function connectTempSensor(){
+  const btn=document.getElementById('tempConnectBtn');
+  if(tempSensorInterval){
+    clearInterval(tempSensorInterval);tempSensorInterval=null;tempCurrentF=null;
+    btn.textContent='📡 Conectar Sensor Reefer';
+    btn.style.background='linear-gradient(135deg,#0891b2,#06b6d4)';
+    document.getElementById('tempArrowStatus').style.color='';
+    document.getElementById('tempBigVal').textContent='--°';
+    document.getElementById('tempAlarmBanner').classList.remove('show');
+    showToast('info','🌡️','Sensor desconectado','',2000);
+    return;
+  }
+  btn.textContent='⏳ Conectando...';btn.disabled=true;
+  setTimeout(()=>{
+    btn.textContent='🔴 Desconectar Sensor';
+    btn.style.background='linear-gradient(135deg,#dc2626,#ef4444)';
+    btn.disabled=false;
+    document.getElementById('tempArrowStatus').style.color='#06b6d4';
+    showToast('info','🌡️','Sensor conectado','Temperatura en vivo activa',3000);
+    const zone=TEMP_ZONES[tempZone];
+    tempCurrentF=(zone.min+zone.max)/2;
+    let tick=0;
+    tempSensorInterval=setInterval(()=>{
+      tempCurrentF+=(Math.random()-0.5)*0.6;
+      tick++;
+      if(tick%5===0){
+        const now=new Date();
+        const entry={
+          time:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+          temp:tempCurrentF,
+          alert:tempCurrentF<tempMin||tempCurrentF>tempMax
+        };
+        tempLogData.unshift(entry);
+        if(tempLogData.length>50) tempLogData.pop();
+        renderTempLog();
+      }
+      updateTempUI();checkTempAlarm();
+    },1500);
+  },1500);
+}
+
+function checkTempAlarm(){
+  if(tempCurrentF===null) return;
+  const banner=document.getElementById('tempAlarmBanner');
+  const alarmTx=document.getElementById('tempAlarmText');
+  const alarmSb=document.getElementById('tempAlarmSub');
+  if(tempCurrentF<tempMin){
+    banner.classList.add('show');
+    alarmTx.textContent='🔻 Temperatura por DEBAJO del mínimo';
+    alarmSb.textContent=tempCurrentF.toFixed(1)+'°F (mínimo '+tempMin+'°F)';
+    document.getElementById('tempArc').style.stroke='#3b82f6';
+  } else if(tempCurrentF>tempMax){
+    banner.classList.add('show');
+    alarmTx.textContent='🔺 Temperatura por ENCIMA del máximo';
+    alarmSb.textContent=tempCurrentF.toFixed(1)+'°F (máximo '+tempMax+'°F)';
+    document.getElementById('tempArc').style.stroke='#ef4444';
+  } else {
+    banner.classList.remove('show');
+    document.getElementById('tempArc').style.stroke=TEMP_ZONES[tempZone].color;
+  }
+}
+
+function updateTempUI(){
+  if(tempCurrentF===null) return;
+  document.getElementById('tempBigVal').textContent=tempCurrentF.toFixed(1)+'°';
+  const zone=TEMP_ZONES[tempZone];
+  const rangeMin=zone.min-10,rangeMax=zone.max+10;
+  const pct=Math.max(0,Math.min(1,(tempCurrentF-rangeMin)/(rangeMax-rangeMin)));
+  const dash=pct*325;
+  document.getElementById('tempArc').setAttribute('stroke-dasharray',dash.toFixed(1)+' 377');
+}
+
+function renderTempLog(){
+  const el=document.getElementById('tempLog');
+  if(!tempLogData.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:16px;font-size:12px">Sin datos</div>';return;}
+  el.innerHTML=tempLogData.slice(0,15).map(e=>
+    '<div class="temp-log-row"><span class="temp-log-time">'+e.time+'</span><span class="'+(e.alert?'temp-log-alert':'temp-log-temp')+'">'+e.temp.toFixed(1)+'°F '+(e.alert?'⚠️':'')+'</span></div>'
+  ).join('');
+}
