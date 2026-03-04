@@ -3544,6 +3544,182 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   cursor:pointer;display:flex;align-items:center;justify-content:center;
 }
 
+/* ══════════════════════════════════════════════════════════
+   📄  DOCUMENT SCANNER SHEET
+══════════════════════════════════════════════════════════ */
+#scannerSheet {
+  position:fixed;inset:0;z-index:5000;
+  background:#000;
+  display:none;flex-direction:column;
+}
+#scannerSheet.open { display:flex; }
+
+/* ── Top bar ── */
+.scan-topbar {
+  position:relative;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;
+  background:linear-gradient(180deg,rgba(0,0,0,.85) 0%,transparent 100%);
+}
+.scan-topbar-title { font-size:16px;font-weight:800;color:#fff;font-family:'DM Sans',sans-serif; }
+.scan-top-btn {
+  background:rgba(255,255,255,.15);border:none;border-radius:50%;
+  width:36px;height:36px;color:#fff;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ── Camera viewport ── */
+#scanViewport {
+  flex:1;position:relative;overflow:hidden;background:#000;
+}
+#scanVideo {
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+/* Document overlay frame */
+.scan-frame-overlay {
+  position:absolute;inset:0;pointer-events:none;
+}
+.scan-frame-corner {
+  position:absolute;width:28px;height:28px;
+  border-color:#f59e0b;border-style:solid;border-width:0;
+}
+.scan-frame-corner.tl { top:18%;left:8%;border-top-width:3px;border-left-width:3px;border-radius:4px 0 0 0; }
+.scan-frame-corner.tr { top:18%;right:8%;border-top-width:3px;border-right-width:3px;border-radius:0 4px 0 0; }
+.scan-frame-corner.bl { bottom:18%;left:8%;border-bottom-width:3px;border-left-width:3px;border-radius:0 0 0 4px; }
+.scan-frame-corner.br { bottom:18%;right:8%;border-bottom-width:3px;border-right-width:3px;border-radius:0 0 4px 0; }
+/* Dim outside frame */
+.scan-dim { position:absolute;background:rgba(0,0,0,.45);pointer-events:none; }
+
+/* Scanning animation line */
+.scan-laser {
+  position:absolute;left:8%;right:8%;height:2px;
+  background:linear-gradient(90deg,transparent,#f59e0b,transparent);
+  box-shadow:0 0 8px #f59e0b;
+  animation:scanLaser 2s ease-in-out infinite;
+  top:18%;
+}
+@keyframes scanLaser {
+  0%   { top:18%; opacity:1; }
+  90%  { top:82%; opacity:1; }
+  100% { top:82%; opacity:0; }
+}
+
+/* Flash effect on capture */
+@keyframes flashWhite { 0%{opacity:0} 10%{opacity:1} 100%{opacity:0} }
+.scan-flash {
+  position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;
+  animation:flashWhite .4s ease-out forwards;
+}
+
+/* ── Bottom controls ── */
+.scan-bottom {
+  position:relative;z-index:10;
+  display:flex;align-items:center;justify-content:space-around;
+  padding:16px 24px calc(24px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(0deg,rgba(0,0,0,.9) 0%,transparent 100%);
+}
+.scan-mode-btn {
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.5px;text-transform:uppercase;
+}
+.scan-mode-btn.active { color:#f59e0b; }
+.scan-capture-btn {
+  width:70px;height:70px;border-radius:50%;border:4px solid #fff;
+  background:rgba(255,255,255,.15);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 2px rgba(245,158,11,.6);
+  transition:transform .1s;
+}
+.scan-capture-btn:active { transform:scale(.92); }
+.scan-capture-inner {
+  width:52px;height:52px;border-radius:50%;background:#fff;
+}
+.scan-gallery-thumb {
+  width:52px;height:52px;border-radius:12px;border:2.5px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.08);overflow:hidden;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;
+}
+.scan-gallery-thumb img { width:100%;height:100%;object-fit:cover; }
+
+/* ── Review screen ── */
+#scanReview {
+  display:none;flex-direction:column;height:100%;
+}
+#scanReview.show { display:flex; }
+
+.scan-review-img-wrap {
+  flex:1;display:flex;align-items:center;justify-content:center;
+  background:#111;padding:16px;overflow:hidden;
+}
+#scanReviewImg {
+  max-width:100%;max-height:100%;border-radius:8px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);object-fit:contain;
+}
+.scan-meta-panel {
+  background:var(--surface,#1e293b);padding:16px;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+.scan-meta-row {
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;background:rgba(255,255,255,.05);
+  border-radius:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,.08);
+}
+.scan-meta-icon { font-size:16px;flex-shrink:0; }
+.scan-meta-lbl  { font-size:11px;color:rgba(255,255,255,.45);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:1px; }
+.scan-meta-val  { font-size:13px;font-weight:800;color:#fff; }
+.scan-meta-input {
+  flex:1;background:none;border:none;color:#fff;font-size:13px;font-weight:800;
+  font-family:'DM Sans',sans-serif;outline:none;
+}
+.scan-meta-input::placeholder { color:rgba(255,255,255,.3); }
+
+/* ── Send panel ── */
+.scan-send-row {
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 12px;
+}
+.scan-send-btn {
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px;border-radius:14px;border:none;
+  font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:transform .1s;
+}
+.scan-send-btn:active { transform:scale(.96); }
+.scan-send-wa    { background:linear-gradient(135deg,#25D366,#128C7E);color:#fff; }
+.scan-send-email { background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff; }
+.scan-format-row {
+  display:flex;gap:8px;padding:0 16px 16px;
+}
+.scan-fmt-chip {
+  flex:1;padding:8px;border-radius:10px;border:1.5px solid rgba(245,158,11,.3);
+  background:rgba(245,158,11,.08);color:rgba(255,255,255,.6);
+  font-size:12px;font-weight:800;cursor:pointer;text-align:center;
+  font-family:'DM Sans',sans-serif;transition:all .15s;
+}
+.scan-fmt-chip.active {
+  border-color:#f59e0b;background:rgba(245,158,11,.18);color:#f59e0b;
+}
+
+/* Thumbnail strip */
+.scan-thumb-strip {
+  display:flex;gap:8px;padding:10px 16px;overflow-x:auto;
+  background:rgba(0,0,0,.3);min-height:72px;
+}
+.scan-thumb-item {
+  width:56px;height:56px;border-radius:8px;flex-shrink:0;
+  border:2px solid rgba(255,255,255,.2);overflow:hidden;cursor:pointer;
+  position:relative;background:#222;
+}
+.scan-thumb-item.active { border-color:#f59e0b; }
+.scan-thumb-item img { width:100%;height:100%;object-fit:cover; }
+.scan-thumb-del {
+  position:absolute;top:-4px;right:-4px;width:18px;height:18px;
+  background:#ef4444;border-radius:50%;color:#fff;font-size:11px;
+  display:flex;align-items:center;justify-content:center;font-weight:900;
+  cursor:pointer;
+}
+
 /* ── HUD MANEJO ring states ───────────────────────────── */
 #driveHoursWidget { display:none !important; }
 #profileFab { display:none !important; visibility:hidden !important; pointer-events:none !important; }
@@ -3613,7 +3789,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     font-size: 18px !important;
   }
 </style>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
@@ -4588,10 +4764,153 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="tpb-arrow" id="tempArrowStatus">›</div>
       </button>
 
+      <!-- Document Scanner -->
+      <button class="tool-page-btn" onclick="openScannerSheet()" style="--tclr:#f59e0b;--tcbg:rgba(245,158,11,.1);--tcbdr:rgba(245,158,11,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b)">📄</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Escanear Documentos</div>
+          <div class="tpb-sub">Escanea BOL, facturas y envía por WhatsApp o Email como PDF/JPG</div>
+        </div>
+        <div class="tpb-arrow">›</div>
+      </button>
+
     </div>
   </div>
 
-  <!-- COMMUNITY PAGE -->
+<!-- ══════════════════════════════════════════════════════════
+     📄  DOCUMENT SCANNER SHEET
+══════════════════════════════════════════════════════════ -->
+<div id="scannerSheet">
+
+  <!-- ── CAMERA VIEW ── -->
+  <div id="scanCameraView" style="display:flex;flex-direction:column;height:100%">
+    <!-- Top bar -->
+    <div class="scan-topbar">
+      <button class="scan-top-btn" onclick="closeScannerSheet()">✕</button>
+      <div class="scan-topbar-title">📄 Escanear Documento</div>
+      <button class="scan-top-btn" onclick="toggleScanFlash()" id="scanFlashBtn" title="Flash">⚡</button>
+    </div>
+
+    <!-- Viewport -->
+    <div id="scanViewport">
+      <video id="scanVideo" autoplay playsinline muted></video>
+      <!-- Guide overlay -->
+      <div class="scan-frame-overlay">
+        <div class="scan-dim" id="dimTop"></div>
+        <div class="scan-dim" id="dimBot"></div>
+        <div class="scan-dim" id="dimLeft"></div>
+        <div class="scan-dim" id="dimRight"></div>
+        <div class="scan-frame-corner tl"></div>
+        <div class="scan-frame-corner tr"></div>
+        <div class="scan-frame-corner bl"></div>
+        <div class="scan-frame-corner br"></div>
+        <div class="scan-laser" id="scanLaser"></div>
+      </div>
+      <!-- Count badge -->
+      <div id="scanCountBadge" style="position:absolute;top:14px;right:14px;background:rgba(245,158,11,.9);color:#000;font-size:11px;font-weight:900;padding:3px 9px;border-radius:999px;display:none;font-family:'DM Sans',sans-serif">
+        0 páginas
+      </div>
+      <!-- Guide text -->
+      <div style="position:absolute;bottom:130px;left:0;right:0;text-align:center;pointer-events:none">
+        <div style="display:inline-block;background:rgba(0,0,0,.55);color:rgba(255,255,255,.85);font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;font-family:'DM Sans',sans-serif">
+          Centra el documento en el encuadre
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom controls -->
+    <div class="scan-bottom">
+      <!-- Gallery / Pages -->
+      <div class="scan-gallery-thumb" id="scanGalleryThumb" onclick="showScanReview()">
+        <span id="scanGalleryIcon">📋</span>
+      </div>
+
+      <!-- Capture button -->
+      <button class="scan-capture-btn" onclick="captureDocument()" id="scanCaptureBtn">
+        <div class="scan-capture-inner"></div>
+      </button>
+
+      <!-- Switch to front/back cam -->
+      <button class="scan-mode-btn" onclick="switchCamera()">
+        <span style="font-size:22px">🔄</span>
+        <span>Cámara</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── REVIEW VIEW ── -->
+  <div id="scanReview">
+    <!-- Top bar -->
+    <div class="scan-topbar" style="background:rgba(0,0,0,.95)">
+      <button class="scan-top-btn" onclick="backToCamera()">‹ Cámara</button>
+      <div class="scan-topbar-title">Revisar y Enviar</div>
+      <button class="scan-top-btn" onclick="addMorePages()" style="font-size:12px;width:auto;padding:0 10px;border-radius:99px">+ Página</button>
+    </div>
+
+    <!-- Thumbnail strip -->
+    <div class="scan-thumb-strip" id="scanThumbStrip"></div>
+
+    <!-- Preview image -->
+    <div class="scan-review-img-wrap">
+      <img id="scanReviewImg" src="" alt="Documento escaneado"/>
+    </div>
+
+    <!-- Metadata -->
+    <div class="scan-meta-panel">
+      <div class="scan-meta-row">
+        <span class="scan-meta-icon">🚛</span>
+        <div style="flex:1">
+          <div class="scan-meta-lbl">Número de Camión</div>
+          <input class="scan-meta-input" id="scanTruckNum" placeholder="Ej: T-1042" type="text"/>
+        </div>
+      </div>
+      <div class="scan-meta-row">
+        <span class="scan-meta-icon">📅</span>
+        <div style="flex:1">
+          <div class="scan-meta-lbl">Fecha</div>
+          <div class="scan-meta-val" id="scanDateVal"></div>
+        </div>
+      </div>
+      <div class="scan-meta-row">
+        <span class="scan-meta-icon">📍</span>
+        <div style="flex:1">
+          <div class="scan-meta-lbl">Ubicación GPS</div>
+          <div class="scan-meta-val" id="scanLocVal">Obteniendo...</div>
+        </div>
+      </div>
+      <div class="scan-meta-row">
+        <span class="scan-meta-icon">📝</span>
+        <div style="flex:1">
+          <div class="scan-meta-lbl">Tipo de documento</div>
+          <input class="scan-meta-input" id="scanDocType" placeholder="BOL / Factura / Inspeccion..." type="text"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Format selector -->
+    <div class="scan-format-row" style="padding:8px 16px">
+      <div class="scan-fmt-chip active" id="fmtPDF" onclick="setScanFormat('PDF')">📄 PDF</div>
+      <div class="scan-fmt-chip" id="fmtJPG" onclick="setScanFormat('JPG')">🖼️ JPG</div>
+    </div>
+
+    <!-- Send buttons -->
+    <div class="scan-send-row">
+      <button class="scan-send-btn scan-send-wa" onclick="sendScanWhatsApp()">
+        <span style="font-size:18px">💬</span> WhatsApp
+      </button>
+      <button class="scan-send-btn scan-send-email" onclick="sendScanEmail()">
+        <span style="font-size:18px">📧</span> Email
+      </button>
+    </div>
+    <div style="padding:0 16px calc(20px + env(safe-area-inset-bottom,0px))">
+      <button onclick="saveScanToDevice()" style="width:100%;padding:12px;border-radius:14px;border:1.5px solid rgba(245,158,11,.3);background:rgba(245,158,11,.08);color:#f59e0b;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">
+        💾 Guardar en Dispositivo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- COMMUNITY PAGE -->
   <div class="page" id="page-community">
     <div class="container">
 
@@ -14147,3 +14466,392 @@ function renderTempLog(){
     '<div class="temp-log-row"><span class="temp-log-time">'+e.time+'</span><span class="'+(e.alert?'temp-log-alert':'temp-log-temp')+'">'+e.temp.toFixed(1)+'°F '+(e.alert?'⚠️':'')+'</span></div>'
   ).join('');
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  📄 DOCUMENT SCANNER — Camera + Crop + PDF/JPG + WhatsApp/Email
+// ═══════════════════════════════════════════════════════════════════════════
+let scanStream = null, scanPages = [], scanActiveIdx = 0;
+let scanFormat = 'PDF', scanFacingMode = 'environment';
+let scanFlashOn = false, scanLocation = null;
+
+// ── Open / Close ──────────────────────────────────────────────────────────
+async function openScannerSheet() {
+  document.getElementById('scannerSheet').classList.add('open');
+  document.getElementById('scanCameraView').style.display = 'flex';
+  document.getElementById('scanReview').classList.remove('show');
+  await startScanCamera();
+  getScanLocation();
+  setScanDate();
+  prefillTruckNum();
+}
+
+function closeScannerSheet() {
+  stopScanCamera();
+  document.getElementById('scannerSheet').classList.remove('open');
+  scanPages = []; scanActiveIdx = 0;
+  updateScanBadge();
+}
+
+// ── Camera ────────────────────────────────────────────────────────────────
+async function startScanCamera() {
+  try {
+    if (scanStream) { scanStream.getTracks().forEach(t=>t.stop()); }
+    scanStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: scanFacingMode,
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    });
+    const vid = document.getElementById('scanVideo');
+    vid.srcObject = scanStream;
+    await vid.play();
+    updateDimOverlay();
+  } catch(e) {
+    showToast('warn','📷','Cámara no disponible', e.message, 4000);
+  }
+}
+
+function stopScanCamera() {
+  if (scanStream) { scanStream.getTracks().forEach(t=>t.stop()); scanStream = null; }
+}
+
+async function switchCamera() {
+  scanFacingMode = scanFacingMode === 'environment' ? 'user' : 'environment';
+  await startScanCamera();
+}
+
+function toggleScanFlash() {
+  if (!scanStream) return;
+  const track = scanStream.getVideoTracks()[0];
+  if (!track || !track.getCapabilities) return;
+  const caps = track.getCapabilities();
+  if (!caps.torch) { showToast('warn','⚡','Flash no disponible','',2000); return; }
+  scanFlashOn = !scanFlashOn;
+  track.applyConstraints({ advanced: [{ torch: scanFlashOn }] });
+  document.getElementById('scanFlashBtn').style.color = scanFlashOn ? '#f59e0b' : '#fff';
+}
+
+// ── Overlay dims ──────────────────────────────────────────────────────────
+function updateDimOverlay() {
+  const vp = document.getElementById('scanViewport');
+  const W = vp.offsetWidth, H = vp.offsetHeight;
+  const ml = W * 0.08, mr = W * 0.08;
+  const mt = H * 0.18, mb = H * 0.18;
+  const fw = W - ml - mr, fh = H - mt - mb;
+  const set = (id, s, l, w, h) => {
+    const el = document.getElementById(id);
+    el.style.cssText = `position:absolute;background:rgba(0,0,0,.45);top:${s}px;left:${l}px;width:${w}px;height:${h}px`;
+  };
+  set('dimTop',   0,   0, W, mt);
+  set('dimBot',   mt+fh, 0, W, mb);
+  set('dimLeft',  mt, 0, ml, fh);
+  set('dimRight', mt, ml+fw, mr, fh);
+}
+
+// ── Capture ───────────────────────────────────────────────────────────────
+function captureDocument() {
+  const vid = document.getElementById('scanVideo');
+  if (!vid.videoWidth) { showToast('warn','📷','Cámara no lista','',2000); return; }
+
+  // Flash feedback
+  const flash = document.createElement('div');
+  flash.className = 'scan-flash';
+  document.getElementById('scanViewport').appendChild(flash);
+  setTimeout(() => flash.remove(), 500);
+
+  // Draw to canvas and crop to frame area
+  const vw = vid.videoWidth, vh = vid.videoHeight;
+  const vp = document.getElementById('scanViewport');
+  const vpW = vp.offsetWidth, vpH = vp.offsetHeight;
+
+  // Frame rect in viewport coords
+  const fx = vpW * 0.08, fy = vpH * 0.18;
+  const fw = vpW * 0.84, fh = vpH * 0.64;
+
+  // Scale to video coords
+  const scaleX = vw / vpW, scaleY = vh / vpH;
+  const cx = fx * scaleX, cy = fy * scaleY;
+  const cw = fw * scaleX, ch = fh * scaleY;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(cw);
+  canvas.height = Math.round(ch);
+  const ctx = canvas.getContext('2d');
+
+  // Draw cropped region
+  ctx.drawImage(vid, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
+
+  // Apply document enhancement (grayscale + contrast)
+  enhanceDocumentImage(ctx, canvas.width, canvas.height);
+
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  scanPages.push(dataUrl);
+  scanActiveIdx = scanPages.length - 1;
+  updateScanBadge();
+  updateGalleryThumb();
+  showToast('info','📄','Página capturada', scanPages.length + ' página(s) en total', 2000);
+}
+
+function enhanceDocumentImage(ctx, w, h) {
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const d = imgData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    // Convert to grayscale
+    const gray = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
+    // Increase contrast
+    const contrast = 1.35;
+    const val = Math.min(255, Math.max(0, (gray - 128) * contrast + 128));
+    d[i] = d[i+1] = d[i+2] = val;
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function updateScanBadge() {
+  const badge = document.getElementById('scanCountBadge');
+  if (scanPages.length > 0) {
+    badge.style.display = 'block';
+    badge.textContent = scanPages.length + (scanPages.length === 1 ? ' página' : ' páginas');
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function updateGalleryThumb() {
+  const thumb = document.getElementById('scanGalleryThumb');
+  if (scanPages.length > 0) {
+    thumb.innerHTML = '<img src="' + scanPages[scanPages.length-1] + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px">';
+  } else {
+    thumb.innerHTML = '<span id="scanGalleryIcon">📋</span>';
+  }
+}
+
+// ── Review ────────────────────────────────────────────────────────────────
+function showScanReview() {
+  if (scanPages.length === 0) { showToast('warn','📄','Sin páginas','Toma al menos una foto primero',2500); return; }
+  stopScanCamera();
+  document.getElementById('scanCameraView').style.display = 'none';
+  document.getElementById('scanReview').classList.add('show');
+  renderThumbStrip();
+  showScanPage(0);
+}
+
+function backToCamera() {
+  document.getElementById('scanReview').classList.remove('show');
+  document.getElementById('scanCameraView').style.display = 'flex';
+  startScanCamera();
+}
+
+function addMorePages() {
+  backToCamera();
+}
+
+function showScanPage(idx) {
+  scanActiveIdx = idx;
+  document.getElementById('scanReviewImg').src = scanPages[idx];
+  document.querySelectorAll('.scan-thumb-item').forEach((el,i) => {
+    el.classList.toggle('active', i === idx);
+  });
+}
+
+function renderThumbStrip() {
+  const strip = document.getElementById('scanThumbStrip');
+  strip.innerHTML = scanPages.map((pg, i) => `
+    <div class="scan-thumb-item ${i===scanActiveIdx?'active':''}" onclick="showScanPage(${i})">
+      <img src="${pg}"/>
+      <div class="scan-thumb-del" onclick="event.stopPropagation();deleteScanPage(${i})">×</div>
+    </div>`).join('');
+}
+
+function deleteScanPage(idx) {
+  scanPages.splice(idx, 1);
+  if (scanPages.length === 0) { backToCamera(); updateScanBadge(); updateGalleryThumb(); return; }
+  scanActiveIdx = Math.min(scanActiveIdx, scanPages.length - 1);
+  renderThumbStrip();
+  showScanPage(scanActiveIdx);
+  updateScanBadge();
+  updateGalleryThumb();
+}
+
+// ── Metadata ──────────────────────────────────────────────────────────────
+function setScanDate() {
+  const now = new Date();
+  document.getElementById('scanDateVal').textContent =
+    now.toLocaleDateString('es-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'}) +
+    '  ' + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+function getScanLocation() {
+  const el = document.getElementById('scanLocVal');
+  if (window.fmLastLat && window.fmLastLon) {
+    el.textContent = window.fmLastLat.toFixed(5) + ', ' + window.fmLastLon.toFixed(5);
+    // Try reverse geocode
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${window.fmLastLat}&lon=${window.fmLastLon}&format=json`)
+      .then(r=>r.json()).then(d=>{
+        const city = d.address.city || d.address.town || d.address.county || '';
+        const state = d.address.state || '';
+        if (city || state) el.textContent = city + (city&&state?', ':'') + state;
+      }).catch(()=>{});
+    scanLocation = { lat: window.fmLastLat, lon: window.fmLastLon };
+  } else if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      scanLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      el.textContent = pos.coords.latitude.toFixed(5) + ', ' + pos.coords.longitude.toFixed(5);
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${scanLocation.lat}&lon=${scanLocation.lon}&format=json`)
+        .then(r=>r.json()).then(d=>{
+          const city = d.address.city||d.address.town||d.address.county||'';
+          const state = d.address.state||'';
+          if(city||state) el.textContent=city+(city&&state?', ':'')+state;
+        }).catch(()=>{});
+    }, () => { el.textContent = 'No disponible'; });
+  } else { el.textContent = 'No disponible'; }
+}
+
+function prefillTruckNum() {
+  const inp = document.getElementById('scanTruckNum');
+  const saved = localStorage.getItem('hos_truck_number');
+  if (saved) inp.value = saved;
+  inp.addEventListener('change', () => localStorage.setItem('hos_truck_number', inp.value));
+}
+
+function setScanFormat(fmt) {
+  scanFormat = fmt;
+  document.getElementById('fmtPDF').classList.toggle('active', fmt === 'PDF');
+  document.getElementById('fmtJPG').classList.toggle('active', fmt === 'JPG');
+}
+
+// ── Build document description string ────────────────────────────────────
+function buildDocInfo() {
+  const truck   = document.getElementById('scanTruckNum').value  || 'N/A';
+  const docType = document.getElementById('scanDocType').value   || 'Documento';
+  const date    = document.getElementById('scanDateVal').textContent.trim();
+  const loc     = document.getElementById('scanLocVal').textContent.trim();
+  return { truck, docType, date, loc };
+}
+
+// ── Generate PDF ──────────────────────────────────────────────────────────
+async function buildPDF() {
+  const { jsPDF } = window.jspdf;
+  const { truck, docType, date, loc } = buildDocInfo();
+  const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'letter' });
+  const W = 215.9, H = 279.4;
+
+  for (let i = 0; i < scanPages.length; i++) {
+    if (i > 0) pdf.addPage();
+    // Header bar
+    pdf.setFillColor(15, 23, 42);
+    pdf.rect(0, 0, W, 22, 'F');
+    pdf.setTextColor(245, 158, 11);
+    pdf.setFontSize(14); pdf.setFont('helvetica','bold');
+    pdf.text('HOS TRACKER — ' + docType.toUpperCase(), 10, 13);
+    pdf.setTextColor(180,180,180);
+    pdf.setFontSize(7); pdf.setFont('helvetica','normal');
+    pdf.text('Camion: ' + truck + '   Fecha: ' + date + '   Ubicacion: ' + loc, 10, 19);
+
+    // Document image — fill usable area
+    const imgH = H - 30;
+    pdf.addImage(scanPages[i], 'JPEG', 5, 24, W - 10, imgH - 8, '', 'MEDIUM');
+
+    // Page number
+    pdf.setTextColor(120,120,120);
+    pdf.setFontSize(8);
+    pdf.text('Pag. ' + (i+1) + ' / ' + scanPages.length, W - 20, H - 5);
+  }
+  return pdf;
+}
+
+// ── Save to device ────────────────────────────────────────────────────────
+async function saveScanToDevice() {
+  const { docType, truck, date } = buildDocInfo();
+  const safeDate = date.replace(/[^a-zA-Z0-9]/g, '-').slice(0,20);
+  const filename = `${docType.replace(/\s+/g,'-')}_${truck}_${safeDate}`;
+
+  if (scanFormat === 'PDF') {
+    if (!window.jspdf) { showToast('warn','⚠️','jsPDF no cargado','Recarga la página',3000); return; }
+    const pdf = await buildPDF();
+    pdf.save(filename + '.pdf');
+  } else {
+    // JPG — if multiple pages, download first or use canvas merge
+    if (scanPages.length === 1) {
+      const a = document.createElement('a');
+      a.href = scanPages[0]; a.download = filename + '.jpg'; a.click();
+    } else {
+      showToast('info','🖼️','Descargando JPGs',scanPages.length+' archivos',2000);
+      scanPages.forEach((pg, i) => {
+        setTimeout(() => {
+          const a = document.createElement('a');
+          a.href = pg; a.download = filename + '_p' + (i+1) + '.jpg'; a.click();
+        }, i * 400);
+      });
+    }
+  }
+  showToast('info','💾','Guardado','Documento guardado en Descargas',3000);
+}
+
+// ── WhatsApp ──────────────────────────────────────────────────────────────
+async function sendScanWhatsApp() {
+  const { truck, docType, date, loc } = buildDocInfo();
+  const msg = encodeURIComponent(
+    '📄 *' + docType + '*\n' +
+    '🚛 Camión: *' + truck + '*\n' +
+    '📅 Fecha: ' + date + '\n' +
+    '📍 Ubicación: ' + loc + '\n\n' +
+    '_Enviado desde HOS Tracker_'
+  );
+
+  // Try Web Share API first (shares actual file on mobile)
+  if (navigator.share && scanFormat === 'PDF' && window.jspdf) {
+    try {
+      const pdf = await buildPDF();
+      const blob = pdf.output('blob');
+      const file = new File([blob], 'documento.pdf', { type:'application/pdf' });
+      await navigator.share({ files:[file], text: decodeURIComponent(msg) });
+      return;
+    } catch(e) { /* fall through to URL method */ }
+  }
+
+  if (navigator.share && scanFormat === 'JPG') {
+    try {
+      const res = await fetch(scanPages[0]);
+      const blob = await res.blob();
+      const file = new File([blob], 'documento.jpg', { type:'image/jpeg' });
+      await navigator.share({ files:[file], text: decodeURIComponent(msg) });
+      return;
+    } catch(e) { /* fall through */ }
+  }
+
+  // Fallback: open WhatsApp with text only
+  window.open('https://wa.me/?text=' + msg, '_blank');
+  showToast('info','💬','WhatsApp abierto','Adjunta el archivo manualmente si es necesario',4000);
+}
+
+// ── Email ─────────────────────────────────────────────────────────────────
+async function sendScanEmail() {
+  const { truck, docType, date, loc } = buildDocInfo();
+  const subject = encodeURIComponent(docType + ' — Camión ' + truck + ' — ' + date);
+  const body    = encodeURIComponent(
+    'Adjunto ' + docType + ' del camión ' + truck + '.\n' +
+    'Fecha: ' + date + '\n' +
+    'Ubicación: ' + loc + '\n\n' +
+    'Enviado desde HOS Tracker.'
+  );
+
+  // Try Web Share first (attaches file on mobile)
+  if (navigator.share && window.jspdf && scanFormat === 'PDF') {
+    try {
+      const pdf = await buildPDF();
+      const blob = pdf.output('blob');
+      const file = new File([blob], 'documento.pdf', { type:'application/pdf' });
+      await navigator.share({ files:[file], title: decodeURIComponent(subject), text: decodeURIComponent(body) });
+      return;
+    } catch(e) { /* fall through */ }
+  }
+
+  // Fallback: download + open mailto
+  await saveScanToDevice();
+  setTimeout(() => {
+    window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+  }, 800);
+  showToast('info','📧','Email abierto','El archivo fue descargado — adjúntalo al correo',5000);
+}
+
