@@ -4662,6 +4662,20 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </div>
 
 <div class="sett-section">
+        <div class="sett-section-title" id="settSecDanger">Data &amp; Privacy</div>
+        <div class="sett-group">
+          <div class="sett-row" onclick="clearAllMemory()" style="cursor:pointer">
+            <div class="sett-icon" style="background:#fee2e2">🧹</div>
+            <div style="flex:1">
+              <div class="sett-label" id="settClearMemoryRow" style="color:#ef4444;margin:0">Clear All Memory</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="settClearMemorySub">Erase all app data &amp; reset to factory defaults</div>
+            </div>
+            <span class="sett-arrow" style="color:#ef4444">›</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sett-section">
         <div class="sett-section-title" id="settSecAbout">About</div>
         <div class="sett-group">
           <div class="sett-row">
@@ -6189,7 +6203,8 @@ const T = {
     menuTitle:'Settings',menuLang:'Language',menuTheme:'Theme',menuCountry:'Country search',light:'Light',dark:'Dark',
     tabLblPlan:'Plan Route',tabLblDrives:'All Drives',tabLblSummary:'Summaries',tabLblSettings:'Settings',
     drivesTitle:'All Drives',summaryTitle:'Summaries',settingsPageTitle:'Settings',settSecGeneral:'General',
-    settSecAppear:'Appearance',settSecHOS:'HOS Rules',settSecAbout:'About',settLangRow:'Language',
+    settSecAppear:'Appearance',settSecHOS:'HOS Rules',settSecAbout:'About',settSecDanger:'Data & Privacy',settLangRow:'Language',
+    settClearMemoryRow:'Clear All Memory',settClearMemorySub:'Erase all app data & reset to factory defaults',
     settCountryRow:'Country Filter',settLightRow:'Light Mode',settDarkRow:'Dark Mode',settBreakRow:'30-min Break Rule',
     settCycleRow:'Cycle Hours',settRestRow:'Rest Requirement',settShareRow:'Share App',sendReportText:'Send Report',
     noDrives:'No drives recorded yet.',calcFirst:'Calculate your first route.',noRoutes:'No routes yet',
@@ -6214,7 +6229,8 @@ const T = {
     menuTitle:'Ajustes',menuLang:'Idioma',menuTheme:'Tema',menuCountry:'País de búsqueda',light:'Claro',dark:'Oscuro',
     tabLblPlan:'Planear Ruta',tabLblDrives:'Todos los Viajes',tabLblSummary:'Resúmenes',tabLblSettings:'Ajustes',
     drivesTitle:'Todos los Viajes',summaryTitle:'Resúmenes',settingsPageTitle:'Ajustes',settSecGeneral:'General',
-    settSecAppear:'Apariencia',settSecHOS:'Reglas HOS',settSecAbout:'Acerca de',settLangRow:'Idioma',
+    settSecAppear:'Apariencia',settSecHOS:'Reglas HOS',settSecAbout:'Acerca de',settSecDanger:'Datos y Privacidad',settLangRow:'Idioma',
+    settClearMemoryRow:'Limpiar Toda la Memoria',settClearMemorySub:'Borrar todos los datos de la app y restaurar valores de fábrica',
     settCountryRow:'Filtro de País',settLightRow:'Modo Claro',settDarkRow:'Modo Oscuro',settBreakRow:'Regla de Pausa 30 min',
     settCycleRow:'Horas de Ciclo',settRestRow:'Requisito de Descanso',settShareRow:'Compartir App',sendReportText:'Enviar Reporte',
     noDrives:'Sin viajes registrados aún.',calcFirst:'Calcula tu primera ruta.',noRoutes:'Sin rutas aún',
@@ -7733,7 +7749,9 @@ function applyLang() {
     traveledLbl:'traveled', remainingLbl:'remaining', elapsedLbl:'elapsed', etaLbl:'eta',
     drivesTitleTxt:'drivesTitle', summaryTitleTxt:'summaryTitle', settTitleTxt:'settingsPageTitle',
     settSecGeneral:'settSecGeneral', settSecAppear:'settSecAppear', settSecHOS:'settSecHOS',
-    settSecAbout:'settSecAbout', settLangRow:'settLangRow', settCountryRow:'settCountryRow',
+    settSecAbout:'settSecAbout', settSecDanger:'settSecDanger',
+    settClearMemoryRow:'settClearMemoryRow', settClearMemorySub:'settClearMemorySub',
+    settLangRow:'settLangRow', settCountryRow:'settCountryRow',
     settCountryRowTitle:'settCountryRow', settLightRow:'settLightRow', settDarkRow:'settDarkRow',
     settBreakRow:'settBreakRow', settCycleRow:'settCycleRow', settRestRow:'settRestRow',
     settShareRow:'settShareRow', menuTitle:'menuTitle', menuLangLbl:'menuLang',
@@ -13696,6 +13714,32 @@ function deleteUserProfile() {
   if (pfab) pfab.textContent = '👤';
   switchProfileTab('register');
   showToast('info','🗑️','Perfil eliminado','Tu perfil ha sido eliminado.', 3000);
+}
+
+function clearAllMemory() {
+  const t = LANG[lang] || LANG.en;
+  const msg = lang === 'es'
+    ? '⚠️ Esto borrará TODOS los datos de la app:\n\n• Perfiles de conductor\n• Historial de rutas\n• Ajustes y preferencias\n• Datos HOS y reportes\n\n¿Continuar? La app se reiniciará.'
+    : '⚠️ This will erase ALL app data:\n\n• Driver profiles\n• Route history\n• Settings & preferences\n• HOS data & reports\n\nContinue? The app will restart.';
+  if (!confirm(msg)) return;
+
+  // Remove all hos_* keys from localStorage
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('hos_')) keysToRemove.push(key);
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+
+  // Also clear caches if service worker is available
+  if ('caches' in window) {
+    caches.keys().then(names => names.forEach(n => caches.delete(n)));
+  }
+
+  showToast('info', '🧹', lang === 'es' ? 'Memoria limpiada' : 'Memory cleared',
+    lang === 'es' ? 'Reiniciando la app…' : 'Restarting app…', 1500);
+
+  setTimeout(() => location.reload(true), 1600);
 }
 
 // Update user stats when they submit reports
