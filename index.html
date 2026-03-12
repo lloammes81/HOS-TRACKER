@@ -4455,8 +4455,21 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         box-shadow:0 4px 18px rgba(16,185,129,.4)">
         🔍 Buscar Diesel Más Barato
       </button>
-      <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:16px">
-        GPS · 100 km · Truck stops + gasolineras HGV
+      <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:12px">
+        GPS · 100 km · OpenStreetMap + registros públicos
+      </div>
+
+      <!-- Quick external links -->
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button onclick="openGoogleMapsTruckStops()" style="flex:1;padding:11px;background:rgba(66,133,244,.12);border:1px solid rgba(66,133,244,.3);border-radius:12px;color:#4285f4;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">
+          🗺️ Google Maps
+        </button>
+        <a href="https://truckerpath.com/" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;padding:11px;background:rgba(234,88,12,.12);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
+          🚛 Trucker Path
+        </a>
+        <a href="https://www.allstays.com/c/truck-stop-locations.htm" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;padding:11px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);border-radius:12px;color:#8b5cf6;font-size:13px;font-weight:700;text-decoration:none">
+          📍 AllStays
+        </a>
       </div>
 
       <!-- Results -->
@@ -10532,12 +10545,14 @@ const OVERPASS_QUERIES = {
     [out:json][timeout:60];
     (
       nwr["amenity"="truck_stop"](around:${r},${lat},${lon});
+      nwr["shop"="truck_stop"](around:${r},${lat},${lon});
       nwr["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
       nwr["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${r},${lat},${lon});
-      nwr["amenity"="fuel"]["fuel:diesel"="yes"]["name"~"Flying J|Pilot|Love|TA |Petro |Sapp|Kwik Trip|Casey|Speedco|Roady|Rush Truck|Speedway|Marathon|Shell|Chevron|BP|Exxon|Mobil|Sunoco|Sinclair|Valero|Circle K|Thornton|Maverik|RaceWay|Racetrac|Stuckey|Bucky|Wilco|Hess",i](around:${r},${lat},${lon});
-      nwr["name"~"Flying J|Pilot Travel|Pilot Flying|Loves Travel|Love's Travel|TA Travel|TA-Petro|TravelCenters|Petro Stopping|Sapp Bros|Kwik Trip|Casey's General|Speedco|Roady's|Rush Truck|Truck Stop|TruckStop|Fuel Stop|Travel Plaza|Travel Center",i](around:${r},${lat},${lon});
+      nwr["amenity"="fuel"]["fuel:diesel"="yes"](around:${r},${lat},${lon});
+      nwr["brand"~"Pilot Flying J|Pilot Travel Center|Love's Travel Stops|Travel Centers of America|Petro Stopping Centers|Sapp Bros|Kwik Trip|Flying J|TA Travel Center|TA-Petro|TruckMart|Roady's|Speedco|Wilco",i](around:${r},${lat},${lon});
+      nwr["operator"~"Pilot|Love's|Travel Centers of America|Petro|Sapp Bros|Kwik Trip|TA Travel|Roady|Speedco",i](around:${r},${lat},${lon});
+      nwr["name"~"Flying J|Pilot Travel|Pilot Flying|Loves Travel|Love.s Travel|TA Travel|TA-Petro|TravelCenters|Petro Stopping|Sapp Bros|Kwik Trip|Casey.s General|Speedco|Roady.s|Rush Truck|Truck Stop|TruckStop|Fuel Stop|Travel Plaza|Travel Center|Truck Plaza",i](around:${r},${lat},${lon});
       nwr["highway"="services"](around:${r},${lat},${lon});
-      nwr["shop"="truck_stop"](around:${r},${lat},${lon});
     );
     out center qt;`,
 
@@ -13719,13 +13734,17 @@ async function searchFuelNearby(btn) {
 
   try {
     const r = 100000; // 100 km
-    const query = `[out:json][timeout:55];
+    const query = `[out:json][timeout:60];
 (
   nwr["amenity"="truck_stop"](around:${r},${lat},${lon});
+  nwr["shop"="truck_stop"](around:${r},${lat},${lon});
   nwr["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
   nwr["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${r},${lat},${lon});
   nwr["amenity"="fuel"]["fuel:diesel"="yes"](around:${r},${lat},${lon});
-  nwr["name"~"Flying J|Pilot|Love|TA Travel|TA-Petro|Petro |Sapp Bros|Kwik Trip|Speedco|Roady|Rush Truck|Travel Center|Travel Plaza|Truck Stop|Sunoco|Valero|Shell|Chevron|BP|Exxon|Mobil|Marathon|Circle K|Maverik",i](around:${r},${lat},${lon});
+  nwr["brand"~"Pilot Flying J|Pilot Travel Center|Love's Travel Stops|Travel Centers of America|Petro Stopping Centers|Sapp Bros|Kwik Trip|Flying J|TA Travel Center|TA-Petro|TruckMart|Roady's|Speedco|Wilco",i](around:${r},${lat},${lon});
+  nwr["operator"~"Pilot|Love's|Travel Centers of America|Petro|Sapp Bros|Kwik Trip|TA Travel|Roady|Speedco",i](around:${r},${lat},${lon});
+  nwr["name"~"Flying J|Pilot Travel|Pilot Flying|Loves Travel|Love.s Travel|TA Travel|TA-Petro|TravelCenters|Petro Stopping|Sapp Bros|Kwik Trip|Casey.s|Speedco|Roady.s|Rush Truck|Truck Stop|TruckStop|Fuel Stop|Travel Plaza|Travel Center|Truck Plaza|Iowa 80|Buc-ee|Stuckey",i](around:${r},${lat},${lon});
+  nwr["highway"="services"](around:${r},${lat},${lon});
 );
 out center qt;`;
     const ctrl = new AbortController();
@@ -13757,7 +13776,18 @@ out center qt;`;
       return;
     }
 
-    list.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">⛽ ${els.length} estaciones encontradas · 100 km</div>`;
+    const gmUrl = `https://www.google.com/maps/search/truck+stop/@${lat},${lon},11z`;
+    const tpUrl = `https://truckerpath.com/`;
+    list.innerHTML = `
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">⛽ ${els.length} truck stops · 100 km</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(66,133,244,.15);border:1px solid rgba(66,133,244,.3);border-radius:12px;color:#4285f4;font-size:13px;font-weight:700;text-decoration:none">
+          🗺️ Google Maps
+        </a>
+        <a href="${tpUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
+          🚛 Trucker Path
+        </a>
+      </div>`;
 
     els.forEach(el => {
       const elLat = el.lat ?? el.center?.lat;
@@ -13805,6 +13835,18 @@ out center qt;`;
   }
 
   if (btn) { btn.disabled = false; btn.textContent = origTxt; }
+}
+
+async function openGoogleMapsTruckStops() {
+  let lat, lon;
+  try {
+    const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, maximumAge: 120000 }));
+    lat = pos.coords.latitude; lon = pos.coords.longitude;
+  } catch {
+    if (origin) { lat = origin.lat; lon = origin.lon; }
+    else { window.open('https://www.google.com/maps/search/truck+stop+near+me', '_blank'); return; }
+  }
+  window.open(`https://www.google.com/maps/search/truck+stop/@${lat},${lon},11z`, '_blank');
 }
 
 function showFuelOnMap(lat, lon, name, emoji) {
