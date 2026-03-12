@@ -4411,7 +4411,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="sett-section-title">👤 Driver Profile</div>
         <div class="profile-card">
           <div class="profile-top">
-            <div class="profile-avatar" id="profileAvatar">🚛</div>
+            <div style="position:relative;display:inline-block" onclick="document.getElementById('profilePhotoInput').click()" title="Cambiar foto">
+              <div class="profile-avatar" id="profileAvatar">🚛</div>
+              <div style="position:absolute;bottom:0;right:0;background:#3b82f6;border:2px solid #0f2027;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer">📷</div>
+            </div>
+            <input type="file" id="profilePhotoInput" accept="image/*" style="display:none" onchange="handleProfilePhotoUpload(event)">
             <div class="profile-name-wrap">
               <div class="profile-name" id="profileDisplayName">Driver</div>
               <div class="profile-sub" id="profileDisplaySub">Set your name &amp; truck type</div>
@@ -5402,10 +5406,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="svc-btn-range">50 mi radius</div>
         </button>
 
-        <button class="svc-btn" onclick="showServiceOnMap('truck',50)">
+        <button class="svc-btn" onclick="showServiceOnMap('truck',100)">
           <div class="svc-btn-icon" style="background:rgba(59,130,246,.15)">⛽</div>
           <div class="svc-btn-name">Truck Stops</div>
-          <div class="svc-btn-range">50 mi radius</div>
+          <div class="svc-btn-range">100 mi radius</div>
         </button>
 
       </div>
@@ -10495,26 +10499,28 @@ const POI_ICONS = {
 // Overpass queries for each POI type
 const OVERPASS_QUERIES = {
   scale: (lat, lon, r) => `
-    [out:json][timeout:25];
+    [out:json][timeout:60];
     (
-      node["amenity"="weigh_station"](around:${r},${lat},${lon});
-      node["highway"="weigh_station"](around:${r},${lat},${lon});
-      node["name"~"weigh",i](around:${r},${lat},${lon});
-      way["amenity"="weigh_station"](around:${r},${lat},${lon});
+      nwr["amenity"="weigh_station"](around:${r},${lat},${lon});
+      nwr["highway"="weigh_station"](around:${r},${lat},${lon});
+      nwr["man_made"="weigh_scale"](around:${r},${lat},${lon});
+      nwr["name"~"weigh station|weigh-station|port of entry|inspection station|truck check|scales",i](around:${r},${lat},${lon});
+      nwr["landuse"="weigh_station"](around:${r},${lat},${lon});
+      nwr["enforcement"="weigh_station"](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   truck: (lat, lon, r) => `
-    [out:json][timeout:30];
+    [out:json][timeout:60];
     (
-      node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
-      node["amenity"="truck_stop"](around:${r},${lat},${lon});
-      node["name"~"Flying J|Pilot|Love's|Loves |TA Travel|TA Truck|Petro |Sapp Bros|Kwik Trip|Speedway|Marathon|Shell|Chevron|BP |Exxon|Mobil|Casey",i](around:${r},${lat},${lon});
-      way["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
-      way["amenity"="truck_stop"](around:${r},${lat},${lon});
-      way["name"~"Flying J|Pilot|Love's|Loves |TA Travel|TA Truck|Petro |Sapp Bros",i](around:${r},${lat},${lon});
+      nwr["amenity"="truck_stop"](around:${r},${lat},${lon});
+      nwr["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+      nwr["amenity"="fuel"]["hgv"!="no"]["name"~"Flying J|Pilot|Love|TA Travel|TA Truck|TA-Petro|Petro |Sapp Bros|Kwik Trip|Casey|Speedco|Roady|Rush Truck|SpeedWay|Marathon|Shell|Chevron|BP |Exxon|Mobil|Truck Stop|Truckstop|Fuel Stop",i](around:${r},${lat},${lon});
+      nwr["name"~"Flying J|Pilot Travel|Loves Travel|TA Travel|TA-Petro|Petro Stopping|Sapp Bros|Kwik Trip|Casey|Speedco|Roady|Rush Truck",i](around:${r},${lat},${lon});
+      nwr["highway"="services"]["hgv"!="no"](around:${r},${lat},${lon});
+      nwr["tourism"="caravan_site"]["hgv"="yes"](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   rest: (lat, lon, r) => `
     [out:json][timeout:25];
@@ -10627,20 +10633,30 @@ const OVERPASS_QUERIES = {
 };
 
 // ── showServiceOnMap: called from Community tab service buttons ──────────
-async function showServiceOnMap(type, radiusMiles) {
+async function showServiceOnMap(type, radiusMiles, _btn) {
   const cfg = POI_ICONS[type] || { emoji:'📍', color:'#10b981', label: type };
+
+  // Loading state on button
+  const btn = _btn || document.querySelector(`.svc-btn[onclick*="'${type}'"]`);
+  const origHTML = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<div class="svc-btn-icon" style="background:rgba(16,185,129,.15)">⏳</div><div class="svc-btn-name">Cargando…</div><div class="svc-btn-range">Obteniendo GPS</div>`;
+  }
+  const restoreBtn = () => { if (btn) { btn.disabled = false; btn.innerHTML = origHTML; } };
 
   // 1. Get GPS position
   let lat, lon;
   try {
     const pos = await new Promise((res, rej) =>
-      navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy:true, timeout:10000 }));
+      navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy:true, timeout:12000 }));
     lat = pos.coords.latitude;
     lon = pos.coords.longitude;
   } catch {
     if (origin) { lat = origin.lat; lon = origin.lon; }
-    else { showToast('warning','📍','GPS needed','Enable location access and try again', 4000); return; }
+    else { restoreBtn(); showToast('warning','📍','GPS needed','Enable location access and try again', 4000); return; }
   }
+  if (btn) btn.innerHTML = `<div class="svc-btn-icon" style="background:rgba(16,185,129,.15)">${cfg.emoji}</div><div class="svc-btn-name">Buscando…</div><div class="svc-btn-range">${radiusMiles} mi</div>`;
 
   // 2. Open fullscreen map
   openFullMapScreen();
@@ -10668,11 +10684,19 @@ async function showServiceOnMap(type, radiusMiles) {
     try {
       const radiusMeters = radiusMiles * 1609.34;
       const query = OVERPASS_QUERIES[type](lat, lon, radiusMeters);
+      const ctrl = new AbortController();
+      const abort = setTimeout(() => ctrl.abort(), 65000);
       const r = await fetch('https://overpass-api.de/api/interpreter', {
-        method:'POST', body:'data=' + encodeURIComponent(query)
+        method:'POST', body:'data=' + encodeURIComponent(query), signal: ctrl.signal
       });
+      clearTimeout(abort);
       const data = await r.json();
-      const elements = data.elements || [];
+      // deduplicate by name+position
+      const seen = new Set();
+      const elements = (data.elements || []).filter(el => {
+        const k = `${(el.lat??el.center?.lat)?.toFixed(3)}_${(el.lon??el.center?.lon)?.toFixed(3)}_${el.tags?.name||''}`;
+        if (seen.has(k)) return false; seen.add(k); return true;
+      });
 
       elements.forEach(el => {
         const elLat = el.lat ?? el.center?.lat;
@@ -10711,8 +10735,10 @@ async function showServiceOnMap(type, radiusMiles) {
         found > 0 ? `${found} ${cfg.label}` : 'No results found',
         found > 0 ? `Toca un pin para ver detalles` : `Intenta aumentar el radio o verifica conexión`,
         5000);
+      restoreBtn();
     } catch(e) {
       showToast('danger','⚠️','Error de conexión','No se pudo cargar. Verifica tu internet.', 5000);
+      restoreBtn();
     }
   }, 700);
 }
@@ -13637,9 +13663,23 @@ function saveDriverProfile() {
   const truckType = document.getElementById('truckTypeSelect')?.value || '18wheeler';
   const jobType   = document.getElementById('jobTypeSelect')?.value   || 'interstate';
 
-  driverProfile = { name, truckType, jobType };
+  driverProfile = { name, truckType, jobType, photo: driverProfile.photo || null };
   localStorage.setItem('hos_driver_profile', JSON.stringify(driverProfile));
   updateProfileDisplay();
+}
+
+function handleProfilePhotoUpload(evt) {
+  const file = evt.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    driverProfile.photo = e.target.result;
+    localStorage.setItem('hos_driver_profile', JSON.stringify(driverProfile));
+    updateProfileDisplay();
+    showToast('success','📷','Foto actualizada','Tu foto de perfil ha sido guardada', 3000);
+  };
+  reader.readAsDataURL(file);
+  evt.target.value = '';
 }
 
 function onJobTypeChange() {
@@ -13660,7 +13700,13 @@ function updateProfileDisplay() {
   const badgeEl   = document.getElementById('profileModeBadge');
   const badgeTxt  = document.getElementById('profileModeText');
 
-  if (avatarEl)  avatarEl.textContent = emoji;
+  if (avatarEl) {
+    if (driverProfile.photo) {
+      avatarEl.innerHTML = `<img src="${driverProfile.photo}" alt="foto" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`;
+    } else {
+      avatarEl.textContent = emoji;
+    }
+  }
   if (nameEl)    nameEl.textContent   = name || 'Driver';
   if (subEl) {
     const truckLabel = document.querySelector('#truckTypeSelect option:checked')?.text?.replace(/^[^ ]+ /, '') || 'Truck';
@@ -15818,8 +15864,13 @@ async function sendScanEmail() {
 
   function getMyEmoji() {
     const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
-    const map = { '18wheeler':'🚛','box':'📦','tanker':'🛢️','flatbed':'🚚','refer':'❄️','local':'🚐' };
+    const map = { '18wheeler':'🚛','box':'📦','tanker':'🛢️','flatbed':'🚚','reefer':'❄️','local':'🚐','dump':'🪨','tow':'🚔','hotshot':'🔥','rv':'🚌','lowboy':'🏗️','concrete':'🪨','stepdecks':'🚚','livestock':'🐄' };
     return map[dp.truckType] || '🚛';
+  }
+
+  function getMyPhoto() {
+    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
+    return dp.photo || null;
   }
 
   function getInitials(name) {
@@ -15990,11 +16041,14 @@ async function sendScanEmail() {
     const isOwn = msg.userId === myUserId;
     const emoji = msg.emoji || '🚛';
     const color = nameColor(msg.name || '');
+    const avatarInner = msg.photo
+      ? `<img src="${msg.photo}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`
+      : emoji;
     const div = document.createElement('div');
     div.className = 'room-msg' + (isOwn ? ' own' : '');
     if (key) div.dataset.key = key;
     div.innerHTML = `
-      <div class="room-avatar" style="background:${color}">${emoji}</div>
+      <div class="room-avatar" style="background:${msg.photo ? '#000' : color}">${avatarInner}</div>
       <div class="room-bubble-wrap">
         <div class="room-bubble-name">${esc(msg.name || 'Driver')}</div>
         <div class="room-bubble">${esc(msg.text)}</div>
@@ -16038,7 +16092,8 @@ async function sendScanEmail() {
     if (!text) return;
     const btn = getEl('chatSendBtn');
     btn.disabled = true;
-    const msg = { userId: myUserId, name: getMyName(), emoji: getMyEmoji(), text, clientTs: Date.now() };
+    const photo = getMyPhoto();
+    const msg = { userId: myUserId, name: getMyName(), emoji: getMyEmoji(), photo: photo || undefined, text, clientTs: Date.now() };
     input.value = ''; input.style.height = '';
 
     const fb = window._chatFirebase;
