@@ -532,6 +532,36 @@
   /* ══════════════════════════════════════════
      SETTINGS — iOS-style list groups
   ══════════════════════════════════════════ */
+  /* ── FUEL FINDER ── */
+  .fuel-station-card {
+    display:flex;align-items:center;gap:12px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:16px;padding:13px 14px;margin-bottom:10px;
+    animation:commPop .3s cubic-bezier(.16,1,.3,1);
+  }
+  .fuel-station-icon {
+    width:46px;height:46px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;flex-shrink:0;
+  }
+  .fuel-station-info { flex:1;min-width:0; }
+  .fuel-station-name {
+    font-size:15px;font-weight:800;color:var(--text);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;
+  }
+  .fuel-station-meta { font-size:12px;color:var(--muted); }
+  .fuel-station-dist {
+    font-size:13px;font-weight:900;color:#10b981;text-align:right;flex-shrink:0;
+  }
+  .fuel-station-actions {
+    display:flex;gap:6px;margin-top:8px;
+  }
+  .fuel-action-btn {
+    flex:1;padding:7px 0;border-radius:10px;border:none;
+    font-size:12px;font-weight:700;cursor:pointer;
+    font-family:'DM Sans',sans-serif;touch-action:manipulation;
+  }
+
   .sett-section { margin-bottom: 24px; }
   .sett-section-title {
     font-size: 11px; font-weight: 800; color: var(--muted);
@@ -4158,8 +4188,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <span id="tabLblDrives">Drives</span>
     </button>
     <button class="tab-btn" data-tab="summary" onclick="switchTab('summary')">
-      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      <span id="tabLblSummary">Summary</span>
+      <svg viewBox="0 0 24 24"><path d="M3 22V7l7-5 7 5v15"/><path d="M3 22h14"/><path d="M10 22V12h4v10"/><path d="M20 11V7.5l2-1.5v6.5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-1"/><path d="M19 7h2"/></svg>
+      <span id="tabLblSummary">Fuel</span>
     </button>
     <button class="tab-btn" data-tab="tools" onclick="switchTab('tools')">
       <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
@@ -4388,34 +4418,49 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- SUMMARY PAGE -->
+  <!-- FUEL PAGE -->
   <div class="page" id="page-summary">
     <div class="container">
       <div class="header">
         <div class="row between">
-          <div class="logo">🚛 <span id="summaryTitleTxt">Summaries</span></div>
+          <div class="logo">⛽ <span id="summaryTitleTxt">Fuel Finder</span></div>
         </div>
       </div>
-      <div class="card" style="text-align:center">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
-          <div>
-            <div style="font-size:28px;font-weight:900" id="sumDrives">0</div>
-            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px" id="sumDrivesLbl">Drives</div>
-          </div>
-          <div>
-            <div style="font-size:28px;font-weight:900;color:var(--muted)" id="sumMiles">0</div>
-            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px" id="sumMilesLbl">Miles</div>
-          </div>
-          <div>
-            <div style="font-size:28px;font-weight:900;color:var(--accent)" id="sumValue">$0</div>
-            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px" id="sumValueLbl">Logged</div>
-          </div>
+
+      <!-- Average price card -->
+      <div id="fuelPriceCard" style="
+        background:linear-gradient(135deg,#0f2027,#0e2038);
+        border:1px solid rgba(16,185,129,.25);
+        border-radius:18px;padding:18px;margin-bottom:14px;
+        display:flex;align-items:center;gap:16px">
+        <div style="font-size:42px;flex-shrink:0">⛽</div>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:4px">Promedio Nacional Diesel · EIA</div>
+          <div id="fuelAvgPrice" style="font-size:32px;font-weight:900;color:#10b981;letter-spacing:-1px">--</div>
+          <div id="fuelAvgDate" style="font-size:11px;color:var(--muted);margin-top:2px">Actualizando…</div>
         </div>
-        <div style="font-size:48px;margin:16px 0">🚛</div>
-        <div style="font-size:16px;font-weight:700;margin-bottom:8px" id="sumStatus">No routes yet</div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:16px" id="sumDesc">Plan a route to see your summary here.</div>
-        <button class="btn btn-primary" id="sendReportBtn" style="display:none">📤 Send Report</button>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px">por galón</div>
+          <button onclick="fetchEIAPrice()" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);border-radius:10px;color:#10b981;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer">↺ Refresh</button>
+        </div>
       </div>
+
+      <!-- Search button -->
+      <button id="fuelSearchBtn" onclick="searchFuelNearby(this)" style="
+        width:100%;padding:16px;border-radius:16px;border:none;
+        background:linear-gradient(135deg,#10b981,#059669);
+        color:#fff;font-size:17px;font-weight:800;
+        font-family:'DM Sans',sans-serif;cursor:pointer;
+        touch-action:manipulation;margin-bottom:8px;
+        box-shadow:0 4px 18px rgba(16,185,129,.4)">
+        🔍 Buscar Diesel Más Barato
+      </button>
+      <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:16px">
+        GPS · 100 km · Truck stops + gasolineras HGV
+      </div>
+
+      <!-- Results -->
+      <div id="fuelResultsList"></div>
     </div>
   </div>
 
@@ -12013,6 +12058,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
+  if (tab === 'summary') fetchEIAPrice();
 }
 
 function bindEvents() {
@@ -13615,6 +13661,172 @@ const JOB_LABELS = {
   'dedicated':  { label: 'Dedicated — Full Map',        cls: 'interstate' },
   'owner':      { label: 'Owner-Operator — Full Map',   cls: 'interstate' },
 };
+
+/* ══════════════════════════════════════════════════════════
+   ⛽  FUEL FINDER
+   ══════════════════════════════════════════════════════════ */
+async function fetchEIAPrice() {
+  const el = document.getElementById('fuelAvgPrice');
+  const dateEl = document.getElementById('fuelAvgDate');
+  if (!el) return;
+  el.textContent = '…';
+  try {
+    // EIA v2 API — free key required; try with a public demo approach first
+    // Series: EMD_EPD2D_PTE_NUS_DPG = Diesel, US average, weekly (cents per gallon)
+    const url = 'https://api.eia.gov/v2/petroleum/pri/gnd/data/?api_key=DEMO_KEY&frequency=weekly&data[0]=value&facets[product][]=DID&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=1';
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const json = await r.json();
+    const val = json?.response?.data?.[0];
+    if (val?.value) {
+      const price = (val.value / 100).toFixed(3);
+      el.textContent = '$' + price;
+      if (dateEl) dateEl.textContent = 'Semana del ' + val.period + ' · EIA.gov';
+      return;
+    }
+  } catch {}
+  // Fallback: try EIA v1 (no-key variant)
+  try {
+    const r2 = await fetch('https://api.eia.gov/series/?api_key=DEMO_KEY&series_id=PET.EMD_EPD2D_PTE_NUS_DPG.W', { signal: AbortSignal.timeout(8000) });
+    const j2 = await r2.json();
+    const series = j2?.series?.[0]?.data;
+    if (series?.length) {
+      const [period, value] = series[0];
+      el.textContent = '$' + (value / 100).toFixed(3);
+      if (dateEl) dateEl.textContent = 'Semana del ' + period + ' · EIA.gov';
+      return;
+    }
+  } catch {}
+  el.textContent = 'N/A';
+  if (dateEl) dateEl.innerHTML = '<a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" style="color:#3b82f6">Ver precio en EIA →</a>';
+}
+
+async function searchFuelNearby(btn) {
+  const list = document.getElementById('fuelResultsList');
+  if (!list) return;
+  const origTxt = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Buscando…'; }
+
+  let lat, lon;
+  try {
+    const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, maximumAge: 60000 }));
+    lat = pos.coords.latitude; lon = pos.coords.longitude;
+  } catch {
+    if (origin) { lat = origin.lat; lon = origin.lon; }
+    else { showToast('warning','📍','GPS necesario','Activa tu ubicación e intenta de nuevo', 4000); if (btn) { btn.disabled = false; btn.textContent = origTxt; } return; }
+  }
+
+  list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:14px">⏳ Consultando base de datos…</div>';
+
+  try {
+    const r = 100000; // 100 km
+    const query = `[out:json][timeout:55];
+(
+  nwr["amenity"="truck_stop"](around:${r},${lat},${lon});
+  nwr["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+  nwr["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${r},${lat},${lon});
+  nwr["amenity"="fuel"]["fuel:diesel"="yes"](around:${r},${lat},${lon});
+  nwr["name"~"Flying J|Pilot|Love|TA Travel|TA-Petro|Petro |Sapp Bros|Kwik Trip|Speedco|Roady|Rush Truck|Travel Center|Travel Plaza|Truck Stop|Sunoco|Valero|Shell|Chevron|BP|Exxon|Mobil|Marathon|Circle K|Maverik",i](around:${r},${lat},${lon});
+);
+out center qt;`;
+    const ctrl = new AbortController();
+    const abort = setTimeout(() => ctrl.abort(), 58000);
+    const resp = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query), signal: ctrl.signal });
+    clearTimeout(abort);
+    const data = await resp.json();
+
+    // Deduplicate
+    const seen = new Set();
+    const els = (data.elements || []).filter(el => {
+      const elLat = el.lat ?? el.center?.lat;
+      const elLon = el.lon ?? el.center?.lon;
+      if (!elLat || !elLon) return false;
+      const k = `${elLat.toFixed(3)}_${elLon.toFixed(3)}_${el.tags?.name || ''}`;
+      if (seen.has(k)) return false; seen.add(k); return true;
+    });
+
+    // Sort by distance
+    els.sort((a, b) => {
+      const aLat = a.lat ?? a.center?.lat, aLon = a.lon ?? a.center?.lon;
+      const bLat = b.lat ?? b.center?.lat, bLon = b.lon ?? b.center?.lon;
+      return haversine(lat, lon, aLat, aLon) - haversine(lat, lon, bLat, bLon);
+    });
+
+    if (!els.length) {
+      list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">⛽</div><div style="font-size:14px;font-weight:700">Sin resultados</div><div style="font-size:12px;margin-top:6px">Aumenta el radio o verifica conexión</div></div>';
+      if (btn) { btn.disabled = false; btn.textContent = origTxt; }
+      return;
+    }
+
+    list.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">⛽ ${els.length} estaciones encontradas · 100 km</div>`;
+
+    els.forEach(el => {
+      const elLat = el.lat ?? el.center?.lat;
+      const elLon = el.lon ?? el.center?.lon;
+      const dist = haversine(lat, lon, elLat, elLon).toFixed(1);
+      const distKm = (haversine(lat, lon, elLat, elLon) * 1.60934).toFixed(1);
+      const name = el.tags?.name || el.tags?.operator || 'Gasolinera';
+      const city = [el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean).join(', ');
+      const phone = el.tags?.phone || '';
+      const brand = el.tags?.brand || el.tags?.operator || '';
+
+      // Pick emoji/color by brand
+      let emoji = '⛽', bgColor = 'rgba(16,185,129,.15)';
+      const n = (name + brand).toLowerCase();
+      if (/flying.?j|pilot/i.test(n))       { emoji = '✈️'; bgColor = 'rgba(245,158,11,.15)'; }
+      else if (/love|loves/i.test(n))        { emoji = '❤️'; bgColor = 'rgba(239,68,68,.15)'; }
+      else if (/ta\b|travel.?center|petro/i.test(n)) { emoji = '🔵'; bgColor = 'rgba(29,78,216,.15)'; }
+      else if (/truck.?stop/i.test(n))       { emoji = '🚛'; bgColor = 'rgba(16,185,129,.15)'; }
+      else if (/shell/i.test(n))             { emoji = '🐚'; bgColor = 'rgba(245,158,11,.15)'; }
+      else if (/chevron/i.test(n))           { emoji = '💙'; bgColor = 'rgba(59,130,246,.15)'; }
+
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${elLat},${elLon}&travelmode=driving`;
+
+      const card = document.createElement('div');
+      card.className = 'fuel-station-card';
+      card.innerHTML = `
+        <div class="fuel-station-icon" style="background:${bgColor}">${emoji}</div>
+        <div class="fuel-station-info">
+          <div class="fuel-station-name">${name}</div>
+          <div class="fuel-station-meta">${city || brand || 'Estación de combustible'}${phone ? ' · ' + phone : ''}</div>
+          <div class="fuel-station-actions">
+            <button class="fuel-action-btn" style="background:rgba(16,185,129,.15);color:#10b981"
+              onclick="showFuelOnMap(${elLat},${elLon},'${name.replace(/'/g,"\\'")}','${emoji}')">🗺️ Mapa</button>
+            <button class="fuel-action-btn" style="background:rgba(59,130,246,.15);color:#3b82f6"
+              onclick="window.open('${mapsUrl}','_blank')">🧭 Navegar</button>
+          </div>
+        </div>
+        <div class="fuel-station-dist">${dist} mi<div style="font-size:10px;font-weight:600;color:var(--muted)">${distKm} km</div></div>`;
+      list.appendChild(card);
+    });
+
+    showToast('success','⛽',`${els.length} estaciones`, 'Toca una para ver en mapa o navegar', 4000);
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">⚠️ Error de conexión. Verifica tu internet.</div>';
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = origTxt; }
+}
+
+function showFuelOnMap(lat, lon, name, emoji) {
+  openFullMapScreen();
+  setTimeout(() => {
+    if (!fmMapInst) return;
+    fmMapInst.setView([lat, lon], 14);
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:#10b981;border:3px solid #fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 10px rgba(0,0,0,.45)">${emoji}</div>`,
+      iconAnchor: [18, 18]
+    });
+    L.marker([lat, lon], { icon }).addTo(fmMapInst)
+      .bindPopup(`<b>${emoji} ${name}</b>`)
+      .openPopup();
+  }, 800);
+}
+
+// Auto-fetch EIA price on load
+document.addEventListener('DOMContentLoaded', () => {
+  fetchEIAPrice();
+});
 
 let driverProfile = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
 
