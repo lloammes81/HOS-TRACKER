@@ -10556,144 +10556,156 @@ const POI_ICONS = {
   reefer:      { emoji:'❄️', color:'#0ea5e9', label:'Reefer Repair' },
 };
 
-// Overpass queries for each POI type
+// Overpass queries — use node (faster than nwr) where POIs are typically points
 const OVERPASS_QUERIES = {
   scale: (lat, lon, r) => `
-    [out:json][timeout:60];
+    [out:json][timeout:30];
     (
-      nwr["amenity"="weigh_station"](around:${r},${lat},${lon});
-      nwr["highway"="weigh_station"](around:${r},${lat},${lon});
-      nwr["man_made"="weigh_scale"](around:${r},${lat},${lon});
-      nwr["name"~"weigh station|weigh-station|port of entry|inspection station|truck check|scales",i](around:${r},${lat},${lon});
-      nwr["landuse"="weigh_station"](around:${r},${lat},${lon});
-      nwr["enforcement"="weigh_station"](around:${r},${lat},${lon});
+      node["amenity"="weigh_station"](around:${r},${lat},${lon});
+      node["highway"="weigh_station"](around:${r},${lat},${lon});
+      node["man_made"="weigh_scale"](around:${r},${lat},${lon});
+      way["amenity"="weigh_station"](around:${r},${lat},${lon});
+      way["highway"="weigh_station"](around:${r},${lat},${lon});
     );
     out center qt;`,
 
   truck: (lat, lon, r) => `
-    [out:json][timeout:60];
+    [out:json][timeout:30];
     (
-      nwr["amenity"="truck_stop"](around:${r},${lat},${lon});
-      nwr["shop"="truck_stop"](around:${r},${lat},${lon});
-      nwr["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
-      nwr["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${r},${lat},${lon});
-      nwr["amenity"="fuel"]["fuel:diesel"="yes"](around:${r},${lat},${lon});
-      nwr["brand"~"Pilot Flying J|Pilot Travel Center|Love's Travel Stops|Travel Centers of America|Petro Stopping Centers|Sapp Bros|Kwik Trip|Flying J|TA Travel Center|TA-Petro|TruckMart|Roady's|Speedco|Wilco",i](around:${r},${lat},${lon});
-      nwr["operator"~"Pilot|Love's|Travel Centers of America|Petro|Sapp Bros|Kwik Trip|TA Travel|Roady|Speedco",i](around:${r},${lat},${lon});
-      nwr["name"~"Flying J|Pilot Travel|Pilot Flying|Loves Travel|Love.s Travel|TA Travel|TA-Petro|TravelCenters|Petro Stopping|Sapp Bros|Kwik Trip|Casey.s General|Speedco|Roady.s|Rush Truck|Truck Stop|TruckStop|Fuel Stop|Travel Plaza|Travel Center|Truck Plaza",i](around:${r},${lat},${lon});
-      nwr["highway"="services"](around:${r},${lat},${lon});
+      node["amenity"="truck_stop"](around:${r},${lat},${lon});
+      node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+      node["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${r},${lat},${lon});
+      node["brand"~"Pilot Flying J|Love's Travel Stops|Travel Centers of America|Petro Stopping Centers|Sapp Bros|Flying J|TA Travel Center|TA-Petro|Wilco",i](around:${r},${lat},${lon});
+      node["name"~"Flying J|Pilot Travel|Loves Travel|TA Travel|TA-Petro|Petro Stop|Sapp Bros|Kwik Trip|Truck Stop|Travel Plaza|Travel Center|Truck Plaza",i](around:${r},${lat},${lon});
+      way["amenity"="truck_stop"](around:${r},${lat},${lon});
+      way["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
     );
     out center qt;`,
 
   rest: (lat, lon, r) => `
-    [out:json][timeout:25];
+    [out:json][timeout:20];
     (
       node["highway"="rest_area"](around:${r},${lat},${lon});
       node["amenity"="rest_area"](around:${r},${lat},${lon});
-      node["highway"="services"]["hgv"="yes"](around:${r},${lat},${lon});
       way["highway"="rest_area"](around:${r},${lat},${lon});
-      way["amenity"="rest_area"](around:${r},${lat},${lon});
-      relation["highway"="rest_area"](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
+
   parking: (lat, lon, r) => `
-    [out:json][timeout:25];
+    [out:json][timeout:20];
     (
       node["amenity"="parking"]["hgv"="yes"](around:${r},${lat},${lon});
       node["amenity"="parking"]["truck"="yes"](around:${r},${lat},${lon});
-      node["amenity"="parking"]["motor_vehicle"="yes"]["name"~"truck|camion|semi|18",i](around:${r},${lat},${lon});
       way["amenity"="parking"]["hgv"="yes"](around:${r},${lat},${lon});
-      way["amenity"="parking"]["truck"="yes"](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   mechanics: (lat, lon, r) => `
-    [out:json][timeout:30];
+    [out:json][timeout:20];
     (
       node["shop"="truck_repair"](around:${r},${lat},${lon});
-      node["craft"="car_repair"]["hgv"="yes"](around:${r},${lat},${lon});
-      node["shop"="car_repair"](around:${r},${lat},${lon});
-      node["name"~"truck.*repair|diesel.*repair|mechanic|mecanico|taller",i](around:${r},${lat},${lon});
+      node["amenity"="car_repair"]["hgv"="yes"](around:${r},${lat},${lon});
+      node["name"~"truck repair|diesel repair|truck mechanic|mecanico|taller diesel",i](around:${r},${lat},${lon});
       way["shop"="truck_repair"](around:${r},${lat},${lon});
-      way["shop"="car_repair"]["hgv"="yes"](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   parts: (lat, lon, r) => `
-    [out:json][timeout:30];
+    [out:json][timeout:20];
     (
       node["shop"="truck_parts"](around:${r},${lat},${lon});
       node["shop"="auto_parts"](around:${r},${lat},${lon});
-      node["shop"="car_parts"](around:${r},${lat},${lon});
-      node["name"~"AutoZone|Napa|O'Reilly|Advance Auto|Freightliner|Kenworth|Peterbilt|Volvo.*Truck|Mack.*Truck|truck.*parts|diesel.*parts",i](around:${r},${lat},${lon});
+      node["name"~"Freightliner|Kenworth|Peterbilt|Volvo Truck|Mack Truck|truck parts|diesel parts|AutoZone|Napa Auto|O.Reilly",i](around:${r},${lat},${lon});
       way["shop"="truck_parts"](around:${r},${lat},${lon});
-      way["shop"="auto_parts"](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   restaurants: (lat, lon, r) => `
-    [out:json][timeout:30];
+    [out:json][timeout:20];
     (
       node["amenity"="restaurant"](around:${r},${lat},${lon});
       node["amenity"="fast_food"](around:${r},${lat},${lon});
-      node["amenity"="cafe"](around:${r},${lat},${lon});
-      node["name"~"McDonald|Burger King|Subway|Wendy|Denny|IHOP|Waffle House|Cracker Barrel|Steak|Diner",i](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   tires: (lat, lon, r) => `
-    [out:json][timeout:25];
+    [out:json][timeout:20];
     (
       node["shop"="tyres"](around:${r},${lat},${lon});
       node["shop"="tires"](around:${r},${lat},${lon});
-      node["name"~"Goodyear|Michelin|Bridgestone|Firestone|Discount Tire|Speedco|TA Truck|Loves.*Tire|truck.*tire",i](around:${r},${lat},${lon});
-      way["shop"="tyres"](around:${r},${lat},${lon});
+      node["name"~"Goodyear|Bridgestone|Firestone|Discount Tire|truck tire|semi tire",i](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   truckwash: (lat, lon, r) => `
-    [out:json][timeout:25];
+    [out:json][timeout:20];
     (
       node["amenity"="car_wash"]["hgv"="yes"](around:${r},${lat},${lon});
-      node["name"~"truck.*wash|blue beacon|speedway.*wash|petro.*wash",i](around:${r},${lat},${lon});
-      way["amenity"="car_wash"]["hgv"="yes"](around:${r},${lat},${lon});
+      node["name"~"Blue Beacon|truck wash|semi wash",i](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   towing: (lat, lon, r) => `
-    [out:json][timeout:25];
+    [out:json][timeout:20];
     (
-      node["amenity"="vehicle_inspection"](around:${r},${lat},${lon});
-      node["name"~"towing|grua|tow truck|roadside",i](around:${r},${lat},${lon});
       node["craft"="towing"](around:${r},${lat},${lon});
+      node["name"~"towing|grua|tow truck|roadside assist",i](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   dotphysical: (lat, lon, r) => `
-    [out:json][timeout:25];
+    [out:json][timeout:20];
     (
       node["amenity"="doctors"](around:${r},${lat},${lon});
-      node["amenity"="clinic"](around:${r},${lat},${lon});
-      node["name"~"DOT.*physical|CDL.*medical|truck.*medical|driver.*medical|concentra|occupational",i](around:${r},${lat},${lon});
+      node["name"~"DOT physical|CDL medical|concentra|occupational health",i](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   chromeshop: (lat, lon, r) => `
-    [out:json][timeout:25];
+    [out:json][timeout:20];
     (
       node["shop"="car_accessories"](around:${r},${lat},${lon});
-      node["name"~"chrome.*shop|truck.*accessories|big.*rig|semi.*accessories",i](around:${r},${lat},${lon});
+      node["name"~"chrome shop|truck accessories|big rig",i](around:${r},${lat},${lon});
     );
-    out center;`,
+    out center qt;`,
 
   reefer: (lat, lon, r) => `
-    [out:json][timeout:25];
+    [out:json][timeout:20];
     (
-      node["name"~"reefer|refriger|thermo.*king|carrier.*transicold|transport.*refrig",i](around:${r},${lat},${lon});
+      node["name"~"Thermo King|Carrier Transicold|reefer repair|refrigeration",i](around:${r},${lat},${lon});
       node["shop"="car_repair"]["name"~"reefer|refriger",i](around:${r},${lat},${lon});
     );
     out center;`,
 };
+
+// ── Overpass fetch with mirror fallbacks ─────────────────────
+const OVERPASS_MIRRORS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
+];
+
+async function overpassFetch(query, timeoutMs = 40000) {
+  for (const mirror of OVERPASS_MIRRORS) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const r = await fetch(mirror, {
+        method: 'POST',
+        body: 'data=' + encodeURIComponent(query),
+        signal: ctrl.signal
+      });
+      clearTimeout(timer);
+      if (!r.ok) continue;
+      const data = await r.json();
+      if (data && (data.elements !== undefined)) return data;
+    } catch {
+      clearTimeout(timer);
+      // Try next mirror
+    }
+  }
+  throw new Error('All Overpass mirrors failed');
+}
 
 // ── showServiceOnMap: called from Community tab service buttons ──────────
 async function showServiceOnMap(type, radiusMiles, _btn) {
@@ -10747,13 +10759,7 @@ async function showServiceOnMap(type, radiusMiles, _btn) {
     try {
       const radiusMeters = radiusMiles * 1609.34;
       const query = OVERPASS_QUERIES[type](lat, lon, radiusMeters);
-      const ctrl = new AbortController();
-      const abort = setTimeout(() => ctrl.abort(), 65000);
-      const r = await fetch('https://overpass-api.de/api/interpreter', {
-        method:'POST', body:'data=' + encodeURIComponent(query), signal: ctrl.signal
-      });
-      clearTimeout(abort);
-      const data = await r.json();
+      const data = await overpassFetch(query, 40000);
       // deduplicate by name+position
       const seen = new Set();
       const elements = (data.elements || []).filter(el => {
@@ -13763,24 +13769,19 @@ async function searchFuelNearby(btn) {
 
   try {
     const r = 100000; // 100 km
-    const query = `[out:json][timeout:60];
+    const query = `[out:json][timeout:30];
 (
-  nwr["amenity"="truck_stop"](around:${r},${lat},${lon});
-  nwr["shop"="truck_stop"](around:${r},${lat},${lon});
-  nwr["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
-  nwr["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${r},${lat},${lon});
-  nwr["amenity"="fuel"]["fuel:diesel"="yes"](around:${r},${lat},${lon});
-  nwr["brand"~"Pilot Flying J|Pilot Travel Center|Love's Travel Stops|Travel Centers of America|Petro Stopping Centers|Sapp Bros|Kwik Trip|Flying J|TA Travel Center|TA-Petro|TruckMart|Roady's|Speedco|Wilco",i](around:${r},${lat},${lon});
-  nwr["operator"~"Pilot|Love's|Travel Centers of America|Petro|Sapp Bros|Kwik Trip|TA Travel|Roady|Speedco",i](around:${r},${lat},${lon});
-  nwr["name"~"Flying J|Pilot Travel|Pilot Flying|Loves Travel|Love.s Travel|TA Travel|TA-Petro|TravelCenters|Petro Stopping|Sapp Bros|Kwik Trip|Casey.s|Speedco|Roady.s|Rush Truck|Truck Stop|TruckStop|Fuel Stop|Travel Plaza|Travel Center|Truck Plaza|Iowa 80|Buc-ee|Stuckey",i](around:${r},${lat},${lon});
-  nwr["highway"="services"](around:${r},${lat},${lon});
+  node["amenity"="truck_stop"](around:${r},${lat},${lon});
+  node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+  node["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${r},${lat},${lon});
+  node["amenity"="fuel"]["fuel:diesel"="yes"](around:${r},${lat},${lon});
+  node["brand"~"Pilot Flying J|Love's Travel Stops|Travel Centers of America|Petro Stopping Centers|Sapp Bros|Flying J|TA Travel Center|TA-Petro",i](around:${r},${lat},${lon});
+  node["name"~"Flying J|Pilot Travel|Loves Travel|TA Travel|TA-Petro|Petro Stop|Sapp Bros|Kwik Trip|Truck Stop|Travel Plaza|Travel Center",i](around:${r},${lat},${lon});
+  way["amenity"="truck_stop"](around:${r},${lat},${lon});
+  way["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
 );
 out center qt;`;
-    const ctrl = new AbortController();
-    const abort = setTimeout(() => ctrl.abort(), 58000);
-    const resp = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query), signal: ctrl.signal });
-    clearTimeout(abort);
-    const data = await resp.json();
+    const data = await overpassFetch(query, 40000);
 
     // Deduplicate
     const seen = new Set();
