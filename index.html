@@ -4088,12 +4088,24 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <!-- STOPS BUILDER -->
         <div class="stops-container" id="stopsContainer">
-          <!-- Origin -->
+          <!-- Origin (solo GPS, no editable) -->
           <div class="stop-row" id="stopRowOrigin">
-            <div class="stop-dot origin">📍</div>
+            <div class="stop-dot origin" onclick="useGPS()" style="cursor:pointer" title="Actualizar ubicación">📍</div>
             <div class="stop-input-wrap">
-              <input id="originInput" placeholder="📡 Obteniendo tu ubicación…" autocomplete="off" />
-              <div class="suggestions" id="originSugg" style="display:none"></div>
+              <div id="originLabel" style="
+                display:flex;align-items:center;gap:6px;
+                padding:10px 12px;border-radius:12px;
+                background:rgba(16,185,129,.08);
+                border:1px solid rgba(16,185,129,.25);
+                color:var(--text);font-size:15px;line-height:1.3;
+                min-height:42px;cursor:default;user-select:text;
+              ">
+                <span id="originLabelText" style="flex:1;color:var(--muted);font-size:13px">📡 Obteniendo tu ubicación…</span>
+                <button onclick="useGPS()" title="Actualizar" style="
+                  background:none;border:none;cursor:pointer;font-size:16px;
+                  padding:0 2px;opacity:.6;flex-shrink:0;line-height:1;
+                " tabindex="-1">🔄</button>
+              </div>
             </div>
           </div>
 
@@ -9105,9 +9117,8 @@ function useGPS() {
       lang==='es'?'Tu dispositivo no soporta geolocalización.':'Your device does not support geolocation.', 3500);
     return;
   }
-  const inp = document.getElementById('originInput');
-  inp.placeholder = lang==='es' ? '📡 Obteniendo tu ubicación…' : '📡 Getting your location…';
-  inp.value = '';
+  const lbl = document.getElementById('originLabelText');
+  if (lbl) { lbl.textContent = lang==='es' ? '📡 Obteniendo tu ubicación…' : '📡 Getting your location…'; lbl.style.color = 'var(--muted)'; }
   origin = null;
 
   navigator.geolocation.getCurrentPosition(async pos => {
@@ -9119,14 +9130,13 @@ function useGPS() {
       const p = feat?.properties || {};
       const name = [p.name, p.city, p.state, p.country].filter(Boolean).join(', ') || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
       origin = { name, lat: latitude, lon: longitude };
-      inp.value = name;
-      inp.placeholder = lang==='es' ? '📍 Mi ubicación' : '📍 My location';
+      if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; }
     } catch {
       origin = { name: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, lat: latitude, lon: longitude };
-      inp.value = origin.name;
+      if (lbl) { lbl.textContent = origin.name; lbl.style.color = 'var(--text)'; }
     }
-  }, err => {
-    inp.placeholder = lang==='es' ? 'Origen – Ciudad, Estado' : 'Origin – City, State';
+  }, () => {
+    if (lbl) { lbl.textContent = lang==='es' ? '⚠️ Permiso de ubicación denegado' : '⚠️ Location permission denied'; lbl.style.color = '#ef4444'; }
     showToast('danger','📡', lang==='es'?'Ubicación no disponible':'Location unavailable', t('gpsDenied'), 4000);
   }, { enableHighAccuracy: true, timeout: 12000 });
 }
@@ -11329,7 +11339,7 @@ function resetForm() {
     miniPoiMarkers[type] = [];
   });
   document.getElementById('miniPoiLegend').style.display = 'none';
-  document.getElementById('originInput').value = '';
+  if (navigator.geolocation) useGPS();
   document.getElementById('destInput').value = '';
   document.getElementById('hoursInput').value = '70';
   document.getElementById('speedInput').value = defaultSpeed;
@@ -11401,16 +11411,6 @@ function bindEvents() {
   // Auto-rellenar origen con la ubicación actual al cargar la app
   if (navigator.geolocation) useGPS();
 
-  document.getElementById('originInput').addEventListener('input', e => {
-    clearTimeout(originDebounce);
-    const v = e.target.value;
-    if (v.length < 2) { document.getElementById('originSugg').style.display = 'none'; return; }
-    originDebounce = setTimeout(async () => {
-      const items = await fetchAutocomplete(v).catch(() => []);
-      showSuggestions('originSugg', items, it => { origin = it; document.getElementById('originInput').value = it.name; });
-    }, 300);
-  });
-
   document.getElementById('destInput').addEventListener('input', e => {
     clearTimeout(destDebounce);
     const v = e.target.value;
@@ -11422,7 +11422,6 @@ function bindEvents() {
   });
 
   document.addEventListener('click', e => {
-    if (!e.target.closest('#originInput') && !e.target.closest('#originSugg')) document.getElementById('originSugg').style.display = 'none';
     if (!e.target.closest('#destInput') && !e.target.closest('#destSugg')) document.getElementById('destSugg').style.display = 'none';
   });
 
@@ -12215,9 +12214,7 @@ function loadHistoryRoute(idx) {
   const h = routeHistory[idx];
   if (!h) return;
 
-  // Fill origin
-  document.getElementById('originInput').value = h.origin;
-  // Geocode origin
+  // Geocodificar origen del historial
   geocodeAndSet(h.origin, 'origin');
 
   // Fill destination
@@ -12254,7 +12251,7 @@ async function geocodeAndSet(name, field) {
     const data = await res.json();
     if (data[0]) {
       const loc = { name, lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-      if (field === 'origin') { origin = loc; document.getElementById('originInput').value = name; }
+      if (field === 'origin') { origin = loc; const lbl = document.getElementById('originLabelText'); if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; } }
       else { destination = loc; document.getElementById('destInput').value = name; }
     }
   } catch {}
