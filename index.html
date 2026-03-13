@@ -10184,99 +10184,33 @@ function toggleFollow() {
   }
 }
 
-// Abort flag — set by minimizeMap() to cancel in-flight fmStartTracking
+// Abort flag — kept for compatibility with minimizeMap
 let fmTrackAbort = false;
 
-async function fmStartTracking() {
+function fmStartTracking() {
   if (!navigator.geolocation) { alert(lang==='es'?'GPS no soportado':'GPS not supported'); return; }
   fmTrackAbort = false;
 
   document.getElementById('fmTrackBanner').style.display = 'none';
-  document.getElementById('fmLiveDot').style.background = '#f59e0b';
-  document.getElementById('fmLiveDot').style.boxShadow = '0 0 6px #f59e0b';
-  document.getElementById('fmLiveDot').style.animation = 'liveblink 1s infinite';
-  document.getElementById('fmLocVal').textContent = lang==='es' ? '📡 Obteniendo ubicación...' : '📡 Getting location...';
-  document.getElementById('fmStatusChip').textContent = '📡 Locating...';
+  document.getElementById('fmLiveDot').style.background = '#10b981';
+  document.getElementById('fmLiveDot').style.boxShadow = '0 0 8px #10b981';
+  document.getElementById('fmLiveDot').style.animation = 'liveblink 1.5s infinite';
+  document.getElementById('fmLocVal').textContent = origin?.name?.split(',')[0] || (lang==='es' ? '📍 Ruta activa' : '📍 Route active');
+  document.getElementById('fmStatusChip').textContent = '📡 GPS activo';
 
-  // ── STEP 1: Fast GPS fix — accept cached position, 6s hard timeout ──────────
-  // Uses enableHighAccuracy:false first so Android/iOS returns quickly.
-  // Falls back to origin coords so the user isn't stuck waiting forever.
-  let realLat = origin?.lat, realLon = origin?.lon, realAccuracy = 200;
-  try {
-    const pos = await Promise.race([
-      new Promise((res, rej) =>
-        navigator.geolocation.getCurrentPosition(res, rej, {
-          enableHighAccuracy: false,
-          maximumAge: 60000,
-          timeout: 6000
-        })
-      ),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('gps-timeout')), 6500))
-    ]);
-    if (fmTrackAbort) return;
-    realLat = pos.coords.latitude;
-    realLon = pos.coords.longitude;
-    realAccuracy = pos.coords.accuracy;
-  } catch {
-    if (fmTrackAbort) return;
-    if (!realLat || !realLon) {
-      document.getElementById('fmLocVal').textContent = '❌ GPS no disponible — verifica permisos';
-      document.getElementById('fmLiveDot').style.background = '#ef4444';
-      return;
-    }
-    // Use origin as fallback and continue
-    document.getElementById('fmLocVal').textContent = '⚠️ GPS débil — usando ruta original';
-  }
+  // ── Start IMMEDIATELY from origin — no GPS blocking wait ─────────────────────
+  // watchPosition will update the truck position as real GPS fixes arrive.
+  // This avoids the iOS/Android permission-dialog freeze entirely.
+  const realLat = origin?.lat ?? 39.5;
+  const realLon = origin?.lon ?? -98.35;
 
-  // ── STEP 2: Reverse geocode — fire-and-forget, never blocks startup ──────────
-  const realOrigin = { lat: realLat, lon: realLon, name: `${realLat.toFixed(4)}, ${realLon.toFixed(4)}` };
-  fetch(`https://photon.komoot.io/reverse?lat=${realLat}&lon=${realLon}`)
-    .then(r => r.json())
-    .then(d => {
-      const p = d.features?.[0]?.properties || {};
-      const n = [p.name, p.city, p.state].filter(Boolean).join(', ');
-      if (n) {
-        realOrigin.name = n;
-        document.getElementById('fmLocVal').textContent = n;
-        document.getElementById('fmFrom').textContent = n.split(',')[0];
-      }
-    }).catch(() => {});
-
-  // ── STEP 3: Recalculate route only if GPS moved >0.5 mi from known origin ────
-  const movedMi = haversine(realLat, realLon, origin?.lat ?? realLat, origin?.lon ?? realLon);
-  if (movedMi > 0.5 && destination) {
-    document.getElementById('fmLocVal').textContent = lang==='es' ? '🔄 Recalculando ruta...' : '🔄 Recalculating route...';
-    try {
-      const road = await fetchRoadRoute(realOrigin, destination);
-      if (fmTrackAbort) return;
-      routeDistance = road.miles;
-      roadGeometry  = road.coords;
-      navSteps = Array.isArray(road.steps) ? road.steps : [];
-    } catch {
-      // Keep existing route geometry on error
-    }
-  }
-
+  document.getElementById('fmFrom').textContent = origin?.name?.split(',')[0] || '';
   navStepIdx = 0;
   const navBox = document.getElementById('navNext');
   if (navBox) navBox.style.display = navSteps.length ? 'block' : 'none';
 
-  origin = realOrigin;
-  document.getElementById('fmFrom').textContent = realOrigin.name.split(',')[0];
-  document.getElementById('fmLocVal').textContent = realOrigin.name;
-
-  // ── STEP 4: Redraw route + place truck ────────────────────
-  if (fmTrackAbort) return;
   if (fmMapInst) {
     fmRedrawRoute(roadGeometry);
-
-    // Accuracy circle
-    if (fmAccMarker) { try { fmMapInst.removeLayer(fmAccMarker); } catch {} }
-    fmAccMarker = L.circle([realLat, realLon], {
-      radius: realAccuracy || 20,
-      color: '#3b82f6', fillColor: '#3b82f6',
-      fillOpacity: 0.08, weight: 1.5, opacity: 0.5
-    }).addTo(fmMapInst);
 
     fmUpdateTruckMarker(realLat, realLon, null, false);
     fmPrevLat = realLat; fmPrevLon = realLon;
@@ -10286,8 +10220,7 @@ async function fmStartTracking() {
     fmCurrentZoom = 15;
     fmMapInst.setView([realLat, realLon], fmCurrentZoom, { animate: true, duration: 1.2 });
 
-    // Load POIs after route is ready
-    setTimeout(() => loadAllPOIs(realLat, realLon), 800);
+    setTimeout(() => loadAllPOIs(realLat, realLon), 600);
   }
 
   // ── STEP 5: Live tracking ─────────────────────────────────
@@ -10804,7 +10737,7 @@ async function showServiceOnMap(type, radiusMiles, _btn) {
         const elLon = el.lon ?? el.center?.lon;
         if (!elLat || !elLon) return;
 
-        const dist = haversine(lat, lon, elLat, elLon).toFixed(1);
+        const dist = Math.round(haversine(lat, lon, elLat, elLon));
         const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
         const city = [el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean).join(', ');
 
@@ -10822,7 +10755,7 @@ async function showServiceOnMap(type, radiusMiles, _btn) {
         const icon = L.divIcon({
           className:'',
           html:`<div style="background:${cfg.color};border:2.5px solid #fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,.45);cursor:pointer">${cfg.emoji}</div>
-                <div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap">${dist}mi</div>`,
+                <div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap">${dist} mi</div>`,
           iconAnchor:[16,16], popupAnchor:[0,-18]
         });
 
@@ -10872,7 +10805,7 @@ async function loadPOI(type, lat, lon) {
       // Calculate distance from current truck/origin position
       const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : (origin?.lat || centerLat);
       const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : (origin?.lon || centerLon);
-      const dist = haversine(truckLat, truckLon, elLat, elLon).toFixed(1);
+      const dist = Math.round(haversine(truckLat, truckLon, elLat, elLon));
 
       const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
       const amenity = el.tags?.amenity || el.tags?.highway || '';
