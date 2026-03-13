@@ -9705,6 +9705,7 @@ let fmPrevLon       = null;
 
 // POI layers
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
+const fmPoiGroups = {};  // LayerGroup per type for batch rendering
 const fmPoiActive = { scale: true, truck: true, rest: true, reports: true, restrict: true, parking: true };
 let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false };
 
@@ -10938,24 +10939,31 @@ async function loadAllPOIs(lat, lon) {
   // Load POIs from each waypoint (radius 30 miles = 48km per waypoint)
   const loadFromWaypoints = async (type) => {
     if (!fmMapInst) return;
-    fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+    if (fmPoiGroups[type]) { try { fmMapInst.removeLayer(fmPoiGroups[type]); } catch {} }
+    fmPoiGroups[type] = null;
     fmPoiLayers[type] = [];
 
     const seen = new Set();
     const radius = 48000; // 30 miles per waypoint
     const cfg = POI_ICONS[type];
 
-    for (const wp of filtered) {
-      try {
+    // Fetch all waypoints in parallel instead of sequentially
+    const wpResults = await Promise.allSettled(
+      filtered.map(wp => {
         const query = OVERPASS_QUERIES[type](wp.lat, wp.lon, radius);
-        const r = await fetch('https://overpass-api.de/api/interpreter', {
-          method: 'POST',
-          body: 'data=' + encodeURIComponent(query)
-        });
-        const data = await r.json();
-        const elements = data.elements || [];
+        return overpassFetch(query, 30000);
+      })
+    );
 
-        elements.forEach(el => {
+    const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : origin.lat;
+    const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : origin.lon;
+    const pendingMarkers = [];
+
+    for (const res of wpResults) {
+      if (res.status !== 'fulfilled') continue;
+      const elements = res.value?.elements || [];
+
+      elements.forEach(el => {
           const elLat = el.lat ?? el.center?.lat;
           const elLon = el.lon ?? el.center?.lon;
           if (!elLat || !elLon) return;
@@ -10966,8 +10974,6 @@ async function loadAllPOIs(lat, lon) {
 
           seen.add(el.id);
 
-          const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : origin.lat;
-          const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : origin.lon;
           const dist = haversine(truckLat, truckLon, elLat, elLon);
           const distStr = dist < 1000 ? dist.toFixed(0) + ' mi' : '999+ mi';
           const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
@@ -11022,11 +11028,15 @@ async function loadAllPOIs(lat, lon) {
 
           const marker = L.marker([elLat, elLon], { icon })
             .bindPopup(popupHtml, { maxWidth: 260 });
-          if (fmPoiActive[type]) marker.addTo(fmMapInst);
+          pendingMarkers.push(marker);
           fmPoiLayers[type].push(marker);
         });
-      } catch(e) { console.warn(`POI ${type} from waypoint failed`, e); }
     }
+
+    // Batch-add all markers at once via LayerGroup to avoid per-marker DOM reflow
+    const group = L.layerGroup(pendingMarkers);
+    fmPoiGroups[type] = group;
+    if (fmPoiActive[type] && fmMapInst) group.addTo(fmMapInst);
 
     fmPoiLoaded[type] = true;
     const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck' : type === 'rest' ? 'chipRest' : 'chipRestrict';
@@ -11629,10 +11639,11 @@ function togglePOI(type) {
   );
   chip.classList.toggle('off', !fmPoiActive[type]);
 
-  fmPoiLayers[type].forEach(m => {
-    if (fmPoiActive[type]) { try { m.addTo(fmMapInst); } catch {} }
-    else { try { fmMapInst.removeLayer(m); } catch {} }
-  });
+  const grp = fmPoiGroups[type];
+  if (grp) {
+    if (fmPoiActive[type]) { try { grp.addTo(fmMapInst); } catch {} }
+    else { try { fmMapInst.removeLayer(grp); } catch {} }
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
