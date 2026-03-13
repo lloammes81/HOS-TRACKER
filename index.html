@@ -10090,6 +10090,8 @@ function closeFullMapScreen() {
 }
 
 function minimizeMap() {
+  // Cancel any in-flight fmStartTracking GPS/route await
+  fmTrackAbort = true;
   // Hide map UI but keep GPS tracking, route, and notifications alive
   document.getElementById('fullMapScreen').style.display = 'none';
   document.getElementById('fmHud').style.transform = 'translateY(100%)';
@@ -10182,60 +10184,89 @@ function toggleFollow() {
   }
 }
 
+// Abort flag — set by minimizeMap() to cancel in-flight fmStartTracking
+let fmTrackAbort = false;
+
 async function fmStartTracking() {
   if (!navigator.geolocation) { alert(lang==='es'?'GPS no soportado':'GPS not supported'); return; }
+  fmTrackAbort = false;
 
   document.getElementById('fmTrackBanner').style.display = 'none';
   document.getElementById('fmLiveDot').style.background = '#f59e0b';
   document.getElementById('fmLiveDot').style.boxShadow = '0 0 6px #f59e0b';
   document.getElementById('fmLiveDot').style.animation = 'liveblink 1s infinite';
-  document.getElementById('fmLocVal').textContent = lang==='es' ? '📡 Obteniendo ubicación real...' : '📡 Getting real location...';
+  document.getElementById('fmLocVal').textContent = lang==='es' ? '📡 Obteniendo ubicación...' : '📡 Getting location...';
   document.getElementById('fmStatusChip').textContent = '📡 Locating...';
 
-  // ── STEP 1: Get precise GPS fix ───────────────────────────
-  let realLat, realLon, realAccuracy;
+  // ── STEP 1: Fast GPS fix — accept cached position, 6s hard timeout ──────────
+  // Uses enableHighAccuracy:false first so Android/iOS returns quickly.
+  // Falls back to origin coords so the user isn't stuck waiting forever.
+  let realLat = origin?.lat, realLon = origin?.lon, realAccuracy = 200;
   try {
-    const pos = await new Promise((res, rej) =>
-      navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 15000 })
-    );
+    const pos = await Promise.race([
+      new Promise((res, rej) =>
+        navigator.geolocation.getCurrentPosition(res, rej, {
+          enableHighAccuracy: false,
+          maximumAge: 60000,
+          timeout: 6000
+        })
+      ),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('gps-timeout')), 6500))
+    ]);
+    if (fmTrackAbort) return;
     realLat = pos.coords.latitude;
     realLon = pos.coords.longitude;
     realAccuracy = pos.coords.accuracy;
   } catch {
-    document.getElementById('fmLocVal').textContent = '❌ GPS error — check permissions';
-    document.getElementById('fmLiveDot').style.background = '#ef4444';
-    return;
+    if (fmTrackAbort) return;
+    if (!realLat || !realLon) {
+      document.getElementById('fmLocVal').textContent = '❌ GPS no disponible — verifica permisos';
+      document.getElementById('fmLiveDot').style.background = '#ef4444';
+      return;
+    }
+    // Use origin as fallback and continue
+    document.getElementById('fmLocVal').textContent = '⚠️ GPS débil — usando ruta original';
   }
 
-  // ── STEP 2: Reverse geocode ───────────────────────────────
-  let realLocName = `${realLat.toFixed(5)}, ${realLon.toFixed(5)}`;
-  try {
-    const r = await fetch(`https://photon.komoot.io/reverse?lat=${realLat}&lon=${realLon}`);
-    const d = await r.json();
-    const p = d.features?.[0]?.properties || {};
-    realLocName = [p.name, p.city, p.state].filter(Boolean).join(', ') || realLocName;
-  } catch {}
+  // ── STEP 2: Reverse geocode — fire-and-forget, never blocks startup ──────────
+  const realOrigin = { lat: realLat, lon: realLon, name: `${realLat.toFixed(4)}, ${realLon.toFixed(4)}` };
+  fetch(`https://photon.komoot.io/reverse?lat=${realLat}&lon=${realLon}`)
+    .then(r => r.json())
+    .then(d => {
+      const p = d.features?.[0]?.properties || {};
+      const n = [p.name, p.city, p.state].filter(Boolean).join(', ');
+      if (n) {
+        realOrigin.name = n;
+        document.getElementById('fmLocVal').textContent = n;
+        document.getElementById('fmFrom').textContent = n.split(',')[0];
+      }
+    }).catch(() => {});
 
-  document.getElementById('fmLocVal').textContent = '🔄 Recalculating route...';
+  // ── STEP 3: Recalculate route only if GPS moved >0.5 mi from known origin ────
+  const movedMi = haversine(realLat, realLon, origin?.lat ?? realLat, origin?.lon ?? realLon);
+  if (movedMi > 0.5 && destination) {
+    document.getElementById('fmLocVal').textContent = lang==='es' ? '🔄 Recalculando ruta...' : '🔄 Recalculating route...';
+    try {
+      const road = await fetchRoadRoute(realOrigin, destination);
+      if (fmTrackAbort) return;
+      routeDistance = road.miles;
+      roadGeometry  = road.coords;
+      navSteps = Array.isArray(road.steps) ? road.steps : [];
+    } catch {
+      // Keep existing route geometry on error
+    }
+  }
 
-  // ── STEP 3: Recalculate route from real GPS ───────────────
-  const realOrigin = { lat: realLat, lon: realLon, name: realLocName };
-  const road = await fetchRoadRoute(realOrigin, destination);
-  routeDistance = road.miles;
-  roadGeometry  = road.coords;
-
-  // ── Turn-by-turn steps (if available) ────────────────────
-  navSteps = Array.isArray(road.steps) ? road.steps : [];
   navStepIdx = 0;
   const navBox = document.getElementById('navNext');
   if (navBox) navBox.style.display = navSteps.length ? 'block' : 'none';
 
   origin = realOrigin;
-
-  document.getElementById('fmFrom').textContent = realLocName.split(',')[0];
-  document.getElementById('fmLocVal').textContent = realLocName;
+  document.getElementById('fmFrom').textContent = realOrigin.name.split(',')[0];
+  document.getElementById('fmLocVal').textContent = realOrigin.name;
 
   // ── STEP 4: Redraw route + place truck ────────────────────
+  if (fmTrackAbort) return;
   if (fmMapInst) {
     fmRedrawRoute(roadGeometry);
 
@@ -10250,13 +10281,12 @@ async function fmStartTracking() {
     fmUpdateTruckMarker(realLat, realLon, null, false);
     fmPrevLat = realLat; fmPrevLon = realLon;
 
-    // AUTO-ZOOM: zoom in on truck at driving zoom level
     fmFollowing = true;
     document.getElementById('fmFollowBtn').classList.add('active');
     fmCurrentZoom = 15;
     fmMapInst.setView([realLat, realLon], fmCurrentZoom, { animate: true, duration: 1.2 });
 
-    // Reload POIs centered on new real position
+    // Load POIs after route is ready
     setTimeout(() => loadAllPOIs(realLat, realLon), 800);
   }
 
