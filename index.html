@@ -2637,6 +2637,55 @@ body.dark #fullMap .leaflet-tile-pane {
   #altRoutesCard.visible { display: block; animation: fadeIn .3s ease; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
   .alt-header { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:10px; }
+  /* ════════════════════════════════════════════════════════════
+     🚛  TRUCK OPTIONS PANEL
+  ════════════════════════════════════════════════════════════ */
+  .truck-opts-panel {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .truck-opts-toggle {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    padding: 11px 14px; background: none; border: none; cursor: pointer;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 700; text-align: left;
+    touch-action: manipulation;
+  }
+  .truck-opts-toggle:active { background: var(--surface2); }
+  .truck-opts-label { flex: 1; }
+  .truck-opts-arrow { transition: transform .2s; flex-shrink: 0; stroke: var(--muted); }
+  .truck-opts-arrow.open { transform: rotate(180deg); }
+  .truck-opts-body {
+    padding: 0 14px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .truck-opts-section { margin-top: 12px; }
+  .truck-opts-sec-label {
+    font-size: 10px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .7px; margin-bottom: 8px;
+  }
+  .route-type-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .rt-pill {
+    padding: 7px 11px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    color: var(--muted); cursor: pointer; transition: all .15s;
+    font-family: 'DM Sans', sans-serif; touch-action: manipulation;
+  }
+  .rt-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .truck-dims-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+  }
+  .truck-dim-lbl {
+    display: block; font-size: 10px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; margin-top: 0;
+  }
+  .truck-dims-grid input[type="number"] {
+    padding: 8px 10px; font-size: 15px; font-weight: 700; width: 100%;
+  }
+
   .alt-route-option {
     display: flex; align-items: center; gap: 10px;
     padding: 10px 12px; border-radius: 12px;
@@ -2673,9 +2722,11 @@ body.dark #fullMap .leaflet-tile-pane {
     font-size: 9px; font-weight: 900; padding: 3px 8px;
     border-radius: 6px; letter-spacing: .5px; text-transform: uppercase;
   }
-  .alt-badge.fastest { background: rgba(16,185,129,.15); color: #059669; }
+  .alt-badge.fastest  { background: rgba(16,185,129,.15); color: #059669; }
   .alt-badge.shortest { background: rgba(59,130,246,.15); color: #2563eb; }
-  .alt-badge.alt { background: rgba(245,158,11,.15); color: #d97706; }
+  .alt-badge.notoll   { background: rgba(139,92,246,.15); color: #7c3aed; }
+  .alt-badge.nohwy    { background: rgba(239,68,68,.15);  color: #dc2626; }
+  .alt-badge.alt      { background: rgba(245,158,11,.15); color: #d97706; }
 
   /* ════════════════════════════════════════════════════════════
      🕐  ROUTE HISTORY
@@ -4362,7 +4413,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="stop-row" id="stopRowDest">
             <div class="stop-dot dest">🏁</div>
             <div class="stop-input-wrap">
-              <input id="destInput" placeholder="Destination – Dallas, TX" autocomplete="off" />
+              <input id="destInput" placeholder="Destination – address or city" autocomplete="off" />
               <div class="suggestions" id="destSugg" style="display:none"></div>
             </div>
           </div>
@@ -4389,6 +4440,67 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div>
             <label id="lblSpeed">🚀 Speed (mph)</label>
             <input type="number" id="speedInput" min="1" value="60" />
+          </div>
+        </div>
+
+        <!-- TRUCK ROUTE OPTIONS -->
+        <div class="truck-opts-panel" id="truckOptsPanel">
+          <button class="truck-opts-toggle" onclick="toggleTruckOpts()" type="button">
+            <span style="font-size:16px">🚛</span>
+            <span class="truck-opts-label">Truck Options &amp; Restrictions</span>
+            <svg class="truck-opts-arrow" id="truckOptsArrow" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="truck-opts-body" id="truckOptsBody" style="display:none">
+
+            <!-- Route type -->
+            <div class="truck-opts-section">
+              <div class="truck-opts-sec-label">Tipo de ruta</div>
+              <div class="route-type-pills">
+                <button class="rt-pill active" data-type="fastest"         type="button" onclick="setRouteType('fastest')">⚡ Más rápida</button>
+                <button class="rt-pill"        data-type="shortest"        type="button" onclick="setRouteType('shortest')">📏 Más corta</button>
+                <button class="rt-pill"        data-type="avoid_tolls"     type="button" onclick="setRouteType('avoid_tolls')">💰 Sin peajes</button>
+                <button class="rt-pill"        data-type="avoid_highways"  type="button" onclick="setRouteType('avoid_highways')">🏘️ Sin autopistas</button>
+              </div>
+            </div>
+
+            <!-- Truck dimensions -->
+            <div class="truck-opts-section">
+              <div class="truck-opts-sec-label">Dimensiones del vehículo (0 = sin restricción)</div>
+              <div class="truck-dims-grid">
+                <div>
+                  <label class="truck-dim-lbl">Altura (ft)</label>
+                  <input type="number" id="truckHeightInp" min="0" max="18" step="0.1" value="13.6"
+                    onchange="truckOptions.height=parseFloat(this.value)||0" />
+                </div>
+                <div>
+                  <label class="truck-dim-lbl">Peso (tons)</label>
+                  <input type="number" id="truckWeightInp" min="0" max="80" step="0.5" value="0"
+                    onchange="truckOptions.weight=parseFloat(this.value)||0" />
+                </div>
+                <div>
+                  <label class="truck-dim-lbl">Ancho (ft)</label>
+                  <input type="number" id="truckWidthInp" min="0" max="12" step="0.1" value="0"
+                    onchange="truckOptions.width=parseFloat(this.value)||0" />
+                </div>
+                <div>
+                  <label class="truck-dim-lbl">Largo (ft)</label>
+                  <input type="number" id="truckLengthInp" min="0" max="120" step="1" value="0"
+                    onchange="truckOptions.length=parseFloat(this.value)||0" />
+                </div>
+                <div>
+                  <label class="truck-dim-lbl">Ejes</label>
+                  <input type="number" id="truckAxlesInp" min="2" max="9" step="1" value="5"
+                    onchange="truckOptions.axles=parseInt(this.value)||5" />
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding-top:16px">
+                  <input type="checkbox" id="truckHazmatChk"
+                    onchange="truckOptions.hazmat=this.checked"
+                    style="width:20px;height:20px;flex-shrink:0;margin:0;cursor:pointer" />
+                  <label class="truck-dim-lbl" style="margin:0;cursor:pointer" for="truckHazmatChk">☣️ Hazmat</label>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -6991,6 +7103,17 @@ let weatherActive   = localStorage.getItem('hos_weather')  === 'true';
 let bridgeActive    = localStorage.getItem('hos_bridge')   === 'true';
 let trailerHeight   = parseFloat(localStorage.getItem('hos_trailer') || '13.6');
 
+/* ── Truck route options ──────────────────────── */
+let truckOptions = {
+  routeType: 'fastest', // fastest | shortest | avoid_tolls | avoid_highways
+  height: parseFloat(localStorage.getItem('hos_trailer') || '13.6'), // ft
+  weight: 0,   // metric tons (0 = no restriction)
+  width:  0,   // ft (0 = no restriction)
+  length: 0,   // ft (0 = no restriction)
+  axles:  5,
+  hazmat: false,
+};
+
 // Fatigue internals
 let fatigueStream   = null;
 let fatigueInterval = null;
@@ -8693,22 +8816,34 @@ let originDebounce, destDebounce;
 async function fetchAutocomplete(q) {
   const countryObj = COUNTRIES.find(c => c.code === selectedCountry);
   const query = selectedCountry && countryObj ? `${q}, ${countryObj.en}` : q;
-  const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8`);
+  const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=10`);
   const data = await r.json();
-  let items = (data.features || []).map(f => ({
-    name: [f.properties.name, f.properties.city, f.properties.state, f.properties.country]
-      .filter(Boolean).filter((v,i,a) => a.indexOf(v) === i).join(', '),
-    lat: f.geometry.coordinates[1],
-    lon: f.geometry.coordinates[0],
-    state: (f.properties.state || '').trim(),
-    country_code: (f.properties.countrycode || '').toUpperCase()
-  })).filter(x => x.name);
+  let items = (data.features || []).map(f => {
+    const p = f.properties;
+    // Build full address: housenumber + street takes priority over name for addresses
+    const streetPart = p.housenumber && p.street
+      ? `${p.housenumber} ${p.street}`
+      : (p.street || p.name || '');
+    const cityPart  = p.city || p.town || p.village || '';
+    const nameParts = [streetPart, cityPart, p.state, p.country]
+      .filter(Boolean).filter((v,i,a) => a.indexOf(v) === i);
+    return {
+      name: nameParts.join(', '),
+      lat: f.geometry.coordinates[1],
+      lon: f.geometry.coordinates[0],
+      state: (p.state || '').trim(),
+      country_code: (p.countrycode || '').toUpperCase(),
+      isAddress: !!(p.housenumber || p.street)
+    };
+  }).filter(x => x.name);
   if (selectedCountry) items = items.filter(x => x.country_code === selectedCountry);
   const seen = new Set();
   items = items.filter(it => {
     const k = `${it.name}|${it.lat.toFixed(4)}|${it.lon.toFixed(4)}`;
     if (seen.has(k)) return false; seen.add(k); return true;
   });
+  // When query contains digits, prioritize address results
+  if (/\d/.test(q)) items.sort((a, b) => (b.isAddress ? 1 : 0) - (a.isAddress ? 1 : 0));
   return items.slice(0, 5);
 }
 
@@ -8719,7 +8854,9 @@ function showSuggestions(containerId, items, onSelect) {
   items.forEach(it => {
     const div = document.createElement('div');
     div.className = 's-item';
-    div.innerHTML = `<div class="s-name">${it.name.split(',')[0]}</div><div class="s-detail">${it.name.split(',').slice(1).join(',')}</div>`;
+    const parts = it.name.split(',');
+    const icon = it.isAddress ? '📍' : '🏙️';
+    div.innerHTML = `<div class="s-name">${icon} ${parts[0]}</div><div class="s-detail">${parts.slice(1).join(',')}</div>`;
     div.onclick = () => { onSelect(it); el.style.display = 'none'; };
     el.appendChild(div);
   });
@@ -8981,11 +9118,27 @@ async function fetchRoadRoute(orig, dest) {
     // ── 2. Try OpenRouteService HGV (requires key but has free tier) ──────────
     try {
       const orsUrl = 'https://api.openrouteservice.org/v2/directions/driving-hgv';
+      // Build avoid_features based on user route type preference
+      const orsAvoid = ['ferries'];
+      if (truckOptions.routeType === 'avoid_tolls')    orsAvoid.push('tollways');
+      if (truckOptions.routeType === 'avoid_highways') orsAvoid.push('highways');
+      // Convert truck dimensions from ft → meters for ORS (uses metric)
+      const ftToM = ft => +(ft * 0.3048).toFixed(2);
+      const orsRestrictions = {};
+      if (truckOptions.height > 0) orsRestrictions.height     = ftToM(truckOptions.height);
+      if (truckOptions.weight > 0) orsRestrictions.weight     = truckOptions.weight;
+      if (truckOptions.width  > 0) orsRestrictions.width      = ftToM(truckOptions.width);
+      if (truckOptions.length > 0) orsRestrictions.length     = ftToM(truckOptions.length);
+      if (truckOptions.axles  > 0) orsRestrictions.axle_count = truckOptions.axles;
       const orsBody = {
         coordinates: [[orig.lon, orig.lat], [dest.lon, dest.lat]],
         profile: 'driving-hgv',
         format: 'geojson',
-        options: { vehicle_type: 'hgv', avoid_features: ['ferries'] },
+        options: {
+          vehicle_type: truckOptions.hazmat ? 'hgv_hazmat' : 'hgv',
+          avoid_features: orsAvoid,
+          ...(Object.keys(orsRestrictions).length ? { profile_params: { restrictions: orsRestrictions } } : {})
+        },
         geometry_simplify: false
       };
       const orsResp = await fetch(orsUrl, {
@@ -9235,22 +9388,22 @@ function fmtDateTime(d) {
    Returns a colored emoji-badge per brand name
 ════════════════════════════════════════════════════════════ */
 const TRUCK_BRAND_MAP = [
-  { match: /pilot/i,          logo: '✈️', color: '#d62a2a', short: 'Pilot' },
-  { match: /flying.?j/i,      logo: '🟡', color: '#f5a623', short: 'Flying J' },
-  { match: /love.?s/i,        logo: '❤️', color: '#e63946', short: "Love's" },
-  { match: /ta\b|travel.?center|truckstop/i, logo: '🔵', color: '#1d4ed8', short: 'TA' },
-  { match: /petro/i,          logo: '⛽', color: '#7c3aed', short: 'Petro' },
-  { match: /sapp.?bros/i,     logo: '🟢', color: '#15803d', short: 'Sapp Bros' },
-  { match: /kwik.?trip/i,     logo: '🔴', color: '#dc2626', short: 'Kwik Trip' },
-  { match: /speedway/i,       logo: '🏁', color: '#1e293b', short: 'Speedway' },
-  { match: /marathon/i,       logo: '🏅', color: '#1d4ed8', short: 'Marathon' },
-  { match: /loves.?travel/i,  logo: '❤️', color: '#e63946', short: "Love's" },
-  { match: /bp\b/i,           logo: '🌻', color: '#15803d', short: 'BP' },
-  { match: /chevron/i,        logo: '💙', color: '#1d4ed8', short: 'Chevron' },
-  { match: /shell/i,          logo: '🐚', color: '#f5a623', short: 'Shell' },
-  { match: /exxon/i,          logo: '🔷', color: '#1d4ed8', short: 'Exxon' },
-  { match: /mobil/i,          logo: '🔴', color: '#dc2626', short: 'Mobil' },
-  { match: /casey/i,          logo: '🏪', color: '#6d28d9', short: "Casey's" },
+  { match: /pilot/i,          logoUrl: 'https://logo.clearbit.com/pilotflyingj.com',   logo: '✈️', color: '#d62a2a', short: 'Pilot' },
+  { match: /flying.?j/i,      logoUrl: 'https://logo.clearbit.com/pilotflyingj.com',   logo: '🟡', color: '#f5a623', short: 'Flying J' },
+  { match: /love.?s/i,        logoUrl: 'https://logo.clearbit.com/loves.com',          logo: '❤️', color: '#e63946', short: "Love's" },
+  { match: /ta\b|travel.?center|truckstop/i, logoUrl: 'https://logo.clearbit.com/ta-petro.com', logo: '🔵', color: '#1d4ed8', short: 'TA' },
+  { match: /petro/i,          logoUrl: 'https://logo.clearbit.com/ta-petro.com',       logo: '⛽', color: '#7c3aed', short: 'Petro' },
+  { match: /sapp.?bros/i,     logoUrl: 'https://logo.clearbit.com/sappbros.com',       logo: '🟢', color: '#15803d', short: 'Sapp Bros' },
+  { match: /kwik.?trip/i,     logoUrl: 'https://logo.clearbit.com/kwiktrip.com',       logo: '🔴', color: '#dc2626', short: 'Kwik Trip' },
+  { match: /speedway/i,       logoUrl: 'https://logo.clearbit.com/speedway.com',       logo: '🏁', color: '#1e293b', short: 'Speedway' },
+  { match: /marathon/i,       logoUrl: 'https://logo.clearbit.com/marathonbrand.com',  logo: '🏅', color: '#1d4ed8', short: 'Marathon' },
+  { match: /loves.?travel/i,  logoUrl: 'https://logo.clearbit.com/loves.com',          logo: '❤️', color: '#e63946', short: "Love's" },
+  { match: /bp\b/i,           logoUrl: 'https://logo.clearbit.com/bp.com',             logo: '🌻', color: '#15803d', short: 'BP' },
+  { match: /chevron/i,        logoUrl: 'https://logo.clearbit.com/chevron.com',        logo: '💙', color: '#1d4ed8', short: 'Chevron' },
+  { match: /shell/i,          logoUrl: 'https://logo.clearbit.com/shell.com',          logo: '🐚', color: '#f5a623', short: 'Shell' },
+  { match: /exxon/i,          logoUrl: 'https://logo.clearbit.com/exxon.com',          logo: '🔷', color: '#1d4ed8', short: 'Exxon' },
+  { match: /mobil/i,          logoUrl: 'https://logo.clearbit.com/mobil.com',          logo: '🔴', color: '#dc2626', short: 'Mobil' },
+  { match: /casey/i,          logoUrl: 'https://logo.clearbit.com/caseys.com',         logo: '🏪', color: '#6d28d9', short: "Casey's" },
 ];
 
 function getTruckBrand(name) {
@@ -9379,8 +9532,9 @@ async function loadMiniMapPOIs() {
           const rawName = brand ? brand.short : name.split(',')[0].substring(0, 14);
 
           // POI type config for icon appearance
-          const typeIcon = type === 'truck'
-            ? (brand ? brand.logo : '🚛')
+          const typeIcon = type === 'truck' && brand?.logoUrl
+            ? `<img src="${brand.logoUrl}" style="width:22px;height:22px;object-fit:contain;border-radius:3px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:15px">${brand.logo}</span>`
+            : type === 'truck' ? (brand ? brand.logo : '🚛')
             : type === 'rest' ? '😴' : '⚖️';
 
           // Build clean round marker with name label below
@@ -9705,6 +9859,7 @@ let fmPrevLon       = null;
 
 // POI layers
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
+const fmPoiGroups = {};  // LayerGroup per type for batch rendering
 const fmPoiActive = { scale: true, truck: true, rest: true, reports: true, restrict: true, parking: true };
 let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false };
 
@@ -10088,6 +10243,8 @@ function closeFullMapScreen() {
 }
 
 function minimizeMap() {
+  // Cancel any in-flight fmStartTracking GPS/route await
+  fmTrackAbort = true;
   // Hide map UI but keep GPS tracking, route, and notifications alive
   document.getElementById('fullMapScreen').style.display = 'none';
   document.getElementById('fmHud').style.transform = 'translateY(100%)';
@@ -10180,82 +10337,43 @@ function toggleFollow() {
   }
 }
 
-async function fmStartTracking() {
+// Abort flag — kept for compatibility with minimizeMap
+let fmTrackAbort = false;
+
+function fmStartTracking() {
   if (!navigator.geolocation) { alert(lang==='es'?'GPS no soportado':'GPS not supported'); return; }
+  fmTrackAbort = false;
 
   document.getElementById('fmTrackBanner').style.display = 'none';
-  document.getElementById('fmLiveDot').style.background = '#f59e0b';
-  document.getElementById('fmLiveDot').style.boxShadow = '0 0 6px #f59e0b';
-  document.getElementById('fmLiveDot').style.animation = 'liveblink 1s infinite';
-  document.getElementById('fmLocVal').textContent = lang==='es' ? '📡 Obteniendo ubicación real...' : '📡 Getting real location...';
-  document.getElementById('fmStatusChip').textContent = '📡 Locating...';
+  document.getElementById('fmLiveDot').style.background = '#10b981';
+  document.getElementById('fmLiveDot').style.boxShadow = '0 0 8px #10b981';
+  document.getElementById('fmLiveDot').style.animation = 'liveblink 1.5s infinite';
+  document.getElementById('fmLocVal').textContent = origin?.name?.split(',')[0] || (lang==='es' ? '📍 Ruta activa' : '📍 Route active');
+  document.getElementById('fmStatusChip').textContent = '📡 GPS activo';
 
-  // ── STEP 1: Get precise GPS fix ───────────────────────────
-  let realLat, realLon, realAccuracy;
-  try {
-    const pos = await new Promise((res, rej) =>
-      navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 15000 })
-    );
-    realLat = pos.coords.latitude;
-    realLon = pos.coords.longitude;
-    realAccuracy = pos.coords.accuracy;
-  } catch {
-    document.getElementById('fmLocVal').textContent = '❌ GPS error — check permissions';
-    document.getElementById('fmLiveDot').style.background = '#ef4444';
-    return;
-  }
+  // ── Start IMMEDIATELY from origin — no GPS blocking wait ─────────────────────
+  // watchPosition will update the truck position as real GPS fixes arrive.
+  // This avoids the iOS/Android permission-dialog freeze entirely.
+  const realLat = origin?.lat ?? 39.5;
+  const realLon = origin?.lon ?? -98.35;
 
-  // ── STEP 2: Reverse geocode ───────────────────────────────
-  let realLocName = `${realLat.toFixed(5)}, ${realLon.toFixed(5)}`;
-  try {
-    const r = await fetch(`https://photon.komoot.io/reverse?lat=${realLat}&lon=${realLon}`);
-    const d = await r.json();
-    const p = d.features?.[0]?.properties || {};
-    realLocName = [p.name, p.city, p.state].filter(Boolean).join(', ') || realLocName;
-  } catch {}
-
-  document.getElementById('fmLocVal').textContent = '🔄 Recalculating route...';
-
-  // ── STEP 3: Recalculate route from real GPS ───────────────
-  const realOrigin = { lat: realLat, lon: realLon, name: realLocName };
-  const road = await fetchRoadRoute(realOrigin, destination);
-  routeDistance = road.miles;
-  roadGeometry  = road.coords;
-
-  // ── Turn-by-turn steps (if available) ────────────────────
-  navSteps = Array.isArray(road.steps) ? road.steps : [];
+  document.getElementById('fmFrom').textContent = origin?.name?.split(',')[0] || '';
   navStepIdx = 0;
   const navBox = document.getElementById('navNext');
   if (navBox) navBox.style.display = navSteps.length ? 'block' : 'none';
 
-  origin = realOrigin;
-
-  document.getElementById('fmFrom').textContent = realLocName.split(',')[0];
-  document.getElementById('fmLocVal').textContent = realLocName;
-
-  // ── STEP 4: Redraw route + place truck ────────────────────
   if (fmMapInst) {
     fmRedrawRoute(roadGeometry);
-
-    // Accuracy circle
-    if (fmAccMarker) { try { fmMapInst.removeLayer(fmAccMarker); } catch {} }
-    fmAccMarker = L.circle([realLat, realLon], {
-      radius: realAccuracy || 20,
-      color: '#3b82f6', fillColor: '#3b82f6',
-      fillOpacity: 0.08, weight: 1.5, opacity: 0.5
-    }).addTo(fmMapInst);
 
     fmUpdateTruckMarker(realLat, realLon, null, false);
     fmPrevLat = realLat; fmPrevLon = realLon;
 
-    // AUTO-ZOOM: zoom in on truck at driving zoom level
     fmFollowing = true;
     document.getElementById('fmFollowBtn').classList.add('active');
     fmCurrentZoom = 15;
     fmMapInst.setView([realLat, realLon], fmCurrentZoom, { animate: true, duration: 1.2 });
 
-    // Reload POIs centered on new real position
-    setTimeout(() => loadAllPOIs(realLat, realLon), 800);
+    setTimeout(() => loadAllPOIs(realLat, realLon), 600);
   }
 
   // ── STEP 5: Live tracking ─────────────────────────────────
@@ -10772,7 +10890,7 @@ async function showServiceOnMap(type, radiusMiles, _btn) {
         const elLon = el.lon ?? el.center?.lon;
         if (!elLat || !elLon) return;
 
-        const dist = haversine(lat, lon, elLat, elLon).toFixed(1);
+        const dist = Math.round(haversine(lat, lon, elLat, elLon));
         const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
         const city = [el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean).join(', ');
 
@@ -10790,7 +10908,7 @@ async function showServiceOnMap(type, radiusMiles, _btn) {
         const icon = L.divIcon({
           className:'',
           html:`<div style="background:${cfg.color};border:2.5px solid #fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,.45);cursor:pointer">${cfg.emoji}</div>
-                <div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap">${dist}mi</div>`,
+                <div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap">${dist} mi</div>`,
           iconAnchor:[16,16], popupAnchor:[0,-18]
         });
 
@@ -10840,7 +10958,7 @@ async function loadPOI(type, lat, lon) {
       // Calculate distance from current truck/origin position
       const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : (origin?.lat || centerLat);
       const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : (origin?.lon || centerLon);
-      const dist = haversine(truckLat, truckLon, elLat, elLon).toFixed(1);
+      const dist = Math.round(haversine(truckLat, truckLon, elLat, elLon));
 
       const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
       const amenity = el.tags?.amenity || el.tags?.highway || '';
@@ -10938,24 +11056,31 @@ async function loadAllPOIs(lat, lon) {
   // Load POIs from each waypoint (radius 30 miles = 48km per waypoint)
   const loadFromWaypoints = async (type) => {
     if (!fmMapInst) return;
-    fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+    if (fmPoiGroups[type]) { try { fmMapInst.removeLayer(fmPoiGroups[type]); } catch {} }
+    fmPoiGroups[type] = null;
     fmPoiLayers[type] = [];
 
     const seen = new Set();
     const radius = 48000; // 30 miles per waypoint
     const cfg = POI_ICONS[type];
 
-    for (const wp of filtered) {
-      try {
+    // Fetch all waypoints in parallel instead of sequentially
+    const wpResults = await Promise.allSettled(
+      filtered.map(wp => {
         const query = OVERPASS_QUERIES[type](wp.lat, wp.lon, radius);
-        const r = await fetch('https://overpass-api.de/api/interpreter', {
-          method: 'POST',
-          body: 'data=' + encodeURIComponent(query)
-        });
-        const data = await r.json();
-        const elements = data.elements || [];
+        return overpassFetch(query, 30000);
+      })
+    );
 
-        elements.forEach(el => {
+    const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : origin.lat;
+    const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : origin.lon;
+    const pendingMarkers = [];
+
+    for (const res of wpResults) {
+      if (res.status !== 'fulfilled') continue;
+      const elements = res.value?.elements || [];
+
+      elements.forEach(el => {
           const elLat = el.lat ?? el.center?.lat;
           const elLon = el.lon ?? el.center?.lon;
           if (!elLat || !elLon) return;
@@ -10966,8 +11091,6 @@ async function loadAllPOIs(lat, lon) {
 
           seen.add(el.id);
 
-          const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : origin.lat;
-          const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : origin.lon;
           const dist = haversine(truckLat, truckLon, elLat, elLon);
           const distStr = dist < 1000 ? dist.toFixed(0) + ' mi' : '999+ mi';
           const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
@@ -10991,7 +11114,9 @@ async function loadAllPOIs(lat, lon) {
 
           const brand = type === 'truck' ? getTruckBrand(name) : null;
           const markerBg  = brand ? brand.color : cfg.color;
-          const typeIcon  = type === 'truck' ? (brand ? brand.logo : '🚛') : type === 'rest' ? '😴' : '⚖️';
+          const typeIcon  = type === 'truck' && brand?.logoUrl
+            ? `<img src="${brand.logoUrl}" style="width:22px;height:22px;object-fit:contain;border-radius:3px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:15px">${brand.logo}</span>`
+            : type === 'truck' ? (brand ? brand.logo : '🚛') : type === 'rest' ? '😴' : '⚖️';
           const shortName = brand ? brand.short : name.split(',')[0].substring(0, 13);
 
           const icon = L.divIcon({
@@ -11022,11 +11147,15 @@ async function loadAllPOIs(lat, lon) {
 
           const marker = L.marker([elLat, elLon], { icon })
             .bindPopup(popupHtml, { maxWidth: 260 });
-          if (fmPoiActive[type]) marker.addTo(fmMapInst);
+          pendingMarkers.push(marker);
           fmPoiLayers[type].push(marker);
         });
-      } catch(e) { console.warn(`POI ${type} from waypoint failed`, e); }
     }
+
+    // Batch-add all markers at once via LayerGroup to avoid per-marker DOM reflow
+    const group = L.layerGroup(pendingMarkers);
+    fmPoiGroups[type] = group;
+    if (fmPoiActive[type] && fmMapInst) group.addTo(fmMapInst);
 
     fmPoiLoaded[type] = true;
     const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck' : type === 'rest' ? 'chipRest' : 'chipRestrict';
@@ -11272,7 +11401,9 @@ function addNearbyStopToMap(res, displayName, cfg, brand) {
   }
 
   const markerBg   = brand ? brand.color : cfg.color;
-  const markerIcon = brand ? brand.logo  : cfg.emoji;
+  const markerIcon = brand?.logoUrl
+    ? `<img src="${brand.logoUrl}" style="width:24px;height:24px;object-fit:contain;border-radius:3px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:18px">${brand.logo}</span>`
+    : (brand ? brand.logo : cfg.emoji);
   const shortName  = brand ? brand.short : displayName.substring(0, 14);
 
   // Build a distinctive stop marker with a star badge
@@ -11629,10 +11760,11 @@ function togglePOI(type) {
   );
   chip.classList.toggle('off', !fmPoiActive[type]);
 
-  fmPoiLayers[type].forEach(m => {
-    if (fmPoiActive[type]) { try { m.addTo(fmMapInst); } catch {} }
-    else { try { fmMapInst.removeLayer(m); } catch {} }
-  });
+  const grp = fmPoiGroups[type];
+  if (grp) {
+    if (fmPoiActive[type]) { try { grp.addTo(fmMapInst); } catch {} }
+    else { try { fmMapInst.removeLayer(grp); } catch {} }
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -12824,7 +12956,12 @@ let selectedAltIdx = 0;
 async function fetchAlternativeRoutes(orig, dest) {
   altRoutes = [];
   try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true&alternatives=3`;
+    // Use truck profile; add exclude param for route type preferences
+    const profile = 'truck';
+    let excludeParam = '';
+    if (truckOptions.routeType === 'avoid_highways') excludeParam = '&exclude=motorway';
+    else if (truckOptions.routeType === 'avoid_tolls') excludeParam = '&exclude=toll';
+    const url = `https://router.project-osrm.org/route/v1/${profile}/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true&alternatives=3${excludeParam}`;
     const res  = await fetch(url);
     const data = await res.json();
     if (data.code === 'Ok' && data.routes?.length) {
@@ -12856,12 +12993,21 @@ function renderAltRoutes(orig, dest) {
     return;
   }
 
-  const labels = [
-    { text: 'Fastest',  cls: 'fastest'  },
-    { text: 'Shortest', cls: 'shortest' },
-    { text: 'Alt',      cls: 'alt'      },
-    { text: 'Alt 2',    cls: 'alt'      },
-  ];
+  const routeTypeLabels = {
+    fastest:         ['Más rápida', 'Alternativa', 'Alt 2', 'Alt 3'],
+    shortest:        ['Más corta',  'Alternativa', 'Alt 2', 'Alt 3'],
+    avoid_tolls:     ['Sin peajes', 'Alternativa', 'Alt 2', 'Alt 3'],
+    avoid_highways:  ['Sin autopistas', 'Alternativa', 'Alt 2', 'Alt 3'],
+  };
+  const routeTypeBadges = {
+    fastest:        ['fastest',  'alt', 'alt', 'alt'],
+    shortest:       ['shortest', 'alt', 'alt', 'alt'],
+    avoid_tolls:    ['notoll',   'alt', 'alt', 'alt'],
+    avoid_highways: ['nohwy',    'alt', 'alt', 'alt'],
+  };
+  const labelSet = routeTypeLabels[truckOptions.routeType] || routeTypeLabels.fastest;
+  const badgeSet = routeTypeBadges[truckOptions.routeType] || routeTypeBadges.fastest;
+  const labels = labelSet.map((text, i) => ({ text, cls: badgeSet[i] }));
 
   list.innerHTML = altRoutes.map((r, i) => `
     <div class="alt-route-option ${i === selectedAltIdx ? 'selected' : ''}" onclick="selectAltRoute(${i})">
@@ -14050,6 +14196,7 @@ function initDriverProfile() {
 ════════════════════════════════════════════════════════════ */
 
 let _localStateWarningEl = null;
+let _pendingDestItem = null;
 let _dismissedAlerts = new Set();
 
 function getOriginState() {
@@ -14098,6 +14245,7 @@ function statesMatch(a, b) {
 function showLocalStateWarning(destItem, originState, destState) {
   // Remove existing warning
   dismissLocalWarning();
+  _pendingDestItem = destItem;
 
   const el = document.createElement('div');
   el.className = 'local-state-warning';
@@ -14113,7 +14261,7 @@ function showLocalStateWarning(destItem, originState, destState) {
           Local drivers are limited to their home state area.
         </div>
         <div class="lsw-actions">
-          <button class="lsw-btn primary" onclick="forceSetDest(${JSON.stringify(JSON.stringify(destItem))})">
+          <button class="lsw-btn primary" onclick="forceSetDest()">
             Use anyway
           </button>
           <button class="lsw-btn secondary" onclick="changeJobTypeFromWarning()">
@@ -14132,8 +14280,9 @@ function showLocalStateWarning(destItem, originState, destState) {
   if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
 }
 
-function forceSetDest(destJsonStr) {
-  const it = JSON.parse(destJsonStr);
+function forceSetDest() {
+  const it = _pendingDestItem;
+  if (!it) return;
   destination = it;
   document.getElementById('destInput').value = it.name;
   document.getElementById('destSugg').style.display = 'none';
@@ -14150,7 +14299,14 @@ function changeJobTypeFromWarning() {
     updateProfileDisplay();
     applyJobMode('interstate');
   }
+  // Now set the pending destination (job type is interstate so local check will pass)
+  const it = _pendingDestItem;
   dismissLocalWarning();
+  if (it) {
+    destination = it;
+    document.getElementById('destInput').value = it.name;
+    document.getElementById('destSugg').style.display = 'none';
+  }
   showToast('info', '🛣️', 'Switched to Interstate', 'You can now route to any state', 3000);
 }
 
@@ -14159,6 +14315,25 @@ function dismissLocalWarning() {
     _localStateWarningEl.remove();
     _localStateWarningEl = null;
   }
+  _pendingDestItem = null;
+}
+
+/* ════════════════════════════════════════════════════════════
+   🚛  TRUCK OPTIONS PANEL CONTROLS
+════════════════════════════════════════════════════════════ */
+function toggleTruckOpts() {
+  const body  = document.getElementById('truckOptsBody');
+  const arrow = document.getElementById('truckOptsArrow');
+  const opening = body.style.display === 'none';
+  body.style.display = opening ? 'block' : 'none';
+  arrow.classList.toggle('open', opening);
+}
+
+function setRouteType(type) {
+  truckOptions.routeType = type;
+  document.querySelectorAll('.rt-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.type === type);
+  });
 }
 
 /* ════════════════════════════════════════════════════════════
