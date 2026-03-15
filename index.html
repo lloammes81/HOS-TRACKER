@@ -6606,12 +6606,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       📡 ¿Activar seguimiento GPS en vivo?
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <button id="fmNoTrack" style="
+      <button id="fmNoTrack" onclick="document.getElementById('fmTrackBanner').style.display='none'" style="
         padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);
         background:rgba(255,255,255,0.08);color:#f1f5f9;font-family:'DM Sans',sans-serif;
         font-size:13px;font-weight:700;cursor:pointer;
       ">🗺️ Solo mapa</button>
-      <button id="fmYesTrack" style="
+      <button id="fmYesTrack" onclick="document.getElementById('fmTrackBanner').style.display='none';fmStartTracking()" style="
         padding:10px;border-radius:10px;border:none;
         background:#10b981;color:#fff;font-family:'DM Sans',sans-serif;
         font-size:13px;font-weight:800;cursor:pointer;
@@ -10196,7 +10196,8 @@ function renderSummary() {
   document.getElementById('sumValue').textContent = '$' + val.toFixed(0);
   document.getElementById('sumStatus').textContent = savedDrives.length ? t('status100') : t('noRoutes');
   document.getElementById('sumDesc').textContent = savedDrives.length ? t('allLogged') : t('planRoute');
-  document.getElementById('sendReportBtn').style.display = savedDrives.length ? 'flex' : 'none';
+  const sendReportEl = document.getElementById('sendReportBtn');
+  if (sendReportEl) sendReportEl.style.display = savedDrives.length ? 'flex' : 'none';
 }
 
 function setOriginLabel(name) {
@@ -10238,7 +10239,7 @@ async function shareRoute() {
   if (!origin || !destination) return;
   const msg = `🚛 HOS Tracker\n\n📍 ${origin.name}\n🎯 ${destination.name}\n📏 ${routeDistance.toLocaleString()} mi\n⏱️ ${fmtH(totalTime)}\n\nby fab-visual™`;
   if (navigator.share) { try { await navigator.share({ title: 'HOS Route', text: msg }); return; } catch {} }
-  if (navigator.clipboard) await navigator.clipboard.writeText(msg);
+  if (navigator.clipboard) { try { await navigator.clipboard.writeText(msg); } catch {} }
   alert(t('copied'));
 }
 
@@ -12717,7 +12718,7 @@ function bindEvents() {
     openFullMapScreen();
   });
   document.getElementById('stopTrackBtn').addEventListener('click', stopTracking);
-  document.getElementById('sendReportBtn').addEventListener('click', shareRoute);
+  document.getElementById('sendReportBtn')?.addEventListener('click', shareRoute);
   document.getElementById('shareAppRow').addEventListener('click', shareRoute);
 
   document.getElementById('resetBtn').addEventListener('click', resetForm);
