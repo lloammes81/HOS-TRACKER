@@ -4692,7 +4692,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div style="position:relative;margin-bottom:8px">
             <div class="stop-row-mobile" id="stopRowDest">
               <span class="stop-icon">🏁</span>
-              <input id="destInput" placeholder="Destino — ciudad o dirección" autocomplete="off" style="flex:1;background:transparent;border:none;padding:2px 0;font-size:15px;box-shadow:none;min-height:44px;color:var(--text)" />
+              <input id="destInput" placeholder="Destino — ciudad o dirección" autocomplete="off" oninput="handleDestInput(this.value)" style="flex:1;background:transparent;border:none;padding:2px 0;font-size:15px;box-shadow:none;min-height:44px;color:var(--text)" />
             </div>
             <div class="suggestions" id="destSugg" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999"></div>
           </div>
@@ -9175,68 +9175,79 @@ function initSpeedometerDrag() {
 
 let originDebounce, destDebounce;
 
-async function fetchAutocomplete(q) {
-  const countryObj = COUNTRIES.find(c => c.code === selectedCountry);
-  const acceptLang = lang === 'es' ? 'es' : 'en';
+// ── Destination autocomplete ──────────────────────────────
+function handleDestInput(val) {
+  clearTimeout(destDebounce);
+  const sugg = document.getElementById('destSugg');
+  const q = (val || '').trim();
+  if (q.length < 2) { sugg.style.display = 'none'; return; }
+  sugg.innerHTML = '<div style="padding:12px 14px;font-size:14px;color:var(--muted);display:flex;align-items:center;gap:8px"><span style="animation:spin 1s linear infinite;display:inline-block">⏳</span> Buscando...</div>';
+  sugg.style.display = 'block';
+  destDebounce = setTimeout(() => runDestSearch(q), 350);
+}
 
-  // Helper: fetch with 7-second timeout
-  const fetchT = (url, opts = {}) => {
+async function runDestSearch(q) {
+  const sugg = document.getElementById('destSugg');
+  if (!sugg) return;
+  try {
+    // Photon — primary
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7`;
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 7000);
-    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(timer));
-  };
-
-  // 1️⃣ Photon (komoot) — primary, fast, no rate limit
-  try {
-    const langP = lang === 'es' ? '&lang=es' : '';
-    const bboxP = selectedCountry === 'US' ? '&bbox=-125,24,-66,50' : (selectedCountry === 'MX' ? '&bbox=-118,14,-86,33' : '');
-    const r = await fetchT(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7${langP}${bboxP}`);
+    setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch(url, { signal: ctrl.signal });
     const data = await r.json();
-    const results = (data.features || []).map(f => {
+    const items = (data.features || []).map(f => {
       const p = f.properties;
-      const streetPart = p.housenumber && p.street ? `${p.housenumber} ${p.street}` : (p.street || '');
-      const cityPart = p.city || p.town || p.village || p.name || '';
-      const nameParts = [streetPart, cityPart, p.state, p.country].filter(Boolean).filter((v,i,a) => a.indexOf(v) === i);
-      return {
-        name: nameParts.join(', '),
-        lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0],
-        state: (p.state || '').trim(),
-        country_code: (p.countrycode || '').toUpperCase(),
-        isAddress: !!(p.housenumber || p.street)
-      };
+      const street = p.housenumber && p.street ? `${p.housenumber} ${p.street}` : (p.street || '');
+      const city = p.city || p.town || p.village || p.name || '';
+      const parts = [street, city, p.state, p.country].filter(Boolean).filter((v,i,a) => a.indexOf(v)===i);
+      return { name: parts.join(', '), lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0],
+               state:(p.state||'').trim(), country_code:(p.countrycode||'').toUpperCase(),
+               isAddress: !!(p.housenumber||p.street) };
     }).filter(x => x.name);
-    if (results.length) return results.slice(0, 6);
+    if (items.length) { showSuggestions('destSugg', items, it => setDestinationWithLocalCheck(it)); return; }
   } catch {}
-
-  // 2️⃣ Nominatim (OpenStreetMap) — fallback
   try {
-    const cc = selectedCountry ? `&countrycodes=${selectedCountry.toLowerCase()}` : '';
-    const r = await fetchT(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1${cc}`,
-      { headers: { 'Accept-Language': acceptLang } }
-    );
-    const data = await r.json();
-    if (data && data.length) {
-      return data.map(d => {
-        const a = d.address || {};
-        const parts = [
-          a.house_number && a.road ? `${a.house_number} ${a.road}` : (a.road || ''),
-          a.city || a.town || a.village || a.county || '',
-          a.state || '',
-          a.country || ''
-        ].filter(Boolean).filter((v,i,arr) => arr.indexOf(v) === i);
-        return {
-          name: parts.join(', ') || d.display_name.split(',').slice(0,3).join(','),
-          lat: parseFloat(d.lat), lon: parseFloat(d.lon),
-          state: (a.state || '').trim(),
-          country_code: (d.address?.country_code || '').toUpperCase(),
-          isAddress: !!(a.house_number || a.road)
-        };
-      }).filter(x => x.name);
+    // Nominatim — fallback
+    const ctrl2 = new AbortController();
+    setTimeout(() => ctrl2.abort(), 8000);
+    const r2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1`, { signal: ctrl2.signal });
+    const data2 = await r2.json();
+    if (data2 && data2.length) {
+      const items2 = data2.map(d => {
+        const a = d.address||{};
+        const parts = [a.house_number&&a.road?`${a.house_number} ${a.road}`:(a.road||''),
+          a.city||a.town||a.village||a.county||'', a.state||'', a.country||'']
+          .filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i);
+        return { name: parts.join(', ')||d.display_name.split(',').slice(0,3).join(','),
+                 lat:parseFloat(d.lat), lon:parseFloat(d.lon),
+                 state:(a.state||'').trim(), country_code:(d.address?.country_code||'').toUpperCase(),
+                 isAddress:!!(a.house_number||a.road) };
+      }).filter(x=>x.name);
+      if (items2.length) { showSuggestions('destSugg', items2, it => setDestinationWithLocalCheck(it)); return; }
     }
   } catch {}
+  sugg.innerHTML = `<div style="padding:12px 14px;font-size:14px;color:var(--muted)">Sin resultados para "${q}"</div>`;
+}
 
-  return [];
+async function fetchAutocomplete(q) {
+  const items = [];
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 7000);
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7`, { signal: ctrl.signal });
+    const data = await r.json();
+    (data.features||[]).forEach(f => {
+      const p = f.properties;
+      const street = p.housenumber&&p.street?`${p.housenumber} ${p.street}`:(p.street||'');
+      const city = p.city||p.town||p.village||p.name||'';
+      const parts = [street,city,p.state,p.country].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+      const name = parts.join(', ');
+      if (name) items.push({ name, lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0],
+        state:(p.state||'').trim(), country_code:(p.countrycode||'').toUpperCase(), isAddress:!!(p.housenumber||p.street) });
+    });
+  } catch {}
+  return items;
 }
 
 function showSuggestions(containerId, items, onSelect) {
@@ -12685,26 +12696,7 @@ function bindEvents() {
   // Auto-rellenar origen con la ubicación actual al cargar la app
   if (navigator.geolocation) useGPS();
 
-  document.getElementById('destInput').addEventListener('input', e => {
-    clearTimeout(destDebounce);
-    const v = e.target.value.trim();
-    const sugg = document.getElementById('destSugg');
-    if (v.length < 2) { sugg.style.display = 'none'; return; }
-    // Show searching state immediately
-    sugg.innerHTML = `<div style="padding:13px 14px;font-size:14px;color:var(--muted)">🔍 ${lang==='es'?'Buscando...':'Searching...'}</div>`;
-    sugg.style.display = 'block';
-    destDebounce = setTimeout(async () => {
-      // Abort if user typed something different
-      if (document.getElementById('destInput').value.trim() !== v) return;
-      const items = await fetchAutocomplete(v).catch(() => []);
-      if (document.getElementById('destInput').value.trim() !== v) return;
-      if (!items.length) {
-        sugg.innerHTML = `<div style="padding:13px 14px;font-size:14px;color:var(--muted)">😕 ${lang==='es'?`Sin resultados para "${v}"`:`No results for "${v}"`}</div>`;
-        return;
-      }
-      showSuggestions('destSugg', items, it => { setDestinationWithLocalCheck(it); });
-    }, 400);
-  });
+  // destInput handled via oninput="handleDestInput()" on the element itself
 
   document.addEventListener('click', e => {
     if (!e.target.closest('#destInput') && !e.target.closest('#destSugg')) document.getElementById('destSugg').style.display = 'none';
