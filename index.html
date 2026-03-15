@@ -4751,8 +4751,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </button>
 
         <div class="grid2" id="shareTrackBtns" style="display:none;margin-top:10px">
-          <button class="btn btn-blue" id="shareBtn">📤 Compartir</button>
-          <button class="btn btn-purple" id="trackBtn">📍 Rastreo en Vivo</button>
+          <button class="btn btn-blue" id="shareBtn" onclick="shareRoute()">📤 Compartir</button>
+          <button class="btn btn-purple" id="trackBtn" onclick="if(!origin||!destination){alert(t('errSel'));return;}openFullMapScreen()">📍 Rastreo en Vivo</button>
         </div>
       </div>
 
@@ -4789,7 +4789,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           </div>
         </div>
         <div class="schedule" id="scheduleList"></div>
-        <button class="btn btn-red" id="resetBtn" style="margin-top:10px">🔄 Nueva Ruta</button>
+        <button class="btn btn-red" id="resetBtn" onclick="resetForm()" style="margin-top:10px">🔄 Nueva Ruta</button>
       </div>
 
 
@@ -9270,9 +9270,11 @@ function showSuggestions(containerId, items, onSelect) {
     const icon = it.isAddress ? '📍' : '🏙️';
     div.innerHTML = `<div class="s-name">${icon} ${parts[0]}</div><div class="s-detail">${parts.slice(1).join(',')}</div>`;
     // Use mousedown + touchstart so selection fires before blur hides the list on mobile
+    // Also add click as fallback for browsers that may not fire mousedown/touchstart
     const select = (e) => { e.preventDefault(); onSelect(it); el.style.display = 'none'; };
     div.addEventListener('mousedown', select);
     div.addEventListener('touchstart', select, { passive: false });
+    div.addEventListener('click', select);
     el.appendChild(div);
   });
   el.style.display = 'block';
@@ -12712,8 +12714,6 @@ function bindEvents() {
     if (!e.target.closest('#destInput') && !e.target.closest('#destSugg')) document.getElementById('destSugg').style.display = 'none';
   });
 
-  document.getElementById('calcBtn').addEventListener('click', calculateRoute);
-
   document.getElementById('shareBtn').addEventListener('click', shareRoute);
   document.getElementById('trackBtn').addEventListener('click', () => {
     if (!origin || !destination) { alert(t('errSel')); return; }
@@ -13619,78 +13619,83 @@ calculateRoute = async function() {
   calcBtn2.textContent = '⏳ Calculating...';
   calcBtn2.disabled = true;
 
-  const depart = new Date(document.getElementById('departureInput').value || new Date());
-  const activeWPs = getActiveWaypoints();
+  try {
+    const depart = new Date(document.getElementById('departureInput').value || new Date());
+    const activeWPs = getActiveWaypoints();
 
-  let road;
-  // Hide alt routes initially
-  const altCard = document.getElementById('altRoutesCard');
-  if (altCard) altCard.classList.remove('visible');
+    let road;
+    // Hide alt routes initially
+    const altCard = document.getElementById('altRoutesCard');
+    if (altCard) altCard.classList.remove('visible');
 
-  if (activeWPs.length > 0) {
-    // Multi-leg route: no alternatives for multi-stop (OSRM handles it)
-    const allPoints = [origin, ...activeWPs, destination];
-    road = await fetchMultiLegRoute(allPoints);
-    if (!road) road = await fetchRoadRoute(origin, destination);
-    altRoutes = [road];
-    selectedAltIdx = 0;
-  } else {
-    // Single leg: fetch alternatives
-    road = await fetchAlternativeRoutes(origin, destination);
+    if (activeWPs.length > 0) {
+      // Multi-leg route: no alternatives for multi-stop (OSRM handles it)
+      const allPoints = [origin, ...activeWPs, destination];
+      road = await fetchMultiLegRoute(allPoints);
+      if (!road) road = await fetchRoadRoute(origin, destination);
+      altRoutes = [road];
+      selectedAltIdx = 0;
+    } else {
+      // Single leg: fetch alternatives
+      road = await fetchAlternativeRoutes(origin, destination);
+    }
+
+    roadGeometry = road.coords;
+    routeSource  = road.source;
+    routeDistance = road.miles;
+    navSteps = Array.isArray(road.steps) ? road.steps : [];
+    navStepIdx = 0;
+
+    schedule = calculateSchedule(depart, routeDistance, speed, hours);
+    arrivalTime = schedule.at(-1)?.end || depart;
+    totalTime = schedule.reduce((a,s) => a + (s.type==='drive'||s.type==='rest'||s.type==='reset'||s.type==='break30' ? s.hours : 0), 0);
+
+    scheduleRestAlarms(schedule, depart);
+
+    // Save to history
+    saveToHistory(origin, destination, routeDistance, activeWPs);
+
+    // Save drive
+    const drive = {
+      id: Date.now(),
+      origin: origin.name, destination: destination.name,
+      distance: routeDistance,
+      value: (routeDistance * 0.73).toFixed(2),
+      date: new Date().toISOString()
+    };
+    savedDrives.push(drive);
+    localStorage.setItem('hos_drives', JSON.stringify(savedDrives));
+
+    renderResults(hours, speed, depart);
+
+    document.getElementById('miniMapCard').style.display = 'block';
+    if (!miniMap) miniMap = initMap('miniMap');
+    setTimeout(() => {
+      miniMap.invalidateSize();
+      const mRef = { list: miniMarkersList };
+      const lRef = { layer: miniLayer };
+      drawRoute(miniMap, roadGeometry, mRef, lRef);
+      miniMarkersList = mRef.list;
+      miniLayer = lRef.layer;
+      resetMiniBadges();
+      loadMiniMapPOIs();
+      loadMiniMapRestrictions();
+    }, 100);
+
+    document.getElementById('routeSourceTxt').textContent =
+      `🛣️ ${t('sourceRoad')}: ${routeSource === 'Fallback' ? t('sourceFallback') : t('sourceOsrm')}`;
+
+    renderDrives();
+    renderSummary();
+
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 150);
+  } catch(err) {
+    console.error('calculateRoute error:', err);
+    showError(lang === 'es' ? 'Error calculando la ruta. Intenta de nuevo.' : 'Error calculating route. Please try again.');
+  } finally {
+    calcBtn2.textContent = t('btnCalc');
+    calcBtn2.disabled = false;
   }
-
-  roadGeometry = road.coords;
-  routeSource  = road.source;
-  routeDistance = road.miles;
-  navSteps = Array.isArray(road.steps) ? road.steps : [];
-  navStepIdx = 0;
-
-  schedule = calculateSchedule(depart, routeDistance, speed, hours);
-  arrivalTime = schedule.at(-1)?.end || depart;
-  totalTime = schedule.reduce((a,s) => a + (s.type==='drive'||s.type==='rest'||s.type==='reset'||s.type==='break30' ? s.hours : 0), 0);
-
-  scheduleRestAlarms(schedule, depart);
-
-  // Save to history
-  saveToHistory(origin, destination, routeDistance, activeWPs);
-
-  // Save drive
-  const drive = {
-    id: Date.now(),
-    origin: origin.name, destination: destination.name,
-    distance: routeDistance,
-    value: (routeDistance * 0.73).toFixed(2),
-    date: new Date().toISOString()
-  };
-  savedDrives.push(drive);
-  localStorage.setItem('hos_drives', JSON.stringify(savedDrives));
-
-  renderResults(hours, speed, depart);
-
-  document.getElementById('miniMapCard').style.display = 'block';
-  if (!miniMap) miniMap = initMap('miniMap');
-  setTimeout(() => {
-    miniMap.invalidateSize();
-    const mRef = { list: miniMarkersList };
-    const lRef = { layer: miniLayer };
-    drawRoute(miniMap, roadGeometry, mRef, lRef);
-    miniMarkersList = mRef.list;
-    miniLayer = lRef.layer;
-    resetMiniBadges();
-    loadMiniMapPOIs();
-    loadMiniMapRestrictions();
-  }, 100);
-
-  document.getElementById('routeSourceTxt').textContent =
-    `🛣️ ${t('sourceRoad')}: ${routeSource === 'Fallback' ? t('sourceFallback') : t('sourceOsrm')}`;
-
-  calcBtn2.textContent = t('btnCalc');
-  calcBtn2.disabled = false;
-
-  renderDrives();
-  renderSummary();
-
-  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 150);
 };
 
 /* init hook */
