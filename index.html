@@ -968,6 +968,7 @@
   #fullMapScreen.bridge-mode #fuelWidget,
   #fullMapScreen.bridge-mode #fmFollowBtn,
   #fullMapScreen.bridge-mode #mapRightControls,
+  #fullMapScreen.bridge-mode #mapLeftControls,
   #fullMapScreen.bridge-mode #reportFab,
   #fullMapScreen.bridge-mode #reportSheet,
   #fullMapScreen.bridge-mode #incidentPanel {
@@ -1022,8 +1023,8 @@
   /* Report button (Waze-style FAB on map) */
   #reportFab {
     position:absolute;
-    right: calc(14px + env(safe-area-inset-right,0px));
-    bottom: 300px;
+    left: calc(10px + env(safe-area-inset-left,0px));
+    bottom: 260px;
     z-index:10;
     width:52px; height:52px; border-radius:50%; border:none;
     background:#f59e0b; color:#fff;
@@ -1120,7 +1121,7 @@
   #reportFab {
     position: absolute;
     bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-    right: calc(14px + env(safe-area-inset-right, 0px));
+    left: calc(10px + env(safe-area-inset-left, 0px));
     z-index: 710;
     width: 52px; height: 52px;
     border-radius: 50%; border: 2.5px solid #fff;
@@ -1838,8 +1839,8 @@
   /* Auto-follow toggle button */
   #fmFollowBtn {
     position:absolute;
-    right: calc(14px + env(safe-area-inset-right,0px));
-    bottom: 360px; z-index:10;
+    left: calc(10px + env(safe-area-inset-left,0px));
+    bottom: 200px; z-index:10;
     width:44px; height:44px; border-radius:50%; border:none;
     background:rgba(15,23,42,0.88); backdrop-filter:blur(8px);
     color:#fff; font-size:20px; cursor:pointer;
@@ -1920,8 +1921,31 @@
   #mapRightControls button:active { transform: scale(.92); }
   /* Compass active state */
   #compassBtn.heading-active { background: rgba(59,130,246,0.75) !important; }
-  /* Follow button active state (reutiliza el color verde) */
-  #mapRightControls #btnCenter:active { background: rgba(16,185,129,0.5); }
+  /* Left controls column */
+  #mapLeftControls {
+    position: absolute;
+    left: calc(10px + env(safe-area-inset-left, 0px));
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 650;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: all;
+  }
+  #mapLeftControls button {
+    width: 44px; height: 44px;
+    border-radius: 12px; border: 2px solid transparent;
+    background: rgba(15,23,42,0.88); backdrop-filter: blur(10px);
+    color: #fff; font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.45);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    transition: transform .15s, background .2s, border-color .3s;
+  }
+  #mapLeftControls button:active { transform: scale(.92); }
+  #mapLeftControls #btnCenter:active { background: rgba(16,185,129,0.5); }
   /* Separador visual entre grupos */
   .map-ctrl-sep {
     width: 28px; height: 1px;
@@ -2324,16 +2348,16 @@ body.map-active #driveHoursWidget{
 
 
 /* ── OVERRIDES (layout fixes) ───────────────────────────── */
-/* btnCenter y btnMapColor ahora están dentro de #mapRightControls — posición estática */
-#mapRightControls #btnCenter,
-#mapRightControls #btnMapColor {
+/* btnCenter y btnMapColor ahora están dentro de #mapLeftControls — posición estática */
+#mapLeftControls #btnCenter,
+#mapLeftControls #btnMapColor {
   position: static !important;
   transform: none !important;
   top: auto !important; bottom: auto !important;
   right: auto !important; left: auto !important;
 }
-#mapRightControls #btnCenter:active,
-#mapRightControls #btnMapColor:active {
+#mapLeftControls #btnCenter:active,
+#mapLeftControls #btnMapColor:active {
   transform: scale(.92) !important;
 }
 /* SOS en columna izquierda — fluye como flex item, anula posición fija */
@@ -6510,8 +6534,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </button>
   </div>
 
-  <!-- RIGHT SIDE CONTROL COLUMN: estilo, brújula, centrar, color, zoom -->
-  <div id="mapRightControls">
+  <!-- LEFT SIDE CONTROL COLUMN: estilo, brújula, centrar, color, zoom -->
+  <div id="mapLeftControls">
     <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Estilo de mapa">🗺️</button>
     <button id="compassBtn"  onclick="toggleHeadingUp()"     title="Norte / Heading-up">🧭</button>
     <div class="map-ctrl-sep"></div>
@@ -6522,15 +6546,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
   </div>
 
-  <!-- AUTO-FOLLOW button (bottom-right, sobre el tools hub) -->
+  <!-- AUTO-FOLLOW button (bottom-left) -->
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
 
-  <!-- TOOLS HUB (bottom-right) -->
-  <div id="toolsHub">
-    <button class="tools-hub-btn thb-reset" onclick="openResetSheet()" title="34h Reset">🔄</button>
-    <button class="tools-hub-btn thb-comm"  onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
-    <button class="tools-hub-btn thb-frt"   onclick="openFreightCalc()" title="Freight Calculator">💰</button>
-    <button class="tools-hub-btn thb-dot"   onclick="openDotLookup()" title="DOT Lookup">🔍</button>
+  <!-- RIGHT SIDE CONTROL COLUMN: 34h Reset, Community Reports, Driver Chat -->
+  <div id="mapRightControls">
+    <button onclick="openResetSheet()" title="34h Reset">🔄</button>
+    <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
+    <button onclick="openChatPanel()" title="Driver Chat">💬</button>
   </div>
 
   <!-- POI Filter chips (ocultos, se activan por JS) -->
@@ -13734,7 +13757,7 @@ calculateRoute = async function() {
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 150);
   } catch(err) {
     console.error('calculateRoute error:', err);
-    const isNetwork = err && (err.name === 'TypeError' || err.message?.includes('network') || err.message?.includes('fetch'));
+    const isNetwork = err && (err.message?.includes('Failed to fetch') || err.message?.includes('Network request failed') || err.message?.toLowerCase().includes('network error'));
     const msg = lang === 'es'
       ? (isNetwork ? 'Sin conexión a internet. Verifica tu red e intenta de nuevo.' : 'Error calculando la ruta. Verifica los puntos de origen y destino.')
       : (isNetwork ? 'No internet connection. Check your network and try again.' : 'Error calculating route. Check your origin and destination.');
