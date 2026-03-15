@@ -9197,7 +9197,7 @@ async function runDestSearch(q) {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 6000);
-    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7`, { signal: ctrl.signal });
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10`, { signal: ctrl.signal });
     clearTimeout(t);
     const data = await r.json();
     const items = (data.features || []).map(f => {
@@ -9206,7 +9206,7 @@ async function runDestSearch(q) {
       const city = p.city || p.town || p.village || p.name || '';
       const parts = [street, city, p.state, p.country].filter(Boolean).filter((v,i,a) => a.indexOf(v)===i);
       return mkItem(parts.join(', '), f.geometry.coordinates[1], f.geometry.coordinates[0], p.state, p.countrycode, p.housenumber||p.street);
-    }).filter(x => x.name);
+    }).filter(x => x.name && (x.country_code === 'US' || x.country_code === 'us'));
     if (items.length) { showSuggestions('destSugg', items, it => setDestinationWithLocalCheck(it)); return; }
   } catch(e1) {
     sugg.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:#ef4444">⚠️ Error red: ${e1.name}. Intenta de nuevo.</div>`;
@@ -9216,7 +9216,7 @@ async function runDestSearch(q) {
   try {
     const ctrl2 = new AbortController();
     const t2 = setTimeout(() => ctrl2.abort(), 6000);
-    const r2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1`, { signal: ctrl2.signal });
+    const r2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1&countrycodes=us`, { signal: ctrl2.signal });
     clearTimeout(t2);
     const data2 = await r2.json();
     if (data2 && data2.length) {
@@ -9242,16 +9242,18 @@ async function fetchAutocomplete(q) {
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 7000);
-    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7`, { signal: ctrl.signal });
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10`, { signal: ctrl.signal });
     const data = await r.json();
     (data.features||[]).forEach(f => {
       const p = f.properties;
+      const cc = (p.countrycode||'').toLowerCase();
+      if (cc !== 'us') return;
       const street = p.housenumber&&p.street?`${p.housenumber} ${p.street}`:(p.street||'');
       const city = p.city||p.town||p.village||p.name||'';
       const parts = [street,city,p.state,p.country].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
       const name = parts.join(', ');
       if (name) items.push({ name, lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0],
-        state:(p.state||'').trim(), country_code:(p.countrycode||'').toUpperCase(), isAddress:!!(p.housenumber||p.street) });
+        state:(p.state||'').trim(), country_code:'US', isAddress:!!(p.housenumber||p.street) });
     });
   } catch {}
   return items;
@@ -13237,7 +13239,7 @@ function setupWaypointInput(inputId, suggId, index) {
     if (q.length < 3) { sugg.style.display='none'; return; }
     debounceT = setTimeout(async () => {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=4&addressdetails=1&accept-language=en`);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=4&addressdetails=1&accept-language=en&countrycodes=us`);
         const data = await res.json();
         if (!data.length) { sugg.style.display='none'; return; }
         sugg.innerHTML = data.map(d => {
@@ -13558,7 +13560,7 @@ function loadHistoryRoute(idx) {
 
 async function geocodeAndSet(name, field) {
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}&limit=1`);
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}&limit=1&countrycodes=us`);
     const data = await res.json();
     if (data[0]) {
       const loc = { name, lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
@@ -13570,7 +13572,7 @@ async function geocodeAndSet(name, field) {
 
 async function geocodeAndSetWP(name, idx2) {
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}&limit=1`);
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}&limit=1&countrycodes=us`);
     const data = await res.json();
     if (data[0]) {
       waypoints[idx2] = { name, lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
