@@ -4707,6 +4707,23 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
         <input type="number" id="speedInput" value="60" style="display:none" />
 
+        <!-- Speed indicator -->
+        <div id="speedIndicator" style="
+          display:flex;align-items:center;justify-content:space-between;
+          background:var(--surface2);border:1px solid var(--border);
+          border-radius:12px;padding:10px 14px;margin-top:10px;
+          cursor:pointer;
+        " onclick="switchTab('settings')">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">🚀</span>
+            <div>
+              <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Velocidad de crucero</div>
+              <div style="font-size:15px;font-weight:800;color:var(--text)" id="speedIndicatorVal">60 mph</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--accent);font-weight:700">Cambiar ›</div>
+        </div>
+
         <!-- TRUCK ROUTE OPTIONS -->
         <div class="truck-opts-panel" id="truckOptsPanel" style="margin-top:10px">
           <button class="truck-opts-toggle" onclick="toggleTruckOpts()" type="button">
@@ -8677,6 +8694,8 @@ function init() {
   // Apply default speed
   document.getElementById('speedInput').value = defaultSpeed;
   document.getElementById('defaultSpeedInput').value = defaultSpeed;
+  const _si = document.getElementById('speedIndicatorVal');
+  if (_si) _si.textContent = defaultSpeed + ' mph';
 
   // Apply saved safety feature states
   document.getElementById('fatigueToggle').classList.toggle('on', fatigueActive);
@@ -12634,6 +12653,8 @@ function bindEvents() {
       defaultSpeed = val;
       localStorage.setItem('hos_speed', val);
       document.getElementById('speedInput').value = val;
+      const ind = document.getElementById('speedIndicatorVal');
+      if (ind) ind.textContent = val + ' mph';
     }
   });
 
