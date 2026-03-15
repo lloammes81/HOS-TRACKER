@@ -7317,7 +7317,7 @@ function showToast(type, icon, title, msg, autoDismiss = 6000) {
   el.classList.add('show');
   if (toastTimer) clearTimeout(toastTimer);
   if (autoDismiss) toastTimer = setTimeout(hideToast, autoDismiss);
-  if (navigator.vibrate) navigator.vibrate(type === 'danger' ? [200,80,200,80,400] : [100,50,100]);
+  vibrate(type === 'danger' ? [200,80,200,80,400] : [100,50,100]);
 }
 function hideToast() {
   document.getElementById('safetyToast').classList.remove('show');
@@ -7505,7 +7505,7 @@ function triggerFatigueAlert() {
   flashDanger(4000);
   // Sound alert using Web Audio API
   playAlertSound();
-  if (navigator.vibrate) navigator.vibrate([500,200,500,200,500,200,800]);
+  vibrate([500,200,500,200,500,200,800]);
   document.getElementById('fatigueAlert').classList.add('show');
   // Also show on map HUD
   showToast('danger','😴','⚠️ FATIGUE ALERT','Eyes closed too long — Pull over immediately!', 45000);
@@ -7605,7 +7605,7 @@ function updateWeatherWidget(wx) {
     showToast('danger','⛈️','⚠️ DANGEROUS WEATHER',
       `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Consider pulling over.`, 45000);
     flashDanger(3000);
-    if (navigator.vibrate) navigator.vibrate([300,100,300,100,300]);
+    vibrate([300,100,300,100,300]);
     // Also show full-screen
     showFullscreenAlert('danger', '⛈️', '¡CLIMA PELIGROSO!',
       `${wx.desc} — ${wx.temp}°F, vientos ${wx.wind}mph. Considera detenerte.`, '', 15000);
@@ -7807,7 +7807,7 @@ async function checkBridges() {
       showToast('danger', '🚨', '⚠️ PUENTE MUY BAJO EN TU RUTA!',
         `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. ¡DESVÍATE AHORA!`, 45000);
       flashDanger(4000);
-      if (navigator.vibrate) navigator.vibrate([400, 100, 400, 100, 800]);
+      vibrate([400, 100, 400, 100, 800]);
       document.getElementById('bridgeNextTxt').textContent = `🚨 MUY BAJO: ${clearance}ft @ ${lowest.name}`;
       document.getElementById('bridgeNextTxt').style.color = '#ef4444';
       showFullscreenAlert('danger', '🌉', '¡PUENTE MUY BAJO EN RUTA!',
@@ -7960,6 +7960,15 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   }
 }
 
+function bindDragEvents(w, onDown, onMove, onUp) {
+  w.addEventListener('mousedown',  onDown);
+  w.addEventListener('touchstart', onDown, { passive: false });
+  window.addEventListener('mousemove',  onMove);
+  window.addEventListener('touchmove',  onMove, { passive: false });
+  window.addEventListener('mouseup',    onUp);
+  window.addEventListener('touchend',   onUp);
+}
+
 function initDriveHoursDrag() {
   const w = document.getElementById('driveHoursWidget');
   if (!w) return;
@@ -8008,12 +8017,7 @@ function initDriveHoursDrag() {
 
   const onUp = () => { if (!dragging) return; dragging = false; w.classList.remove('dragging'); };
 
-  w.addEventListener('mousedown',  onDown);
-  w.addEventListener('touchstart', onDown, { passive: false });
-  window.addEventListener('mousemove',  onMove);
-  window.addEventListener('touchmove',  onMove, { passive: false });
-  window.addEventListener('mouseup',    onUp);
-  window.addEventListener('touchend',   onUp);
+  bindDragEvents(w, onDown, onMove, onUp);
 }
 
 function updateSpeedometer(mph) {
@@ -8084,10 +8088,8 @@ function showFullscreenAlert(type, emoji, title, sub, distText, autoDismissMs) {
 
   fsAlertActive = true;
   playAlertSound();
-  if (navigator.vibrate) {
-    if (type === 'police') navigator.vibrate([200,100,200,100,400,100,200,100,200]);
-    else navigator.vibrate([400,150,400,150,800]);
-  }
+  if (type === 'police') vibrate([200,100,200,100,400,100,200,100,200]);
+  else vibrate([400,150,400,150,800]);
 
   // Auto-dismiss
   if (fsAlertTimeout) clearTimeout(fsAlertTimeout);
@@ -8138,7 +8140,7 @@ function scheduleRestAlarms(scheduleData, departureTime) {
         const tw = setTimeout(() => {
           showToast('warning', '⏰', '15 min para descansar',
             `En 15 min deberás detenerte a descansar (${seg.type === 'break30' ? '30 min' : '10 horas'})`, 8000);
-          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+          vibrate([100, 50, 100]);
         }, warn15);
         hosRestTimers.push(tw);
       }
@@ -8175,7 +8177,7 @@ function triggerRestStartAlarm(seg) {
 
   overlay.classList.add('show');
   playAlertSound();
-  if (navigator.vibrate) navigator.vibrate([500,200,500,200,500,500,500]);
+  vibrate([500,200,500,200,500,500,500]);
 
   // Start countdown
   if (hosRestCountdown) clearInterval(hosRestCountdown);
@@ -8210,7 +8212,7 @@ function triggerRestEndAlarm(seg) {
     10000
   );
   playAlertSound();
-  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  vibrate([200, 100, 200]);
 }
 
 function updateRestTimer(secs) {
@@ -8363,7 +8365,7 @@ function checkSpeedLimit(gpsSpeed) {
       speedLimitExceeded = true;
       toast.classList.add('show');
       toast.textContent = `🚨 ${gpsSpeed} mph — Límite: ${limits.truck} mph`;
-      if (navigator.vibrate) navigator.vibrate([200,100,200]);
+      vibrate([200,100,200]);
       if (speedToastTimer) clearTimeout(speedToastTimer);
       speedToastTimer = setTimeout(() => {
         toast.classList.remove('show');
@@ -8521,7 +8523,7 @@ function triggerSOS() {
   const overlay = document.getElementById('sosOverlay');
   overlay.classList.add('show');
   playAlertSound();
-  if (navigator.vibrate) navigator.vibrate([500,200,500,200,500,500]);
+  vibrate([500,200,500,200,500,500]);
 
   // Show contact info
   document.getElementById('sosContactName').textContent =
@@ -8871,12 +8873,7 @@ function initSpeedWidgetDrag() {
     w.classList.remove('dragging');
   };
 
-  w.addEventListener('mousedown', onDown);
-  w.addEventListener('touchstart', onDown, { passive: false });
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('touchmove', onMove, { passive: false });
-  window.addEventListener('mouseup', onUp);
-  window.addEventListener('touchend', onUp);
+  bindDragEvents(w, onDown, onMove, onUp);
 
   if (resetBtn) {
     resetBtn.addEventListener('click', (e) => {
@@ -8976,12 +8973,7 @@ function initSpeedometerDrag() {
     w.classList.remove('dragging');
   };
 
-  w.addEventListener('mousedown', onDown);
-  w.addEventListener('touchstart', onDown, { passive: false });
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('touchmove', onMove, { passive: false });
-  window.addEventListener('mouseup', onUp);
-  window.addEventListener('touchend', onUp);
+  bindDragEvents(w, onDown, onMove, onUp);
 }
 
 
@@ -9800,6 +9792,17 @@ function toggleMiniPOI(type) {
   });
 }
 
+function resetMiniBadges() {
+  ['miniBadgeTruck','miniBadgeRest','miniBadgeRestrict'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.add('poi-loading'); el.classList.remove('off'); }
+  });
+  document.getElementById('miniTruckCnt').textContent    = '…';
+  document.getElementById('miniRestCnt').textContent     = '…';
+  document.getElementById('miniRestrictCnt').textContent = '…';
+  miniPoiActive = { truck: true, rest: true, restrict: true };
+}
+
 async function calculateRoute() {
   hideError();
   if (!origin || !destination) { showError(t('errSel')); return; }
@@ -9817,7 +9820,7 @@ async function calculateRoute() {
         : `For your safety, you cannot calculate a route at ${fmCurrentSpeed} mph. Please stop the vehicle first.`,
       8000
     );
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+    vibrate([200, 100, 200, 100, 200]);
     return;
   }
 
@@ -9861,16 +9864,7 @@ async function calculateRoute() {
     drawRoute(miniMap, roadGeometry, mRef, lRef);
     miniMarkersList = mRef.list;
     miniLayer = lRef.layer;
-    // Reset badge states
-    ['miniBadgeTruck','miniBadgeRest','miniBadgeRestrict'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.add('poi-loading');
-    });
-    document.getElementById('miniTruckCnt').textContent    = '…';
-    document.getElementById('miniRestCnt').textContent     = '…';
-    document.getElementById('miniRestrictCnt').textContent = '…';
-    miniPoiActive = { truck: true, rest: true, restrict: true };
-    ['miniBadgeTruck','miniBadgeRest','miniBadgeRestrict'].forEach(id => document.getElementById(id)?.classList.remove('off'));
+    resetMiniBadges();
     // Load POIs along route (async, non-blocking)
     loadMiniMapPOIs();
     loadMiniMapRestrictions();
@@ -11647,7 +11641,7 @@ function addNearbyStopToMap(res, displayName, cfg, brand) {
 
   showToast('info', markerIcon, `${shortName} agregado`,
     `Marcado en el mapa como parada.`, 2500);
-  if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
+  vibrate([40, 20, 40]);
 }
 
 function clearAllPOIs() {
@@ -11815,7 +11809,7 @@ function checkNearbyRestrictions(lat, lon) {
         `Hay una vía restringida para camiones a ${dist.toFixed(1)} millas. Verifica la ruta.`,
         8000
       );
-      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      vibrate([200, 100, 200]);
       break;
     }
   }
@@ -12107,7 +12101,7 @@ function quickReport(type, emoji, label) {
   // 2-second on-screen toast then auto-dismiss
   showToast('warning', emoji, `${label} marcado`,
     `Marcado en el mapa. Visible para todos en esta ruta.`, 2000);
-  if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
+  vibrate([60, 40, 120]);
 }
 
 function submitIncident(type, emoji, label) {
@@ -12131,7 +12125,7 @@ function submitIncident(type, emoji, label) {
   // No bubble on screen — report goes straight to map
   showToast('warning', emoji, `${label} Reportado`,
     'Visible en el mapa de la ruta.', 4000);
-  if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+  vibrate([50, 30, 50]);
 }
 
 // Legacy stubs (FAB removed but referenced in old bind)
@@ -12370,7 +12364,7 @@ function checkNearbyReports(lat, lon) {
 
   // Vibrate for high-priority
   const cfg = REPORT_ICONS[top.type] || {};
-  if (navigator.vibrate && cfg.warn) navigator.vibrate([30, 20, 60]);
+  if (cfg.warn) vibrate([30, 20, 60]);
 }
 
 // Legacy startTracking/stopTracking still used by old monitor modal
@@ -12424,11 +12418,12 @@ function switchTab(tab) {
 function bindEvents() {
   document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
-  document.getElementById('themeToggle').addEventListener('click', () => { isDark = !isDark; localStorage.setItem('hos_theme', isDark ? 'dark' : 'light'); applyTheme(); });
-  document.getElementById('lightBtn').addEventListener('click', () => { isDark = false; localStorage.setItem('hos_theme', 'light'); applyTheme(); });
-  document.getElementById('darkBtn').addEventListener('click', () => { isDark = true; localStorage.setItem('hos_theme', 'dark'); applyTheme(); });
-  document.getElementById('lightModeRow').addEventListener('click', () => { isDark = false; localStorage.setItem('hos_theme', 'light'); applyTheme(); });
-  document.getElementById('darkModeRow').addEventListener('click', () => { isDark = true; localStorage.setItem('hos_theme', 'dark'); applyTheme(); });
+  const setTheme = dark => { isDark = dark; localStorage.setItem('hos_theme', isDark ? 'dark' : 'light'); applyTheme(); };
+  document.getElementById('themeToggle').addEventListener('click', () => setTheme(!isDark));
+  document.getElementById('lightBtn').addEventListener('click', () => setTheme(false));
+  document.getElementById('darkBtn').addEventListener('click', () => setTheme(true));
+  document.getElementById('lightModeRow').addEventListener('click', () => setTheme(false));
+  document.getElementById('darkModeRow').addEventListener('click', () => setTheme(true));
 
   document.getElementById('langSelect').value = lang;
   document.getElementById('langSelect').addEventListener('change', e => { lang = e.target.value; localStorage.setItem('hos_lang', lang); applyLang(); updateSettingsChecks(); });
@@ -12577,7 +12572,7 @@ function startResetCountdown() {
   tickReset();
 
   showToast('info','⏰','34-Hour Reset Started','Countdown running. You will be notified when complete.', 5000);
-  if (navigator.vibrate) navigator.vibrate([50,30,80]);
+  vibrate([50,30,80]);
 }
 
 function cancelResetCountdown() {
@@ -12601,7 +12596,7 @@ function tickReset() {
     // Reset complete!
     cancelResetCountdown();
     showToast('success','✅','34-Hour Reset Complete!','Your 70-hour cycle has been fully reset. Safe travels!', 8000);
-    if (navigator.vibrate) navigator.vibrate([100,50,100,50,200]);
+    vibrate([100,50,100,50,200]);
     return;
   }
   const h = Math.floor(remaining / 3600000);
@@ -12918,7 +12913,7 @@ function upvoteReport(id, el) {
   const cnt = el.querySelector('.comm-upvote-count');
   if (btn) btn.classList.add('voted');
   if (cnt) cnt.textContent = (report ? report.votes : 1);
-  if (navigator.vibrate) navigator.vibrate(15);
+  vibrate(15);
 }
 
 function updateCommBadge(count) {
@@ -12972,21 +12967,16 @@ document.addEventListener('click', e => {
   if (e.target.id === 'communityPanel')   closeCommunityPanel();
 });
 
-// Enter key on DOT input triggers search
+// Single init: DOT inputs, GPS auto-detect
 document.addEventListener('DOMContentLoaded', () => {
   const di = document.getElementById('dotInput');
   if (di) di.addEventListener('keydown', e => { if (e.key === 'Enter') searchDOT(); });
-});
 
-// Auto-detect origin GPS on load
-document.addEventListener('DOMContentLoaded', () => {
   if (navigator.geolocation) {
     useGPS();
   } else {
     const txt = document.getElementById('originLabelText');
-    const spinner = document.querySelector('#originLabel .olbl-spinner');
     if (txt) txt.textContent = 'GPS no disponible';
-    if (spinner) spinner.style.display = 'none';
   }
 });
 
@@ -13383,7 +13373,7 @@ calculateRoute = async function() {
   if (fmVehicleMoving && fmCurrentSpeed > 3) {
     showToast('danger','🚨', lang==='es'?'¡Vehículo en movimiento!':'Vehicle in Motion!',
       lang==='es'?`Por tu seguridad detente para usar esta función.`:`Please stop the vehicle first.`, 8000);
-    if (navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+    vibrate([200,100,200,100,200]);
     return;
   }
 
@@ -13448,15 +13438,7 @@ calculateRoute = async function() {
     drawRoute(miniMap, roadGeometry, mRef, lRef);
     miniMarkersList = mRef.list;
     miniLayer = lRef.layer;
-    ['miniBadgeTruck','miniBadgeRest','miniBadgeRestrict'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.add('poi-loading');
-    });
-    document.getElementById('miniTruckCnt').textContent    = '…';
-    document.getElementById('miniRestCnt').textContent     = '…';
-    document.getElementById('miniRestrictCnt').textContent = '…';
-    miniPoiActive = { truck: true, rest: true, restrict: true };
-    ['miniBadgeTruck','miniBadgeRest','miniBadgeRestrict'].forEach(id => document.getElementById(id)?.classList.remove('off'));
+    resetMiniBadges();
     loadMiniMapPOIs();
     loadMiniMapRestrictions();
   }, 100);
@@ -13495,7 +13477,7 @@ function closeTCModal() {
 function acceptTerms() {
   localStorage.setItem('hos_tc_accepted', '1');
   closeTCModal();
-  if (navigator.vibrate) navigator.vibrate([20,10,40]);
+  vibrate([20,10,40]);
 }
 function checkFirstLaunch() {
   if (!localStorage.getItem('hos_tc_accepted')) {
@@ -13827,7 +13809,7 @@ function submitCommReport() {
   updateCommTabBadge(communityReports.length);
   renderCommPage();
 
-  if (navigator.vibrate) navigator.vibrate([20, 10, 40]);
+  vibrate([20, 10, 40]);
   showToast('info', cfg.emoji, cfg.label + ' reported', onRoute ? '✅ Posted on your route' : 'Posted near your location', 3000);
 }
 
@@ -13988,10 +13970,10 @@ switchTab = function(tab) {
 };
 
 /* ── Wire dotInput2 Enter key ── */
-document.addEventListener('DOMContentLoaded', () => {
+{
   const di2 = document.getElementById('dotInput2');
   if (di2) di2.addEventListener('keydown', e => { if (e.key === 'Enter') searchDOTInline(); });
-});
+}
 
 /* ── Init: update community tab badge ── */
 function initCommTabBadge() {
@@ -13999,14 +13981,10 @@ function initCommTabBadge() {
 }
 
 /* Force allow touch scroll inside T&C modal */
-document.addEventListener('DOMContentLoaded', function() {
-  var tcBody = document.getElementById('tcBody');
-  if (tcBody) {
-    tcBody.addEventListener('touchmove', function(e) {
-      e.stopPropagation();
-    }, { passive: true });
-  }
-});
+{
+  const tcBody = document.getElementById('tcBody');
+  if (tcBody) tcBody.addEventListener('touchmove', e => e.stopPropagation(), { passive: true });
+}
 
 
 /* ════════════════════════════════════════════════════════════
@@ -14213,9 +14191,7 @@ function showFuelOnMap(lat, lon, name, emoji) {
 }
 
 // Auto-fetch EIA price on load
-document.addEventListener('DOMContentLoaded', () => {
-  fetchEIAPrice();
-});
+fetchEIAPrice();
 
 let driverProfile = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
 
@@ -14448,7 +14424,7 @@ function showLocalStateWarning(destItem, originState, destState) {
   document.body.appendChild(el);
   _localStateWarningEl = el;
 
-  if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
+  vibrate([30, 20, 30]);
 }
 
 function forceSetDest() {
@@ -14557,7 +14533,7 @@ function checkRouteAlerts() {
       (r.comment ? '"' + r.comment + '"' : '') + ' · ' + dist + (r.userName ? ' · by ' + r.userName : ''),
       6000
     );
-    if (navigator.vibrate) navigator.vibrate([40, 20, 40, 20, 40]);
+    vibrate([40, 20, 40, 20, 40]);
   });
 
   // Update community page alert banners
@@ -14670,7 +14646,7 @@ function voteReportStill(id, btn) {
   const cnt = document.getElementById('vc-still-' + id);
   if (cnt) cnt.textContent = report.confirmations.length;
 
-  if (navigator.vibrate) navigator.vibrate(15);
+  vibrate(15);
   showToast('info','👍','Reported as still active',
     report.confirmations.length + ' driver' + (report.confirmations.length!==1?'s':'') + ' confirmed', 2500);
 }
@@ -14717,7 +14693,7 @@ function voteReportClear(id, btn) {
     updateCommTabBadge(communityReports.length);
     renderRouteAlertBanners();
 
-    if (navigator.vibrate) navigator.vibrate([20,10,20,10,40]);
+    vibrate([20,10,20,10,40]);
     showToast('success','✅', cfg.label + ' cleared!',
       '4 drivers confirmed the road is clear. Alert removed.', 4000);
   } else {
@@ -14726,7 +14702,7 @@ function voteReportClear(id, btn) {
     const cnt = document.getElementById('vc-clear-' + id);
     if (cnt) cnt.textContent = clearCount;
 
-    if (navigator.vibrate) navigator.vibrate(20);
+    vibrate(20);
     showToast('info','✅','All clear vote registered',
       clearCount + '/4 drivers say it\'s gone', 2500);
   }
@@ -15144,7 +15120,7 @@ function registerUser() {
   localStorage.setItem('hos_user', JSON.stringify(currentUser));
 
   showToast('success', newUser.avatar, `¡Bienvenido ${name}!`, 'Perfil creado exitosamente 🚛', 4000);
-  if (navigator.vibrate) navigator.vibrate([50, 30, 100]);
+  vibrate([50, 30, 100]);
   showProfileView();
 }
 
@@ -15168,7 +15144,7 @@ function loginUser() {
   localStorage.setItem('hos_user', JSON.stringify(currentUser));
 
   showToast('success', profile.avatar, `¡Hola ${profile.name}!`, 'Sesión iniciada correctamente.', 3000);
-  if (navigator.vibrate) navigator.vibrate([50, 30, 100]);
+  vibrate([50, 30, 100]);
   showProfileView();
 }
 
