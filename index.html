@@ -4584,7 +4584,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
       <div class="hero-btns" style="flex-direction:column;align-items:center;gap:6px">
-        <button class="hero-btn" id="themeToggle" title="Cambiar color">🌙</button>
+        <button class="hero-btn" id="themeToggle" title="Cambiar color" onclick="isDark=!isDark;localStorage.setItem('hos_theme',isDark?'dark':'light');applyTheme()">🌙</button>
         <!-- Avatar debajo del tema -->
         <div id="heroAvatarWrap" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="openProfilePanel()">
           <div id="heroAvatarImg" style="
@@ -4746,7 +4746,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <div class="error" id="errorBox" style="display:none;margin-top:10px"></div>
 
-        <button class="btn-calc-mobile" id="calcBtn">
+        <button class="btn-calc-mobile" id="calcBtn" onclick="calculateRoute()">
           <span style="font-size:22px">🚛</span> Calcular Ruta
         </button>
 
@@ -8711,7 +8711,7 @@ function init() {
   populateCountrySelects();
   applyLang();
   setDepartureNow();
-  bindEvents();
+  try { bindEvents(); } catch(e) { console.error('bindEvents error:', e); }
   initSpeedWidgetDrag();
   initSpeedometerDrag();
   initDriveHoursDrag();
