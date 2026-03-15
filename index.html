@@ -2427,6 +2427,106 @@ body.dark #fullMap .leaflet-tile-pane {
   /* ════════════════════════════════════════════════════════════
      🗺️  COMMUNITY REPORTS PANEL (mejorado)
   ════════════════════════════════════════════════════════════ */
+  /* ── DRIVER CHAT PANEL ── */
+  #chatPanel {
+    position:fixed;inset:0;z-index:9000;
+    background:rgba(0,0,0,.82);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    display:none;flex-direction:column;align-items:center;justify-content:flex-end;
+  }
+  #chatPanel.open{display:flex;animation:tcFadeIn .25s ease;}
+  #chatSheet{
+    width:100%;max-width:540px;
+    background:var(--surface);
+    border-radius:24px 24px 0 0;
+    height:88vh;display:flex;flex-direction:column;
+    box-shadow:0 -8px 48px rgba(0,0,0,.5);
+    animation:sheetUp .3s cubic-bezier(.16,1,.3,1);
+  }
+  #chatChannelBar{
+    display:flex;gap:6px;padding:8px 16px 4px;flex-shrink:0;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .chat-ch-btn{
+    border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;
+    background:rgba(255,255,255,.08);color:var(--muted);transition:.15s;white-space:nowrap;
+  }
+  .chat-ch-btn.active{background:var(--accent);color:#fff;}
+  #chatMessages{
+    flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .chat-msg{display:flex;gap:8px;align-items:flex-start;}
+  .chat-msg.mine{flex-direction:row-reverse;}
+  .chat-avatar{
+    width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#6d28d9);
+    display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+  }
+  .chat-bubble{
+    max-width:72%;background:rgba(255,255,255,.08);border-radius:16px 16px 16px 4px;
+    padding:8px 12px;
+  }
+  .chat-msg.mine .chat-bubble{
+    background:linear-gradient(135deg,var(--accent),#6d28d9);border-radius:16px 16px 4px 16px;
+  }
+  .chat-name{font-size:10px;font-weight:700;color:var(--accent);margin-bottom:3px;}
+  .chat-msg.mine .chat-name{color:rgba(255,255,255,.7);text-align:right;}
+  .chat-text{font-size:14px;line-height:1.4;color:var(--text);word-break:break-word;}
+  .chat-msg.mine .chat-text{color:#fff;}
+  .chat-time{font-size:10px;color:var(--muted);margin-top:3px;}
+  .chat-msg.mine .chat-time{text-align:right;}
+  #chatInputWrap{
+    display:flex;gap:8px;padding:10px 14px 14px;border-top:1px solid rgba(255,255,255,.06);
+    flex-shrink:0;background:var(--surface);
+    padding-bottom:calc(14px + env(safe-area-inset-bottom));
+  }
+  #chatInput{
+    flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
+    border-radius:22px;padding:10px 16px;color:var(--text);font-size:14px;outline:none;
+    font-family:inherit;resize:none;max-height:80px;
+  }
+  #chatSendBtn{
+    width:42px;height:42px;border-radius:50%;border:none;
+    background:linear-gradient(135deg,var(--accent),#6d28d9);
+    color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;align-self:flex-end;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #chatSendBtn:disabled{opacity:.4;cursor:not-allowed;}
+  .chat-setup-msg{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:12px;padding:24px;text-align:center;color:var(--muted);
+  }
+  .chat-setup-msg h3{color:var(--text);margin:0;}
+  .chat-setup-msg pre{
+    background:rgba(255,255,255,.06);border-radius:10px;padding:12px;
+    font-size:11px;text-align:left;color:#86efac;overflow-x:auto;
+    max-width:100%;white-space:pre-wrap;word-break:break-all;
+  }
+  .chat-fab{
+    position:fixed;bottom:calc(var(--tab-h) + 16px);right:16px;z-index:800;
+    width:50px;height:50px;border-radius:50%;border:none;
+    background:linear-gradient(135deg,var(--accent),#6d28d9);
+    color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 18px rgba(124,58,237,.5);
+    display:none;align-items:center;justify-content:center;
+    transition:transform .2s;
+  }
+  .chat-fab:active{transform:scale(.92);}
+  .chat-fab-badge{
+    position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;
+    border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid var(--bg);
+  }
+  .chat-empty{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:var(--muted);gap:8px;font-size:14px;
+  }
+  .chat-loading{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    color:var(--muted);font-size:13px;padding:20px;
+  }
+
   #communityPanel {
     position: fixed; inset: 0; z-index: 8500;
     background: rgba(0,0,0,.78);
@@ -4237,6 +4337,44 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   #chatSendBtn:disabled { opacity: .4; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Firebase SDK (Driver Chat) -->
+<script type="module">
+  // ══════════════════════════════════════════════════════════
+  //  FIREBASE CONFIG — reemplaza con los datos de tu proyecto
+  //  https://console.firebase.google.com → Configuración del proyecto
+  // ══════════════════════════════════════════════════════════
+  const FIREBASE_CONFIG = {
+    apiKey:            "TU_API_KEY",
+    authDomain:        "tu-proyecto.firebaseapp.com",
+    databaseURL:       "https://tu-proyecto-default-rtdb.firebaseio.com",
+    projectId:         "tu-proyecto",
+    storageBucket:     "tu-proyecto.appspot.com",
+    messagingSenderId: "000000000000",
+    appId:             "1:000000000000:web:0000000000000000"
+  };
+  const CHAT_CONFIGURED = FIREBASE_CONFIG.apiKey !== "TU_API_KEY";
+
+  if (CHAT_CONFIGURED) {
+    const { initializeApp }      = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    const { getDatabase, ref, push, query, orderByChild, limitToLast, onValue, serverTimestamp }
+                                  = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+    const app = initializeApp(FIREBASE_CONFIG);
+    const db  = getDatabase(app);
+
+    // Expose to global scope for the chat functions
+    window._chatDB              = db;
+    window._chatRef             = (ch) => ref(db, `hos_chat/${ch}/messages`);
+    window._chatPush            = push;
+    window._chatQuery           = query;
+    window._chatOrderByChild    = orderByChild;
+    window._chatLimitToLast     = limitToLast;
+    window._chatOnValue         = onValue;
+    window._chatServerTimestamp = serverTimestamp;
+    window._chatReady           = true;
+  } else {
+    window._chatReady = false;
+  }
+</script>
 </head>
 
 <body>
@@ -4396,16 +4534,24 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <!-- STOPS BUILDER -->
         <div class="stops-container" id="stopsContainer">
-          <!-- Origin (GPS auto-detected) -->
+          <!-- Origin (solo GPS, no editable) -->
           <div class="stop-row" id="stopRowOrigin">
-            <div class="stop-dot origin">📍</div>
+            <div class="stop-dot origin" onclick="useGPS()" style="cursor:pointer" title="Actualizar ubicación">📍</div>
             <div class="stop-input-wrap">
-              <div class="origin-location-label" id="originLabel">
-                <span class="olbl-spinner">⟳</span>
-                <span class="olbl-text" id="originLabelText">Obteniendo ubicación…</span>
+              <div id="originLabel" style="
+                display:flex;align-items:center;gap:6px;
+                padding:10px 12px;border-radius:12px;
+                background:rgba(16,185,129,.08);
+                border:1px solid rgba(16,185,129,.25);
+                color:var(--text);font-size:15px;line-height:1.3;
+                min-height:42px;cursor:default;user-select:text;
+              ">
+                <span id="originLabelText" style="flex:1;color:var(--muted);font-size:13px">📡 Obteniendo tu ubicación…</span>
+                <button onclick="useGPS()" title="Actualizar" style="
+                  background:none;border:none;cursor:pointer;font-size:16px;
+                  padding:0 2px;opacity:.6;flex-shrink:0;line-height:1;
+                " tabindex="-1">🔄</button>
               </div>
-              <!-- hidden input kept for JS compatibility -->
-              <input id="originInput" style="display:none" autocomplete="off" />
             </div>
           </div>
 
@@ -5205,6 +5351,20 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </div>
 
 <div class="sett-section">
+        <div class="sett-section-title" id="settSecDanger">Data &amp; Privacy</div>
+        <div class="sett-group">
+          <div class="sett-row" onclick="clearAllMemory()" style="cursor:pointer">
+            <div class="sett-icon" style="background:#fee2e2">🧹</div>
+            <div style="flex:1">
+              <div class="sett-label" id="settClearMemoryRow" style="color:#ef4444;margin:0">Clear All Memory</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="settClearMemorySub">Erase all app data &amp; reset to factory defaults</div>
+            </div>
+            <span class="sett-arrow" style="color:#ef4444">›</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sett-section">
         <div class="sett-section-title" id="settSecAbout">About</div>
         <div class="sett-group">
           <div class="sett-row">
@@ -5461,7 +5621,17 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <!-- Header -->
       <div class="comm-page-header">
         <div style="padding-top:calc(var(--header-pt) - 8px)"></div>
-        <div class="comm-page-title">👥 Community</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div class="comm-page-title">👥 Community</div>
+          <button onclick="openChatPanel()" style="
+            background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(109,40,217,.25));
+            border:1px solid rgba(124,58,237,.4);color:var(--accent);
+            border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;
+            display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;
+          " id="commChatBtn">
+            💬 <span id="commChatBtnLbl">Chat</span>
+          </button>
+        </div>
         <div class="comm-page-sub" id="commPageSub">Road conditions from truckers on your route</div>
       </div>
 
@@ -6998,7 +7168,8 @@ const T = {
     menuTitle:'Settings',menuLang:'Language',menuTheme:'Theme',menuCountry:'Country search',light:'Light',dark:'Dark',
     tabLblPlan:'Plan Route',tabLblDrives:'All Drives',tabLblSummary:'Fuel',tabLblSettings:'Settings',
     drivesTitle:'All Drives',summaryTitle:'Summaries',settingsPageTitle:'Settings',settSecGeneral:'General',
-    settSecAppear:'Appearance',settSecHOS:'HOS Rules',settSecAbout:'About',settLangRow:'Language',
+    settSecAppear:'Appearance',settSecHOS:'HOS Rules',settSecAbout:'About',settSecDanger:'Data & Privacy',settLangRow:'Language',
+    settClearMemoryRow:'Clear All Memory',settClearMemorySub:'Erase all app data & reset to factory defaults',
     settCountryRow:'Country Filter',settLightRow:'Light Mode',settDarkRow:'Dark Mode',settBreakRow:'30-min Break Rule',
     settCycleRow:'Cycle Hours',settRestRow:'Rest Requirement',settShareRow:'Share App',sendReportText:'Send Report',
     noDrives:'No drives recorded yet.',calcFirst:'Calculate your first route.',noRoutes:'No routes yet',
@@ -7023,7 +7194,8 @@ const T = {
     menuTitle:'Ajustes',menuLang:'Idioma',menuTheme:'Tema',menuCountry:'País de búsqueda',light:'Claro',dark:'Oscuro',
     tabLblPlan:'Planear Ruta',tabLblDrives:'Todos los Viajes',tabLblSummary:'Fuel',tabLblSettings:'Ajustes',
     drivesTitle:'Todos los Viajes',summaryTitle:'Resúmenes',settingsPageTitle:'Ajustes',settSecGeneral:'General',
-    settSecAppear:'Apariencia',settSecHOS:'Reglas HOS',settSecAbout:'Acerca de',settLangRow:'Idioma',
+    settSecAppear:'Apariencia',settSecHOS:'Reglas HOS',settSecAbout:'Acerca de',settSecDanger:'Datos y Privacidad',settLangRow:'Idioma',
+    settClearMemoryRow:'Limpiar Toda la Memoria',settClearMemorySub:'Borrar todos los datos de la app y restaurar valores de fábrica',
     settCountryRow:'Filtro de País',settLightRow:'Modo Claro',settDarkRow:'Modo Oscuro',settBreakRow:'Regla de Pausa 30 min',
     settCycleRow:'Horas de Ciclo',settRestRow:'Requisito de Descanso',settShareRow:'Compartir App',sendReportText:'Enviar Reporte',
     noDrives:'Sin viajes registrados aún.',calcFirst:'Calcula tu primera ruta.',noRoutes:'Sin rutas aún',
@@ -7052,7 +7224,7 @@ const COUNTRIES = [
   {code:'CO',en:'Colombia',es:'Colombia'}
 ];
 
-let lang = localStorage.getItem('hos_lang') || 'en';
+let lang = localStorage.getItem('hos_lang') || 'es';
 let isDark = localStorage.getItem('hos_theme') === 'dark';
 let use30min = localStorage.getItem('hos_30min') !== 'false';
 let selectedCountry = localStorage.getItem('hos_country') || '';
@@ -8553,7 +8725,9 @@ function applyLang() {
     traveledLbl:'traveled', remainingLbl:'remaining', elapsedLbl:'elapsed', etaLbl:'eta',
     drivesTitleTxt:'drivesTitle', summaryTitleTxt:'summaryTitle', settTitleTxt:'settingsPageTitle',
     settSecGeneral:'settSecGeneral', settSecAppear:'settSecAppear', settSecHOS:'settSecHOS',
-    settSecAbout:'settSecAbout', settLangRow:'settLangRow', settCountryRow:'settCountryRow',
+    settSecAbout:'settSecAbout', settSecDanger:'settSecDanger',
+    settClearMemoryRow:'settClearMemoryRow', settClearMemorySub:'settClearMemorySub',
+    settLangRow:'settLangRow', settCountryRow:'settCountryRow',
     settCountryRowTitle:'settCountryRow', settLightRow:'settLightRow', settDarkRow:'settDarkRow',
     settBreakRow:'settBreakRow', settCycleRow:'settCycleRow', settRestRow:'settRestRow',
     settShareRow:'settShareRow', menuTitle:'menuTitle', menuLangLbl:'menuLang',
@@ -9794,12 +9968,14 @@ function setOriginLabel(name) {
 }
 
 function useGPS() {
-  if (!navigator.geolocation) { alert('GPS not supported'); return; }
-  // Show loading state
-  const spinner = document.querySelector('#originLabel .olbl-spinner');
-  const txt = document.getElementById('originLabelText');
-  if (spinner) spinner.style.display = '';
-  if (txt) txt.textContent = 'Obteniendo ubicación…';
+  if (!navigator.geolocation) {
+    showToast('danger','📡', lang==='es'?'GPS no disponible':'GPS not supported',
+      lang==='es'?'Tu dispositivo no soporta geolocalización.':'Your device does not support geolocation.', 3500);
+    return;
+  }
+  const lbl = document.getElementById('originLabelText');
+  if (lbl) { lbl.textContent = lang==='es' ? '📡 Obteniendo tu ubicación…' : '📡 Getting your location…'; lbl.style.color = 'var(--muted)'; }
+  origin = null;
 
   navigator.geolocation.getCurrentPosition(async pos => {
     const { latitude, longitude } = pos.coords;
@@ -9810,16 +9986,15 @@ function useGPS() {
       const p = feat?.properties || {};
       const name = [p.name, p.city, p.state, p.country].filter(Boolean).join(', ') || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
       origin = { name, lat: latitude, lon: longitude };
-      setOriginLabel(name);
+      if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; }
     } catch {
       origin = { name: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, lat: latitude, lon: longitude };
-      setOriginLabel(origin.name);
+      if (lbl) { lbl.textContent = origin.name; lbl.style.color = 'var(--text)'; }
     }
   }, () => {
-    if (txt) txt.textContent = 'GPS no disponible';
-    if (spinner) spinner.style.display = 'none';
-    alert(t('gpsDenied'));
-  }, { enableHighAccuracy: true, timeout: 10000 });
+    if (lbl) { lbl.textContent = lang==='es' ? '⚠️ Permiso de ubicación denegado' : '⚠️ Location permission denied'; lbl.style.color = '#ef4444'; }
+    showToast('danger','📡', lang==='es'?'Ubicación no disponible':'Location unavailable', t('gpsDenied'), 4000);
+  }, { enableHighAccuracy: true, timeout: 12000 });
 }
 
 async function shareRoute() {
@@ -12216,7 +12391,7 @@ function resetForm() {
     miniPoiMarkers[type] = [];
   });
   document.getElementById('miniPoiLegend').style.display = 'none';
-  document.getElementById('originInput').value = '';
+  if (navigator.geolocation) useGPS();
   document.getElementById('destInput').value = '';
   document.getElementById('hoursInput').value = '70';
   document.getElementById('speedInput').value = defaultSpeed;
@@ -12286,15 +12461,8 @@ function bindEvents() {
 
   document.getElementById('gpsBtn').addEventListener('click', useGPS);
 
-  document.getElementById('originInput').addEventListener('input', e => {
-    clearTimeout(originDebounce);
-    const v = e.target.value;
-    if (v.length < 2) { document.getElementById('originSugg').style.display = 'none'; return; }
-    originDebounce = setTimeout(async () => {
-      const items = await fetchAutocomplete(v).catch(() => []);
-      showSuggestions('originSugg', items, it => { origin = it; document.getElementById('originInput').value = it.name; });
-    }, 300);
-  });
+  // Auto-rellenar origen con la ubicación actual al cargar la app
+  if (navigator.geolocation) useGPS();
 
   document.getElementById('destInput').addEventListener('input', e => {
     clearTimeout(destDebounce);
@@ -12307,7 +12475,6 @@ function bindEvents() {
   });
 
   document.addEventListener('click', e => {
-    if (!e.target.closest('#originInput') && !e.target.closest('#originSugg')) document.getElementById('originSugg').style.display = 'none';
     if (!e.target.closest('#destInput') && !e.target.closest('#destSugg')) document.getElementById('destSugg').style.display = 'none';
   });
 
@@ -13126,9 +13293,7 @@ function loadHistoryRoute(idx) {
   const h = routeHistory[idx];
   if (!h) return;
 
-  // Fill origin
-  document.getElementById('originInput').value = h.origin;
-  // Geocode origin
+  // Geocodificar origen del historial
   geocodeAndSet(h.origin, 'origin');
 
   // Fill destination
@@ -13165,7 +13330,7 @@ async function geocodeAndSet(name, field) {
     const data = await res.json();
     if (data[0]) {
       const loc = { name, lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-      if (field === 'origin') { origin = loc; document.getElementById('originInput').value = name; }
+      if (field === 'origin') { origin = loc; const lbl = document.getElementById('originLabelText'); if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; } }
       else { destination = loc; document.getElementById('destInput').value = name; }
     }
   } catch {}
@@ -14610,7 +14775,7 @@ document.addEventListener('click', e => {
 // Prevent rubber-band scroll on the root but allow inside scrollable areas
 document.body.addEventListener('touchmove', e => {
   // Allow scrolling inside modals, sheets, and scrollable containers
-  if (!e.target.closest('.suggestions, .page, [data-scroll], #tcBody, #tcSheet, #supportSheet, #historySheet, #resetPanel, #communityPanel, .tool-sheet, .hist-body')) e.preventDefault();
+  if (!e.target.closest('.suggestions, .page, [data-scroll], #tcBody, #tcSheet, #supportSheet, #historySheet, #resetPanel, #communityPanel, .tool-sheet, .hist-body, #chatMessages, #chatSheet')) e.preventDefault();
 }, { passive: false });
 
 // Lock orientation is not strictly needed but add a viewport meta refresh on resize
@@ -15028,6 +15193,32 @@ function deleteUserProfile() {
   showToast('info','🗑️','Perfil eliminado','Tu perfil ha sido eliminado.', 3000);
 }
 
+function clearAllMemory() {
+  const t = LANG[lang] || LANG.en;
+  const msg = lang === 'es'
+    ? '⚠️ Esto borrará TODOS los datos de la app:\n\n• Perfiles de conductor\n• Historial de rutas\n• Ajustes y preferencias\n• Datos HOS y reportes\n\n¿Continuar? La app se reiniciará.'
+    : '⚠️ This will erase ALL app data:\n\n• Driver profiles\n• Route history\n• Settings & preferences\n• HOS data & reports\n\nContinue? The app will restart.';
+  if (!confirm(msg)) return;
+
+  // Remove all hos_* keys from localStorage
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('hos_')) keysToRemove.push(key);
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+
+  // Also clear caches if service worker is available
+  if ('caches' in window) {
+    caches.keys().then(names => names.forEach(n => caches.delete(n)));
+  }
+
+  showToast('info', '🧹', lang === 'es' ? 'Memoria limpiada' : 'Memory cleared',
+    lang === 'es' ? 'Reiniciando la app…' : 'Restarting app…', 1500);
+
+  setTimeout(() => location.reload(true), 1600);
+}
+
 // Update user stats when they submit reports
 function incrementUserReports() {
   if (!currentUser) return;
@@ -15038,7 +15229,241 @@ function incrementUserReports() {
   const idx = allProfiles.findIndex(p => p.id === currentUser.id);
   if (idx >= 0) { allProfiles[idx].totalReports = currentUser.totalReports; localStorage.setItem('hos_profiles', JSON.stringify(allProfiles)); }
 }
+
+/* ══════════════════════════════════════════════════════════
+   💬  DRIVER CHAT
+══════════════════════════════════════════════════════════ */
+(function() {
+  const TRUCK_EMOJIS = {
+    '18wheeler':'🚛','dump':'🪨','flatbed':'📦','tanker':'⛽','reefer':'❄️',
+    'box':'📬','lowboy':'🏗️','stepdecks':'🚚','hotshot':'🔥','livestock':'🐄',
+    'tow':'🚔','concrete':'🪨','rv':'🚌'
+  };
+
+  let chatChannel    = 'general';
+  let chatUnsub      = null;   // Firebase listener unsubscribe
+  let chatUnread     = 0;
+  let chatOpen       = false;
+  let lastMsgId      = null;
+
+  /* ── Open / Close ──────────────────────────────────── */
+  window.openChatPanel = function() {
+    chatOpen = true;
+    chatUnread = 0;
+    document.getElementById('chatFabBadge').style.display = 'none';
+    document.getElementById('chatPanel').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    loadChannel(chatChannel);
+  };
+
+  window.closeChatPanel = function() {
+    chatOpen = false;
+    document.getElementById('chatPanel').classList.remove('open');
+    document.body.style.overflow = '';
+    if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+  };
+
+  /* ── Channel switch ────────────────────────────────── */
+  window.switchChatChannel = function(ch, btn) {
+    chatChannel = ch;
+    document.querySelectorAll('.chat-ch-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+    document.getElementById('chatMessages').innerHTML =
+      '<div class="chat-loading" id="chatLoading">⏳ ' + (lang==='es'?'Conectando…':'Connecting…') + '</div>';
+    loadChannel(ch);
+  };
+
+  /* ── Load channel messages ─────────────────────────── */
+  function loadChannel(ch) {
+    const msgBox = document.getElementById('chatMessages');
+
+    if (!window._chatReady) {
+      msgBox.innerHTML = '';
+      const setupDiv = document.createElement('div');
+      setupDiv.className = 'chat-setup-msg';
+      setupDiv.innerHTML = `
+        <div style="font-size:48px">🔧</div>
+        <h3>${lang==='es'?'Configura Firebase':'Configure Firebase'}</h3>
+        <p style="font-size:13px;line-height:1.5">${lang==='es'
+          ? 'El chat en tiempo real requiere una base de datos Firebase gratuita. Edita el archivo <code>index.html</code> y completa la sección <strong>FIREBASE_CONFIG</strong> con los datos de tu proyecto.'
+          : 'Real-time chat requires a free Firebase database. Edit <code>index.html</code> and fill in the <strong>FIREBASE_CONFIG</strong> section with your project credentials.'
+        }</p>
+        <pre>// console.firebase.google.com
+// → Nuevo proyecto → Realtime DB
+FIREBASE_CONFIG = {
+  apiKey: "tu-api-key",
+  databaseURL: "https://...",
+  projectId: "tu-proyecto",
+  ...
+}</pre>
+      `;
+      msgBox.appendChild(setupDiv);
+      return;
+    }
+
+    const q = window._chatQuery(
+      window._chatRef(ch),
+      window._chatOrderByChild('ts'),
+      window._chatLimitToLast(80)
+    );
+
+    chatUnsub = window._chatOnValue(q, snap => {
+      const loading = document.getElementById('chatLoading');
+      if (loading) loading.remove();
+
+      const msgs = [];
+      snap.forEach(child => msgs.push({ id: child.key, ...child.val() }));
+
+      // Re-render only if there are new messages
+      const latestId = msgs.length ? msgs[msgs.length - 1].id : null;
+      if (latestId === lastMsgId) return;
+      lastMsgId = latestId;
+
+      msgBox.innerHTML = '';
+
+      if (!msgs.length) {
+        const empty = document.createElement('div');
+        empty.className = 'chat-empty';
+        empty.innerHTML = '<div style="font-size:40px">💬</div><span>'
+          + (lang==='es'?'Sé el primero en escribir':'Be the first to say something') + '</span>';
+        msgBox.appendChild(empty);
+      } else {
+        msgs.forEach(m => msgBox.appendChild(buildMsgEl(m)));
+      }
+      msgBox.scrollTop = msgBox.scrollHeight;
+
+      // Unread badge when panel is closed
+      if (!chatOpen && msgs.length) {
+        chatUnread++;
+        const badge = document.getElementById('chatFabBadge');
+        badge.textContent = chatUnread > 9 ? '9+' : chatUnread;
+        badge.style.display = 'flex';
+      }
+    });
+  }
+
+  /* ── Build a single message element ───────────────── */
+  function buildMsgEl(m) {
+    const isMe = currentUser && m.userId === currentUser.id;
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-msg' + (isMe ? ' mine' : '');
+
+    const truckEmoji = TRUCK_EMOJIS[m.truckType] || '🚛';
+    const timeStr = m.ts ? new Date(m.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+
+    wrap.innerHTML = `
+      <div class="chat-avatar">${truckEmoji}</div>
+      <div class="chat-bubble">
+        <div class="chat-name">${escapeHtml(m.name || 'Driver')}</div>
+        <div class="chat-text">${escapeHtml(m.text)}</div>
+        <div class="chat-time">${timeStr}</div>
+      </div>
+    `;
+    return wrap;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  /* ── Send message ──────────────────────────────────── */
+  window.sendChatMessage = function() {
+    if (!window._chatReady) return;
+
+    const input = document.getElementById('chatInput');
+    const text  = input.value.trim();
+    if (!text) return;
+
+    if (!currentUser) {
+      showToast('info','🔒',
+        lang==='es'?'Inicia sesión':'Login required',
+        lang==='es'?'Debes tener un perfil para chatear.':'You need a profile to chat.', 3000);
+      return;
+    }
+
+    document.getElementById('chatSendBtn').disabled = true;
+    input.value = '';
+    input.style.height = 'auto';
+
+    window._chatPush(window._chatRef(chatChannel), {
+      userId:    currentUser.id,
+      name:      currentUser.name || 'Driver',
+      truckType: currentUser.truckType || '18wheeler',
+      text:      text,
+      ts:        window._chatServerTimestamp()
+    }).then(() => {
+      document.getElementById('chatSendBtn').disabled = false;
+    }).catch(err => {
+      document.getElementById('chatSendBtn').disabled = false;
+      showToast('danger','⚠️','Chat error', err.message, 4000);
+    });
+  };
+
+  /* ── Show/hide FAB based on current tab ────────────── */
+  const _origSwitchTabChat = switchTab;
+  switchTab = function(tab) {
+    _origSwitchTabChat(tab);
+    const fab = document.getElementById('chatFab');
+    if (fab) fab.style.display = tab === 'community' ? 'flex' : 'none';
+  };
+})();
 </script>
+
+<!-- ══════════════════════════════════════════════════════════
+     💬  DRIVER CHAT PANEL
+══════════════════════════════════════════════════════════ -->
+<div id="chatPanel" onclick="if(event.target===this)closeChatPanel()">
+  <div id="chatSheet">
+    <!-- Header -->
+    <div class="tool-hdr" style="padding:14px 20px 8px">
+      <div class="tool-hdr-left">
+        <div class="tool-hdr-icon" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">💬</div>
+        <div>
+          <div class="tool-hdr-title" id="chatPanelTitle">Driver Chat</div>
+          <div class="tool-hdr-sub" id="chatPanelSub">Talk with truckers on the road</div>
+        </div>
+      </div>
+      <button class="tool-close" onclick="closeChatPanel()">×</button>
+    </div>
+
+    <!-- Channel selector -->
+    <div id="chatChannelBar">
+      <button class="chat-ch-btn active" data-ch="general"  onclick="switchChatChannel('general',this)">🌐 General</button>
+      <button class="chat-ch-btn"        data-ch="route"    onclick="switchChatChannel('route',this)">🛣️ En Ruta</button>
+      <button class="chat-ch-btn"        data-ch="weather"  onclick="switchChatChannel('weather',this)">🌧️ Clima</button>
+      <button class="chat-ch-btn"        data-ch="rest"     onclick="switchChatChannel('rest',this)">😴 Descanso</button>
+    </div>
+
+    <!-- Messages list -->
+    <div id="chatMessages">
+      <div class="chat-loading" id="chatLoading">⏳ Conectando…</div>
+    </div>
+
+    <!-- Input row -->
+    <div id="chatInputWrap">
+      <textarea id="chatInput" rows="1"
+        placeholder="Escribe un mensaje…"
+        maxlength="300"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'">
+      </textarea>
+      <button id="chatSendBtn" onclick="sendChatMessage()" title="Enviar">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating chat button (shown on Community tab) -->
+<button class="chat-fab" id="chatFab" onclick="openChatPanel()" title="Driver Chat">
+  💬
+  <span class="chat-fab-badge" id="chatFabBadge" style="display:none">0</span>
+</button>
 
 <!-- ══════════════ PRO SUBSCRIBE MODAL ══════════════ -->
 <div id="subscribeModal" style="
