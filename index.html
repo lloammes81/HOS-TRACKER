@@ -10307,11 +10307,11 @@ function renderDrives() {
 function renderSummary() {
   const miles = savedDrives.reduce((a,d) => a+(d.distance||0), 0);
   const val = savedDrives.reduce((a,d) => a+parseFloat(d.value||0), 0);
-  document.getElementById('sumDrives').textContent = savedDrives.length;
-  document.getElementById('sumMiles').textContent = miles.toLocaleString();
-  document.getElementById('sumValue').textContent = '$' + val.toFixed(0);
-  document.getElementById('sumStatus').textContent = savedDrives.length ? t('status100') : t('noRoutes');
-  document.getElementById('sumDesc').textContent = savedDrives.length ? t('allLogged') : t('planRoute');
+  const sd = document.getElementById('sumDrives');   if (sd) sd.textContent = savedDrives.length;
+  const sm = document.getElementById('sumMiles');    if (sm) sm.textContent = miles.toLocaleString();
+  const sv = document.getElementById('sumValue');    if (sv) sv.textContent = '$' + val.toFixed(0);
+  const ss = document.getElementById('sumStatus');   if (ss) ss.textContent = savedDrives.length ? t('status100') : t('noRoutes');
+  const sdc = document.getElementById('sumDesc');    if (sdc) sdc.textContent = savedDrives.length ? t('allLogged') : t('planRoute');
   const sendReportEl = document.getElementById('sendReportBtn');
   if (sendReportEl) sendReportEl.style.display = savedDrives.length ? 'flex' : 'none';
 }
