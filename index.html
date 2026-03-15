@@ -952,7 +952,7 @@
   #fullMapScreen.bridge-mode #weatherWidget,
   #fullMapScreen.bridge-mode #fuelWidget,
   #fullMapScreen.bridge-mode #fmFollowBtn,
-  #fullMapScreen.bridge-mode .fm-zoom-btns,
+  #fullMapScreen.bridge-mode #mapRightControls,
   #fullMapScreen.bridge-mode #reportFab,
   #fullMapScreen.bridge-mode #reportSheet,
   #fullMapScreen.bridge-mode #incidentPanel {
@@ -1879,6 +1879,47 @@
   }
   .map-fab:active{ transform:scale(.92); }
 
+  /* ── COLUMNA DERECHA DE CONTROLES DEL MAPA ─────────────── */
+  #mapRightControls {
+    position: absolute;
+    right: calc(10px + env(safe-area-inset-right, 0px));
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 650;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: all;
+  }
+  #mapRightControls button {
+    width: 44px; height: 44px;
+    border-radius: 12px; border: 2px solid transparent;
+    background: rgba(15,23,42,0.88); backdrop-filter: blur(10px);
+    color: #fff; font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.45);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    transition: transform .15s, background .2s, border-color .3s;
+  }
+  #mapRightControls button:active { transform: scale(.92); }
+  /* Compass active state */
+  #compassBtn.heading-active { background: rgba(59,130,246,0.75) !important; }
+  /* Follow button active state (reutiliza el color verde) */
+  #mapRightControls #btnCenter:active { background: rgba(16,185,129,0.5); }
+  /* Separador visual entre grupos */
+  .map-ctrl-sep {
+    width: 28px; height: 1px;
+    background: rgba(255,255,255,0.15);
+    margin: 2px 0;
+  }
+  /* Botones de zoom — texto más grande */
+  .map-ctrl-zoom {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    letter-spacing: -1px;
+  }
+
   .nav-next{
     position:absolute;
     left: calc(14px + env(safe-area-inset-left,0px));
@@ -2268,23 +2309,25 @@ body.map-active #driveHoursWidget{
 
 
 /* ── OVERRIDES (layout fixes) ───────────────────────────── */
-/* SOS and Weather positions handled by the left-stack CSS above — no override needed */
-#btnCenter{
-  top: 50% !important;
-  bottom: auto !important;
-  transform: translateY(-50%) !important;
-}
-#btnCenter:active{
-  transform: translateY(-50%) scale(.92) !important;
-}
-#btnMapColor{
-  top: calc(50% + 60px) !important;
-  bottom: auto !important;
+/* btnCenter y btnMapColor ahora están dentro de #mapRightControls — posición estática */
+#mapRightControls #btnCenter,
+#mapRightControls #btnMapColor {
+  position: static !important;
   transform: none !important;
-  right: calc(14px + env(safe-area-inset-right,0px)) !important;
+  top: auto !important; bottom: auto !important;
+  right: auto !important; left: auto !important;
 }
-#btnMapColor:active{
+#mapRightControls #btnCenter:active,
+#mapRightControls #btnMapColor:active {
   transform: scale(.92) !important;
+}
+/* SOS en columna izquierda — fluye como flex item, anula posición fija */
+#fullMapScreen #sosFab {
+  position: static !important;
+  top: auto !important; right: auto !important;
+  bottom: auto !important; left: auto !important;
+  transform: none !important;
+  z-index: auto !important;
 }
 
 /* ── MAP TILE CLARITY — brighter, more contrast, sharper on mobile ── */
@@ -4703,7 +4746,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="param-box" style="cursor:pointer;position:relative" onclick="openDeparturePicker()">
             <label id="lblTime">🕐 Salida</label>
             <div id="departureDisplay" style="font-size:13px;font-weight:700;color:var(--text);padding:4px 0;line-height:1.3;min-height:36px;display:flex;flex-direction:column;justify-content:center">
-              <span id="departureDate" style="font-size:13px;font-weight:800">hoy</span>
+              <span id="departureDate" style="font-size:13px;font-weight:800">---</span>
               <span id="departureTime" style="font-size:12px;color:var(--muted);font-weight:600">--:--</span>
             </div>
             <input type="datetime-local" id="departureInput" style="position:absolute;opacity:0;width:1px;height:1px;top:0;left:0;pointer-events:none" oninput="updateDepartureDisplay()" />
@@ -6410,24 +6453,23 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- Map Style Picker Panel -->
   <div id="mapStylePanel"></div>
 
-  <!-- CENTER ON MY LOCATION -->
-  <button id="btnCenter" class="map-fab" title="Centralizar">🎯</button>
-
-  <!-- CHANGE MAP COLOR -->
-  <button id="btnMapColor" class="map-fab" title="Cambiar color del mapa" onclick="cycleMapColor()">🎨</button>
-
   <!-- NEXT TURN / EXIT INSTRUCTION -->
   <div id="navNext" class="nav-next" style="display:none">🧭</div>
 
-
-  <!-- MAP SPEED LIMIT SIGN -->
+  <!-- MAP SPEED LIMIT SIGN (display only — no buttons inside) -->
   <div id="mapSpeedSign">
+    <div class="mss-sign" id="mssSign">
+      <div class="mss-top">SPEED&#10;LIMIT</div>
+      <div class="mss-num" id="mssNum">65</div>
+      <div class="mss-truck-label">TRUCKS</div>
+    </div>
+    <div class="mss-post"></div>
+    <div class="mss-state-badge" id="mssState">-- STATE</div>
+    <div class="mss-diff" id="mssDiff"></div>
+  </div>
 
-  <!-- QUICK REPORT FAB -->
+  <!-- QUICK REPORT FAB (direct child — positioned correctly) -->
   <button id="reportFab" onclick="toggleReportSheet()" title="Reportar incidente">⚠️</button>
-
-  <!-- PROFILE FAB BUTTON — below speed limit sign, right side -->
-  <!-- profileFab REMOVED -->
 
   <!-- QUICK REPORT ACTION SHEET -->
   <div id="reportSheet">
@@ -6456,34 +6498,37 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <span class="rs-label">Vía cerrada</span>
     </button>
   </div>
-    <div class="mss-sign" id="mssSign">
-      <div class="mss-top">SPEED&#10;LIMIT</div>
-      <div class="mss-num" id="mssNum">65</div>
-      <div class="mss-truck-label">TRUCKS</div>
-    </div>
-    <div class="mss-post"></div>
-    <div class="mss-state-badge" id="mssState">-- STATE</div>
-    <div class="mss-diff" id="mssDiff"></div>
-    <!-- Map style + Compass buttons stacked below speed sign -->
-    <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Cambiar estilo de mapa" style="
-      display:flex;align-items:center;justify-content:center;
-      width:44px;height:44px;border-radius:50%;border:none;
-      background:rgba(15,23,42,0.88);backdrop-filter:blur(10px);
-      color:#fff;font-size:20px;cursor:pointer;margin-top:8px;
-      box-shadow:0 2px 12px rgba(0,0,0,0.45);
-      -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-    ">🗺️</button>
-    <button id="compassBtn" onclick="toggleHeadingUp()" title="Heading-up / North-up" style="
-      display:flex;align-items:center;justify-content:center;
-      width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,0.12);
-      background:rgba(15,23,42,0.88);backdrop-filter:blur(10px);
-      color:#fff;font-size:22px;cursor:pointer;margin-top:6px;
-      box-shadow:0 2px 12px rgba(0,0,0,0.45);
-      transition:border-color .3s,background .3s,transform .5s;
-      -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-    ">🧭</button>
-    <!-- SOS button — right column below compass -->
-    <button id="sosFab" onclick="triggerSOS()" style="margin-top:6px;pointer-events:all">SOS</button>
+
+  <!-- RIGHT SIDE CONTROL COLUMN: estilo, brújula, centrar, color, zoom -->
+  <div id="mapRightControls">
+    <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Estilo de mapa">🗺️</button>
+    <button id="compassBtn"  onclick="toggleHeadingUp()"     title="Norte / Heading-up">🧭</button>
+    <div class="map-ctrl-sep"></div>
+    <button id="btnCenter"   title="Centralizar">🎯</button>
+    <button id="btnMapColor" onclick="cycleMapColor()"       title="Color del mapa">🎨</button>
+    <div class="map-ctrl-sep"></div>
+    <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomIn()">+</button>
+    <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
+  </div>
+
+  <!-- AUTO-FOLLOW button (bottom-right, sobre el tools hub) -->
+  <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
+
+  <!-- TOOLS HUB (bottom-right) -->
+  <div id="toolsHub">
+    <button class="tools-hub-btn thb-reset" onclick="openResetSheet()" title="34h Reset">🔄</button>
+    <button class="tools-hub-btn thb-comm"  onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
+    <button class="tools-hub-btn thb-frt"   onclick="openFreightCalc()" title="Freight Calculator">💰</button>
+    <button class="tools-hub-btn thb-dot"   onclick="openDotLookup()" title="DOT Lookup">🔍</button>
+  </div>
+
+  <!-- POI Filter chips (ocultos, se activan por JS) -->
+  <div id="poiLegend" style="display:none!important">
+    <div class="poi-chip" id="chipScale"    onclick="togglePOI('scale')">⚖️ Scales</div>
+    <div class="poi-chip" id="chipTruck"    onclick="togglePOI('truck')">🚛 Truck Stops</div>
+    <div class="poi-chip" id="chipRest"     onclick="togglePOI('rest')">😴 Rest Areas</div>
+    <div class="poi-chip" id="chipReport"   onclick="togglePOI('reports')">🚨 Reports</div>
+    <div class="poi-chip" id="chipRestrict" onclick="togglePOI('restrict')">🚫 Restrictions</div>
   </div>
 
   <!-- TOP BAR -->
@@ -6495,32 +6540,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     pointer-events:none;
     display:flex; align-items:flex-start; justify-content:space-between;
   ">
-
-  <!-- POI Filter chips - hidden, POIs load automatically by default -->
-  <div id="poiLegend" style="display:none!important">
-    <div class="poi-chip" id="chipScale"    onclick="togglePOI('scale')">⚖️ Scales</div>
-    <div class="poi-chip" id="chipTruck"    onclick="togglePOI('truck')">🚛 Truck Stops</div>
-    <div class="poi-chip" id="chipRest"     onclick="togglePOI('rest')">😴 Rest Areas</div>
-    <div class="poi-chip" id="chipReport"   onclick="togglePOI('reports')">🚨 Reports</div>
-    <div class="poi-chip" id="chipRestrict" onclick="togglePOI('restrict')">🚫 Restrictions</div>
-  </div>
-
-  <!-- Auto-follow button -->
-  <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
-
-  <!-- Tools Hub Buttons (right side) -->
-  <div id="toolsHub">
-    <button class="tools-hub-btn thb-reset" onclick="openResetSheet()" title="34h Reset">🔄</button>
-    <button class="tools-hub-btn thb-comm"  onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
-    <button class="tools-hub-btn thb-frt"   onclick="openFreightCalc()" title="Freight Calculator">💰</button>
-    <button class="tools-hub-btn thb-dot"   onclick="openDotLookup()" title="DOT Lookup">🔍</button>
-  </div>
-
-  <!-- Custom zoom buttons -->
-  <div class="fm-zoom-btns">
-    <button class="fm-zoom-btn" onclick="fmMapInst && fmMapInst.zoomIn()">+</button>
-    <button class="fm-zoom-btn" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
-  </div>
 
     <!-- LEFT: close + weather + SOS -->
     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:7px;pointer-events:all">
@@ -6544,6 +6563,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
         <div class="wx-desc" id="wxDesc">Clima</div>
       </div>
+
+      <!-- SOS button -->
+      <button id="sosFab" onclick="triggerSOS()">SOS</button>
 
     </div>
 
@@ -8851,17 +8873,12 @@ function updateDepartureDisplay() {
   const dateEl = document.getElementById('departureDate');
   const timeEl = document.getElementById('departureTime');
   if (!el || !dateEl || !timeEl) return;
-  if (!el.value) return;
+  // Si no hay valor, establecer ahora para que siempre haya fecha/hora
+  if (!el.value) { setDepartureNow(); return; }
   const d = new Date(el.value);
-  const today = new Date();
-  const isToday = d.toDateString() === today.toDateString();
-  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
-  const isTomorrow = d.toDateString() === tomorrow.toDateString();
   const locale = lang === 'es' ? 'es' : 'en';
-  const dayStr = isToday ? (lang === 'es' ? 'Hoy' : 'Today')
-               : isTomorrow ? (lang === 'es' ? 'Mañana' : 'Tomorrow')
-               : d.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
-  dateEl.textContent = dayStr;
+  // Siempre mostrar la fecha real (día, mes y día del mes)
+  dateEl.textContent = d.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
   timeEl.textContent = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -13706,10 +13723,13 @@ calculateRoute = async function() {
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 150);
   } catch(err) {
     console.error('calculateRoute error:', err);
-    showError(lang === 'es' ? 'Error calculando la ruta. Intenta de nuevo.' : 'Error calculating route. Please try again.');
+    const isNetwork = err && (err.name === 'TypeError' || err.message?.includes('network') || err.message?.includes('fetch'));
+    const msg = lang === 'es'
+      ? (isNetwork ? 'Sin conexión a internet. Verifica tu red e intenta de nuevo.' : 'Error calculando la ruta. Verifica los puntos de origen y destino.')
+      : (isNetwork ? 'No internet connection. Check your network and try again.' : 'Error calculating route. Check your origin and destination.');
+    showError(msg);
   } finally {
-    calcBtn2.textContent = t('btnCalc');
-    calcBtn2.disabled = false;
+    if (calcBtn2) { calcBtn2.textContent = t('btnCalc'); calcBtn2.disabled = false; }
   }
 };
 
