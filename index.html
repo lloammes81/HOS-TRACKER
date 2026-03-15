@@ -336,7 +336,10 @@
   }
   .param-box input:focus { box-shadow: none; border-color: transparent; }
   .param-box input[type="datetime-local"] {
-    font-size: 14px; color-scheme: dark;
+    font-size: 14px; color-scheme: light; color: var(--text);
+  }
+  body.dark .param-box input[type="datetime-local"] {
+    color-scheme: dark;
   }
   .btn-calc-mobile {
     width: 100%; padding: 18px;
@@ -9099,40 +9102,59 @@ let originDebounce, destDebounce;
 
 async function fetchAutocomplete(q) {
   const countryObj = COUNTRIES.find(c => c.code === selectedCountry);
-  const query = selectedCountry && countryObj ? `${q}, ${countryObj.en}` : q;
+  const queryCC = selectedCountry && countryObj ? `${q}, ${countryObj.en}` : q;
+  const acceptLang = lang === 'es' ? 'es' : 'en';
 
-  // Try Nominatim first (most reliable)
+  // Helper: fetch with 6-second timeout
+  const fetchT = (url, opts = {}) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(timer));
+  };
+
+  // Parse Nominatim result
+  const parseNom = (data) => data.map(d => {
+    const a = d.address || {};
+    const parts = [
+      a.house_number && a.road ? `${a.house_number} ${a.road}` : (a.road || ''),
+      a.city || a.town || a.village || a.county || '',
+      a.state || '',
+      a.country || ''
+    ].filter(Boolean).filter((v,i,arr) => arr.indexOf(v) === i);
+    return {
+      name: parts.join(', ') || d.display_name.split(',').slice(0,3).join(','),
+      lat: parseFloat(d.lat), lon: parseFloat(d.lon),
+      state: (a.state || '').trim(),
+      country_code: (d.address?.country_code || '').toUpperCase(),
+      isAddress: !!(a.house_number || a.road)
+    };
+  }).filter(x => x.name);
+
+  // 1️⃣ Nominatim with country filter
   try {
     const cc = selectedCountry ? `&countrycodes=${selectedCountry.toLowerCase()}` : '';
-    const r = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=6&addressdetails=1${cc}`,
-      { headers: { 'Accept-Language': lang === 'es' ? 'es' : 'en' } }
+    const r = await fetchT(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryCC)}&limit=6&addressdetails=1${cc}`,
+      { headers: { 'Accept-Language': acceptLang } }
     );
     const data = await r.json();
-    if (data && data.length) {
-      return data.map(d => {
-        const a = d.address || {};
-        const parts = [
-          a.house_number && a.road ? `${a.house_number} ${a.road}` : (a.road || ''),
-          a.city || a.town || a.village || a.county || '',
-          a.state || '',
-          a.country || ''
-        ].filter(Boolean).filter((v,i,arr) => arr.indexOf(v) === i);
-        return {
-          name: parts.join(', ') || d.display_name.split(',').slice(0,3).join(','),
-          lat: parseFloat(d.lat),
-          lon: parseFloat(d.lon),
-          state: (a.state || '').trim(),
-          country_code: (d.address?.country_code || '').toUpperCase(),
-          isAddress: !!(a.house_number || a.road)
-        };
-      }).filter(x => x.name);
-    }
+    if (data && data.length) return parseNom(data);
   } catch {}
 
-  // Fallback to Photon
+  // 2️⃣ Nominatim without country filter (broader search)
   try {
-    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6`);
+    const r = await fetchT(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1`,
+      { headers: { 'Accept-Language': acceptLang } }
+    );
+    const data = await r.json();
+    if (data && data.length) return parseNom(data);
+  } catch {}
+
+  // 3️⃣ Photon fallback
+  try {
+    const bbox = selectedCountry === 'US' ? '&bbox=-125,24,-66,50' : '';
+    const r = await fetchT(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6${bbox}`);
     const data = await r.json();
     return (data.features || []).map(f => {
       const p = f.properties;
@@ -9141,8 +9163,7 @@ async function fetchAutocomplete(q) {
       const nameParts = [streetPart, cityPart, p.state, p.country].filter(Boolean).filter((v,i,a) => a.indexOf(v)===i);
       return {
         name: nameParts.join(', '),
-        lat: f.geometry.coordinates[1],
-        lon: f.geometry.coordinates[0],
+        lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0],
         state: (p.state || '').trim(),
         country_code: (p.countrycode || '').toUpperCase(),
         isAddress: !!(p.housenumber || p.street)
@@ -12549,6 +12570,7 @@ function switchTab(tab) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
   if (tab === 'summary') fetchEIAPrice();
+  if (tab === 'plan') { const dep = document.getElementById('departureInput'); if (dep && !dep.value) setDepartureNow(); }
 }
 
 function bindEvents() {
@@ -12600,12 +12622,23 @@ function bindEvents() {
 
   document.getElementById('destInput').addEventListener('input', e => {
     clearTimeout(destDebounce);
-    const v = e.target.value;
-    if (v.length < 2) { document.getElementById('destSugg').style.display = 'none'; return; }
+    const v = e.target.value.trim();
+    const sugg = document.getElementById('destSugg');
+    if (v.length < 2) { sugg.style.display = 'none'; return; }
+    // Show searching state immediately
+    sugg.innerHTML = `<div style="padding:13px 14px;font-size:14px;color:var(--muted)">🔍 ${lang==='es'?'Buscando...':'Searching...'}</div>`;
+    sugg.style.display = 'block';
     destDebounce = setTimeout(async () => {
+      // Abort if user typed something different
+      if (document.getElementById('destInput').value.trim() !== v) return;
       const items = await fetchAutocomplete(v).catch(() => []);
+      if (document.getElementById('destInput').value.trim() !== v) return;
+      if (!items.length) {
+        sugg.innerHTML = `<div style="padding:13px 14px;font-size:14px;color:var(--muted)">😕 ${lang==='es'?`Sin resultados para "${v}"`:`No results for "${v}"`}</div>`;
+        return;
+      }
       showSuggestions('destSugg', items, it => { setDestinationWithLocalCheck(it); });
-    }, 200);
+    }, 400);
   });
 
   document.addEventListener('click', e => {
