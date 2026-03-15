@@ -14029,6 +14029,7 @@ function initDriverProfile() {
 ════════════════════════════════════════════════════════════ */
 
 let _localStateWarningEl = null;
+let _pendingDestItem = null;
 let _dismissedAlerts = new Set();
 
 function getOriginState() {
@@ -14077,6 +14078,7 @@ function statesMatch(a, b) {
 function showLocalStateWarning(destItem, originState, destState) {
   // Remove existing warning
   dismissLocalWarning();
+  _pendingDestItem = destItem;
 
   const el = document.createElement('div');
   el.className = 'local-state-warning';
@@ -14092,7 +14094,7 @@ function showLocalStateWarning(destItem, originState, destState) {
           Local drivers are limited to their home state area.
         </div>
         <div class="lsw-actions">
-          <button class="lsw-btn primary" onclick="forceSetDest(${JSON.stringify(JSON.stringify(destItem))})">
+          <button class="lsw-btn primary" onclick="forceSetDest()">
             Use anyway
           </button>
           <button class="lsw-btn secondary" onclick="changeJobTypeFromWarning()">
@@ -14111,8 +14113,9 @@ function showLocalStateWarning(destItem, originState, destState) {
   if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
 }
 
-function forceSetDest(destJsonStr) {
-  const it = JSON.parse(destJsonStr);
+function forceSetDest() {
+  const it = _pendingDestItem;
+  if (!it) return;
   destination = it;
   document.getElementById('destInput').value = it.name;
   document.getElementById('destSugg').style.display = 'none';
@@ -14129,7 +14132,14 @@ function changeJobTypeFromWarning() {
     updateProfileDisplay();
     applyJobMode('interstate');
   }
+  // Now set the pending destination (job type is interstate so local check will pass)
+  const it = _pendingDestItem;
   dismissLocalWarning();
+  if (it) {
+    destination = it;
+    document.getElementById('destInput').value = it.name;
+    document.getElementById('destSugg').style.display = 'none';
+  }
   showToast('info', '🛣️', 'Switched to Interstate', 'You can now route to any state', 3000);
 }
 
@@ -14138,6 +14148,7 @@ function dismissLocalWarning() {
     _localStateWarningEl.remove();
     _localStateWarningEl = null;
   }
+  _pendingDestItem = null;
 }
 
 /* ════════════════════════════════════════════════════════════
