@@ -329,11 +329,15 @@
     margin: 0; display: flex; align-items: center; gap: 4px;
   }
   .param-box input {
-    background: transparent; border: none; padding: 0;
-    font-size: 18px; font-weight: 700; box-shadow: none;
-    border-radius: 0; min-height: 32px;
+    background: transparent; border: none; padding: 2px 0;
+    font-size: 16px; font-weight: 700; box-shadow: none;
+    border-radius: 0; min-height: 36px; width: 100%;
+    color: var(--text);
   }
-  .param-box input:focus { box-shadow: none; }
+  .param-box input:focus { box-shadow: none; border-color: transparent; }
+  .param-box input[type="datetime-local"] {
+    font-size: 14px; color-scheme: dark;
+  }
   .btn-calc-mobile {
     width: 100%; padding: 18px;
     background: linear-gradient(135deg, #10b981, #059669);
@@ -8798,7 +8802,10 @@ function applyTheme() {
 function setDepartureNow() {
   const now = new Date();
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  document.getElementById('departureInput').value = local;
+  const el = document.getElementById('departureInput');
+  if (el) el.value = local;
+  // Also set after render in case CSS delayed the display
+  setTimeout(() => { if (el && !el.value) el.value = local; }, 300);
 }
 
 function populateCountrySelects() {
