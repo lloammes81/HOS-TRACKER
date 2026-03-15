@@ -9189,29 +9189,35 @@ function handleDestInput(val) {
 async function runDestSearch(q) {
   const sugg = document.getElementById('destSugg');
   if (!sugg) return;
+
+  const mkItem = (name, lat, lon, state, cc, isAddr) =>
+    ({ name, lat, lon, state: (state||'').trim(), country_code: (cc||'').toUpperCase(), isAddress: !!isAddr });
+
+  // 1️⃣ Photon
   try {
-    // Photon — primary
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7`;
     const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 8000);
-    const r = await fetch(url, { signal: ctrl.signal });
+    const t = setTimeout(() => ctrl.abort(), 6000);
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7`, { signal: ctrl.signal });
+    clearTimeout(t);
     const data = await r.json();
     const items = (data.features || []).map(f => {
       const p = f.properties;
       const street = p.housenumber && p.street ? `${p.housenumber} ${p.street}` : (p.street || '');
       const city = p.city || p.town || p.village || p.name || '';
       const parts = [street, city, p.state, p.country].filter(Boolean).filter((v,i,a) => a.indexOf(v)===i);
-      return { name: parts.join(', '), lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0],
-               state:(p.state||'').trim(), country_code:(p.countrycode||'').toUpperCase(),
-               isAddress: !!(p.housenumber||p.street) };
+      return mkItem(parts.join(', '), f.geometry.coordinates[1], f.geometry.coordinates[0], p.state, p.countrycode, p.housenumber||p.street);
     }).filter(x => x.name);
     if (items.length) { showSuggestions('destSugg', items, it => setDestinationWithLocalCheck(it)); return; }
-  } catch {}
+  } catch(e1) {
+    sugg.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:#ef4444">⚠️ Error red: ${e1.name}. Intenta de nuevo.</div>`;
+  }
+
+  // 2️⃣ Nominatim fallback
   try {
-    // Nominatim — fallback
     const ctrl2 = new AbortController();
-    setTimeout(() => ctrl2.abort(), 8000);
+    const t2 = setTimeout(() => ctrl2.abort(), 6000);
     const r2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1`, { signal: ctrl2.signal });
+    clearTimeout(t2);
     const data2 = await r2.json();
     if (data2 && data2.length) {
       const items2 = data2.map(d => {
@@ -9219,15 +9225,16 @@ async function runDestSearch(q) {
         const parts = [a.house_number&&a.road?`${a.house_number} ${a.road}`:(a.road||''),
           a.city||a.town||a.village||a.county||'', a.state||'', a.country||'']
           .filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i);
-        return { name: parts.join(', ')||d.display_name.split(',').slice(0,3).join(','),
-                 lat:parseFloat(d.lat), lon:parseFloat(d.lon),
-                 state:(a.state||'').trim(), country_code:(d.address?.country_code||'').toUpperCase(),
-                 isAddress:!!(a.house_number||a.road) };
+        return mkItem(parts.join(', ')||d.display_name.split(',').slice(0,3).join(','),
+          parseFloat(d.lat), parseFloat(d.lon), a.state, d.address?.country_code, a.house_number||a.road);
       }).filter(x=>x.name);
       if (items2.length) { showSuggestions('destSugg', items2, it => setDestinationWithLocalCheck(it)); return; }
     }
-  } catch {}
-  sugg.innerHTML = `<div style="padding:12px 14px;font-size:14px;color:var(--muted)">Sin resultados para "${q}"</div>`;
+  } catch(e2) {
+    console.error('Nominatim error:', e2);
+  }
+
+  sugg.innerHTML = `<div style="padding:12px 14px;font-size:14px;color:var(--muted)">Sin resultados para "<b>${q}</b>"</div>`;
 }
 
 async function fetchAutocomplete(q) {
