@@ -9031,7 +9031,10 @@ function showSuggestions(containerId, items, onSelect) {
     const parts = it.name.split(',');
     const icon = it.isAddress ? '📍' : '🏙️';
     div.innerHTML = `<div class="s-name">${icon} ${parts[0]}</div><div class="s-detail">${parts.slice(1).join(',')}</div>`;
-    div.onclick = () => { onSelect(it); el.style.display = 'none'; };
+    // Use mousedown + touchstart so selection fires before blur hides the list on mobile
+    const select = (e) => { e.preventDefault(); onSelect(it); el.style.display = 'none'; };
+    div.addEventListener('mousedown', select);
+    div.addEventListener('touchstart', select, { passive: false });
     el.appendChild(div);
   });
   el.style.display = 'block';
@@ -13017,11 +13020,14 @@ function setupWaypointInput(inputId, suggId, index) {
         }).join('');
         sugg.style.display='block';
         sugg.querySelectorAll('.sugg-item').forEach(item => {
-          item.addEventListener('click', () => {
+          const selectWp = (e) => {
+            e.preventDefault();
             input.value = item.dataset.name;
             sugg.style.display = 'none';
             waypoints[index] = { name: item.dataset.name, lat: parseFloat(item.dataset.lat), lon: parseFloat(item.dataset.lon) };
-          });
+          };
+          item.addEventListener('mousedown', selectWp);
+          item.addEventListener('touchstart', selectWp, { passive: false });
         });
       } catch {}
     }, 300);
