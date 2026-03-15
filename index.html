@@ -4571,8 +4571,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="hero-brand-sub">by fab-visual™</div>
         </div>
       </div>
-      <div class="hero-btns">
+      <div class="hero-btns" style="flex-direction:column;align-items:center;gap:6px">
         <button class="hero-btn" id="themeToggle" title="Cambiar color">🌙</button>
+        <!-- Avatar debajo del tema -->
+        <div id="heroAvatarWrap" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="openProfilePanel()">
+          <div id="heroAvatarImg" style="
+            width:34px;height:34px;border-radius:10px;overflow:hidden;
+            background:linear-gradient(135deg,#10b981,#059669);
+            display:flex;align-items:center;justify-content:center;
+            font-size:18px;border:2px solid rgba(255,255,255,.2);
+          ">👤</div>
+          <div id="heroAvatarName" style="font-size:8px;font-weight:800;color:rgba(255,255,255,.7);letter-spacing:.3px;max-width:44px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Driver</div>
+        </div>
         <!-- hidden controls kept for JS compatibility -->
         <button id="gpsBtn" style="display:none"></button>
         <button id="menuBtn" style="display:none"></button>
@@ -4706,23 +4716,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           </div>
         </div>
         <input type="number" id="speedInput" value="60" style="display:none" />
-
-        <!-- Speed indicator -->
-        <div id="speedIndicator" style="
-          display:flex;align-items:center;justify-content:space-between;
-          background:var(--surface2);border:1px solid var(--border);
-          border-radius:12px;padding:10px 14px;margin-top:10px;
-          cursor:pointer;
-        " onclick="switchTab('settings')">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:18px">🚀</span>
-            <div>
-              <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Velocidad de crucero</div>
-              <div style="font-size:15px;font-weight:800;color:var(--text)" id="speedIndicatorVal">60 mph</div>
-            </div>
-          </div>
-          <div style="font-size:11px;color:var(--accent);font-weight:700">Cambiar ›</div>
-        </div>
 
         <!-- TRUCK ROUTE OPTIONS -->
         <div class="truck-opts-panel" id="truckOptsPanel" style="margin-top:10px">
@@ -14118,23 +14111,24 @@ function updateFuelAvatar() {
   const user = currentUser || JSON.parse(localStorage.getItem('hos_user') || 'null');
   const profile = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
   const name = (user && user.name) || profile.name || 'Driver';
-  const avatarHTML = (user && user.photoData)
-    ? `<img src="${user.photoData}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:12px" />`
-    : (user && user.avatar ? user.avatar : '👤');
+  const isPhoto = user && user.photoData;
+  const emoji = (user && user.avatar) ? user.avatar : '👤';
 
-  // Fuel page avatar
-  const fuelImg  = document.getElementById('fuelAvatarImg');
-  const fuelName = document.getElementById('fuelAvatarName');
-  if (fuelImg)  fuelImg.innerHTML  = typeof avatarHTML === 'string' && avatarHTML.startsWith('<') ? avatarHTML : '';
-  if (fuelImg && !avatarHTML.startsWith('<'))  fuelImg.textContent = avatarHTML;
-  if (fuelName) fuelName.textContent = name;
+  function applyAvatar(imgId, nameId) {
+    const imgEl  = document.getElementById(imgId);
+    const nameEl = document.getElementById(nameId);
+    if (!imgEl) return;
+    if (isPhoto) {
+      imgEl.innerHTML = `<img src="${user.photoData}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:10px" />`;
+    } else {
+      imgEl.textContent = emoji;
+    }
+    if (nameEl) nameEl.textContent = name;
+  }
 
-  // Plan page avatar
-  const planImg  = document.getElementById('planAvatarImg');
-  const planName = document.getElementById('planAvatarName');
-  if (planImg)  planImg.innerHTML  = typeof avatarHTML === 'string' && avatarHTML.startsWith('<') ? avatarHTML : '';
-  if (planImg && !avatarHTML.startsWith('<'))  planImg.textContent = avatarHTML;
-  if (planName) planName.textContent = name;
+  applyAvatar('fuelAvatarImg',  'fuelAvatarName');
+  applyAvatar('planAvatarImg',  'planAvatarName');
+  applyAvatar('heroAvatarImg',  'heroAvatarName');
 }
 
 /* ── Wire dotInput2 Enter key ── */
