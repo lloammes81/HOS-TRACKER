@@ -4676,12 +4676,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           </div>
 
           <!-- Destination -->
-          <div class="stop-row-mobile" id="stopRowDest" style="position:relative">
-            <span class="stop-icon">🏁</span>
-            <div class="stop-input-wrap" style="flex:1;position:relative">
-              <input id="destInput" placeholder="Destino — ciudad o dirección" autocomplete="off" style="width:100%" />
-              <div class="suggestions" id="destSugg" style="display:none"></div>
+          <div style="position:relative;margin-bottom:8px">
+            <div class="stop-row-mobile" id="stopRowDest">
+              <span class="stop-icon">🏁</span>
+              <input id="destInput" placeholder="Destino — ciudad o dirección" autocomplete="off" style="flex:1;background:transparent;border:none;padding:2px 0;font-size:15px;box-shadow:none;min-height:44px;color:var(--text)" />
             </div>
+            <div class="suggestions" id="destSugg" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999"></div>
           </div>
 
           <!-- Dynamic waypoints -->
@@ -9088,35 +9088,57 @@ let originDebounce, destDebounce;
 async function fetchAutocomplete(q) {
   const countryObj = COUNTRIES.find(c => c.code === selectedCountry);
   const query = selectedCountry && countryObj ? `${q}, ${countryObj.en}` : q;
-  const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=10`);
-  const data = await r.json();
-  let items = (data.features || []).map(f => {
-    const p = f.properties;
-    // Build full address: housenumber + street takes priority over name for addresses
-    const streetPart = p.housenumber && p.street
-      ? `${p.housenumber} ${p.street}`
-      : (p.street || p.name || '');
-    const cityPart  = p.city || p.town || p.village || '';
-    const nameParts = [streetPart, cityPart, p.state, p.country]
-      .filter(Boolean).filter((v,i,a) => a.indexOf(v) === i);
-    return {
-      name: nameParts.join(', '),
-      lat: f.geometry.coordinates[1],
-      lon: f.geometry.coordinates[0],
-      state: (p.state || '').trim(),
-      country_code: (p.countrycode || '').toUpperCase(),
-      isAddress: !!(p.housenumber || p.street)
-    };
-  }).filter(x => x.name);
-  if (selectedCountry) items = items.filter(x => x.country_code === selectedCountry);
-  const seen = new Set();
-  items = items.filter(it => {
-    const k = `${it.name}|${it.lat.toFixed(4)}|${it.lon.toFixed(4)}`;
-    if (seen.has(k)) return false; seen.add(k); return true;
-  });
-  // When query contains digits, prioritize address results
-  if (/\d/.test(q)) items.sort((a, b) => (b.isAddress ? 1 : 0) - (a.isAddress ? 1 : 0));
-  return items.slice(0, 5);
+
+  // Try Nominatim first (most reliable)
+  try {
+    const cc = selectedCountry ? `&countrycodes=${selectedCountry.toLowerCase()}` : '';
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=6&addressdetails=1${cc}`,
+      { headers: { 'Accept-Language': lang === 'es' ? 'es' : 'en' } }
+    );
+    const data = await r.json();
+    if (data && data.length) {
+      return data.map(d => {
+        const a = d.address || {};
+        const parts = [
+          a.house_number && a.road ? `${a.house_number} ${a.road}` : (a.road || ''),
+          a.city || a.town || a.village || a.county || '',
+          a.state || '',
+          a.country || ''
+        ].filter(Boolean).filter((v,i,arr) => arr.indexOf(v) === i);
+        return {
+          name: parts.join(', ') || d.display_name.split(',').slice(0,3).join(','),
+          lat: parseFloat(d.lat),
+          lon: parseFloat(d.lon),
+          state: (a.state || '').trim(),
+          country_code: (d.address?.country_code || '').toUpperCase(),
+          isAddress: !!(a.house_number || a.road)
+        };
+      }).filter(x => x.name);
+    }
+  } catch {}
+
+  // Fallback to Photon
+  try {
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6`);
+    const data = await r.json();
+    return (data.features || []).map(f => {
+      const p = f.properties;
+      const streetPart = p.housenumber && p.street ? `${p.housenumber} ${p.street}` : (p.street || p.name || '');
+      const cityPart = p.city || p.town || p.village || '';
+      const nameParts = [streetPart, cityPart, p.state, p.country].filter(Boolean).filter((v,i,a) => a.indexOf(v)===i);
+      return {
+        name: nameParts.join(', '),
+        lat: f.geometry.coordinates[1],
+        lon: f.geometry.coordinates[0],
+        state: (p.state || '').trim(),
+        country_code: (p.countrycode || '').toUpperCase(),
+        isAddress: !!(p.housenumber || p.street)
+      };
+    }).filter(x => x.name).slice(0, 5);
+  } catch {}
+
+  return [];
 }
 
 function showSuggestions(containerId, items, onSelect) {
@@ -12571,7 +12593,7 @@ function bindEvents() {
     destDebounce = setTimeout(async () => {
       const items = await fetchAutocomplete(v).catch(() => []);
       showSuggestions('destSugg', items, it => { setDestinationWithLocalCheck(it); });
-    }, 300);
+    }, 200);
   });
 
   document.addEventListener('click', e => {
