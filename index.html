@@ -2637,6 +2637,55 @@ body.dark #fullMap .leaflet-tile-pane {
   #altRoutesCard.visible { display: block; animation: fadeIn .3s ease; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
   .alt-header { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:10px; }
+  /* ════════════════════════════════════════════════════════════
+     🚛  TRUCK OPTIONS PANEL
+  ════════════════════════════════════════════════════════════ */
+  .truck-opts-panel {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .truck-opts-toggle {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    padding: 11px 14px; background: none; border: none; cursor: pointer;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 700; text-align: left;
+    touch-action: manipulation;
+  }
+  .truck-opts-toggle:active { background: var(--surface2); }
+  .truck-opts-label { flex: 1; }
+  .truck-opts-arrow { transition: transform .2s; flex-shrink: 0; stroke: var(--muted); }
+  .truck-opts-arrow.open { transform: rotate(180deg); }
+  .truck-opts-body {
+    padding: 0 14px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .truck-opts-section { margin-top: 12px; }
+  .truck-opts-sec-label {
+    font-size: 10px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .7px; margin-bottom: 8px;
+  }
+  .route-type-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .rt-pill {
+    padding: 7px 11px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    color: var(--muted); cursor: pointer; transition: all .15s;
+    font-family: 'DM Sans', sans-serif; touch-action: manipulation;
+  }
+  .rt-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .truck-dims-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+  }
+  .truck-dim-lbl {
+    display: block; font-size: 10px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; margin-top: 0;
+  }
+  .truck-dims-grid input[type="number"] {
+    padding: 8px 10px; font-size: 15px; font-weight: 700; width: 100%;
+  }
+
   .alt-route-option {
     display: flex; align-items: center; gap: 10px;
     padding: 10px 12px; border-radius: 12px;
@@ -2673,9 +2722,11 @@ body.dark #fullMap .leaflet-tile-pane {
     font-size: 9px; font-weight: 900; padding: 3px 8px;
     border-radius: 6px; letter-spacing: .5px; text-transform: uppercase;
   }
-  .alt-badge.fastest { background: rgba(16,185,129,.15); color: #059669; }
+  .alt-badge.fastest  { background: rgba(16,185,129,.15); color: #059669; }
   .alt-badge.shortest { background: rgba(59,130,246,.15); color: #2563eb; }
-  .alt-badge.alt { background: rgba(245,158,11,.15); color: #d97706; }
+  .alt-badge.notoll   { background: rgba(139,92,246,.15); color: #7c3aed; }
+  .alt-badge.nohwy    { background: rgba(239,68,68,.15);  color: #dc2626; }
+  .alt-badge.alt      { background: rgba(245,158,11,.15); color: #d97706; }
 
   /* ════════════════════════════════════════════════════════════
      🕐  ROUTE HISTORY
@@ -4362,7 +4413,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="stop-row" id="stopRowDest">
             <div class="stop-dot dest">🏁</div>
             <div class="stop-input-wrap">
-              <input id="destInput" placeholder="Destination – Dallas, TX" autocomplete="off" />
+              <input id="destInput" placeholder="Destination – address or city" autocomplete="off" />
               <div class="suggestions" id="destSugg" style="display:none"></div>
             </div>
           </div>
@@ -4389,6 +4440,67 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div>
             <label id="lblSpeed">🚀 Speed (mph)</label>
             <input type="number" id="speedInput" min="1" value="60" />
+          </div>
+        </div>
+
+        <!-- TRUCK ROUTE OPTIONS -->
+        <div class="truck-opts-panel" id="truckOptsPanel">
+          <button class="truck-opts-toggle" onclick="toggleTruckOpts()" type="button">
+            <span style="font-size:16px">🚛</span>
+            <span class="truck-opts-label">Truck Options &amp; Restrictions</span>
+            <svg class="truck-opts-arrow" id="truckOptsArrow" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="truck-opts-body" id="truckOptsBody" style="display:none">
+
+            <!-- Route type -->
+            <div class="truck-opts-section">
+              <div class="truck-opts-sec-label">Tipo de ruta</div>
+              <div class="route-type-pills">
+                <button class="rt-pill active" data-type="fastest"         type="button" onclick="setRouteType('fastest')">⚡ Más rápida</button>
+                <button class="rt-pill"        data-type="shortest"        type="button" onclick="setRouteType('shortest')">📏 Más corta</button>
+                <button class="rt-pill"        data-type="avoid_tolls"     type="button" onclick="setRouteType('avoid_tolls')">💰 Sin peajes</button>
+                <button class="rt-pill"        data-type="avoid_highways"  type="button" onclick="setRouteType('avoid_highways')">🏘️ Sin autopistas</button>
+              </div>
+            </div>
+
+            <!-- Truck dimensions -->
+            <div class="truck-opts-section">
+              <div class="truck-opts-sec-label">Dimensiones del vehículo (0 = sin restricción)</div>
+              <div class="truck-dims-grid">
+                <div>
+                  <label class="truck-dim-lbl">Altura (ft)</label>
+                  <input type="number" id="truckHeightInp" min="0" max="18" step="0.1" value="13.6"
+                    onchange="truckOptions.height=parseFloat(this.value)||0" />
+                </div>
+                <div>
+                  <label class="truck-dim-lbl">Peso (tons)</label>
+                  <input type="number" id="truckWeightInp" min="0" max="80" step="0.5" value="0"
+                    onchange="truckOptions.weight=parseFloat(this.value)||0" />
+                </div>
+                <div>
+                  <label class="truck-dim-lbl">Ancho (ft)</label>
+                  <input type="number" id="truckWidthInp" min="0" max="12" step="0.1" value="0"
+                    onchange="truckOptions.width=parseFloat(this.value)||0" />
+                </div>
+                <div>
+                  <label class="truck-dim-lbl">Largo (ft)</label>
+                  <input type="number" id="truckLengthInp" min="0" max="120" step="1" value="0"
+                    onchange="truckOptions.length=parseFloat(this.value)||0" />
+                </div>
+                <div>
+                  <label class="truck-dim-lbl">Ejes</label>
+                  <input type="number" id="truckAxlesInp" min="2" max="9" step="1" value="5"
+                    onchange="truckOptions.axles=parseInt(this.value)||5" />
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding-top:16px">
+                  <input type="checkbox" id="truckHazmatChk"
+                    onchange="truckOptions.hazmat=this.checked"
+                    style="width:20px;height:20px;flex-shrink:0;margin:0;cursor:pointer" />
+                  <label class="truck-dim-lbl" style="margin:0;cursor:pointer" for="truckHazmatChk">☣️ Hazmat</label>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -6991,6 +7103,17 @@ let weatherActive   = localStorage.getItem('hos_weather')  === 'true';
 let bridgeActive    = localStorage.getItem('hos_bridge')   === 'true';
 let trailerHeight   = parseFloat(localStorage.getItem('hos_trailer') || '13.6');
 
+/* ── Truck route options ──────────────────────── */
+let truckOptions = {
+  routeType: 'fastest', // fastest | shortest | avoid_tolls | avoid_highways
+  height: parseFloat(localStorage.getItem('hos_trailer') || '13.6'), // ft
+  weight: 0,   // metric tons (0 = no restriction)
+  width:  0,   // ft (0 = no restriction)
+  length: 0,   // ft (0 = no restriction)
+  axles:  5,
+  hazmat: false,
+};
+
 // Fatigue internals
 let fatigueStream   = null;
 let fatigueInterval = null;
@@ -8693,22 +8816,34 @@ let originDebounce, destDebounce;
 async function fetchAutocomplete(q) {
   const countryObj = COUNTRIES.find(c => c.code === selectedCountry);
   const query = selectedCountry && countryObj ? `${q}, ${countryObj.en}` : q;
-  const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8`);
+  const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=10`);
   const data = await r.json();
-  let items = (data.features || []).map(f => ({
-    name: [f.properties.name, f.properties.city, f.properties.state, f.properties.country]
-      .filter(Boolean).filter((v,i,a) => a.indexOf(v) === i).join(', '),
-    lat: f.geometry.coordinates[1],
-    lon: f.geometry.coordinates[0],
-    state: (f.properties.state || '').trim(),
-    country_code: (f.properties.countrycode || '').toUpperCase()
-  })).filter(x => x.name);
+  let items = (data.features || []).map(f => {
+    const p = f.properties;
+    // Build full address: housenumber + street takes priority over name for addresses
+    const streetPart = p.housenumber && p.street
+      ? `${p.housenumber} ${p.street}`
+      : (p.street || p.name || '');
+    const cityPart  = p.city || p.town || p.village || '';
+    const nameParts = [streetPart, cityPart, p.state, p.country]
+      .filter(Boolean).filter((v,i,a) => a.indexOf(v) === i);
+    return {
+      name: nameParts.join(', '),
+      lat: f.geometry.coordinates[1],
+      lon: f.geometry.coordinates[0],
+      state: (p.state || '').trim(),
+      country_code: (p.countrycode || '').toUpperCase(),
+      isAddress: !!(p.housenumber || p.street)
+    };
+  }).filter(x => x.name);
   if (selectedCountry) items = items.filter(x => x.country_code === selectedCountry);
   const seen = new Set();
   items = items.filter(it => {
     const k = `${it.name}|${it.lat.toFixed(4)}|${it.lon.toFixed(4)}`;
     if (seen.has(k)) return false; seen.add(k); return true;
   });
+  // When query contains digits, prioritize address results
+  if (/\d/.test(q)) items.sort((a, b) => (b.isAddress ? 1 : 0) - (a.isAddress ? 1 : 0));
   return items.slice(0, 5);
 }
 
@@ -8719,7 +8854,9 @@ function showSuggestions(containerId, items, onSelect) {
   items.forEach(it => {
     const div = document.createElement('div');
     div.className = 's-item';
-    div.innerHTML = `<div class="s-name">${it.name.split(',')[0]}</div><div class="s-detail">${it.name.split(',').slice(1).join(',')}</div>`;
+    const parts = it.name.split(',');
+    const icon = it.isAddress ? '📍' : '🏙️';
+    div.innerHTML = `<div class="s-name">${icon} ${parts[0]}</div><div class="s-detail">${parts.slice(1).join(',')}</div>`;
     div.onclick = () => { onSelect(it); el.style.display = 'none'; };
     el.appendChild(div);
   });
@@ -8981,11 +9118,27 @@ async function fetchRoadRoute(orig, dest) {
     // ── 2. Try OpenRouteService HGV (requires key but has free tier) ──────────
     try {
       const orsUrl = 'https://api.openrouteservice.org/v2/directions/driving-hgv';
+      // Build avoid_features based on user route type preference
+      const orsAvoid = ['ferries'];
+      if (truckOptions.routeType === 'avoid_tolls')    orsAvoid.push('tollways');
+      if (truckOptions.routeType === 'avoid_highways') orsAvoid.push('highways');
+      // Convert truck dimensions from ft → meters for ORS (uses metric)
+      const ftToM = ft => +(ft * 0.3048).toFixed(2);
+      const orsRestrictions = {};
+      if (truckOptions.height > 0) orsRestrictions.height     = ftToM(truckOptions.height);
+      if (truckOptions.weight > 0) orsRestrictions.weight     = truckOptions.weight;
+      if (truckOptions.width  > 0) orsRestrictions.width      = ftToM(truckOptions.width);
+      if (truckOptions.length > 0) orsRestrictions.length     = ftToM(truckOptions.length);
+      if (truckOptions.axles  > 0) orsRestrictions.axle_count = truckOptions.axles;
       const orsBody = {
         coordinates: [[orig.lon, orig.lat], [dest.lon, dest.lat]],
         profile: 'driving-hgv',
         format: 'geojson',
-        options: { vehicle_type: 'hgv', avoid_features: ['ferries'] },
+        options: {
+          vehicle_type: truckOptions.hazmat ? 'hgv_hazmat' : 'hgv',
+          avoid_features: orsAvoid,
+          ...(Object.keys(orsRestrictions).length ? { profile_params: { restrictions: orsRestrictions } } : {})
+        },
         geometry_simplify: false
       };
       const orsResp = await fetch(orsUrl, {
@@ -12803,7 +12956,12 @@ let selectedAltIdx = 0;
 async function fetchAlternativeRoutes(orig, dest) {
   altRoutes = [];
   try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true&alternatives=3`;
+    // Use truck profile; add exclude param for route type preferences
+    const profile = 'truck';
+    let excludeParam = '';
+    if (truckOptions.routeType === 'avoid_highways') excludeParam = '&exclude=motorway';
+    else if (truckOptions.routeType === 'avoid_tolls') excludeParam = '&exclude=toll';
+    const url = `https://router.project-osrm.org/route/v1/${profile}/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true&alternatives=3${excludeParam}`;
     const res  = await fetch(url);
     const data = await res.json();
     if (data.code === 'Ok' && data.routes?.length) {
@@ -12835,12 +12993,21 @@ function renderAltRoutes(orig, dest) {
     return;
   }
 
-  const labels = [
-    { text: 'Fastest',  cls: 'fastest'  },
-    { text: 'Shortest', cls: 'shortest' },
-    { text: 'Alt',      cls: 'alt'      },
-    { text: 'Alt 2',    cls: 'alt'      },
-  ];
+  const routeTypeLabels = {
+    fastest:         ['Más rápida', 'Alternativa', 'Alt 2', 'Alt 3'],
+    shortest:        ['Más corta',  'Alternativa', 'Alt 2', 'Alt 3'],
+    avoid_tolls:     ['Sin peajes', 'Alternativa', 'Alt 2', 'Alt 3'],
+    avoid_highways:  ['Sin autopistas', 'Alternativa', 'Alt 2', 'Alt 3'],
+  };
+  const routeTypeBadges = {
+    fastest:        ['fastest',  'alt', 'alt', 'alt'],
+    shortest:       ['shortest', 'alt', 'alt', 'alt'],
+    avoid_tolls:    ['notoll',   'alt', 'alt', 'alt'],
+    avoid_highways: ['nohwy',    'alt', 'alt', 'alt'],
+  };
+  const labelSet = routeTypeLabels[truckOptions.routeType] || routeTypeLabels.fastest;
+  const badgeSet = routeTypeBadges[truckOptions.routeType] || routeTypeBadges.fastest;
+  const labels = labelSet.map((text, i) => ({ text, cls: badgeSet[i] }));
 
   list.innerHTML = altRoutes.map((r, i) => `
     <div class="alt-route-option ${i === selectedAltIdx ? 'selected' : ''}" onclick="selectAltRoute(${i})">
@@ -14149,6 +14316,24 @@ function dismissLocalWarning() {
     _localStateWarningEl = null;
   }
   _pendingDestItem = null;
+}
+
+/* ════════════════════════════════════════════════════════════
+   🚛  TRUCK OPTIONS PANEL CONTROLS
+════════════════════════════════════════════════════════════ */
+function toggleTruckOpts() {
+  const body  = document.getElementById('truckOptsBody');
+  const arrow = document.getElementById('truckOptsArrow');
+  const opening = body.style.display === 'none';
+  body.style.display = opening ? 'block' : 'none';
+  arrow.classList.toggle('open', opening);
+}
+
+function setRouteType(type) {
+  truckOptions.routeType = type;
+  document.querySelectorAll('.rt-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.type === type);
+  });
 }
 
 /* ════════════════════════════════════════════════════════════
