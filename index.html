@@ -1330,6 +1330,32 @@
     margin-top: 1px;
     white-space: nowrap;
   }
+  #mssMySpeed.warn { border-color: #ef4444; background: #fff5f5; }
+  #mssMySpeed.warn .mss-num { color: #ef4444; }
+
+  /* ── COMMUNITY REPORT ALERT POPUP ─────────────────────── */
+  #reportAlertPopup {
+    position: absolute;
+    top: calc(80px + env(safe-area-inset-top, 0px));
+    left: 50%; transform: translateX(-50%) translateY(-20px);
+    z-index: 900;
+    background: rgba(15,23,42,0.95); backdrop-filter: blur(16px);
+    border-radius: 16px; padding: 14px 20px;
+    min-width: 220px; max-width: 280px;
+    display: none; flex-direction: column;
+    align-items: center; gap: 6px;
+    border: 1.5px solid rgba(239,68,68,0.45);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+    text-align: center;
+  }
+  #reportAlertPopup.show {
+    display: flex;
+    animation: rapSlide .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes rapSlide {
+    from { opacity:0; transform:translateX(-50%) translateY(-30px); }
+    to   { opacity:1; transform:translateX(-50%) translateY(0); }
+  }
 
   /* ── SMOOTH TRUCK WRAPPER (CSS rotation transition) ─────── */
   .truck-smooth-wrapper {
@@ -6498,9 +6524,23 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="mss-num" id="mssNum">65</div>
       <div class="mss-truck-label">TRUCKS</div>
     </div>
+    <div class="mss-sign" id="mssMySpeed" style="border-top:none;border-top-left-radius:0;border-top-right-radius:0;margin-top:-1px">
+      <div class="mss-top">YOUR&#10;SPEED</div>
+      <div class="mss-num" id="mssMySpeedNum">0</div>
+      <div class="mss-truck-label">MPH</div>
+    </div>
     <div class="mss-post"></div>
     <div class="mss-state-badge" id="mssState">-- STATE</div>
     <div class="mss-diff" id="mssDiff"></div>
+  </div>
+
+  <!-- COMMUNITY REPORT ALERT POPUP -->
+  <div id="reportAlertPopup">
+    <div style="font-size:28px" id="rapEmoji">⚠️</div>
+    <div style="font-size:13px;font-weight:800;color:#f1f5f9" id="rapTitle">Reporte de Comunidad</div>
+    <div style="font-size:11px;color:rgba(241,245,249,0.75)" id="rapMsg">Reportado en tu área — mantente alerta</div>
+    <div style="font-size:10px;color:rgba(241,245,249,0.45)" id="rapBy">Por: Anónimo</div>
+    <button onclick="document.getElementById('reportAlertPopup').classList.remove('show')" style="margin-top:4px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;color:#f1f5f9;font-size:11px;font-weight:700;padding:4px 12px;cursor:pointer">✕ Cerrar</button>
   </div>
 
   <!-- QUICK REPORT FAB (direct child — positioned correctly) -->
@@ -8218,6 +8258,13 @@ function initDriveHoursDrag() {
 }
 
 function updateSpeedometer(mph) {
+  // Update the inline speed sign (below speed limit sign)
+  const mySpeedNum = document.getElementById('mssMySpeedNum');
+  const mySpeedSign = document.getElementById('mssMySpeed');
+  if (mySpeedNum) mySpeedNum.textContent = Math.round(mph);
+  const over = (currentTruckSpeedLimit != null) && (mph > (currentTruckSpeedLimit + 0.5));
+  if (mySpeedSign) mySpeedSign.classList.toggle('warn', !!over);
+
   if (!speedoVisible) return;
   const num = document.getElementById('speedoNum');
   const ring = document.getElementById('speedoRing');
@@ -8227,9 +8274,8 @@ function updateSpeedometer(mph) {
   num.textContent = Math.round(mph);
   const moving = mph > 3;
 
-  
+
   // Over-limit based on state truck speed limit (if available)
-  const over = (currentTruckSpeedLimit != null) && (mph > (currentTruckSpeedLimit + 0.5));
   const spw = document.getElementById('speedometerWidget');
   if (spw) spw.classList.toggle('over-limit', !!over);
 
@@ -12409,9 +12455,7 @@ function quickReport(type, emoji, label) {
     fmMapInst.flyTo([lat, lon], Math.max(fmMapInst.getZoom(), 15), { duration: 0.8 });
   }
 
-  // 2-second on-screen toast then auto-dismiss
-  showToast('warning', emoji, `${label} marcado`,
-    `Marcado en el mapa. Visible para todos en esta ruta.`, 2000);
+  showReportAlert(emoji, label, report.reportedByName);
   vibrate([60, 40, 120]);
 }
 
@@ -12437,6 +12481,20 @@ function submitIncident(type, emoji, label) {
   showToast('warning', emoji, `${label} Reportado`,
     'Visible en el mapa de la ruta.', 4000);
   vibrate([50, 30, 50]);
+}
+
+let _rapTimer;
+function showReportAlert(emoji, label, byName) {
+  const pop = document.getElementById('reportAlertPopup');
+  if (!pop) return;
+  document.getElementById('rapEmoji').textContent = emoji;
+  document.getElementById('rapTitle').textContent = label;
+  document.getElementById('rapBy').textContent = `Por: ${byName || 'Anónimo'} · ahora`;
+  pop.classList.remove('show');
+  void pop.offsetWidth;
+  pop.classList.add('show');
+  clearTimeout(_rapTimer);
+  _rapTimer = setTimeout(() => pop.classList.remove('show'), 6000);
 }
 
 // Legacy stubs (FAB removed but referenced in old bind)
