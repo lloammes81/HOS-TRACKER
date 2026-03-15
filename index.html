@@ -6593,7 +6593,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div id="mapRightControls">
     <button onclick="openResetSheet()" title="34h Reset">🔄</button>
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
-    <button onclick="openChatPanel()" title="Driver Chat">💬</button>
+    <button onclick="openChatPanel()" title="Driver Chat" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)!important;border-color:rgba(124,58,237,.4)!important">💬</button>
   </div>
 
   <!-- POI Filter chips (ocultos, se activan por JS) -->
@@ -8108,8 +8108,8 @@ let wasMoving = false;
 
 
 function showSpeedometer() {
-  document.getElementById('speedometerWidget').classList.add('visible');
-  speedoVisible = true;
+  // Speedometer flotante eliminado — velocidad se muestra en el letrero del mapa
+  speedoVisible = false;
   // Apply saved/default position so it's draggable immediately
   setTimeout(applySpeedometerPos, 30);
 }
@@ -16534,11 +16534,17 @@ async function startEldScan(){
 
 function startEldDataSimulation(){
   let odo=487320,hrs=12847.3,fuel=72;
+  // HOS hours: start from current form values or defaults
+  let driveHoursLeft = parseFloat(document.getElementById('hoursInput')?.value||11);
+  if(driveHoursLeft>11) driveHoursLeft=11;
+  let cycleHoursLeft = 70;
   eldInterval=setInterval(()=>{
     const speed=window.fmCurrentSpeed||0;
     const rpm=1200+speed*18+Math.floor(Math.random()*80-40);
     fuel=Math.max(10,fuel-0.001);
     odo+=speed/3600;hrs+=1/3600;
+    // Decrease HOS hours when driving
+    if(speed>2){ driveHoursLeft=Math.max(0,driveHoursLeft-1/2400); cycleHoursLeft=Math.max(0,cycleHoursLeft-1/2400); }
     document.getElementById('eldMph').textContent=speed;
     document.getElementById('eldOdometer').textContent=Math.floor(odo).toLocaleString();
     document.getElementById('eldEngineHrs').textContent=hrs.toFixed(1);
@@ -16552,6 +16558,14 @@ function startEldDataSimulation(){
       b.style.display='flex';
       document.getElementById('eldAlertText').textContent='⛽ Combustible bajo — '+Math.round(fuel)+'% restante';
     }
+    // Update HUD map bubbles with ELD HOS data
+    const driveEl=document.getElementById('fmDriveLeft');
+    if(driveEl) driveEl.textContent=driveHoursLeft.toFixed(1)+'h';
+    const cycleEl=document.getElementById('fm70Left');
+    if(cycleEl) cycleEl.textContent=cycleHoursLeft.toFixed(1)+'h';
+    // Update drive arc
+    const arc=document.getElementById('hudDhArc');
+    if(arc){ const pct=driveHoursLeft/11; arc.setAttribute('stroke-dasharray',`${pct*126} 126`); arc.setAttribute('stroke',driveHoursLeft<2?'#ef4444':driveHoursLeft<4?'#f59e0b':'#10b981'); }
   },1500);
 }
 
