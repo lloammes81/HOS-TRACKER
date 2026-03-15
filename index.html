@@ -4842,6 +4842,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="header">
         <div class="row between">
           <div class="logo">⛽ <span id="summaryTitleTxt">Fuel Finder</span></div>
+          <!-- Avatar top right -->
+          <div id="fuelUserAvatar" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer" onclick="openProfilePanel()">
+            <div id="fuelAvatarImg" style="
+              width:42px;height:42px;border-radius:14px;
+              background:linear-gradient(135deg,#10b981,#059669);
+              display:flex;align-items:center;justify-content:center;
+              font-size:22px;overflow:hidden;
+              box-shadow:0 2px 10px rgba(16,185,129,.35);
+              border:2px solid rgba(16,185,129,.4);
+            ">👤</div>
+            <div id="fuelAvatarName" style="font-size:9px;font-weight:800;color:var(--muted);letter-spacing:.4px;max-width:52px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Driver</div>
+          </div>
         </div>
       </div>
 
@@ -4878,16 +4890,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
 
       <!-- Quick external links -->
-      <div style="display:flex;gap:8px;margin-bottom:16px">
-        <button onclick="openGoogleMapsTruckStops()" style="flex:1;padding:11px;background:rgba(66,133,244,.12);border:1px solid rgba(66,133,244,.3);border-radius:12px;color:#4285f4;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">
-          🗺️ Google Maps
+      <div style="margin-bottom:16px">
+        <button onclick="openGoogleMapsTruckStops()" style="width:100%;padding:13px;background:rgba(66,133,244,.12);border:1px solid rgba(66,133,244,.3);border-radius:14px;color:#4285f4;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">
+          🗺️ Ver en Google Maps
         </button>
-        <a href="https://truckerpath.com/" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;padding:11px;background:rgba(234,88,12,.12);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
-          🚛 Trucker Path
-        </a>
-        <a href="https://www.allstays.com/c/truck-stop-locations.htm" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;padding:11px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);border-radius:12px;color:#8b5cf6;font-size:13px;font-weight:700;text-decoration:none">
-          📍 AllStays
-        </a>
       </div>
 
       <!-- Results -->
@@ -8725,6 +8731,7 @@ function init() {
   initResetTimer();
   initCommBadge();
   initMultiStopAndHistory();
+  updateFuelAvatar();
   checkFirstLaunch();
   initCommTabBadge();
   initDriverProfile();
@@ -14090,14 +14097,31 @@ switchTab = function(tab) {
     refreshCommPage();
   }
   if (tab === 'tools') {
-    // Show active reset indicator on arrow
     const arrow = document.getElementById('resetArrowStatus');
     if (arrow) {
       if (resetActive) { arrow.classList.add('reset-active'); arrow.textContent = ''; }
       else { arrow.classList.remove('reset-active'); arrow.textContent = '›'; }
     }
   }
+  if (tab === 'summary') updateFuelAvatar();
 };
+
+function updateFuelAvatar() {
+  const imgEl  = document.getElementById('fuelAvatarImg');
+  const nameEl = document.getElementById('fuelAvatarName');
+  if (!imgEl || !nameEl) return;
+  const user = currentUser || JSON.parse(localStorage.getItem('hos_user') || 'null');
+  const profile = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
+  const name = (user && user.name) || profile.name || 'Driver';
+  nameEl.textContent = name;
+  if (user && user.photoData) {
+    imgEl.innerHTML = `<img src="${user.photoData}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:12px" />`;
+  } else if (user && user.avatar) {
+    imgEl.textContent = user.avatar;
+  } else {
+    imgEl.textContent = '👤';
+  }
+}
 
 /* ── Wire dotInput2 Enter key ── */
 {
