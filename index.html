@@ -4700,9 +4700,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <div class="form-section-label">⚙️ Parámetros del viaje</div>
         <div class="trip-params-grid">
-          <div class="param-box">
+          <div class="param-box" style="cursor:pointer;position:relative" onclick="openDeparturePicker()">
             <label id="lblTime">🕐 Salida</label>
-            <input type="datetime-local" id="departureInput" />
+            <div id="departureDisplay" style="font-size:13px;font-weight:700;color:var(--text);padding:4px 0;line-height:1.3;min-height:36px;display:flex;flex-direction:column;justify-content:center">
+              <span id="departureDate" style="font-size:13px;font-weight:800">hoy</span>
+              <span id="departureTime" style="font-size:12px;color:var(--muted);font-weight:600">--:--</span>
+            </div>
+            <input type="datetime-local" id="departureInput" style="position:absolute;opacity:0;width:1px;height:1px;top:0;left:0;pointer-events:none" oninput="updateDepartureDisplay()" />
           </div>
           <div class="param-box">
             <label id="lblHours">⏱️ Horas disp.</label>
@@ -8839,8 +8843,52 @@ function setDepartureNow() {
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   const el = document.getElementById('departureInput');
   if (el) el.value = local;
-  // Also set after render in case CSS delayed the display
-  setTimeout(() => { if (el && !el.value) el.value = local; }, 300);
+  updateDepartureDisplay();
+}
+
+function updateDepartureDisplay() {
+  const el = document.getElementById('departureInput');
+  const dateEl = document.getElementById('departureDate');
+  const timeEl = document.getElementById('departureTime');
+  if (!el || !dateEl || !timeEl) return;
+  if (!el.value) return;
+  const d = new Date(el.value);
+  const today = new Date();
+  const isToday = d.toDateString() === today.toDateString();
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+  const isTomorrow = d.toDateString() === tomorrow.toDateString();
+  const locale = lang === 'es' ? 'es' : 'en';
+  const dayStr = isToday ? (lang === 'es' ? 'Hoy' : 'Today')
+               : isTomorrow ? (lang === 'es' ? 'Mañana' : 'Tomorrow')
+               : d.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
+  dateEl.textContent = dayStr;
+  timeEl.textContent = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+}
+
+function openDeparturePicker() {
+  const el = document.getElementById('departureInput');
+  if (!el) return;
+  if (el.showPicker) {
+    try { el.showPicker(); } catch {}
+  } else {
+    el.style.position = 'fixed';
+    el.style.opacity = '0';
+    el.style.width = '100%';
+    el.style.height = '100%';
+    el.style.top = '0';
+    el.style.left = '0';
+    el.style.pointerEvents = 'all';
+    el.focus();
+    el.click();
+    setTimeout(() => {
+      el.style.position = 'absolute';
+      el.style.width = '1px';
+      el.style.height = '1px';
+      el.style.top = '0';
+      el.style.left = '0';
+      el.style.pointerEvents = 'none';
+    }, 500);
+  }
 }
 
 function populateCountrySelects() {
@@ -12582,7 +12630,7 @@ function switchTab(tab) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
   if (tab === 'summary') fetchEIAPrice();
-  if (tab === 'plan') { const dep = document.getElementById('departureInput'); if (dep && !dep.value) setDepartureNow(); }
+  if (tab === 'plan') { const dep = document.getElementById('departureInput'); if (dep && !dep.value) setDepartureNow(); else updateDepartureDisplay(); }
 }
 
 function bindEvents() {
