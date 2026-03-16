@@ -11373,7 +11373,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
     } else {
       // Wrapper gone (rare) — recreate icon
       const html = buildTruckIconHTML(heading, isMoving);
-      const icon = L.divIcon({ className: '', html, iconAnchor: [26, 26], iconSize: [52, 52] });
+      const icon = L.divIcon({ className: '', html, iconAnchor: [20, 36], iconSize: [40, 72] });
       fmGpsMarker.setIcon(icon);
       truckFrom = { lat, lon, heading: heading ?? 0 };
     }
@@ -11527,16 +11527,29 @@ function toggleHeadingUp() {
 }
 
 // ── calcFollowCenter ────────────────────────────────────────────────────────
-// Returns a map center offset ahead of the truck so the truck icon sits in
-// the lower third of the screen (like a real navigation app).
-// offsetFrac: fraction of map height to shift ahead (default 0.28 = 28%)
+// Returns a map center offset so the truck sits in the lower third of the
+// VISIBLE map area (above the HUD overlay). Accounts for the HUD height so
+// the truck is never hidden behind the bottom panel.
 function calcFollowCenter(lat, lon, heading, offsetFrac) {
   if (!fmMapInst) return [lat, lon];
   try {
     const size = fmMapInst.getSize();          // {x, y} in screen pixels
     const zoom = fmCurrentZoom;
-    const frac = (offsetFrac !== undefined) ? offsetFrac : 0.28;
-    const offsetPx = size.y * frac;            // pixels to shift the center ahead
+
+    let offsetPx;
+    if (offsetFrac !== undefined) {
+      offsetPx = size.y * offsetFrac;
+    } else {
+      // Measure the visible HUD height (it's 0 when hidden via translateY(100%))
+      const hudEl = document.getElementById('fmHud');
+      const hudH  = (hudEl && hudEl.style.transform !== 'translateY(100%)')
+                    ? (hudEl.offsetHeight || 0) : 0;
+      // Place truck at 65% from top of visible area = shows ~65% road ahead
+      // offsetPx = target_truck_screen_y - screen_center_y
+      // target_truck_screen_y = 0.65 * (size.y - hudH)
+      offsetPx = 0.65 * (size.y - hudH) - size.y * 0.5;
+    }
+    // pixels to offset the map center (negative = center south of truck = truck above center)
 
     // Bearing in radians (0 = north, 90 = east …)
     const bear = (fmHeadingUpMode && heading != null && heading >= 0) ? heading : 0;
@@ -11734,9 +11747,7 @@ function fmStartTracking() {
         fmCurrentZoom = 16;
       }
       window._fmProgrammaticMove = true;
-      const followCenter = isMoving
-        ? calcFollowCenter(snapLat, snapLon, heading)
-        : [snapLat, snapLon];
+      const followCenter = calcFollowCenter(snapLat, snapLon, heading);
       fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
       // ── Heading-up: rotate map to match truck direction ──
       if (fmHeadingUpMode && isMoving && heading != null && heading >= 0) {
