@@ -15216,9 +15216,23 @@ out center qt;`;
       const distKm = (haversine(lat, lon, elLat, elLon) * 1.60934).toFixed(1);
       const name   = el.tags?.name || el.tags?.operator || (isTruck ? 'Truck Stop' : isScale ? 'Weigh Station' : 'Parqueo');
       const city   = [el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean).join(', ');
-      const cap    = el.tags?.['capacity:hgv'] || el.tags?.capacity || '';
-      const meta   = city || (cap ? `Capacidad: ${cap} trucks` : (isTruck ? 'Parada de trucks' : isScale ? 'Báscula DOT' : 'Estacionamiento'));
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${elLat},${elLon}&travelmode=driving`;
+      const cap      = el.tags?.['capacity:hgv'] || el.tags?.capacity || '';
+      const streetLn = [el.tags?.['addr:housenumber'], el.tags?.['addr:street']].filter(Boolean).join(' ');
+      const addrParts = [streetLn, el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean);
+      const fullAddr  = addrParts.join(', ');
+      const meta      = fullAddr || city || (cap ? `Capacidad: ${cap} trucks` : (isTruck ? 'Parada de trucks' : isScale ? 'Báscula DOT' : 'Estacionamiento'));
+
+      // Navigate by address when available, otherwise by name+city, fallback to coords
+      const genericNames = ['Truck Stop','Weigh Station','Parqueo'];
+      let navDest;
+      if (addrParts.length >= 2) {
+        navDest = encodeURIComponent(fullAddr);
+      } else if (name && !genericNames.includes(name)) {
+        navDest = encodeURIComponent(city ? `${name}, ${city}` : name);
+      } else {
+        navDest = `${elLat},${elLon}`;
+      }
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${navDest}&travelmode=driving`;
       const icon   = poiIcon;
 
       const card = document.createElement('div');
