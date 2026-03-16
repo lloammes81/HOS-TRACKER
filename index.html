@@ -10447,18 +10447,49 @@ function useGPS() {
 
   navigator.geolocation.getCurrentPosition(async pos => {
     const { latitude, longitude } = pos.coords;
-    try {
-      const r = await fetch(`https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}`);
-      const data = await r.json();
-      const feat = data.features?.[0];
-      const p = feat?.properties || {};
-      const name = [p.name, p.city, p.state, p.country].filter(Boolean).join(', ') || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-      origin = { name, lat: latitude, lon: longitude };
-      if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; }
-    } catch {
-      origin = { name: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, lat: latitude, lon: longitude };
-      if (lbl) { lbl.textContent = origin.name; lbl.style.color = 'var(--text)'; }
+
+    // Helper: build a clean human-readable name from Photon properties
+    function buildNameFromPhoton(p) {
+      // Prefer city > district/county > name, then add state abbreviation
+      const city = p.city || p.locality || p.district || p.county || '';
+      const state = p.state || '';
+      const country = p.country || '';
+      // State abbreviation map for US
+      const stateAbbr = { 'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA','Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA','Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY' };
+      const stAbbr = stateAbbr[state] || state;
+      if (city && stAbbr) return `${city}, ${stAbbr}`;
+      if (city) return city;
+      if (stAbbr) return stAbbr;
+      return '';
     }
+
+    let name = '';
+    // Try Photon (komoot) first
+    try {
+      const r = await fetch(`https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}`, { signal: AbortSignal.timeout(6000) });
+      const data = await r.json();
+      const p = data.features?.[0]?.properties || {};
+      name = buildNameFromPhoton(p);
+    } catch {}
+
+    // Fallback: Nominatim reverse geocoding
+    if (!name) {
+      try {
+        const r2 = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`, { headers: { 'Accept-Language': 'en' }, signal: AbortSignal.timeout(6000) });
+        const d2 = await r2.json();
+        const a = d2.address || {};
+        const city2 = a.city || a.town || a.village || a.hamlet || a.county || '';
+        const state2 = a.state || '';
+        const stateAbbr2 = { 'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA','Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA','Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY' };
+        const sa = stateAbbr2[state2] || state2;
+        if (city2 && sa) name = `${city2}, ${sa}`;
+        else if (city2) name = city2;
+      } catch {}
+    }
+
+    if (!name) name = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    origin = { name, lat: latitude, lon: longitude };
+    if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; }
   }, () => {
     if (lbl) { lbl.textContent = lang==='es' ? '⚠️ Permiso de ubicación denegado' : '⚠️ Location permission denied'; lbl.style.color = '#ef4444'; }
     showToast('danger','📡', lang==='es'?'Ubicación no disponible':'Location unavailable', t('gpsDenied'), 4000);
@@ -16176,7 +16207,33 @@ FIREBASE_CONFIG = {
     <div id="eldAlertBanner" style="background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.35);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;gap:8px">
       <span>⚠️</span><span id="eldAlertText" style="font-size:13px;font-weight:700;color:#ef4444"></span>
     </div>
-    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px;box-shadow:0 4px 14px rgba(99,102,241,.4)">🔍 Buscar dispositivos ELD</button>
+    <!-- iOS notice (shown only on iOS) -->
+    <div id="eldIosNotice" style="display:none;background:rgba(245,158,11,.1);border:1.5px solid rgba(245,158,11,.3);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:800;color:#f59e0b;margin-bottom:6px">📱 iOS — Bluetooth vía App</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:10px">Safari en iPhone no admite Web Bluetooth. Para conectar tu ELD:</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <span style="font-size:18px">1️⃣</span>
+          <div style="font-size:13px;color:var(--text)"><b>Keep Truckin / Motive:</b> Abre la app oficial del ELD y completa el logbook ahí.</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <span style="font-size:18px">2️⃣</span>
+          <div style="font-size:13px;color:var(--text)"><b>Samsara / PeopleNet:</b> Usa la app oficial de tu proveedor ELD para iOS.</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <span style="font-size:18px">3️⃣</span>
+          <div style="font-size:13px;color:var(--text)"><b>HOS Tracker:</b> Usa el modo simulación para practicar el logbook y registrar tus horas manualmente.</div>
+        </div>
+      </div>
+      <button onclick="startEldDemo()" style="width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🎮 Activar Modo Simulación ELD</button>
+    </div>
+
+    <!-- Android/Chrome BLE scan button -->
+    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">🔍 Buscar Dispositivos ELD (Bluetooth)</button>
+
+    <!-- Demo/simulation button always visible -->
+    <button onclick="startEldDemo()" id="eldDemoBtn" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(99,102,241,.3);background:rgba(99,102,241,.08);color:#6366f1;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px">🎮 Modo Simulación (sin Bluetooth)</button>
+
     <div id="eldDeviceList" class="eld-device-list" style="display:none"></div>
     <div id="eldLiveData" style="display:none">
       <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px">📊 Datos en Vivo del ELD</div>
@@ -16275,10 +16332,11 @@ FIREBASE_CONFIG = {
         <button onclick="disconnectEld()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px">🔌 Desconectar ELD</button>
       </div>
     </div>
-    <div id="eldNoBluetooth" style="display:none;text-align:center;padding:20px 0;color:var(--muted)">
-      <div style="font-size:36px;margin-bottom:10px">📵</div>
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Bluetooth no disponible</div>
-      <div style="font-size:12px;line-height:1.6">Usa Chrome en Android o Chrome Desktop para conectar vía Web Bluetooth.</div>
+    <div id="eldNoBluetooth" style="display:none;text-align:center;padding:16px 0;color:var(--muted)">
+      <div style="font-size:36px;margin-bottom:8px">📶</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Bluetooth Web no disponible</div>
+      <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Requiere Chrome/Edge en Android.<br>En iPhone usa el modo simulación.</div>
+      <button onclick="startEldDemo()" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">🎮 Activar Modo Simulación</button>
     </div>
   </div>
 </div>
@@ -16705,13 +16763,48 @@ window.showSubscribeModal = function() {
 //  📡 ELD BLUETOOTH — Web Bluetooth API
 // ─────────────────────────────────────────────────────────────────────────────
 let eldDevice=null,eldChar=null,eldInterval=null;
-function openEldSheet(){document.getElementById('eldSheet').classList.add('open');}
+function openEldSheet(){
+  document.getElementById('eldSheet').classList.add('open');
+  // Detect iOS (no Web Bluetooth support)
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  const hasWebBT = !!navigator.bluetooth;
+  if(isIOS){
+    document.getElementById('eldIosNotice').style.display='block';
+    document.getElementById('eldScanBtn').style.display='none';
+    document.getElementById('eldDemoBtn').style.display='none';
+  } else if(!hasWebBT){
+    document.getElementById('eldIosNotice').style.display='none';
+    document.getElementById('eldScanBtn').style.display='none';
+    document.getElementById('eldDemoBtn').style.display='none';
+    document.getElementById('eldNoBluetooth').style.display='block';
+  }
+}
 function closeEldSheet(){document.getElementById('eldSheet').classList.remove('open');}
+
+function startEldDemo(){
+  // Simulate ELD connection without Bluetooth (iOS / no-BLE mode)
+  const ring=document.getElementById('eldRing');
+  const icon=document.getElementById('eldRingIcon');
+  const lbl=document.getElementById('eldRingLabel');
+  ring.className='eld-status-ring connected';
+  icon.textContent='🎮';lbl.textContent='SIMULACIÓN';
+  document.getElementById('eldConnectedName').textContent='Modo Simulación — HOS Tracker';
+  document.getElementById('eldIosNotice').style.display='none';
+  document.getElementById('eldNoBluetooth').style.display='none';
+  document.getElementById('eldScanBtn').style.display='none';
+  document.getElementById('eldDemoBtn').style.display='none';
+  document.getElementById('eldLiveData').style.display='block';
+  document.getElementById('eldLogbook').style.display='block';
+  document.getElementById('eldArrowStatus').style.color='#f59e0b';
+  startEldDataSimulation();
+  showToast('info','🎮','Modo Simulación ELD','Logbook y HOS activados',3000);
+}
 
 async function startEldScan(){
   if(!navigator.bluetooth){
     document.getElementById('eldNoBluetooth').style.display='block';
     document.getElementById('eldScanBtn').style.display='none';
+    document.getElementById('eldDemoBtn').style.display='none';
     return;
   }
   const ring=document.getElementById('eldRing');
@@ -16719,27 +16812,37 @@ async function startEldScan(){
   const lbl=document.getElementById('eldRingLabel');
   ring.className='eld-status-ring scanning';
   icon.textContent='🔵';lbl.textContent='BUSCANDO...';
-  document.getElementById('eldScanBtn').textContent='⏳ Escaneando...';
+  document.getElementById('eldScanBtn').textContent='⏳ Escaneando BLE...';
   document.getElementById('eldScanBtn').disabled=true;
+  document.getElementById('eldDemoBtn').style.display='none';
   try{
+    // Request BLE device — browser shows native picker
     eldDevice=await navigator.bluetooth.requestDevice({
       acceptAllDevices:true,
-      optionalServices:['0000ff00-0000-1000-8000-00805f9b34fb','battery_service']
+      optionalServices:[
+        '0000ff00-0000-1000-8000-00805f9b34fb',
+        'battery_service',
+        '0000ffd0-0000-1000-8000-00805f9b34fb',
+        '0000ffe0-0000-1000-8000-00805f9b34fb'
+      ]
     });
+    lbl.textContent='CONECTANDO...';
     await eldDevice.gatt.connect();
     ring.className='eld-status-ring connected';
     icon.textContent='✅';lbl.textContent='CONECTADO';
     document.getElementById('eldConnectedName').textContent=eldDevice.name||'Dispositivo ELD';
     document.getElementById('eldScanBtn').style.display='none';
     document.getElementById('eldLiveData').style.display='block';
+    document.getElementById('eldLogbook').style.display='block';
     document.getElementById('eldArrowStatus').style.color='#6366f1';
     startEldDataSimulation();
     showToast('info','📡','ELD Conectado',eldDevice.name||'Dispositivo vinculado',3000);
   }catch(e){
     ring.className='eld-status-ring';
     icon.textContent='📡';lbl.textContent='DESCONECTADO';
-    document.getElementById('eldScanBtn').textContent='🔍 Buscar dispositivos ELD';
+    document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
     document.getElementById('eldScanBtn').disabled=false;
+    document.getElementById('eldDemoBtn').style.display='block';
     if(e.name!=='NotFoundError') showToast('warn','⚠️','ELD Error',e.message,4000);
   }
 }
@@ -16861,8 +16964,9 @@ function disconnectEld(){
   document.getElementById('eldLiveData').style.display='none';
   document.getElementById('eldLogbook').style.display='none';
   document.getElementById('eldScanBtn').style.display='block';
-  document.getElementById('eldScanBtn').textContent='🔍 Buscar dispositivos ELD';
+  document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
   document.getElementById('eldScanBtn').disabled=false;
+  document.getElementById('eldDemoBtn').style.display='block';
   document.getElementById('eldAlertBanner').style.display='none';
   const ring=document.getElementById('eldRing');
   ring.className='eld-status-ring';
