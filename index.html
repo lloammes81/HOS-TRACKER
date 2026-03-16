@@ -11032,6 +11032,7 @@ let fmGpsMarker  = null;  // the animated truck
 let fmAccMarker  = null;  // accuracy circle
 let fmWatchId    = null;
 let fmWakeLock   = null;  // Screen Wake Lock to keep GPS running
+let fmGpsPollId  = null;  // setInterval fallback to force fresh GPS fixes
 let fmTripStart  = null;
 let fmDriveSeconds = 0;    // accumulated moving time in seconds
 let fmLastMoveTime = null; // timestamp of last GPS fix when moving
@@ -11923,10 +11924,44 @@ function fmStartTracking() {
   }, () => {
     document.getElementById('fmLocVal').textContent = '⚠️ Weak GPS signal';
   }, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+
+  // ── GPS polling fallback — forces fresh fix from phone hardware every 2s ──
+  // Guarantees real-time movement even if watchPosition is throttled by the OS.
+  fmGpsPollId = setInterval(() => {
+    if (!fmIsTracking) return;
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lat     = pos.coords.latitude;
+      const lon     = pos.coords.longitude;
+      const rawSpd  = pos.coords.speed;
+      const hdg     = pos.coords.heading;
+      const moving  = rawSpd != null && rawSpd >= 0 ? rawSpd * 2.237 > 3 : false;
+      window.lastFixFm = { lat, lon, acc: pos.coords.accuracy, ts: Date.now() };
+      const snap = typeof snapToRoute === 'function' ? snapToRoute(lat, lon) : { lat, lon };
+      let finalHdg = hdg;
+      if ((!finalHdg || finalHdg < 0) && fmPrevLat != null && moving) {
+        finalHdg = calcHeading(fmPrevLat, fmPrevLon, snap.lat, snap.lon);
+      }
+      if (moving) { fmPrevLat = snap.lat; fmPrevLon = snap.lon; }
+      fmLastHeading = finalHdg;
+      fmUpdateTruckMarker(snap.lat, snap.lon, finalHdg, moving);
+      if (fmFollowing && fmMapInst) {
+        const ctr = moving
+          ? calcFollowCenter(snap.lat, snap.lon, finalHdg)
+          : [snap.lat, snap.lon];
+        window._fmProgrammaticMove = true;
+        fmMapInst.setView(ctr, fmCurrentZoom, { animate: true, duration: 0.6, noMoveStart: true });
+        setTimeout(() => { window._fmProgrammaticMove = false; }, 800);
+      }
+      fmCurrentSpeed = rawSpd != null && rawSpd >= 0 ? Math.round(rawSpd * 2.237) : 0;
+      fmVehicleMoving = moving;
+      updateSpeedometer(fmCurrentSpeed);
+    }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 });
+  }, 2000);
 }
 
 function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
+  if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
   // Release Wake Lock
   if (fmWakeLock) { fmWakeLock.release().catch(() => {}); fmWakeLock = null; }
