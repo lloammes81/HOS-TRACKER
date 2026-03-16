@@ -11265,6 +11265,10 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   // Update target
   if (truckTo) truckFrom = { ...truckTo };
   truckTo = { lat, lon, heading: heading ?? truckFrom?.heading ?? 0 };
+  // Guard: if truckFrom is still null (e.g. after fmStopTracking resets state but
+  // fmGpsMarker is still alive), seed it equal to truckTo so the animation tick
+  // doesn't bail out early and the marker is immediately repositioned.
+  if (!truckFrom) truckFrom = { lat, lon, heading: heading ?? 0 };
 
   if (!fmGpsMarker) {
     // First placement — create marker
