@@ -4780,6 +4780,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </button>
   </div>
 
+  <!-- FLOATING CHAT BUTTON -->
+  <button id="chatFab" onclick="openChatPanel()" aria-label="Driver Chat">
+    💬<span id="chatFabBadge"></span>
+  </button>
+
   <!-- PLAN PAGE -->
   <div class="page active" id="page-plan">
     <div class="container">
@@ -12928,6 +12933,8 @@ function switchTab(tab) {
   document.getElementById('page-' + tab).classList.add('active');
   if (tab === 'summary') { fetchEIAPrice(); searchFuelNearby(null); }
   if (tab === 'plan') { const dep = document.getElementById('departureInput'); if (dep && !dep.value) setDepartureNow(); else updateDepartureDisplay(); }
+  const fab = document.getElementById('chatFab');
+  if (fab) fab.style.display = tab === 'community' ? 'none' : 'flex';
 }
 
 function bindEvents() {
