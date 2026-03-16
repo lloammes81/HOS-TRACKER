@@ -11056,7 +11056,9 @@ function openFullMapScreen() {
         fmUserDragged = false;
         const fb = document.getElementById('fmFollowBtn');
         if (fb) fb.classList.add('active');
-        fmMapInst.setView([window.lastFixFm.lat, window.lastFixFm.lon], Math.max(fmMapInst.getZoom(), 15), { animate:true, duration:0.7, noMoveStart:true });
+        const lf = window.lastFixFm;
+        const cc = calcFollowCenter(lf.lat, lf.lon, fmLastHeading);
+        fmMapInst.setView(cc, Math.max(fmMapInst.getZoom(), 15), { animate:true, duration:0.7, noMoveStart:true });
       });
     }
   }
@@ -11433,6 +11435,40 @@ function toggleHeadingUp() {
     2500);
 }
 
+// ── calcFollowCenter ────────────────────────────────────────────────────────
+// Returns a map center offset ahead of the truck so the truck icon sits in
+// the lower third of the screen (like a real navigation app).
+// offsetFrac: fraction of map height to shift ahead (default 0.28 = 28%)
+function calcFollowCenter(lat, lon, heading, offsetFrac) {
+  if (!fmMapInst) return [lat, lon];
+  try {
+    const size = fmMapInst.getSize();          // {x, y} in screen pixels
+    const zoom = fmCurrentZoom;
+    const frac = (offsetFrac !== undefined) ? offsetFrac : 0.28;
+    const offsetPx = size.y * frac;            // pixels to shift the center ahead
+
+    // Bearing in radians (0 = north, 90 = east …)
+    const bear = (fmHeadingUpMode && heading != null && heading >= 0) ? heading : 0;
+    const rad  = bear * Math.PI / 180;
+
+    // Project truck position to Mercator pixel space at current zoom
+    const truckPx = fmMapInst.project([lat, lon], zoom);
+
+    // Shift the center AHEAD (in the heading direction):
+    //   Px.x += offsetPx * sin(bearing)   → east component
+    //   Px.y -= offsetPx * cos(bearing)   → north component (Y flipped in pixels)
+    const centerPx = L.point(
+      truckPx.x + offsetPx * Math.sin(rad),
+      truckPx.y - offsetPx * Math.cos(rad)
+    );
+
+    const c = fmMapInst.unproject(centerPx, zoom);
+    return [c.lat, c.lng];
+  } catch (e) {
+    return [lat, lon];
+  }
+}
+
 function toggleFollow() {
   fmFollowing = !fmFollowing;
   fmUserDragged = !fmFollowing;
@@ -11440,7 +11476,9 @@ function toggleFollow() {
   btn.classList.toggle('active', fmFollowing);
   // If re-enabling follow, snap to truck immediately
   if (fmFollowing && fmGpsMarker) {
-    fmMapInst.setView(fmGpsMarker.getLatLng(), fmCurrentZoom, { animate: true, duration: 0.8 });
+    const ll = fmGpsMarker.getLatLng();
+    const rc = calcFollowCenter(ll.lat, ll.lng, fmLastHeading);
+    fmMapInst.setView(rc, fmCurrentZoom, { animate: true, duration: 0.8 });
   }
 }
 
@@ -11481,6 +11519,15 @@ function fmStartTracking() {
     window._fmProgrammaticMove = true;
     fmMapInst.setView([realLat, realLon], fmCurrentZoom, { animate: true, duration: 1.2 });
     setTimeout(() => { window._fmProgrammaticMove = false; }, 1500);
+    // After map settles, apply ahead-offset so truck starts in lower third
+    setTimeout(() => {
+      if (fmFollowing && fmGpsMarker) {
+        window._fmProgrammaticMove = true;
+        const ll = fmGpsMarker.getLatLng();
+        fmMapInst.setView(calcFollowCenter(ll.lat, ll.lng, fmLastHeading), fmCurrentZoom, { animate: true, duration: 0.8 });
+        setTimeout(() => { window._fmProgrammaticMove = false; }, 1000);
+      }
+    }, 1600);
 
     setTimeout(() => loadAllPOIs(realLat, realLon), 600);
   }
@@ -11576,7 +11623,10 @@ function fmStartTracking() {
         fmCurrentZoom = 16;
       }
       window._fmProgrammaticMove = true;
-      fmMapInst.setView([snapLat, snapLon], fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
+      const followCenter = isMoving
+        ? calcFollowCenter(snapLat, snapLon, heading)
+        : [snapLat, snapLon];
+      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
       // ── Heading-up: rotate map to match truck direction ──
       if (fmHeadingUpMode && isMoving && heading != null && heading >= 0) {
         if (typeof fmMapInst.setBearing === 'function') {
