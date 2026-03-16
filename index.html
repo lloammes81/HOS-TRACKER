@@ -4381,6 +4381,101 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   }
 
   /* ════════════════════════════════════════════════════════════
+  /* ════════════════════════════════════════════════════════════
+     👥  COMMUNITY QUICK PANEL (dashboard side panel)
+  ════════════════════════════════════════════════════════════ */
+  #commQuickTrigger {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 6500;
+    background: linear-gradient(160deg,#7c3aed,#4f46e5);
+    color: #fff;
+    border: none;
+    border-radius: 14px 0 0 14px;
+    width: 36px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    box-shadow: -4px 0 20px rgba(124,58,237,.45);
+    transition: width .2s;
+    touch-action: manipulation;
+    padding: 0;
+  }
+  #commQuickTrigger:active { width: 32px; }
+  #commQuickTrigger .cqt-icon { font-size: 18px; line-height: 1; }
+  #commQuickTrigger .cqt-label {
+    font-size: 8px; font-weight: 900; letter-spacing: .5px;
+    writing-mode: vertical-rl; text-orientation: mixed;
+    transform: rotate(180deg); color: rgba(255,255,255,.85);
+  }
+  #commQuickTrigger .cqt-badge {
+    position: absolute; top: 6px; left: 6px;
+    background: #ef4444; color: #fff;
+    font-size: 9px; font-weight: 900; border-radius: 999px;
+    padding: 1px 4px; min-width: 14px; text-align: center;
+    display: none;
+  }
+
+  #commQuickPanel {
+    position: fixed;
+    right: -220px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 6400;
+    background: rgba(10,16,30,0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(124,58,237,.35);
+    border-right: none;
+    border-radius: 20px 0 0 20px;
+    padding: 14px 10px;
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: right .3s cubic-bezier(.4,0,.2,1);
+    box-shadow: -8px 0 40px rgba(0,0,0,.5);
+  }
+  #commQuickPanel.open { right: 36px; }
+  #commQuickPanel .cqp-title {
+    font-size: 10px; font-weight: 900; color: rgba(255,255,255,.4);
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 0 6px 4px; border-bottom: 1px solid rgba(255,255,255,.08);
+    margin-bottom: 2px;
+  }
+  .cqp-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 12px; border-radius: 12px; cursor: pointer;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.07);
+    transition: background .15s, transform .1s;
+    touch-action: manipulation;
+  }
+  .cqp-item:active { background: rgba(255,255,255,.1); transform: scale(.97); }
+  .cqp-item-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
+  .cqp-item-info { display: flex; flex-direction: column; gap: 2px; }
+  .cqp-item-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .cqp-item-sub { font-size: 10px; color: var(--muted); }
+  .cqp-item.chat  { border-color: rgba(124,58,237,.3); }
+  .cqp-item.rep   { border-color: rgba(239,68,68,.3); }
+  .cqp-item.reset { border-color: rgba(59,130,246,.3); }
+  .cqp-item.comm  { border-color: rgba(16,185,129,.3); }
+  .cqp-item.fuel  { border-color: rgba(245,158,11,.3); }
+  #commQuickOverlay {
+    display: none; position: fixed; inset: 0; z-index: 6300;
+  }
+  #commQuickOverlay.show { display: block; }
+
+  /* Hide trigger when fullmap is open */
+  #fullMapScreen:not([style*="display:none"]) ~ #commQuickTrigger,
+  #fullMapScreen:not([style*="display: none"]) ~ #commQuickTrigger { display: none; }
+
      💬  CARRIERCHAT — channels + rooms + side drawer
   ════════════════════════════════════════════════════════════ */
 
@@ -4784,6 +4879,61 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <button id="chatFab" onclick="openChatPanel()" aria-label="Driver Chat">
     💬<span id="chatFabBadge"></span>
   </button>
+
+  <!-- COMMUNITY QUICK PANEL OVERLAY -->
+  <div id="commQuickOverlay" onclick="closeCommQuickPanel()"></div>
+
+  <!-- COMMUNITY QUICK TRIGGER (right edge tab) -->
+  <button id="commQuickTrigger" onclick="toggleCommQuickPanel()" aria-label="Community">
+    <span class="cqt-badge" id="cqtBadge"></span>
+    <span class="cqt-icon">👥</span>
+    <span class="cqt-label">COMUNIDAD</span>
+  </button>
+
+  <!-- COMMUNITY QUICK PANEL (slides from right) -->
+  <div id="commQuickPanel">
+    <div class="cqp-title">Comunidad</div>
+
+    <div class="cqp-item chat" onclick="closeCommQuickPanel();openChatPanel()">
+      <span class="cqp-item-icon">💬</span>
+      <div class="cqp-item-info">
+        <div class="cqp-item-name">Driver Chat</div>
+        <div class="cqp-item-sub">Canales en vivo</div>
+      </div>
+    </div>
+
+    <div class="cqp-item rep" onclick="closeCommQuickPanel();toggleReportSheet()">
+      <span class="cqp-item-icon">⚠️</span>
+      <div class="cqp-item-info">
+        <div class="cqp-item-name">Reportar</div>
+        <div class="cqp-item-sub">Incidente en ruta</div>
+      </div>
+    </div>
+
+    <div class="cqp-item comm" onclick="closeCommQuickPanel();openCommunityPanel()">
+      <span class="cqp-item-icon">🚨</span>
+      <div class="cqp-item-info">
+        <div class="cqp-item-name">Alertas</div>
+        <div class="cqp-item-sub">Reportes cercanos</div>
+      </div>
+    </div>
+
+    <div class="cqp-item reset" onclick="closeCommQuickPanel();openResetSheet()">
+      <span class="cqp-item-icon">🔄</span>
+      <div class="cqp-item-info">
+        <div class="cqp-item-name">Reset 34H</div>
+        <div class="cqp-item-sub">Calcular descanso</div>
+      </div>
+    </div>
+
+    <div class="cqp-item fuel" onclick="closeCommQuickPanel();switchTab('summary')">
+      <span class="cqp-item-icon">⛽</span>
+      <div class="cqp-item-info">
+        <div class="cqp-item-name">Diésel Barato</div>
+        <div class="cqp-item-sub">Precios cercanos</div>
+      </div>
+    </div>
+  </div>
 
   <!-- PLAN PAGE -->
   <div class="page active" id="page-plan">
@@ -13340,6 +13490,24 @@ function showDotError(msg) {
 ════════════════════════════════════════════════════════════ */
 let commFilter = 'all';
 let votedReports = JSON.parse(localStorage.getItem('hos_voted') || '[]');
+
+/* ── Community Quick Panel ── */
+function toggleCommQuickPanel() {
+  const panel = document.getElementById('commQuickPanel');
+  const overlay = document.getElementById('commQuickOverlay');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+    overlay.classList.remove('show');
+  } else {
+    panel.classList.add('open');
+    overlay.classList.add('show');
+  }
+}
+function closeCommQuickPanel() {
+  document.getElementById('commQuickPanel').classList.remove('open');
+  document.getElementById('commQuickOverlay').classList.remove('show');
+}
 
 function openCommunityPanel() {
   document.getElementById('communityPanel').classList.add('open');
