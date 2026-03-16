@@ -13405,10 +13405,12 @@ function renderCommunityReports() {
   // Clear old report markers
   fmPoiLayers.reports.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
   fmPoiLayers.reports = [];
-  // Re-add all valid reports (skip ones that have been denied by 2+ drivers)
+  // Re-add all valid reports (skip ones that have been denied by 2+ drivers or created by current user)
   communityReports.forEach(r => {
     const denyCount = r.denials ? r.denials.length : 0;
-    if (denyCount < 2) addReportMarker(r);
+    if (denyCount >= 2) return;
+    if (currentUser && r.reportedBy === currentUser.id) return; // don't show own reports
+    addReportMarker(r);
   });
 }
 
@@ -13532,9 +13534,10 @@ function showIncidentDetail(report, dist) {
 let lastReportAlertId = null;
 let _shownNearbyIds = new Set();
 function checkNearbyReports(lat, lon) {
-  // Find all nearby reports not yet shown
+  // Find all nearby reports not yet shown (exclude own reports)
   const nearby = communityReports
-    .filter(r => haversine(lat, lon, r.lat, r.lon) < 5 && !_shownNearbyIds.has(r.id))
+    .filter(r => haversine(lat, lon, r.lat, r.lon) < 5 && !_shownNearbyIds.has(r.id)
+      && !(currentUser && r.reportedBy === currentUser.id))
     .sort((a, b) => {
       // Priority order: accident > police > inspection > hazard > others
       const pri = ['accident','police','inspection','hazard'];
@@ -15087,7 +15090,7 @@ function submitCommReport() {
     onRoute,
     interstates,
     votes:         0,
-    reportedBy:    userName,
+    reportedBy:    currentUser ? currentUser.id : userName,
     reportedByName: userName,
     confirmations: [],
     denials: [],
@@ -15143,7 +15146,9 @@ function renderCommPage() {
   // Show no-route warning if filter is on and no route
   const noRouteBanner = document.getElementById('commNoRouteBanner');
 
-  let reports = [...communityReports].sort((a, b) => b.ts - a.ts);
+  let reports = [...communityReports]
+    .filter(r => !(currentUser && r.reportedBy === currentUser.id)) // hide own reports
+    .sort((a, b) => b.ts - a.ts);
 
   // Apply route filter
   if (commFilterByRoute) {
@@ -16009,6 +16014,7 @@ function checkRouteAlerts() {
     if (!ALERT_TYPES.has(r.type)) return false;
     if (_dismissedAlerts.has(r.id)) return false;
     if (Date.now() - r.ts > 7200000) return false; // older than 2h
+    if (currentUser && r.reportedBy === currentUser.id) return false; // hide own reports
     return isReportOnRoute(r, 10); // within 10 miles of route
   });
 
