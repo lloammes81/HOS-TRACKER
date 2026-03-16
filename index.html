@@ -2781,17 +2781,18 @@ body.dark #fullMap .leaflet-tile-pane {
   #chatPanel {
     position:fixed;z-index:9000;
     display:none;
-    bottom:100px;right:16px;
-    width:360px;
-    /* hidden by default */
+    inset:0;
+    width:100%;
+    background:rgba(0,0,0,.45);
+    backdrop-filter:blur(4px);
   }
-  #chatPanel.open{display:block;animation:tcFadeIn .22s ease;}
+  #chatPanel.open{display:flex;flex-direction:column;animation:tcFadeIn .22s ease;}
   #chatSheet{
     width:100%;
+    flex:1;
     background:var(--surface);
-    border-radius:18px;
-    height:520px;display:flex;flex-direction:column;
-    box-shadow:0 12px 56px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.07);
+    border-radius:0;
+    display:flex;flex-direction:column;
     overflow:hidden;
   }
   /* Minimised state: collapse to just the header */
@@ -2799,15 +2800,8 @@ body.dark #fullMap .leaflet-tile-pane {
   #chatPanel.minimised #chatChannelBar,
   #chatPanel.minimised #chatMessages,
   #chatPanel.minimised #chatInputWrap { display:none; }
-  /* Drag handle overlay on header */
-  #chatDragHandle {
-    position:absolute;top:0;left:0;right:0;height:52px;cursor:grab;z-index:1;
-  }
-  #chatDragHandle:active { cursor:grabbing; }
-  /* Small screen: full-width sheet */
-  @media(max-width:420px){
-    #chatPanel { width:calc(100vw - 16px); right:8px; bottom:90px; }
-  }
+  /* Drag handle: desactivado en pantalla completa */
+  #chatDragHandle { display:none; }
   #chatChannelBar{
     display:flex;gap:6px;padding:8px 16px 4px;flex-shrink:0;
     overflow-x:auto;-webkit-overflow-scrolling:touch;
@@ -16711,7 +16705,7 @@ FIREBASE_CONFIG = {
       </div>
       <div style="display:flex;gap:4px;align-items:center;position:relative;z-index:2;">
         <button id="chatMinBtn" onclick="toggleChatMinimise()" title="Minimizar"
-          style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">—</button>
+          style="display:none;">—</button>
         <button class="tool-close" onclick="closeChatPanel()" style="width:28px;height:28px;font-size:20px;line-height:1;">×</button>
       </div>
     </div>
