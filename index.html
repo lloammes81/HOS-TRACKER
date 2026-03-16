@@ -4467,6 +4467,43 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   .cqp-item.reset { border-color: rgba(59,130,246,.3); }
   .cqp-item.comm  { border-color: rgba(16,185,129,.3); }
   .cqp-item.fuel  { border-color: rgba(245,158,11,.3); }
+  .cqp-item.truck { border-color: rgba(16,185,129,.3); }
+  .cqp-item.park  { border-color: rgba(99,102,241,.3); }
+
+  /* ── NEARBY POI SHEET ─────────────────────────────────── */
+  #nearbyPoiOverlay {
+    position: fixed; inset: 0; z-index: 9200;
+    background: rgba(0,0,0,.6); backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  #nearbyPoiOverlay.open { display: flex; animation: tcFadeIn .2s ease; }
+  #nearbyPoiSheet {
+    width: 100%; max-width: 540px;
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    max-height: 88vh; display: flex; flex-direction: column;
+    box-shadow: 0 -8px 48px rgba(0,0,0,.5);
+    animation: sheetUp .3s cubic-bezier(.16,1,.3,1);
+  }
+  #nearbyPoiBody {
+    flex: 1; overflow-y: auto; padding: 0 16px 24px;
+    -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  }
+  .poi-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px; border-radius: 14px;
+    background: var(--card); border: 1px solid var(--border);
+    margin-bottom: 8px; cursor: pointer;
+    transition: background .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .poi-card:active { background: rgba(255,255,255,.07); }
+  .poi-card-icon { font-size: 26px; flex-shrink: 0; }
+  .poi-card-info { flex: 1; min-width: 0; }
+  .poi-card-name { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .poi-card-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .poi-card-dist { font-size: 13px; font-weight: 800; color: #10b981; flex-shrink: 0; }
   #commQuickOverlay {
     display: none; position: fixed; inset: 0; z-index: 6300;
   }
@@ -4931,6 +4968,22 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="cqp-item-info">
         <div class="cqp-item-name">Diésel Barato</div>
         <div class="cqp-item-sub">Precios cercanos</div>
+      </div>
+    </div>
+
+    <div class="cqp-item truck" onclick="closeCommQuickPanel();searchNearbyPOI('truck')">
+      <span class="cqp-item-icon">🚛</span>
+      <div class="cqp-item-info">
+        <div class="cqp-item-name">Truck Stops</div>
+        <div class="cqp-item-sub">Cercanos a ti</div>
+      </div>
+    </div>
+
+    <div class="cqp-item park" onclick="closeCommQuickPanel();searchNearbyPOI('parking')">
+      <span class="cqp-item-icon">🅿️</span>
+      <div class="cqp-item-info">
+        <div class="cqp-item-name">Parqueos</div>
+        <div class="cqp-item-sub">Parking para trucks</div>
       </div>
     </div>
   </div>
@@ -6593,14 +6646,38 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div class="comm-filter-bar">
       <div class="comm-chip active" data-filter="all" onclick="filterComm(this,'all')">All</div>
       <div class="comm-chip" data-filter="police" onclick="filterComm(this,'police')">🚔 Police</div>
+      <div class="comm-chip" data-filter="dot_police" onclick="filterComm(this,'dot_police')">🚛 DOT Police</div>
+      <div class="comm-chip" data-filter="inspection" onclick="filterComm(this,'inspection')">🔍 Inspección</div>
       <div class="comm-chip" data-filter="accident" onclick="filterComm(this,'accident')">💥 Accident</div>
       <div class="comm-chip" data-filter="hazard" onclick="filterComm(this,'hazard')">⚠️ Hazard</div>
       <div class="comm-chip" data-filter="traffic" onclick="filterComm(this,'traffic')">🚦 Traffic</div>
-      <div class="comm-chip" data-filter="inspection" onclick="filterComm(this,'inspection')">🔍 Inspection</div>
     </div>
     <div class="comm-body" id="commBody">
       <button class="comm-refresh-btn" onclick="refreshCommunityReports()">🔄 Refresh Reports</button>
       <div id="commList"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     🚛  NEARBY POI SHEET (Truck Stops / Parqueos)
+══════════════════════════════════════════════════════════ -->
+<div id="nearbyPoiOverlay" onclick="closeNearbyPoiSheet()">
+  <div id="nearbyPoiSheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="tool-hdr" style="padding:14px 20px 10px">
+      <div class="tool-hdr-left">
+        <div class="tool-hdr-icon" id="nearbyPoiIcon" style="background:linear-gradient(135deg,#10b981,#059669)">🚛</div>
+        <div>
+          <div class="tool-hdr-title" id="nearbyPoiTitle">Truck Stops Cercanos</div>
+          <div class="tool-hdr-sub" id="nearbyPoiSub">Buscando…</div>
+        </div>
+      </div>
+      <button class="tool-close" onclick="closeNearbyPoiSheet()">×</button>
+    </div>
+    <div id="nearbyPoiBody">
+      <div id="nearbyPoiList" style="padding-top:8px"></div>
     </div>
   </div>
 </div>
@@ -6836,6 +6913,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button class="rs-btn" onclick="quickReport('closure','🚫','Vía cerrada')">
       <div class="rs-icon" style="background:#450a0a">🚫</div>
       <span class="rs-label">Vía cerrada</span>
+    </button>
+    <button class="rs-btn" onclick="quickReport('dot_police','🚛','DOT Police')">
+      <div class="rs-icon" style="background:#1e3a5f">🚛</div>
+      <span class="rs-label">DOT Police</span>
+    </button>
+    <button class="rs-btn" onclick="quickReport('inspection','🔍','Inspección DOT')">
+      <div class="rs-icon" style="background:#312e81">🔍</div>
+      <span class="rs-label">Inspección DOT</span>
     </button>
   </div>
 
@@ -12607,18 +12692,20 @@ function togglePOI(type) {
    Stored in localStorage, shared across browser sessions
 ════════════════════════════════════════════════════════════ */
 const REPORT_ICONS = {
-  police:     { emoji:'🚔', color:'#3b82f6', label:'Policía',      warn: true  },
-  accident:   { emoji:'💥', color:'#ef4444', label:'Accidente',    warn: true  },
-  inspection: { emoji:'🔍', color:'#6b7280', label:'Inspección',   warn: false },
+  police:     { emoji:'🚔', color:'#3b82f6', label:'Policía',        warn: true  },
+  dot_police: { emoji:'🚛', color:'#1d4ed8', label:'DOT Police',     warn: true  },
+  inspection: { emoji:'🔍', color:'#6b7280', label:'Inspección DOT', warn: true  },
+  accident:   { emoji:'💥', color:'#ef4444', label:'Accidente',      warn: true  },
 };
 
 /* ════════════════════════════════════════════════════════════
    🚨  INCIDENT TYPE TOGGLES (Settings-driven)
 ════════════════════════════════════════════════════════════ */
 const INCIDENT_TYPES = {
-  police:     { emoji:'🚔', label:'Policía',    bg:'#1d3a8a', statusOn:'Activo — marcado en el mapa' },
-  accident:   { emoji:'💥', label:'Accidente',  bg:'#7f1d1d', statusOn:'Activo — marcado en el mapa' },
-  inspection: { emoji:'🔍', label:'Inspección', bg:'#4b5320', statusOn:'Activo — marcado en el mapa' },
+  police:     { emoji:'🚔', label:'Policía',        bg:'#1d3a8a', statusOn:'Activo — marcado en el mapa' },
+  dot_police: { emoji:'🚛', label:'DOT Police',     bg:'#1e3a5f', statusOn:'Activo — marcado en el mapa' },
+  inspection: { emoji:'🔍', label:'Inspección DOT', bg:'#312e81', statusOn:'Activo — marcado en el mapa' },
+  accident:   { emoji:'💥', label:'Accidente',      bg:'#7f1d1d', statusOn:'Activo — marcado en el mapa' },
 };
 
 // Load saved incident type states
@@ -13553,11 +13640,12 @@ function renderCommunityReports() {
   }
 
   const TYPE_CONFIG = {
-    police:     { emoji:'🚔', color:'#1d3a8a', bg:'rgba(29,58,138,.15)' },
-    accident:   { emoji:'💥', color:'#7f1d1d', bg:'rgba(127,29,29,.15)' },
-    inspection: { emoji:'🔍', color:'#1e3a5f', bg:'rgba(30,58,95,.15)'  },
-    hazard:     { emoji:'⚠️', color:'#7c2d12', bg:'rgba(124,45,18,.15)' },
-    traffic:    { emoji:'🚦', color:'#14532d', bg:'rgba(20,83,45,.15)'  },
+    police:     { emoji:'🚔', color:'#1d3a8a', bg:'rgba(29,58,138,.15)'  },
+    dot_police: { emoji:'🚛', color:'#1e3a5f', bg:'rgba(30,58,95,.15)'   },
+    inspection: { emoji:'🔍', color:'#312e81', bg:'rgba(49,46,129,.15)'  },
+    accident:   { emoji:'💥', color:'#7f1d1d', bg:'rgba(127,29,29,.15)'  },
+    hazard:     { emoji:'⚠️', color:'#7c2d12', bg:'rgba(124,45,18,.15)'  },
+    traffic:    { emoji:'🚦', color:'#14532d', bg:'rgba(20,83,45,.15)'   },
   };
 
   const userLat = currentLat || (origin ? origin.lat : null);
@@ -14439,7 +14527,8 @@ function updateCommTabBadge(count) {
 
 const COMM_TYPE_CFG = {
   police:     { emoji:'🚔', label:'Police',          bg:'rgba(29,58,138,.18)',  color:'#3b82f6' },
-  inspection: { emoji:'🔍', label:'Inspection',      bg:'rgba(59,130,246,.14)', color:'#60a5fa' },
+  dot_police: { emoji:'🚛', label:'DOT Police',      bg:'rgba(30,58,95,.18)',   color:'#1d4ed8' },
+  inspection: { emoji:'🔍', label:'Inspección DOT',  bg:'rgba(49,46,129,.18)',  color:'#818cf8' },
   truckstop:  { emoji:'🅿️', label:'Truck Stop Full', bg:'rgba(245,158,11,.14)', color:'#f59e0b' },
   accident:   { emoji:'💥', label:'Accident',        bg:'rgba(127,29,29,.18)',  color:'#ef4444' },
   hazard:     { emoji:'⚠️', label:'Hazard',          bg:'rgba(124,45,18,.18)',  color:'#f97316' },
@@ -14941,6 +15030,152 @@ out center qt;`;
   }
 
   if (btn) { btn.disabled = false; btn.textContent = origTxt; }
+}
+
+function closeNearbyPoiSheet() {
+  document.getElementById('nearbyPoiOverlay').classList.remove('open');
+}
+
+async function searchNearbyPOI(type) {
+  const overlay  = document.getElementById('nearbyPoiOverlay');
+  const iconEl   = document.getElementById('nearbyPoiIcon');
+  const titleEl  = document.getElementById('nearbyPoiTitle');
+  const subEl    = document.getElementById('nearbyPoiSub');
+  const list     = document.getElementById('nearbyPoiList');
+
+  const isTruck  = type === 'truck';
+  iconEl.textContent  = isTruck ? '🚛' : '🅿️';
+  iconEl.style.background = isTruck
+    ? 'linear-gradient(135deg,#10b981,#059669)'
+    : 'linear-gradient(135deg,#6366f1,#4f46e5)';
+  titleEl.textContent = isTruck ? 'Truck Stops Cercanos' : 'Parqueos Cercanos';
+  subEl.textContent   = 'Buscando…';
+  list.innerHTML      = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">⏳ Obteniendo ubicación…</div>';
+  overlay.classList.add('open');
+
+  let lat, lon;
+  try {
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, maximumAge: 60000 }));
+    lat = pos.coords.latitude; lon = pos.coords.longitude;
+  } catch {
+    if (window.origin && origin.lat) { lat = origin.lat; lon = origin.lon; }
+    else {
+      list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">📍 GPS necesario. Activa tu ubicación.</div>';
+      subEl.textContent = 'GPS no disponible';
+      return;
+    }
+  }
+
+  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">⏳ Consultando base de datos…</div>';
+  subEl.textContent = 'Consultando OpenStreetMap…';
+
+  const r = 80000; // 80 km radius
+  let query;
+
+  if (isTruck) {
+    query = `[out:json][timeout:30];
+(
+  node["amenity"="truck_stop"](around:${r},${lat},${lon});
+  node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+  node["brand"~"Pilot Flying J|Love's Travel Stops|Travel Centers of America|Petro Stopping Centers|Sapp Bros|Flying J|TA Travel Center|TA-Petro",i](around:${r},${lat},${lon});
+  node["name"~"Flying J|Pilot Travel|Loves Travel|TA Travel|TA-Petro|Petro Stop|Sapp Bros|Truck Stop|Travel Plaza|Travel Center",i](around:${r},${lat},${lon});
+  way["amenity"="truck_stop"](around:${r},${lat},${lon});
+  way["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+);
+out center qt;`;
+  } else {
+    query = `[out:json][timeout:30];
+(
+  node["amenity"="parking"]["hgv"="yes"](around:${r},${lat},${lon});
+  node["amenity"="parking"]["truck"="yes"](around:${r},${lat},${lon});
+  node["amenity"="parking"]["access"="yes"]["capacity:hgv"](around:${r},${lat},${lon});
+  node["amenity"="truck_stop"](around:${r},${lat},${lon});
+  way["amenity"="parking"]["hgv"="yes"](around:${r},${lat},${lon});
+  way["amenity"="parking"]["truck"="yes"](around:${r},${lat},${lon});
+  node["name"~"rest area|rest stop|travel plaza|weigh station",i](around:${r},${lat},${lon});
+);
+out center qt;`;
+  }
+
+  try {
+    const data = await overpassFetch(query, 40000);
+
+    // Deduplicate
+    const seen = new Set();
+    const els = (data.elements || []).filter(el => {
+      const elLat = el.lat ?? el.center?.lat;
+      const elLon = el.lon ?? el.center?.lon;
+      if (!elLat || !elLon) return false;
+      const k = `${elLat.toFixed(3)}_${elLon.toFixed(3)}_${el.tags?.name || ''}`;
+      if (seen.has(k)) return false; seen.add(k); return true;
+    });
+
+    // Sort by distance
+    els.sort((a, b) => {
+      const aLat = a.lat ?? a.center?.lat, aLon = a.lon ?? a.center?.lon;
+      const bLat = b.lat ?? b.center?.lat, bLon = b.lon ?? b.center?.lon;
+      return haversine(lat, lon, aLat, aLon) - haversine(lat, lon, bLat, bLon);
+    });
+
+    if (!els.length) {
+      const icon = isTruck ? '🚛' : '🅿️';
+      list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
+        <div style="font-size:48px;margin-bottom:12px">${icon}</div>
+        <div style="font-size:15px;font-weight:700">Sin resultados en 80 km</div>
+        <div style="font-size:12px;margin-top:6px">Verifica tu conexión o amplía la búsqueda</div>
+      </div>`;
+      subEl.textContent = 'Sin resultados';
+      return;
+    }
+
+    subEl.textContent = `${els.length} encontrados · 80 km`;
+
+    const gmQuery = isTruck ? 'truck+stop' : 'truck+parking';
+    const gmUrl   = `https://www.google.com/maps/search/${gmQuery}/@${lat},${lon},12z`;
+    list.innerHTML = `
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(66,133,244,.15);border:1px solid rgba(66,133,244,.3);border-radius:12px;color:#4285f4;font-size:13px;font-weight:700;text-decoration:none">
+          🗺️ Google Maps
+        </a>
+        <a href="https://truckerpath.com/" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
+          🚛 Trucker Path
+        </a>
+      </div>`;
+
+    els.forEach(el => {
+      const elLat  = el.lat ?? el.center?.lat;
+      const elLon  = el.lon ?? el.center?.lon;
+      const distMi = haversine(lat, lon, elLat, elLon).toFixed(1);
+      const distKm = (haversine(lat, lon, elLat, elLon) * 1.60934).toFixed(1);
+      const name   = el.tags?.name || el.tags?.operator || (isTruck ? 'Truck Stop' : 'Parqueo');
+      const city   = [el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean).join(', ');
+      const cap    = el.tags?.['capacity:hgv'] || el.tags?.capacity || '';
+      const meta   = city || (cap ? `Capacidad: ${cap} trucks` : (isTruck ? 'Parada de trucks' : 'Estacionamiento'));
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${elLat},${elLon}&travelmode=driving`;
+      const icon   = isTruck ? '🚛' : '🅿️';
+
+      const card = document.createElement('div');
+      card.className = 'poi-card';
+      card.onclick = () => window.open(mapsUrl, '_blank');
+      card.innerHTML = `
+        <div class="poi-card-icon">${icon}</div>
+        <div class="poi-card-info">
+          <div class="poi-card-name">${name}</div>
+          <div class="poi-card-meta">${meta}</div>
+        </div>
+        <div class="poi-card-dist">${distMi} mi<div style="font-size:10px;color:var(--muted)">${distKm} km</div></div>`;
+      list.appendChild(card);
+    });
+
+    showToast('success', isTruck ? '🚛' : '🅿️',
+      `${els.length} ${isTruck ? 'truck stops' : 'parqueos'}`,
+      'Toca uno para navegar', 3500);
+
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">⚠️ Error de conexión. Verifica tu internet.</div>';
+    subEl.textContent = 'Error de conexión';
+  }
 }
 
 async function openGoogleMapsTruckStops() {
