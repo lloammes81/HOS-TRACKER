@@ -7894,6 +7894,49 @@ let bridgeInterval  = null;
 let lastBridgeLat   = null;
 let lastBridgeLon   = null;
 
+/* ── Global GPS warm-cache ───────────────────────────────────
+   Keeps GPS chip active from app start so all features get
+   an instant cached fix instead of waiting 2-12s each time.
+──────────────────────────────────────────────────────────── */
+let _gpsCache       = null;   // { lat, lon, accuracy, timestamp }
+let _gpsWarmId      = null;
+
+function startGPSWarm() {
+  if (!navigator.geolocation || _gpsWarmId !== null) return;
+  _gpsWarmId = navigator.geolocation.watchPosition(
+    pos => {
+      _gpsCache = {
+        lat:       pos.coords.latitude,
+        lon:       pos.coords.longitude,
+        accuracy:  pos.coords.accuracy,
+        speed:     pos.coords.speed,
+        heading:   pos.coords.heading,
+        timestamp: pos.timestamp,
+        raw:       pos
+      };
+    },
+    () => { /* silently ignore warm-cache errors */ },
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+  );
+}
+
+/**
+ * Returns a Promise<{lat,lon,...}> using the warm GPS cache when fresh
+ * (< maxAgeMs old), otherwise falls back to getCurrentPosition.
+ * @param {number} maxAgeMs   Max cache age to accept (default 4 s)
+ * @param {number} timeoutMs  Fallback timeout (default 12 s)
+ */
+function getGPSPosition(maxAgeMs = 4000, timeoutMs = 12000) {
+  const now = Date.now();
+  if (_gpsCache && (now - _gpsCache.timestamp) < maxAgeMs) {
+    return Promise.resolve(_gpsCache.raw);
+  }
+  return new Promise((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(resolve, reject,
+      { enableHighAccuracy: true, maximumAge: maxAgeMs, timeout: timeoutMs })
+  );
+}
+
 /* ════════════════════════════════════════════════════════════
    SHARED TOAST SYSTEM
 ════════════════════════════════════════════════════════════ */
@@ -8222,14 +8265,15 @@ async function startWeatherMonitor() {
   const updateNow = async () => {
     if (!weatherActive) return;
     if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(async pos => {
+    try {
+      const pos = await getGPSPosition(30000, 10000); // 30s cache ok for weather
       const { latitude: lat, longitude: lon } = pos.coords;
       // Don't re-fetch if barely moved (<5 miles)
       if (lastWeatherLat && haversine(lat,lon,lastWeatherLat,lastWeatherLon) < 5) return;
       lastWeatherLat = lat; lastWeatherLon = lon;
       const wx = await fetchWeather(lat, lon);
       updateWeatherWidget(wx);
-    }, () => {}, { enableHighAccuracy: false, timeout: 10000 });
+    } catch {}
   };
 
   await updateNow();
@@ -8359,62 +8403,63 @@ async function fetchBridgesAlongRoute(routeWaypoints) {
 async function checkBridges() {
   if (!bridgeActive) return;
 
-  navigator.geolocation.getCurrentPosition(async pos => {
-    const { latitude: lat, longitude: lon } = pos.coords;
-    if (lastBridgeLat && haversine(lat, lon, lastBridgeLat, lastBridgeLon) < 0.5) return;
-    lastBridgeLat = lat; lastBridgeLon = lon;
+  let pos;
+  try { pos = await getGPSPosition(4000, 10000); } catch { return; }
 
-    // Only check bridges if we have a planned route
-    if (!roadGeometry || roadGeometry.length < 2) {
-      document.getElementById('bridgeNextTxt').textContent = 'Planifica una ruta para monitorear puentes';
-      return;
-    }
+  const { latitude: lat, longitude: lon } = pos.coords;
+  if (lastBridgeLat && haversine(lat, lon, lastBridgeLat, lastBridgeLon) < 0.5) return;
+  lastBridgeLat = lat; lastBridgeLon = lon;
 
-    // Get route waypoints within next 30 miles
-    const aheadWaypoints = getRouteAhead(lat, lon, 30);
-    if (!aheadWaypoints.length) {
-      document.getElementById('bridgeNextTxt').textContent = 'No hay ruta por delante';
-      return;
-    }
+  // Only check bridges if we have a planned route
+  if (!roadGeometry || roadGeometry.length < 2) {
+    document.getElementById('bridgeNextTxt').textContent = 'Planifica una ruta para monitorear puentes';
+    return;
+  }
 
-    const bridges = await fetchBridgesAlongRoute(aheadWaypoints);
-    if (!bridges.length) {
-      document.getElementById('bridgeNextTxt').textContent = '✅ Sin puentes bajos en ruta';
-      document.getElementById('bridgeNextTxt').style.color = 'rgba(255,255,255,.5)';
-      return;
-    }
+  // Get route waypoints within next 30 miles
+  const aheadWaypoints = getRouteAhead(lat, lon, 30);
+  if (!aheadWaypoints.length) {
+    document.getElementById('bridgeNextTxt').textContent = 'No hay ruta por delante';
+    return;
+  }
 
-    // Sort by distance ahead
-    bridges.sort((a, b) => a.distAhead - b.distAhead);
-    const lowest  = bridges.reduce((a, b) => a.feet < b.feet ? a : b);
-    const nearest = bridges[0];
-    const clearance = lowest.feet;
-    const needed    = trailerHeight;
-    const margin    = clearance - needed;
+  const bridges = await fetchBridgesAlongRoute(aheadWaypoints);
+  if (!bridges.length) {
+    document.getElementById('bridgeNextTxt').textContent = '✅ Sin puentes bajos en ruta';
+    document.getElementById('bridgeNextTxt').style.color = 'rgba(255,255,255,.5)';
+    return;
+  }
 
-    document.getElementById('bridgeNextTxt').textContent =
-      `🌉 ${nearest.name}: ${nearest.feet}ft — ${nearest.distAhead.toFixed(1)}mi ahead`;
+  // Sort by distance ahead
+  bridges.sort((a, b) => a.distAhead - b.distAhead);
+  const lowest  = bridges.reduce((a, b) => a.feet < b.feet ? a : b);
+  const nearest = bridges[0];
+  const clearance = lowest.feet;
+  const needed    = trailerHeight;
+  const margin    = clearance - needed;
 
-    if (margin < 0) {
-      showToast('danger', '🚨', '⚠️ PUENTE MUY BAJO EN TU RUTA!',
-        `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. ¡DESVÍATE AHORA!`, 45000);
-      flashDanger(4000);
-      vibrate([400, 100, 400, 100, 800]);
-      document.getElementById('bridgeNextTxt').textContent = `🚨 MUY BAJO: ${clearance}ft @ ${lowest.name}`;
-      document.getElementById('bridgeNextTxt').style.color = '#ef4444';
-      showFullscreenAlert('danger', '🌉', '¡PUENTE MUY BAJO EN RUTA!',
-        `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. ¡DESVÍATE!`, '', 20000);
-    } else if (margin < 1.5) {
-      showToast('warning', '⚠️', 'Puente con poco espacio',
-        `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. Solo ${margin.toFixed(1)}ft de margen.`, 8000);
-      document.getElementById('bridgeNextTxt').textContent = `⚠️ Bajo: ${clearance}ft @ ${lowest.name}`;
-      document.getElementById('bridgeNextTxt').style.color = '#f59e0b';
-    } else {
-      document.getElementById('bridgeNextTxt').style.color = 'rgba(255,255,255,.5)';
-    }
-    document.getElementById('bridgeStatusTxt').textContent =
-      `Active · ${needed}ft trailer · ${bridges.length} bridge${bridges.length > 1 ? 's' : ''} en ruta`;
-  }, () => {}, { enableHighAccuracy: false, timeout: 10000 });
+  document.getElementById('bridgeNextTxt').textContent =
+    `🌉 ${nearest.name}: ${nearest.feet}ft — ${nearest.distAhead.toFixed(1)}mi ahead`;
+
+  if (margin < 0) {
+    showToast('danger', '🚨', '⚠️ PUENTE MUY BAJO EN TU RUTA!',
+      `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. ¡DESVÍATE AHORA!`, 45000);
+    flashDanger(4000);
+    vibrate([400, 100, 400, 100, 800]);
+    document.getElementById('bridgeNextTxt').textContent = `🚨 MUY BAJO: ${clearance}ft @ ${lowest.name}`;
+    document.getElementById('bridgeNextTxt').style.color = '#ef4444';
+    showFullscreenAlert('danger', '🌉', '¡PUENTE MUY BAJO EN RUTA!',
+      `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. ¡DESVÍATE!`, '', 20000);
+  } else if (margin < 1.5) {
+    showToast('warning', '⚠️', 'Puente con poco espacio',
+      `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. Solo ${margin.toFixed(1)}ft de margen.`, 8000);
+    document.getElementById('bridgeNextTxt').textContent = `⚠️ Bajo: ${clearance}ft @ ${lowest.name}`;
+    document.getElementById('bridgeNextTxt').style.color = '#f59e0b';
+  } else {
+    document.getElementById('bridgeNextTxt').style.color = 'rgba(255,255,255,.5)';
+  }
+  document.getElementById('bridgeStatusTxt').textContent =
+    `Active · ${needed}ft trailer · ${bridges.length} bridge${bridges.length > 1 ? 's' : ''} en ruta`;
 }
 
 function startBridgeDetector() {
@@ -13749,6 +13794,9 @@ document.addEventListener('click', e => {
 
 // Single init: DOT inputs, GPS auto-detect
 document.addEventListener('DOMContentLoaded', () => {
+  // Start warm GPS cache immediately so all features get instant fixes
+  startGPSWarm();
+
   const di = document.getElementById('dotInput');
   if (di) di.addEventListener('keydown', e => { if (e.key === 'Enter') searchDOT(); });
 
@@ -14927,7 +14975,7 @@ async function searchFuelNearby(btn) {
 
   let lat, lon;
   try {
-    const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, maximumAge: 60000 }));
+    const pos = await getGPSPosition(4000, 10000);
     lat = pos.coords.latitude; lon = pos.coords.longitude;
   } catch {
     if (origin) { lat = origin.lat; lon = origin.lon; }
@@ -15065,8 +15113,7 @@ async function searchNearbyPOI(type) {
 
   let lat, lon;
   try {
-    const pos = await new Promise((res, rej) =>
-      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, maximumAge: 60000 }));
+    const pos = await getGPSPosition(4000, 10000);
     lat = pos.coords.latitude; lon = pos.coords.longitude;
   } catch {
     if (window.origin && origin.lat) { lat = origin.lat; lon = origin.lon; }
@@ -15200,7 +15247,7 @@ out center qt;`;
 async function openGoogleMapsTruckStops() {
   let lat, lon;
   try {
-    const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, maximumAge: 120000 }));
+    const pos = await getGPSPosition(4000, 8000);
     lat = pos.coords.latitude; lon = pos.coords.longitude;
   } catch {
     if (origin) { lat = origin.lat; lon = origin.lon; }
