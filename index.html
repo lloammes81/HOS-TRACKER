@@ -3918,6 +3918,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   padding:20px 18px calc(30px + env(safe-area-inset-bottom,0px));
   font-family:'DM Sans',sans-serif;
   animation:slideUp .35s cubic-bezier(.16,1,.3,1);
+  max-height:92vh;overflow-y:auto;
 }
 .eld-handle { width:36px;height:4px;background:rgba(255,255,255,.18);border-radius:999px;margin:0 auto 18px; }
 .eld-title  { font-size:18px;font-weight:900;color:var(--text);margin-bottom:4px; }
@@ -3952,6 +3953,60 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 }
 .eld-data-val  { font-size:22px;font-weight:900;color:#6366f1;font-family:'Bebas Neue',sans-serif; }
 .eld-data-lbl  { font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:3px; }
+
+/* ELD Logbook */
+.eld-logbook { margin-top:16px; overflow-y:auto; max-height:54vh; }
+.eld-lb-section-title {
+  font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.eld-lb-section-title::after { content:'';flex:1;height:1px;background:var(--border); }
+.eld-lb-hos-grid {
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;
+}
+.eld-lb-hos-card {
+  background:var(--surface2);border-radius:12px;padding:11px 12px;
+  border:1px solid var(--border);text-align:center;
+}
+.eld-lb-hos-val { font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1; }
+.eld-lb-hos-lbl { font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px; }
+/* Status timeline (24h logbook graph) */
+.eld-lb-graph {
+  background:rgba(0,0,0,.2);border-radius:12px;padding:12px;
+  margin-bottom:14px;border:1px solid var(--border);
+}
+.eld-lb-graph-title { font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px; }
+.eld-lb-row { display:flex;align-items:center;gap:6px;margin-bottom:6px; }
+.eld-lb-row-lbl { font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;width:26px;flex-shrink:0; }
+.eld-lb-bar-wrap { flex:1;height:14px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;position:relative; }
+.eld-lb-bar { height:100%;border-radius:4px;transition:width .8s ease; }
+.eld-lb-bar.drive { background:linear-gradient(90deg,#10b981,#059669); }
+.eld-lb-bar.onduty { background:linear-gradient(90deg,#f59e0b,#d97706); }
+.eld-lb-bar.sleeper { background:linear-gradient(90deg,#6366f1,#4f46e5); }
+.eld-lb-bar.offduty { background:linear-gradient(90deg,rgba(255,255,255,.15),rgba(255,255,255,.1)); }
+.eld-lb-bar-val { font-size:9px;font-weight:800;color:var(--muted);width:30px;text-align:right;flex-shrink:0; }
+/* Hour tick marks */
+.eld-lb-ticks { display:flex;justify-content:space-between;padding:0 0 4px 32px;margin-bottom:8px; }
+.eld-lb-tick { font-size:8px;color:rgba(255,255,255,.2);font-weight:600; }
+/* Violations */
+.eld-violation-row {
+  display:flex;align-items:center;gap:8px;padding:8px 12px;
+  background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);
+  border-radius:10px;margin-bottom:6px;
+}
+.eld-violation-icon { font-size:16px;flex-shrink:0; }
+.eld-violation-text { font-size:12px;font-weight:700;color:#ef4444; }
+.eld-violation-sub  { font-size:11px;color:var(--muted);margin-top:1px; }
+/* Summary row */
+.eld-lb-summary {
+  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;
+}
+.eld-lb-stat-pill {
+  flex:1;min-width:80px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:8px 10px;text-align:center;
+}
+.eld-lb-stat-num { font-family:'Bebas Neue',sans-serif;font-size:20px;line-height:1; }
+.eld-lb-stat-lbl { font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px; }
 
 /* ══════════════════════════════════════════════════════════
    🌡️  TEMP SENSOR SHEET
@@ -6004,11 +6059,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <!-- ============================================================
      💬  CARRIERCHAT — FAB + Drawer + Channels + Room
      ============================================================ -->
-
-<!-- Floating Chat Button -->
-<button id="chatFab" onclick="openChat()" aria-label="Chat">
-  💬<span id="chatFabBadge"></span>
-</button>
 
 <!-- Hamburger (side drawer) -->
 <button id="drawerHamburger" onclick="openDrawer()" aria-label="Menú" style="display:none">☰</button>
@@ -12781,7 +12831,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
-  if (tab === 'summary') fetchEIAPrice();
+  if (tab === 'summary') { fetchEIAPrice(); searchFuelNearby(null); }
   if (tab === 'plan') { const dep = document.getElementById('departureInput'); if (dep && !dep.value) setDepartureNow(); else updateDepartureDisplay(); }
 }
 
@@ -15655,7 +15705,6 @@ function incrementUserReports() {
   window.openChatPanel = function() {
     chatOpen = true;
     chatUnread = 0;
-    document.getElementById('chatFabBadge').style.display = 'none';
     document.getElementById('chatPanel').classList.add('open');
     document.body.style.overflow = 'hidden';
     loadChannel(chatChannel);
@@ -15738,12 +15787,9 @@ FIREBASE_CONFIG = {
       }
       msgBox.scrollTop = msgBox.scrollHeight;
 
-      // Unread badge when panel is closed
+      // Unread count (badge removed — chat accessible via map controls)
       if (!chatOpen && msgs.length) {
         chatUnread++;
-        const badge = document.getElementById('chatFabBadge');
-        badge.textContent = chatUnread > 9 ? '9+' : chatUnread;
-        badge.style.display = 'flex';
       }
     });
   }
@@ -15808,12 +15854,6 @@ FIREBASE_CONFIG = {
   };
 
   /* ── Show/hide FAB based on current tab ────────────── */
-  const _origSwitchTabChat = switchTab;
-  switchTab = function(tab) {
-    _origSwitchTabChat(tab);
-    const fab = document.getElementById('chatFab');
-    if (fab) fab.style.display = tab === 'community' ? 'flex' : 'none';
-  };
 })();
 </script>
 
@@ -15864,11 +15904,6 @@ FIREBASE_CONFIG = {
   </div>
 </div>
 
-<!-- Floating chat button (shown on Community tab) -->
-<button class="chat-fab" id="chatFab" onclick="openChatPanel()" title="Driver Chat">
-  💬
-  <span class="chat-fab-badge" id="chatFabBadge" style="display:none">0</span>
-</button>
 
 <!-- ══════════════ PRO SUBSCRIBE MODAL ══════════════ -->
 <div id="subscribeModal" style="
@@ -16061,7 +16096,88 @@ FIREBASE_CONFIG = {
         <div style="font-size:11px;color:var(--muted);font-weight:600">Dispositivo conectado</div>
         <div id="eldConnectedName" style="font-size:14px;font-weight:800;color:#6366f1;margin-top:2px"></div>
       </div>
-      <button onclick="disconnectEld()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:10px">🔌 Desconectar</button>
+
+      <!-- ── LOGBOOK ─────────────────────────────────────────── -->
+      <div class="eld-logbook" id="eldLogbook">
+
+        <div class="eld-lb-section-title" style="margin-top:16px">📋 Logbook de Horas (FMCSA)</div>
+
+        <!-- HOS summary cards -->
+        <div class="eld-lb-hos-grid">
+          <div class="eld-lb-hos-card">
+            <div class="eld-lb-hos-val" id="lbDriveUsed" style="color:#10b981">0.0h</div>
+            <div class="eld-lb-hos-lbl">Manejo Hoy</div>
+          </div>
+          <div class="eld-lb-hos-card">
+            <div class="eld-lb-hos-val" id="lbDriveLeft" style="color:#6366f1">11.0h</div>
+            <div class="eld-lb-hos-lbl">Manejo Restante</div>
+          </div>
+          <div class="eld-lb-hos-card">
+            <div class="eld-lb-hos-val" id="lbOnDutyUsed" style="color:#f59e0b">0.0h</div>
+            <div class="eld-lb-hos-lbl">On-Duty Hoy</div>
+          </div>
+          <div class="eld-lb-hos-card">
+            <div class="eld-lb-hos-val" id="lbCycleUsed" style="color:#ef4444">0.0h</div>
+            <div class="eld-lb-hos-lbl">Ciclo 70h Usado</div>
+          </div>
+        </div>
+
+        <!-- Summary pills -->
+        <div class="eld-lb-summary">
+          <div class="eld-lb-stat-pill">
+            <div class="eld-lb-stat-num" id="lbMilesDay" style="color:#10b981">0</div>
+            <div class="eld-lb-stat-lbl">Millas Hoy</div>
+          </div>
+          <div class="eld-lb-stat-pill">
+            <div class="eld-lb-stat-num" id="lbBreakDue" style="color:#f59e0b">--</div>
+            <div class="eld-lb-stat-lbl">Próx. Descanso</div>
+          </div>
+          <div class="eld-lb-stat-pill">
+            <div class="eld-lb-stat-num" id="lbStatus" style="color:#6366f1">SB</div>
+            <div class="eld-lb-stat-lbl">Estado Actual</div>
+          </div>
+        </div>
+
+        <!-- 24-hour graph -->
+        <div class="eld-lb-graph">
+          <div class="eld-lb-graph-title">📊 Gráfica de 24 horas (estilo logbook)</div>
+          <div class="eld-lb-ticks">
+            <span class="eld-lb-tick">0</span><span class="eld-lb-tick">4</span>
+            <span class="eld-lb-tick">8</span><span class="eld-lb-tick">12</span>
+            <span class="eld-lb-tick">16</span><span class="eld-lb-tick">20</span>
+            <span class="eld-lb-tick">24</span>
+          </div>
+          <div class="eld-lb-row">
+            <div class="eld-lb-row-lbl">D</div>
+            <div class="eld-lb-bar-wrap"><div class="eld-lb-bar drive" id="lbBarDrive" style="width:0%"></div></div>
+            <div class="eld-lb-bar-val" id="lbBarDriveVal">0h</div>
+          </div>
+          <div class="eld-lb-row">
+            <div class="eld-lb-row-lbl">ON</div>
+            <div class="eld-lb-bar-wrap"><div class="eld-lb-bar onduty" id="lbBarOnDuty" style="width:0%"></div></div>
+            <div class="eld-lb-bar-val" id="lbBarOnDutyVal">0h</div>
+          </div>
+          <div class="eld-lb-row">
+            <div class="eld-lb-row-lbl">SB</div>
+            <div class="eld-lb-bar-wrap"><div class="eld-lb-bar sleeper" id="lbBarSleeper" style="width:0%"></div></div>
+            <div class="eld-lb-bar-val" id="lbBarSleeperVal">0h</div>
+          </div>
+          <div class="eld-lb-row">
+            <div class="eld-lb-row-lbl">OFF</div>
+            <div class="eld-lb-bar-wrap"><div class="eld-lb-bar offduty" id="lbBarOff" style="width:100%"></div></div>
+            <div class="eld-lb-bar-val" id="lbBarOffVal">24h</div>
+          </div>
+        </div>
+
+        <!-- Violations -->
+        <div class="eld-lb-section-title">⚠️ Infracciones HOS</div>
+        <div id="lbViolations">
+          <div style="text-align:center;padding:14px;color:var(--muted);font-size:13px">✅ Sin infracciones detectadas</div>
+        </div>
+
+        <!-- Disconnect -->
+        <button onclick="disconnectEld()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px">🔌 Desconectar ELD</button>
+      </div>
     </div>
     <div id="eldNoBluetooth" style="display:none;text-align:center;padding:20px 0;color:var(--muted)">
       <div style="font-size:36px;margin-bottom:10px">📵</div>
@@ -16534,46 +16650,120 @@ async function startEldScan(){
 
 function startEldDataSimulation(){
   let odo=487320,hrs=12847.3,fuel=72;
+  let milesDay=0;
   // HOS hours: start from current form values or defaults
   let driveHoursLeft = parseFloat(document.getElementById('hoursInput')?.value||11);
   if(driveHoursLeft>11) driveHoursLeft=11;
+  let driveHoursUsed = 11 - driveHoursLeft;
+  let onDutyHoursUsed = driveHoursUsed + 0.5; // pre-trip inspection
+  let sleeperHours = 0;
   let cycleHoursLeft = 70;
+  let cycleHoursUsed = 70 - cycleHoursLeft;
+  let continuousDriveMin = 0; // minutes driven without 30-min break
+
   eldInterval=setInterval(()=>{
     const speed=window.fmCurrentSpeed||0;
     const rpm=1200+speed*18+Math.floor(Math.random()*80-40);
     fuel=Math.max(10,fuel-0.001);
-    odo+=speed/3600;hrs+=1/3600;
+    odo+=speed/3600; hrs+=1/3600;
+    const isDriving = speed>2;
+    const tickHrs = 1/2400; // per 1500ms tick in hours
+
     // Decrease HOS hours when driving
-    if(speed>2){ driveHoursLeft=Math.max(0,driveHoursLeft-1/2400); cycleHoursLeft=Math.max(0,cycleHoursLeft-1/2400); }
+    if(isDriving){
+      driveHoursLeft=Math.max(0,driveHoursLeft-tickHrs);
+      driveHoursUsed+=tickHrs;
+      onDutyHoursUsed+=tickHrs;
+      cycleHoursLeft=Math.max(0,cycleHoursLeft-tickHrs);
+      cycleHoursUsed+=tickHrs;
+      continuousDriveMin+=tickHrs*60;
+      milesDay+=speed*tickHrs;
+    }
+
+    // Live data cards
     document.getElementById('eldMph').textContent=speed;
     document.getElementById('eldOdometer').textContent=Math.floor(odo).toLocaleString();
     document.getElementById('eldEngineHrs').textContent=hrs.toFixed(1);
     document.getElementById('eldRpm').textContent=rpm;
     document.getElementById('eldFuel').textContent=Math.round(fuel)+'%';
-    const st=speed>2?'D':'SB';
+    const st=isDriving?'D':'SB';
     const dEl=document.getElementById('eldDutyStatus');
-    dEl.textContent=st;dEl.style.color=speed>2?'#10b981':'#f59e0b';
+    dEl.textContent=st; dEl.style.color=isDriving?'#10b981':'#f59e0b';
+
     if(fuel<20){
       const b=document.getElementById('eldAlertBanner');
       b.style.display='flex';
       document.getElementById('eldAlertText').textContent='⛽ Combustible bajo — '+Math.round(fuel)+'% restante';
     }
-    // Update HUD map bubbles with ELD HOS data
+
+    // ── HUD map bubbles ───────────────────────────────────
     const driveEl=document.getElementById('fmDriveLeft');
     if(driveEl) driveEl.textContent=driveHoursLeft.toFixed(1)+'h';
     const cycleEl=document.getElementById('fm70Left');
     if(cycleEl) cycleEl.textContent=cycleHoursLeft.toFixed(1)+'h';
-    // Update drive arc
     const arc=document.getElementById('hudDhArc');
     if(arc){ const pct=driveHoursLeft/11; arc.setAttribute('stroke-dasharray',`${pct*126} 126`); arc.setAttribute('stroke',driveHoursLeft<2?'#ef4444':driveHoursLeft<4?'#f59e0b':'#10b981'); }
+
+    // ── Logbook update ────────────────────────────────────
+    const du=Math.min(driveHoursUsed,11);
+    const ou=Math.min(onDutyHoursUsed,14);
+    const cu=cycleHoursUsed;
+    const offH=24-du-sleeperHours-ou;
+
+    const el=id=>document.getElementById(id);
+    if(el('lbDriveUsed')) el('lbDriveUsed').textContent=du.toFixed(1)+'h';
+    if(el('lbDriveLeft')) el('lbDriveLeft').textContent=driveHoursLeft.toFixed(1)+'h';
+    if(el('lbOnDutyUsed')) el('lbOnDutyUsed').textContent=ou.toFixed(1)+'h';
+    if(el('lbCycleUsed')) el('lbCycleUsed').textContent=cu.toFixed(1)+'h';
+    if(el('lbMilesDay')) el('lbMilesDay').textContent=Math.round(milesDay);
+    if(el('lbStatus')) { el('lbStatus').textContent=st; el('lbStatus').style.color=isDriving?'#10b981':'#6366f1'; }
+
+    // Break due warning (30-min break required after 8h driving)
+    const breakDueEl=el('lbBreakDue');
+    if(breakDueEl){
+      if(du>=8 && continuousDriveMin>=480){
+        breakDueEl.textContent='¡YA!'; breakDueEl.style.color='#ef4444';
+      } else if(du>=7){
+        const minsLeft=Math.max(0,60-(continuousDriveMin-420));
+        breakDueEl.textContent=Math.round(minsLeft)+'m'; breakDueEl.style.color='#f59e0b';
+      } else {
+        breakDueEl.textContent='OK'; breakDueEl.style.color='#10b981';
+      }
+    }
+
+    // Graph bars (out of 24h = 100%)
+    const driveW=(du/24*100).toFixed(1);
+    const onW=(Math.max(0,ou-du)/24*100).toFixed(1);
+    const sbW=(sleeperHours/24*100).toFixed(1);
+    const offW=(Math.max(0,offH)/24*100).toFixed(1);
+    if(el('lbBarDrive')) { el('lbBarDrive').style.width=driveW+'%'; el('lbBarDriveVal').textContent=du.toFixed(1)+'h'; }
+    if(el('lbBarOnDuty')) { el('lbBarOnDuty').style.width=onW+'%'; el('lbBarOnDutyVal').textContent=(ou-du<0?0:ou-du).toFixed(1)+'h'; }
+    if(el('lbBarSleeper')) { el('lbBarSleeper').style.width=sbW+'%'; el('lbBarSleeperVal').textContent=sleeperHours.toFixed(1)+'h'; }
+    if(el('lbBarOff')) { el('lbBarOff').style.width=offW+'%'; el('lbBarOffVal').textContent=Math.max(0,offH).toFixed(1)+'h'; }
+
+    // Violations
+    const vDiv=el('lbViolations');
+    if(vDiv){
+      const viols=[];
+      if(du>11) viols.push({icon:'🚨',text:'Límite 11h excedido',sub:`${du.toFixed(1)}h manejadas (máx 11h)`});
+      if(ou>14) viols.push({icon:'⚠️',text:'Límite 14h on-duty excedido',sub:`${ou.toFixed(1)}h (máx 14h)`});
+      if(cu>70) viols.push({icon:'🔴',text:'Ciclo 70h excedido',sub:`${cu.toFixed(1)}h usadas`});
+      if(du>=8 && continuousDriveMin>480) viols.push({icon:'⏸️',text:'Descanso 30 min requerido',sub:'8h continuas sin pausa de 30 min'});
+      if(viols.length){
+        vDiv.innerHTML=viols.map(v=>`<div class="eld-violation-row"><div class="eld-violation-icon">${v.icon}</div><div><div class="eld-violation-text">${v.text}</div><div class="eld-violation-sub">${v.sub}</div></div></div>`).join('');
+      } else {
+        vDiv.innerHTML='<div style="text-align:center;padding:14px;color:var(--muted);font-size:13px">✅ Sin infracciones detectadas</div>';
+      }
+    }
   },1500);
 }
 
 function disconnectEld(){
   if(eldInterval){clearInterval(eldInterval);eldInterval=null;}
-  if(eldDevice&&eldDevice.gatt.connected) eldDevice.gatt.disconnect();
+  if(eldDevice&&eldDevice.gatt&&eldDevice.gatt.connected) eldDevice.gatt.disconnect();
   eldDevice=null;
   document.getElementById('eldLiveData').style.display='none';
+  document.getElementById('eldLogbook').style.display='none';
   document.getElementById('eldScanBtn').style.display='block';
   document.getElementById('eldScanBtn').textContent='🔍 Buscar dispositivos ELD';
   document.getElementById('eldScanBtn').disabled=false;
