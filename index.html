@@ -1716,6 +1716,25 @@
     letter-spacing: .8px;
     margin-top: 3px;
   }
+  .speedo-status {
+    margin-top: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 9px; font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: rgba(107,114,128,0.25);
+    color: #9ca3af;
+    transition: background .3s, color .3s;
+  }
+  .speedo-status.moving {
+    background: rgba(16,185,129,0.2);
+    color: #10b981;
+  }
+  .speedo-status.over-speed {
+    background: rgba(239,68,68,0.2);
+    color: #ef4444;
+  }
 
   /* ══════════════════════════════════════════
      INCIDENT BUBBLES PANEL (left side, stacked)
@@ -7626,6 +7645,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div class="speedo-unit">MPH</div>
   </div>
   <div class="speedo-label" id="speedoLabel">GPS SPEED</div>
+  <div class="speedo-status" id="speedoStatus">DETENIDO</div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -8733,6 +8753,7 @@ function updateSpeedometer(mph) {
   const ring = document.getElementById('speedoRing');
   const arc = document.getElementById('speedoArc');
   const label = document.getElementById('speedoLabel');
+  const statusBadge = document.getElementById('speedoStatus');
 
   num.textContent = Math.round(mph);
   const moving = mph > 3;
@@ -8754,11 +8775,20 @@ if (moving) {
     ring.className = 'speedo-ring moving';
     arc.style.stroke = mph > 75 ? '#ef4444' : mph > 55 ? '#f59e0b' : '#10b981';
     label.textContent = 'GPS SPEED';
+    if (statusBadge) {
+      statusBadge.textContent = over ? (lang === 'es' ? '⚠ EXCESO' : '⚠ OVER LIMIT')
+                                     : (lang === 'es' ? '🚛 MANEJANDO' : '🚛 DRIVING');
+      statusBadge.className = 'speedo-status ' + (over ? 'over-speed' : 'moving');
+    }
   } else {
     num.className = 'speedo-num stopped';
     ring.className = 'speedo-ring stopped';
     arc.style.stroke = '#6b7280';
-    label.textContent = lang === 'es' ? 'DETENIDO' : 'STOPPED';
+    label.textContent = 'GPS SPEED';
+    if (statusBadge) {
+      statusBadge.textContent = lang === 'es' ? '⏸ DETENIDO' : '⏸ STOPPED';
+      statusBadge.className = 'speedo-status';
+    }
   }
 
   // Arc: max speed = 100mph = full circle (345 dasharray units)
