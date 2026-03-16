@@ -1577,41 +1577,68 @@
   /* ── DRIVING HOURS WIDGET ───────────────────────────────── */
   #driveHoursWidget {
     position: fixed;
-    bottom: calc(var(--tab-h) + 120px);
-    left: calc(14px + env(safe-area-inset-left, 0px));
+    bottom: calc(var(--tab-h) + 16px);
+    left: calc(10px + env(safe-area-inset-left, 0px));
     right: auto; top: auto; transform: none;
     z-index: 600;
     display: none;
     flex-direction: column;
     align-items: center;
     pointer-events: auto;
-    opacity: .88;
+    opacity: .95;
     cursor: grab;
     touch-action: none;
     user-select: none;
+    background: rgba(8,14,28,0.88);
+    backdrop-filter: blur(16px);
+    border-radius: 18px;
+    padding: 10px 14px 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 6px 30px rgba(0,0,0,0.6);
   }
   #driveHoursWidget.visible  { display: flex; }
   #driveHoursWidget.dragging { cursor: grabbing; opacity: 1; }
 
+  /* ELD-style drive hours widget row */
+  .dh-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dh-side {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 2px;
+    min-width: 38px;
+  }
+  .dh-side-val {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 13px; line-height: 1;
+    color: rgba(255,255,255,.85);
+    letter-spacing: .5px;
+  }
+  .dh-side-lbl {
+    font-size: 7px; font-weight: 800;
+    color: rgba(255,255,255,.35);
+    text-transform: uppercase; letter-spacing: .8px;
+  }
   .dh-ring {
     width: 90px; height: 90px;
     border-radius: 50%;
     background: rgba(8,14,28,0.97);
-    border: 3px solid #10b981;
-    box-shadow: 0 0 0 2px rgba(16,185,129,.18), 0 0 22px rgba(16,185,129,.32), 0 6px 24px rgba(0,0,0,.7);
+    border: none;
+    box-shadow: 0 0 0 2px rgba(16,185,129,.2), 0 0 24px rgba(16,185,129,.28), 0 6px 24px rgba(0,0,0,.7);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     position: relative;
     backdrop-filter: blur(20px);
-    transition: border-color .4s, box-shadow .4s;
+    transition: box-shadow .4s;
+    flex-shrink: 0;
   }
   .dh-ring.warn {
-    border-color: #f59e0b;
-    box-shadow: 0 0 0 2px rgba(245,158,11,.3), 0 0 22px rgba(245,158,11,.4), 0 6px 24px rgba(0,0,0,.7);
+    box-shadow: 0 0 0 2px rgba(245,158,11,.35), 0 0 22px rgba(245,158,11,.42), 0 6px 24px rgba(0,0,0,.7);
   }
   .dh-ring.critical {
-    border-color: #ef4444;
-    box-shadow: 0 0 0 2px rgba(239,68,68,.35), 0 0 26px rgba(239,68,68,.55), 0 6px 24px rgba(0,0,0,.7);
+    box-shadow: 0 0 0 2px rgba(239,68,68,.4), 0 0 28px rgba(239,68,68,.58), 0 6px 24px rgba(0,0,0,.7);
     animation: dhPulse 1.2s ease-in-out infinite;
   }
   @keyframes dhPulse {
@@ -1633,14 +1660,14 @@
   .dh-hrs.warn     { color: #f59e0b; }
   .dh-hrs.critical { color: #ef4444; }
   .dh-unit {
-    font-size: 9px; font-weight: 800;
-    color: rgba(255,255,255,.45); letter-spacing: 1.2px;
-    text-transform: uppercase; z-index: 1; margin-top: 0px;
+    font-size: 8px; font-weight: 800;
+    color: rgba(255,255,255,.4); letter-spacing: 1px;
+    text-transform: uppercase; z-index: 1; margin-top: 1px;
   }
   .dh-label {
     font-size: 9px; font-weight: 700;
-    color: rgba(255,255,255,.35); letter-spacing: .6px;
-    margin-top: 4px; text-align: center;
+    color: rgba(255,255,255,.3); letter-spacing: .5px;
+    margin-top: 5px; text-align: center;
     white-space: nowrap;
   }
   .speedo-ring {
@@ -2244,8 +2271,7 @@
   --stack-size: 90px;
 }
 
-/* Right stack (portrait/mobile) — Drive Hours + SOS + Weather from bottom */
-#driveHoursWidget,
+/* Right stack (portrait/mobile) — SOS + Weather from bottom-right */
 #sosFab,
 #weatherWidget{
   right: var(--stack-right) !important;
@@ -2253,11 +2279,13 @@
   top: auto !important;
   transform: none !important;
 }
-
-/* Sizes + spacing — bottom-right stack (portrait) */
+/* Drive hours widget stays bottom-left */
 #driveHoursWidget{
+  left: calc(10px + env(safe-area-inset-left,0px)) !important;
+  right: auto !important;
   bottom: calc(var(--stack-base) + 0px) !important;
 }
+
 #sosFab{
   position: fixed !important;
   bottom: calc(var(--stack-base) + (var(--stack-size) + var(--stack-gap)) * 1) !important;
@@ -2394,12 +2422,11 @@ body.map-active #driveHoursWidget{
 #speedometerWidget.over-limit .speedo-num{ color:#ef4444 !important; }
 #speedometerWidget.over-limit .speedo-label{ color:rgba(255,255,255,.85) !important; }
 
-/* Drive hours: grow when driving */
-#driveHoursWidget.boost{ transform: scale(1.1) !important; opacity:1 !important; }
+/* Drive hours: subtle highlight when driving */
+#driveHoursWidget.boost{ opacity:1 !important; }
 #driveHoursWidget.driving-active{
-  transform: scale(1.15) !important;
   opacity:1 !important;
-  filter: drop-shadow(0 0 18px rgba(16,185,129,.6));
+  box-shadow: 0 0 0 1px rgba(16,185,129,.35), 0 8px 32px rgba(0,0,0,.7), 0 0 20px rgba(16,185,129,.25) !important;
 }
 #driveHoursWidget{ transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s, filter .3s; transform-origin: left top; }
 #driveHoursWidget.blink{ animation: dhBlink 1s infinite; }
@@ -7553,25 +7580,35 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
      DRIVING HOURS WIDGET (left side)
 ══════════════════════════════════════ -->
 <div id="driveHoursWidget">
-  <div class="dh-ring" id="dhRing">
-    <!-- Arc SVG — full circle track + colored arc -->
-    <svg class="dh-svg" viewBox="0 0 100 100">
-      <!-- Track -->
-      <circle cx="50" cy="50" r="42" fill="none"
-              stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
-      <!-- Colored arc — starts at top, goes clockwise -->
-      <circle cx="50" cy="50" r="42" fill="none"
-              stroke="#10b981" stroke-width="5"
-              stroke-linecap="round"
-              stroke-dasharray="0 264"
-              id="dhArc"
-              transform="rotate(-220 50 50)"
-              style="transition:stroke-dasharray .8s ease, stroke .4s"/>
-    </svg>
-    <div class="dh-hrs" id="dhHrs">11h</div>
-    <div class="dh-unit">HRS</div>
+  <!-- ELD-style: side labels + ring -->
+  <div class="dh-row">
+    <div class="dh-side">
+      <span class="dh-side-val" id="dhMaxLabel">11:00</span>
+      <span class="dh-side-lbl">MAX</span>
+    </div>
+    <div class="dh-ring" id="dhRing">
+      <svg class="dh-svg" viewBox="0 0 100 100">
+        <!-- Track (gray) -->
+        <circle cx="50" cy="50" r="42" fill="none"
+                stroke="rgba(255,255,255,0.12)" stroke-width="6"/>
+        <!-- Colored remaining arc -->
+        <circle cx="50" cy="50" r="42" fill="none"
+                stroke="#10b981" stroke-width="6"
+                stroke-linecap="round"
+                stroke-dasharray="0 264"
+                id="dhArc"
+                transform="rotate(-90 50 50)"
+                style="transition:stroke-dasharray .8s ease, stroke .4s"/>
+      </svg>
+      <div class="dh-hrs" id="dhHrs">11h</div>
+      <div class="dh-unit" id="dhUnit">MANEJO</div>
+    </div>
+    <div class="dh-side">
+      <span class="dh-side-val" id="dhUsedLabel">00:00</span>
+      <span class="dh-side-lbl">USADO</span>
+    </div>
   </div>
-  <div class="dh-label" id="dhLabel">DRIVING LEFT</div>
+  <div class="dh-label" id="dhLabel">HORAS DE MANEJO</div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -8523,10 +8560,8 @@ let wasMoving = false;
 
 
 function showSpeedometer() {
-  document.getElementById('speedometerWidget').classList.add('visible');
+  // Floating speedometer removed from map — speed shown in mapSpeedSign "YOUR SPEED"
   speedoVisible = true;
-  // Apply saved/default position so it's draggable immediately
-  setTimeout(applySpeedometerPos, 30);
 }
 
 function hideSpeedometer() {
@@ -8536,8 +8571,8 @@ function hideSpeedometer() {
 
 /* ── DRIVING HOURS WIDGET ─────────────────────────────────── */
 function showDriveHoursWidget() {
-  // driveHoursWidget removed from map — ring lives in HUD bottom bar
-  // document.getElementById('driveHoursWidget').classList.add('visible');
+  const w = document.getElementById('driveHoursWidget');
+  if (w) { w.classList.add('visible'); applyDriveHoursPos(); }
 }
 
 function hideDriveHoursWidget() {
@@ -8565,11 +8600,24 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   const label = document.getElementById('dhLabel');
   if (!ring) return;
 
-  // Format label
+  // Format center label (remaining)
   const totalMins = Math.round(hoursLeft * 60);
   const h = Math.floor(totalMins / 60);
   const m = totalMins % 60;
   hrs.textContent = h > 0 ? `${h}h${m > 0 ? m : ''}` : `${m}m`;
+
+  // ELD-style side labels: MAX (left) and USED (right)
+  const maxEl   = document.getElementById('dhMaxLabel');
+  const usedEl  = document.getElementById('dhUsedLabel');
+  if (maxEl) {
+    const maxH = Math.floor(maxHours); const maxM = Math.round((maxHours - maxH) * 60);
+    maxEl.textContent = `${String(maxH).padStart(2,'0')}:${String(maxM).padStart(2,'0')}`;
+  }
+  if (usedEl) {
+    const elapsedH = maxHours - hoursLeft;
+    const eH = Math.floor(elapsedH); const eM = Math.round((elapsedH - eH) * 60);
+    usedEl.textContent = `${String(eH).padStart(2,'0')}:${String(Math.max(0,eM)).padStart(2,'0')}`;
+  }
 
   // Severity state
   const isWarn     = hoursLeft < 4 && hoursLeft >= 2;
@@ -8581,9 +8629,9 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   const arcColor = isCritical ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981';
   arc.style.stroke = arcColor;
 
-  // Arc length: 264 units = full circle (r=42, circumference≈263.9)
+  // Arc length: full circle r=42 circumference = 2π×42 ≈ 263.9
   const pct    = Math.max(0, Math.min(1, hoursLeft / Math.max(1, maxHours)));
-  const dashLen = pct * 227; // 227 ≈ 86% of circumference (matches -220deg start)
+  const dashLen = pct * 263.9;
   arc.setAttribute('stroke-dasharray', `${dashLen.toFixed(1)} 264`);
 
   // Label
