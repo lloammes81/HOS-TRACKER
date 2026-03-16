@@ -2731,21 +2731,36 @@ body.dark #fullMap .leaflet-tile-pane {
   /* ════════════════════════════════════════════════════════════
      🗺️  COMMUNITY REPORTS PANEL (mejorado)
   ════════════════════════════════════════════════════════════ */
-  /* ── DRIVER CHAT PANEL ── */
+  /* ── DRIVER CHAT PANEL (floating window) ── */
   #chatPanel {
-    position:fixed;inset:0;z-index:9000;
-    background:rgba(0,0,0,.82);
-    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    display:none;flex-direction:column;align-items:center;justify-content:flex-end;
+    position:fixed;z-index:9000;
+    display:none;
+    bottom:100px;right:16px;
+    width:360px;
+    /* hidden by default */
   }
-  #chatPanel.open{display:flex;animation:tcFadeIn .25s ease;}
+  #chatPanel.open{display:block;animation:tcFadeIn .22s ease;}
   #chatSheet{
-    width:100%;max-width:540px;
+    width:100%;
     background:var(--surface);
-    border-radius:24px 24px 0 0;
-    height:88vh;display:flex;flex-direction:column;
-    box-shadow:0 -8px 48px rgba(0,0,0,.5);
-    animation:sheetUp .3s cubic-bezier(.16,1,.3,1);
+    border-radius:18px;
+    height:520px;display:flex;flex-direction:column;
+    box-shadow:0 12px 56px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.07);
+    overflow:hidden;
+  }
+  /* Minimised state: collapse to just the header */
+  #chatPanel.minimised #chatSheet { height:56px; }
+  #chatPanel.minimised #chatChannelBar,
+  #chatPanel.minimised #chatMessages,
+  #chatPanel.minimised #chatInputWrap { display:none; }
+  /* Drag handle overlay on header */
+  #chatDragHandle {
+    position:absolute;top:0;left:0;right:0;height:52px;cursor:grab;z-index:1;
+  }
+  #chatDragHandle:active { cursor:grabbing; }
+  /* Small screen: full-width sheet */
+  @media(max-width:420px){
+    #chatPanel { width:calc(100vw - 16px); right:8px; bottom:90px; }
   }
   #chatChannelBar{
     display:flex;gap:6px;padding:8px 16px 4px;flex-shrink:0;
@@ -16328,17 +16343,67 @@ function incrementUserReports() {
   window.openChatPanel = function() {
     chatOpen = true;
     chatUnread = 0;
-    document.getElementById('chatPanel').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    const panel = document.getElementById('chatPanel');
+    panel.classList.add('open');
+    panel.classList.remove('minimised');
+    // Reset minimise button label
+    const minBtn = document.getElementById('chatMinBtn');
+    if (minBtn) minBtn.textContent = '—';
     loadChannel(chatChannel);
   };
 
   window.closeChatPanel = function() {
     chatOpen = false;
     document.getElementById('chatPanel').classList.remove('open');
-    document.body.style.overflow = '';
     if (chatUnsub) { chatUnsub(); chatUnsub = null; }
   };
+
+  window.toggleChatMinimise = function() {
+    const panel = document.getElementById('chatPanel');
+    const isMin = panel.classList.toggle('minimised');
+    const minBtn = document.getElementById('chatMinBtn');
+    if (minBtn) minBtn.textContent = isMin ? '▲' : '—';
+  };
+
+  /* ── Drag to move ──────────────────────────────────── */
+  (function initChatDrag() {
+    const handle = document.getElementById('chatDragHandle');
+    const panel  = document.getElementById('chatPanel');
+    if (!handle || !panel) return;
+
+    let dragging = false, ox = 0, oy = 0;
+
+    function onStart(e) {
+      dragging = true;
+      const touch = e.touches ? e.touches[0] : e;
+      ox = touch.clientX - panel.getBoundingClientRect().left;
+      oy = touch.clientY - panel.getBoundingClientRect().top;
+      panel.style.transition = 'none';
+      e.preventDefault();
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      const touch = e.touches ? e.touches[0] : e;
+      let nx = touch.clientX - ox;
+      let ny = touch.clientY - oy;
+      // Clamp within viewport
+      nx = Math.max(0, Math.min(nx, window.innerWidth  - panel.offsetWidth));
+      ny = Math.max(0, Math.min(ny, window.innerHeight - panel.offsetHeight));
+      panel.style.right  = 'auto';
+      panel.style.bottom = 'auto';
+      panel.style.left   = nx + 'px';
+      panel.style.top    = ny + 'px';
+      e.preventDefault();
+    }
+    function onEnd() { dragging = false; }
+
+    handle.addEventListener('mousedown',  onStart, { passive: false });
+    handle.addEventListener('touchstart', onStart, { passive: false });
+    window.addEventListener('mousemove',  onMove,  { passive: false });
+    window.addEventListener('touchmove',  onMove,  { passive: false });
+    window.addEventListener('mouseup',    onEnd);
+    window.addEventListener('touchend',   onEnd);
+  })();
 
   /* ── Channel switch ────────────────────────────────── */
   window.switchChatChannel = function(ch, btn) {
@@ -16483,18 +16548,24 @@ FIREBASE_CONFIG = {
 <!-- ══════════════════════════════════════════════════════════
      💬  DRIVER CHAT PANEL
 ══════════════════════════════════════════════════════════ -->
-<div id="chatPanel" onclick="if(event.target===this)closeChatPanel()">
+<div id="chatPanel">
+  <!-- Invisible drag handle (covers header) -->
+  <div id="chatDragHandle"></div>
   <div id="chatSheet">
     <!-- Header -->
-    <div class="tool-hdr" style="padding:14px 20px 8px">
-      <div class="tool-hdr-left">
-        <div class="tool-hdr-icon" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">💬</div>
+    <div class="tool-hdr" style="padding:10px 14px 8px;flex-shrink:0;">
+      <div class="tool-hdr-left" style="gap:10px;">
+        <div class="tool-hdr-icon" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);width:34px;height:34px;font-size:16px;">💬</div>
         <div>
-          <div class="tool-hdr-title" id="chatPanelTitle">Driver Chat</div>
-          <div class="tool-hdr-sub" id="chatPanelSub">Talk with truckers on the road</div>
+          <div class="tool-hdr-title" id="chatPanelTitle" style="font-size:15px;">Driver Chat</div>
+          <div class="tool-hdr-sub" id="chatPanelSub" style="font-size:11px;">Talk with truckers on the road</div>
         </div>
       </div>
-      <button class="tool-close" onclick="closeChatPanel()">×</button>
+      <div style="display:flex;gap:4px;align-items:center;position:relative;z-index:2;">
+        <button id="chatMinBtn" onclick="toggleChatMinimise()" title="Minimizar"
+          style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">—</button>
+        <button class="tool-close" onclick="closeChatPanel()" style="width:28px;height:28px;font-size:20px;line-height:1;">×</button>
+      </div>
     </div>
 
     <!-- Channel selector -->
