@@ -11031,6 +11031,7 @@ let fmLayer      = null;
 let fmGpsMarker  = null;  // the animated truck
 let fmAccMarker  = null;  // accuracy circle
 let fmWatchId    = null;
+let fmWakeLock   = null;  // Screen Wake Lock to keep GPS running
 let fmTripStart  = null;
 let fmDriveSeconds = 0;    // accumulated moving time in seconds
 let fmLastMoveTime = null; // timestamp of last GPS fix when moving
@@ -11622,6 +11623,25 @@ function fmStartTracking() {
   }
 
   // ── STEP 5: Live tracking ─────────────────────────────────
+  // Pause warm-cache watcher so only one GPS watcher runs (avoids conflicts)
+  if (_gpsWarmId != null) {
+    navigator.geolocation.clearWatch(_gpsWarmId);
+    _gpsWarmId = null;
+  }
+
+  // Request Wake Lock so screen/browser doesn't pause GPS when idle
+  if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').then(wl => {
+      fmWakeLock = wl;
+      // Re-acquire if released by system (e.g. tab went background then returned)
+      fmWakeLock.addEventListener('release', () => {
+        if (fmIsTracking && 'wakeLock' in navigator) {
+          navigator.wakeLock.request('screen').then(wl2 => { fmWakeLock = wl2; }).catch(() => {});
+        }
+      });
+    }).catch(() => {});
+  }
+
   fmIsTracking  = true;
   fmTripStart    = new Date();
   fmDriveSeconds = 0;
@@ -11902,12 +11922,16 @@ function fmStartTracking() {
 
   }, () => {
     document.getElementById('fmLocVal').textContent = '⚠️ Weak GPS signal';
-  }, { enableHighAccuracy: true, maximumAge: 1500, timeout: 15000 });
+  }, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
 }
 
 function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   fmIsTracking = false;
+  // Release Wake Lock
+  if (fmWakeLock) { fmWakeLock.release().catch(() => {}); fmWakeLock = null; }
+  // Restart warm-cache watcher now that tracking is stopped
+  startGPSWarm();
   fmVehicleMoving = false;
   fmCurrentSpeed = 0;
   fmPrevLat = null; fmPrevLon = null;
@@ -14132,6 +14156,24 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     const txt = document.getElementById('originLabelText');
     if (txt) txt.textContent = 'GPS no disponible';
+  }
+});
+
+// When app returns to foreground, resume GPS so real-time position continues
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (fmIsTracking) {
+      // Force one immediate GPS fix to wake up the chip after background pause
+      navigator.geolocation.getCurrentPosition(() => {}, () => {},
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+      // Re-acquire wake lock if system released it while in background
+      if (!fmWakeLock && 'wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').then(wl => { fmWakeLock = wl; }).catch(() => {});
+      }
+    } else if (_gpsWarmId == null) {
+      // Not tracking — restart warm cache if it died
+      startGPSWarm();
+    }
   }
 });
 
