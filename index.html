@@ -5760,7 +5760,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <div class="sett-icon" style="background:#d1fae5">🛣️</div>
             <div style="flex:1">
               <div class="sett-label" style="margin:0">Límite de Velocidad</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="speedLimitStatusTxt">Muestra límite por estado</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="speedLimitStatusTxt">Límite real de la vía actual</div>
             </div>
             <button class="sett-toggle on" id="speedLimitToggle" onclick="toggleSpeedLimit(this)"></button>
           </div>
@@ -9035,13 +9035,14 @@ let speedLimitActive   = localStorage.getItem('hos_speedlimit') !== 'false';
 let speedLimitExceeded = false;
 let speedToastTimer    = null;
 let lastStateCheck     = 0;
+let lastRoadSpeedCheck = 0;
 
 function toggleSpeedLimit(btn) {
   speedLimitActive = !speedLimitActive;
   localStorage.setItem('hos_speedlimit', speedLimitActive);
   btn.classList.toggle('on', speedLimitActive);
   document.getElementById('speedLimitStatusTxt').textContent =
-    speedLimitActive ? 'Muestra límite por estado' : 'Desactivado';
+    speedLimitActive ? 'Límite real de la vía actual' : 'Desactivado';
   if (!speedLimitActive) {
     document.getElementById('speedLimitWidget').classList.remove('visible');
   }
@@ -9101,6 +9102,91 @@ async function detectStateAndUpdateLimit(lat, lon) {
   } catch(e) {}
 }
 
+// ── parseOsmMaxspeed ────────────────────────────────────────────────────────
+// Converts an OSM maxspeed tag value (e.g. "65 mph", "105 km/h", "65") to mph.
+// isMetric = true when the truck is in a country that uses km/h (CAN, MX).
+function parseOsmMaxspeed(raw, isMetric) {
+  if (!raw) return null;
+  const s = raw.trim();
+  if (/^(none|signals|variable|walk|living_street|national|urban|rural)$/i.test(s)) return null;
+  const mphMatch = s.match(/^(\d+)\s*mph$/i);
+  if (mphMatch) return parseInt(mphMatch[1], 10);
+  const kmhMatch = s.match(/^(\d+)\s*(?:km\/h|kph)$/i);
+  if (kmhMatch) return Math.round(parseInt(kmhMatch[1], 10) / 1.60934);
+  const numMatch = s.match(/^(\d+)$/);
+  if (numMatch) {
+    const v = parseInt(numMatch[1], 10);
+    return isMetric ? Math.round(v / 1.60934) : v;
+  }
+  return null;
+}
+
+// ── fetchRoadSpeedLimit ─────────────────────────────────────────────────────
+// Queries Overpass for the maxspeed of the road the truck is currently on.
+// Updates the map speed sign with the real road limit (falls back to state
+// limit when OSM has no maxspeed tag for the nearest way).
+async function fetchRoadSpeedLimit(lat, lon) {
+  if (!speedLimitActive) return;
+  const now = Date.now();
+  if (now - lastRoadSpeedCheck < 10000) return; // at most every 10 s
+  lastRoadSpeedCheck = now;
+
+  const isMetric = ['ON', 'BC', 'AB', 'QC', 'MX'].includes(currentStateCode);
+  try {
+    // Find ways within 30 m that carry road traffic (not footpaths, etc.)
+    const query =
+      `[out:json][timeout:5];` +
+      `way(around:30,${lat},${lon})` +
+      `[highway~"^(motorway|motorway_link|trunk|trunk_link|primary|primary_link|` +
+      `secondary|secondary_link|tertiary|tertiary_link|unclassified|residential)$"];` +
+      `out tags 8;`;
+    const r = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: query,
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!r.ok) return;
+    const d = await r.json();
+
+    // Sort by road importance so we read the trunk/primary before a residential
+    const prio = ['motorway','motorway_link','trunk','trunk_link',
+                  'primary','primary_link','secondary','secondary_link',
+                  'tertiary','tertiary_link','unclassified','residential'];
+    const els = (d.elements || []).sort((a, b) =>
+      prio.indexOf(a.tags?.highway) - prio.indexOf(b.tags?.highway));
+
+    for (const el of els) {
+      // Prefer truck-specific limit (maxspeed:hgv) over general maxspeed
+      const raw = el.tags?.['maxspeed:hgv'] || el.tags?.maxspeed;
+      if (!raw) continue;
+      const mph = parseOsmMaxspeed(raw, isMetric);
+      if (mph && mph >= 5 && mph <= 120) {
+        if (mph !== currentTruckSpeedLimit) {
+          currentTruckSpeedLimit = mph;
+          const unit = isMetric ? 'km/h' : 'mph';
+          const num     = document.getElementById('mssNum');
+          const diff    = document.getElementById('mssDiff');
+          const mssSign = document.getElementById('mssSign');
+          const slNum   = document.getElementById('slNum');
+          if (num)  num.textContent  = mph;
+          if (slNum) slNum.textContent = mph;
+          if (diff) diff.textContent = `Road limit · ${mph} ${unit}`;
+          if (mssSign) { mssSign.classList.remove('new'); void mssSign.offsetWidth; mssSign.classList.add('new'); }
+          document.getElementById('mapSpeedSign')?.classList.add('visible');
+          document.getElementById('speedLimitWidget')?.classList.add('visible');
+        }
+        return;
+      }
+    }
+
+    // No road-level maxspeed found → fall back to state-based limit
+    const stateLimits = STATE_SPEED_LIMITS[currentStateCode];
+    if (stateLimits && currentTruckSpeedLimit !== stateLimits.truck) {
+      updateMapSpeedSign(stateLimits.truck, stateLimits.car, currentStateCode, currentStateCode);
+    }
+  } catch(e) {}
+}
+
 function updateMapSpeedSign(truckMph, carMph, code, stateName) {
   currentTruckSpeedLimit = Number(truckMph) || null;
 
@@ -9133,13 +9219,12 @@ function hideMapSpeedSign() {
 }
 
 function checkSpeedLimit(gpsSpeed) {
-  if (!speedLimitActive || !currentStateCode) return;
-  const limits = STATE_SPEED_LIMITS[currentStateCode];
-  if (!limits) return;
+  if (!speedLimitActive || !currentTruckSpeedLimit) return;
+  const limit   = currentTruckSpeedLimit;
   const sign    = document.getElementById('slSign');
   const mssSign = document.getElementById('mssSign');
   const toast   = document.getElementById('speedToast');
-  const overLimit = gpsSpeed > limits.truck + 5;
+  const overLimit = gpsSpeed > limit + 5;
 
   if (sign)    sign.classList.toggle('over-limit', overLimit);
   if (mssSign) mssSign.classList.toggle('warn', overLimit);
@@ -9148,7 +9233,7 @@ function checkSpeedLimit(gpsSpeed) {
     if (!speedLimitExceeded) {
       speedLimitExceeded = true;
       toast.classList.add('show');
-      toast.textContent = `🚨 ${gpsSpeed} mph — Límite: ${limits.truck} mph`;
+      toast.textContent = `🚨 ${gpsSpeed} mph — Límite: ${limit} mph`;
       vibrate([200,100,200]);
       if (speedToastTimer) clearTimeout(speedToastTimer);
       speedToastTimer = setTimeout(() => {
@@ -11544,6 +11629,7 @@ function fmStartTracking() {
   fmLastGeocode = 0;
   lastStateCheck = 0;
   lastFuelCheck  = 0;
+  lastRoadSpeedCheck = 0;
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
   showDriveHoursWidget();
@@ -11808,6 +11894,7 @@ function fmStartTracking() {
 
     // ── Detect state + fetch cheap fuel (throttled) ──────────
     detectStateAndUpdateLimit(lat, lon);
+    fetchRoadSpeedLimit(lat, lon);
     fetchCheapFuel(lat, lon);
 
     // ── Arrival ─────────────────────────────────────────────
