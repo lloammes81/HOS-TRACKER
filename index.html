@@ -10023,10 +10023,15 @@ function showSuggestions(containerId, items, onSelect) {
 // TRUCK ICON (customizable)
 // ==============================
 function getTruckIconHTML(sizePx=26) {
-  // Priority: uploaded image if selected
+  // Priority 1: current user profile photo — shown as a circle
+  if (typeof currentUser !== 'undefined' && currentUser && currentUser.photoData) {
+    const s = Math.max(20, sizePx + 8);
+    return `<img alt="foto" src="${currentUser.photoData}" style="width:${s}px;height:${s}px;object-fit:cover;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:block;" />`;
+  }
+  // Priority 2: uploaded image if selected
   if (truckIconMode && truckIconMode.startsWith('upload:') && truckUploadData) {
-    const s = Math.max(18, sizePx + 8);
-    return `<img alt="truck" src="${truckUploadData}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25));border-radius:10px" />`;
+    const s = Math.max(20, sizePx + 8);
+    return `<img alt="truck" src="${truckUploadData}" style="width:${s}px;height:${s}px;object-fit:cover;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:block;" />`;
   }
   if (truckIconMode && truckIconMode.startsWith('img:')) {
     const url = truckIconMode.slice(4);
@@ -10039,11 +10044,15 @@ function getTruckIconHTML(sizePx=26) {
 }
 
 function getTruckLeafletIcon() {
+  const hasPhoto = (typeof currentUser !== 'undefined' && currentUser && currentUser.photoData)
+    || (truckIconMode && truckIconMode.startsWith('upload:') && truckUploadData);
+  const size = hasPhoto ? 40 : 44;
+  const anchor = size / 2;
   return L.divIcon({
     className: '',
     html: `<div style="display:flex;align-items:center;justify-content:center">${getTruckIconHTML(24)}</div>`,
-    iconSize: [44, 44],
-    iconAnchor: [22, 22]
+    iconSize: [size, size],
+    iconAnchor: [anchor, anchor]
   });
 }
 
