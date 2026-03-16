@@ -11256,54 +11256,102 @@ const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 let fmTruckEl = null;  // the inner div element for rotation
 
 function buildTruckIconHTML(heading, isMoving) {
-  const rot = heading != null ? heading : 0;
-  const cab  = isMoving ? '#10b981' : '#6b7280';   // cab color matches speedometer green
-  const trl  = isMoving ? '#0d9488' : '#4b5563';   // trailer slightly darker
-  const glow = isMoving ? 'rgba(16,185,129,0.55)' : 'rgba(107,114,128,0.3)';
-  const tire  = isMoving ? '#10b981' : '#6b7280';
+  const rot  = heading != null ? heading : 0;
+  const cab  = isMoving ? '#10b981' : '#6b7280';
+  const trl  = isMoving ? '#0a7a65' : '#374151';
+  const tire = isMoving ? '#10b981' : '#4b5563';
+  const hl   = isMoving ? '#fef08a' : '#9ca3af';
+  // Top-down 18-wheeler: facing UP (north). viewBox 48x108.
+  // Front = top (y=0). Rear = bottom (y=108).
+  // Wheels: 2 steer + 8 drive (tandem) + 8 trailer (tandem) = 18 total.
   return `
     <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
          style="transform:rotate(${rot}deg);transition:transform 0.6s cubic-bezier(.4,0,.2,1)">
       <div class="truck-glow"></div>
       <div class="truck-pulse"></div>
-      <svg viewBox="0 0 40 72" width="40" height="72" style="position:relative;z-index:1;filter:drop-shadow(0 3px 10px rgba(0,0,0,.65))">
-        <!-- ── TRAILER body ── -->
-        <rect x="8" y="22" width="24" height="38" rx="2" fill="${trl}" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
-        <!-- trailer ribs -->
-        <line x1="8" y1="32" x2="32" y2="32" stroke="rgba(255,255,255,.12)" stroke-width=".8"/>
-        <line x1="8" y1="42" x2="32" y2="42" stroke="rgba(255,255,255,.12)" stroke-width=".8"/>
-        <line x1="8" y1="52" x2="32" y2="52" stroke="rgba(255,255,255,.12)" stroke-width=".8"/>
-        <!-- trailer rear reflector strip -->
-        <rect x="8" y="57" width="24" height="2" rx="1" fill="rgba(255,200,0,0.7)"/>
-        <!-- ── rear axle tires (dual) ── -->
-        <rect x="4"  y="48" width="4" height="8" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
-        <rect x="32" y="48" width="4" height="8" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
-        <rect x="4"  y="56" width="4" height="8" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
-        <rect x="32" y="56" width="4" height="8" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
-        <!-- ── fifth wheel coupling ── -->
-        <ellipse cx="20" cy="24" rx="5" ry="3" fill="rgba(0,0,0,.4)" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>
-        <!-- ── CAB body ── -->
-        <rect x="9" y="4" width="22" height="20" rx="4" fill="${cab}" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
-        <!-- cab windshield -->
-        <rect x="12" y="7" width="16" height="9" rx="2" fill="rgba(180,230,255,0.75)" stroke="rgba(255,255,255,.4)" stroke-width=".8"/>
-        <!-- cab hood bulge -->
-        <rect x="13" y="3" width="14" height="5" rx="2" fill="${cab}" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
-        <!-- ── front bumper ── -->
-        <rect x="10" y="1" width="20" height="3" rx="1.5" fill="rgba(255,255,255,.5)"/>
-        <!-- ── headlights ── -->
-        <ellipse cx="13" cy="2.5" rx="2.5" ry="1.5" fill="${isMoving?'#fef08a':'#d1d5db'}"/>
-        <ellipse cx="27" cy="2.5" rx="2.5" ry="1.5" fill="${isMoving?'#fef08a':'#d1d5db'}"/>
-        <!-- ── front axle tires ── -->
-        <rect x="4"  y="16" width="5" height="7" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
-        <rect x="31" y="16" width="5" height="7" rx="1.5" fill="#1e293b" stroke="${tire}" stroke-width="1.2"/>
-        <!-- ── exhaust stacks (top of cab) ── -->
-        <rect x="10" y="5" width="2" height="6" rx="1" fill="#374151" stroke="rgba(255,255,255,.2)" stroke-width=".5"/>
-        <rect x="28" y="5" width="2" height="6" rx="1" fill="#374151" stroke="rgba(255,255,255,.2)" stroke-width=".5"/>
-        ${isMoving ? `<!-- exhaust smoke -->
-        <circle cx="11" cy="4" r="1.5" fill="rgba(200,200,200,0.4)"/>
-        <circle cx="29" cy="4" r="1.5" fill="rgba(200,200,200,0.4)"/>` : ''}
-        <!-- ── direction arrow on cab ── -->
-        <polygon points="20,0 17,5 23,5" fill="${isMoving?'#fef08a':'rgba(255,255,255,.4)'}"/>
+      <svg viewBox="0 0 48 108" width="44" height="99" style="position:relative;z-index:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.7))">
+
+        <!-- ══ CAB ══ -->
+        <!-- Hood / engine cover -->
+        <rect x="13" y="4" width="22" height="16" rx="3" fill="${cab}" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+        <!-- Hood vents -->
+        <line x1="17" y1="8"  x2="31" y2="8"  stroke="rgba(0,0,0,.3)" stroke-width=".8"/>
+        <line x1="17" y1="11" x2="31" y2="11" stroke="rgba(0,0,0,.3)" stroke-width=".8"/>
+        <line x1="17" y1="14" x2="31" y2="14" stroke="rgba(0,0,0,.3)" stroke-width=".8"/>
+        <!-- Front bumper -->
+        <rect x="11" y="1" width="26" height="4" rx="2" fill="rgba(200,200,200,.7)" stroke="rgba(255,255,255,.4)" stroke-width=".5"/>
+        <!-- Headlights -->
+        <rect x="11" y="1" width="7" height="4" rx="1.5" fill="${hl}" opacity=".9"/>
+        <rect x="30" y="1" width="7" height="4" rx="1.5" fill="${hl}" opacity=".9"/>
+        <!-- Exhaust stacks (left & right of hood) -->
+        <rect x="12" y="5" width="3" height="11" rx="1.5" fill="#1f2937" stroke="rgba(255,255,255,.15)" stroke-width=".5"/>
+        <rect x="33" y="5" width="3" height="11" rx="1.5" fill="#1f2937" stroke="rgba(255,255,255,.15)" stroke-width=".5"/>
+        ${isMoving ? `<circle cx="13.5" cy="4.5" r="2.5" fill="rgba(210,210,210,.45)"/>
+        <circle cx="34.5" cy="4.5" r="2.5" fill="rgba(210,210,210,.45)"/>` : ''}
+        <!-- Steer axle (1 tire each side — 2 total) -->
+        <rect x="3"  y="10" width="10" height="6" rx="2" fill="#111827" stroke="${tire}" stroke-width="1.3"/>
+        <rect x="35" y="10" width="10" height="6" rx="2" fill="#111827" stroke="${tire}" stroke-width="1.3"/>
+        <!-- Windshield -->
+        <rect x="12" y="20" width="24" height="10" rx="2" fill="rgba(147,210,255,.85)" stroke="rgba(255,255,255,.5)" stroke-width=".8"/>
+        <!-- Cab body (sleeper) -->
+        <rect x="10" y="4" width="28" height="36" rx="4" fill="none" stroke="${cab}" stroke-width="2"/>
+        <rect x="11" y="30" width="26" height="10" rx="2" fill="${trl}" opacity=".65"/>
+        <!-- Cab roof marker lights -->
+        <circle cx="19" cy="3" r="1.2" fill="rgba(255,120,0,.8)"/>
+        <circle cx="24" cy="3" r="1.2" fill="rgba(255,120,0,.8)"/>
+        <circle cx="29" cy="3" r="1.2" fill="rgba(255,120,0,.8)"/>
+        <!-- Drive axle tandem (2 axles × 4 dual tires = 8 total) -->
+        <!-- Axle 1 left outer/inner -->
+        <rect x="2"  y="27" width="8" height="5" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
+        <rect x="10" y="27" width="5" height="5" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
+        <!-- Axle 1 right inner/outer -->
+        <rect x="33" y="27" width="5" height="5" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
+        <rect x="38" y="27" width="8" height="5" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
+        <!-- Axle 2 left outer/inner -->
+        <rect x="2"  y="33" width="8" height="5" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
+        <rect x="10" y="33" width="5" height="5" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
+        <!-- Axle 2 right inner/outer -->
+        <rect x="33" y="33" width="5" height="5" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
+        <rect x="38" y="33" width="8" height="5" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
+
+        <!-- ══ FIFTH WHEEL + KINGPIN ══ -->
+        <ellipse cx="24" cy="45" rx="8" ry="5" fill="rgba(0,0,0,.5)" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+        <circle  cx="24" cy="45" r="2.5"        fill="rgba(255,255,255,.2)"/>
+
+        <!-- ══ TRAILER ══ -->
+        <!-- Trailer body -->
+        <rect x="9" y="50" width="30" height="54" rx="2" fill="${trl}" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+        <!-- Corrugated ribs -->
+        <line x1="9" y1="62"  x2="39" y2="62"  stroke="rgba(255,255,255,.1)" stroke-width="1.2"/>
+        <line x1="9" y1="72"  x2="39" y2="72"  stroke="rgba(255,255,255,.1)" stroke-width="1.2"/>
+        <line x1="9" y1="82"  x2="39" y2="82"  stroke="rgba(255,255,255,.1)" stroke-width="1.2"/>
+        <line x1="9" y1="92"  x2="39" y2="92"  stroke="rgba(255,255,255,.1)" stroke-width="1.2"/>
+        <!-- Trailer side rails -->
+        <rect x="9"  y="50" width="3" height="54" rx="1" fill="rgba(255,255,255,.06)"/>
+        <rect x="36" y="50" width="3" height="54" rx="1" fill="rgba(255,255,255,.06)"/>
+        <!-- Trailer axle tandem (2 axles × 4 dual tires = 8 total) -->
+        <!-- Axle 1 left outer/inner -->
+        <rect x="1"  y="75" width="9" height="6" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
+        <rect x="10" y="75" width="5" height="6" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
+        <!-- Axle 1 right inner/outer -->
+        <rect x="33" y="75" width="5" height="6" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
+        <rect x="38" y="75" width="9" height="6" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
+        <!-- Axle 2 left outer/inner -->
+        <rect x="1"  y="82" width="9" height="6" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
+        <rect x="10" y="82" width="5" height="6" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
+        <!-- Axle 2 right inner/outer -->
+        <rect x="33" y="82" width="5" height="6" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
+        <rect x="38" y="82" width="9" height="6" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
+        <!-- Rear bumper -->
+        <rect x="9" y="101" width="30" height="3" rx="1.5" fill="rgba(200,200,200,.5)"/>
+        <!-- Rear DOT reflector tape (orange + red) -->
+        <rect x="9"  y="100" width="8" height="2" rx="1" fill="rgba(255,60,0,.9)"/>
+        <rect x="17" y="100" width="7" height="2" rx="1" fill="rgba(255,200,0,.9)"/>
+        <rect x="24" y="100" width="7" height="2" rx="1" fill="rgba(255,60,0,.9)"/>
+        <rect x="31" y="100" width="8" height="2" rx="1" fill="rgba(255,200,0,.9)"/>
+        <!-- Rear red lights -->
+        <rect x="9"  y="99" width="5" height="3" rx="1" fill="rgba(220,30,30,.9)"/>
+        <rect x="34" y="99" width="5" height="3" rx="1" fill="rgba(220,30,30,.9)"/>
       </svg>
     </div>`;
 }
@@ -11360,7 +11408,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   if (!fmGpsMarker) {
     // First placement — create marker
     const html  = buildTruckIconHTML(heading, isMoving);
-    const icon  = L.divIcon({ className: '', html, iconAnchor: [20, 36], iconSize: [40, 72] });
+    const icon  = L.divIcon({ className: '', html, iconAnchor: [22, 22], iconSize: [44, 99] });
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
 
@@ -11373,7 +11421,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
     } else {
       // Wrapper gone (rare) — recreate icon
       const html = buildTruckIconHTML(heading, isMoving);
-      const icon = L.divIcon({ className: '', html, iconAnchor: [20, 36], iconSize: [40, 72] });
+      const icon = L.divIcon({ className: '', html, iconAnchor: [22, 22], iconSize: [44, 99] });
       fmGpsMarker.setIcon(icon);
       truckFrom = { lat, lon, heading: heading ?? 0 };
     }
@@ -11729,9 +11777,13 @@ function fmStartTracking() {
       else { if (typeof _orc !== 'undefined') _orc = 0; }
     }
 
-    // Recalculate heading from snapped position for accurate rotation
-    if ((!heading || heading < 0) && fmPrevLat != null && isMoving) {
+    // Always derive heading from consecutive snapped positions so the truck
+    // icon aligns with the actual road direction (GPS heading can lag or
+    // be wrong on curves; snapped positions are more accurate).
+    if (fmPrevLat != null && isMoving) {
       heading = calcHeading(fmPrevLat, fmPrevLon, snapLat, snapLon);
+    } else if (!heading || heading < 0) {
+      heading = fmLastHeading ?? 0;
     }
     if (isMoving) { fmPrevLat = snapLat; fmPrevLon = snapLon; }
     fmLastHeading = heading;
