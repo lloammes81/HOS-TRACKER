@@ -983,6 +983,66 @@
   #fullMapScreen #speedometerWidget,
   #fullMapScreen #driveHoursWidget,
   #fullMapScreen #mapSpeedSign { transition: opacity .4s ease; }
+
+  /* ── MAP ALT ROUTES TOP BAR ───────────────────────── */
+  #mapAltBar {
+    position: absolute;
+    top: calc(58px + env(safe-area-inset-top, 0px));
+    left: 0; right: 0;
+    z-index: 660;
+    padding: 0 10px;
+    display: none;
+    pointer-events: none;
+  }
+  #mapAltBar.show { display: block; }
+  #mapAltList {
+    display: flex; gap: 8px;
+    overflow-x: auto; padding: 6px 2px 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; pointer-events: all;
+  }
+  #mapAltList::-webkit-scrollbar { display: none; }
+  .map-alt-card {
+    flex-shrink: 0;
+    background: rgba(10,16,30,0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 9px 14px;
+    cursor: pointer;
+    touch-action: manipulation;
+    display: flex; align-items: center; gap: 9px;
+    min-width: 150px;
+    transition: border-color .18s, background .18s, transform .12s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+  }
+  .map-alt-card.selected {
+    border-color: #10b981;
+    background: rgba(16,185,129,0.18);
+  }
+  .map-alt-card:active { transform: scale(.96); }
+  .mac-radio {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .map-alt-card.selected .mac-radio { border-color: #10b981; background: #10b981; }
+  .map-alt-card.selected .mac-radio::after {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff;
+  }
+  .mac-info { flex: 1; min-width: 0; }
+  .mac-dist { font-size: 13px; font-weight: 800; color: #f1f5f9; line-height: 1.2; }
+  .mac-time { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+  .mac-badge {
+    font-size: 9px; font-weight: 900; padding: 2px 7px;
+    border-radius: 5px; letter-spacing: .4px; text-transform: uppercase; flex-shrink: 0;
+  }
+  .mac-badge.fastest  { background: rgba(16,185,129,.2);  color: #6ee7b7; }
+  .mac-badge.shortest { background: rgba(59,130,246,.2);  color: #93c5fd; }
+  .mac-badge.notoll   { background: rgba(139,92,246,.2);  color: #c4b5fd; }
+  .mac-badge.alt      { background: rgba(245,158,11,.2);  color: #fcd34d; }
   .bridge-label { font-size: 9px; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; font-weight:700; }
   .bridge-row { display:flex; align-items:center; gap:6px; }
   .bridge-val { font-family:"Bebas Neue",sans-serif; font-size:26px; color:#f59e0b; line-height:1; }
@@ -6639,11 +6699,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- AUTO-FOLLOW button (bottom-left) -->
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
 
-  <!-- RIGHT SIDE CONTROL COLUMN: 34h Reset, Community Reports, Driver Chat -->
+  <!-- RIGHT SIDE CONTROL COLUMN: 34h Reset, Community Reports -->
   <div id="mapRightControls">
     <button onclick="openResetSheet()" title="34h Reset">🔄</button>
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
-    <button onclick="openChatPanel()" title="Driver Chat" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)!important;border-color:rgba(124,58,237,.4)!important">💬</button>
   </div>
 
   <!-- POI Filter chips (ocultos, se activan por JS) -->
@@ -6729,6 +6788,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
     <!-- RIGHT: spacer (speed sign is absolute top-right via CSS) -->
     <div style="width:40px"></div>
+  </div>
+
+  <!-- ALT ROUTES TOP BAR -->
+  <div id="mapAltBar">
+    <div id="mapAltList"></div>
   </div>
 
   <!-- CONFIRM TRACKING BANNER (shows when map opens, before tracking starts) -->
@@ -13565,6 +13629,7 @@ function renderAltRoutes(orig, dest) {
   const list = document.getElementById('altRoutesList');
   if (!card || !list || altRoutes.length <= 1) {
     if (card) card.classList.remove('visible');
+    hideMapAltBar();
     return;
   }
 
@@ -13584,7 +13649,7 @@ function renderAltRoutes(orig, dest) {
   const badgeSet = routeTypeBadges[truckOptions.routeType] || routeTypeBadges.fastest;
   const labels = labelSet.map((text, i) => ({ text, cls: badgeSet[i] }));
 
-  list.innerHTML = altRoutes.map((r, i) => `
+  const rowHtml = altRoutes.map((r, i) => `
     <div class="alt-route-option ${i === selectedAltIdx ? 'selected' : ''}" onclick="selectAltRoute(${i})">
       <div class="alt-radio"></div>
       <div class="alt-info">
@@ -13594,16 +13659,46 @@ function renderAltRoutes(orig, dest) {
       <div class="alt-badge ${labels[i]?.cls || 'alt'}">${labels[i]?.text || 'Alt'}</div>
     </div>
   `).join('');
-
+  list.innerHTML = rowHtml;
   card.classList.add('visible');
+
+  // Also populate the map top bar if map is open
+  showMapAltBar(orig, dest, labels);
+}
+
+function showMapAltBar(orig, dest, labels) {
+  const bar = document.getElementById('mapAltBar');
+  const mapList = document.getElementById('mapAltList');
+  if (!bar || !mapList) return;
+  mapList.innerHTML = altRoutes.map((r, i) => `
+    <div class="map-alt-card ${i === selectedAltIdx ? 'selected' : ''}" onclick="selectAltRoute(${i});hideMapAltBar()">
+      <div class="mac-radio"></div>
+      <div class="mac-info">
+        <div class="mac-dist">${r.miles} mi · ${r.hours}h</div>
+        <div class="mac-time">${orig.name.split(',')[0]} → ${dest.name.split(',')[0]}</div>
+      </div>
+      <div class="mac-badge ${labels[i]?.cls || 'alt'}">${labels[i]?.text || 'Alt'}</div>
+    </div>
+  `).join('');
+  bar.classList.add('show');
+}
+
+function hideMapAltBar() {
+  const bar = document.getElementById('mapAltBar');
+  if (bar) bar.classList.remove('show');
 }
 
 function selectAltRoute(idx) {
   selectedAltIdx = idx;
-  // Re-render selection UI
+  // Re-render selection UI (plan page cards)
   document.querySelectorAll('.alt-route-option').forEach((el, i) => {
     el.classList.toggle('selected', i === idx);
   });
+  // Update map bar selection and hide after short delay
+  document.querySelectorAll('.map-alt-card').forEach((el, i) => {
+    el.classList.toggle('selected', i === idx);
+  });
+  setTimeout(hideMapAltBar, 800);
   // Apply the selected route
   const r = altRoutes[idx];
   if (!r) return;
@@ -13801,6 +13896,7 @@ calculateRoute = async function() {
     // Hide alt routes initially
     const altCard = document.getElementById('altRoutesCard');
     if (altCard) altCard.classList.remove('visible');
+    hideMapAltBar();
 
     if (activeWPs.length > 0) {
       // Multi-leg route: no alternatives for multi-stop (OSRM handles it)
