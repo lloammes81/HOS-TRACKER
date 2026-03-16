@@ -7162,9 +7162,16 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
     <!-- 4 stat bubbles: LLEGADA · MANEJO-ring · RESTANTE · 70 HRS -->
     <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr 1fr;gap:4px;margin-bottom:12px;align-items:center">
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
-        <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmEtaLbl">LLEGADA</div>
-        <div style="font-size:15px;font-weight:900;color:#f59e0b;line-height:1" id="fmEta">--</div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden">
+        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
+          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/>
+          <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#f59e0b" stroke-width="5"
+                  stroke-linecap="round" stroke-dasharray="0 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+        </svg>
+        <div style="position:relative">
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmEtaLbl">LLEGADA</div>
+          <div style="font-size:15px;font-weight:900;color:#f59e0b;line-height:1" id="fmEta">--</div>
+        </div>
       </div>
       <div id="hudManejoCell" style="background:rgba(10,16,30,0.9);border:2px solid rgba(16,185,129,0.3);border-radius:14px;padding:7px 4px;text-align:center;transition:transform .4s cubic-bezier(.34,1.56,.64,1),background .4s,box-shadow .4s,border-color .4s;transform-origin:center">
         <div style="font-size:7px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px" id="fmDriveLbl">MANEJO</div>
@@ -7179,13 +7186,27 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           </div>
         </div>
       </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
-        <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmRemLbl">RESTANTE</div>
-        <div style="font-size:15px;font-weight:900;color:#3b82f6;line-height:1" id="fmRem">--</div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden">
+        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
+          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/>
+          <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#3b82f6" stroke-width="5"
+                  stroke-linecap="round" stroke-dasharray="226 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+        </svg>
+        <div style="position:relative">
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmRemLbl">RESTANTE</div>
+          <div style="font-size:15px;font-weight:900;color:#3b82f6;line-height:1" id="fmRem">--</div>
+        </div>
       </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center">
-        <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fm70Lbl">70 HRS</div>
-        <div style="font-size:15px;font-weight:900;color:#8b5cf6;line-height:1" id="fm70Left">70h</div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden">
+        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
+          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/>
+          <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#8b5cf6" stroke-width="5"
+                  stroke-linecap="round" stroke-dasharray="226 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
+        </svg>
+        <div style="position:relative">
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fm70Lbl">70 HRS</div>
+          <div style="font-size:15px;font-weight:900;color:#8b5cf6;line-height:1" id="fm70Left">70h</div>
+        </div>
       </div>
     </div>
 
@@ -11606,6 +11627,11 @@ function fmStartTracking() {
     document.getElementById('fmBar').style.width = pct + '%';
     document.getElementById('fmEta').textContent = fmtH(etaH);
     document.getElementById('fmRem').textContent = remaining.toFixed(1) + ' mi';
+    // Update outer-ring arcs for LLEGADA and RESTANTE
+    const _etaArc = document.getElementById('hudEtaArc');
+    if (_etaArc) { const f = pct / 100; _etaArc.setAttribute('stroke-dasharray', `${f * 226} 226`); }
+    const _remArc = document.getElementById('hudRemArc');
+    if (_remArc) { const f = Math.max(0, remaining / Math.max(1, routeDistance)); _remArc.setAttribute('stroke-dasharray', `${f * 226} 226`); }
 
     // ── Miles remaining widget on map ────────────────────────
     const mrWidget = document.getElementById('milesRemainingWidget');
@@ -11699,6 +11725,9 @@ function fmStartTracking() {
     const cyEl = document.getElementById('fm70Left');
     cyEl.textContent = fmtH(cycleLeft);
     cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
+    // Update outer-ring arc for 70 HRS
+    const _70arcGps = document.getElementById('hud70Arc');
+    if (_70arcGps) { const cycMax = parseFloat(document.getElementById('hoursInput').value) || 70; const f = Math.max(0, cycleLeft / cycMax); const c = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6'; _70arcGps.setAttribute('stroke-dasharray', `${f * 226} 226`); _70arcGps.setAttribute('stroke', c); }
 
     // ── Location name throttled ──────────────────────────────
     const nowGeo = Date.now();
@@ -17611,6 +17640,8 @@ function startEldDataSimulation(){
     if(cycleEl) cycleEl.textContent=cycleHoursLeft.toFixed(1)+'h';
     const arc=document.getElementById('hudDhArc');
     if(arc){ const pct=driveHoursLeft/11; arc.setAttribute('stroke-dasharray',`${pct*126} 126`); arc.setAttribute('stroke',driveHoursLeft<2?'#ef4444':driveHoursLeft<4?'#f59e0b':'#10b981'); }
+    const arc70=document.getElementById('hud70Arc');
+    if(arc70){ const f=Math.max(0,cycleHoursLeft/70); const c=cycleHoursLeft<10?'#ef4444':cycleHoursLeft<20?'#f59e0b':'#8b5cf6'; arc70.setAttribute('stroke-dasharray',`${f*226} 226`); arc70.setAttribute('stroke',c); }
 
     // ── Logbook update ────────────────────────────────────
     const du=Math.min(driveHoursUsed,11);
