@@ -4469,6 +4469,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   .cqp-item.fuel  { border-color: rgba(245,158,11,.3); }
   .cqp-item.truck { border-color: rgba(16,185,129,.3); }
   .cqp-item.park  { border-color: rgba(99,102,241,.3); }
+  .cqp-item.scale { border-color: rgba(234,88,12,.3); }
 
   /* ── NEARBY POI SHEET ─────────────────────────────────── */
   #nearbyPoiOverlay {
@@ -4984,6 +4985,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="cqp-item-info">
         <div class="cqp-item-name">Parqueos</div>
         <div class="cqp-item-sub">Parking para trucks</div>
+      </div>
+    </div>
+
+    <div class="cqp-item scale" onclick="closeCommQuickPanel();searchNearbyPOI('weighstation')">
+      <span class="cqp-item-icon">⚖️</span>
+      <div class="cqp-item-info">
+        <div class="cqp-item-name">Weigh Stations</div>
+        <div class="cqp-item-sub">Básculas DOT cercanas</div>
       </div>
     </div>
   </div>
@@ -11844,7 +11853,7 @@ async function showServiceOnMap(type, radiusMiles, _btn) {
 
 async function loadPOI(type, lat, lon) {
   if (!fmMapInst) return;
-  const radius = 80000; // 50 miles in meters
+  const radius = 160934; // 100 miles in meters
   const centerLat = lat || (origin ? (origin.lat + destination.lat) / 2 : 39.5);
   const centerLon = lon || (origin ? (origin.lon + destination.lon) / 2 : -98.35);
 
@@ -12138,7 +12147,7 @@ async function runNearbySearch() {
 
   statusEl.textContent = '🔍 Buscando lugares cercanos...';
 
-  const radius = 80000; // 50 miles
+  const radius = 160934; // 100 miles
   const seen = new Set();
   const results = [];
 
@@ -15036,11 +15045,17 @@ async function searchNearbyPOI(type) {
   const list     = document.getElementById('nearbyPoiList');
 
   const isTruck  = type === 'truck';
-  iconEl.textContent  = isTruck ? '🚛' : '🅿️';
-  iconEl.style.background = isTruck
+  const isScale  = type === 'weighstation';
+  const poiIcon  = isTruck ? '🚛' : isScale ? '⚖️' : '🅿️';
+  const poiGrad  = isTruck
     ? 'linear-gradient(135deg,#10b981,#059669)'
-    : 'linear-gradient(135deg,#6366f1,#4f46e5)';
-  titleEl.textContent = isTruck ? 'Truck Stops Cercanos' : 'Parqueos Cercanos';
+    : isScale
+      ? 'linear-gradient(135deg,#ea580c,#c2410c)'
+      : 'linear-gradient(135deg,#6366f1,#4f46e5)';
+  const poiTitle = isTruck ? 'Truck Stops Cercanos' : isScale ? 'Weigh Stations Cercanas' : 'Parqueos Cercanos';
+  iconEl.textContent      = poiIcon;
+  iconEl.style.background = poiGrad;
+  titleEl.textContent     = poiTitle;
   subEl.textContent   = 'Buscando…';
   list.innerHTML      = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">⏳ Obteniendo ubicación…</div>';
   overlay.classList.add('open');
@@ -15062,7 +15077,7 @@ async function searchNearbyPOI(type) {
   list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">⏳ Consultando base de datos…</div>';
   subEl.textContent = 'Consultando OpenStreetMap…';
 
-  const r = 80000; // 80 km radius
+  const r = 160934; // 100 miles in meters
   let query;
 
   if (isTruck) {
@@ -15074,6 +15089,16 @@ async function searchNearbyPOI(type) {
   node["name"~"Flying J|Pilot Travel|Loves Travel|TA Travel|TA-Petro|Petro Stop|Sapp Bros|Truck Stop|Travel Plaza|Travel Center",i](around:${r},${lat},${lon});
   way["amenity"="truck_stop"](around:${r},${lat},${lon});
   way["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+);
+out center qt;`;
+  } else if (isScale) {
+    query = `[out:json][timeout:30];
+(
+  node["amenity"="weigh_station"](around:${r},${lat},${lon});
+  node["highway"="weigh_station"](around:${r},${lat},${lon});
+  way["amenity"="weigh_station"](around:${r},${lat},${lon});
+  way["highway"="weigh_station"](around:${r},${lat},${lon});
+  node["man_made"="weigh_scale"](around:${r},${lat},${lon});
 );
 out center qt;`;
   } else {
@@ -15111,19 +15136,18 @@ out center qt;`;
     });
 
     if (!els.length) {
-      const icon = isTruck ? '🚛' : '🅿️';
       list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
-        <div style="font-size:48px;margin-bottom:12px">${icon}</div>
-        <div style="font-size:15px;font-weight:700">Sin resultados en 80 km</div>
+        <div style="font-size:48px;margin-bottom:12px">${poiIcon}</div>
+        <div style="font-size:15px;font-weight:700">Sin resultados en 100 millas</div>
         <div style="font-size:12px;margin-top:6px">Verifica tu conexión o amplía la búsqueda</div>
       </div>`;
       subEl.textContent = 'Sin resultados';
       return;
     }
 
-    subEl.textContent = `${els.length} encontrados · 80 km`;
+    subEl.textContent = `${els.length} encontrados · 100 mi`;
 
-    const gmQuery = isTruck ? 'truck+stop' : 'truck+parking';
+    const gmQuery = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
     const gmUrl   = `https://www.google.com/maps/search/${gmQuery}/@${lat},${lon},12z`;
     list.innerHTML = `
       <div style="display:flex;gap:8px;margin-bottom:12px">
@@ -15140,12 +15164,12 @@ out center qt;`;
       const elLon  = el.lon ?? el.center?.lon;
       const distMi = haversine(lat, lon, elLat, elLon).toFixed(1);
       const distKm = (haversine(lat, lon, elLat, elLon) * 1.60934).toFixed(1);
-      const name   = el.tags?.name || el.tags?.operator || (isTruck ? 'Truck Stop' : 'Parqueo');
+      const name   = el.tags?.name || el.tags?.operator || (isTruck ? 'Truck Stop' : isScale ? 'Weigh Station' : 'Parqueo');
       const city   = [el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean).join(', ');
       const cap    = el.tags?.['capacity:hgv'] || el.tags?.capacity || '';
-      const meta   = city || (cap ? `Capacidad: ${cap} trucks` : (isTruck ? 'Parada de trucks' : 'Estacionamiento'));
+      const meta   = city || (cap ? `Capacidad: ${cap} trucks` : (isTruck ? 'Parada de trucks' : isScale ? 'Báscula DOT' : 'Estacionamiento'));
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${elLat},${elLon}&travelmode=driving`;
-      const icon   = isTruck ? '🚛' : '🅿️';
+      const icon   = poiIcon;
 
       const card = document.createElement('div');
       card.className = 'poi-card';
@@ -15160,8 +15184,8 @@ out center qt;`;
       list.appendChild(card);
     });
 
-    showToast('success', isTruck ? '🚛' : '🅿️',
-      `${els.length} ${isTruck ? 'truck stops' : 'parqueos'}`,
+    showToast('success', poiIcon,
+      `${els.length} ${isTruck ? 'truck stops' : isScale ? 'weigh stations' : 'parqueos'}`,
       'Toca uno para navegar', 3500);
 
   } catch(e) {
