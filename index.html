@@ -11478,7 +11478,9 @@ function fmStartTracking() {
     fmFollowing = true;
     document.getElementById('fmFollowBtn').classList.add('active');
     fmCurrentZoom = 15;
+    window._fmProgrammaticMove = true;
     fmMapInst.setView([realLat, realLon], fmCurrentZoom, { animate: true, duration: 1.2 });
+    setTimeout(() => { window._fmProgrammaticMove = false; }, 1500);
 
     setTimeout(() => loadAllPOIs(realLat, realLon), 600);
   }
