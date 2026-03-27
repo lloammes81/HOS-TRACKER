@@ -4460,15 +4460,50 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
      👥  COMMUNITY QUICK PANEL (dashboard side panel)
   ════════════════════════════════════════════════════════════ */
   /* ── Side Tab Buttons (right edge) ─────────────────────── */
-  #sideTabStack {
+  #sideMenuToggle {
     position: fixed;
     right: 0;
     top: 50%;
     transform: translateY(-50%);
+    z-index: 6502;
+    width: 16px;
+    height: 64px;
+    background: rgba(249,115,22,.32);
+    border: 1px solid rgba(249,115,22,.45);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    color: rgba(255,255,255,.85);
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: right .28s cubic-bezier(.4,0,.2,1), background .15s;
+    padding: 0;
+    line-height: 1;
+  }
+  #sideMenuToggle.open {
+    right: 34px;
+    background: rgba(249,115,22,.5);
+  }
+  #sideMenuToggle:active { opacity: .65; }
+
+  #sideTabStack {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%) translateX(100%);
     z-index: 6500;
     display: flex;
     flex-direction: column;
     gap: 3px;
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+  }
+  #sideTabStack.open {
+    transform: translateY(-50%) translateX(0);
   }
   .side-tab-btn {
     position: relative;
@@ -4611,6 +4646,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   /* Hide side tabs when fullmap is open */
   #fullMapScreen:not([style*="display:none"]) ~ #sideTabStack,
   #fullMapScreen:not([style*="display: none"]) ~ #sideTabStack { display: none; }
+  #fullMapScreen:not([style*="display:none"]) ~ #sideMenuToggle,
+  #fullMapScreen:not([style*="display: none"]) ~ #sideMenuToggle { display: none; }
 
   /* Hide chatFab — replaced by side tab */
   #chatFab { display: none !important; }
@@ -5026,6 +5063,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <button id="commQuickTrigger" aria-hidden="true" style="display:none">
     <span class="cqt-badge" id="cqtBadge"></span>
   </button>
+
+  <!-- Toggle arrow — siempre visible en el borde derecho -->
+  <button id="sideMenuToggle" onclick="toggleSideTabMenu()" aria-label="Abrir menú lateral">‹</button>
 
   <!-- SIDE TAB BUTTONS (3 stacked vertical tabs) -->
   <div id="sideTabStack">
@@ -14677,6 +14717,20 @@ function showDotError(msg) {
 ════════════════════════════════════════════════════════════ */
 let commFilter = 'all';
 let votedReports = JSON.parse(localStorage.getItem('hos_voted') || '[]');
+
+/* ── Side Tab Menu Toggle ── */
+function toggleSideTabMenu() {
+  const stack  = document.getElementById('sideTabStack');
+  const toggle = document.getElementById('sideMenuToggle');
+  const isOpen = stack.classList.toggle('open');
+  toggle.classList.toggle('open', isOpen);
+  toggle.textContent = isOpen ? '›' : '‹';
+  // Si se cierra el menú, cerrar también el panel de comunidad
+  if (!isOpen) {
+    document.getElementById('commQuickPanel')?.classList.remove('open');
+    document.getElementById('commQuickOverlay')?.classList.remove('open');
+  }
+}
 
 /* ── Community Quick Panel ── */
 function toggleCommQuickPanel() {
