@@ -542,6 +542,12 @@
   .sched.break30 { border-color: var(--amber); }
   .sched .t { font-size: 15px; font-weight: 800; }
   .sched .d { font-size: 14px; color: var(--muted); margin-top: 3px; }
+  .sched-city { display:inline-flex;align-items:center;gap:5px;margin-top:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:#94a3b8 }
+  .sched-city.loaded { color:#f1f5f9;background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.25) }
+  .sched-city.loading { animation:schedCityPulse 1.2s ease-in-out infinite }
+  @keyframes schedCityPulse{ 0%,100%{opacity:.5} 50%{opacity:1} }
+  .sched.dest-flag { border-color:#10b981;background:rgba(16,185,129,.08) }
+  .sched.dest-flag .t { color:#10b981 }
 
   /* ══════════════════════════════════════════
      MINI MAP
@@ -4453,43 +4459,54 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   /* ════════════════════════════════════════════════════════════
      👥  COMMUNITY QUICK PANEL (dashboard side panel)
   ════════════════════════════════════════════════════════════ */
-  #commQuickTrigger {
+  /* ── Side Tab Buttons (right edge) ─────────────────────── */
+  #sideTabStack {
     position: fixed;
     right: 0;
     top: 50%;
     transform: translateY(-50%);
     z-index: 6500;
-    background: linear-gradient(160deg,#7c3aed,#4f46e5);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .side-tab-btn {
+    position: relative;
+    background: linear-gradient(160deg,#f97316,#ea580c);
     color: #fff;
     border: none;
-    border-radius: 14px 0 0 14px;
-    width: 36px;
-    height: 80px;
+    border-radius: 10px 0 0 10px;
+    width: 34px;
+    height: 100px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 5px;
     cursor: pointer;
-    box-shadow: -4px 0 20px rgba(124,58,237,.45);
-    transition: width .2s;
+    box-shadow: -3px 0 16px rgba(249,115,22,.45);
+    transition: width .18s, box-shadow .18s;
     touch-action: manipulation;
     padding: 0;
   }
-  #commQuickTrigger:active { width: 32px; }
-  #commQuickTrigger .cqt-icon { font-size: 18px; line-height: 1; }
-  #commQuickTrigger .cqt-label {
-    font-size: 8px; font-weight: 900; letter-spacing: .5px;
+  .side-tab-btn:active { width: 28px; box-shadow: -2px 0 8px rgba(249,115,22,.3); }
+  .side-tab-icon { font-size: 16px; line-height: 1; }
+  .side-tab-label {
+    font-size: 9px; font-weight: 900; letter-spacing: .6px;
     writing-mode: vertical-rl; text-orientation: mixed;
-    transform: rotate(180deg); color: rgba(255,255,255,.85);
+    transform: rotate(180deg); color: #fff;
+    text-transform: uppercase;
   }
-  #commQuickTrigger .cqt-badge {
-    position: absolute; top: 6px; left: 6px;
+  .side-tab-badge {
+    position: absolute; top: 5px; left: 5px;
     background: #ef4444; color: #fff;
     font-size: 9px; font-weight: 900; border-radius: 999px;
     padding: 1px 4px; min-width: 14px; text-align: center;
     display: none;
   }
+
+  /* keep commQuickTrigger id alive for legacy JS — hidden via alias */
+  #commQuickTrigger { display: none !important; }
 
   #commQuickPanel {
     position: fixed;
@@ -4539,6 +4556,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   .cqp-item.truck { border-color: rgba(16,185,129,.3); }
   .cqp-item.park  { border-color: rgba(99,102,241,.3); }
   .cqp-item.scale { border-color: rgba(234,88,12,.3); }
+  .cqp-item.signs { border-color: rgba(16,185,129,.3); }
+
+  /* ── ROAD SIGNS PANEL ─────────────────────────────────── */
+  #roadSignsOverlay{display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:flex-end;justify-content:center}
+  #roadSignsOverlay.open{display:flex;animation:tcFadeIn .22s ease}
+  #roadSignsSheet{width:100%;max-width:540px;max-height:88vh;background:var(--surface);border-radius:24px 24px 0 0;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,.6)}
+  .signs-tab{flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+  .signs-tab.active{background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.5);color:#f59e0b}
+  .sign-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .sign-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px}
+  .sign-name{font-size:10px;font-weight:800;color:var(--text);text-align:center;line-height:1.3}
+  .sign-desc{font-size:8.5px;color:var(--muted);text-align:center;line-height:1.3}
 
   /* ── NEARBY POI SHEET ─────────────────────────────────── */
   #nearbyPoiOverlay {
@@ -4579,9 +4608,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   }
   #commQuickOverlay.show { display: block; }
 
-  /* Hide trigger when fullmap is open */
-  #fullMapScreen:not([style*="display:none"]) ~ #commQuickTrigger,
-  #fullMapScreen:not([style*="display: none"]) ~ #commQuickTrigger { display: none; }
+  /* Hide side tabs when fullmap is open */
+  #fullMapScreen:not([style*="display:none"]) ~ #sideTabStack,
+  #fullMapScreen:not([style*="display: none"]) ~ #sideTabStack { display: none; }
+
+  /* Hide chatFab — replaced by side tab */
+  #chatFab { display: none !important; }
 
      💬  CARRIERCHAT — channels + rooms + side drawer
   ════════════════════════════════════════════════════════════ */
@@ -4982,32 +5014,42 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </button>
   </div>
 
-  <!-- FLOATING CHAT BUTTON -->
-  <button id="chatFab" onclick="openChatPanel()" aria-label="Driver Chat">
+  <!-- FLOATING CHAT BUTTON (hidden — replaced by side tab) -->
+  <button id="chatFab" onclick="openChatPanel()" aria-label="Driver Chat" style="display:none">
     💬<span id="chatFabBadge"></span>
   </button>
 
   <!-- COMMUNITY QUICK PANEL OVERLAY -->
   <div id="commQuickOverlay" onclick="closeCommQuickPanel()"></div>
 
-  <!-- COMMUNITY QUICK TRIGGER (right edge tab) -->
-  <button id="commQuickTrigger" onclick="toggleCommQuickPanel()" aria-label="Community">
+  <!-- LEGACY TRIGGER (hidden — kept for JS compatibility) -->
+  <button id="commQuickTrigger" aria-hidden="true" style="display:none">
     <span class="cqt-badge" id="cqtBadge"></span>
-    <span class="cqt-icon">👥</span>
-    <span class="cqt-label">COMUNIDAD</span>
   </button>
+
+  <!-- SIDE TAB BUTTONS (3 stacked vertical tabs) -->
+  <div id="sideTabStack">
+    <!-- Btn 1: DOT News -->
+    <button class="side-tab-btn" onclick="openDotPanel()" aria-label="DOT">
+      <span class="side-tab-icon">📋</span>
+      <span class="side-tab-label">DOT</span>
+    </button>
+    <!-- Btn 2: Comunidad -->
+    <button class="side-tab-btn" onclick="toggleCommQuickPanel()" aria-label="Comunidad">
+      <span class="side-tab-badge" id="sideTabBadge"></span>
+      <span class="side-tab-icon">👥</span>
+      <span class="side-tab-label">Comunidad</span>
+    </button>
+    <!-- Btn 3: Live Chat (conversaciones entre choferes) -->
+    <button class="side-tab-btn" onclick="openChatPanel()" aria-label="Live Chat">
+      <span class="side-tab-icon">💬</span>
+      <span class="side-tab-label">Live Chat</span>
+    </button>
+  </div>
 
   <!-- COMMUNITY QUICK PANEL (slides from right) -->
   <div id="commQuickPanel">
     <div class="cqp-title">Comunidad</div>
-
-    <div class="cqp-item chat" onclick="closeCommQuickPanel();openChatPanel()">
-      <span class="cqp-item-icon">💬</span>
-      <div class="cqp-item-info">
-        <div class="cqp-item-name">Driver Chat</div>
-        <div class="cqp-item-sub">Canales en vivo</div>
-      </div>
-    </div>
 
     <div class="cqp-item rep" onclick="closeCommQuickPanel();toggleReportSheet()">
       <span class="cqp-item-icon">⚠️</span>
@@ -5062,6 +5104,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="cqp-item-info">
         <div class="cqp-item-name">Weigh Stations</div>
         <div class="cqp-item-sub">Básculas DOT cercanas</div>
+      </div>
+    </div>
+    <div class="cqp-item signs" onclick="closeCommQuickPanel();openRoadSignsPanel()">
+      <span class="cqp-item-icon">🚦</span>
+      <div class="cqp-item-info">
+        <div class="cqp-item-name">Road Signs</div>
+        <div class="cqp-item-sub">Guía visual · inspección</div>
       </div>
     </div>
   </div>
@@ -5213,18 +5262,19 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <label id="lblTime">🕐 Salida</label>
             <input type="datetime-local" id="departureInput" class="departure-input" />
           </div>
-          <div class="param-box">
+          <div class="param-box" style="display:none">
             <label id="lblHours">⏱️ Horas disponibles</label>
             <input type="number" id="hoursInput" min="1" max="70" value="70" />
           </div>
         </div>
         <input type="number" id="speedInput" value="60" style="display:none" />
+        <input type="number" id="dailyHoursInput" value="11" style="display:none" />
 
         <!-- TRUCK ROUTE OPTIONS -->
         <div class="truck-opts-panel" id="truckOptsPanel" style="margin-top:10px">
           <button class="truck-opts-toggle" onclick="toggleTruckOpts()" type="button">
             <span style="font-size:16px">🚛</span>
-            <span class="truck-opts-label">Opciones de Camión</span>
+            <span class="truck-opts-label">Opciones de Ruta</span>
             <svg class="truck-opts-arrow" id="truckOptsArrow" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="truck-opts-body" id="truckOptsBody" style="display:none">
@@ -6731,6 +6781,31 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 
 <!-- ══════════════════════════════════════════════════════════
+     🚦  ROAD SIGNS PANEL
+══════════════════════════════════════════════════════════ -->
+<div id="roadSignsOverlay">
+  <div id="roadSignsSheet" onclick="event.stopPropagation()">
+    <!-- Header -->
+    <div style="padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="font-size:17px;font-weight:900;color:var(--text)">🚦 Road Signs Guide</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Guía visual para inspecciones DOT</div>
+      </div>
+      <button onclick="closeRoadSignsPanel()" style="background:rgba(255,255,255,.08);border:none;border-radius:10px;width:34px;height:34px;color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:7px;padding:10px 16px;overflow-x:auto;flex-shrink:0;scrollbar-width:none">
+      <button class="signs-tab active" onclick="_switchSignTab(this,'reg')">🛑 Regulatory</button>
+      <button class="signs-tab" onclick="_switchSignTab(this,'warn')">⚠️ Warning</button>
+      <button class="signs-tab" onclick="_switchSignTab(this,'guide')">🟢 Guide</button>
+      <button class="signs-tab" onclick="_switchSignTab(this,'truck')">🚛 Truck / DOT</button>
+    </div>
+    <!-- Content -->
+    <div id="roadSignsContent" style="flex:1;overflow-y:auto;padding:12px 14px 36px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
      🚛  NEARBY POI SHEET (Truck Stops / Parqueos)
 ══════════════════════════════════════════════════════════ -->
 <div id="nearbyPoiOverlay" onclick="closeNearbyPoiSheet()">
@@ -7251,6 +7326,86 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
+
+/* ── DOT Violation Sheet ──────────────────────────────── */
+#violationOverlay{display:none;position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,.75);align-items:flex-end;justify-content:center}
+#violationOverlay.active{display:flex;animation:tcFadeIn .2s ease}
+#violationSheet{background:#0f172a;border-radius:24px 24px 0 0;width:100%;max-width:540px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 -8px 48px rgba(239,68,68,.25);animation:sheetUp .35s cubic-bezier(.16,1,.3,1)}
+.vio-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;border-bottom:1px solid rgba(239,68,68,.2);flex-shrink:0}
+.vio-header-left{display:flex;align-items:center;gap:10px}
+.vio-header-icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.vio-header-title{font-size:16px;font-weight:800;color:#f1f5f9}
+.vio-header-sub{font-size:11px;color:#ef4444;font-weight:600;margin-top:1px}
+.vio-close{background:rgba(255,255,255,.06);border:none;border-radius:10px;width:34px;height:34px;color:#94a3b8;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.vio-body{overflow-y:auto;padding:14px 18px 32px;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:10px}
+.vio-card{border-radius:16px;padding:14px 16px;border:1px solid}
+.vio-card.critical{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.35)}
+.vio-card.high{background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.3)}
+.vio-card.medium{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.25)}
+.vio-card.info{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.2)}
+.vio-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+.vio-badge{font-size:9px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;padding:3px 9px;border-radius:999px;flex-shrink:0}
+.vio-badge.critical{background:#ef4444;color:#fff}
+.vio-badge.high{background:#f97316;color:#fff}
+.vio-badge.medium{background:#f59e0b;color:#000}
+.vio-badge.info{background:#3b82f6;color:#fff}
+.vio-code{font-size:9px;color:#475569;font-weight:700;letter-spacing:.3px}
+.vio-title{font-size:13px;font-weight:800;color:#f1f5f9;margin-bottom:5px;line-height:1.4}
+.vio-desc{font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:8px}
+.vio-fine{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.3);border-radius:8px;padding:7px 10px}
+.vio-fine-lbl{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.vio-fine-val{font-size:13px;font-weight:900;margin-left:auto}
+.vio-fine-val.critical{color:#ef4444}
+.vio-fine-val.high{color:#f97316}
+.vio-fine-val.medium{color:#f59e0b}
+.vio-fine-val.info{color:#3b82f6}
+.vio-dismiss-btn{margin:4px 18px 0;flex-shrink:0;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:14px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.3px}
+.vio-dismiss-btn:active{transform:scale(.97)}
+
+/* ── DOT News Cards ───────────────────────────────────── */
+.dot-news-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-left:3px solid #f97316;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.dot-news-tag{display:inline-block;font-size:9px;font-weight:800;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.dot-news-title{font-size:13px;font-weight:800;color:#f1f5f9;line-height:1.4;margin-bottom:6px}
+.dot-news-body{font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:8px}
+.dot-news-meta{font-size:10px;color:#475569;font-weight:600}
+
+/* ── HOS Input Popups ─────────────────────────────────── */
+.hos-popup-overlay{display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.78);align-items:center;justify-content:center;padding:20px}
+.hos-popup-overlay.active{display:flex}
+.hos-popup-card{background:#0f172a;border:1.5px solid rgba(59,130,246,.45);border-radius:22px;padding:30px 24px 24px;max-width:350px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.85)}
+.hos-popup-step{font-size:10px;font-weight:800;color:#3b82f6;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px}
+.hos-popup-icon{font-size:36px;margin-bottom:10px}
+.hos-popup-title{font-size:17px;font-weight:800;color:#f1f5f9;margin-bottom:5px;line-height:1.3}
+.hos-popup-sub{font-size:12px;color:#64748b;margin-bottom:20px;line-height:1.5}
+.hos-popup-dot{color:#3b82f6;font-weight:900}
+.hos-popup-input-wrap{position:relative;margin-bottom:8px}
+.hos-popup-input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(59,130,246,.35);border-radius:12px;padding:16px 52px 16px 16px;font-size:28px;font-weight:900;color:#f1f5f9;text-align:center;box-sizing:border-box;-moz-appearance:textfield;outline:none;transition:border-color .2s}
+.hos-popup-input:focus{border-color:#3b82f6}
+.hos-popup-input::-webkit-outer-spin-button,.hos-popup-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.hos-popup-unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:11px;color:#475569;font-weight:700;text-transform:uppercase;pointer-events:none}
+.hos-popup-error{display:none;color:#ef4444;font-size:11px;margin-bottom:12px;text-align:center;font-weight:600}
+.hos-popup-btn{width:100%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.4px;transition:transform .15s,opacity .15s}
+.hos-popup-btn:active{transform:scale(.96);opacity:.9}
+.hos-popup-limit{display:inline-block;background:rgba(59,130,246,.15);color:#60a5fa;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;margin-left:4px}
+.hos-weekly-bar{margin:14px 0 20px;background:rgba(255,255,255,.06);border-radius:8px;height:6px;overflow:hidden}
+.hos-weekly-bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#8b5cf6,#3b82f6);transition:width .4s}
+.hos-cycle-saved-badge{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:9px 12px;margin:0 0 14px;font-size:12px;color:#10b981;line-height:1.5}
+.arrived-btn{display:block;width:100%;margin-top:12px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.3px;transition:transform .15s,opacity .15s}
+.arrived-btn:active{transform:scale(.97);opacity:.9}
+
+/* ── Calc Progress Overlay ────────────────────────────── */
+#calcProgressOverlay{display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:20px}
+#calcProgressOverlay.active{display:flex}
+.calc-progress-card{background:#0f172a;border:1.5px solid rgba(59,130,246,.4);border-radius:22px;padding:36px 28px;max-width:320px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.85)}
+.calc-progress-truck{font-size:52px;margin-bottom:14px;display:block;animation:calcTruck 1.2s ease-in-out infinite}
+@keyframes calcTruck{0%,100%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
+.calc-progress-title{font-size:18px;font-weight:800;color:#f1f5f9;margin-bottom:4px}
+.calc-progress-sub{font-size:12px;color:#64748b;margin-bottom:22px}
+.calc-pb-track{background:rgba(255,255,255,.07);border-radius:999px;height:10px;overflow:hidden;margin-bottom:10px}
+.calc-pb-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#3b82f6,#8b5cf6,#3b82f6);background-size:200% 100%;animation:calcFill 2.8s ease-out forwards,calcShimmer 1.2s linear infinite}
+@keyframes calcFill{0%{width:0%}55%{width:72%}85%{width:90%}100%{width:92%}}
+@keyframes calcShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.calc-pb-pct{font-size:12px;color:#475569;font-weight:700}
 </style>
 
 
@@ -7576,6 +7731,305 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div class="toast-msg" id="toastMsg"></div>
   </div>
   <button class="toast-close" onclick="hideToast()">×</button>
+</div>
+
+<!-- ══ VIOLATION NOTIFICATION SHEET ══ -->
+<div id="violationOverlay">
+  <div id="violationSheet">
+    <div class="vio-header">
+      <div class="vio-header-left">
+        <div class="vio-header-icon">⚠️</div>
+        <div>
+          <div class="vio-header-title">Violaciones Detectadas</div>
+          <div class="vio-header-sub" id="vioHeaderSub">0 infracciones · DOT/FMCSA</div>
+        </div>
+      </div>
+      <button class="vio-close" onclick="closeViolationSheet()">×</button>
+    </div>
+    <div class="vio-body" id="vioBody"></div>
+    <button class="vio-dismiss-btn" onclick="closeViolationSheet()">Entendido — Cerrar</button>
+  </div>
+</div>
+
+<!-- ══ DOT PANEL (Noticias + Regulaciones) ══ -->
+<div id="dotPanelOverlay" style="display:none;position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.75);align-items:flex-end;justify-content:center;padding:0">
+  <div id="dotPanelSheet" style="background:#0f172a;border-radius:24px 24px 0 0;width:100%;max-width:540px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 -8px 48px rgba(0,0,0,.6);animation:sheetUp .3s cubic-bezier(.16,1,.3,1)">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#f97316,#ea580c);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📋</div>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:#f1f5f9">DOT / FMCSA</div>
+          <div style="font-size:10px;color:#64748b">Noticias y Regulaciones</div>
+        </div>
+      </div>
+      <button onclick="closeDotPanel()" style="background:rgba(255,255,255,.06);border:none;border-radius:10px;width:34px;height:34px;color:#94a3b8;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:6px;padding:12px 18px 0;flex-shrink:0">
+      <button id="dotTabNews" onclick="_dotSwitchTab('news')" style="flex:1;padding:8px;border-radius:10px;border:none;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;font-size:12px;font-weight:800;cursor:pointer">📰 Noticias</button>
+      <button id="dotTabRegs" onclick="_dotSwitchTab('regs')" style="flex:1;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer">📋 Regulaciones</button>
+    </div>
+
+    <!-- Scroll body -->
+    <div style="overflow-y:auto;padding:14px 18px 32px;-webkit-overflow-scrolling:touch;flex:1">
+
+      <!-- ── TAB: NOTICIAS ── -->
+      <div id="dotPanelNews">
+        <div style="font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px" id="dotNewsDate">Actualizando…</div>
+
+        <!-- Noticia 1 -->
+        <div class="dot-news-card" style="border-left-color:#ef4444">
+          <div class="dot-news-tag" style="background:rgba(239,68,68,.15);color:#ef4444">🚨 ALERTA</div>
+          <div class="dot-news-title">FMCSA refuerza inspecciones en básculas del I-10 e I-40</div>
+          <div class="dot-news-body">La FMCSA anunció operativos de inspección intensiva en puntos de pesaje de Texas, Nuevo México y Arizona durante los próximos 60 días. Los agentes verificarán ELD, horas de servicio y condición de frenos.</div>
+          <div class="dot-news-meta">Mar 25, 2026 · FMCSA Safety Division</div>
+        </div>
+
+        <!-- Noticia 2 -->
+        <div class="dot-news-card" style="border-left-color:#f59e0b">
+          <div class="dot-news-tag" style="background:rgba(245,158,11,.15);color:#f59e0b">⚠️ REGULACIÓN</div>
+          <div class="dot-news-title">Nuevo requisito de capacitación para conductores de materiales peligrosos</div>
+          <div class="dot-news-body">A partir del 1 de abril de 2026, todos los conductores de HazMat deberán completar 4 horas adicionales de entrenamiento en manejo de derrames. La PHMSA publicó el reglamento final en el Registro Federal.</div>
+          <div class="dot-news-meta">Mar 20, 2026 · PHMSA / DOT</div>
+        </div>
+
+        <!-- Noticia 3 -->
+        <div class="dot-news-card" style="border-left-color:#3b82f6">
+          <div class="dot-news-tag" style="background:rgba(59,130,246,.15);color:#3b82f6">📢 AVISO</div>
+          <div class="dot-news-title">Prórroga para ELD de tercera generación: plazo extendido a junio 2026</div>
+          <div class="dot-news-body">La FMCSA otorgó una extensión de 90 días para la transición a dispositivos ELD de Generación 3. Las flotas deben completar la actualización antes del 30 de junio de 2026.</div>
+          <div class="dot-news-meta">Mar 15, 2026 · FMCSA Technology Division</div>
+        </div>
+
+        <!-- Noticia 4 -->
+        <div class="dot-news-card" style="border-left-color:#10b981">
+          <div class="dot-news-tag" style="background:rgba(16,185,129,.15);color:#10b981">✅ ACTUALIZACIÓN</div>
+          <div class="dot-news-title">FMCSA actualiza lista de ELD certificados: 47 nuevos dispositivos aprobados</div>
+          <div class="dot-news-body">Se añadieron 47 nuevos dispositivos ELD a la lista oficial de dispositivos registrados. Los transportistas pueden consultar el registro actualizado en fmcsa.dot.gov/registration/ELD.</div>
+          <div class="dot-news-meta">Mar 10, 2026 · FMCSA</div>
+        </div>
+
+        <!-- Noticia 5 -->
+        <div class="dot-news-card" style="border-left-color:#8b5cf6">
+          <div class="dot-news-tag" style="background:rgba(139,92,246,.15);color:#8b5cf6">💡 RECORDATORIO</div>
+          <div class="dot-news-title">Operación "Road Check 2026" programada para mayo: 72 horas de inspecciones</div>
+          <div class="dot-news-body">El CVSA realizará su inspección anual masiva del 20 al 22 de mayo de 2026. Este año el enfoque principal será el sistema de frenos y el cumplimiento de HOS. Más de 10,000 inspectores participarán en 50 estados.</div>
+          <div class="dot-news-meta">Mar 5, 2026 · CVSA / DOT</div>
+        </div>
+
+        <!-- Contacto -->
+        <div style="background:rgba(255,255,255,.04);border-radius:14px;padding:14px;margin-top:6px;text-align:center">
+          <div style="font-size:11px;color:#475569;margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.6px">Línea directa FMCSA</div>
+          <div style="font-size:18px;font-weight:900;color:#3b82f6">1-800-832-5660</div>
+          <div style="font-size:10px;color:#475569;margin-top:4px">fmcsa.dot.gov · Lun–Vie 9am–7pm ET</div>
+        </div>
+      </div>
+
+      <!-- ── TAB: REGULACIONES ── -->
+      <div id="dotPanelRegs" style="display:none">
+
+        <div style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);border-radius:16px;padding:14px 16px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:800;color:#f97316;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">🕐 Límites de Conducción HOS</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:26px;font-weight:900;color:#fb923c;line-height:1">11</div>
+              <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Horas / día</div>
+            </div>
+            <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:26px;font-weight:900;color:#fb923c;line-height:1">70</div>
+              <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Horas / 8 días</div>
+            </div>
+            <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:26px;font-weight:900;color:#fb923c;line-height:1">14</div>
+              <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Ventana diaria</div>
+            </div>
+            <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:26px;font-weight:900;color:#fb923c;line-height:1">10</div>
+              <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Descanso mínimo</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:16px;padding:14px 16px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:800;color:#3b82f6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🔄 Reset del Ciclo (34h)</div>
+          <div style="font-size:13px;color:#cbd5e1;line-height:1.6">Toma <strong style="color:#60a5fa">34 horas consecutivas</strong> fuera de servicio para reiniciar las 70 hrs. Debe incluir dos períodos entre <strong style="color:#60a5fa">1:00 AM – 5:00 AM</strong>.</div>
+        </div>
+
+        <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:16px;padding:14px 16px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">⏸️ Descanso de 30 Minutos</div>
+          <div style="font-size:13px;color:#cbd5e1;line-height:1.6">Obligatorio después de <strong style="color:#34d399">8 horas</strong> de conducción acumulada. Debe tomarse en estado <em>Off Duty</em> o <em>Sleeper Berth</em>.</div>
+        </div>
+
+        <div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:16px;padding:14px 16px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:800;color:#8b5cf6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">📱 ELD Obligatorio</div>
+          <div style="font-size:13px;color:#cbd5e1;line-height:1.6">Todos los conductores bajo HOS deben usar un <strong style="color:#a78bfa">Dispositivo de Registro Electrónico (ELD)</strong> certificado por FMCSA.</div>
+        </div>
+
+        <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:16px;padding:14px 16px">
+          <div style="font-size:11px;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">💰 Multas por Incumplimiento</div>
+          <div style="font-size:13px;color:#cbd5e1;line-height:1.6">Violaciones HOS: hasta <strong style="color:#f87171">$16,000</strong> por infracción. Operación fuera de servicio: hasta <strong style="color:#f87171">$25,000</strong>. Las multas se duplican si hay accidente.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HOS POPUP 1: Horas diarias disponibles ══ -->
+<div class="hos-popup-overlay" id="hosPopup1">
+  <div class="hos-popup-card">
+    <div class="hos-popup-step">Paso 1 de 2</div>
+    <div class="hos-popup-icon">🕐</div>
+    <div class="hos-popup-title">¿Cuántas horas de manejo tienes disponibles hoy?</div>
+    <div class="hos-popup-sub">
+      Regulación DOT: máximo <span class="hos-popup-dot">11 horas</span> de conducción por día.
+    </div>
+    <div class="hos-popup-input-wrap">
+      <input class="hos-popup-input" id="hosStep1Input" type="number" min="0.5" max="11" step="0.5" value="11"
+        onkeydown="if(event.key==='Enter') _hosStep1Submit()" />
+      <span class="hos-popup-unit">hrs</span>
+    </div>
+    <div class="hos-popup-error" id="hosStep1Error">Ingresa un valor entre 0.5 y 11 horas</div>
+    <button class="hos-popup-btn" onclick="_hosStep1Submit()">Continuar →</button>
+  </div>
+</div>
+
+<!-- ══ HOS POPUP 2: Horas semanales 70-hr cycle ══ -->
+<div class="hos-popup-overlay" id="hosPopup2">
+  <div class="hos-popup-card">
+    <div class="hos-popup-step">Paso 2 de 3</div>
+    <div class="hos-popup-icon">📋</div>
+    <div class="hos-popup-title">¿Cuántas horas te quedan del ciclo de 70 hrs?</div>
+    <div class="hos-popup-sub">
+      Ciclo <span class="hos-popup-dot">70 hrs / 8 días</span> DOT. Ingresa tus horas restantes disponibles.
+    </div>
+
+    <!-- Progress bar del ciclo -->
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#475569;margin-bottom:4px">
+      <span>0 hrs</span>
+      <span id="hosWeeklyPctLbl" style="color:#8b5cf6;font-weight:700">100%</span>
+      <span>70 hrs</span>
+    </div>
+    <div class="hos-weekly-bar"><div class="hos-weekly-bar-fill" id="hosWeeklyBarFill" style="width:100%"></div></div>
+
+    <div class="hos-popup-input-wrap" style="margin-top:14px">
+      <input class="hos-popup-input" id="hosStep2Input" type="number" min="1" max="70" step="1" value="70"
+        oninput="_hosUpdateWeeklyBar(this.value)"
+        onkeydown="if(event.key==='Enter') _hosStep2Submit()" />
+      <span class="hos-popup-unit">hrs</span>
+    </div>
+
+    <!-- Cálculo en tiempo real -->
+    <div id="hosCalcResult" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin:12px 0 8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="text-align:center">
+        <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Horas ciclo restantes</div>
+        <div id="hosCalcWeekly" style="font-size:26px;font-weight:900;color:#8b5cf6;line-height:1">70</div>
+        <div style="font-size:9px;color:#475569;margin-top:2px">de 70 hrs</div>
+      </div>
+      <div style="text-align:center;border-left:1px solid rgba(255,255,255,.06);padding-left:8px">
+        <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Disponibles hoy</div>
+        <div id="hosCalcToday" style="font-size:26px;font-weight:900;color:#10b981;line-height:1">11</div>
+        <div id="hosCalcTodayLbl" style="font-size:9px;color:#475569;margin-top:2px">hrs para manejar</div>
+      </div>
+    </div>
+
+    <div class="hos-popup-error" id="hosStep2Error">Ingresa un valor entre 1 y 70 horas</div>
+    <button class="hos-popup-btn" onclick="_hosStep2Submit()">Continuar →</button>
+  </div>
+</div>
+
+<!-- ══ HOS POPUP 3: Resumen y confirmación ══ -->
+<div class="hos-popup-overlay" id="hosPopup3">
+  <div class="hos-popup-card" style="max-width:380px">
+    <div class="hos-popup-step">Paso 3 de 3 — Resumen</div>
+    <div class="hos-popup-icon">📊</div>
+    <div class="hos-popup-title">Tiempo disponible para esta ruta</div>
+    <div class="hos-popup-sub" style="margin-bottom:14px">Revisa tu disponibilidad antes de calcular</div>
+
+    <!-- Tarjetas de resumen -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <!-- Horas del día -->
+      <div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);border-radius:12px;padding:11px;text-align:center">
+        <div style="font-size:9px;color:#60a5fa;text-transform:uppercase;font-weight:800;letter-spacing:.6px;margin-bottom:4px">🕐 Hoy (diario)</div>
+        <div id="hosSum1Val" style="font-size:28px;font-weight:900;color:#3b82f6;line-height:1">11</div>
+        <div style="font-size:9px;color:#475569;margin-top:2px">hrs disponibles</div>
+      </div>
+      <!-- Ciclo semanal -->
+      <div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);border-radius:12px;padding:11px;text-align:center">
+        <div style="font-size:9px;color:#a78bfa;text-transform:uppercase;font-weight:800;letter-spacing:.6px;margin-bottom:4px">📋 Ciclo 70h</div>
+        <div id="hosSum2Val" style="font-size:28px;font-weight:900;color:#8b5cf6;line-height:1">70</div>
+        <div style="font-size:9px;color:#475569;margin-top:2px">hrs restantes</div>
+      </div>
+    </div>
+
+    <!-- Total que puede manejar — card destacada -->
+    <div id="hosSumTotal" style="border-radius:14px;padding:14px;text-align:center;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px" id="hosSumTotalLabel">✅ Puedes manejar</div>
+      <div id="hosSumTotalVal" style="font-size:42px;font-weight:900;line-height:1">11</div>
+      <div style="font-size:11px;margin-top:4px;opacity:.8" id="hosSumTotalSub">horas hoy en esta ruta</div>
+    </div>
+
+    <!-- Barra visual semanal -->
+    <div style="margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#475569;margin-bottom:4px">
+        <span>Ciclo semanal usado</span>
+        <span id="hosSumCycleUsed" style="font-weight:700;color:#94a3b8">0 / 70 hrs</span>
+      </div>
+      <div style="background:rgba(255,255,255,.07);border-radius:999px;height:8px;overflow:hidden;margin-bottom:10px">
+        <div id="hosSumCycleBar" style="height:100%;border-radius:999px;background:linear-gradient(90deg,#8b5cf6,#3b82f6);transition:width .4s" ></div>
+      </div>
+    </div>
+
+    <!-- Días estimados restantes en ciclo -->
+    <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">📅</span>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#f1f5f9" id="hosSumDaysLbl">Días estimados restantes en ciclo</div>
+        <div style="font-size:11px;color:#64748b" id="hosSumDaysSub">Basado en 11 hrs/día promedio</div>
+      </div>
+      <div id="hosSumDaysVal" style="font-size:22px;font-weight:900;color:#10b981;margin-left:auto">~6</div>
+    </div>
+
+    <button class="hos-popup-btn" id="hosSumCalcBtn" onclick="_hosStep3Confirm()">🚛 Calcular Ruta</button>
+  </div>
+</div>
+
+<!-- ══ HOS ARRIVAL POPUP: ¿Llegaste? ══ -->
+<div class="hos-popup-overlay" id="hosArrivalPopup">
+  <div class="hos-popup-card">
+    <div class="hos-popup-step">🏁 Destino alcanzado</div>
+    <div class="hos-popup-icon">🎉</div>
+    <div class="hos-popup-title">¿Llegaste a tu destino?</div>
+    <div class="hos-popup-sub" id="hosArrivalSub">¿Deseas guardar el ciclo de horas para tu próxima ruta?</div>
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin:14px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center">
+      <div>
+        <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Horas usadas</div>
+        <div id="hosArrHrsUsed" style="font-size:26px;font-weight:900;color:#f97316;line-height:1">—</div>
+        <div style="font-size:9px;color:#475569;margin-top:2px">en este viaje</div>
+      </div>
+      <div style="border-left:1px solid rgba(255,255,255,.06);padding-left:8px">
+        <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Ciclo restante</div>
+        <div id="hosArrHrsRemain" style="font-size:26px;font-weight:900;color:#10b981;line-height:1">—</div>
+        <div style="font-size:9px;color:#475569;margin-top:2px">hrs disponibles</div>
+      </div>
+    </div>
+    <button class="hos-popup-btn" onclick="window._hosArrivalSave()" style="margin-bottom:10px">💾 Guardar ciclo de horas</button>
+    <button class="hos-popup-btn" onclick="window._hosArrivalDiscard()" style="background:rgba(255,255,255,.07);color:#94a3b8;margin-top:0">🗺️ Nueva ruta sin guardar</button>
+  </div>
+</div>
+
+<!-- ══ CALC PROGRESS OVERLAY ══ -->
+<div id="calcProgressOverlay">
+  <div class="calc-progress-card">
+    <span class="calc-progress-truck">🚛</span>
+    <div class="calc-progress-title">Calculando tu ruta…</div>
+    <div class="calc-progress-sub">Procesando horario HOS y paradas de descanso</div>
+    <div class="calc-pb-track"><div class="calc-pb-fill" id="calcProgressFill"></div></div>
+    <div class="calc-pb-pct" id="calcProgressPct">Calculando…</div>
+  </div>
 </div>
 
 <!-- Screen flash -->
@@ -10036,21 +10490,110 @@ function showSuggestions(containerId, items, onSelect) {
 // ==============================
 // TRUCK ICON (customizable)
 // ==============================
-function getTruckIconHTML(sizePx=26) {
-  // Priority 1: current user profile photo — shown as a circle
-  if (typeof currentUser !== 'undefined' && currentUser && currentUser.photoData) {
-    const s = Math.max(20, sizePx + 8);
-    return `<img alt="foto" src="${currentUser.photoData}" style="width:${s}px;height:${s}px;object-fit:cover;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:block;" />`;
+function _getUserAvatarHTML(sizePx) {
+  const s = Math.max(32, sizePx + 10);
+  const fs = Math.round(s * 0.38);
+  const border = '3px solid #fff';
+  const shadow = '0 2px 12px rgba(0,0,0,.6)';
+  // Foto del perfil
+  const user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
+  const photoData = (user && user.photoData) || (typeof truckUploadData !== 'undefined' && truckIconMode && truckIconMode.startsWith('upload:') && truckUploadData ? truckUploadData : null);
+  if (photoData) {
+    return `<div style="width:${s}px;height:${s}px;border-radius:50%;border:${border};box-shadow:${shadow};overflow:hidden;flex-shrink:0"><img src="${photoData}" style="width:100%;height:100%;object-fit:cover;display:block"></div>`;
   }
-  // Priority 2: uploaded image if selected
+  // Iniciales
+  const name = (user && user.name) || (typeof driverProfile !== 'undefined' && driverProfile && driverProfile.name) || null;
+  if (name) {
+    const initials = name.trim().split(/\s+/).map(w => w[0] && w[0].toUpperCase()).filter(Boolean).slice(0,2).join('');
+    const palette = ['#1d4ed8','#7c3aed','#059669','#dc2626','#d97706','#0891b2','#be185d','#4f46e5'];
+    let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xFFFF;
+    const bg = palette[h % palette.length];
+    return `<div style="width:${s}px;height:${s}px;border-radius:50%;border:${border};box-shadow:${shadow};background:${bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:${fs}px;font-weight:900;color:#fff;letter-spacing:-.5px;font-family:system-ui,sans-serif">${initials||'?'}</div>`;
+  }
+  return null; // sin usuario — usar ícono predeterminado
+}
+
+function getTruckIconHTML(sizePx=26) {
+  // Siempre mostrar avatar del usuario (foto o iniciales)
+  const avatarHtml = _getUserAvatarHTML(sizePx);
+  if (avatarHtml) return avatarHtml;
+
+  // Fallback: imagen subida manualmente
   if (truckIconMode && truckIconMode.startsWith('upload:') && truckUploadData) {
-    const s = Math.max(20, sizePx + 8);
-    return `<img alt="truck" src="${truckUploadData}" style="width:${s}px;height:${s}px;object-fit:cover;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:block;" />`;
+    const s = Math.max(32, sizePx + 10);
+    return `<div style="width:${s}px;height:${s}px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,.6);overflow:hidden;flex-shrink:0"><img src="${truckUploadData}" style="width:100%;height:100%;object-fit:cover;display:block"></div>`;
   }
   if (truckIconMode && truckIconMode.startsWith('img:')) {
     const url = truckIconMode.slice(4);
     const s = Math.max(18, sizePx + 8);
     return `<img alt="truck" src="${url}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))" />`;
+  }
+  // SVG realistic truck (default)
+  if (!truckIconMode || truckIconMode === 'svg:truck' || truckIconMode === 'emoji:🚛') {
+    const sc = sizePx / 20; // scale factor (base design at 20px width)
+    const w = Math.round(20 * sc), h = Math.round(52 * sc);
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 52" width="${w}" height="${h}" style="filter:drop-shadow(0 2px 6px rgba(0,0,0,.55));display:block">
+      <!-- Trailer body -->
+      <rect x="1.5" y="16" width="17" height="32" rx="1.5" fill="#1e3a5f"/>
+      <rect x="2.5" y="17" width="15" height="30" rx="1" fill="#1e40af" opacity=".7"/>
+      <!-- Trailer orange stripe -->
+      <rect x="1.5" y="20" width="17" height="2" fill="#f97316"/>
+      <rect x="1.5" y="40" width="17" height="2" fill="#f97316"/>
+      <!-- Trailer reflectors -->
+      <rect x="1.5" y="44" width="4" height="1.5" rx=".5" fill="#fbbf24"/>
+      <rect x="14.5" y="44" width="4" height="1.5" rx=".5" fill="#fbbf24"/>
+      <!-- Fifth wheel / coupling -->
+      <rect x="7" y="14" width="6" height="4" rx="1" fill="#374151"/>
+      <circle cx="10" cy="16" r="2" fill="#4b5563"/>
+      <!-- Cab body -->
+      <rect x="2" y="3" width="16" height="14" rx="3" fill="#1d4ed8"/>
+      <!-- Cab roof highlight -->
+      <rect x="3.5" y="3.5" width="13" height="4" rx="2" fill="#3b82f6" opacity=".6"/>
+      <!-- Windshield -->
+      <rect x="4" y="4" width="12" height="6" rx="2" fill="#bfdbfe" opacity=".9"/>
+      <!-- Windshield glare -->
+      <rect x="5" y="4.5" width="4" height="2" rx="1" fill="#fff" opacity=".4"/>
+      <!-- Side mirrors -->
+      <rect x=".5" y="6" width="2" height="3" rx=".8" fill="#374151"/>
+      <rect x="17.5" y="6" width="2" height="3" rx=".8" fill="#374151"/>
+      <!-- Headlights -->
+      <rect x="3" y="2" width="4.5" height="2.5" rx="1" fill="#fef08a"/>
+      <rect x="12.5" y="2" width="4.5" height="2.5" rx="1" fill="#fef08a"/>
+      <!-- Front grille -->
+      <rect x="5" y="1" width="10" height="2.5" rx="1" fill="#1e3a5f"/>
+      <rect x="6" y="1.4" width="2" height="1.6" rx=".3" fill="#374151"/>
+      <rect x="9" y="1.4" width="2" height="1.6" rx=".3" fill="#374151"/>
+      <rect x="12" y="1.4" width="2" height="1.6" rx=".3" fill="#374151"/>
+      <!-- Bumper -->
+      <rect x="2.5" y=".2" width="15" height="2" rx="1" fill="#374151"/>
+      <!-- Exhaust stacks -->
+      <rect x="4" y=".5" width="2" height="4" rx="1" fill="#6b7280"/>
+      <rect x="14" y=".5" width="2" height="4" rx="1" fill="#6b7280"/>
+      <!-- Wheels front -->
+      <rect x=".2" y="7" width="2.5" height="5" rx="1" fill="#0f172a"/>
+      <rect x=".7" y="7.5" width="1.5" height="4" rx=".5" fill="#374151"/>
+      <rect x="17.3" y="7" width="2.5" height="5" rx="1" fill="#0f172a"/>
+      <rect x="17.8" y="7.5" width="1.5" height="4" rx=".5" fill="#374151"/>
+      <!-- Wheels drive axle -->
+      <rect x=".2" y="28" width="2.5" height="5" rx="1" fill="#0f172a"/>
+      <rect x=".7" y="28.5" width="1.5" height="4" rx=".5" fill="#374151"/>
+      <rect x="17.3" y="28" width="2.5" height="5" rx="1" fill="#0f172a"/>
+      <rect x="17.8" y="28.5" width="1.5" height="4" rx=".5" fill="#374151"/>
+      <rect x=".2" y="34" width="2.5" height="5" rx="1" fill="#0f172a"/>
+      <rect x=".7" y="34.5" width="1.5" height="4" rx=".5" fill="#374151"/>
+      <rect x="17.3" y="34" width="2.5" height="5" rx="1" fill="#0f172a"/>
+      <rect x="17.8" y="34.5" width="1.5" height="4" rx=".5" fill="#374151"/>
+      <!-- Wheels trailer rear -->
+      <rect x=".2" y="42" width="2.5" height="5" rx="1" fill="#0f172a"/>
+      <rect x=".7" y="42.5" width="1.5" height="4" rx=".5" fill="#374151"/>
+      <rect x="17.3" y="42" width="2.5" height="5" rx="1" fill="#0f172a"/>
+      <rect x="17.8" y="42.5" width="1.5" height="4" rx=".5" fill="#374151"/>
+      <!-- Tail lights -->
+      <rect x="1.5" y="47" width="3.5" height="2" rx=".8" fill="#ef4444"/>
+      <rect x="15" y="47" width="3.5" height="2" rx=".8" fill="#ef4444"/>
+      <!-- Rear reflector strip -->
+      <rect x="3" y="49.5" width="14" height="1.5" rx=".5" fill="#fbbf24" opacity=".8"/>
+    </svg>`;
   }
   // Emoji
   const emoji = (truckIconMode && truckIconMode.startsWith('emoji:')) ? truckIconMode.slice(6) : '🚛';
@@ -10058,9 +10601,8 @@ function getTruckIconHTML(sizePx=26) {
 }
 
 function getTruckLeafletIcon() {
-  const hasPhoto = (typeof currentUser !== 'undefined' && currentUser && currentUser.photoData)
-    || (truckIconMode && truckIconMode.startsWith('upload:') && truckUploadData);
-  const size = hasPhoto ? 40 : 44;
+  const hasAvatar = _getUserAvatarHTML(24) !== null;
+  const size = hasAvatar ? 42 : 44;
   const anchor = size / 2;
   return L.divIcon({
     className: '',
@@ -10426,11 +10968,11 @@ function addRoadNameMarkers(map, steps, isFull){
 }
 
 
-function calculateSchedule(start, distance, speed, cycle) {
+function calculateSchedule(start, distance, speed, cycle, firstDayLimit = 11) {
   const sched = [];
   let current = new Date(start), rem = distance, hours = cycle, day = 1, safety = 0;
   while (rem > 0 && safety++ < 500) {
-    const available = Math.min(11, hours);
+    const available = Math.min(day === 1 ? firstDayLimit : 11, hours);
     if (available <= 0) {
       const end = new Date(current.getTime() + 34*3600000);
       sched.push({ type:'reset', day, start:new Date(current), end, hours:34 });
@@ -10909,21 +11451,55 @@ function renderResults(hours, speed, depart) {
 
   const sl = document.getElementById('scheduleList');
   sl.innerHTML = '';
-  schedule.forEach(s => {
+  let cumMiles = 0;
+  const restStops = [];
+
+  schedule.forEach((s, idx) => {
     const div = document.createElement('div');
-    if (s.type === 'break30') {
+    if (s.type === 'drive') {
+      cumMiles += (s.distance || 0);
+      div.className = 'sched';
+      div.innerHTML = `<div class="t">${t('day')} ${s.day} - ${t('drive')}</div><div class="d" style="white-space:pre-line">🚛 ${fmtTime(s.start)} → ${fmtTime(s.end)}\n${fmtH(s.hours)} | ${Math.round(s.distance||0)} mi</div>`;
+    } else if (s.type === 'break30') {
       div.className = 'sched break30';
-      div.innerHTML = `<div class="t">☕ ${lang==='es'?'Pausa 30 min obligatoria':'Mandatory 30-min Break'}</div><div class="d">⏸️ ${fmtTime(s.start)} → ${fmtTime(s.end)}</div>`;
-    } else {
-      div.className = 'sched' + (s.type==='rest'?' rest':s.type==='reset'?' reset':'');
-      const title = s.type==='reset' ? `🔄 ${t('reset')}` : `${t('day')} ${s.day} - ${s.type==='drive'?t('drive'):t('rest')}`;
-      const detail = s.type==='drive'
-        ? `🚛 ${fmtTime(s.start)} → ${fmtTime(s.end)}\n${fmtH(s.hours)} | ${Math.round(s.distance||0)} mi`
-        : s.type==='rest' ? `😴 10 hours DOT` : `Recover 70 hrs`;
-      div.innerHTML = `<div class="t">${title}</div><div class="d" style="white-space:pre-line">${detail}</div>`;
+      div.innerHTML = `<div class="t">☕ ${lang==='es'?'Pausa 30 min obligatoria':'Mandatory 30-min Break'}</div><div class="d">⏸️ ${fmtTime(s.start)} → ${fmtTime(s.end)}</div><div class="sched-city loading" id="schedCity${idx}">📍 Obteniendo ciudad…</div>`;
+      restStops.push({ idx, miles: cumMiles });
+    } else if (s.type === 'rest') {
+      div.className = 'sched rest';
+      div.innerHTML = `<div class="t">${t('day')} ${s.day} - ${t('rest')}</div><div class="d">😴 ${fmtTime(s.start)} → ${fmtTime(s.end)} · 10 hrs DOT</div><div class="sched-city loading" id="schedCity${idx}">📍 Obteniendo ciudad…</div>`;
+      restStops.push({ idx, miles: cumMiles });
+    } else if (s.type === 'reset') {
+      div.className = 'sched reset';
+      div.innerHTML = `<div class="t">🔄 ${t('reset')}</div><div class="d">${fmtTime(s.start)} → ${fmtTime(s.end)} · 34 hrs</div><div class="sched-city loading" id="schedCity${idx}">📍 Obteniendo ciudad…</div>`;
+      restStops.push({ idx, miles: cumMiles });
     }
     sl.appendChild(div);
   });
+
+  // Destino final con bandera
+  const destDiv = document.createElement('div');
+  destDiv.className = 'sched dest-flag';
+  destDiv.innerHTML = `<div class="t">🏁 ${destination.name}</div><div class="d">${lang==='es'?'Destino final':'Final destination'} · ${routeDistance.toLocaleString()} mi total</div><button class="arrived-btn" onclick="window._hosOpenArrivalPopup()">✅ ${lang==='es'?'Llegué al destino':'I Arrived'}</button>`;
+  sl.appendChild(destDiv);
+
+  // Detectar violaciones DOT y mostrar notificación
+  const _dailyHrs  = parseFloat(document.getElementById('dailyHoursInput')?.value || 11);
+  const _weeklyHrs = parseFloat(document.getElementById('hoursInput')?.value || 70);
+  _detectAndShowViolations(_dailyHrs, _weeklyHrs);
+
+  // Geocodificar ciudades de descanso de forma asíncrona
+  if (restStops.length && roadGeometry && roadGeometry.length > 1) {
+    restStops.forEach((stop, i) => {
+      setTimeout(() => {
+        const pos = _getPositionAtMiles(stop.miles);
+        if (!pos) return;
+        _reverseGeocodeCity(pos[0], pos[1]).then(city => {
+          const el = document.getElementById('schedCity' + stop.idx);
+          if (el) { el.textContent = '📍 ' + city; el.classList.remove('loading'); el.classList.add('loaded'); }
+        });
+      }, i * 1100); // 1.1s entre llamadas → respeta Nominatim rate-limit
+    });
+  }
 }
 
 function renderDrives() {
@@ -14761,7 +15337,8 @@ calculateRoute = async function() {
     navSteps = Array.isArray(road.steps) ? road.steps : [];
     navStepIdx = 0;
 
-    schedule = calculateSchedule(depart, routeDistance, speed, hours);
+    const dailyHrs = parseFloat(document.getElementById('dailyHoursInput')?.value || 11);
+    schedule = calculateSchedule(depart, routeDistance, speed, hours, dailyHrs);
     arrivalTime = schedule.at(-1)?.end || depart;
     totalTime = schedule.reduce((a,s) => a + (s.type==='drive'||s.type==='rest'||s.type==='reset'||s.type==='break30' ? s.hours : 0), 0);
 
@@ -16072,6 +16649,11 @@ function setRouteType(type) {
   document.querySelectorAll('.rt-pill').forEach(p => {
     p.classList.toggle('active', p.dataset.type === type);
   });
+  // Si ya hay una ruta calculada, recalcular sin mostrar popups de horas
+  if (origin && destination && routeDistance > 0) {
+    _hosAutoRecalc = true;
+    calculateRoute();
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -18902,6 +19484,770 @@ async function sendScanEmail() {
 
 })();
 
+
+/* ════════════════════════════════════════════════════════════
+   ⚠️  DOT VIOLATION DETECTOR
+════════════════════════════════════════════════════════════ */
+function closeViolationSheet() {
+  document.getElementById('violationOverlay')?.classList.remove('active');
+}
+document.getElementById('violationOverlay')?.addEventListener('click', function(e) {
+  if (e.target === this) closeViolationSheet();
+});
+
+function _detectAndShowViolations(dailyHrs, weeklyHrs) {
+  const V = [];
+
+  /* ── 1. Input: daily hours > 11 ── */
+  if (dailyHrs > 11) {
+    V.push({
+      severity: 'critical', risk: 'CRÍTICO',
+      code: '49 CFR § 395.3(a)(3)',
+      title: 'Límite diario de conducción excedido',
+      desc: `Reportaste ${dailyHrs} hrs disponibles hoy. El DOT permite máximo 11 hrs de conducción por día. Operar por encima coloca al transportista Fuera de Servicio inmediato.`,
+      fine: '$7,500 – $16,000'
+    });
+  }
+
+  /* ── 2. Input: weekly cycle > 70 ── */
+  if (weeklyHrs > 70) {
+    V.push({
+      severity: 'critical', risk: 'CRÍTICO',
+      code: '49 CFR § 395.3(b)',
+      title: 'Ciclo de 70 hrs / 8 días excedido',
+      desc: `Ingresaste ${weeklyHrs} hrs en el ciclo semanal. El máximo federal es 70 hrs en 8 días consecutivos. La FMCSA puede ordenar parada inmediata del vehículo.`,
+      fine: '$7,500 – $16,000'
+    });
+  }
+
+  if (schedule && schedule.length) {
+
+    /* ── 3. Schedule: reset 34h requerido (ciclo agotado) ── */
+    if (schedule.some(s => s.type === 'reset')) {
+      V.push({
+        severity: 'high', risk: 'ALTO',
+        code: '49 CFR § 395.3(b)',
+        title: 'Ciclo semanal insuficiente — Reset 34 hrs necesario',
+        desc: 'La ruta agota tu ciclo de 70 hrs antes de llegar al destino. La ley exige un descanso de 34 horas consecutivas fuera de servicio antes de continuar. Planifica este tiempo en tu itinerario.',
+        fine: '$3,500 – $16,000'
+      });
+    }
+
+    /* ── 4. Schedule: conducción diaria > 11h ── */
+    const driveByDay = {};
+    schedule.forEach(s => {
+      if (s.type === 'drive') driveByDay[s.day] = (driveByDay[s.day] || 0) + s.hours;
+    });
+    Object.entries(driveByDay).forEach(([day, hrs]) => {
+      if (hrs > 11.05) {
+        V.push({
+          severity: 'critical', risk: 'CRÍTICO',
+          code: '49 CFR § 395.3(a)(3)',
+          title: `Exceso de conducción — Día ${day}`,
+          desc: `El Día ${day} acumula ${hrs.toFixed(1)} hrs de manejo, superando el límite de 11 hrs/día. Un inspector DOT puede ordenar parada inmediata y retiro de la licencia CDL.`,
+          fine: '$7,500 – $16,000'
+        });
+      }
+    });
+
+    /* ── 5. Schedule: ventana de 14h on-duty excedida ── */
+    const windowByDay = {};
+    schedule.forEach(s => {
+      if (s.type === 'rest' || s.type === 'reset') return;
+      const d = s.day;
+      if (!windowByDay[d]) windowByDay[d] = { start: s.start.getTime(), end: s.end.getTime() };
+      if (s.start.getTime() < windowByDay[d].start) windowByDay[d].start = s.start.getTime();
+      if (s.end.getTime()   > windowByDay[d].end)   windowByDay[d].end   = s.end.getTime();
+    });
+    Object.entries(windowByDay).forEach(([day, w]) => {
+      const hrs = (w.end - w.start) / 3600000;
+      if (hrs > 14.05) {
+        V.push({
+          severity: 'high', risk: 'ALTO',
+          code: '49 CFR § 395.3(a)(2)',
+          title: `Ventana on-duty de 14 hrs excedida — Día ${day}`,
+          desc: `El Día ${day} tiene una ventana de servicio activo de ${hrs.toFixed(1)} hrs desde el inicio del turno. El límite es 14 hrs, sin importar cuánto tiempo se haya descansado dentro del turno.`,
+          fine: '$3,500 – $16,000'
+        });
+      }
+    });
+
+    /* ── 6. Schedule: pausa 30 min no programada (si use30min=false) ── */
+    if (!use30min) {
+      const needsBreak = Object.values(driveByDay).some(h => h >= 8);
+      if (needsBreak) {
+        V.push({
+          severity: 'high', risk: 'ALTO',
+          code: '49 CFR § 395.3(a)(3)(ii)',
+          title: 'Pausa obligatoria de 30 min desactivada',
+          desc: 'Tienes desactivada la pausa de 30 minutos. Esta pausa es obligatoria después de 8 hrs de conducción acumulada. Omitirla es una violación directa que puede resultar en declaración Fuera de Servicio.',
+          fine: '$1,000 – $16,000'
+        });
+      }
+    }
+
+    /* ── 7. Daily hours muy bajas — advertencia de fatiga ── */
+    if (dailyHrs <= 4 && dailyHrs > 0) {
+      V.push({
+        severity: 'medium', risk: 'MEDIO',
+        code: '49 CFR § 392.3',
+        title: 'Riesgo de fatiga del conductor',
+        desc: `Con solo ${dailyHrs} hrs disponibles hoy, el conductor puede estar operando con fatiga acumulada. La Sección 392.3 prohíbe operar un vehículo cuando la fatiga afecta la capacidad de manejar con seguridad.`,
+        fine: '$1,000 – $8,000'
+      });
+    }
+  }
+
+  if (V.length === 0) return; // sin violaciones — no mostrar nada
+
+  /* ── Renderizar el sheet ── */
+  const critCount   = V.filter(v => v.severity === 'critical').length;
+  const highCount   = V.filter(v => v.severity === 'high').length;
+  const subParts = [];
+  if (critCount) subParts.push(`${critCount} crítica${critCount > 1 ? 's' : ''}`);
+  if (highCount) subParts.push(`${highCount} alta${highCount > 1 ? 's' : ''}`);
+  const otherCount = V.length - critCount - highCount;
+  if (otherCount) subParts.push(`${otherCount} advertencia${otherCount > 1 ? 's' : ''}`);
+  document.getElementById('vioHeaderSub').textContent = subParts.join(' · ') + ' · DOT/FMCSA';
+
+  const body = document.getElementById('vioBody');
+  body.innerHTML = V.map(v => `
+    <div class="vio-card ${v.severity}">
+      <div class="vio-card-top">
+        <span class="vio-badge ${v.severity}">${v.risk}</span>
+        <span class="vio-code">${v.code}</span>
+      </div>
+      <div class="vio-title">${v.title}</div>
+      <div class="vio-desc">${v.desc}</div>
+      <div class="vio-fine">
+        <span style="font-size:16px">${v.severity==='critical'?'💰':v.severity==='high'?'⚠️':v.severity==='medium'?'🔶':'ℹ️'}</span>
+        <span class="vio-fine-lbl">Multa potencial</span>
+        <span class="vio-fine-val ${v.severity}">${v.fine}</span>
+      </div>
+    </div>`).join('');
+
+  /* Mostrar con delay mínimo para que el usuario vea el resultado primero */
+  setTimeout(() => {
+    document.getElementById('violationOverlay')?.classList.add('active');
+    if (typeof vibrate === 'function') vibrate([100, 50, 100, 50, 200]);
+  }, 900);
+}
+
+/* ════════════════════════════════════════════════════════════
+   📍  SCHEDULE CITY HELPERS
+════════════════════════════════════════════════════════════ */
+function _getPositionAtMiles(targetMiles) {
+  if (!roadGeometry || roadGeometry.length < 2) return null;
+  // Use raw haversine (no rounding) for interpolation
+  function rawHav(la1, lo1, la2, lo2) {
+    const R = 3959, r = x => x * Math.PI / 180;
+    const dLat = r(la2-la1), dLon = r(lo2-lo1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+  let traveled = 0;
+  for (let i = 1; i < roadGeometry.length; i++) {
+    const [la1, lo1] = roadGeometry[i-1];
+    const [la2, lo2] = roadGeometry[i];
+    const seg = rawHav(la1, lo1, la2, lo2);
+    if (traveled + seg >= targetMiles) {
+      const frac = seg > 0 ? (targetMiles - traveled) / seg : 0;
+      return [la1 + (la2 - la1) * frac, lo1 + (lo2 - lo1) * frac];
+    }
+    traveled += seg;
+  }
+  return roadGeometry[roadGeometry.length - 1];
+}
+
+const _stateAbbr = {Alabama:'AL',Alaska:'AK',Arizona:'AZ',Arkansas:'AR',California:'CA',Colorado:'CO',Connecticut:'CT',Delaware:'DE',Florida:'FL',Georgia:'GA',Hawaii:'HI',Idaho:'ID',Illinois:'IL',Indiana:'IN',Iowa:'IA',Kansas:'KS',Kentucky:'KY',Louisiana:'LA',Maine:'ME',Maryland:'MD',Massachusetts:'MA',Michigan:'MI',Minnesota:'MN',Mississippi:'MS',Missouri:'MO',Montana:'MT',Nebraska:'NE',Nevada:'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND',Ohio:'OH',Oklahoma:'OK',Oregon:'OR',Pennsylvania:'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD',Tennessee:'TN',Texas:'TX',Utah:'UT',Vermont:'VT',Virginia:'VA',Washington:'WA','West Virginia':'WV',Wisconsin:'WI',Wyoming:'WY'};
+
+async function _reverseGeocodeCity(lat, lon) {
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&zoom=10&addressdetails=1`,
+      { headers: { 'Accept-Language': 'en' } }
+    );
+    const d = await r.json();
+    const a = d.address || {};
+    const city  = a.city || a.town || a.village || a.hamlet || a.county || '';
+    const state = a.state || '';
+    const sa    = _stateAbbr[state] || (state.length <= 3 ? state.toUpperCase() : '');
+    return city && sa ? `${city}, ${sa}` : city || (lang==='es' ? 'Ubicación desconocida' : 'Unknown location');
+  } catch {
+    return lang==='es' ? 'Sin conexión' : 'Unavailable';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   📋  DOT PANEL
+════════════════════════════════════════════════════════════ */
+function openDotPanel() {
+  const el = document.getElementById('dotPanelOverlay');
+  if (!el) return;
+  // set today's date label
+  const d = new Date();
+  const lbl = document.getElementById('dotNewsDate');
+  if (lbl) lbl.textContent = 'Actualizado: ' + d.toLocaleDateString('es-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  _dotSwitchTab('news');
+  el.style.display = 'flex';
+}
+function closeDotPanel() {
+  const el = document.getElementById('dotPanelOverlay');
+  if (el) el.style.display = 'none';
+}
+function _dotSwitchTab(tab) {
+  const news    = document.getElementById('dotPanelNews');
+  const regs    = document.getElementById('dotPanelRegs');
+  const btnNews = document.getElementById('dotTabNews');
+  const btnRegs = document.getElementById('dotTabRegs');
+  if (!news || !regs) return;
+  const isNews = tab === 'news';
+  news.style.display = isNews ? 'block' : 'none';
+  regs.style.display = isNews ? 'none'  : 'block';
+  if (btnNews) { btnNews.style.background = isNews ? 'linear-gradient(135deg,#f97316,#ea580c)' : 'transparent'; btnNews.style.color = isNews ? '#fff' : '#94a3b8'; btnNews.style.border = isNews ? 'none' : '1px solid rgba(255,255,255,.1)'; }
+  if (btnRegs) { btnRegs.style.background = isNews ? 'transparent' : 'linear-gradient(135deg,#f97316,#ea580c)'; btnRegs.style.color = isNews ? '#94a3b8' : '#fff'; btnRegs.style.border = isNews ? '1px solid rgba(255,255,255,.1)' : 'none'; }
+}
+document.getElementById('dotPanelOverlay')?.addEventListener('click', function(e) {
+  if (e.target === this) closeDotPanel();
+});
+
+/* Sync side-tab badge with legacy cqtBadge */
+(function() {
+  const legacy = document.getElementById('cqtBadge');
+  const side   = document.getElementById('sideTabBadge');
+  if (!legacy || !side) return;
+  const obs = new MutationObserver(() => {
+    side.textContent = legacy.textContent;
+    side.style.display = legacy.style.display;
+  });
+  obs.observe(legacy, { attributes: true, childList: true, subtree: true });
+})();
+
+/* ════════════════════════════════════════════════════════════
+   🚛  HOS POPUP FLOW — reemplaza ventana de hora restante
+════════════════════════════════════════════════════════════ */
+window._hosAutoRecalc = false;
+
+(function() {
+  // Guarda la última versión de calculateRoute antes de este override
+  const _origCalcForPopup = calculateRoute;
+
+  // Reemplaza calculateRoute con el flujo de popups
+  calculateRoute = function() {
+    if (!origin || !destination) { showError(t('errSel')); return; }
+    if (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving && fmCurrentSpeed > 3) {
+      showToast('danger','🚨',
+        lang==='es' ? '¡Vehículo en movimiento!' : 'Vehicle in Motion!',
+        lang==='es' ? 'Detente para usar esta función.' : 'Please stop the vehicle first.',
+        8000);
+      if (typeof vibrate === 'function') vibrate([200,100,200,100,200]);
+      return;
+    }
+
+    // Si viene de un cambio de tipo de ruta, saltar popups y calcular directo
+    if (window._hosAutoRecalc) {
+      window._hosAutoRecalc = false;
+      const overlay = document.getElementById('calcProgressOverlay');
+      if (overlay) {
+        const fill = document.getElementById('calcProgressFill');
+        if (fill) { fill.style.animation = 'none'; fill.offsetHeight; fill.style.animation = ''; }
+        overlay.classList.add('active');
+      }
+      const result = _origCalcForPopup();
+      const done = () => { if (overlay) overlay.classList.remove('active'); };
+      if (result && typeof result.then === 'function') result.then(done).catch(done);
+      else setTimeout(done, 400);
+      return;
+    }
+
+    _hosOpenPopup1();
+  };
+
+  // ── Popup 1: horas diarias ─────────────────────────────
+  function _hosOpenPopup1() {
+    const overlay = document.getElementById('hosPopup1');
+    const inp     = document.getElementById('hosStep1Input');
+    const err     = document.getElementById('hosStep1Error');
+    if (err) err.style.display = 'none';
+    if (inp) { inp.value = '11'; setTimeout(() => inp.select(), 80); }
+    if (overlay) overlay.classList.add('active');
+  }
+
+  window._hosStep1Submit = function() {
+    const inp = document.getElementById('hosStep1Input');
+    const err = document.getElementById('hosStep1Error');
+    const val = parseFloat(inp.value);
+    if (isNaN(val) || val <= 0 || val > 11) {
+      err.style.display = 'block';
+      inp.focus();
+      return;
+    }
+    err.style.display = 'none';
+    document.getElementById('dailyHoursInput').value = val;
+    document.getElementById('hosPopup1').classList.remove('active');
+    _hosOpenPopup2();
+  };
+
+  // ── Popup 2: ciclo semanal 70h ─────────────────────────
+  function _hosOpenPopup2() {
+    const overlay = document.getElementById('hosPopup2');
+    const inp     = document.getElementById('hosStep2Input');
+    const err     = document.getElementById('hosStep2Error');
+    if (err) err.style.display = 'none';
+    if (inp) { inp.value = '70'; setTimeout(() => inp.select(), 80); }
+    _hosUpdateWeeklyBar(70);
+    if (overlay) overlay.classList.add('active');
+  }
+
+  window._hosUpdateWeeklyBar = function(val) {
+    const weekly  = Math.max(0, Math.min(70, parseFloat(val) || 0));
+    const daily   = Math.max(0, Math.min(11, parseFloat(document.getElementById('dailyHoursInput')?.value || 11)));
+    const todayHrs = Math.min(daily, weekly);
+    const pct     = (weekly / 70 * 100).toFixed(0);
+
+    // Progress bar
+    const fill = document.getElementById('hosWeeklyBarFill');
+    if (fill) {
+      fill.style.width = pct + '%';
+      fill.style.background = weekly <= 14
+        ? 'linear-gradient(90deg,#ef4444,#f97316)'
+        : weekly <= 35
+          ? 'linear-gradient(90deg,#f59e0b,#f97316)'
+          : 'linear-gradient(90deg,#8b5cf6,#3b82f6)';
+    }
+
+    // Pct label
+    const pctLbl = document.getElementById('hosWeeklyPctLbl');
+    if (pctLbl) pctLbl.textContent = pct + '%';
+
+    // Calc card — weekly
+    const wEl = document.getElementById('hosCalcWeekly');
+    if (wEl) {
+      wEl.textContent = weekly;
+      wEl.style.color = weekly <= 14 ? '#ef4444' : weekly <= 35 ? '#f59e0b' : '#8b5cf6';
+    }
+
+    // Calc card — today available
+    const tEl    = document.getElementById('hosCalcToday');
+    const tLbl   = document.getElementById('hosCalcTodayLbl');
+    if (tEl) {
+      tEl.textContent = todayHrs % 1 === 0 ? todayHrs : todayHrs.toFixed(1);
+      tEl.style.color = todayHrs <= 3 ? '#ef4444' : todayHrs <= 6 ? '#f59e0b' : '#10b981';
+    }
+    if (tLbl) {
+      const limited = todayHrs < daily;
+      tLbl.textContent = limited ? 'hrs (limitado por ciclo)' : 'hrs para manejar';
+      tLbl.style.color  = limited ? '#f59e0b' : '#475569';
+    }
+  };
+
+  window._hosStep2Submit = function() {
+    const inp = document.getElementById('hosStep2Input');
+    const err = document.getElementById('hosStep2Error');
+    const val = parseFloat(inp.value);
+    if (isNaN(val) || val < 1 || val > 70) {
+      err.style.display = 'block';
+      inp.focus();
+      return;
+    }
+    err.style.display = 'none';
+    document.getElementById('hoursInput').value = val;
+    document.getElementById('hosPopup2').classList.remove('active');
+    _hosOpenPopup3();
+  };
+
+  // ── Popup 3: resumen y confirmación ───────────────────
+  function _hosOpenPopup3() {
+    const daily  = parseFloat(document.getElementById('dailyHoursInput')?.value || 11);
+    const weekly = parseFloat(document.getElementById('hoursInput')?.value || 70);
+    const canDrive = Math.min(daily, weekly);
+    const usedCycle = 70 - weekly;
+    const estDays = weekly > 0 ? Math.floor(weekly / 11) : 0;
+    const limited = canDrive < daily;
+
+    // Valores individuales
+    const el = id => document.getElementById(id);
+    if (el('hosSum1Val')) el('hosSum1Val').textContent = daily % 1 === 0 ? daily : daily.toFixed(1);
+    if (el('hosSum2Val')) el('hosSum2Val').textContent = weekly;
+
+    // Tarjeta total — color según nivel
+    const color = canDrive <= 3  ? { bg:'rgba(239,68,68,.15)',  border:'rgba(239,68,68,.4)',  txt:'#ef4444', label:'⚠️ Horas limitadas' }
+                : canDrive <= 6  ? { bg:'rgba(245,158,11,.15)', border:'rgba(245,158,11,.4)', txt:'#f59e0b', label:'🟡 Horas moderadas' }
+                :                  { bg:'rgba(16,185,129,.15)', border:'rgba(16,185,129,.35)',txt:'#10b981', label:'✅ Puedes manejar' };
+
+    const totalCard = el('hosSumTotal');
+    if (totalCard) { totalCard.style.background = color.bg; totalCard.style.border = '1.5px solid ' + color.border; }
+    if (el('hosSumTotalLabel')) el('hosSumTotalLabel').textContent = color.label;
+    if (el('hosSumTotalVal'))   { el('hosSumTotalVal').textContent = canDrive % 1 === 0 ? canDrive : canDrive.toFixed(1); el('hosSumTotalVal').style.color = color.txt; }
+    if (el('hosSumTotalSub'))   el('hosSumTotalSub').textContent = limited ? 'hrs (ciclo semanal es el límite)' : 'horas hoy en esta ruta';
+
+    // Barra ciclo semanal
+    const barPct = Math.min(100, (usedCycle / 70) * 100).toFixed(1);
+    if (el('hosSumCycleBar'))  { el('hosSumCycleBar').style.width = barPct + '%'; el('hosSumCycleBar').style.background = weekly <= 14 ? 'linear-gradient(90deg,#ef4444,#f97316)' : weekly <= 35 ? 'linear-gradient(90deg,#f59e0b,#fb923c)' : 'linear-gradient(90deg,#8b5cf6,#3b82f6)'; }
+    if (el('hosSumCycleUsed')) el('hosSumCycleUsed').textContent = usedCycle.toFixed(0) + ' / 70 hrs usadas';
+
+    // Días estimados
+    if (el('hosSumDaysVal'))  { el('hosSumDaysVal').textContent = '~' + estDays; el('hosSumDaysVal').style.color = estDays <= 1 ? '#ef4444' : estDays <= 3 ? '#f59e0b' : '#10b981'; }
+    if (el('hosSumDaysSub'))  el('hosSumDaysSub').textContent = 'Con ' + weekly + ' hrs restantes a 11 hrs/día';
+
+    // Botón color
+    const btn = el('hosSumCalcBtn');
+    if (btn) { btn.style.background = canDrive <= 3 ? 'linear-gradient(135deg,#ef4444,#dc2626)' : 'linear-gradient(135deg,#3b82f6,#1d4ed8)'; }
+
+    el('hosPopup3')?.classList.add('active');
+  }
+
+  window._hosStep3Confirm = function() {
+    document.getElementById('hosPopup3')?.classList.remove('active');
+
+    // Mostrar progress bar
+    const overlay = document.getElementById('calcProgressOverlay');
+    if (overlay) {
+      const fill = document.getElementById('calcProgressFill');
+      if (fill) { fill.style.animation = 'none'; fill.offsetHeight; fill.style.animation = ''; }
+      overlay.classList.add('active');
+    }
+
+    // Ejecutar cálculo
+    const result = _origCalcForPopup();
+    const done = () => { if (overlay) overlay.classList.remove('active'); };
+    if (result && typeof result.then === 'function') {
+      result.then(done).catch(done);
+    } else {
+      setTimeout(done, 400);
+    }
+  };
+
+  // ── Ciclo persistente — localStorage ──────────────────
+  const HOS_CYCLE_KEY = 'hos_cycle_state';
+
+  function _hosLoadCycleState() {
+    try {
+      const s = JSON.parse(localStorage.getItem(HOS_CYCLE_KEY));
+      if (!s || !s.savedAt) return null;
+      const ageDays = (Date.now() - new Date(s.savedAt).getTime()) / 86400000;
+      if (ageDays > 8) { localStorage.removeItem(HOS_CYCLE_KEY); return null; }
+      return s;
+    } catch(e) { return null; }
+  }
+
+  function _hosSaveCycleState(weeklyHrsRemaining, destName) {
+    localStorage.setItem(HOS_CYCLE_KEY, JSON.stringify({
+      weeklyHrsRemaining: Math.max(0, weeklyHrsRemaining),
+      savedAt: new Date().toISOString(),
+      destination: destName || ''
+    }));
+  }
+
+  function _hosClearCycleState() {
+    localStorage.removeItem(HOS_CYCLE_KEY);
+  }
+
+  // ── Override popup 1 para mostrar ciclo guardado ────
+  const _origOpenPopup1 = _hosOpenPopup1;
+  _hosOpenPopup1 = function() {
+    const saved = _hosLoadCycleState();
+    let badge = document.getElementById('hosCycleSavedBadge');
+    if (saved) {
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'hosCycleSavedBadge';
+        badge.className = 'hos-cycle-saved-badge';
+        const card = document.querySelector('#hosPopup1 .hos-popup-card');
+        const inputWrap = card?.querySelector('.hos-popup-input-wrap');
+        if (inputWrap) card.insertBefore(badge, inputWrap);
+      }
+      const pct = Math.round(saved.weeklyHrsRemaining / 70 * 100);
+      badge.innerHTML = `💾 Ciclo guardado: <strong>${saved.weeklyHrsRemaining} hrs restantes</strong> (${pct}% del ciclo 70h)<br><small style="color:#64748b">Solo ingresa tus horas diarias — el ciclo se usa automáticamente</small>`;
+      badge.style.display = 'block';
+      const stepEl = document.querySelector('#hosPopup1 .hos-popup-step');
+      if (stepEl) stepEl.textContent = 'Paso 1 de 2';
+    } else {
+      if (badge) badge.style.display = 'none';
+      const stepEl = document.querySelector('#hosPopup1 .hos-popup-step');
+      if (stepEl) stepEl.textContent = 'Paso 1 de 2';
+    }
+    const overlay = document.getElementById('hosPopup1');
+    const inp = document.getElementById('hosStep1Input');
+    const err = document.getElementById('hosStep1Error');
+    if (err) err.style.display = 'none';
+    if (inp) { inp.value = '11'; setTimeout(() => inp.select(), 80); }
+    if (overlay) overlay.classList.add('active');
+  };
+
+  // ── Override step1Submit para saltar popup 2 si ciclo guardado ─
+  window._hosStep1Submit = function() {
+    const inp = document.getElementById('hosStep1Input');
+    const err = document.getElementById('hosStep1Error');
+    const val = parseFloat(inp.value);
+    if (isNaN(val) || val <= 0 || val > 11) {
+      err.style.display = 'block'; inp.focus(); return;
+    }
+    err.style.display = 'none';
+    document.getElementById('dailyHoursInput').value = val;
+    document.getElementById('hosPopup1').classList.remove('active');
+    const saved = _hosLoadCycleState();
+    if (saved) {
+      document.getElementById('hoursInput').value = saved.weeklyHrsRemaining;
+      const stepEl = document.querySelector('#hosPopup3 .hos-popup-step');
+      if (stepEl) stepEl.textContent = 'Paso 2 de 2 — Resumen';
+      _hosOpenPopup3();
+    } else {
+      _hosOpenPopup2();
+    }
+  };
+
+  // ── Popup de llegada ────────────────────────────────
+  window._hosOpenArrivalPopup = function() {
+    const weekly = parseFloat(document.getElementById('hoursInput')?.value || 70);
+    let tripHrs = 0;
+    if (window.schedule && Array.isArray(window.schedule)) {
+      tripHrs = window.schedule.filter(s => s.type === 'drive').reduce((a, s) => a + (s.hours || 0), 0);
+    }
+    const remaining = Math.max(0, parseFloat((weekly - tripHrs).toFixed(1)));
+
+    const el = id => document.getElementById(id);
+    if (el('hosArrHrsUsed')) el('hosArrHrsUsed').textContent = tripHrs.toFixed(1);
+    if (el('hosArrHrsRemain')) {
+      el('hosArrHrsRemain').textContent = remaining.toFixed(0);
+      el('hosArrHrsRemain').style.color = remaining <= 14 ? '#ef4444' : remaining <= 35 ? '#f59e0b' : '#10b981';
+    }
+    const destName = window.destination?.name?.split(',')[0] || '';
+    if (el('hosArrivalSub')) el('hosArrivalSub').textContent = `${destName ? destName + ' — ' : ''}¿Guardar ${remaining.toFixed(0)} hrs del ciclo para tu próxima ruta?`;
+    window._hosArrivalRemaining = remaining;
+    el('hosArrivalPopup')?.classList.add('active');
+  };
+
+  window._hosArrivalSave = function() {
+    const remaining = window._hosArrivalRemaining ?? 70;
+    const destName = window.destination?.name || '';
+    _hosSaveCycleState(remaining, destName);
+    document.getElementById('hosArrivalPopup')?.classList.remove('active');
+    if (typeof showToast === 'function') showToast('success','💾','Ciclo guardado',`${remaining.toFixed(0)} hrs restantes — se usarán en tu próxima ruta`,5000);
+  };
+
+  window._hosArrivalDiscard = function() {
+    _hosClearCycleState();
+    document.getElementById('hosArrivalPopup')?.classList.remove('active');
+  };
+
+  // ── Notificaciones del sistema ──────────────────────
+  (function _hosNotifInit() {
+    if (!('Notification' in window)) return;
+    // Pedir permiso después de 6 segundos de uso
+    if (Notification.permission === 'default') {
+      setTimeout(() => {
+        Notification.requestPermission().then(p => {
+          if (p === 'granted' && typeof showToast === 'function') {
+            showToast('success','🔔','Notificaciones activadas','Recibirás alertas DOT y actualizaciones en pantalla',5000);
+          }
+        });
+      }, 6000);
+    }
+
+    // Al volver a primer plano, mostrar notificación si hay noticias nuevas
+    const NEWS_KEY = 'hos_last_news_ts';
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      const last = parseInt(localStorage.getItem(NEWS_KEY) || '0');
+      const now = Date.now();
+      if (now - last > 30 * 60 * 1000) { // 30 min
+        localStorage.setItem(NEWS_KEY, String(now));
+        // Notificación nativa si en background
+        if (Notification.permission === 'granted') {
+          try { new Notification('HOS Tracker — DOT Update', { body: 'Hay nuevas noticias y regulaciones DOT disponibles.', icon: '' }); }
+          catch(e) {}
+        }
+        // Toast in-app siempre
+        if (typeof showToast === 'function') {
+          showToast('info','📋','Noticias DOT','Revisa las últimas actualizaciones del DOT en el panel lateral',6000);
+        }
+      }
+    });
+
+    // Verificar cada 30 min mientras la app está abierta
+    setInterval(() => {
+      if (document.hidden) return;
+      const last = parseInt(localStorage.getItem(NEWS_KEY) || '0');
+      const now = Date.now();
+      if (now - last > 30 * 60 * 1000) {
+        localStorage.setItem(NEWS_KEY, String(now));
+        if (Notification.permission === 'granted') {
+          try { new Notification('HOS Tracker — DOT Update', { body: 'Hay nuevas noticias y regulaciones DOT disponibles.' }); }
+          catch(e) {}
+        }
+        if (typeof showToast === 'function') {
+          showToast('info','📋','Noticias DOT','Revisa las últimas actualizaciones del DOT en el panel lateral',6000);
+        }
+      }
+    }, 30 * 60 * 1000);
+  })();
+
+  // Tecla Enter en los popups
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.getElementById('hosPopup1')?.classList.contains('active')) {
+      e.preventDefault(); window._hosStep1Submit();
+    } else if (document.getElementById('hosPopup2')?.classList.contains('active')) {
+      e.preventDefault(); window._hosStep2Submit();
+    } else if (document.getElementById('hosPopup3')?.classList.contains('active')) {
+      e.preventDefault(); window._hosStep3Confirm();
+    }
+  });
+
+  // Tap fuera NO cierra los popups (el driver debe ingresar un valor)
+})();
+
+/* ════════════════════════════════════════════════════════════
+   🚦  ROAD SIGNS GUIDE
+════════════════════════════════════════════════════════════ */
+(function(){
+  // ── SVG helpers ─────────────────────────────────────────
+  function octSVG(label,bg,fg){
+    return `<svg viewBox="0 0 64 64" width="52" height="52"><polygon points="20,2 44,2 62,20 62,44 44,62 20,62 2,44 2,20" fill="${bg}" stroke="${fg}" stroke-width="3"/><text x="32" y="${label.length>4?'38':'40'}" text-anchor="middle" fill="${fg}" font-size="${label.length>4?'10':'13'}" font-weight="900" font-family="system-ui,sans-serif">${label}</text></svg>`;
+  }
+  function rectSVG(lines,bg,fg,w=64,h=44){
+    const mid=h/2+1; const step=13;
+    const y0=lines.length===1?mid+5:mid-Math.floor(lines.length/2)*step/2+2;
+    const rows=lines.map((l,i)=>`<text x="${w/2}" y="${y0+i*step}" text-anchor="middle" fill="${fg}" font-size="11" font-weight="900" font-family="system-ui,sans-serif">${l}</text>`).join('');
+    return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><rect x="2" y="2" width="${w-4}" height="${h-4}" rx="4" fill="${bg}" stroke="${fg}" stroke-width="2.5"/>${rows}</svg>`;
+  }
+  function diamondSVG(symbol,bg,fg='#1a1a1a'){
+    return `<svg viewBox="0 0 64 64" width="56" height="56"><rect x="8" y="8" width="48" height="48" rx="5" fill="${bg}" stroke="${fg}" stroke-width="2.5" transform="rotate(45 32 32)"/><text x="32" y="38" text-anchor="middle" fill="${fg}" font-size="22" font-weight="900" font-family="system-ui,sans-serif">${symbol}</text></svg>`;
+  }
+  function diamondTextSVG(lines,bg,fg='#1a1a1a'){
+    const y0=lines.length===1?37:31; const step=11;
+    const rows=lines.map((l,i)=>`<text x="32" y="${y0+i*step}" text-anchor="middle" fill="${fg}" font-size="9" font-weight="900" font-family="system-ui,sans-serif">${l}</text>`).join('');
+    return `<svg viewBox="0 0 64 64" width="56" height="56"><rect x="8" y="8" width="48" height="48" rx="5" fill="${bg}" stroke="${fg}" stroke-width="2.5" transform="rotate(45 32 32)"/>${rows}</svg>`;
+  }
+  function yieldSVG(){
+    return `<svg viewBox="0 0 70 62" width="58" height="52"><polygon points="35,60 2,4 68,4" fill="#fff" stroke="#dc2626" stroke-width="5"/><text x="35" y="38" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="900" font-family="system-ui,sans-serif">YIELD</text></svg>`;
+  }
+  function circleSVG(text,bg,fg,size=56){
+    return `<svg viewBox="0 0 64 64" width="${size}" height="${size}"><circle cx="32" cy="32" r="29" fill="${bg}" stroke="${fg}" stroke-width="3"/><text x="32" y="37" text-anchor="middle" fill="${fg}" font-size="10" font-weight="900" font-family="system-ui,sans-serif">${text}</text></svg>`;
+  }
+  function pentagonSVG(text,bg,fg){
+    return `<svg viewBox="0 0 64 60" width="54" height="54"><polygon points="32,2 62,22 50,58 14,58 2,22" fill="${bg}" stroke="${fg}" stroke-width="2.5"/><text x="32" y="36" text-anchor="middle" fill="${fg}" font-size="10" font-weight="900" font-family="system-ui,sans-serif">${text}</text></svg>`;
+  }
+  function shieldSVG(num,bg,fg){
+    return `<svg viewBox="0 0 50 60" width="44" height="52"><path d="M25,2 L48,10 L48,32 Q48,52 25,58 Q2,52 2,32 L2,10 Z" fill="${bg}" stroke="${fg}" stroke-width="2.5"/><text x="25" y="38" text-anchor="middle" fill="${fg}" font-size="16" font-weight="900" font-family="system-ui,sans-serif">${num}</text></svg>`;
+  }
+  function noSVG(symbol,label){
+    return `<svg viewBox="0 0 64 64" width="54" height="54"><circle cx="32" cy="32" r="29" fill="#fff" stroke="#dc2626" stroke-width="3"/><text x="32" y="28" text-anchor="middle" fill="#1a1a1a" font-size="18" font-family="system-ui,sans-serif">${symbol}</text><text x="32" y="42" text-anchor="middle" fill="#1a1a1a" font-size="8" font-weight="800" font-family="system-ui,sans-serif">${label}</text><line x1="10" y1="54" x2="54" y2="10" stroke="#dc2626" stroke-width="3.5"/></svg>`;
+  }
+  function railSVG(){
+    return `<svg viewBox="0 0 64 64" width="54" height="54"><circle cx="32" cy="32" r="29" fill="#fbbf24" stroke="#1a1a1a" stroke-width="2.5"/><text x="32" y="22" text-anchor="middle" fill="#1a1a1a" font-size="20" font-weight="900" font-family="system-ui,sans-serif">R</text><line x1="12" y1="32" x2="52" y2="32" stroke="#1a1a1a" stroke-width="3"/><text x="32" y="50" text-anchor="middle" fill="#1a1a1a" font-size="20" font-weight="900" font-family="system-ui,sans-serif">R</text></svg>`;
+  }
+  function xrailSVG(){
+    return `<svg viewBox="0 0 64 64" width="54" height="54"><text x="32" y="45" text-anchor="middle" font-size="52" font-family="serif">✕</text><text x="14" y="32" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="900" font-family="system-ui,sans-serif">RR</text><text x="50" y="32" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="900" font-family="system-ui,sans-serif">RR</text></svg>`;
+  }
+  function orangeRectSVG(lines){
+    const h=50; const w=64;
+    const y0=lines.length===1?32:25; const step=13;
+    const rows=lines.map((l,i)=>`<text x="32" y="${y0+i*step}" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="900" font-family="system-ui,sans-serif">${l}</text>`).join('');
+    return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><rect x="2" y="2" width="60" height="46" rx="4" fill="#f97316" stroke="#1a1a1a" stroke-width="2.5"/>${rows}</svg>`;
+  }
+
+  // ── Sign data ────────────────────────────────────────────
+  const SIGNS = {
+    reg:[
+      { svg:octSVG('STOP','#dc2626','#fff'),            name:'Stop',                  desc:'Full stop required' },
+      { svg:yieldSVG(),                                 name:'Yield',                 desc:'Give way to traffic' },
+      { svg:rectSVG(['DO NOT','ENTER'],'#dc2626','#fff'),name:'Do Not Enter',         desc:'Wrong direction' },
+      { svg:rectSVG(['WRONG','WAY'],'#dc2626','#fff'),   name:'Wrong Way',            desc:'You are going wrong way' },
+      { svg:rectSVG(['SPEED','LIMIT','55'],'#fff','#1a1a1a',50,58),name:'Speed Limit',desc:'Maximum speed allowed' },
+      { svg:rectSVG(['ONE WAY','→'],'#1a1a1a','#fff',68,38),name:'One Way',          desc:'Traffic flows one direction' },
+      { svg:noSVG('↰','LEFT'),                          name:'No Left Turn',          desc:'Left turns prohibited' },
+      { svg:noSVG('↱','RIGHT'),                         name:'No Right Turn',         desc:'Right turns prohibited' },
+      { svg:noSVG('↶','U-TURN'),                        name:'No U-Turn',             desc:'U-turns prohibited' },
+      { svg:noSVG('🚛','TRUCKS'),                        name:'No Trucks',             desc:'Trucks not permitted' },
+      { svg:noSVG('P','PARKING'),                       name:'No Parking',            desc:'Parking not allowed here' },
+      { svg:railSVG(),                                  name:'Railroad Advance',       desc:'Railroad crossing ahead' },
+      { svg:rectSVG(['KEEP','RIGHT'],'#fff','#1a1a1a'), name:'Keep Right',            desc:'Stay to the right side' },
+      { svg:rectSVG(['NO','PASSING','ZONE'],'#fff','#1a1a1a',62,52),name:'No Passing Zone',desc:'Passing not permitted' },
+    ],
+    warn:[
+      { svg:diamondSVG('↱','#fbbf24'),    name:'Curve Right',         desc:'Road curves to the right' },
+      { svg:diamondSVG('↰','#fbbf24'),    name:'Curve Left',          desc:'Road curves to the left' },
+      { svg:diamondSVG('↯','#fbbf24'),    name:'Winding Road',        desc:'Series of curves ahead' },
+      { svg:diamondSVG('🌊','#fbbf24'),   name:'Slippery When Wet',   desc:'Slippery road surface' },
+      { svg:diamondTextSVG(['STEEP','HILL'],'#fbbf24'), name:'Steep Grade',  desc:'Hill — control your speed' },
+      { svg:diamondSVG('DIP','#fbbf24'),  name:'Dip',                 desc:'Low point — reduce speed' },
+      { svg:diamondSVG('⤵','#fbbf24'),   name:'Merge',               desc:'Lanes merging ahead' },
+      { svg:diamondTextSVG(['LANE','ENDS'],'#fbbf24'), name:'Lane Ends',     desc:'Right lane ends ahead' },
+      { svg:diamondSVG('🚶','#fbbf24'),   name:'Pedestrian Crossing', desc:'Watch for pedestrians' },
+      { svg:diamondSVG('🏫','#fbbf24'),   name:'School Zone',         desc:'Children may be crossing' },
+      { svg:diamondSVG('🚲','#fbbf24'),   name:'Bicycle Crossing',    desc:'Bicyclists may cross here' },
+      { svg:diamondSVG('🦌','#fbbf24'),   name:'Deer Crossing',       desc:'Watch for deer on roadway' },
+      { svg:diamondTextSVG(['LOW','CLEARANCE'],'#fbbf24'),name:'Low Clearance',desc:'Check bridge height' },
+      { svg:xrailSVG(),                   name:'Railroad Crossing',    desc:'Cross tracks — stop if needed' },
+      { svg:diamondTextSVG(['NARROW','BRIDGE'],'#fbbf24'),name:'Narrow Bridge',desc:'Bridge narrower than road' },
+      { svg:diamondSVG('⇆','#fbbf24'),   name:'Divided Hwy Ends',    desc:'Divided highway ends ahead' },
+    ],
+    guide:[
+      { svg:shieldSVG('90','#1d4ed8','#fff'),             name:'Interstate Route',    desc:'Interstate highway shield' },
+      { svg:shieldSVG('66','#fff','#1a1a1a'),             name:'US Route',            desc:'US numbered highway' },
+      { svg:pentagonSVG('STATE','#fff','#1a1a1a'),        name:'State Route',         desc:'State-numbered highway' },
+      { svg:rectSVG(['REST','AREA'],'#16a34a','#fff'),    name:'Rest Area',           desc:'Picnic/restroom ahead' },
+      { svg:rectSVG(['H'],'#1d4ed8','#fff',44,44),        name:'Hospital',            desc:'Medical facility nearby' },
+      { svg:rectSVG(['GAS','FOOD'],'#1d4ed8','#fff'),     name:'Services Ahead',      desc:'Fuel and food available' },
+      { svg:rectSVG(['TRUCK','ROUTE'],'#fff','#1a1a1a'),  name:'Truck Route',         desc:'Designated for trucks' },
+      { svg:rectSVG(['EXIT','→'],'#16a34a','#fff',68,40), name:'Exit Sign',           desc:'Exit ramp ahead' },
+      { svg:rectSVG(['MILE','MARKER','142'],'#16a34a','#fff',56,52),name:'Mile Marker',desc:'Indicates mileage position' },
+      { svg:rectSVG(['FOOD','LODGING'],'#1d4ed8','#fff'), name:'Food & Lodging',      desc:'Services at next exit' },
+    ],
+    truck:[
+      { svg:rectSVG(['WEIGHT','LIMIT','80,000 LBS'],'#fff','#1a1a1a',70,54),  name:'Weight Limit',     desc:'Max gross vehicle weight' },
+      { svg:rectSVG(['BRIDGE','LIMIT','40 TON'],'#fff','#1a1a1a',70,54),      name:'Bridge Weight',    desc:'Weight limit on bridge' },
+      { svg:rectSVG(['AXLE','LIMIT','20,000'],'#fff','#1a1a1a',70,54),        name:'Axle Weight',      desc:'Per-axle weight limit' },
+      { svg:rectSVG(['CLEARANCE','13\' 6"'],'#fff','#1a1a1a',70,46),          name:'Max Height',       desc:'Bridge / overhead clearance' },
+      { svg:rectSVG(['MAX','WIDTH','8\' 6"'],'#fff','#1a1a1a',70,46),         name:'Max Width',        desc:'Maximum vehicle width' },
+      { svg:rectSVG(['WEIGH','STATION','AHEAD'],'#fff','#1a1a1a',70,54),      name:'Weigh Station',    desc:'All trucks must stop' },
+      { svg:orangeRectSVG(['INSPECTION','STATION']),                           name:'Inspection Station',desc:'DOT inspection checkpoint' },
+      { svg:orangeRectSVG(['BRAKE','CHECK','AREA']),                           name:'Brake Check Area', desc:'Test brakes before descent' },
+      { svg:rectSVG(['HAZMAT','ROUTE'],'#f97316','#fff',70,44),                name:'Hazmat Route',     desc:'Hazardous materials route' },
+      { svg:rectSVG(['OVERSIZE','LOAD'],'#fbbf24','#1a1a1a',70,44),           name:'Oversize Load',    desc:'Wide/oversize vehicle ahead' },
+      { svg:rectSVG(['CDL','CHECKPOINT'],'#1d4ed8','#fff'),                    name:'CDL Checkpoint',   desc:'Commercial license check' },
+      { svg:orangeRectSVG(['EMERGENCY','STOPPING','ONLY']),                    name:'Emergency Stop',   desc:'Pull over only if emergency' },
+    ]
+  };
+
+  // ── Render ───────────────────────────────────────────────
+  function _renderSignTab(tab){
+    const list = SIGNS[tab] || [];
+    document.getElementById('roadSignsContent').innerHTML =
+      '<div class="sign-grid">' +
+      list.map(s =>
+        `<div class="sign-card">
+          ${s.svg}
+          <div class="sign-name">${s.name}</div>
+          <div class="sign-desc">${s.desc}</div>
+        </div>`
+      ).join('') +
+      '</div>';
+  }
+
+  window.openRoadSignsPanel = function(){
+    document.getElementById('roadSignsOverlay').classList.add('open');
+    _renderSignTab('reg');
+    document.querySelectorAll('.signs-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  };
+
+  window.closeRoadSignsPanel = function(){
+    document.getElementById('roadSignsOverlay').classList.remove('open');
+  };
+
+  window._switchSignTab = function(btn, tab){
+    document.querySelectorAll('.signs-tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    _renderSignTab(tab);
+  };
+
+  // Cerrar con tap en el overlay
+  document.getElementById('roadSignsOverlay')?.addEventListener('click', function(e){
+    if(e.target === this) window.closeRoadSignsPanel();
+  });
+})();
 
 </script>
 }
