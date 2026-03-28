@@ -974,6 +974,24 @@
     min-width: 150px;
   }
   #bridgeInput.visible { display: block; animation: fadeIn .3s ease; }
+  #bridgeInput.bridge-warn {
+    border-color: rgba(245,158,11,.7);
+    box-shadow: 0 4px 24px rgba(245,158,11,.35), 0 0 0 2px rgba(245,158,11,.2);
+    animation: fadeIn .3s ease, bridgePulseWarn 1.8s ease-in-out infinite;
+  }
+  #bridgeInput.bridge-danger {
+    border-color: rgba(239,68,68,.8);
+    box-shadow: 0 4px 28px rgba(239,68,68,.5), 0 0 0 3px rgba(239,68,68,.25);
+    animation: fadeIn .3s ease, bridgePulseDanger 0.9s ease-in-out infinite;
+  }
+  @keyframes bridgePulseWarn {
+    0%,100% { box-shadow: 0 4px 24px rgba(245,158,11,.35), 0 0 0 2px rgba(245,158,11,.2); }
+    50%      { box-shadow: 0 4px 32px rgba(245,158,11,.6),  0 0 0 4px rgba(245,158,11,.35); }
+  }
+  @keyframes bridgePulseDanger {
+    0%,100% { box-shadow: 0 4px 28px rgba(239,68,68,.5), 0 0 0 3px rgba(239,68,68,.25); }
+    50%      { box-shadow: 0 4px 36px rgba(239,68,68,.8), 0 0 0 6px rgba(239,68,68,.4); }
+  }
 
   /* ── BRIDGE MODE: hide all overlays ─────────────────────── */
   #fullMapScreen.bridge-mode #fmHud,
@@ -2085,7 +2103,45 @@
     align-items: center;
     gap: 8px;
     pointer-events: all;
+    transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .3s;
   }
+  #mapLeftControls.panel-hidden {
+    transform: translateY(-50%) translateX(calc(-1 * (10px + env(safe-area-inset-left,0px) + 60px)));
+    opacity: 0;
+    pointer-events: none;
+  }
+  #mapLeftPanelBtn {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 651;
+    width: 16px;
+    height: 64px;
+    background: rgba(16,185,129,0.32);
+    border: 1px solid rgba(16,185,129,0.45);
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    color: rgba(255,255,255,.9);
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: left .35s cubic-bezier(.4,0,.2,1), background .15s;
+    padding: 0;
+    line-height: 1;
+  }
+  #mapLeftPanelBtn.open {
+    left: calc(10px + env(safe-area-inset-left,0px) + 44px + 6px);
+    background: rgba(16,185,129,0.5);
+  }
+  #mapLeftPanelBtn:active { opacity: .65; }
   #mapLeftControls button {
     width: 44px; height: 44px;
     border-radius: 12px; border: 2px solid transparent;
@@ -4520,11 +4576,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     gap: 5px;
     cursor: pointer;
     box-shadow: -3px 0 16px rgba(249,115,22,.45);
-    transition: width .18s, box-shadow .18s;
+    transition: width .2s, height .2s, background .2s, box-shadow .2s, transform .2s;
     touch-action: manipulation;
     padding: 0;
   }
-  .side-tab-btn:active { width: 28px; box-shadow: -2px 0 8px rgba(249,115,22,.3); }
+  .side-tab-btn:hover {
+    width: 42px;
+    height: 112px;
+    background: linear-gradient(160deg,#fb923c,#f97316);
+    box-shadow: -4px 0 22px rgba(249,115,22,.7);
+    transform: scaleX(1.06);
+  }
+  .side-tab-btn:active { width: 28px; box-shadow: -2px 0 8px rgba(249,115,22,.3); transform: scaleX(.95); }
   .side-tab-icon { font-size: 16px; line-height: 1; }
   .side-tab-label {
     font-size: 9px; font-weight: 900; letter-spacing: .6px;
@@ -4575,14 +4638,20 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     padding: 11px 12px; border-radius: 12px; cursor: pointer;
     background: rgba(255,255,255,.04);
     border: 1px solid rgba(255,255,255,.07);
-    transition: background .15s, transform .1s;
+    transition: background .2s, transform .2s, box-shadow .2s;
     touch-action: manipulation;
+  }
+  .cqp-item:hover {
+    background: rgba(249,115,22,.18);
+    border-color: rgba(249,115,22,.5);
+    transform: scale(1.04);
+    box-shadow: 0 4px 16px rgba(249,115,22,.25);
   }
   .cqp-item:active { background: rgba(255,255,255,.1); transform: scale(.97); }
   .cqp-item-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
   .cqp-item-info { display: flex; flex-direction: column; gap: 2px; }
-  .cqp-item-name { font-size: 13px; font-weight: 700; color: var(--text); }
-  .cqp-item-sub { font-size: 10px; color: var(--muted); }
+  .cqp-item-name { font-size: 13px; font-weight: 700; color: #ffffff; }
+  .cqp-item-sub { font-size: 10px; color: rgba(255,255,255,0.75); }
   .cqp-item.chat  { border-color: rgba(124,58,237,.3); }
   .cqp-item.rep   { border-color: rgba(239,68,68,.3); }
   .cqp-item.reset { border-color: rgba(59,130,246,.3); }
@@ -5042,7 +5111,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </button>
     <button class="tab-btn" data-tab="community" onclick="switchTab('community')">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      <span id="commTabLbl">Community</span>
+      <span id="commTabLbl">Services</span>
       <span class="comm-count-badge" id="commTabBadge" style="top:3px;right:calc(50% - 18px)"></span>
     </button>
     <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">
@@ -5070,18 +5139,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- SIDE TAB BUTTONS (3 stacked vertical tabs) -->
   <div id="sideTabStack">
     <!-- Btn 1: DOT News -->
-    <button class="side-tab-btn" onclick="openDotPanel()" aria-label="DOT">
+    <button class="side-tab-btn" onclick="closeSideTabMenu();openDotPanel()" aria-label="DOT">
       <span class="side-tab-icon">📋</span>
       <span class="side-tab-label">DOT</span>
     </button>
     <!-- Btn 2: Comunidad -->
-    <button class="side-tab-btn" onclick="toggleCommQuickPanel()" aria-label="Comunidad">
+    <button class="side-tab-btn" onclick="closeSideTabMenu();toggleCommQuickPanel()" aria-label="Comunidad">
       <span class="side-tab-badge" id="sideTabBadge"></span>
       <span class="side-tab-icon">👥</span>
       <span class="side-tab-label">Comunidad</span>
     </button>
     <!-- Btn 3: Live Chat (conversaciones entre choferes) -->
-    <button class="side-tab-btn" onclick="openChatPanel()" aria-label="Live Chat">
+    <button class="side-tab-btn" onclick="closeSideTabMenu();openChatPanel()" aria-label="Live Chat">
       <span class="side-tab-icon">💬</span>
       <span class="side-tab-label">Live Chat</span>
     </button>
@@ -5146,6 +5215,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="cqp-item-sub">Básculas DOT cercanas</div>
       </div>
     </div>
+
     <div class="cqp-item signs" onclick="closeCommQuickPanel();openRoadSignsPanel()">
       <span class="cqp-item-icon">🚦</span>
       <div class="cqp-item-info">
@@ -5369,9 +5439,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <div class="results-k" id="departureLbl">SALIDA</div>
             <div class="results-v" id="departureVal"></div>
           </div>
-          <div class="results-kv">
-            <div class="results-k" id="arrivalLbl">LLEGADA</div>
-            <div class="results-v" id="arrivalVal"></div>
+          <div class="results-kv" id="arrivalCard" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.45);">
+            <div class="results-k" id="arrivalLbl" style="color:#06b6d4;">LLEGADA</div>
+            <div class="results-v" id="arrivalVal" style="color:#ffffff;"></div>
           </div>
           <div class="results-kv full">
             <div class="results-k" id="totalTimeLbl">TIEMPO TOTAL</div>
@@ -5484,7 +5554,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
               <div class="profile-avatar" id="profileAvatar">🚛</div>
               <div style="position:absolute;bottom:0;right:0;background:#3b82f6;border:2px solid #0f2027;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer">📷</div>
             </div>
-            <input type="file" id="profilePhotoInput" accept="image/*" style="display:none" onchange="handleProfilePhotoUpload(event)">
+            <input type="file" id="profilePhotoInput" accept="image/*" style="display:none" onchange="handleProfilePhotoUpload(event.target.files[0])">
             <div class="profile-name-wrap">
               <div class="profile-name" id="profileDisplayName">Driver</div>
               <div class="profile-sub" id="profileDisplaySub">Set your name &amp; truck type</div>
@@ -5599,37 +5669,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <div class="sett-section">
-    <div class="sett-section-title" id="settSecTruckIcon">Truck Icon</div>
-    <div class="sett-group" style="padding:14px 14px 10px">
-      <div style="font-weight:900;font-size:14px;margin-bottom:6px" id="truckIconTitle">Truck marker icon</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px" id="truckIconDesc">
-        Choose an icon or upload your own photo. This changes the truck marker on the route map.
-      </div>
-
-      <label style="margin-top:0" id="truckPickerLbl">Choose</label>
-      <select class="menu-select" id="truckIconSelect" style="width:100%;margin-top:6px">
-        <option value="emoji:🚛">🚛 Classic</option>
-        <option value="emoji:🚚">🚚 Delivery</option>
-        <option value="emoji:🛻">🛻 Pickup</option>
-        <option value="emoji:🚐">🚐 Van</option>
-        <option value="emoji:🚒">🚒 Fire</option>
-        <option value="emoji:🚌">🚌 Bus</option>
-        <option value="img:https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f69b.png">🖼️ Truck image</option>
-      </select>
-
-      <label id="truckUploadLbl">Upload photo</label>
-      <input type="file" id="truckUpload" accept="image/*"
-        style="margin-top:6px;width:100%;padding:10px;border:1.5px dashed var(--border);border-radius:10px;background:var(--bg);color:var(--text)"
-      />
-
-      <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
-        <div style="font-weight:800;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px" id="truckPreviewLbl">Preview</div>
-        <div id="truckPreview" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid var(--border);background:var(--surface)"></div>
-        <button class="chip-btn" id="truckResetBtn" style="padding:10px 10px">Reset</button>
-      </div>
-    </div>
-  </div>
 
 
 
@@ -5703,18 +5742,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <button class="sett-toggle" id="weatherToggle"></button>
           </div>
 
-          <!-- Bridge Detector -->
-          <div class="sett-row" style="cursor:default">
-            <div class="sett-icon" style="background:#fef3c7">🌉</div>
-            <div style="flex:1">
-              <div class="sett-label" style="margin:0">Low Bridge Detector</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="bridgeStatusTxt">Off — set trailer height</div>
-            </div>
-            <button class="sett-toggle" id="bridgeToggle"></button>
-          </div>
-
-          <!-- Trailer height input (visible when bridge toggle is ON) -->
-          <div id="trailerHeightRow" class="sett-row" style="cursor:default;display:none;background:var(--surface2)">
+          <!-- Trailer height input (siempre visible) -->
+          <div id="trailerHeightRow" class="sett-row" style="cursor:default;display:flex;background:var(--surface2)">
             <div class="sett-icon" style="background:#fef3c7">📐</div>
             <div class="sett-label" style="font-size:14px">Trailer Height</div>
             <div style="display:flex;align-items:center;gap:6px">
@@ -5853,14 +5882,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="sett-section-title">⛽ Gasolina Barata en Ruta</div>
         <div class="sett-group">
           <div class="sett-row" style="cursor:default">
-            <div class="sett-icon" style="background:#d1fae5">⛽</div>
-            <div style="flex:1">
-              <div class="sett-label" style="margin:0">Buscar Diesel Barato</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="fuelStatusTxt">Activo durante rastreo</div>
-            </div>
-            <button class="sett-toggle on" id="fuelToggle" onclick="toggleFuelFinder(this)"></button>
-          </div>
-          <div class="sett-row" style="cursor:default">
             <div class="sett-icon" style="background:#d1fae5">🛣️</div>
             <div style="flex:1">
               <div class="sett-label" style="margin:0">Límite de Velocidad</div>
@@ -5904,45 +5925,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
 
-<div class="sett-section">
-  <div class="sett-section-title">📍 Búsqueda Cercana</div>
-  <div class="sett-group" style="padding:14px 16px">
-    <!-- Filter checkboxes -->
-    <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">Buscar cerca de mi ubicación</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="nearbyFilterRow">
-      <label class="nearby-chip" id="nearbyChipTruck">
-        <input type="checkbox" id="nearbyTruck" checked onchange="runNearbySearch()"> 🚛 Truck Stops
-      </label>
-      <label class="nearby-chip" id="nearbyChipRest">
-        <input type="checkbox" id="nearbyRest" checked onchange="runNearbySearch()"> 😴 Rest Areas
-      </label>
-      <label class="nearby-chip" id="nearbyChipScale">
-        <input type="checkbox" id="nearbyScale" onchange="runNearbySearch()"> ⚖️ Scales
-      </label>
-    </div>
-
-    <!-- Search button -->
-    <button onclick="runNearbySearch()" id="nearbySearchBtn" style="
-      width:100%;padding:12px;border-radius:12px;border:none;
-      background:linear-gradient(135deg,#10b981,#3b82f6);
-      color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;
-      cursor:pointer;margin-bottom:14px;
-      box-shadow:0 4px 16px rgba(16,185,129,0.3);
-      touch-action:manipulation;
-    ">🔍 Buscar Ahora</button>
-
-    <!-- Results list -->
-    <div id="nearbyResultsList" style="display:none">
-      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px" id="nearbyResultsTitle">Resultados cercanos</div>
-      <div id="nearbyResultsItems"></div>
-    </div>
-
-    <!-- Loading / status -->
-    <div id="nearbyStatus" style="text-align:center;color:var(--muted);font-size:12px;padding:8px 0;display:none">
-      📡 Obteniendo ubicación...
-    </div>
-  </div>
-</div>
 
 <div class="sett-section">
   <div class="sett-section-title">⭐ Suscripción</div>
@@ -6344,80 +6326,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="comm-toggle-switch" id="routeFilterSwitch"></div>
       </div>
 
-      <!-- Type filter chips -->
-      <div class="comm-filter-bar" id="commFilterBar">
-        <div class="comm-filter-chip active" data-type="all"        onclick="setCommFilter(this,'all')">All</div>
-        <div class="comm-filter-chip" data-type="police"      onclick="setCommFilter(this,'police')">🚔 Police</div>
-        <div class="comm-filter-chip" data-type="inspection"  onclick="setCommFilter(this,'inspection')">🔍 Inspection</div>
-        <div class="comm-filter-chip" data-type="truckstop"   onclick="setCommFilter(this,'truckstop')">🅿️ Truck Stop Full</div>
-        <div class="comm-filter-chip" data-type="accident"    onclick="setCommFilter(this,'accident')">💥 Accident</div>
-        <div class="comm-filter-chip" data-type="hazard"      onclick="setCommFilter(this,'hazard')">⚠️ Hazard</div>
-        <div class="comm-filter-chip" data-type="traffic"     onclick="setCommFilter(this,'traffic')">🚦 Traffic</div>
-        <div class="comm-filter-chip" data-type="weather"     onclick="setCommFilter(this,'weather')">🌧️ Weather</div>
-        <div class="comm-filter-chip" data-type="road"        onclick="setCommFilter(this,'road')">🚧 Road Work</div>
-      </div>
-
-      <!-- NEW REPORT FORM -->
-      <div class="comm-new-report-card">
-        <div class="comm-new-report-title">📣 Add a Report on Your Route</div>
-        <!-- Type selector grid -->
-        <div class="comm-type-grid" id="commTypeGrid">
-          <button class="comm-type-btn selected" data-type="police" onclick="selectCommType(this,'police')">
-            <span class="cbt-emoji">🚔</span>Police
-          </button>
-          <button class="comm-type-btn" data-type="inspection" onclick="selectCommType(this,'inspection')">
-            <span class="cbt-emoji">🔍</span>Inspection
-          </button>
-          <button class="comm-type-btn" data-type="truckstop" onclick="selectCommType(this,'truckstop')">
-            <span class="cbt-emoji">🅿️</span>TS Full
-          </button>
-          <button class="comm-type-btn" data-type="accident" onclick="selectCommType(this,'accident')">
-            <span class="cbt-emoji">💥</span>Accident
-          </button>
-          <button class="comm-type-btn" data-type="hazard" onclick="selectCommType(this,'hazard')">
-            <span class="cbt-emoji">⚠️</span>Hazard
-          </button>
-          <button class="comm-type-btn" data-type="traffic" onclick="selectCommType(this,'traffic')">
-            <span class="cbt-emoji">🚦</span>Traffic
-          </button>
-          <button class="comm-type-btn" data-type="weather" onclick="selectCommType(this,'weather')">
-            <span class="cbt-emoji">🌧️</span>Weather
-          </button>
-          <button class="comm-type-btn" data-type="road" onclick="selectCommType(this,'road')">
-            <span class="cbt-emoji">🚧</span>Road Work
-          </button>
-        </div>
-
-        <!-- Comment -->
-        <textarea
-          class="comm-comment-input"
-          id="commCommentInput"
-          placeholder="Add details… (e.g. 'Scales open at MM 142, all trucks being weighed')"
-          maxlength="200"
-          rows="2"
-        ></textarea>
-
-        <!-- Submit row -->
-        <div class="comm-submit-row">
-          <div class="comm-user-tag">
-            <div class="comm-user-avatar" id="commUserAvatar">👤</div>
-            <span id="commUserLabel">Set name in Settings</span>
-          </div>
-          <button class="comm-submit-btn" id="commSubmitBtn" onclick="submitCommReport()">
-            📣 Post
-          </button>
-        </div>
-      </div>
 
       <!-- TRUCK SERVICES -->
       <div class="svc-section-title">🛠️ Truck Services Near You</div>
       <div class="svc-grid">
 
-        <button class="svc-btn" onclick="showServiceOnMap('scale',100)">
-          <div class="svc-btn-icon" style="background:rgba(234,88,12,.15)">⚖️</div>
-          <div class="svc-btn-name">DOT Weigh Stations</div>
-          <div class="svc-btn-range">100 mi radius</div>
-        </button>
 
         <button class="svc-btn" onclick="showServiceOnMap('mechanics',50)">
           <div class="svc-btn-icon" style="background:rgba(124,58,237,.15)">🔧</div>
@@ -7109,6 +7022,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </button>
   </div>
 
+  <!-- LEFT PANEL TOGGLE TAB -->
+  <button id="mapLeftPanelBtn" class="open" onclick="toggleMapLeftPanel()" title="Controles del mapa">‹</button>
+
   <!-- LEFT SIDE CONTROL COLUMN: estilo, brújula, centrar, color, zoom -->
   <div id="mapLeftControls">
     <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Estilo de mapa">🗺️</button>
@@ -7124,9 +7040,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- AUTO-FOLLOW button (bottom-left) -->
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
 
-  <!-- RIGHT SIDE CONTROL COLUMN: 34h Reset, Community Reports -->
+  <!-- RIGHT SIDE CONTROL COLUMN: Community Reports -->
   <div id="mapRightControls">
-    <button onclick="openResetSheet()" title="34h Reset">🔄</button>
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
   </div>
 
@@ -7294,12 +7209,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden">
         <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
           <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/>
-          <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#f59e0b" stroke-width="5"
+          <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#06b6d4" stroke-width="5"
                   stroke-linecap="round" stroke-dasharray="0 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
         </svg>
         <div style="position:relative">
           <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmEtaLbl">LLEGADA</div>
-          <div style="font-size:15px;font-weight:900;color:#f59e0b;line-height:1" id="fmEta">--</div>
+          <div style="font-size:15px;font-weight:900;color:#06b6d4;line-height:1" id="fmEta">--</div>
         </div>
       </div>
       <div id="hudManejoCell" style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden;transition:transform .4s cubic-bezier(.34,1.56,.64,1),background .4s,box-shadow .4s,border-color .4s;transform-origin:center">
@@ -8458,7 +8373,7 @@ let tripStart = null;
 /* ── Safety feature states ────────────────────── */
 let fatigueActive   = localStorage.getItem('hos_fatigue')  !== 'false' ? false : false;
 let weatherActive   = localStorage.getItem('hos_weather')  === 'true';
-let bridgeActive    = localStorage.getItem('hos_bridge')   === 'true';
+let bridgeActive    = true; // Siempre activo — Low Bridge Detector no se puede desactivar
 let trailerHeight   = parseFloat(localStorage.getItem('hos_trailer') || '13.6');
 
 /* ── Truck route options ──────────────────────── */
@@ -9018,9 +8933,11 @@ async function checkBridges() {
   }
 
   const bridges = await fetchBridgesAlongRoute(aheadWaypoints);
+  const widget  = document.getElementById('bridgeInput');
+
   if (!bridges.length) {
-    document.getElementById('bridgeNextTxt').textContent = '✅ Sin puentes bajos en ruta';
-    document.getElementById('bridgeNextTxt').style.color = 'rgba(255,255,255,.5)';
+    // Sin puentes bajos — ocultar widget
+    widget.classList.remove('visible', 'bridge-warn', 'bridge-danger');
     return;
   }
 
@@ -9032,10 +8949,15 @@ async function checkBridges() {
   const needed    = trailerHeight;
   const margin    = clearance - needed;
 
+  // Mostrar widget con aviso
+  widget.classList.add('visible');
+
   document.getElementById('bridgeNextTxt').textContent =
     `🌉 ${nearest.name}: ${nearest.feet}ft — ${nearest.distAhead.toFixed(1)}mi ahead`;
 
   if (margin < 0) {
+    widget.classList.add('bridge-danger');
+    widget.classList.remove('bridge-warn');
     showToast('danger', '🚨', '⚠️ PUENTE MUY BAJO EN TU RUTA!',
       `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. ¡DESVÍATE AHORA!`, 45000);
     flashDanger(4000);
@@ -9045,22 +8967,24 @@ async function checkBridges() {
     showFullscreenAlert('danger', '🌉', '¡PUENTE MUY BAJO EN RUTA!',
       `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. ¡DESVÍATE!`, '', 20000);
   } else if (margin < 1.5) {
+    widget.classList.add('bridge-warn');
+    widget.classList.remove('bridge-danger');
     showToast('warning', '⚠️', 'Puente con poco espacio',
       `${lowest.name}: ${clearance}ft — Tu tráiler: ${needed}ft. Solo ${margin.toFixed(1)}ft de margen.`, 8000);
     document.getElementById('bridgeNextTxt').textContent = `⚠️ Bajo: ${clearance}ft @ ${lowest.name}`;
     document.getElementById('bridgeNextTxt').style.color = '#f59e0b';
   } else {
+    widget.classList.remove('bridge-warn', 'bridge-danger');
     document.getElementById('bridgeNextTxt').style.color = 'rgba(255,255,255,.5)';
   }
-  document.getElementById('bridgeStatusTxt').textContent =
-    `Active · ${needed}ft trailer · ${bridges.length} bridge${bridges.length > 1 ? 's' : ''} en ruta`;
+  document.getElementById('bridgeStatusTxt') &&
+    (document.getElementById('bridgeStatusTxt').textContent =
+      `Active · ${needed}ft trailer · ${bridges.length} bridge${bridges.length > 1 ? 's' : ''} en ruta`);
 }
 
 function startBridgeDetector() {
-  document.getElementById('bridgeInput').classList.add('visible');
+  // Widget permanece oculto hasta que se detecte un puente bajo
   document.getElementById('bridgeDisplayVal').textContent = trailerHeight.toFixed(1);
-  document.getElementById('bridgeStatusTxt').textContent = `Active · ${trailerHeight}ft trailer`;
-  document.getElementById('trailerHeightRow').style.display = 'flex';
   checkBridges(); // immediate check
   bridgeInterval = setInterval(checkBridges, 3 * 60 * 1000); // every 3 min
 }
@@ -9074,14 +8998,7 @@ function stopBridgeDetector() {
 }
 
 function toggleBridgeDetector() {
-  bridgeActive = !bridgeActive;
-  localStorage.setItem('hos_bridge', bridgeActive);
-  document.getElementById('bridgeToggle').classList.toggle('on', bridgeActive);
-  // Toggle overlay-hide mode on fullscreen map
-  const screen = document.getElementById('fullMapScreen');
-  if (screen) screen.classList.toggle('bridge-mode', bridgeActive);
-  if (bridgeActive) startBridgeDetector();
-  else stopBridgeDetector();
+  // Bridge detector siempre activo — no se puede desactivar
 }
 
 function adjustHeight(delta) {
@@ -9958,9 +9875,7 @@ function init() {
   // Apply saved safety feature states
   document.getElementById('fatigueToggle').classList.toggle('on', fatigueActive);
   document.getElementById('weatherToggle').classList.toggle('on', weatherActive);
-  document.getElementById('bridgeToggle').classList.toggle('on', bridgeActive);
   document.getElementById('trailerHeightInput').value = trailerHeight;
-  document.getElementById('trailerHeightRow').style.display = bridgeActive ? 'flex' : 'none';
 
   if (weatherActive) startWeatherMonitor();
   if (bridgeActive)  startBridgeDetector();
@@ -11519,7 +11434,7 @@ function renderResults(hours, speed, depart) {
   // Destino final con bandera
   const destDiv = document.createElement('div');
   destDiv.className = 'sched dest-flag';
-  destDiv.innerHTML = `<div class="t">🏁 ${destination.name}</div><div class="d">${lang==='es'?'Destino final':'Final destination'} · ${routeDistance.toLocaleString()} mi total</div><button class="arrived-btn" onclick="window._hosOpenArrivalPopup()">✅ ${lang==='es'?'Llegué al destino':'I Arrived'}</button>`;
+  destDiv.innerHTML = `<div class="t">🏁 ${destination.name}</div><div class="d">${lang==='es'?'Destino final':'Final destination'} · ${routeDistance.toLocaleString()} mi total</div>`;
   sl.appendChild(destDiv);
 
   // Detectar violaciones DOT y mostrar notificación
@@ -12279,6 +12194,8 @@ let fmTrackAbort = false;
 function fmStartTracking() {
   if (!navigator.geolocation) { alert(lang==='es'?'GPS no soportado':'GPS not supported'); return; }
   fmTrackAbort = false;
+  // Iniciar servicio Android en segundo plano (si está disponible)
+  try { if (window.AndroidHOS) AndroidHOS.startTracking(lang==='es'?'Rastreo GPS activo':'GPS tracking active'); } catch(e) {}
 
   document.getElementById('fmTrackBanner').style.display = 'none';
   document.getElementById('fmLiveDot').style.background = '#10b981';
@@ -12662,6 +12579,8 @@ function fmStartTracking() {
 }
 
 function fmStopTracking() {
+  // Detener servicio Android en segundo plano (si está disponible)
+  try { if (window.AndroidHOS) AndroidHOS.stopTracking(); } catch(e) {}
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
@@ -14413,7 +14332,7 @@ function bindEvents() {
   // Safety feature toggles
   document.getElementById('fatigueToggle').addEventListener('click', e => { e.stopPropagation(); toggleFatigueDetector(); });
   document.getElementById('weatherToggle').addEventListener('click', e => { e.stopPropagation(); toggleWeatherMonitor(); });
-  document.getElementById('bridgeToggle').addEventListener('click',  e => { e.stopPropagation(); toggleBridgeDetector(); });
+  // bridgeToggle removed — detector always active
   document.getElementById('trailerHeightInput').addEventListener('change', e => {
     const v = parseFloat(e.target.value);
     if (!isNaN(v) && v >= 8 && v <= 18) {
@@ -14730,6 +14649,26 @@ function toggleSideTabMenu() {
     document.getElementById('commQuickPanel')?.classList.remove('open');
     document.getElementById('commQuickOverlay')?.classList.remove('open');
   }
+}
+function toggleMapLeftPanel() {
+  const ctrl = document.getElementById('mapLeftControls');
+  const btn  = document.getElementById('mapLeftPanelBtn');
+  if (!ctrl || !btn) return;
+  const hiding = !ctrl.classList.contains('panel-hidden');
+  ctrl.classList.toggle('panel-hidden', hiding);
+  btn.classList.toggle('open', !hiding);
+  btn.textContent = hiding ? '›' : '‹';
+}
+
+function closeSideTabMenu() {
+  const stack  = document.getElementById('sideTabStack');
+  const toggle = document.getElementById('sideMenuToggle');
+  if (!stack) return;
+  stack.classList.remove('open');
+  toggle?.classList.remove('open');
+  if (toggle) toggle.textContent = '‹';
+  document.getElementById('commQuickPanel')?.classList.remove('open');
+  document.getElementById('commQuickOverlay')?.classList.remove('open');
 }
 
 /* ── Community Quick Panel ── */
