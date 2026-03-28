@@ -5077,6 +5077,591 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </head>
 
 <body>
+
+<!-- ══════════════════════════════════════════════════════════
+     🚛  ONBOARDING — First-launch registration & subscription
+══════════════════════════════════════════════════════════ -->
+<style>
+#onboardOverlay {
+  position: fixed; inset: 0; z-index: 999999;
+  background: #070f1a;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#onboardOverlay.ob-hidden { display: none; }
+
+.ob-progress {
+  display: flex; gap: 6px; padding: 16px 24px 0;
+  justify-content: center; flex-shrink: 0;
+}
+.ob-dot {
+  width: 28px; height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,.15); transition: background .3s;
+}
+.ob-dot.active { background: #10b981; }
+.ob-dot.done   { background: rgba(16,185,129,.4); }
+
+.ob-screen {
+  flex: 1; display: none; flex-direction: column;
+  align-items: center; overflow-y: auto;
+  padding: 20px 24px 40px;
+  -webkit-overflow-scrolling: touch;
+}
+.ob-screen.ob-active { display: flex; }
+
+.ob-logo { width: 72px; height: 72px; border-radius: 18px; overflow: hidden; margin-bottom: 14px; box-shadow: 0 8px 32px rgba(16,185,129,.35); flex-shrink:0; }
+.ob-logo img { width:100%; height:100%; object-fit:cover; }
+.ob-tagline { font-size: 22px; font-weight: 900; color: #f1f5f9; text-align: center; line-height: 1.3; margin-bottom: 6px; }
+.ob-tagline em { color: #10b981; font-style: normal; }
+.ob-sub    { font-size: 13px; color: #64748b; text-align: center; line-height: 1.5; margin-bottom: 28px; max-width: 300px; }
+
+.ob-avatar-ring {
+  width: 110px; height: 110px; border-radius: 50%;
+  background: linear-gradient(135deg,#10b981,#059669);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 52px; cursor: pointer; flex-shrink: 0;
+  border: 3px solid rgba(16,185,129,.5);
+  box-shadow: 0 0 0 8px rgba(16,185,129,.1), 0 8px 32px rgba(0,0,0,.5);
+  position: relative; overflow: hidden; margin-bottom: 8px;
+}
+.ob-avatar-ring img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.ob-avatar-hint { font-size: 11px; color: #64748b; margin-bottom: 22px; text-align:center; }
+
+.ob-field { width: 100%; margin-bottom: 14px; }
+.ob-label { font-size: 10px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+.ob-input {
+  width: 100%; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px; padding: 13px 16px; color: #f1f5f9; font-size: 15px;
+  outline: none; box-sizing: border-box; font-family: inherit;
+}
+.ob-input:focus { border-color: rgba(16,185,129,.5); background: rgba(16,185,129,.05); }
+
+.ob-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-bottom: 14px; }
+.ob-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 100%; margin-bottom: 14px; }
+
+.ob-choice {
+  background: rgba(255,255,255,.05); border: 2px solid rgba(255,255,255,.08);
+  border-radius: 14px; padding: 14px 8px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  transition: all .2s; touch-action: manipulation;
+}
+.ob-choice:active { transform: scale(.96); }
+.ob-choice.selected {
+  background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.55);
+  box-shadow: 0 0 0 3px rgba(16,185,129,.12);
+}
+.ob-choice-icon { font-size: 28px; line-height: 1; }
+.ob-choice-name { font-size: 11px; font-weight: 800; color: #cbd5e1; text-align: center; }
+
+.ob-route-choice {
+  background: rgba(255,255,255,.05); border: 2px solid rgba(255,255,255,.08);
+  border-radius: 14px; padding: 16px; cursor: pointer;
+  display: flex; align-items: center; gap: 14px;
+  transition: all .2s; touch-action: manipulation; width: 100%; margin-bottom: 10px;
+}
+.ob-route-choice.selected { background: rgba(249,115,22,.1); border-color: rgba(249,115,22,.5); }
+.ob-route-choice-icon { font-size: 28px; flex-shrink: 0; }
+.ob-route-choice-text { flex: 1; }
+.ob-route-choice-name { font-size: 14px; font-weight: 800; color: #f1f5f9; margin-bottom: 2px; }
+.ob-route-choice-sub  { font-size: 11px; color: #64748b; }
+
+.ob-plan-card {
+  width: 100%; border-radius: 18px; padding: 20px; margin-bottom: 14px;
+  border: 2px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04);
+  cursor: pointer; transition: all .25s; touch-action: manipulation; box-sizing: border-box;
+}
+.ob-plan-card.selected.pro { border-color: rgba(249,115,22,.6); background: rgba(249,115,22,.08); }
+.ob-plan-card.selected.free { border-color: rgba(100,116,139,.5); background: rgba(100,116,139,.06); }
+.ob-plan-card.selected.trial { border-color: rgba(16,185,129,.6); background: rgba(16,185,129,.08); }
+.ob-plan-badge { display: inline-block; font-size: 9px; font-weight: 900; padding: 3px 9px; border-radius: 20px; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
+.ob-plan-price { font-size: 32px; font-weight: 900; color: #f1f5f9; line-height: 1; margin-bottom: 4px; }
+.ob-plan-period { font-size: 11px; color: #64748b; margin-bottom: 12px; }
+.ob-plan-features { list-style: none; margin: 0; padding: 0; }
+.ob-plan-features li { font-size: 12px; color: #94a3b8; padding: 3px 0; display: flex; align-items: center; gap: 7px; }
+.ob-plan-features li span { font-size: 14px; }
+
+.ob-btn {
+  width: 100%; padding: 16px; border-radius: 14px; border: none;
+  font-size: 16px; font-weight: 900; cursor: pointer; letter-spacing: .3px;
+  touch-action: manipulation; margin-top: 8px;
+  transition: opacity .2s, transform .1s;
+}
+.ob-btn:active { transform: scale(.97); opacity: .85; }
+.ob-btn-primary { background: linear-gradient(135deg,#10b981,#059669); color: #fff; }
+.ob-btn-secondary { background: rgba(255,255,255,.07); color: #94a3b8; border: 1px solid rgba(255,255,255,.1); }
+
+.ob-step-title { font-size: 20px; font-weight: 900; color: #f1f5f9; text-align: center; margin-bottom: 6px; }
+.ob-step-sub   { font-size: 12px; color: #64748b; text-align: center; margin-bottom: 24px; line-height: 1.5; max-width: 300px; }
+.ob-error { font-size: 11px; color: #ef4444; margin-top: -8px; margin-bottom: 10px; display: none; }
+
+/* Trial banner shown inside app after trial expires */
+#trialBanner {
+  display: none; position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+  z-index: 9800; background: linear-gradient(135deg,#f97316,#ea580c);
+  border-radius: 14px; padding: 10px 16px; max-width: 340px; width: calc(100% - 32px);
+  box-shadow: 0 4px 24px rgba(249,115,22,.45);
+}
+#trialBanner.show { display: flex; align-items: center; gap: 10px; }
+#trialBanner .tb-text { flex: 1; font-size: 12px; color: #fff; font-weight: 700; line-height: 1.4; }
+#trialBanner .tb-btn { background: #fff; color: #ea580c; border: none; border-radius: 8px; padding: 7px 12px; font-size: 11px; font-weight: 900; cursor: pointer; white-space: nowrap; }
+</style>
+
+<div id="onboardOverlay" class="ob-hidden">
+
+  <!-- Progress dots -->
+  <div class="ob-progress">
+    <div class="ob-dot" id="obDot1"></div>
+    <div class="ob-dot" id="obDot2"></div>
+    <div class="ob-dot" id="obDot3"></div>
+    <div class="ob-dot" id="obDot4"></div>
+    <div class="ob-dot" id="obDot5"></div>
+  </div>
+
+  <!-- ── SCREEN 1: WELCOME ── -->
+  <div class="ob-screen" id="ob-s1">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%">
+      <div class="ob-logo">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23091525'/%3E%3Ctext y='.9em' font-size='72' x='12'>🚛%3C/text%3E%3C/svg%3E" alt="logo">
+      </div>
+      <div class="ob-tagline">HOS <em>Tracker</em><br>by fab-visual™</div>
+      <div class="ob-sub">El compañero inteligente para conductores de camión. GPS en tiempo real, alertas DOT y planificación de horas.</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-bottom:28px">
+        <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:24px;margin-bottom:4px">📍</div>
+          <div style="font-size:10px;font-weight:800;color:#10b981">GPS en Tiempo Real</div>
+        </div>
+        <div style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:24px;margin-bottom:4px">⏱️</div>
+          <div style="font-size:10px;font-weight:800;color:#f97316">Control de HOS</div>
+        </div>
+        <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:24px;margin-bottom:4px">📋</div>
+          <div style="font-size:10px;font-weight:800;color:#3b82f6">Alertas DOT</div>
+        </div>
+        <div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:24px;margin-bottom:4px">💬</div>
+          <div style="font-size:10px;font-weight:800;color:#8b5cf6">Chat de Choferes</div>
+        </div>
+      </div>
+
+      <button class="ob-btn ob-btn-primary" onclick="obGoTo(2)">🚀 Comenzar ahora</button>
+      <div style="font-size:11px;color:#334155;margin-top:12px;text-align:center">Registro rápido · 2 minutos · Sin tarjeta de crédito</div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN 2: DRIVER PROFILE ── -->
+  <div class="ob-screen" id="ob-s2">
+    <div class="ob-step-title">Tu Perfil de Conductor</div>
+    <div class="ob-step-sub">Esta información aparecerá en el mapa y en tu perfil DOT</div>
+
+    <!-- Photo -->
+    <div class="ob-avatar-ring" id="obAvatarRing" onclick="document.getElementById('obPhotoInput').click()">
+      <span id="obAvatarEmoji">🚛</span>
+    </div>
+    <div class="ob-avatar-hint">📷 Toca para agregar tu foto</div>
+    <input type="file" id="obPhotoInput" accept="image/*" style="display:none" onchange="obHandlePhoto(event)">
+
+    <div class="ob-field">
+      <div class="ob-label">Nombre completo *</div>
+      <input class="ob-input" id="obName" type="text" placeholder="Ej: Carlos Rodríguez" maxlength="40">
+      <div class="ob-error" id="obNameErr">Por favor ingresa tu nombre</div>
+    </div>
+
+    <div class="ob-field">
+      <div class="ob-label">Número de CDL (opcional)</div>
+      <input class="ob-input" id="obCdl" type="text" placeholder="Ej: A123456789" maxlength="20">
+    </div>
+
+    <div class="ob-field">
+      <div class="ob-label">Estado / State</div>
+      <select class="ob-input" id="obState">
+        <option value="">-- Selecciona tu estado --</option>
+        <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+        <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+        <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+        <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+        <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+        <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+        <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+        <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+        <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+        <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+        <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+        <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+        <option>Wisconsin</option><option>Wyoming</option>
+        <option>Puerto Rico</option>
+      </select>
+    </div>
+
+    <button class="ob-btn ob-btn-primary" onclick="obStep2Next()">Continuar →</button>
+  </div>
+
+  <!-- ── SCREEN 3: TRUCK TYPE ── -->
+  <div class="ob-screen" id="ob-s3">
+    <div class="ob-step-title">Tu Camión</div>
+    <div class="ob-step-sub">Selecciona el tipo de unidad que operas</div>
+
+    <div class="ob-grid3" id="obTruckGrid">
+      <div class="ob-choice" data-truck="semi"        onclick="obSelectTruck(this,'semi')">
+        <div class="ob-choice-icon">🚛</div>
+        <div class="ob-choice-name">Semi / 18-Wheeler</div>
+      </div>
+      <div class="ob-choice" data-truck="flatbed"     onclick="obSelectTruck(this,'flatbed')">
+        <div class="ob-choice-icon">🏗️</div>
+        <div class="ob-choice-name">Flatbed</div>
+      </div>
+      <div class="ob-choice" data-truck="reefer"      onclick="obSelectTruck(this,'reefer')">
+        <div class="ob-choice-icon">❄️</div>
+        <div class="ob-choice-name">Reefer</div>
+      </div>
+      <div class="ob-choice" data-truck="tanker"      onclick="obSelectTruck(this,'tanker')">
+        <div class="ob-choice-icon">⛽</div>
+        <div class="ob-choice-name">Tanker</div>
+      </div>
+      <div class="ob-choice" data-truck="boxtruck"    onclick="obSelectTruck(this,'boxtruck')">
+        <div class="ob-choice-icon">📦</div>
+        <div class="ob-choice-name">Box Truck</div>
+      </div>
+      <div class="ob-choice" data-truck="dump"        onclick="obSelectTruck(this,'dump')">
+        <div class="ob-choice-icon">🚚</div>
+        <div class="ob-choice-name">Dump Truck</div>
+      </div>
+      <div class="ob-choice" data-truck="carhauler"   onclick="obSelectTruck(this,'carhauler')">
+        <div class="ob-choice-icon">🚗</div>
+        <div class="ob-choice-name">Car Hauler</div>
+      </div>
+      <div class="ob-choice" data-truck="hazmat"      onclick="obSelectTruck(this,'hazmat')">
+        <div class="ob-choice-icon">☢️</div>
+        <div class="ob-choice-name">HazMat</div>
+      </div>
+      <div class="ob-choice" data-truck="other"       onclick="obSelectTruck(this,'other')">
+        <div class="ob-choice-icon">🔧</div>
+        <div class="ob-choice-name">Otro</div>
+      </div>
+    </div>
+
+    <div class="ob-error" id="obTruckErr" style="display:none">Selecciona el tipo de camión</div>
+
+    <div style="margin-top:8px;margin-bottom:16px;width:100%">
+      <div class="ob-step-title" style="font-size:16px;text-align:left;margin-bottom:12px">Tipo de operación</div>
+      <div id="obRouteGrid">
+        <div class="ob-route-choice" data-route="local" onclick="obSelectRoute(this,'local')">
+          <div class="ob-route-choice-icon">📍</div>
+          <div class="ob-route-choice-text">
+            <div class="ob-route-choice-name">Local</div>
+            <div class="ob-route-choice-sub">Rutas dentro de la misma área · menos de 150 mi</div>
+          </div>
+        </div>
+        <div class="ob-route-choice" data-route="interstate" onclick="obSelectRoute(this,'interstate')">
+          <div class="ob-route-choice-icon">🛣️</div>
+          <div class="ob-route-choice-text">
+            <div class="ob-route-choice-name">Interstate</div>
+            <div class="ob-route-choice-sub">Rutas entre estados · sujeto a HOS federal</div>
+          </div>
+        </div>
+        <div class="ob-route-choice" data-route="otr" onclick="obSelectRoute(this,'otr')">
+          <div class="ob-route-choice-icon">🗺️</div>
+          <div class="ob-route-choice-text">
+            <div class="ob-route-choice-name">OTR — Over The Road</div>
+            <div class="ob-route-choice-sub">Larga distancia · múltiples estados · semanas fuera</div>
+          </div>
+        </div>
+      </div>
+      <div class="ob-error" id="obRouteErr">Selecciona el tipo de operación</div>
+    </div>
+
+    <button class="ob-btn ob-btn-primary" onclick="obStep3Next()">Continuar →</button>
+    <button class="ob-btn ob-btn-secondary" style="margin-top:6px" onclick="obGoTo(2)">← Atrás</button>
+  </div>
+
+  <!-- ── SCREEN 4: SUBSCRIPTION ── -->
+  <div class="ob-screen" id="ob-s4">
+    <div class="ob-step-title">Elige tu Plan</div>
+    <div class="ob-step-sub">Prueba gratis por 7 días. Cancela cuando quieras.</div>
+
+    <!-- TRIAL / PRO -->
+    <div class="ob-plan-card trial selected" id="obPlanTrial" onclick="obSelectPlan('trial')">
+      <div class="ob-plan-badge" style="background:rgba(16,185,129,.2);color:#10b981">⭐ 7 DÍAS GRATIS — RECOMENDADO</div>
+      <div class="ob-plan-price">$0</div>
+      <div class="ob-plan-period">por 7 días · luego $9.99/mes</div>
+      <ul class="ob-plan-features">
+        <li><span>✅</span> GPS en tiempo real + notificaciones</li>
+        <li><span>✅</span> Planificación de rutas ilimitada</li>
+        <li><span>✅</span> Alertas de puentes bajos</li>
+        <li><span>✅</span> Live Chat con conductores</li>
+        <li><span>✅</span> Reportes de comunidad</li>
+        <li><span>✅</span> Noticias y alertas DOT</li>
+        <li><span>✅</span> Servicios cercanos (diesel, parking…)</li>
+      </ul>
+    </div>
+
+    <div class="ob-plan-card pro" id="obPlanPro" onclick="obSelectPlan('pro')">
+      <div class="ob-plan-badge" style="background:rgba(249,115,22,.2);color:#f97316">🔥 PRO MENSUAL</div>
+      <div class="ob-plan-price">$9.99</div>
+      <div class="ob-plan-period">por mes · facturado mensualmente</div>
+      <ul class="ob-plan-features">
+        <li><span>✅</span> Todo lo del plan Trial incluido</li>
+        <li><span>✅</span> Sin interrupciones ni límites</li>
+        <li><span>✅</span> Soporte prioritario 24/7</li>
+        <li><span>✅</span> Exportar logs a PDF</li>
+        <li><span>✅</span> Historial de rutas ilimitado</li>
+      </ul>
+    </div>
+
+    <div class="ob-plan-card free" id="obPlanFree" onclick="obSelectPlan('free')">
+      <div class="ob-plan-badge" style="background:rgba(100,116,139,.2);color:#64748b">GRATIS</div>
+      <div class="ob-plan-price" style="font-size:24px;color:#64748b">$0</div>
+      <div class="ob-plan-period">siempre gratis · con restricciones</div>
+      <ul class="ob-plan-features">
+        <li><span>✅</span> Calculadora HOS básica</li>
+        <li><span>✅</span> Mapa de ruta (3 por día)</li>
+        <li><span>⛔</span> Sin GPS en segundo plano</li>
+        <li><span>⛔</span> Sin Live Chat</li>
+        <li><span>⛔</span> Sin alertas de puentes</li>
+        <li><span>⛔</span> Sin reportes de comunidad</li>
+      </ul>
+    </div>
+
+    <button class="ob-btn ob-btn-primary" id="obPlanBtn" onclick="obStep4Next()">Iniciar prueba de 7 días →</button>
+    <div style="font-size:10px;color:#334155;margin-top:10px;text-align:center">
+      Sin tarjeta de crédito requerida para el trial. Puedes suscribirte en cualquier momento.
+    </div>
+  </div>
+
+  <!-- ── SCREEN 5: ALL SET ── -->
+  <div class="ob-screen" id="ob-s5">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%">
+      <div style="font-size:72px;margin-bottom:16px">🚛</div>
+      <div class="ob-step-title" style="font-size:24px">¡Todo listo!</div>
+      <div id="obWelcomeMsg" style="font-size:15px;color:#10b981;font-weight:800;margin-bottom:6px;text-align:center"></div>
+      <div id="obSummary"    style="font-size:12px;color:#64748b;text-align:center;line-height:1.7;margin-bottom:28px"></div>
+
+      <div id="obTrialInfo" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:14px 18px;text-align:center;margin-bottom:24px;width:100%;box-sizing:border-box">
+        <div style="font-size:13px;font-weight:800;color:#10b981;margin-bottom:4px">⭐ Prueba GRATIS activa</div>
+        <div style="font-size:11px;color:#64748b">Tienes 7 días de acceso completo. Te avisaremos antes de que expire.</div>
+      </div>
+
+      <button class="ob-btn ob-btn-primary" onclick="obFinish()" style="font-size:18px;padding:18px">
+        🚀 Entrar a la app
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Trial expiry banner (shows inside app) -->
+<div id="trialBanner">
+  <div class="tb-text">⏰ Tu prueba gratuita <strong>expiró</strong>. Suscríbete para seguir usando todas las funciones.</div>
+  <button class="tb-btn" onclick="obShowUpgrade()">Ver planes</button>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   ONBOARDING — Registration & Subscription Logic
+══════════════════════════════════════════════════════════ */
+(function() {
+  const OB_KEY  = 'hos_onboarding_done';
+  const SUB_KEY = 'hos_subscription';
+  const TRIAL_KEY = 'hos_trial_start';
+  const PROFILE_KEY = 'hos_ob_profile';
+  const TRIAL_DAYS = 7;
+
+  let obStep = 1;
+  let obPhotoData = null;
+  let obTruckType = null;
+  let obRouteType = null;
+  let obPlan = 'trial';
+
+  /* ─── Init ────────────────────────────────────────────── */
+  function init() {
+    const done = localStorage.getItem(OB_KEY);
+    if (!done) {
+      document.getElementById('onboardOverlay').classList.remove('ob-hidden');
+      obGoTo(1);
+    } else {
+      checkTrial();
+    }
+  }
+
+  /* ─── Navigation ──────────────────────────────────────── */
+  window.obGoTo = function(n) {
+    for (let i = 1; i <= 5; i++) {
+      const s = document.getElementById('ob-s' + i);
+      if (s) s.classList.toggle('ob-active', i === n);
+      const d = document.getElementById('obDot' + i);
+      if (d) {
+        d.classList.toggle('active', i === n);
+        d.classList.toggle('done', i < n);
+      }
+    }
+    obStep = n;
+    document.getElementById('onboardOverlay').scrollTop = 0;
+  };
+
+  /* ─── Step 2: Driver profile ──────────────────────────── */
+  window.obHandlePhoto = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      obPhotoData = reader.result;
+      const ring = document.getElementById('obAvatarRing');
+      ring.innerHTML = '<img src="' + obPhotoData + '" alt="foto">';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window.obStep2Next = function() {
+    const name = document.getElementById('obName').value.trim();
+    const err  = document.getElementById('obNameErr');
+    if (!name) { err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    obGoTo(3);
+  };
+
+  /* ─── Step 3: Truck & Route ───────────────────────────── */
+  window.obSelectTruck = function(el, val) {
+    document.querySelectorAll('#obTruckGrid .ob-choice').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    obTruckType = val;
+  };
+
+  window.obSelectRoute = function(el, val) {
+    document.querySelectorAll('#obRouteGrid .ob-route-choice').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    obRouteType = val;
+  };
+
+  window.obStep3Next = function() {
+    const te = document.getElementById('obTruckErr');
+    const re = document.getElementById('obRouteErr');
+    te.style.display = obTruckType ? 'none' : 'block';
+    re.style.display = obRouteType ? 'none' : 'block';
+    if (!obTruckType || !obRouteType) return;
+    obGoTo(4);
+  };
+
+  /* ─── Step 4: Subscription ────────────────────────────── */
+  window.obSelectPlan = function(plan) {
+    obPlan = plan;
+    ['trial','pro','free'].forEach(p => {
+      const el = document.getElementById('obPlan' + p.charAt(0).toUpperCase() + p.slice(1));
+      if (el) el.classList.toggle('selected', p === plan);
+    });
+    const btn = document.getElementById('obPlanBtn');
+    if (plan === 'trial') btn.textContent = '⭐ Iniciar prueba de 7 días →';
+    else if (plan === 'pro') btn.textContent = '🔥 Suscribirse por $9.99/mes →';
+    else btn.textContent = 'Continuar con plan gratis →';
+  };
+
+  window.obStep4Next = function() {
+    const name = document.getElementById('obName').value.trim();
+    // Save everything
+    const profile = {
+      name,
+      cdl:   document.getElementById('obCdl').value.trim(),
+      state: document.getElementById('obState').value,
+      truck: obTruckType,
+      route: obRouteType,
+      photo: obPhotoData,
+      plan:  obPlan
+    };
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    localStorage.setItem(SUB_KEY, obPlan);
+    if (obPlan === 'trial') {
+      localStorage.setItem(TRIAL_KEY, Date.now().toString());
+    }
+    // Pre-fill existing app user data
+    if (obPhotoData) {
+      localStorage.setItem('hos_profile_photo', obPhotoData);
+      localStorage.setItem('hos_truck_upload', obPhotoData);
+      localStorage.setItem('hos_truck_icon', 'upload:profile');
+    }
+    try {
+      const u = { name, photoData: obPhotoData, truck: obTruckType };
+      const existing = JSON.parse(localStorage.getItem('hos_user') || '{}');
+      localStorage.setItem('hos_user', JSON.stringify({ ...existing, ...u }));
+    } catch(e) {}
+
+    // Summary screen
+    const routeLabels = { local:'Local', interstate:'Interstate', otr:'OTR — Over The Road' };
+    const truckLabels = { semi:'Semi/18-Wheeler', flatbed:'Flatbed', reefer:'Reefer', tanker:'Tanker', boxtruck:'Box Truck', dump:'Dump Truck', carhauler:'Car Hauler', hazmat:'HazMat', other:'Otro' };
+    document.getElementById('obWelcomeMsg').textContent = '¡Bienvenido, ' + name + '!';
+    document.getElementById('obSummary').innerHTML =
+      '🚛 ' + (truckLabels[obTruckType] || obTruckType) + ' · ' + (routeLabels[obRouteType] || obRouteType) + '<br>' +
+      (profile.state ? '📍 ' + profile.state + '<br>' : '') +
+      (profile.cdl   ? '🪪 CDL: ' + profile.cdl + '<br>' : '');
+
+    const trialInfo = document.getElementById('obTrialInfo');
+    if (obPlan === 'free')  trialInfo.style.display = 'none';
+    if (obPlan === 'pro')   { trialInfo.style.background = 'rgba(249,115,22,.1)'; trialInfo.style.borderColor = 'rgba(249,115,22,.3)'; trialInfo.innerHTML = '<div style="font-size:13px;font-weight:800;color:#f97316;margin-bottom:4px">🔥 Plan Pro Activado</div><div style="font-size:11px;color:#64748b">Acceso completo a todas las funciones.</div>'; }
+
+    obGoTo(5);
+  };
+
+  /* ─── Step 5: Finish ──────────────────────────────────── */
+  window.obFinish = function() {
+    localStorage.setItem(OB_KEY, '1');
+    document.getElementById('onboardOverlay').classList.add('ob-hidden');
+    // Apply avatar to map icon
+    try { if (typeof applyAllAvatars === 'function') applyAllAvatars(); } catch(e) {}
+    try { if (typeof showProfileView === 'function') showProfileView(); } catch(e) {}
+    checkTrial();
+  };
+
+  /* ─── Trial check ─────────────────────────────────────── */
+  function checkTrial() {
+    const sub   = localStorage.getItem(SUB_KEY);
+    const start = parseInt(localStorage.getItem(TRIAL_KEY) || '0', 10);
+    if (sub !== 'trial' && sub !== 'free') return; // pro — no banner
+    if (sub === 'trial' && start) {
+      const elapsed = Date.now() - start;
+      const days = Math.floor(elapsed / 86400000);
+      if (days < TRIAL_DAYS) {
+        // Still in trial — show days remaining toast-style (silent)
+        const remaining = TRIAL_DAYS - days;
+        window._trialDaysLeft = remaining;
+        if (remaining <= 2) showTrialBanner('⚠️ Tu prueba vence en ' + remaining + ' día(s). ¡Suscríbete para no perder el acceso!');
+        return;
+      }
+      // Trial expired — downgrade to free
+      localStorage.setItem(SUB_KEY, 'free');
+    }
+    if (localStorage.getItem(SUB_KEY) === 'free') {
+      showTrialBanner('⏰ Tu prueba gratuita expiró. Suscríbete para seguir con acceso completo.');
+      applyFreeRestrictions();
+    }
+  }
+
+  function showTrialBanner(msg) {
+    const b = document.getElementById('trialBanner');
+    if (!b) return;
+    b.querySelector('.tb-text').innerHTML = msg;
+    b.classList.add('show');
+    setTimeout(() => b.classList.remove('show'), 8000);
+  }
+
+  function applyFreeRestrictions() {
+    // Disable GPS background tracking notification
+    window._subPlan = 'free';
+  }
+
+  window.obShowUpgrade = function() {
+    document.getElementById('trialBanner').classList.remove('show');
+    document.getElementById('onboardOverlay').classList.remove('ob-hidden');
+    obGoTo(4);
+  };
+
+  /* ─── Run ─────────────────────────────────────────────── */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
 <div class="bg-icons" aria-hidden="true">
   <span style="top:4%;left:3%;font-size:58px;opacity:.10">🚛</span>
   <span style="top:12%;right:8%;font-size:44px;opacity:.08">⏰</span>
@@ -5158,23 +5743,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- COMMUNITY QUICK PANEL (slides from right) -->
   <div id="commQuickPanel">
-    <div class="cqp-title">Comunidad</div>
-
-    <div class="cqp-item rep" onclick="closeCommQuickPanel();toggleReportSheet()">
-      <span class="cqp-item-icon">⚠️</span>
-      <div class="cqp-item-info">
-        <div class="cqp-item-name">Reportar</div>
-        <div class="cqp-item-sub">Incidente en ruta</div>
-      </div>
-    </div>
-
-    <div class="cqp-item comm" onclick="closeCommQuickPanel();openCommunityPanel()">
-      <span class="cqp-item-icon">🚨</span>
-      <div class="cqp-item-info">
-        <div class="cqp-item-name">Alertas</div>
-        <div class="cqp-item-sub">Reportes cercanos</div>
-      </div>
-    </div>
+    <div class="cqp-title">Services</div>
 
     <div class="cqp-item reset" onclick="closeCommQuickPanel();openResetSheet()">
       <span class="cqp-item-icon">🔄</span>
@@ -5242,18 +5811,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="hero-brand-sub">by fab-visual™</div>
         </div>
       </div>
-      <div class="hero-btns" style="flex-direction:column;align-items:center;gap:6px">
+      <div class="hero-btns" style="align-items:center;gap:6px">
         <button class="hero-btn" id="themeToggle" title="Cambiar color" onclick="isDark=!isDark;localStorage.setItem('hos_theme',isDark?'dark':'light');applyTheme()">🌙</button>
-        <!-- Avatar debajo del tema -->
-        <div id="heroAvatarWrap" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="openProfilePanel()">
-          <div id="heroAvatarImg" style="
-            width:34px;height:34px;border-radius:10px;overflow:hidden;
-            background:linear-gradient(135deg,#10b981,#059669);
-            display:flex;align-items:center;justify-content:center;
-            font-size:18px;border:2px solid rgba(255,255,255,.2);
-          ">👤</div>
-          <div id="heroAvatarName" style="font-size:8px;font-weight:800;color:rgba(255,255,255,.7);letter-spacing:.3px;max-width:44px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Driver</div>
-        </div>
         <!-- hidden controls kept for JS compatibility -->
         <button id="gpsBtn" style="display:none"></button>
         <button id="menuBtn" style="display:none"></button>
@@ -5292,6 +5851,30 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
 
   </div>
+
+  <!-- DRIVER AVATAR — absolutamente posicionado, centro-derecha de la tarjeta -->
+  <div id="heroAvatarWrap" onclick="openProfilePanel()" style="
+    position:absolute; top:50%; left:68%;
+    transform:translate(-50%,-50%);
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    cursor:pointer; z-index:3;
+  ">
+    <div id="heroAvatarImg" style="
+      width:84px; height:84px; border-radius:50%; overflow:hidden;
+      background:linear-gradient(135deg,#10b981,#059669);
+      display:flex; align-items:center; justify-content:center;
+      font-size:40px;
+      border:3px solid rgba(16,185,129,.6);
+      box-shadow:0 0 0 6px rgba(16,185,129,.12), 0 8px 28px rgba(0,0,0,.55);
+    ">👤</div>
+    <div id="heroAvatarName" style="
+      font-size:13px; font-weight:800; color:#fff;
+      letter-spacing:.4px; text-align:center;
+      max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      text-shadow:0 1px 8px rgba(0,0,0,.7);
+    ">Driver</div>
+  </div>
+
 </div>
 
             <!-- MINI MAP -->
@@ -6309,9 +6892,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="comm-page-header">
         <div style="padding-top:calc(var(--header-pt) - 8px)"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <div class="comm-page-title">👥 Community</div>
+          <div class="comm-page-title">🛠️ Services</div>
         </div>
-        <div class="comm-page-sub" id="commPageSub">Road conditions from truckers on your route</div>
+        <div class="comm-page-sub" id="commPageSub">Servicios y recursos para conductores de camión</div>
       </div>
 
       <!-- Route filter toggle -->
@@ -6381,16 +6964,52 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="svc-btn-range">100 mi radius</div>
         </button>
 
+        <button class="svc-btn" onclick="showServiceOnMap('diesel',50)">
+          <div class="svc-btn-icon" style="background:rgba(245,158,11,.15)">💲</div>
+          <div class="svc-btn-name">Diesel Barato</div>
+          <div class="svc-btn-range">50 mi radius</div>
+        </button>
+
+        <button class="svc-btn" onclick="showServiceOnMap('hospital',30)">
+          <div class="svc-btn-icon" style="background:rgba(239,68,68,.15)">🏥</div>
+          <div class="svc-btn-name">Hospital / Urgent</div>
+          <div class="svc-btn-range">30 mi radius</div>
+        </button>
+
+        <button class="svc-btn" onclick="showServiceOnMap('restaurant',25)">
+          <div class="svc-btn-icon" style="background:rgba(249,115,22,.15)">🍔</div>
+          <div class="svc-btn-name">Restaurantes</div>
+          <div class="svc-btn-range">25 mi radius</div>
+        </button>
+
+        <button class="svc-btn" onclick="showServiceOnMap('catscale',75)">
+          <div class="svc-btn-icon" style="background:rgba(16,185,129,.15)">⚖️</div>
+          <div class="svc-btn-name">CAT Scale</div>
+          <div class="svc-btn-range">75 mi radius</div>
+        </button>
+
+        <button class="svc-btn" onclick="showServiceOnMap('def',50)">
+          <div class="svc-btn-icon" style="background:rgba(6,182,212,.15)">🛢️</div>
+          <div class="svc-btn-name">DEF Station</div>
+          <div class="svc-btn-range">50 mi radius</div>
+        </button>
+
+        <button class="svc-btn" onclick="showServiceOnMap('motel',30)">
+          <div class="svc-btn-icon" style="background:rgba(139,92,246,.15)">🏨</div>
+          <div class="svc-btn-name">Motels / Hotels</div>
+          <div class="svc-btn-range">30 mi radius</div>
+        </button>
+
+        <button class="svc-btn" onclick="showServiceOnMap('propane',50)">
+          <div class="svc-btn-icon" style="background:rgba(234,88,12,.15)">🔥</div>
+          <div class="svc-btn-name">Propano / CNG</div>
+          <div class="svc-btn-range">50 mi radius</div>
+        </button>
+
       </div>
 
-      <!-- REPORTS LIST -->
-      <div class="comm-section-title">
-        Reports <span class="comm-section-count" id="commPageCount">0</span>
-        <div style="flex:1"></div>
-        <button onclick="refreshCommPage()" style="background:none;border:none;color:var(--accent);font-size:11px;font-weight:800;cursor:pointer;padding:0;touch-action:manipulation">🔄 Refresh</button>
-      </div>
-      <div id="commAlertBanners"></div>
-      <div id="commPageList"></div>
+      <div id="commAlertBanners" style="display:none"></div>
+      <div id="commPageList" style="display:none"></div>
 
     </div>
   </div>
@@ -7708,7 +8327,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 <!-- ══ DOT PANEL (Noticias + Regulaciones) ══ -->
 <div id="dotPanelOverlay" style="display:none;position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.75);align-items:flex-end;justify-content:center;padding:0">
-  <div id="dotPanelSheet" style="background:#0f172a;border-radius:24px 24px 0 0;width:100%;max-width:540px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 -8px 48px rgba(0,0,0,.6);animation:sheetUp .3s cubic-bezier(.16,1,.3,1)">
+  <div id="dotPanelSheet" style="background:#0f172a;border-radius:24px 24px 0 0;width:100%;max-width:540px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 -8px 48px rgba(0,0,0,.6);animation:sheetUp .3s cubic-bezier(.16,1,.3,1);overflow:hidden;position:relative">
 
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0;flex-shrink:0">
@@ -7736,7 +8355,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div style="font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px" id="dotNewsDate">Actualizando…</div>
 
         <!-- Noticia 1 -->
-        <div class="dot-news-card" style="border-left-color:#ef4444">
+        <div class="dot-news-card" style="border-left-color:#ef4444;cursor:pointer" onclick="openDotNewsDetail(0)">
           <div class="dot-news-tag" style="background:rgba(239,68,68,.15);color:#ef4444">🚨 ALERTA</div>
           <div class="dot-news-title">FMCSA refuerza inspecciones en básculas del I-10 e I-40</div>
           <div class="dot-news-body">La FMCSA anunció operativos de inspección intensiva en puntos de pesaje de Texas, Nuevo México y Arizona durante los próximos 60 días. Los agentes verificarán ELD, horas de servicio y condición de frenos.</div>
@@ -7744,7 +8363,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
 
         <!-- Noticia 2 -->
-        <div class="dot-news-card" style="border-left-color:#f59e0b">
+        <div class="dot-news-card" style="border-left-color:#f59e0b;cursor:pointer" onclick="openDotNewsDetail(1)">
           <div class="dot-news-tag" style="background:rgba(245,158,11,.15);color:#f59e0b">⚠️ REGULACIÓN</div>
           <div class="dot-news-title">Nuevo requisito de capacitación para conductores de materiales peligrosos</div>
           <div class="dot-news-body">A partir del 1 de abril de 2026, todos los conductores de HazMat deberán completar 4 horas adicionales de entrenamiento en manejo de derrames. La PHMSA publicó el reglamento final en el Registro Federal.</div>
@@ -7752,7 +8371,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
 
         <!-- Noticia 3 -->
-        <div class="dot-news-card" style="border-left-color:#3b82f6">
+        <div class="dot-news-card" style="border-left-color:#3b82f6;cursor:pointer" onclick="openDotNewsDetail(2)">
           <div class="dot-news-tag" style="background:rgba(59,130,246,.15);color:#3b82f6">📢 AVISO</div>
           <div class="dot-news-title">Prórroga para ELD de tercera generación: plazo extendido a junio 2026</div>
           <div class="dot-news-body">La FMCSA otorgó una extensión de 90 días para la transición a dispositivos ELD de Generación 3. Las flotas deben completar la actualización antes del 30 de junio de 2026.</div>
@@ -7760,7 +8379,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
 
         <!-- Noticia 4 -->
-        <div class="dot-news-card" style="border-left-color:#10b981">
+        <div class="dot-news-card" style="border-left-color:#10b981;cursor:pointer" onclick="openDotNewsDetail(3)">
           <div class="dot-news-tag" style="background:rgba(16,185,129,.15);color:#10b981">✅ ACTUALIZACIÓN</div>
           <div class="dot-news-title">FMCSA actualiza lista de ELD certificados: 47 nuevos dispositivos aprobados</div>
           <div class="dot-news-body">Se añadieron 47 nuevos dispositivos ELD a la lista oficial de dispositivos registrados. Los transportistas pueden consultar el registro actualizado en fmcsa.dot.gov/registration/ELD.</div>
@@ -7768,7 +8387,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
 
         <!-- Noticia 5 -->
-        <div class="dot-news-card" style="border-left-color:#8b5cf6">
+        <div class="dot-news-card" style="border-left-color:#8b5cf6;cursor:pointer" onclick="openDotNewsDetail(4)">
           <div class="dot-news-tag" style="background:rgba(139,92,246,.15);color:#8b5cf6">💡 RECORDATORIO</div>
           <div class="dot-news-title">Operación "Road Check 2026" programada para mayo: 72 horas de inspecciones</div>
           <div class="dot-news-body">El CVSA realizará su inspección anual masiva del 20 al 22 de mayo de 2026. Este año el enfoque principal será el sistema de frenos y el cumplimiento de HOS. Más de 10,000 inspectores participarán en 50 estados.</div>
@@ -7830,6 +8449,25 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
       </div>
     </div>
+
+    <!-- ── DOT NEWS DETAIL VIEW ── -->
+    <div id="dotNewsDetail" style="display:none;position:absolute;inset:0;background:#0f172a;border-radius:24px 24px 0 0;flex-direction:column;z-index:10">
+      <!-- Detail Header -->
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 18px 12px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.07)">
+        <button onclick="closeDotNewsDetail()" style="background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.35);border-radius:10px;width:36px;height:36px;color:#f97316;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700">←</button>
+        <div style="flex:1;min-width:0">
+          <div id="dotDetailTag" style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px"></div>
+          <div style="font-size:11px;color:#64748b">DOT / FMCSA · Detalle</div>
+        </div>
+      </div>
+      <!-- Detail Scroll Body -->
+      <div style="flex:1;overflow-y:auto;padding:18px 18px 36px;-webkit-overflow-scrolling:touch">
+        <div id="dotDetailTitle" style="font-size:17px;font-weight:900;color:#f1f5f9;line-height:1.4;margin-bottom:10px"></div>
+        <div id="dotDetailMeta" style="font-size:10px;color:#475569;font-weight:600;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.06)"></div>
+        <div id="dotDetailBody" style="font-size:14px;color:#cbd5e1;line-height:1.75"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -14648,6 +15286,7 @@ function toggleSideTabMenu() {
   if (!isOpen) {
     document.getElementById('commQuickPanel')?.classList.remove('open');
     document.getElementById('commQuickOverlay')?.classList.remove('open');
+    document.getElementById('commQuickOverlay')?.classList.remove('show');
   }
 }
 function toggleMapLeftPanel() {
@@ -14669,6 +15308,7 @@ function closeSideTabMenu() {
   if (toggle) toggle.textContent = '‹';
   document.getElementById('commQuickPanel')?.classList.remove('open');
   document.getElementById('commQuickOverlay')?.classList.remove('open');
+  document.getElementById('commQuickOverlay')?.classList.remove('show');
 }
 
 /* ── Community Quick Panel ── */
@@ -17225,14 +17865,27 @@ function applyUserIconToMap() {
 }
 
 function handleProfilePhotoUpload(file) {
-  if (!file || !currentUser) return;
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    currentUser.photoData = String(reader.result || '');
-    persistCurrentUserToProfiles();
+    const data = String(reader.result || '');
+    // Guardar siempre en localStorage independientemente de sesión
+    localStorage.setItem('hos_profile_photo', data);
+    truckUploadData = data;
+    truckIconMode   = 'upload:profile';
+    localStorage.setItem('hos_truck_upload', data);
+    localStorage.setItem('hos_truck_icon',   truckIconMode);
+    // Si hay sesión activa, guardar también en el perfil
+    if (currentUser) {
+      currentUser.photoData = data;
+      persistCurrentUserToProfiles();
+    }
     applyUserIconToMap();
-    showProfileView();
-    showToast('success','📷','Foto actualizada','Tu foto ahora aparece como icono del mapa.', 3500);
+    try { showProfileView(); } catch {}
+    // Actualizar avatar visible en ajustes
+    const av = document.getElementById('profileAvatar');
+    if (av) av.innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
+    showToast('success','📷','Foto guardada','Tu foto aparece como ícono del camión en el mapa.', 3500);
   };
   reader.readAsDataURL(file);
 }
@@ -17611,6 +18264,7 @@ FIREBASE_CONFIG = {
     <!-- Header -->
     <div class="tool-hdr" style="padding:10px 14px 8px;flex-shrink:0;">
       <div class="tool-hdr-left" style="gap:10px;">
+        <button onclick="closeChatPanel()" title="Volver" style="background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.35);border-radius:10px;width:32px;height:32px;color:#a78bfa;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700">←</button>
         <div class="tool-hdr-icon" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);width:34px;height:34px;font-size:16px;">💬</div>
         <div>
           <div class="tool-hdr-title" id="chatPanelTitle" style="font-size:15px;">Driver Chat</div>
@@ -17622,6 +18276,38 @@ FIREBASE_CONFIG = {
           style="display:none;">—</button>
         <button class="tool-close" onclick="closeChatPanel()" style="width:28px;height:28px;font-size:20px;line-height:1;">×</button>
       </div>
+    </div>
+
+    <!-- Report / Alert quick buttons -->
+    <div style="padding:8px 14px 4px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06)">
+      <div style="font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">⚠️ Reportar Incidente</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px">
+        <button onclick="quickReport('police','🚔','Policía')" style="background:rgba(29,58,138,.35);border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-size:16px">🚔</span><span style="font-size:9px;color:#93c5fd;font-weight:700">Policía</span>
+        </button>
+        <button onclick="quickReport('accident','💥','Accidente')" style="background:rgba(127,29,29,.35);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-size:16px">💥</span><span style="font-size:9px;color:#fca5a5;font-weight:700">Accidente</span>
+        </button>
+        <button onclick="quickReport('hazard','⚠️','Peligro en vía')" style="background:rgba(124,45,18,.35);border:1px solid rgba(249,115,22,.25);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-size:16px">⚠️</span><span style="font-size:9px;color:#fdba74;font-weight:700">Peligro</span>
+        </button>
+        <button onclick="quickReport('traffic','🚦','Tráfico lento')" style="background:rgba(120,53,15,.35);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-size:16px">🚦</span><span style="font-size:9px;color:#fcd34d;font-weight:700">Tráfico</span>
+        </button>
+        <button onclick="quickReport('construction','🚧','Construcción')" style="background:rgba(113,63,18,.35);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-size:16px">🚧</span><span style="font-size:9px;color:#fcd34d;font-weight:700">Construc.</span>
+        </button>
+        <button onclick="quickReport('closure','🚫','Vía cerrada')" style="background:rgba(69,10,10,.35);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-size:16px">🚫</span><span style="font-size:9px;color:#fca5a5;font-weight:700">Cerrada</span>
+        </button>
+        <button onclick="quickReport('dot_police','🚛','DOT Police')" style="background:rgba(30,58,95,.35);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-size:16px">🚛</span><span style="font-size:9px;color:#93c5fd;font-weight:700">DOT Police</span>
+        </button>
+        <button onclick="quickReport('inspection','🔍','Inspección DOT')" style="background:rgba(49,46,129,.35);border:1px solid rgba(139,92,246,.25);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-size:16px">🔍</span><span style="font-size:9px;color:#c4b5fd;font-weight:700">Inspección</span>
+        </button>
+      </div>
+      <button onclick="closeChatPanel();openCommunityPanel()" style="width:100%;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:6px;cursor:pointer;color:#34d399;font-size:11px;font-weight:700">🚨 Ver Alertas de Reportes Cercanos</button>
     </div>
 
     <!-- Channel selector -->
@@ -19703,6 +20389,98 @@ function _dotSwitchTab(tab) {
 document.getElementById('dotPanelOverlay')?.addEventListener('click', function(e) {
   if (e.target === this) closeDotPanel();
 });
+
+/* ── DOT News Detail ─────────────────────────────────────── */
+const _dotNewsData = [
+  {
+    tag: '🚨 ALERTA', tagColor: '#ef4444', tagBg: 'rgba(239,68,68,.15)',
+    title: 'FMCSA refuerza inspecciones en básculas del I-10 e I-40',
+    meta: 'Mar 25, 2026 · FMCSA Safety Division',
+    body: `La FMCSA anunció operativos de inspección intensiva en puntos de pesaje de Texas, Nuevo México y Arizona durante los próximos 60 días. Los agentes verificarán ELD, horas de servicio y condición de frenos.<br><br>
+<strong style="color:#f1f5f9">Puntos clave:</strong><br>
+• Los inspectores se enfocarán principalmente en los corredores I-10 (El Paso–Houston) e I-40 (Amarillo–Oklahoma City).<br>
+• Se verificará el cumplimiento del ciclo de 70 horas en 8 días y el descanso de 34 horas.<br>
+• Los vehículos con violaciones de frenos serán puestos fuera de servicio inmediatamente.<br>
+• Se recomienda llevar toda la documentación actualizada: licencia CDL, tarjeta médica, registros de inspección del vehículo (DVIR) y logs ELD de los últimos 8 días.<br><br>
+<strong style="color:#f1f5f9">Qué hacer:</strong><br>
+Verifica el estado de tus frenos antes de entrar a Texas o Nuevo México. Asegúrate que tu ELD esté sincronizado y sin errores de diagnóstico. Si tienes dudas sobre tus horas, consulta la sección de Regulaciones en esta app.`
+  },
+  {
+    tag: '⚠️ REGULACIÓN', tagColor: '#f59e0b', tagBg: 'rgba(245,158,11,.15)',
+    title: 'Nuevo requisito de capacitación para conductores de materiales peligrosos',
+    meta: 'Mar 20, 2026 · PHMSA / DOT',
+    body: `A partir del 1 de abril de 2026, todos los conductores de HazMat deberán completar 4 horas adicionales de entrenamiento en manejo de derrames. La PHMSA publicó el reglamento final en el Registro Federal.<br><br>
+<strong style="color:#f1f5f9">Detalles del nuevo reglamento:</strong><br>
+• El entrenamiento debe ser completado por un proveedor certificado por PHMSA.<br>
+• El contenido cubre: identificación de materiales peligrosos, procedimientos de contención de derrames, comunicación de emergencias y uso de equipo de protección personal (EPP).<br>
+• Los empleadores deben guardar registros de la capacitación por un mínimo de 3 años.<br>
+• Los conductores que ya tengan certificación HazMat renovada después del 1 de enero de 2025 están exentos si presentan documentación.<br><br>
+<strong style="color:#f1f5f9">Penalidades:</strong><br>
+El incumplimiento puede resultar en multas de hasta $13,000 por infracción y suspensión del endoso HazMat en la CDL.`
+  },
+  {
+    tag: '📢 AVISO', tagColor: '#3b82f6', tagBg: 'rgba(59,130,246,.15)',
+    title: 'Prórroga para ELD de tercera generación: plazo extendido a junio 2026',
+    meta: 'Mar 15, 2026 · FMCSA Technology Division',
+    body: `La FMCSA otorgó una extensión de 90 días para la transición a dispositivos ELD de Generación 3. Las flotas deben completar la actualización antes del 30 de junio de 2026.<br><br>
+<strong style="color:#f1f5f9">¿Qué cambia con los ELD Gen-3?</strong><br>
+• Mayor seguridad cibernética: encriptación de datos en tránsito y en reposo.<br>
+• Sincronización automática con el portal FMCSA en tiempo real.<br>
+• Pantalla de diagnóstico mejorada con códigos de error estandarizados.<br>
+• Compatibilidad obligatoria con Bluetooth 5.0 y Wi-Fi 6 para transferencia de datos.<br><br>
+<strong style="color:#f1f5f9">¿Qué debes hacer?</strong><br>
+Contacta a tu proveedor de ELD para verificar si tu dispositivo actual cumple con los estándares Gen-3 o necesita reemplazo. La lista de dispositivos certificados está disponible en fmcsa.dot.gov/registration/ELD. Flotas que no completen la transición antes del 30 de junio enfrentarán multas diarias de $1,000 por vehículo.`
+  },
+  {
+    tag: '✅ ACTUALIZACIÓN', tagColor: '#10b981', tagBg: 'rgba(16,185,129,.15)',
+    title: 'FMCSA actualiza lista de ELD certificados: 47 nuevos dispositivos aprobados',
+    meta: 'Mar 10, 2026 · FMCSA',
+    body: `Se añadieron 47 nuevos dispositivos ELD a la lista oficial de dispositivos registrados. Los transportistas pueden consultar el registro actualizado en fmcsa.dot.gov/registration/ELD.<br><br>
+<strong style="color:#f1f5f9">Proveedores destacados en la nueva lista:</strong><br>
+• KeepTruckin (Motive) — 3 nuevos modelos certificados Gen-3<br>
+• Samsara — 2 modelos actualizados con soporte Gen-3<br>
+• Verizon Connect — actualización de firmware para modelos existentes<br>
+• PeopleNet — nuevo dispositivo tableta certificado<br>
+• Trimble — 4 modelos de integración OEM aprobados<br><br>
+<strong style="color:#f1f5f9">Dispositivos revocados:</strong><br>
+La FMCSA también retiró la certificación de 8 dispositivos de proveedores que no cumplieron con los estándares de seguridad cibernética actualizados. Si usas uno de estos dispositivos, recibirás una notificación de tu proveedor.<br><br>
+<strong style="color:#f1f5f9">Acción recomendada:</strong><br>
+Verifica que tu dispositivo ELD actual aparezca en la lista actualizada. Si fue revocado, tienes 30 días para reemplazarlo sin penalidad.`
+  },
+  {
+    tag: '💡 RECORDATORIO', tagColor: '#8b5cf6', tagBg: 'rgba(139,92,246,.15)',
+    title: 'Operación "Road Check 2026" programada para mayo: 72 horas de inspecciones',
+    meta: 'Mar 5, 2026 · CVSA / DOT',
+    body: `El CVSA realizará su inspección anual masiva del 20 al 22 de mayo de 2026. Este año el enfoque principal será el sistema de frenos y el cumplimiento de HOS. Más de 10,000 inspectores participarán en 50 estados.<br><br>
+<strong style="color:#f1f5f9">Enfoque de inspección 2026:</strong><br>
+• <strong style="color:#a78bfa">Frenos:</strong> Ajuste, condición de las zapatas, fugas de aire, funcionamiento del ABS.<br>
+• <strong style="color:#a78bfa">HOS:</strong> Registros ELD de los últimos 8 días, ciclo de 70 horas, descansos de 10 horas.<br>
+• <strong style="color:#a78bfa">Neumáticos:</strong> Profundidad de banda de rodamiento, presión y condición de paredes.<br>
+• <strong style="color:#a78bfa">Luces:</strong> Funcionamiento de luces de freno, girofaro y marcadores laterales.<br><br>
+<strong style="color:#f1f5f9">Estadísticas históricas:</strong><br>
+En la edición 2025, el 20% de los vehículos inspeccionados fue puesto fuera de servicio. El 8% de conductores fue detenido por violaciones de HOS. Prepárate con anticipación para evitar ser parte de esas estadísticas.<br><br>
+<strong style="color:#f1f5f9">Lista de verificación pre-inspección:</strong><br>
+✓ Logs ELD sin errores de diagnóstico<br>
+✓ Frenos ajustados (usa la fórmula de carrera de la cámara)<br>
+✓ Presión de neumáticos según especificación del fabricante<br>
+✓ Tarjeta médica vigente y en la billetera<br>
+✓ Documentos del vehículo al día (registro, seguro, IFTA)`
+  }
+];
+
+function openDotNewsDetail(idx) {
+  const d = _dotNewsData[idx];
+  if (!d) return;
+  const detail = document.getElementById('dotNewsDetail');
+  document.getElementById('dotDetailTag').innerHTML = `<span style="background:${d.tagBg};color:${d.tagColor};padding:3px 8px;border-radius:6px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px">${d.tag}</span>`;
+  document.getElementById('dotDetailTitle').textContent = d.title;
+  document.getElementById('dotDetailMeta').textContent = d.meta;
+  document.getElementById('dotDetailBody').innerHTML = d.body;
+  detail.style.display = 'flex';
+}
+function closeDotNewsDetail() {
+  document.getElementById('dotNewsDetail').style.display = 'none';
+}
 
 /* Sync side-tab badge with legacy cqtBadge */
 (function() {
