@@ -7248,6 +7248,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 <style>
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+@keyframes truckBubblePulse { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 4px rgba(16,185,129,.0)} 50%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 8px rgba(16,185,129,.35)} }
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
@@ -11279,103 +11280,57 @@ const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 let fmTruckEl = null;  // the inner div element for rotation
 
 function buildTruckIconHTML(heading, isMoving) {
-  const rot  = heading != null ? heading : 0;
-  const cab  = isMoving ? '#10b981' : '#6b7280';
-  const trl  = isMoving ? '#0a7a65' : '#374151';
-  const tire = isMoving ? '#10b981' : '#4b5563';
-  const hl   = isMoving ? '#fef08a' : '#9ca3af';
-  // Top-down 18-wheeler: facing UP (north). viewBox 48x108.
-  // Front = top (y=0). Rear = bottom (y=108).
-  // Wheels: 2 steer + 8 drive (tandem) + 8 trailer (tandem) = 18 total.
+  const rot = heading != null ? heading : 0;
+  const user = typeof currentUser !== 'undefined' ? currentUser : null;
+
+  // Get initials from name
+  function getInitials(name) {
+    if (!name) return '🚛';
+    const w = name.trim().split(/\s+/).filter(Boolean);
+    if (w.length >= 2) return (w[0][0] + w[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  }
+  const initials = user ? getInitials(user.name) : '🚛';
+  const pulse = isMoving ? 'truckBubblePulse 1.8s ease-in-out infinite' : 'none';
+  const ring  = isMoving ? '#10b981' : '#6b7280';
+
+  // Photo or avatar inside circle
+  let inner = '';
+  if (user && user.photoData) {
+    inner = `<img src="${user.photoData}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:block" />`;
+  } else if (user && user.avatar) {
+    inner = `<span style="font-size:22px;line-height:44px">${user.avatar}</span>`;
+  } else {
+    inner = `<span style="font-size:20px;line-height:44px">🚛</span>`;
+  }
+
   return `
     <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
-         style="transform:rotate(${rot}deg);transition:transform 0.6s cubic-bezier(.4,0,.2,1)">
-      <div class="truck-glow"></div>
-      <div class="truck-pulse"></div>
-      <svg viewBox="0 0 48 108" width="44" height="99" style="position:relative;z-index:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.7))">
-
-        <!-- ══ CAB ══ -->
-        <!-- Hood / engine cover -->
-        <rect x="13" y="4" width="22" height="16" rx="3" fill="${cab}" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
-        <!-- Hood vents -->
-        <line x1="17" y1="8"  x2="31" y2="8"  stroke="rgba(0,0,0,.3)" stroke-width=".8"/>
-        <line x1="17" y1="11" x2="31" y2="11" stroke="rgba(0,0,0,.3)" stroke-width=".8"/>
-        <line x1="17" y1="14" x2="31" y2="14" stroke="rgba(0,0,0,.3)" stroke-width=".8"/>
-        <!-- Front bumper -->
-        <rect x="11" y="1" width="26" height="4" rx="2" fill="rgba(200,200,200,.7)" stroke="rgba(255,255,255,.4)" stroke-width=".5"/>
-        <!-- Headlights -->
-        <rect x="11" y="1" width="7" height="4" rx="1.5" fill="${hl}" opacity=".9"/>
-        <rect x="30" y="1" width="7" height="4" rx="1.5" fill="${hl}" opacity=".9"/>
-        <!-- Exhaust stacks (left & right of hood) -->
-        <rect x="12" y="5" width="3" height="11" rx="1.5" fill="#1f2937" stroke="rgba(255,255,255,.15)" stroke-width=".5"/>
-        <rect x="33" y="5" width="3" height="11" rx="1.5" fill="#1f2937" stroke="rgba(255,255,255,.15)" stroke-width=".5"/>
-        ${isMoving ? `<circle cx="13.5" cy="4.5" r="2.5" fill="rgba(210,210,210,.45)"/>
-        <circle cx="34.5" cy="4.5" r="2.5" fill="rgba(210,210,210,.45)"/>` : ''}
-        <!-- Steer axle (1 tire each side — 2 total) -->
-        <rect x="3"  y="10" width="10" height="6" rx="2" fill="#111827" stroke="${tire}" stroke-width="1.3"/>
-        <rect x="35" y="10" width="10" height="6" rx="2" fill="#111827" stroke="${tire}" stroke-width="1.3"/>
-        <!-- Windshield -->
-        <rect x="12" y="20" width="24" height="10" rx="2" fill="rgba(147,210,255,.85)" stroke="rgba(255,255,255,.5)" stroke-width=".8"/>
-        <!-- Cab body (sleeper) -->
-        <rect x="10" y="4" width="28" height="36" rx="4" fill="none" stroke="${cab}" stroke-width="2"/>
-        <rect x="11" y="30" width="26" height="10" rx="2" fill="${trl}" opacity=".65"/>
-        <!-- Cab roof marker lights -->
-        <circle cx="19" cy="3" r="1.2" fill="rgba(255,120,0,.8)"/>
-        <circle cx="24" cy="3" r="1.2" fill="rgba(255,120,0,.8)"/>
-        <circle cx="29" cy="3" r="1.2" fill="rgba(255,120,0,.8)"/>
-        <!-- Drive axle tandem (2 axles × 4 dual tires = 8 total) -->
-        <!-- Axle 1 left outer/inner -->
-        <rect x="2"  y="27" width="8" height="5" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
-        <rect x="10" y="27" width="5" height="5" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
-        <!-- Axle 1 right inner/outer -->
-        <rect x="33" y="27" width="5" height="5" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
-        <rect x="38" y="27" width="8" height="5" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
-        <!-- Axle 2 left outer/inner -->
-        <rect x="2"  y="33" width="8" height="5" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
-        <rect x="10" y="33" width="5" height="5" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
-        <!-- Axle 2 right inner/outer -->
-        <rect x="33" y="33" width="5" height="5" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
-        <rect x="38" y="33" width="8" height="5" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
-
-        <!-- ══ FIFTH WHEEL + KINGPIN ══ -->
-        <ellipse cx="24" cy="45" rx="8" ry="5" fill="rgba(0,0,0,.5)" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
-        <circle  cx="24" cy="45" r="2.5"        fill="rgba(255,255,255,.2)"/>
-
-        <!-- ══ TRAILER ══ -->
-        <!-- Trailer body -->
-        <rect x="9" y="50" width="30" height="54" rx="2" fill="${trl}" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
-        <!-- Corrugated ribs -->
-        <line x1="9" y1="62"  x2="39" y2="62"  stroke="rgba(255,255,255,.1)" stroke-width="1.2"/>
-        <line x1="9" y1="72"  x2="39" y2="72"  stroke="rgba(255,255,255,.1)" stroke-width="1.2"/>
-        <line x1="9" y1="82"  x2="39" y2="82"  stroke="rgba(255,255,255,.1)" stroke-width="1.2"/>
-        <line x1="9" y1="92"  x2="39" y2="92"  stroke="rgba(255,255,255,.1)" stroke-width="1.2"/>
-        <!-- Trailer side rails -->
-        <rect x="9"  y="50" width="3" height="54" rx="1" fill="rgba(255,255,255,.06)"/>
-        <rect x="36" y="50" width="3" height="54" rx="1" fill="rgba(255,255,255,.06)"/>
-        <!-- Trailer axle tandem (2 axles × 4 dual tires = 8 total) -->
-        <!-- Axle 1 left outer/inner -->
-        <rect x="1"  y="75" width="9" height="6" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
-        <rect x="10" y="75" width="5" height="6" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
-        <!-- Axle 1 right inner/outer -->
-        <rect x="33" y="75" width="5" height="6" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
-        <rect x="38" y="75" width="9" height="6" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
-        <!-- Axle 2 left outer/inner -->
-        <rect x="1"  y="82" width="9" height="6" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
-        <rect x="10" y="82" width="5" height="6" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
-        <!-- Axle 2 right inner/outer -->
-        <rect x="33" y="82" width="5" height="6" rx="1"   fill="#111827" stroke="${tire}" stroke-width=".9"/>
-        <rect x="38" y="82" width="9" height="6" rx="1.5" fill="#111827" stroke="${tire}" stroke-width="1.2"/>
-        <!-- Rear bumper -->
-        <rect x="9" y="101" width="30" height="3" rx="1.5" fill="rgba(200,200,200,.5)"/>
-        <!-- Rear DOT reflector tape (orange + red) -->
-        <rect x="9"  y="100" width="8" height="2" rx="1" fill="rgba(255,60,0,.9)"/>
-        <rect x="17" y="100" width="7" height="2" rx="1" fill="rgba(255,200,0,.9)"/>
-        <rect x="24" y="100" width="7" height="2" rx="1" fill="rgba(255,60,0,.9)"/>
-        <rect x="31" y="100" width="8" height="2" rx="1" fill="rgba(255,200,0,.9)"/>
-        <!-- Rear red lights -->
-        <rect x="9"  y="99" width="5" height="3" rx="1" fill="rgba(220,30,30,.9)"/>
-        <rect x="34" y="99" width="5" height="3" rx="1" fill="rgba(220,30,30,.9)"/>
+         style="transform:rotate(${rot}deg);transition:transform 0.6s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;align-items:center;gap:0">
+      <!-- Direction arrow -->
+      <svg width="14" height="10" viewBox="0 0 14 10" style="margin-bottom:-1px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))">
+        <polygon points="7,0 14,10 0,10" fill="${ring}"/>
       </svg>
+      <!-- User bubble -->
+      <div style="
+        width:44px;height:44px;border-radius:50%;
+        border:3px solid ${ring};
+        box-shadow:0 0 0 2px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.6);
+        overflow:hidden;display:flex;align-items:center;justify-content:center;
+        background:rgba(15,23,42,.9);
+        animation:${pulse};
+        position:relative;
+      ">${inner}</div>
+      <!-- Initials badge -->
+      <div style="
+        margin-top:3px;
+        background:rgba(0,0,0,.75);backdrop-filter:blur(4px);
+        color:#f1f5f9;font-size:10px;font-weight:800;
+        padding:2px 7px;border-radius:8px;
+        border:1px solid rgba(255,255,255,.15);
+        white-space:nowrap;letter-spacing:.5px;
+        transform:rotate(0deg);
+      ">${initials}</div>
     </div>`;
 }
 
@@ -11431,7 +11386,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   if (!fmGpsMarker) {
     // First placement — create marker
     const html  = buildTruckIconHTML(heading, isMoving);
-    const icon  = L.divIcon({ className: '', html, iconAnchor: [22, 22], iconSize: [44, 99] });
+    const icon  = L.divIcon({ className: '', html, iconAnchor: [25, 57], iconSize: [50, 75] });
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
 
@@ -11444,7 +11399,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
     } else {
       // Wrapper gone (rare) — recreate icon
       const html = buildTruckIconHTML(heading, isMoving);
-      const icon = L.divIcon({ className: '', html, iconAnchor: [22, 22], iconSize: [44, 99] });
+      const icon = L.divIcon({ className: '', html, iconAnchor: [25, 57], iconSize: [50, 75] });
       fmGpsMarker.setIcon(icon);
       truckFrom = { lat, lon, heading: heading ?? 0 };
     }
