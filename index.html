@@ -852,6 +852,19 @@
   }
 
   /* Toast alert banner */
+  /* State border welcome banner */
+  #stateBanner {
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.8);
+    z-index:9999; background:rgba(10,16,35,0.96); border:2px solid #10b981;
+    border-radius:22px; padding:30px 44px; text-align:center;
+    opacity:0; pointer-events:none; transition:all 0.4s cubic-bezier(.16,1,.3,1);
+    box-shadow:0 8px 48px rgba(0,0,0,0.75);
+  }
+  #stateBanner.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  #stateBanner .sb-flag { font-size:52px; display:block; margin-bottom:6px; }
+  #stateBanner .sb-welcome { font-size:11px; color:rgba(255,255,255,.45); font-weight:700; letter-spacing:3px; text-transform:uppercase; }
+  #stateBanner .sb-name { font-size:34px; font-weight:900; color:#10b981; margin-top:6px; line-height:1; }
+
   .safety-toast {
     position: fixed; top: calc(14px + env(safe-area-inset-top,0px));
     left: 14px; right: 14px; z-index: 9000;
@@ -7859,6 +7872,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 ══════════════════════════════════════════════════════════ -->
 
 <!-- Toast notification (shared) -->
+<!-- State border welcome banner -->
+<div id="stateBanner">
+  <span class="sb-flag">🏁</span>
+  <div class="sb-welcome">Bienvenido a</div>
+  <div class="sb-name" id="stateBannerName">—</div>
+</div>
+
 <div class="safety-toast" id="safetyToast">
   <div class="toast-icon" id="toastIcon">⚠️</div>
   <div class="toast-body">
@@ -9660,6 +9680,9 @@ let speedLimitExceeded = false;
 let speedToastTimer    = null;
 let lastStateCheck     = 0;
 let lastRoadSpeedCheck = 0;
+let lastBorderWarnState = '';
+let lastBorderWarnCheck = 0;
+let stateBannerTimer    = null;
 
 function toggleSpeedLimit(btn) {
   speedLimitActive = !speedLimitActive;
@@ -9670,6 +9693,61 @@ function toggleSpeedLimit(btn) {
   if (!speedLimitActive) {
     document.getElementById('speedLimitWidget').classList.remove('visible');
   }
+}
+
+function showStateBanner(name) {
+  const el = document.getElementById('stateBanner');
+  const nm = document.getElementById('stateBannerName');
+  if (!el || !nm) return;
+  nm.textContent = name;
+  el.classList.add('show');
+  if (stateBannerTimer) clearTimeout(stateBannerTimer);
+  stateBannerTimer = setTimeout(() => el.classList.remove('show'), 5000);
+  vibrate([150, 60, 150, 60, 300]);
+}
+
+function destPointMiles(lat, lon, headingDeg, miles) {
+  const R = 3958.8;
+  const d = miles / R;
+  const b = headingDeg * Math.PI / 180;
+  const φ1 = lat * Math.PI / 180;
+  const λ1 = lon * Math.PI / 180;
+  const φ2 = Math.asin(Math.sin(φ1)*Math.cos(d) + Math.cos(φ1)*Math.sin(d)*Math.cos(b));
+  const λ2 = λ1 + Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(φ1), Math.cos(d)-Math.sin(φ1)*Math.sin(φ2));
+  return { lat: φ2 * 180/Math.PI, lon: λ2 * 180/Math.PI };
+}
+
+async function checkStateBorderAhead(lat, lon, heading) {
+  const now = Date.now();
+  if (now - lastBorderWarnCheck < 30000) return;
+  lastBorderWarnCheck = now;
+  if (!currentStateCode) return;
+  try {
+    const ahead = destPointMiles(lat, lon, heading ?? 0, 5);
+    const r = await fetch(`https://photon.komoot.io/reverse?lat=${ahead.lat}&lon=${ahead.lon}`);
+    const d = await r.json();
+    const p = d.features?.[0]?.properties || {};
+    const stateRaw = p.state || p.region || '';
+    const stateMap = {
+      'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+      'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
+      'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS',
+      'Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA',
+      'Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT',
+      'Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM',
+      'New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK',
+      'Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
+      'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT',
+      'Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
+      'México':'MX','Mexico':'MX','Ontario':'ON','British Columbia':'BC','Alberta':'AB','Quebec':'QC'
+    };
+    const code = stateMap[stateRaw] || stateRaw.slice(0,2).toUpperCase();
+    if (code && code !== currentStateCode && code !== lastBorderWarnState) {
+      lastBorderWarnState = code;
+      showToast('info', '🚧', `En 5 millas: ${stateRaw || code}`,
+        lang === 'es' ? `Entrando al estado de ${stateRaw || code}` : `Entering ${stateRaw || code}`, 8000);
+    }
+  } catch(e) {}
 }
 
 async function detectStateAndUpdateLimit(lat, lon) {
@@ -9697,7 +9775,9 @@ async function detectStateAndUpdateLimit(lat, lon) {
     };
     const code = stateMap[stateRaw] || stateRaw.slice(0,2).toUpperCase();
     if (code && code !== currentStateCode) {
+      const prevCode = currentStateCode;
       currentStateCode = code;
+      lastBorderWarnState = ''; // reset border warning for next state
       const limits = STATE_SPEED_LIMITS[code];
       if (limits) {
         // --- Settings widget (draggable) ---
@@ -9707,13 +9787,10 @@ async function detectStateAndUpdateLimit(lat, lon) {
 
         // --- Map speed sign ---
         updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
-
-        // Toast when entering new state (skip on first load to avoid spam)
-        if (currentStateCode !== code || !document.getElementById('mapSpeedSign').classList.contains('visible')) {
-          const unit = code === 'ON' || code === 'BC' || code === 'AB' || code === 'QC' ? 'km/h' : 'mph';
-          showToast('info', '🚦', `${stateRaw || code} — Truck limit: ${limits.truck} ${unit}`,
-            `Car: ${limits.car} ${unit}${limits.truck < limits.car ? ' · Trucks must go slower' : ''}`, 6000);
-        }
+      }
+      // Welcome banner when entering a new state (not on first load)
+      if (prevCode) {
+        showStateBanner(stateRaw || code);
       }
     } else if (code && code === currentStateCode) {
       // Same state — ensure sign stays visible if it was somehow hidden
@@ -12672,6 +12749,7 @@ function fmStartTracking() {
 
     // ── Detect state + fetch cheap fuel (throttled) ──────────
     detectStateAndUpdateLimit(lat, lon);
+    checkStateBorderAhead(lat, lon, fmLastHeading);
     fetchRoadSpeedLimit(lat, lon);
     fetchCheapFuel(lat, lon);
 
