@@ -11804,10 +11804,14 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
       const hudEl = document.getElementById('fmHud');
       const hudH  = (hudEl && hudEl.style.transform !== 'translateY(100%)')
                     ? (hudEl.offsetHeight || 0) : 0;
-      // Place truck at 65% from top of visible area = shows ~65% road ahead
-      // offsetPx = target_truck_screen_y - screen_center_y
-      // target_truck_screen_y = 0.65 * (size.y - hudH)
-      offsetPx = 0.65 * (size.y - hudH) - size.y * 0.5;
+      // Place truck at 82% from top of visible area = truck near bottom, road ahead fills screen
+      // If highway bar is visible (speed>30mph), its height reduces the usable map area
+      const fmScreen = document.getElementById('fullMapScreen');
+      const hwBar = document.getElementById('fmHighwayBar');
+      const hwBarH = (fmScreen && fmScreen.classList.contains('highway-speed') && hwBar)
+                     ? (hwBar.offsetHeight || Math.round(size.y * 0.42)) : 0;
+      const usableH = size.y - hudH - hwBarH;
+      offsetPx = 0.82 * usableH - size.y * 0.5;
     }
     // pixels to offset the map center (negative = center south of truck = truck above center)
 
