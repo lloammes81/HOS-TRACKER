@@ -5185,7 +5185,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <div id="originLabel" style="flex:1;display:flex;align-items:center;gap:6px;">
               <span id="originLabelText" class="stop-gps-label">📡 Obteniendo ubicación…</span>
             </div>
-            <button class="stop-refresh-btn" onclick="useGPS()" title="Actualizar">🔄</button>
+            <button class="stop-refresh-btn" id="gpsUserBtn" onclick="useGPS()" title="Actualizar ubicación"
+              style="padding:0;width:36px;height:36px;border-radius:50%;border:2px solid rgba(99,102,241,.5);background:rgba(99,102,241,.12);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+              <span id="gpsUserBtnInner" style="font-size:18px;line-height:1">📡</span>
+            </button>
           </div>
 
           <!-- Destination -->
@@ -5213,11 +5216,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <label id="lblTime">🕐 Salida</label>
             <input type="datetime-local" id="departureInput" class="departure-input" />
           </div>
-          <div class="param-box">
-            <label id="lblHours">⏱️ Horas disponibles</label>
-            <input type="number" id="hoursInput" min="1" max="70" value="70" />
-          </div>
         </div>
+        <!-- hoursInput kept hidden; value is set by the hours dialog before calculating -->
+        <input type="number" id="hoursInput" min="1" max="70" value="70" style="display:none" />
         <input type="number" id="speedInput" value="60" style="display:none" />
 
         <!-- TRUCK ROUTE OPTIONS -->
@@ -5246,7 +5247,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <div class="error" id="errorBox" style="display:none;margin-top:10px"></div>
 
-        <button class="btn-calc-mobile" id="calcBtn" onclick="calculateRoute()">
+        <button class="btn-calc-mobile" id="calcBtn" onclick="calculateRoute()" disabled style="opacity:0.45;cursor:not-allowed">
           <span style="font-size:22px">🚛</span> Calcular Ruta
         </button>
 
@@ -8619,12 +8620,11 @@ function hideSpeedometer() {
 
 /* ── DRIVING HOURS WIDGET ─────────────────────────────────── */
 function showDriveHoursWidget() {
-  const w = document.getElementById('driveHoursWidget');
-  if (w) { w.classList.add('visible'); applyDriveHoursPos(); }
+  // Drive hours widget removed — no longer displayed
 }
 
 function hideDriveHoursWidget() {
-  document.getElementById('driveHoursWidget').classList.remove('visible');
+  // Drive hours widget removed — no longer displayed
 }
 
 function applyDriveHoursPos() {
@@ -10812,15 +10812,63 @@ function resetMiniBadges() {
   miniPoiActive = { truck: true, rest: true, restrict: true };
 }
 
+/* ── HOS HOURS DIALOG ─────────────────────────────── */
+let _hosRemainingDailyHrs = 11;
+
+function openHosDialog() {
+  const modal = document.getElementById('hosHoursModal');
+  if (!modal) return;
+  document.getElementById('hosStep1').style.display = '';
+  document.getElementById('hosStep2').style.display = 'none';
+  document.getElementById('hosDailyError').style.display = 'none';
+  document.getElementById('hosWeeklyError').style.display = 'none';
+  document.getElementById('hosDailyInput').value = _hosRemainingDailyHrs || 11;
+  document.getElementById('hosWeeklyInput').value = parseFloat(document.getElementById('hoursInput').value) || 70;
+  modal.style.display = 'flex';
+}
+
+function closeHosDialog() {
+  const modal = document.getElementById('hosHoursModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function hosStep1Next() {
+  const val = parseFloat(document.getElementById('hosDailyInput').value);
+  const errEl = document.getElementById('hosDailyError');
+  if (isNaN(val) || val <= 0 || val > 11) {
+    errEl.textContent = 'Debe ser entre 0.1 y 11 horas. No puede ser 0.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  _hosRemainingDailyHrs = val;
+  document.getElementById('hosStep1').style.display = 'none';
+  document.getElementById('hosStep2').style.display = '';
+}
+
+function hosStep2Back() {
+  document.getElementById('hosStep2').style.display = 'none';
+  document.getElementById('hosStep1').style.display = '';
+}
+
+function hosStep2Confirm() {
+  const val = parseFloat(document.getElementById('hosWeeklyInput').value);
+  const errEl = document.getElementById('hosWeeklyError');
+  if (isNaN(val) || val <= 0 || val > 70) {
+    errEl.textContent = 'Debe ser entre 1 y 70 horas.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  document.getElementById('hoursInput').value = val;
+  closeHosDialog();
+  _doCalculateRoute();
+}
+
 async function calculateRoute() {
   hideError();
   if (!origin || !destination) { showError(t('errSel')); return; }
-  const hours = parseFloat(document.getElementById('hoursInput').value);
-  const speed = parseFloat(document.getElementById('speedInput').value);
-  if (isNaN(hours)||hours<=0||hours>70) { showError(t('err70')); return; }
-  if (isNaN(speed)||speed<=0) { showError(t('errSpeed')); return; }
-
-  // 🚨 Safety: block if vehicle is currently moving
+  // Safety: block if vehicle is currently moving
   if (fmVehicleMoving && fmCurrentSpeed > 3) {
     showToast('danger','🚨',
       lang === 'es' ? '¡Vehículo en movimiento!' : 'Vehicle in Motion!',
@@ -10832,6 +10880,16 @@ async function calculateRoute() {
     vibrate([200, 100, 200, 100, 200]);
     return;
   }
+  openHosDialog();
+}
+
+async function _doCalculateRoute() {
+  hideError();
+  if (!origin || !destination) { showError(t('errSel')); return; }
+  const hours = parseFloat(document.getElementById('hoursInput').value);
+  const speed = parseFloat(document.getElementById('speedInput').value);
+  if (isNaN(hours)||hours<=0||hours>70) { showError(t('err70')); return; }
+  if (isNaN(speed)||speed<=0) { showError(t('errSpeed')); return; }
 
   const calcBtn = document.getElementById('calcBtn');
   calcBtn.textContent = '⏳ Calculating...';
@@ -10970,6 +11028,21 @@ function setOriginLabel(name) {
   if (txt) { txt.textContent = name; txt.style.color = 'var(--text)'; }
 }
 
+function updateGpsUserBtnPhoto() {
+  const inner = document.getElementById('gpsUserBtnInner');
+  if (!inner) return;
+  const user = typeof currentUser !== 'undefined' ? currentUser : null;
+  if (user && user.photoData) {
+    inner.innerHTML = `<img src="${user.photoData}" alt="yo" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block" />`;
+  } else if (user && user.avatar) {
+    inner.textContent = user.avatar;
+    inner.style.fontSize = '20px';
+  } else {
+    inner.textContent = '📡';
+    inner.style.fontSize = '18px';
+  }
+}
+
 function useGPS() {
   if (!navigator.geolocation) {
     showToast('danger','📡', lang==='es'?'GPS no disponible':'GPS not supported',
@@ -11031,6 +11104,7 @@ function useGPS() {
     if (!name) name = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
     origin = { name, lat: latitude, lon: longitude };
     if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; }
+    updateGpsUserBtnPhoto();
   }, () => {
     if (lbl) { lbl.textContent = lang==='es' ? '⚠️ Permiso de ubicación denegado' : '⚠️ Location permission denied'; lbl.style.color = '#ef4444'; }
     showToast('danger','📡', lang==='es'?'Ubicación no disponible':'Location unavailable', t('gpsDenied'), 4000);
@@ -11088,6 +11162,8 @@ localStorage.setItem('hos_reports', JSON.stringify(communityReports));
 
 // Current logged-in user
 let currentUser = JSON.parse(localStorage.getItem('hos_user') || 'null');
+// Show user photo on GPS button if profile already loaded
+setTimeout(() => updateGpsUserBtnPhoto(), 100);
 
 function openFullMapScreen() {
   const screen = document.getElementById('fullMapScreen');
@@ -14281,6 +14357,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const txt = document.getElementById('originLabelText');
     if (txt) txt.textContent = 'GPS no disponible';
   }
+
+  // Request notification permission
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
+  }
+
+  // Request camera permission (silent probe — triggers permission dialog)
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then(stream => { stream.getTracks().forEach(t => t.stop()); })
+      .catch(() => {});
+  }
 });
 
 // When app returns to foreground, resume GPS so real-time position continues
@@ -14679,7 +14767,7 @@ async function geocodeAndSet(name, field) {
     if (data[0]) {
       const loc = { name, lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
       if (field === 'origin') { origin = loc; const lbl = document.getElementById('originLabelText'); if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; } }
-      else { destination = loc; document.getElementById('destInput').value = name; }
+      else { destination = loc; document.getElementById('destInput').value = name; enableCalcBtn(); }
     }
   } catch {}
 }
@@ -15966,6 +16054,15 @@ function setDestinationWithLocalCheck(it) {
   destination = it;
   document.getElementById('destInput').value = it.name;
   document.getElementById('destSugg').style.display = 'none';
+  enableCalcBtn();
+}
+
+function enableCalcBtn() {
+  const btn = document.getElementById('calcBtn');
+  if (!btn) return;
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.style.cursor = 'pointer';
 }
 
 function extractStateFromName(name) {
@@ -16025,6 +16122,7 @@ function forceSetDest() {
   document.getElementById('destInput').value = it.name;
   document.getElementById('destSugg').style.display = 'none';
   dismissLocalWarning();
+  enableCalcBtn();
 }
 
 function changeJobTypeFromWarning() {
@@ -16044,6 +16142,7 @@ function changeJobTypeFromWarning() {
     destination = it;
     document.getElementById('destInput').value = it.name;
     document.getElementById('destSugg').style.display = 'none';
+    enableCalcBtn();
   }
   showToast('info', '🛣️', 'Switched to Interstate', 'You can now route to any state', 3000);
 }
@@ -16617,6 +16716,7 @@ function persistCurrentUserToProfiles() {
     localStorage.setItem('hos_profiles', JSON.stringify(allProfiles));
   }
   localStorage.setItem('hos_user', JSON.stringify(currentUser));
+  updateGpsUserBtnPhoto();
 }
 
 function syncProfileFab() {
@@ -17079,6 +17179,38 @@ FIREBASE_CONFIG = {
   </div>
 </div>
 
+
+<!-- ══════════════ HOS HOURS DIALOG ══════════════ -->
+<div id="hosHoursModal" style="display:none;position:fixed;inset:0;z-index:9800;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+  <div style="background:var(--card,#111827);border-radius:22px;padding:28px 24px 22px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.7);border:1px solid rgba(255,255,255,0.1);position:relative">
+    <!-- Step 1: Daily driving hours -->
+    <div id="hosStep1">
+      <div style="font-size:24px;text-align:center;margin-bottom:6px">🚛</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text,#f9fafb);text-align:center;margin-bottom:8px">Horas de Manejo Restantes</div>
+      <div style="font-size:13px;color:var(--muted,#9ca3af);text-align:center;margin-bottom:20px;line-height:1.5">¿Cuántas horas de manejo te quedan disponibles hoy?<br><span style="font-size:11px;opacity:.75">(Límite diario: 11 horas — no puede ser 0)</span></div>
+      <input type="number" id="hosDailyInput" min="0.1" max="11" step="0.5" value="11"
+        style="width:100%;padding:14px;font-size:22px;font-weight:700;text-align:center;border-radius:12px;border:2px solid rgba(99,102,241,.5);background:rgba(99,102,241,.1);color:var(--text,#f9fafb);box-sizing:border-box;outline:none" />
+      <div id="hosDailyError" style="display:none;color:#ef4444;font-size:12px;text-align:center;margin-top:6px"></div>
+      <div style="display:flex;gap:10px;margin-top:18px">
+        <button onclick="closeHosDialog()" style="flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:transparent;color:var(--muted,#9ca3af);font-size:14px;cursor:pointer">Cancelar</button>
+        <button onclick="hosStep1Next()" style="flex:2;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Siguiente →</button>
+      </div>
+    </div>
+    <!-- Step 2: Weekly 70-hr cycle hours -->
+    <div id="hosStep2" style="display:none">
+      <div style="font-size:24px;text-align:center;margin-bottom:6px">⏱️</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text,#f9fafb);text-align:center;margin-bottom:8px">Horas del Ciclo Semanal</div>
+      <div style="font-size:13px;color:var(--muted,#9ca3af);text-align:center;margin-bottom:20px;line-height:1.5">¿Cuántas horas te quedan de tu ciclo de <strong>70 horas semanales</strong>?<br><span style="font-size:11px;opacity:.75">(Ingresa entre 1 y 70 horas)</span></div>
+      <input type="number" id="hosWeeklyInput" min="1" max="70" step="1" value="70"
+        style="width:100%;padding:14px;font-size:22px;font-weight:700;text-align:center;border-radius:12px;border:2px solid rgba(16,185,129,.5);background:rgba(16,185,129,.1);color:var(--text,#f9fafb);box-sizing:border-box;outline:none" />
+      <div id="hosWeeklyError" style="display:none;color:#ef4444;font-size:12px;text-align:center;margin-top:6px"></div>
+      <div style="display:flex;gap:10px;margin-top:18px">
+        <button onclick="hosStep2Back()" style="flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:transparent;color:var(--muted,#9ca3af);font-size:14px;cursor:pointer">← Atrás</button>
+        <button onclick="hosStep2Confirm()" style="flex:2;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Calcular Ruta 🚛</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════════ PRO SUBSCRIBE MODAL ══════════════ -->
 <div id="subscribeModal" style="
