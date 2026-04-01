@@ -7277,6 +7277,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
+@keyframes arrivalBlink {
+  0%,100% { opacity:1; color: #f1f5f9; text-shadow: none; }
+  50%      { opacity:.25; color: #818cf8; text-shadow: 0 0 12px rgba(129,140,248,.9); }
+}
+.arrival-blink {
+  animation: arrivalBlink .65s ease-in-out 6;
+}
 
 /* ── HIGHWAY SPEED MODE (>30 mph): shrink map to top half ──── */
 #fullMapScreen.highway-speed #fullMap {
@@ -11048,7 +11055,12 @@ function renderResults(hours, speed, depart) {
   document.getElementById('fromVal').textContent = origin.name;
   document.getElementById('toVal').textContent = destination.name;
   document.getElementById('departureVal').textContent = fmtDateTime(depart);
-  document.getElementById('arrivalVal').textContent = fmtDateTime(arrivalTime);
+  const arrEl = document.getElementById('arrivalVal');
+  arrEl.textContent = fmtDateTime(arrivalTime);
+  arrEl.classList.remove('arrival-blink');
+  void arrEl.offsetWidth; // force reflow to restart animation
+  arrEl.classList.add('arrival-blink');
+  arrEl.addEventListener('animationend', () => arrEl.classList.remove('arrival-blink'), { once: true });
   document.getElementById('totalTimeVal').textContent = fmtH(totalTime);
 
   const sl = document.getElementById('scheduleList');
