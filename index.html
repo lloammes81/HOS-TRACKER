@@ -11831,12 +11831,12 @@ function fmStartTracking() {
     // Always derive heading from consecutive snapped positions so the truck
     // icon aligns with the actual road direction (GPS heading can lag or
     // be wrong on curves; snapped positions are more accurate).
-    if (fmPrevLat != null && isMoving) {
+    if (fmPrevLat != null && (snapLat !== fmPrevLat || snapLon !== fmPrevLon)) {
       heading = calcHeading(fmPrevLat, fmPrevLon, snapLat, snapLon);
     } else if (!heading || heading < 0) {
       heading = fmLastHeading ?? 0;
     }
-    if (isMoving) { fmPrevLat = snapLat; fmPrevLon = snapLon; }
+    fmPrevLat = snapLat; fmPrevLon = snapLon;
     fmLastHeading = heading;
 
     // ── Update truck marker at snapped on-road position ─────
@@ -11853,13 +11853,10 @@ function fmStartTracking() {
       const followCenter = calcFollowCenter(snapLat, snapLon, heading);
       fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
       // ── Heading-up: rotate map to match truck direction ──
-      if (fmHeadingUpMode && isMoving && heading != null && heading >= 0) {
-        if (typeof fmMapInst.setBearing === 'function') {
+      if (typeof fmMapInst.setBearing === 'function') {
+        if (fmHeadingUpMode && heading != null && heading >= 0) {
           fmMapInst.setBearing(heading);
-        }
-      } else if (!fmHeadingUpMode || !isMoving) {
-        // North-up when stopped or user disabled heading-up
-        if (typeof fmMapInst.setBearing === 'function') {
+        } else if (!fmHeadingUpMode) {
           fmMapInst.setBearing(0);
         }
       }
