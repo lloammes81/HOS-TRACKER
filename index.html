@@ -418,6 +418,7 @@
   .results-kv.full { grid-column: 1 / -1; }
   .results-k { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
   .results-v { font-size: 16px; font-weight: 700; line-height: 1.3; }
+  .arrival-blink { animation: blink 1s ease-in-out infinite; }
   /* number inputs: hide spinners */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -11597,7 +11598,10 @@ function renderResults(hours, speed, depart) {
   document.getElementById('fromVal').textContent = origin.name;
   document.getElementById('toVal').textContent = destination.name;
   document.getElementById('departureVal').textContent = fmtDateTime(depart);
-  document.getElementById('arrivalVal').textContent = fmtDateTime(arrivalTime);
+  const arrivalValEl = document.getElementById('arrivalVal');
+  arrivalValEl.textContent = fmtDateTime(arrivalTime);
+  arrivalValEl.classList.add('arrival-blink');
+  document.getElementById('arrivalLbl').classList.add('arrival-blink');
   document.getElementById('totalTimeVal').textContent = fmtH(totalTime);
 
   const sl = document.getElementById('scheduleList');
