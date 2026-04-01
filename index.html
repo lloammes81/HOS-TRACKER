@@ -2583,6 +2583,23 @@ body.map-active #driveHoursWidget{
 #fullMap .leaflet-tile-pane {
   filter: brightness(1.18) contrast(1.12) saturate(1.08);
 }
+/* Highway mode: map shrinks to make room for speed bar */
+#fullMap { transition: bottom 0.4s ease; }
+#highwayBar {
+  position:absolute; bottom:0; left:0; right:0; height:0;
+  background:rgba(10,16,35,0.97);
+  z-index:10; overflow:hidden;
+  transition:height 0.4s ease;
+  display:flex; align-items:center; justify-content:space-around;
+  padding:0 16px; box-sizing:border-box;
+  border-top:2px solid rgba(16,185,129,0.3);
+}
+#highwayBar.active { height:36vh; }
+.hw-speed-block { text-align:center; }
+.hw-speed-val { font-size:72px; font-weight:900; color:#10b981; line-height:1; }
+.hw-speed-val.over { color:#ef4444; }
+.hw-speed-unit { font-size:15px; font-weight:700; color:rgba(255,255,255,.6); margin-top:2px; letter-spacing:2px; }
+.hw-speed-lbl { font-size:10px; font-weight:700; color:rgba(255,255,255,.35); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:2px; }
 /* Night mode: don't over-brighten dark tiles */
 body.dark #miniMap .leaflet-tile-pane,
 body.dark #fullMap .leaflet-tile-pane {
@@ -7120,7 +7137,15 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   background:#000; flex-direction:column;
 ">
   <!-- MAP fills entire screen -->
-  <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
+  <div id="fullMap" style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1"></div>
+  <!-- Highway speed bar (appears when > 40 mph) -->
+  <div id="highwayBar">
+    <div class="hw-speed-block">
+      <div class="hw-speed-lbl">VELOCIDAD</div>
+      <div class="hw-speed-val" id="hwSpeedVal">0</div>
+      <div class="hw-speed-unit">MPH</div>
+    </div>
+  </div>
     <div class="local-radius-info" id="localRadiusInfo" style="display:none">📍 Local Mode — 100 mi radius</div>
     <div id="routeAlertPill" onclick="switchTab('community')">🚨 Alert on your route — tap</div>
 
@@ -9402,6 +9427,23 @@ function initDriveHoursDrag() {
 }
 
 function updateSpeedometer(mph) {
+  // Highway mode: shrink map when > 40 mph
+  const hwBar = document.getElementById('highwayBar');
+  const mapEl = document.getElementById('fullMap');
+  const hwVal = document.getElementById('hwSpeedVal');
+  const isHighway = mph > 40;
+  if (hwBar && mapEl) {
+    const wasHighway = hwBar.classList.contains('active');
+    if (hwVal) { hwVal.textContent = Math.round(mph); hwVal.classList.toggle('over', mph > 75); }
+    if (isHighway !== wasHighway) {
+      hwBar.classList.toggle('active', isHighway);
+      mapEl.style.bottom = isHighway ? '36vh' : '0';
+      setTimeout(() => { if (fmMapInst) fmMapInst.invalidateSize(); }, 430);
+    } else if (isHighway && hwVal) {
+      hwVal.textContent = Math.round(mph);
+    }
+  }
+
   // Update the inline speed sign (below speed limit sign)
   const mySpeedNum = document.getElementById('mssMySpeedNum');
   const mySpeedSign = document.getElementById('mssMySpeed');
