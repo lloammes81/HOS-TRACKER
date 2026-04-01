@@ -5181,14 +5181,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="stops-container" id="stopsContainer">
           <!-- Origin (GPS) -->
           <div class="stop-row-mobile" id="stopRowOrigin">
-            <span class="stop-icon">📍</span>
+            <span class="stop-icon" id="gpsUserBtn" onclick="useGPS()" title="Actualizar ubicación"
+              style="width:32px;height:32px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:20px;position:relative">
+              <span id="gpsUserBtnInner">📍</span>
+            </span>
             <div id="originLabel" style="flex:1;display:flex;align-items:center;gap:6px;">
               <span id="originLabelText" class="stop-gps-label">📡 Obteniendo ubicación…</span>
             </div>
-            <button class="stop-refresh-btn" id="gpsUserBtn" onclick="useGPS()" title="Actualizar ubicación"
-              style="padding:0;width:36px;height:36px;border-radius:50%;border:2px solid rgba(99,102,241,.5);background:rgba(99,102,241,.12);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
-              <span id="gpsUserBtnInner" style="font-size:18px;line-height:1">📡</span>
-            </button>
+            <button class="stop-refresh-btn" onclick="useGPS()" title="Actualizar">🔄</button>
           </div>
 
           <!-- Destination -->
@@ -11141,13 +11141,13 @@ function updateGpsUserBtnPhoto() {
   const initials = user ? getInitials(user.name) : '';
 
   if (user && user.photoData) {
-    inner.innerHTML = `<img src="${user.photoData}" alt="yo" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block" />`;
+    inner.innerHTML = `<img src="${user.photoData}" alt="yo" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block;border:2px solid rgba(99,102,241,.6)" />`;
   } else if (user && user.avatar) {
     inner.textContent = user.avatar;
     inner.style.fontSize = '20px';
   } else {
-    inner.textContent = '📡';
-    inner.style.fontSize = '18px';
+    inner.textContent = '📍';
+    inner.style.fontSize = '20px';
   }
 
   // Add/update initials badge
