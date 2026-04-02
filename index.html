@@ -9024,6 +9024,19 @@ function initDriveHoursDrag() {
 }
 
 function updateSpeedometer(mph) {
+  // ── Map shrink when > 40 mph ──────────────────────────────
+  const mapEl = document.getElementById('fullMap');
+  if (mapEl) {
+    const isHighway = mph > 40;
+    const wasHighway = mapEl.dataset.highway === '1';
+    if (isHighway !== wasHighway) {
+      mapEl.dataset.highway = isHighway ? '1' : '0';
+      mapEl.style.transition = 'bottom 0.4s ease';
+      mapEl.style.bottom = isHighway ? '50vh' : '0';
+      setTimeout(() => { if (fmMapInst) fmMapInst.invalidateSize(); }, 450);
+    }
+  }
+
   // Update the inline speed sign (below speed limit sign)
   const mySpeedNum = document.getElementById('mssMySpeedNum');
   const mySpeedSign = document.getElementById('mssMySpeed');
@@ -12026,6 +12039,9 @@ function fmStartTracking() {
     fmPrevLat = snapLat; fmPrevLon = snapLon;
     fmLastHeading = heading;
 
+    // ── Speed limit check (must run before truck marker so color is correct) ──
+    checkSpeedLimit(gpsSpeed);
+
     // ── Update truck marker at snapped on-road position ─────
     fmUpdateTruckMarker(snapLat, snapLon, heading, isMoving);
 
@@ -12207,9 +12223,6 @@ function fmStartTracking() {
 
     // ── Bridge check: also trigger from GPS when moving (in addition to timer) ──
     if (bridgeActive && isMoving) checkBridges();
-
-    // ── Speed limit check ────────────────────────────────────
-    checkSpeedLimit(gpsSpeed);
 
     // ── Detect state + fetch cheap fuel (throttled) ──────────
     detectStateAndUpdateLimit(lat, lon);
