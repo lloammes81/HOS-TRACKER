@@ -6098,6 +6098,36 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="tpb-arrow" id="tempArrowStatus">›</div>
       </button>
 
+      <!-- Bridge & Weight Restrictions -->
+      <button class="tool-page-btn" onclick="openBridgeRestrSheet()" style="--tclr:#f97316;--tcbg:rgba(249,115,22,.1);--tcbdr:rgba(249,115,22,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#ea580c,#f97316)">🌉</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Restricciones de Altura/Peso</div>
+          <div class="tpb-sub">Alertas de puentes y carreteras con límite de altura y peso</div>
+        </div>
+        <div class="tpb-arrow">›</div>
+      </button>
+
+      <!-- No-Truck Zones -->
+      <button class="tool-page-btn" onclick="openNoTruckSheet()" style="--tclr:#ec4899;--tcbg:rgba(236,72,153,.1);--tcbdr:rgba(236,72,153,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#be185d,#ec4899)">🚫</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Zonas No-Truck</div>
+          <div class="tpb-sub">Alertas de zonas restringidas para vehículos pesados</div>
+        </div>
+        <div class="tpb-arrow">›</div>
+      </button>
+
+      <!-- Axle Weight Calculator -->
+      <button class="tool-page-btn" onclick="openAxleCalcSheet()" style="--tclr:#a78bfa;--tcbg:rgba(167,139,250,.1);--tcbdr:rgba(167,139,250,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">⚖️</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Calculadora de Peso por Eje</div>
+          <div class="tpb-sub">Distribuye el peso de carga y verifica límites DOT por eje</div>
+        </div>
+        <div class="tpb-arrow">›</div>
+      </button>
+
       <!-- Document Scanner -->
       <button class="tool-page-btn" onclick="openScannerSheet()" style="--tclr:#f59e0b;--tcbg:rgba(245,158,11,.1);--tcbdr:rgba(245,158,11,.3)">
         <div class="tpb-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b)">📄</div>
@@ -6110,6 +6140,180 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
     </div>
   </div>
+
+<!-- ══════════════════════════════════════════════════════════
+     🌉  BRIDGE / WEIGHT RESTRICTIONS SHEET
+══════════════════════════════════════════════════════════ -->
+<style>
+.restr-sheet {
+  position:fixed;inset:0;z-index:800;background:#0b173a;
+  display:none;flex-direction:column;overflow-y:auto;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+}
+.restr-sheet.open { display:flex; }
+.restr-topbar {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);
+  background:rgba(15,23,42,.95);position:sticky;top:0;z-index:2;
+}
+.restr-topbar-title { font-size:16px;font-weight:800;color:#f1f5f9; }
+.restr-close { background:rgba(255,255,255,.08);border:none;color:#f1f5f9;font-size:20px;width:36px;height:36px;border-radius:50%;cursor:pointer; }
+.restr-body { padding:16px;display:flex;flex-direction:column;gap:14px; }
+.restr-section { background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px; }
+.restr-section-title { font-size:11px;font-weight:800;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px; }
+.restr-row { display:flex;align-items:center;gap:10px;margin-bottom:10px; }
+.restr-row:last-child { margin-bottom:0; }
+.restr-label { font-size:13px;color:rgba(255,255,255,.7);font-weight:600;flex:1; }
+.restr-input { background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f1f5f9;font-size:14px;font-weight:700;padding:8px 10px;width:90px;text-align:center; }
+.restr-alert-item { display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;margin-bottom:8px; }
+.restr-alert-item:last-child { margin-bottom:0; }
+.restr-alert-item.warn { background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3); }
+.restr-alert-item.danger { background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3); }
+.restr-alert-item.ok { background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2); }
+.restr-alert-ico { font-size:22px;flex-shrink:0;margin-top:1px; }
+.restr-alert-title { font-size:13px;font-weight:800;color:#f1f5f9; }
+.restr-alert-sub { font-size:11px;color:rgba(255,255,255,.5);margin-top:2px; }
+.restr-toggle-row { display:flex;align-items:center;justify-content:space-between;padding:10px 0; }
+.restr-toggle { position:relative;width:46px;height:26px; }
+.restr-toggle input { opacity:0;width:0;height:0; }
+.restr-toggle-slider { position:absolute;inset:0;background:#374151;border-radius:13px;transition:.3s; }
+.restr-toggle input:checked + .restr-toggle-slider { background:#10b981; }
+.restr-toggle-slider:before { content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s; }
+.restr-toggle input:checked + .restr-toggle-slider:before { transform:translateX(20px); }
+/* Axle calc */
+.axle-row { display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06); }
+.axle-row:last-child { border-bottom:none; }
+.axle-name { font-size:13px;font-weight:700;color:#f1f5f9;width:120px;flex-shrink:0; }
+.axle-bar-wrap { flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden; }
+.axle-bar { height:100%;border-radius:4px;transition:width .5s; }
+.axle-val { font-size:13px;font-weight:800;width:80px;text-align:right;flex-shrink:0; }
+.axle-limit { font-size:10px;color:rgba(255,255,255,.35);width:60px;text-align:right;flex-shrink:0; }
+</style>
+
+<!-- Bridge/Weight Restrictions Sheet -->
+<div id="bridgeRestrSheet" class="restr-sheet">
+  <div class="restr-topbar">
+    <button class="restr-close" onclick="closeBridgeRestrSheet()">✕</button>
+    <div class="restr-topbar-title">🌉 Restricciones Altura/Peso</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="restr-body">
+    <!-- Toggle -->
+    <div class="restr-section">
+      <div class="restr-toggle-row">
+        <div>
+          <div style="font-size:14px;font-weight:800;color:#f1f5f9">Alertas activas</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">Avisa cuando una ruta tenga restricción</div>
+        </div>
+        <label class="restr-toggle"><input type="checkbox" id="bridgeAlertToggle" checked onchange="saveBridgeSettings()"><span class="restr-toggle-slider"></span></label>
+      </div>
+    </div>
+    <!-- Truck dimensions -->
+    <div class="restr-section">
+      <div class="restr-section-title">Dimensiones del camión</div>
+      <div class="restr-row">
+        <div class="restr-label">🚛 Altura (ft)</div>
+        <input class="restr-input" type="number" id="truckHeightFt" value="13" min="8" max="18" step="0.1" oninput="saveBridgeSettings()">
+      </div>
+      <div class="restr-row">
+        <div class="restr-label">⚖️ Peso bruto (lbs)</div>
+        <input class="restr-input" type="number" id="truckGrossLbs" value="80000" min="10000" max="130000" step="1000" oninput="saveBridgeSettings()">
+      </div>
+      <div class="restr-row">
+        <div class="restr-label">↔️ Ancho (ft)</div>
+        <input class="restr-input" type="number" id="truckWidthFt" value="8.5" min="6" max="10" step="0.1" oninput="saveBridgeSettings()">
+      </div>
+    </div>
+    <!-- Nearby alerts -->
+    <div class="restr-section">
+      <div class="restr-section-title">Restricciones cercanas</div>
+      <div id="bridgeAlertList">
+        <div class="restr-alert-item ok">
+          <div class="restr-alert-ico">✅</div>
+          <div><div class="restr-alert-title">Sin restricciones detectadas</div><div class="restr-alert-sub">Activa el GPS para verificar en tiempo real</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- No-Truck Zones Sheet -->
+<div id="noTruckSheet" class="restr-sheet">
+  <div class="restr-topbar">
+    <button class="restr-close" onclick="closeNoTruckSheet()">✕</button>
+    <div class="restr-topbar-title">🚫 Zonas No-Truck</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="restr-body">
+    <!-- Toggle -->
+    <div class="restr-section">
+      <div class="restr-toggle-row">
+        <div>
+          <div style="font-size:14px;font-weight:800;color:#f1f5f9">Alertas activas</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">Avisa al entrar a zona restringida para camiones</div>
+        </div>
+        <label class="restr-toggle"><input type="checkbox" id="noTruckToggle" checked onchange="saveNoTruckSettings()"><span class="restr-toggle-slider"></span></label>
+      </div>
+    </div>
+    <!-- Info -->
+    <div class="restr-section">
+      <div class="restr-section-title">Tipos de restricción</div>
+      <div class="restr-alert-item warn"><div class="restr-alert-ico">🚛</div><div><div class="restr-alert-title">HGV Prohibido</div><div class="restr-alert-sub">Vehículos pesados no permitidos (hgv=no)</div></div></div>
+      <div class="restr-alert-item warn"><div class="restr-alert-ico">🏙️</div><div><div class="restr-alert-title">Zona urbana restringida</div><div class="restr-alert-sub">Calles residenciales sin acceso para camiones</div></div></div>
+      <div class="restr-alert-item warn"><div class="restr-alert-ico">⏰</div><div><div class="restr-alert-title">Restricción por horario</div><div class="restr-alert-sub">Algunas zonas restringen camiones en horas pico</div></div></div>
+    </div>
+    <!-- Nearby alerts -->
+    <div class="restr-section">
+      <div class="restr-section-title">Zonas cercanas detectadas</div>
+      <div id="noTruckAlertList">
+        <div class="restr-alert-item ok">
+          <div class="restr-alert-ico">✅</div>
+          <div><div class="restr-alert-title">Ruta libre</div><div class="restr-alert-sub">No se detectaron zonas no-truck cercanas</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Axle Weight Calculator Sheet -->
+<div id="axleCalcSheet" class="restr-sheet">
+  <div class="restr-topbar">
+    <button class="restr-close" onclick="closeAxleCalcSheet()">✕</button>
+    <div class="restr-topbar-title">⚖️ Peso por Eje</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="restr-body">
+    <!-- Inputs -->
+    <div class="restr-section">
+      <div class="restr-section-title">Datos del camión</div>
+      <div class="restr-row">
+        <div class="restr-label">⚖️ Peso bruto total (lbs)</div>
+        <input class="restr-input" type="number" id="axleGrossLbs" value="80000" min="20000" max="130000" step="500" oninput="calcAxleWeight()">
+      </div>
+      <div class="restr-row">
+        <div class="restr-label">🚛 Peso camión vacío (lbs)</div>
+        <input class="restr-input" type="number" id="axleTruckLbs" value="35000" min="10000" max="60000" step="500" oninput="calcAxleWeight()">
+      </div>
+      <div class="restr-row">
+        <div class="restr-label">📦 Carga (calculada)</div>
+        <div id="axleCargoDisplay" style="font-size:14px;font-weight:800;color:#10b981">45,000 lbs</div>
+      </div>
+    </div>
+    <!-- Results -->
+    <div class="restr-section">
+      <div class="restr-section-title">Distribución por eje (18-Wheeler)</div>
+      <div id="axleResults"></div>
+    </div>
+    <!-- DOT Limits reference -->
+    <div class="restr-section">
+      <div class="restr-section-title">Límites DOT federales</div>
+      <div class="restr-alert-item ok"><div class="restr-alert-ico">ℹ️</div><div>
+        <div class="restr-alert-title">Peso máximo legal</div>
+        <div class="restr-alert-sub">Eje delantero (steer): 12,000 lbs · Tándem tractora: 34,000 lbs · Tándem trailer: 34,000 lbs · Gross total: 80,000 lbs</div>
+      </div></div>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════════
      📄  DOCUMENT SCANNER SHEET
@@ -12011,6 +12215,7 @@ function fmStartTracking() {
     // ── Detect state + fetch cheap fuel (throttled) ──────────
     detectStateAndUpdateLimit(lat, lon);
     checkStateBorderAhead(lat, lon, fmLastHeading);
+    checkRoadRestrictions(lat, lon);
     fetchRoadSpeedLimit(lat, lon);
     fetchCheapFuel(lat, lon);
 
@@ -13962,6 +14167,190 @@ function initResetTimer() {
 /* ════════════════════════════════════════════════════════════
    💰  FREIGHT CALCULATOR
 ════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   🌉  BRIDGE / WEIGHT RESTRICTIONS
+═══════════════════════════════════════════════ */
+let bridgeAlertActive = localStorage.getItem('hos_bridgeAlert') !== 'false';
+let noTruckAlertActive = localStorage.getItem('hos_noTruckAlert') !== 'false';
+let lastRestrCheck = 0;
+
+function openBridgeRestrSheet() {
+  const s = document.getElementById('bridgeRestrSheet');
+  s.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  // Load saved settings
+  document.getElementById('bridgeAlertToggle').checked = bridgeAlertActive;
+  const h = localStorage.getItem('hos_truckHeight') || '13';
+  const w = localStorage.getItem('hos_truckWeight') || '80000';
+  const wd = localStorage.getItem('hos_truckWidth') || '8.5';
+  document.getElementById('truckHeightFt').value = h;
+  document.getElementById('truckGrossLbs').value = w;
+  document.getElementById('truckWidthFt').value = wd;
+}
+function closeBridgeRestrSheet() {
+  document.getElementById('bridgeRestrSheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function saveBridgeSettings() {
+  bridgeAlertActive = document.getElementById('bridgeAlertToggle').checked;
+  localStorage.setItem('hos_bridgeAlert', bridgeAlertActive);
+  localStorage.setItem('hos_truckHeight', document.getElementById('truckHeightFt').value);
+  localStorage.setItem('hos_truckWeight', document.getElementById('truckGrossLbs').value);
+  localStorage.setItem('hos_truckWidth', document.getElementById('truckWidthFt').value);
+}
+
+function openNoTruckSheet() {
+  document.getElementById('noTruckSheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('noTruckToggle').checked = noTruckAlertActive;
+}
+function closeNoTruckSheet() {
+  document.getElementById('noTruckSheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function saveNoTruckSettings() {
+  noTruckAlertActive = document.getElementById('noTruckToggle').checked;
+  localStorage.setItem('hos_noTruckAlert', noTruckAlertActive);
+}
+
+async function checkRoadRestrictions(lat, lon) {
+  const now = Date.now();
+  if (now - lastRestrCheck < 45000) return;
+  lastRestrCheck = now;
+
+  const truckH  = parseFloat(localStorage.getItem('hos_truckHeight') || '13');
+  const truckW  = parseFloat(localStorage.getItem('hos_truckWeight') || '80000');
+  const wTons   = (truckW * 0.000453592).toFixed(1);
+  const hMeters = (truckH * 0.3048).toFixed(2);
+  const r = 0.15; // ~150m radius
+
+  try {
+    const query = `[out:json][timeout:10];
+      (
+        way(around:${r*1000},${lat},${lon})[maxheight];
+        way(around:${r*1000},${lat},${lon})[maxweight];
+        way(around:${r*1000},${lat},${lon})[hgv=no];
+        way(around:${r*1000},${lat},${lon})[access=no][motor_vehicle!=yes];
+      );out tags;`;
+    const res = await fetch('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query));
+    const data = await res.json();
+    const elements = data.elements || [];
+
+    const bridgeList = document.getElementById('bridgeAlertList');
+    const noTruckList = document.getElementById('noTruckAlertList');
+    let bridgeAlerts = [];
+    let noTruckAlerts = [];
+
+    elements.forEach(el => {
+      const t = el.tags || {};
+      // Height restriction
+      if (t.maxheight) {
+        const mh = parseFloat(t.maxheight);
+        if (!isNaN(mh) && mh < parseFloat(hMeters)) {
+          bridgeAlerts.push({ type:'danger', ico:'⚠️', title:`Altura máx: ${t.maxheight}m`, sub:`Tu camión: ${truckH}ft (${hMeters}m) — NO PASA` });
+        } else if (!isNaN(mh)) {
+          bridgeAlerts.push({ type:'warn', ico:'🌉', title:`Altura máx: ${t.maxheight}m`, sub:`Tu camión: ${hMeters}m — Pasa con margen` });
+        }
+      }
+      // Weight restriction
+      if (t.maxweight) {
+        const mw = parseFloat(t.maxweight);
+        if (!isNaN(mw) && mw < parseFloat(wTons)) {
+          bridgeAlerts.push({ type:'danger', ico:'⚠️', title:`Peso máx: ${t.maxweight}t`, sub:`Tu camión: ${wTons}t — EXCEDE LÍMITE` });
+        }
+      }
+      // No-truck / HGV
+      if (t.hgv === 'no' || t.access === 'no') {
+        const road = t.name || t.ref || 'Vía actual';
+        noTruckAlerts.push({ type:'danger', ico:'🚫', title:`Zona restringida: ${road}`, sub:'Camiones pesados no permitidos en esta vía' });
+      }
+    });
+
+    // Update bridge list
+    if (bridgeAlerts.length) {
+      bridgeList.innerHTML = bridgeAlerts.map(a =>
+        `<div class="restr-alert-item ${a.type}"><div class="restr-alert-ico">${a.ico}</div><div><div class="restr-alert-title">${a.title}</div><div class="restr-alert-sub">${a.sub}</div></div></div>`
+      ).join('');
+      if (bridgeAlertActive && bridgeAlerts.some(a => a.type === 'danger')) {
+        showToast('danger','⚠️','Restricción de altura/peso','Verifica la ruta — posible restricción adelante', 10000);
+      }
+    } else if (bridgeList) {
+      bridgeList.innerHTML = `<div class="restr-alert-item ok"><div class="restr-alert-ico">✅</div><div><div class="restr-alert-title">Sin restricciones detectadas</div><div class="restr-alert-sub">Ruta libre de restricciones de altura y peso</div></div></div>`;
+    }
+
+    // Update no-truck list
+    if (noTruckAlerts.length) {
+      noTruckList.innerHTML = noTruckAlerts.map(a =>
+        `<div class="restr-alert-item ${a.type}"><div class="restr-alert-ico">${a.ico}</div><div><div class="restr-alert-title">${a.title}</div><div class="restr-alert-sub">${a.sub}</div></div></div>`
+      ).join('');
+      if (noTruckAlertActive) {
+        showToast('danger','🚫','Zona restringida para camiones','No-truck zone detectada cerca de tu posición', 10000);
+        vibrate([200,80,200]);
+      }
+    } else if (noTruckList) {
+      noTruckList.innerHTML = `<div class="restr-alert-item ok"><div class="restr-alert-ico">✅</div><div><div class="restr-alert-title">Ruta libre</div><div class="restr-alert-sub">No se detectaron zonas no-truck cercanas</div></div></div>`;
+    }
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════
+   ⚖️  AXLE WEIGHT CALCULATOR
+═══════════════════════════════════════════════ */
+function openAxleCalcSheet() {
+  document.getElementById('axleCalcSheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  calcAxleWeight();
+}
+function closeAxleCalcSheet() {
+  document.getElementById('axleCalcSheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function calcAxleWeight() {
+  const gross  = parseFloat(document.getElementById('axleGrossLbs').value) || 80000;
+  const empty  = parseFloat(document.getElementById('axleTruckLbs').value) || 35000;
+  const cargo  = Math.max(0, gross - empty);
+  document.getElementById('axleCargoDisplay').textContent = cargo.toLocaleString() + ' lbs';
+
+  // Standard 18-wheeler distribution (approximate percentages based on load)
+  // Steer axle: ~12% of gross (but capped at 12,000)
+  // Drive tandem: ~42.5% of gross
+  // Trailer tandem: ~42.5% of gross (but calculated from actual cargo distribution)
+  const steer   = Math.min(12000, gross * 0.12);
+  const drive   = (gross - steer) * 0.50;
+  const trailer = gross - steer - drive;
+
+  const limits = { steer: 12000, drive: 34000, trailer: 34000 };
+  const axles = [
+    { name:'Eje delantero', weight: steer,   limit: limits.steer,   emoji:'🔵' },
+    { name:'Tándem tractora', weight: drive,  limit: limits.drive,   emoji:'🟢' },
+    { name:'Tándem trailer',  weight: trailer,limit: limits.trailer, emoji:'🟢' },
+  ];
+
+  const maxGross = 80000;
+  const grossOk = gross <= maxGross;
+
+  let html = axles.map(ax => {
+    const pct = Math.min(100, (ax.weight / ax.limit) * 100);
+    const over = ax.weight > ax.limit;
+    const color = over ? '#ef4444' : pct > 85 ? '#f59e0b' : '#10b981';
+    return `<div class="axle-row">
+      <div class="axle-name">${ax.name}</div>
+      <div class="axle-bar-wrap"><div class="axle-bar" style="width:${pct}%;background:${color}"></div></div>
+      <div class="axle-val" style="color:${color}">${Math.round(ax.weight).toLocaleString()}</div>
+      <div class="axle-limit">/ ${ax.limit.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+
+  html += `<div class="axle-row" style="border-top:1px solid rgba(255,255,255,.12);margin-top:6px;padding-top:14px">
+    <div class="axle-name" style="font-weight:900">TOTAL BRUTO</div>
+    <div class="axle-bar-wrap"><div class="axle-bar" style="width:${Math.min(100,(gross/maxGross)*100)}%;background:${grossOk?'#10b981':'#ef4444'}"></div></div>
+    <div class="axle-val" style="color:${grossOk?'#10b981':'#ef4444'}">${gross.toLocaleString()}</div>
+    <div class="axle-limit">/ ${maxGross.toLocaleString()}</div>
+  </div>`;
+
+  document.getElementById('axleResults').innerHTML = html;
+}
+
 function openFreightCalc() {
   // Auto-fill miles from current route if available
   if (typeof totalDistanceMiles !== 'undefined' && totalDistanceMiles > 0) {
