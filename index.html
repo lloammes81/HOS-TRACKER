@@ -7542,12 +7542,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <style>
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
 @keyframes truckBubblePulse { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 4px rgba(16,185,129,.0)} 50%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 8px rgba(16,185,129,.35)} }
-@keyframes breakPulse { 0%,100%{border-color:#10b981;box-shadow:0 8px 36px rgba(0,0,0,.7),0 0 0 0 rgba(16,185,129,.0)} 50%{border-color:#34d399;box-shadow:0 8px 36px rgba(0,0,0,.7),0 0 0 8px rgba(16,185,129,.25)} }
-@keyframes violBlink { 0%,100%{opacity:1} 40%{opacity:.6} }
-#breakTimerOverlay .bto-pulse { animation:breakPulse 2s ease-in-out infinite; }
-#breakTimerOverlay .bto-complete { border-color:#10b981 !important; background:rgba(5,30,20,0.97) !important; }
-#breakViolationBanner { animation:violBlink 1.4s ease-in-out infinite; }
-@keyframes speedingRingPulse { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 4px rgba(239,68,68,.0)} 50%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(239,68,68,.5),0 0 0 10px rgba(239,68,68,.45)} }
+@keyframes glowGreen { 0%,100%{box-shadow:0 0 0 3px rgba(16,185,129,.9),0 0 0 9px rgba(16,185,129,.35),0 0 0 18px rgba(16,185,129,.12),0 6px 24px rgba(0,0,0,.7)} 50%{box-shadow:0 0 0 3px rgba(16,185,129,1),0 0 0 13px rgba(16,185,129,.45),0 0 0 26px rgba(16,185,129,.18),0 6px 24px rgba(0,0,0,.7)} }
+@keyframes glowRed   { 0%,100%{box-shadow:0 0 0 3px rgba(239,68,68,.9),0 0 0 9px rgba(239,68,68,.4),0 0 0 18px rgba(239,68,68,.15),0 6px 24px rgba(0,0,0,.7)} 50%{box-shadow:0 0 0 3px rgba(239,68,68,1),0 0 0 14px rgba(239,68,68,.5),0 0 0 28px rgba(239,68,68,.2),0 6px 24px rgba(0,0,0,.7)} }
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
@@ -12161,50 +12157,42 @@ const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 // The static truck icon element — we reuse the same DOM, only move/rotate
 let fmTruckEl = null;  // the inner div element for rotation
 
-function buildTruckIconHTML(heading, isMoving, isSpeeding = false) {
-  const rot = heading != null ? heading : 0;
+function buildTruckIconHTML(heading, isMoving) {
   const user = typeof currentUser !== 'undefined' ? currentUser : null;
+  const overLimit = typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded;
 
-  // Get initials from name
-  function getInitials(name) {
-    if (!name) return '🚛';
-    const w = name.trim().split(/\s+/).filter(Boolean);
-    if (w.length >= 2) return (w[0][0] + w[1][0]).toUpperCase();
-    return name.substring(0, 2).toUpperCase();
+  // Glow color: red if over limit, green if moving, gray if stopped
+  let glowAnim = 'none';
+  let borderColor = '#6b7280';
+  if (isMoving) {
+    if (overLimit) {
+      glowAnim = 'glowRed 1.2s ease-in-out infinite';
+      borderColor = '#ef4444';
+    } else {
+      glowAnim = 'glowGreen 1.6s ease-in-out infinite';
+      borderColor = '#10b981';
+    }
   }
-  const initials = user ? getInitials(user.name) : '🚛';
-  // Color: rojo=exceso velocidad, verde=manejando normal, gris=detenido
-  const ring  = isSpeeding ? '#ef4444' : (isMoving ? '#10b981' : '#6b7280');
-  const pulse = isSpeeding
-    ? 'speedingRingPulse 0.5s ease-in-out infinite'
-    : (isMoving ? 'truckBubblePulse 1.8s ease-in-out infinite' : 'none');
 
   // Photo or avatar inside circle
   let inner = '';
   if (user && user.photoData) {
-    inner = `<img src="${user.photoData}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:block" />`;
+    inner = `<img src="${user.photoData}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;display:block" />`;
   } else if (user && user.avatar) {
-    inner = `<span style="font-size:22px;line-height:44px">${user.avatar}</span>`;
+    inner = `<span style="font-size:26px;line-height:50px">${user.avatar}</span>`;
   } else {
-    inner = `<span style="font-size:20px;line-height:44px">🚛</span>`;
+    inner = `<span style="font-size:24px;line-height:50px">🚛</span>`;
   }
 
   return `
     <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
-         style="transform:rotate(${rot}deg);transition:transform 0.6s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;align-items:center;gap:0">
-      <!-- Direction arrow -->
-      <svg width="14" height="10" viewBox="0 0 14 10" style="margin-bottom:-1px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))">
-        <polygon points="7,0 14,10 0,10" fill="${ring}"/>
-      </svg>
-      <!-- User bubble -->
+         style="display:flex;align-items:center;justify-content:center;">
       <div style="
-        width:44px;height:44px;border-radius:50%;
-        border:3px solid ${ring};
-        box-shadow:0 0 0 2px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.6);
+        width:50px;height:50px;border-radius:50%;
+        border:3px solid ${borderColor};
         overflow:hidden;display:flex;align-items:center;justify-content:center;
-        background:rgba(15,23,42,.9);
-        animation:${pulse};
-        position:relative;
+        background:rgba(15,23,42,.95);
+        animation:${glowAnim};
       ">${inner}</div>
     </div>`;
 }
@@ -12258,31 +12246,13 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   // doesn't bail out early and the marker is immediately repositioned.
   if (!truckFrom) truckFrom = { lat, lon, heading: heading ?? 0 };
 
-  const isSpeeding = typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded;
-
+  const html = buildTruckIconHTML(heading, isMoving);
+  const icon = L.divIcon({ className: '', html, iconAnchor: [28, 28], iconSize: [56, 56] });
   if (!fmGpsMarker) {
-    // First placement — create marker
-    const html  = buildTruckIconHTML(heading, isMoving, isSpeeding);
-    const icon  = L.divIcon({ className: '', html, iconAnchor: [25, 57], iconSize: [50, 75] });
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
-    fmLastSpeeding = isSpeeding;
-
   } else {
-    const speedingChanged = (typeof fmLastSpeeding !== 'undefined') && fmLastSpeeding !== isSpeeding;
-    fmLastSpeeding = isSpeeding;
-    // Refresh icon if moving/speeding state changed
-    const wrapper = document.getElementById('truckWrapper');
-    if (wrapper && !speedingChanged) {
-      // Toggle moving/stopped classes without rebuilding full icon
-      wrapper.classList.toggle('stopped', !isMoving);
-    } else {
-      // Rebuild icon (state changed or wrapper gone)
-      const html = buildTruckIconHTML(heading, isMoving, isSpeeding);
-      const icon = L.divIcon({ className: '', html, iconAnchor: [25, 57], iconSize: [50, 75] });
-      fmGpsMarker.setIcon(icon);
-      truckFrom = { lat, lon, heading: heading ?? 0 };
-    }
+    fmGpsMarker.setIcon(icon);
   }
 
   // Cancel previous animation and start fresh
