@@ -2395,9 +2395,16 @@
   bottom: calc(var(--stack-base) + 0px) !important;
 }
 
-#sosFab{
-  position: fixed !important;
-  bottom: calc(var(--stack-base) + (var(--stack-size) + var(--stack-gap)) * 1) !important;
+/* SOS ahora está dentro de mapRightControls — sin posicionamiento fijo */
+#mapRightControls #sosFab{
+  position: relative !important;
+  bottom: auto !important; right: auto !important;
+  top: auto !important; left: auto !important;
+  transform: none !important;
+  display: none;
+}
+#mapRightControls #sosFab.visible{
+  display: flex !important;
 }
 #weatherWidget{
   position: fixed !important;
@@ -7147,6 +7154,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- MAP SPEED LIMIT SIGN (display only — no buttons inside) -->
   <div id="mapSpeedSign">
+    <!-- Reloj encima del letrero -->
+    <div id="mapSpeedClock" style="
+      background:rgba(10,16,30,0.88);backdrop-filter:blur(8px);
+      border-radius:8px;padding:4px 10px;margin-bottom:5px;
+      text-align:center;font-size:14px;font-weight:800;
+      color:#f1f5f9;letter-spacing:0.5px;pointer-events:none;
+      box-shadow:0 2px 10px rgba(0,0,0,.45);white-space:nowrap;
+    ">--:--</div>
     <div class="mss-sign" id="mssSign">
       <div class="mss-top">SPEED&#10;LIMIT</div>
       <div class="mss-num" id="mssNum">65</div>
@@ -7211,10 +7226,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- LEFT PANEL TOGGLE TAB -->
-  <button id="mapLeftPanelBtn" class="open" onclick="toggleMapLeftPanel()" title="Controles del mapa">‹</button>
+  <button id="mapLeftPanelBtn" onclick="toggleMapLeftPanel()" title="Controles del mapa">›</button>
 
   <!-- LEFT SIDE CONTROL COLUMN: estilo, brújula, centrar, color, zoom -->
-  <div id="mapLeftControls">
+  <div id="mapLeftControls" class="panel-hidden">
     <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Estilo de mapa">🗺️</button>
     <button id="compassBtn"  onclick="toggleHeadingUp()"     title="Norte / Heading-up">🧭</button>
     <div class="map-ctrl-sep"></div>
@@ -7223,14 +7238,35 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div class="map-ctrl-sep"></div>
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomIn()">+</button>
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
+    <div class="map-ctrl-sep"></div>
+    <button id="mapSearchBtn" onclick="toggleMapSearch()" title="Buscar destino" style="font-size:18px">🔍</button>
+  </div>
+
+  <!-- BARRA DE BÚSQUEDA DEL MAPA -->
+  <div id="mapSearchOverlay" style="
+    display:none;position:absolute;
+    top:calc(58px + env(safe-area-inset-top,0px));
+    left:8px;right:8px;z-index:20;pointer-events:all;
+  ">
+    <div style="background:rgba(10,16,30,0.96);border-radius:14px;padding:10px 14px;backdrop-filter:blur(14px);box-shadow:0 4px 28px rgba(0,0,0,.7);border:1px solid rgba(255,255,255,0.1)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:17px;flex-shrink:0">🔍</span>
+        <input id="mapSearchInput" type="text" placeholder="Buscar destino..." autocomplete="off"
+               oninput="handleMapSearch(this.value)"
+               style="flex:1;background:transparent;border:none;color:#f1f5f9;font-size:15px;outline:none;min-height:38px;caret-color:#06b6d4" />
+        <button onclick="closeMapSearch()" style="background:none;border:none;color:#6b7280;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent">✕</button>
+      </div>
+    </div>
+    <div id="mapSearchSugg" style="display:none;background:rgba(10,16,30,0.97);border-radius:12px;margin-top:5px;overflow:hidden;box-shadow:0 4px 28px rgba(0,0,0,.6);max-height:270px;overflow-y:auto"></div>
   </div>
 
   <!-- AUTO-FOLLOW button (bottom-left) -->
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
 
-  <!-- RIGHT SIDE CONTROL COLUMN: Community Reports -->
+  <!-- RIGHT SIDE CONTROL COLUMN: Community Reports + SOS -->
   <div id="mapRightControls">
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
+    <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
   </div>
 
   <!-- POI Filter chips (ocultos, se activan por JS) -->
@@ -7275,8 +7311,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="wx-desc" id="wxDesc">Clima</div>
       </div>
 
-      <!-- SOS button -->
-      <button id="sosFab" onclick="triggerSOS()">SOS</button>
+      <!-- SOS ahora está en mapRightControls -->
 
     </div>
 
@@ -7453,6 +7488,39 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
+    <!-- BREAK TIMER OVERLAY (aparece cuando el driver se detiene para el descanso) -->
+    <div id="breakTimerOverlay" style="display:none;position:absolute;bottom:calc(108px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:25;pointer-events:none;white-space:nowrap">
+      <div style="background:rgba(10,16,30,0.96);border-radius:22px;padding:16px 28px;text-align:center;backdrop-filter:blur(16px);border:2.5px solid #10b981;box-shadow:0 8px 36px rgba(0,0,0,.7);min-width:210px">
+        <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.2px;color:#10b981;margin-bottom:2px">⏸ DESCANSO OBLIGATORIO</div>
+        <div id="breakTimerCount" style="font-size:46px;font-weight:900;color:#fff;font-family:'Courier New',monospace;letter-spacing:3px;line-height:1.15;text-shadow:0 2px 10px rgba(16,185,129,.4)">30:00</div>
+        <div id="breakTimerLabel" style="font-size:11px;color:#94a3b8;margin-top:2px">Tiempo restante de pausa</div>
+        <div style="height:5px;background:rgba(255,255,255,.08);border-radius:999px;margin-top:10px;overflow:hidden">
+          <div id="breakTimerBar" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width .8s ease"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIOLATION OVERLAY (si sigue manejando sin tomar pausa) -->
+    <div id="breakViolationBanner" style="display:none;position:absolute;top:calc(64px + env(safe-area-inset-top,0px));left:10px;right:10px;z-index:26;pointer-events:all">
+      <div style="background:rgba(127,29,29,0.97);border-radius:16px;padding:14px 16px;backdrop-filter:blur(14px);border:2px solid #ef4444;box-shadow:0 6px 28px rgba(239,68,68,.5)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:28px">🚨</span>
+          <div>
+            <div style="font-size:14px;font-weight:900;color:#fff;letter-spacing:.3px">VIOLACIÓN HOS — 30-MIN BREAK</div>
+            <div style="font-size:11px;color:rgba(255,180,180,0.9);margin-top:1px">8 horas manejando sin descanso obligatorio</div>
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,.35);border-radius:10px;padding:10px 12px;font-size:11px;color:#fca5a5;line-height:1.6">
+          ⚖️ <b style="color:#fff">Multa FMCSA: $1,000 – $16,000</b> por conductor<br>
+          📋 <b style="color:#fff">CSA Points: +7</b> (puede causar out-of-service)<br>
+          🏢 <b style="color:#fff">Empresa: hasta $91,000</b> si hay patrón de violaciones
+        </div>
+        <button onclick="document.getElementById('breakViolationBanner').style.display='none'" style="margin-top:10px;width:100%;padding:10px;background:rgba(239,68,68,0.25);border:1.5px solid #ef4444;border-radius:10px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">
+          ✓ Entendido — Deteniéndome ahora
+        </button>
+      </div>
+    </div>
+
     <!-- Stop button (only when tracking) -->
     <button id="fmStopBtn" onclick="fmStopTracking()" style="
       display:none;width:100%;margin-top:12px;padding:14px;
@@ -7467,6 +7535,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <style>
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
 @keyframes truckBubblePulse { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 4px rgba(16,185,129,.0)} 50%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 8px rgba(16,185,129,.35)} }
+@keyframes breakPulse { 0%,100%{border-color:#10b981;box-shadow:0 8px 36px rgba(0,0,0,.7),0 0 0 0 rgba(16,185,129,.0)} 50%{border-color:#34d399;box-shadow:0 8px 36px rgba(0,0,0,.7),0 0 0 8px rgba(16,185,129,.25)} }
+@keyframes violBlink { 0%,100%{opacity:1} 40%{opacity:.6} }
+#breakTimerOverlay .bto-pulse { animation:breakPulse 2s ease-in-out infinite; }
+#breakTimerOverlay .bto-complete { border-color:#10b981 !important; background:rgba(5,30,20,0.97) !important; }
+#breakViolationBanner { animation:violBlink 1.4s ease-in-out infinite; }
+@keyframes speedingRingPulse { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 4px rgba(239,68,68,.0)} 50%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(239,68,68,.5),0 0 0 10px rgba(239,68,68,.45)} }
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
@@ -8669,6 +8743,35 @@ function getGPSPosition(maxAgeMs = 4000, timeoutMs = 12000) {
    SHARED TOAST SYSTEM
 ════════════════════════════════════════════════════════════ */
 let toastTimer = null;
+/* ── Sonidos de notificación (Web Audio API) ── */
+function playNotifSound(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const play = (freq, start, dur, vol = 0.28) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + start);
+      gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur + 0.05);
+    };
+    if (type === 'danger') {
+      play(880, 0, 0.14, 0.45); play(880, 0.18, 0.14, 0.45); play(880, 0.36, 0.28, 0.55);
+    } else if (type === 'warning') {
+      play(660, 0, 0.18, 0.3); play(880, 0.24, 0.22, 0.35);
+    } else if (type === 'success') {
+      play(523, 0, 0.1); play(659, 0.13, 0.1); play(784, 0.26, 0.22, 0.35);
+    } else {
+      play(520, 0, 0.18);
+    }
+  } catch {}
+}
+
 function showToast(type, icon, title, msg, autoDismiss = 6000) {
   const el = document.getElementById('safetyToast');
   el.className = `safety-toast ${type}`;
@@ -8681,6 +8784,7 @@ function showToast(type, icon, title, msg, autoDismiss = 6000) {
   if (toastTimer) clearTimeout(toastTimer);
   if (autoDismiss) toastTimer = setTimeout(hideToast, autoDismiss);
   vibrate(type === 'danger' ? [200,80,200,80,400] : [100,50,100]);
+  playNotifSound(type);
 }
 function hideToast() {
   document.getElementById('safetyToast').classList.remove('show');
@@ -11027,95 +11131,41 @@ async function fetchOsrmStepsOnly(orig, dest){
   }catch{ return []; }
 }
 async function fetchRoadRoute(orig, dest) {
-  // ── 1. Try OSRM truck profile first (best for real truck routing) ──────────
-  // truck profile respects: max weight, height, low bridges, hgv restrictions
-  return (async () => {
+  // Usa OSRM driving con timeout generoso (20s)
+  {
     const coords = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
     const osrmBase = 'https://router.project-osrm.org/route/v1';
 
-    // Try profiles in order: truck → driving (fallback)
-    const profiles = ['truck', 'driving'];
-    for (const profile of profiles) {
-      try {
-        const url = `${osrmBase}/${profile}/${coords}?overview=full&geometries=geojson&steps=true&alternatives=true`;
-        const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-        if (!r.ok) continue;
-        const data = await r.json();
-        if (data.code !== 'Ok') continue;
-
-        // Pick best route — prefer least distance that avoids cities (fewer turns ≈ highway-biased)
-        const routes = data.routes || [];
-        let best = routes[0];
-        if (routes.length > 1) {
-          // Prefer route with more distance (likely highways over city streets for trucks)
-          // but cap at 20% longer than shortest
-          const shortest = routes[0].distance;
-          const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
-            rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
-          if (highway) best = highway;
-        }
-
-        const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-        const miles = Math.round((best.distance || 0) / 1609.344);
-        const steps = best.legs?.[0]?.steps || [];
-
-        console.log(`✅ Route: OSRM-${profile} | ${miles} mi | ${routeCoords.length} pts`);
-        return { coords: routeCoords, miles, steps, source: `OSRM-${profile}` };
-      } catch (e) {
-        console.warn(`OSRM ${profile} failed:`, e.message);
-      }
-    }
-
-    // ── 2. Try OpenRouteService HGV (requires key but has free tier) ──────────
     try {
-      const orsUrl = 'https://api.openrouteservice.org/v2/directions/driving-hgv';
-      // Build avoid_features based on user route type preference
-      const orsAvoid = ['ferries'];
-      if (truckOptions.routeType === 'avoid_tolls')    orsAvoid.push('tollways');
-      if (truckOptions.routeType === 'avoid_highways') orsAvoid.push('highways');
-      // Convert truck dimensions from ft → meters for ORS (uses metric)
-      const ftToM = ft => +(ft * 0.3048).toFixed(2);
-      const orsRestrictions = {};
-      if (truckOptions.height > 0) orsRestrictions.height     = ftToM(truckOptions.height);
-      if (truckOptions.weight > 0) orsRestrictions.weight     = truckOptions.weight;
-      if (truckOptions.width  > 0) orsRestrictions.width      = ftToM(truckOptions.width);
-      if (truckOptions.length > 0) orsRestrictions.length     = ftToM(truckOptions.length);
-      if (truckOptions.axles  > 0) orsRestrictions.axle_count = truckOptions.axles;
-      const orsBody = {
-        coordinates: [[orig.lon, orig.lat], [dest.lon, dest.lat]],
-        profile: 'driving-hgv',
-        format: 'geojson',
-        options: {
-          vehicle_type: truckOptions.hazmat ? 'hgv_hazmat' : 'hgv',
-          avoid_features: orsAvoid,
-          ...(Object.keys(orsRestrictions).length ? { profile_params: { restrictions: orsRestrictions } } : {})
-        },
-        geometry_simplify: false
-      };
-      const orsResp = await fetch(orsUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(orsBody),
-        signal: AbortSignal.timeout(10000)
-      });
-      if (orsResp.ok) {
-        const orsData = await orsResp.json();
-        const feature = orsData.features?.[0];
-        if (feature) {
-          const routeCoords = (feature.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-          const dist = feature.properties?.summary?.distance || 0;
-          if (routeCoords.length > 1) {
-            console.log('✅ Route: ORS HGV (truck-restricted)');
-            return { coords: routeCoords, miles: Math.round(dist / 1609.344), steps: [], source: 'ORS-HGV' };
+      const url = `${osrmBase}/driving/${coords}?overview=full&geometries=geojson&steps=true&alternatives=true`;
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 20000);
+      const r = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(t);
+      if (r.ok) {
+        const data = await r.json();
+        if (data.code === 'Ok' && data.routes?.length) {
+          const routes = data.routes;
+          let best = routes[0];
+          if (routes.length > 1) {
+            const shortest = routes[0].distance;
+            const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
+              rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
+            if (highway) best = highway;
           }
+          const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
+          const miles = Math.round((best.distance || 0) / 1609.344);
+          const steps = best.legs?.[0]?.steps || [];
+          console.log(`✅ Route: OSRM-driving | ${miles} mi | ${routeCoords.length} pts`);
+          return { coords: routeCoords, miles, steps, source: 'OSRM-driving' };
         }
       }
     } catch (e) {
-      console.warn('ORS HGV failed:', e.message);
+      console.warn('OSRM driving failed:', e.message);
     }
 
-    // ── 3. Straight-line fallback ─────────────────────────────────────────────
-    console.warn('⚠️ All routing APIs failed — using straight line');
+    // Fallback: línea recta
+    console.warn('⚠️ OSRM falló — usando línea recta');
     const straight = haversine(orig.lat, orig.lon, dest.lat, dest.lon);
     return {
       coords: [[orig.lat, orig.lon], [dest.lat, dest.lon]],
@@ -11123,7 +11173,7 @@ async function fetchRoadRoute(orig, dest) {
       steps: [],
       source: 'Fallback'
     };
-  })();
+  }
 }
 // ── Road-name markers (labels) ──────────────────────────────
 function extractRoadLabel(step){
@@ -11904,6 +11954,7 @@ function openFullMapScreen() {
   screen.style.display = 'flex';
   screen.style.flexDirection = 'column';
   document.body.classList.add('map-active');
+  setTimeout(_autoHideLeftPanelOnOpen, 400); // mostrar controles 3.5s luego ocultar
 
   // Bridge mode: hide all overlays when height detector is on
   screen.classList.toggle('bridge-mode', !!bridgeActive);
@@ -11949,21 +12000,23 @@ function openFullMapScreen() {
     const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
     fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
 
-    // Detect when user drags map — pause auto-follow
+    // Detect when user drags map — pause auto-follow (resume after 8s)
     fmMapInst.on('dragstart', () => {
       if (window._fmProgrammaticMove) return; // ignore programmatic pans
       fmUserDragged = true;
       fmFollowing = false;
       document.getElementById('fmFollowBtn').classList.remove('active');
+      _scheduleAutoResumeFollow();
     });
 
-    // Detect when user zooms (pinch) — pause auto-follow
+    // Detect when user zooms (pinch) — pause auto-follow (resume after 8s)
     fmMapInst.on('zoomstart', () => {
       if (window._fmProgrammaticMove) return; // ignore programmatic zoom
       fmUserDragged = true;
       fmFollowing = false;
       const fb = document.getElementById('fmFollowBtn');
       if (fb) fb.classList.remove('active');
+      _scheduleAutoResumeFollow();
     });
 
     // Center button — re-enable follow and center on last GPS fix
@@ -12083,12 +12136,13 @@ let truckAnimFrame = null;       // requestAnimationFrame handle
 let truckFrom = null;            // { lat, lon, heading }
 let truckTo   = null;            // { lat, lon, heading }
 let truckAnimStart  = 0;
+let fmLastSpeeding  = false;     // track speeding state for icon color
 const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 
 // The static truck icon element — we reuse the same DOM, only move/rotate
 let fmTruckEl = null;  // the inner div element for rotation
 
-function buildTruckIconHTML(heading, isMoving) {
+function buildTruckIconHTML(heading, isMoving, isSpeeding = false) {
   const rot = heading != null ? heading : 0;
   const user = typeof currentUser !== 'undefined' ? currentUser : null;
 
@@ -12100,8 +12154,11 @@ function buildTruckIconHTML(heading, isMoving) {
     return name.substring(0, 2).toUpperCase();
   }
   const initials = user ? getInitials(user.name) : '🚛';
-  const pulse = isMoving ? 'truckBubblePulse 1.8s ease-in-out infinite' : 'none';
-  const ring  = isMoving ? '#10b981' : '#6b7280';
+  // Color: rojo=exceso velocidad, verde=manejando normal, gris=detenido
+  const ring  = isSpeeding ? '#ef4444' : (isMoving ? '#10b981' : '#6b7280');
+  const pulse = isSpeeding
+    ? 'speedingRingPulse 0.5s ease-in-out infinite'
+    : (isMoving ? 'truckBubblePulse 1.8s ease-in-out infinite' : 'none');
 
   // Photo or avatar inside circle
   let inner = '';
@@ -12182,22 +12239,27 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   // doesn't bail out early and the marker is immediately repositioned.
   if (!truckFrom) truckFrom = { lat, lon, heading: heading ?? 0 };
 
+  const isSpeeding = typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded;
+
   if (!fmGpsMarker) {
     // First placement — create marker
-    const html  = buildTruckIconHTML(heading, isMoving);
+    const html  = buildTruckIconHTML(heading, isMoving, isSpeeding);
     const icon  = L.divIcon({ className: '', html, iconAnchor: [25, 57], iconSize: [50, 75] });
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
+    fmLastSpeeding = isSpeeding;
 
   } else {
-    // Refresh icon if moving state changed (to swap colors/pulse)
+    const speedingChanged = (typeof fmLastSpeeding !== 'undefined') && fmLastSpeeding !== isSpeeding;
+    fmLastSpeeding = isSpeeding;
+    // Refresh icon if moving/speeding state changed
     const wrapper = document.getElementById('truckWrapper');
-    if (wrapper) {
+    if (wrapper && !speedingChanged) {
       // Toggle moving/stopped classes without rebuilding full icon
       wrapper.classList.toggle('stopped', !isMoving);
     } else {
-      // Wrapper gone (rare) — recreate icon
-      const html = buildTruckIconHTML(heading, isMoving);
+      // Rebuild icon (state changed or wrapper gone)
+      const html = buildTruckIconHTML(heading, isMoving, isSpeeding);
       const icon = L.divIcon({ className: '', html, iconAnchor: [25, 57], iconSize: [50, 75] });
       fmGpsMarker.setIcon(icon);
       truckFrom = { lat, lon, heading: heading ?? 0 };
@@ -12259,8 +12321,108 @@ function calcHeading(lat1, lon1, lat2, lon2) {
 
 function fmTickClock() {
   const now = new Date();
-  document.getElementById('fmClockTxt').textContent = now.toLocaleTimeString(lang==='es'?'es-US':'en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
-  document.getElementById('fmDateTxt').textContent = now.toLocaleDateString(lang==='es'?'es-ES':'en-US',{weekday:'short',month:'short',day:'numeric'});
+  const locale = (typeof lang !== 'undefined' && lang === 'es') ? 'es-US' : 'en-US';
+  const timeStr = now.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+  const dateStr = now.toLocaleDateString(locale === 'es-US' ? 'es-ES' : 'en-US', {weekday:'short',month:'short',day:'numeric'});
+  document.getElementById('fmClockTxt').textContent = timeStr;
+  document.getElementById('fmDateTxt').textContent  = dateStr;
+  // Reloj encima del letrero de velocidad (solo hora:min)
+  const speedClock = document.getElementById('mapSpeedClock');
+  if (speedClock) {
+    speedClock.textContent = now.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit',hour12:true});
+  }
+}
+
+/* ── Búsqueda de destino desde el mapa ── */
+let mapSearchDebounce;
+function toggleMapSearch() {
+  const overlay = document.getElementById('mapSearchOverlay');
+  const visible = overlay && overlay.style.display !== 'none';
+  if (overlay) overlay.style.display = visible ? 'none' : 'block';
+  if (!visible) setTimeout(() => document.getElementById('mapSearchInput')?.focus(), 120);
+}
+function closeMapSearch() {
+  const overlay = document.getElementById('mapSearchOverlay');
+  if (overlay) overlay.style.display = 'none';
+  const inp  = document.getElementById('mapSearchInput');
+  const sugg = document.getElementById('mapSearchSugg');
+  if (inp)  inp.value = '';
+  if (sugg) sugg.style.display = 'none';
+}
+function handleMapSearch(val) {
+  clearTimeout(mapSearchDebounce);
+  const sugg = document.getElementById('mapSearchSugg');
+  const q = (val || '').trim();
+  if (q.length < 3) { if (sugg) sugg.style.display = 'none'; return; }
+  sugg.innerHTML = '<div style="padding:12px 14px;font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:8px"><span style="animation:spin 1s linear infinite;display:inline-block">⏳</span> Buscando...</div>';
+  sugg.style.display = 'block';
+  mapSearchDebounce = setTimeout(async () => {
+    const mkItem = (name, lat, lon, state, cc, isAddr) =>
+      ({ name, lat, lon, state: (state||'').trim(), country_code: (cc||'').toUpperCase(), isAddress: !!isAddr });
+
+    // 1️⃣ Nominatim PRIMARY
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8&addressdetails=1&countrycodes=us&accept-language=en`,
+        { signal: ctrl.signal, headers: { 'Accept-Language': 'en' } }
+      );
+      clearTimeout(t);
+      const data = await r.json();
+      if (data && data.length) {
+        const items = data.map(d => {
+          const a = d.address || {};
+          const street = a.house_number && a.road ? `${a.house_number} ${a.road}` : (a.road || a.pedestrian || '');
+          const city   = a.city || a.town || a.village || a.suburb || a.county || '';
+          const parts  = [street, city, a.state, 'USA'].filter(Boolean).filter((v,i,arr) => arr.indexOf(v)===i);
+          const name   = parts.join(', ') || d.display_name.split(',').slice(0,4).join(',').trim();
+          return mkItem(name, parseFloat(d.lat), parseFloat(d.lon), a.state, d.address?.country_code, !!(a.house_number || a.road));
+        }).filter(x => x.name);
+        items.sort((a,b) => {
+          const sA = /^\d/.test(a.name)?2:a.isAddress?1:0;
+          const sB = /^\d/.test(b.name)?2:b.isAddress?1:0;
+          return sB - sA;
+        });
+        if (items.length) {
+          showSuggestions('mapSearchSugg', items, it => { setDestinationWithLocalCheck(it); closeMapSearch(); });
+          return;
+        }
+      }
+    } catch(e1) { console.warn('MapSearch Nominatim failed:', e1.message); }
+
+    // 2️⃣ Photon FALLBACK
+    try {
+      const ctrl2 = new AbortController();
+      const t2 = setTimeout(() => ctrl2.abort(), 7000);
+      const r2 = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10`, { signal: ctrl2.signal });
+      clearTimeout(t2);
+      const data2 = await r2.json();
+      const items2 = (data2.features || []).map(f => {
+        const p = f.properties;
+        const cc = (p.countrycode || '').toLowerCase();
+        if (cc && cc !== 'us') return null;
+        const street = p.housenumber && p.street ? `${p.housenumber} ${p.street}` : (p.street || '');
+        const city   = p.city || p.town || p.village || p.name || '';
+        const parts  = [street, city, p.state, 'USA'].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+        return mkItem(parts.join(', '), f.geometry.coordinates[1], f.geometry.coordinates[0], p.state, p.countrycode, !!(p.housenumber||p.street));
+      }).filter(x => x && x.name);
+      items2.sort((a,b) => {
+        const sA = /^\d/.test(a.name)?2:a.isAddress?1:0;
+        const sB = /^\d/.test(b.name)?2:b.isAddress?1:0;
+        return sB - sA;
+      });
+      if (items2.length) {
+        showSuggestions('mapSearchSugg', items2, it => { setDestinationWithLocalCheck(it); closeMapSearch(); });
+        return;
+      }
+    } catch(e2) {
+      if (sugg) sugg.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:#ef4444">⚠️ Sin conexión. Intenta de nuevo.</div>`;
+      return;
+    }
+
+    if (sugg) sugg.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:#94a3b8">Sin resultados para "<b>${q}</b>"</div>`;
+  }, 300);
 }
 
 function closeFullMapScreen() {
@@ -12328,6 +12490,7 @@ function reopenMap() {
   if (fmGpsMarker && fmMapInst) {
     fmMapInst.setView(fmGpsMarker.getLatLng(), fmMapInst.getZoom());
   }
+  setTimeout(_autoHideLeftPanelOnOpen, 400);
 }
 
 
@@ -12411,6 +12574,238 @@ function toggleFollow() {
   }
 }
 
+/* ════════════════════════════════════════════════════════════
+   ⏸  SISTEMA DE PAUSA OBLIGATORIA DE 30 MIN (FMCSA HOS)
+   Regla: tras 8h de manejo continuo, se requiere pausa de ≥30 min
+════════════════════════════════════════════════════════════ */
+let b30DriveSecs  = 0;      // segundos manejados desde última pausa válida
+let b30StopSecs   = 0;      // segundos detenido consecutivo actual
+let b30LastTs     = null;   // timestamp del último GPS fix
+let b30Warned1h   = false;  // aviso 1 hora antes (7h conducidos)
+let b30Warned30m  = false;  // aviso 30 min antes (7.5h)
+let b30Warned2m   = false;  // aviso 2 min antes (7h58m)
+let b30ViolShown  = false;  // banner de violación visible
+let b30InBreak    = false;  // pausa en progreso (detenido, contando)
+let b30BreakStart = null;   // timestamp inicio pausa
+let b30Complete   = false;  // pausa de 30 min completada
+let b30TickId     = null;   // setInterval del temporizador
+
+const B30_DRIVE_LIMIT  = 8 * 3600;   // 8 horas en segundos
+const B30_BREAK_MIN    = 30 * 60;    // 30 minutos en segundos
+
+function b30Reset() {
+  b30DriveSecs = 0; b30StopSecs = 0; b30LastTs = null;
+  b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
+  b30ViolShown = false; b30InBreak = false; b30BreakStart = null;
+  b30Complete = false;
+  if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
+  document.getElementById('breakTimerOverlay').style.display = 'none';
+  document.getElementById('breakViolationBanner').style.display = 'none';
+}
+
+function b30UpdateTimer() {
+  if (!b30BreakStart) return;
+  const elapsed = (Date.now() - b30BreakStart) / 1000;
+  const remaining = Math.max(0, B30_BREAK_MIN - elapsed);
+  const pct = Math.min(100, (elapsed / B30_BREAK_MIN) * 100);
+  const m = Math.floor(remaining / 60);
+  const s = Math.floor(remaining % 60);
+  const display = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+  const countEl = document.getElementById('breakTimerCount');
+  const barEl   = document.getElementById('breakTimerBar');
+  const lblEl   = document.getElementById('breakTimerLabel');
+  const overlay = document.getElementById('breakTimerOverlay');
+  if (!countEl) return;
+
+  if (remaining <= 0 && !b30Complete) {
+    // ¡Pausa completada!
+    b30Complete = true;
+    b30DriveSecs = 0; b30StopSecs = 0;
+    b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
+    b30ViolShown = false;
+    if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
+
+    countEl.textContent = '✓ 30:00';
+    countEl.style.color = '#10b981';
+    if (barEl) { barEl.style.width = '100%'; barEl.style.background = '#10b981'; }
+    if (lblEl) lblEl.textContent = '¡Pausa completada! Puedes continuar.';
+    const inner = overlay.querySelector('div');
+    if (inner) { inner.style.borderColor = '#10b981'; inner.style.animation = 'none'; }
+
+    showToast('success','✅',
+      '¡PAUSA COMPLETADA!',
+      'Descansaste 30 minutos. Puedes continuar manejando.',
+      10000);
+    vibrate([200,80,200]);
+
+    // Ocultar overlay después de 8 segundos
+    setTimeout(() => {
+      const ov = document.getElementById('breakTimerOverlay');
+      if (ov) ov.style.display = 'none';
+      b30InBreak = false;
+    }, 8000);
+
+  } else if (remaining > 0) {
+    countEl.textContent = display;
+    countEl.style.color = remaining < 300 ? '#34d399' : '#fff';
+    if (barEl) barEl.style.width = pct + '%';
+    // Actualizar contador hacia arriba (cuánto llevas)
+    const done = Math.floor(elapsed / 60);
+    const doneSec = Math.floor(elapsed % 60);
+    if (lblEl) lblEl.textContent = `Llevas ${String(done).padStart(2,'0')}:${String(doneSec).padStart(2,'0')} — Faltan ${display}`;
+  }
+}
+
+function b30ShowBreakTimer() {
+  const overlay = document.getElementById('breakTimerOverlay');
+  if (!overlay || b30Complete) return;
+  b30InBreak = true;
+  b30BreakStart = Date.now();
+  overlay.style.display = 'block';
+  const inner = overlay.querySelector('div');
+  if (inner) inner.classList.add('bto-pulse');
+
+  // Ocultar banner de violación si está visible
+  const viol = document.getElementById('breakViolationBanner');
+  if (viol) viol.style.display = 'none';
+  b30ViolShown = false;
+
+  // Iniciar tick cada segundo
+  if (b30TickId) clearInterval(b30TickId);
+  b30TickId = setInterval(b30UpdateTimer, 1000);
+  b30UpdateTimer();
+}
+
+function b30Check(isMoving) {
+  if (!fmIsTracking || !use30min) return;
+  const now = Date.now();
+
+  // Calcular delta tiempo real entre GPS fixes
+  const delta = b30LastTs ? Math.min((now - b30LastTs) / 1000, 30) : 0;
+  b30LastTs = now;
+
+  if (isMoving) {
+    // Si el driver retoma marcha en medio de una pausa incompleta, cancelar pausa
+    if (b30InBreak && !b30Complete && b30StopSecs < B30_BREAK_MIN) {
+      b30InBreak = false;
+      b30BreakStart = null;
+      b30StopSecs = 0;
+      if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
+      document.getElementById('breakTimerOverlay').style.display = 'none';
+    }
+    b30StopSecs = 0;
+    if (!b30Complete) b30DriveSecs += delta;
+
+    // ── Notificaciones progresivas ──────────────────────────
+    if (!b30Warned1h && b30DriveSecs >= 7 * 3600) {
+      b30Warned1h = true;
+      showToast('warning','☕',
+        '☕ PAUSA EN 1 HORA',
+        'Llevas 7 horas manejando. En 1 hora necesitarás pausa obligatoria de 30 min (FMCSA).',
+        12000);
+      vibrate([150, 80, 150]);
+    }
+    if (!b30Warned30m && b30DriveSecs >= 7.5 * 3600) {
+      b30Warned30m = true;
+      showToast('warning','⏰',
+        '⏰ PAUSA EN 30 MINUTOS',
+        'Llevas 7.5 horas. En 30 min debes detenerte 30 min obligatorios por ley federal.',
+        15000);
+      vibrate([200, 80, 200, 80, 200]);
+    }
+    if (!b30Warned2m && b30DriveSecs >= (B30_DRIVE_LIMIT - 120)) {
+      b30Warned2m = true;
+      showToast('danger','🛑',
+        '🛑 ¡DETENTE EN 2 MINUTOS!',
+        'Quedan 2 min para completar 8h. DETENTE a descansar 30 min obligatorios ahora.',
+        0);
+      vibrate([300,100,300,100,500]);
+      flashDanger(3000);
+    }
+    // ── Violación: 8 horas sin pausa, sigue manejando ──────
+    if (b30DriveSecs >= B30_DRIVE_LIMIT && !b30ViolShown) {
+      b30ViolShown = true;
+      const viol = document.getElementById('breakViolationBanner');
+      if (viol) viol.style.display = 'block';
+      showToast('danger','⚖️',
+        '⚖️ VIOLACIÓN HOS',
+        'Multa $1,000–$16,000. Detente AHORA.',
+        0);
+      vibrate([500,150,500,150,500,150,500]);
+      flashDanger(5000);
+    }
+  } else {
+    // Driver detenido
+    b30StopSecs += delta;
+
+    // Si lleva suficiente tiempo manejando, mostrar temporizador de pausa
+    const needsBreak = b30DriveSecs >= B30_DRIVE_LIMIT - 120 || b30Warned30m;
+    if (needsBreak && !b30InBreak && !b30Complete) {
+      b30ShowBreakTimer();
+    }
+    // Ocultar banner de violación mientras está parado
+    if (b30ViolShown) {
+      const viol = document.getElementById('breakViolationBanner');
+      if (viol) viol.style.display = 'none';
+      b30ViolShown = false;
+    }
+  }
+}
+
+// ── Auto-resume follow after user stops touching the map ──────────────────
+let _autoResumeTimer = null;
+function _scheduleAutoResumeFollow() {
+  if (_autoResumeTimer) clearTimeout(_autoResumeTimer);
+  _autoResumeTimer = setTimeout(() => {
+    if (!fmIsTracking) return;
+    fmFollowing = true;
+    fmUserDragged = false;
+    const fb = document.getElementById('fmFollowBtn');
+    if (fb) fb.classList.add('active');
+    if (fmGpsMarker && fmMapInst) {
+      const ll = fmGpsMarker.getLatLng();
+      window._fmProgrammaticMove = true;
+      fmMapInst.setView(calcFollowCenter(ll.lat, ll.lng, fmLastHeading), fmCurrentZoom, { animate: true, duration: 0.9 });
+      if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
+      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
+    }
+  }, 8000); // reanuda seguimiento 8s después de que el usuario deja de tocar el mapa
+}
+
+// ── Báscula (Weigh Station) — notificar 5 millas antes ────────────────────
+const _weighNotified = new Set();
+function checkWeighStations(lat, lon) {
+  if (!fmIsTracking || !destination || !fmPoiLayers['scale']?.length) return;
+  const distToDest = haversine(lat, lon, destination.lat, destination.lon);
+
+  for (const marker of fmPoiLayers['scale']) {
+    const ll  = marker.getLatLng();
+    const key = `${ll.lat.toFixed(4)},${ll.lng.toFixed(4)}`;
+    if (_weighNotified.has(key)) continue;
+
+    const distToScale = haversine(lat, lon, ll.lat, ll.lng);
+    if (distToScale > 5.5 || distToScale < 0.2) continue; // fuera del rango de aviso
+
+    // Confirmar que está ADELANTE (más cerca al destino que nosotros)
+    const scaleToDest = haversine(ll.lat, ll.lng, destination.lat, destination.lon);
+    if (scaleToDest >= distToDest) continue; // está detrás
+
+    _weighNotified.add(key);
+    const mi = distToScale.toFixed(1);
+    showToast(
+      'warning', '⚖️',
+      lang === 'es' ? '⚖️ BÁSCULA EN RUTA' : '⚖️ WEIGH STATION AHEAD',
+      lang === 'es'
+        ? `Báscula a ${mi} millas. Prepara documentos y reduce velocidad.`
+        : `Weigh station ${mi} miles ahead. Prepare documents and slow down.`,
+      15000
+    );
+    vibrate([300, 100, 300, 100, 300]);
+    break; // solo una notificación por ciclo GPS
+  }
+}
+
 // Abort flag — kept for compatibility with minimizeMap
 let fmTrackAbort = false;
 
@@ -12491,6 +12886,8 @@ function fmStartTracking() {
   lastStateCheck = 0;
   lastFuelCheck  = 0;
   lastRoadSpeedCheck = 0;
+  _weighNotified.clear(); // reinicia báscula alertas para nuevo viaje
+  b30Reset();             // reinicia sistema de pausa 30 min
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
   showDriveHoursWidget();
@@ -12578,9 +12975,7 @@ function fmStartTracking() {
         fmCurrentZoom = 16;
       }
       window._fmProgrammaticMove = true;
-      const followCenter = calcFollowCenter(snapLat, snapLon, heading);
-      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
-      // ── Heading-up: rotate map to match truck direction ──
+      // Rotate BEFORE pan so the bearing event fires while flag is set
       if (typeof fmMapInst.setBearing === 'function') {
         if (fmHeadingUpMode && heading != null && heading >= 0) {
           fmMapInst.setBearing(heading);
@@ -12588,12 +12983,20 @@ function fmStartTracking() {
           fmMapInst.setBearing(0);
         }
       }
-      setTimeout(() => { window._fmProgrammaticMove = false; }, 1200);
+      const followCenter = calcFollowCenter(snapLat, snapLon, heading);
+      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
+      // Keep flag true until animation fully settles (longer than GPS poll interval)
+      if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
+      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
     }
 
     
     // ── NEXT TURN / EXIT (local) ───────────────────────────
     updateNavInstruction(lat, lon);
+    // ── Weigh station warning ─────────────────────────────
+    if (isMoving) checkWeighStations(lat, lon);
+    // ── 30-min break rule check ────────────────────────────
+    b30Check(isMoving);
 // ── HUD stats ────────────────────────────────────────────
     const remaining = haversine(lat, lon, destination.lat, destination.lon);
     const traveled  = Math.max(0, routeDistance - remaining);
@@ -12725,13 +13128,40 @@ function fmStartTracking() {
     const nowGeo = Date.now();
     if (nowGeo - fmLastGeocode > 12000) {
       fmLastGeocode = nowGeo;
-      try {
-        const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`);
-        const d = await r.json();
-        const p = d.features?.[0]?.properties || {};
-        document.getElementById('fmLocVal').textContent =
-          [p.name, p.city, p.state].filter(Boolean).join(', ') || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-      } catch { document.getElementById('fmLocVal').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`; }
+      (async () => {
+        const locEl = document.getElementById('fmLocVal');
+        if (!locEl) return;
+
+        // 1️⃣ Photon reverse PRIMARY
+        try {
+          const rP = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&lang=en`);
+          const dP = await rP.json();
+          const p  = dP.features?.[0]?.properties || {};
+          const addr = [p.name, p.city || p.town || p.village, p.state].filter(Boolean).join(', ');
+          if (addr) { locEl.textContent = addr; return; }
+        } catch(eP) { console.warn('Photon reverse failed:', eP.message); }
+
+        // 2️⃣ Nominatim reverse FALLBACK
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 8000);
+          const rN = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&zoom=14&addressdetails=1`,
+            { signal: ctrl.signal, headers: { 'Accept-Language': 'en' } }
+          );
+          clearTimeout(t);
+          const dN = await rN.json();
+          const a  = dN.address || {};
+          const city  = a.city || a.town || a.village || a.suburb || a.county || '';
+          const state = a.state || '';
+          const road  = a.road || a.pedestrian || '';
+          const addr2 = [road, city, state].filter(Boolean).join(', ') || dN.display_name?.split(',').slice(0,3).join(',').trim();
+          if (addr2) { locEl.textContent = addr2; return; }
+        } catch(eN) { console.warn('Nominatim reverse failed:', eN.message); }
+
+        // 3️⃣ Last resort: coordinates
+        locEl.textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+      })();
     }
 
     // ── Check nearby community reports ─────────────────────
@@ -12777,12 +13207,17 @@ function fmStartTracking() {
       fmLastHeading = finalHdg;
       fmUpdateTruckMarker(snap.lat, snap.lon, finalHdg, moving);
       if (fmFollowing && fmMapInst) {
+        window._fmProgrammaticMove = true;
+        if (typeof fmMapInst.setBearing === 'function') {
+          if (fmHeadingUpMode && finalHdg != null && finalHdg >= 0) fmMapInst.setBearing(finalHdg);
+          else if (!fmHeadingUpMode) fmMapInst.setBearing(0);
+        }
         const ctr = moving
           ? calcFollowCenter(snap.lat, snap.lon, finalHdg)
           : [snap.lat, snap.lon];
-        window._fmProgrammaticMove = true;
         fmMapInst.setView(ctr, fmCurrentZoom, { animate: true, duration: 0.6, noMoveStart: true });
-        setTimeout(() => { window._fmProgrammaticMove = false; }, 800);
+        if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
+        window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
       }
       fmCurrentSpeed = rawSpd != null && rawSpd >= 0 ? Math.round(rawSpd * 2.237) : 0;
       fmVehicleMoving = moving;
@@ -12797,6 +13232,7 @@ function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
+  b30Reset(); // limpiar sistema de pausa al detener rastreo
   // Release Wake Lock
   if (fmWakeLock) { fmWakeLock.release().catch(() => {}); fmWakeLock = null; }
   // Restart warm-cache watcher now that tracking is stopped
@@ -13287,18 +13723,40 @@ async function loadAllPOIs(lat, lon) {
           const distStr = dist < 1000 ? dist.toFixed(0) + ' mi' : '999+ mi';
           const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
 
-          let popupHtml = `
-            <div style="font-family:'DM Sans',sans-serif;min-width:170px;max-width:230px;padding:4px">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-                <div style="width:36px;height:36px;border-radius:50%;background:${cfg.color}22;border:2px solid ${cfg.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${cfg.emoji}</div>
-                <div>
-                  <div style="font-weight:800;font-size:14px;line-height:1.2">${name}</div>
-                  <div style="color:#6b7280;font-size:11px;font-weight:600">${cfg.label}</div>
+          // Popup especial para básculas
+          let popupHtml;
+          if (type === 'scale') {
+            popupHtml = `
+              <div style="font-family:'DM Sans',sans-serif;min-width:180px;max-width:240px;padding:4px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                  <div style="width:40px;height:40px;background:#f59e0b;transform:rotate(45deg);border:2px solid #000;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <span style="transform:rotate(-45deg);font-size:18px">⚖️</span>
+                  </div>
+                  <div>
+                    <div style="font-weight:900;font-size:14px;line-height:1.2;color:#f59e0b">WEIGH STATION</div>
+                    <div style="color:#6b7280;font-size:11px;font-weight:600">${name}</div>
+                  </div>
                 </div>
-              </div>
-              <div style="background:${cfg.color}15;border:1px solid ${cfg.color}40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:${cfg.color}">
-                📏 ${distStr} from start
-              </div>`;
+                <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">
+                  ⚠️ Reduce velocidad — Ten documentos listos
+                </div>
+                <div style="background:#f59e0b15;border:1px solid #f59e0b40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:#f59e0b">
+                  📏 ${distStr} desde el inicio
+                </div>`;
+          } else {
+            popupHtml = `
+              <div style="font-family:'DM Sans',sans-serif;min-width:170px;max-width:230px;padding:4px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                  <div style="width:36px;height:36px;border-radius:50%;background:${cfg.color}22;border:2px solid ${cfg.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${cfg.emoji}</div>
+                  <div>
+                    <div style="font-weight:800;font-size:14px;line-height:1.2">${name}</div>
+                    <div style="color:#6b7280;font-size:11px;font-weight:600">${cfg.label}</div>
+                  </div>
+                </div>
+                <div style="background:${cfg.color}15;border:1px solid ${cfg.color}40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:${cfg.color}">
+                  📏 ${distStr} from start
+                </div>`;
+          }
           if (el.tags?.opening_hours) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:6px">🕐 ${el.tags.opening_hours}</div>`;
           if (el.tags?.phone) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:3px">📞 ${el.tags.phone}</div>`;
           if (el.tags?.['addr:city']) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:3px">📍 ${el.tags['addr:city']}</div>`;
@@ -13311,31 +13769,67 @@ async function loadAllPOIs(lat, lon) {
             : type === 'truck' ? (brand ? brand.logo : '🚛') : type === 'rest' ? '😴' : '⚖️';
           const shortName = brand ? brand.short : name.split(',')[0].substring(0, 13);
 
-          const icon = L.divIcon({
-            className: '',
-            html: `
-              <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-                <div style="
-                  width:34px; height:34px;
-                  background:${markerBg};
-                  border-radius:50%;
-                  border:2.5px solid rgba(255,255,255,.95);
-                  box-shadow:0 3px 12px rgba(0,0,0,.5);
-                  display:flex; align-items:center; justify-content:center;
-                  font-size:15px; line-height:1; cursor:pointer;
-                ">${typeIcon}</div>
-                <div style="
-                  background:${markerBg}; color:#fff;
-                  font-size:8px; font-weight:900;
-                  padding:2px 6px; border-radius:6px;
-                  white-space:nowrap; font-family:'DM Sans',sans-serif;
-                  box-shadow:0 2px 5px rgba(0,0,0,.4);
-                  max-width:75px; overflow:hidden; text-overflow:ellipsis;
-                ">${shortName}</div>
-              </div>`,
-            iconAnchor: [17, 17],
-            popupAnchor: [0, -20]
-          });
+          // Básculas: icono tipo señal de tráfico (más grande y visible)
+          let icon;
+          if (type === 'scale') {
+            icon = L.divIcon({
+              className: '',
+              html: `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+                  <!-- Señal de rombo amarillo -->
+                  <div style="
+                    width:44px;height:44px;
+                    background:#f59e0b;
+                    transform:rotate(45deg);
+                    border:3px solid #000;
+                    box-shadow:0 3px 14px rgba(0,0,0,.55);
+                    display:flex;align-items:center;justify-content:center;
+                    cursor:pointer;
+                  ">
+                    <span style="transform:rotate(-45deg);font-size:20px;line-height:1">⚖️</span>
+                  </div>
+                  <!-- Poste -->
+                  <div style="width:3px;height:10px;background:#555;margin-top:-2px"></div>
+                  <!-- Etiqueta -->
+                  <div style="
+                    background:#000;color:#f59e0b;
+                    font-size:7px;font-weight:900;letter-spacing:.4px;
+                    padding:2px 5px;border-radius:4px;
+                    white-space:nowrap;font-family:'DM Sans',sans-serif;
+                    box-shadow:0 2px 5px rgba(0,0,0,.5);
+                    margin-top:1px;
+                  ">WEIGH ST.</div>
+                </div>`,
+              iconAnchor: [22, 28],
+              popupAnchor: [0, -32]
+            });
+          } else {
+            icon = L.divIcon({
+              className: '',
+              html: `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                  <div style="
+                    width:34px; height:34px;
+                    background:${markerBg};
+                    border-radius:50%;
+                    border:2.5px solid rgba(255,255,255,.95);
+                    box-shadow:0 3px 12px rgba(0,0,0,.5);
+                    display:flex; align-items:center; justify-content:center;
+                    font-size:15px; line-height:1; cursor:pointer;
+                  ">${typeIcon}</div>
+                  <div style="
+                    background:${markerBg}; color:#fff;
+                    font-size:8px; font-weight:900;
+                    padding:2px 6px; border-radius:6px;
+                    white-space:nowrap; font-family:'DM Sans',sans-serif;
+                    box-shadow:0 2px 5px rgba(0,0,0,.4);
+                    max-width:75px; overflow:hidden; text-overflow:ellipsis;
+                  ">${shortName}</div>
+                </div>`,
+              iconAnchor: [17, 17],
+              popupAnchor: [0, -20]
+            });
+          }
 
           const marker = L.marker([elLat, elLon], { icon })
             .bindPopup(popupHtml, { maxWidth: 260 });
@@ -14869,14 +15363,32 @@ function toggleSideTabMenu() {
     document.getElementById('commQuickOverlay')?.classList.remove('show');
   }
 }
-function toggleMapLeftPanel() {
+let _leftPanelAutoHideTimer = null;
+function toggleMapLeftPanel(forceHide) {
   const ctrl = document.getElementById('mapLeftControls');
   const btn  = document.getElementById('mapLeftPanelBtn');
   if (!ctrl || !btn) return;
-  const hiding = !ctrl.classList.contains('panel-hidden');
+  const hiding = forceHide === true ? true : !ctrl.classList.contains('panel-hidden');
   ctrl.classList.toggle('panel-hidden', hiding);
   btn.classList.toggle('open', !hiding);
   btn.textContent = hiding ? '›' : '‹';
+  // Si se abre, programar auto-ocultamiento a los 5 segundos
+  if (_leftPanelAutoHideTimer) clearTimeout(_leftPanelAutoHideTimer);
+  if (!hiding) {
+    _leftPanelAutoHideTimer = setTimeout(() => toggleMapLeftPanel(true), 5000);
+  }
+}
+function _autoHideLeftPanelOnOpen() {
+  // Al abrir el mapa: mostrar controles 3 segundos, luego ocultar
+  const ctrl = document.getElementById('mapLeftControls');
+  const btn  = document.getElementById('mapLeftPanelBtn');
+  if (!ctrl || !btn) return;
+  // Mostrar
+  ctrl.classList.remove('panel-hidden');
+  btn.classList.add('open');
+  btn.textContent = '‹';
+  if (_leftPanelAutoHideTimer) clearTimeout(_leftPanelAutoHideTimer);
+  _leftPanelAutoHideTimer = setTimeout(() => toggleMapLeftPanel(true), 3500);
 }
 
 function closeSideTabMenu() {
@@ -15229,13 +15741,16 @@ let selectedAltIdx = 0;
 async function fetchAlternativeRoutes(orig, dest) {
   altRoutes = [];
   try {
-    // Use truck profile; add exclude param for route type preferences
-    const profile = 'truck';
+    // Perfil driving (único disponible en OSRM público) + timeout 20s
+    const profile = 'driving';
     let excludeParam = '';
     if (truckOptions.routeType === 'avoid_highways') excludeParam = '&exclude=motorway';
     else if (truckOptions.routeType === 'avoid_tolls') excludeParam = '&exclude=toll';
     const url = `https://router.project-osrm.org/route/v1/${profile}/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true&alternatives=3${excludeParam}`;
-    const res  = await fetch(url);
+    const altCtrl = new AbortController();
+    const altT = setTimeout(() => altCtrl.abort(), 20000);
+    const res  = await fetch(url, { signal: altCtrl.signal });
+    clearTimeout(altT);
     const data = await res.json();
     if (data.code === 'Ok' && data.routes?.length) {
       altRoutes = data.routes.map((r, i) => ({
