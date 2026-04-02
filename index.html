@@ -7138,7 +7138,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   background:#000; flex-direction:column;
 ">
   <!-- MAP fills entire screen -->
-  <div id="fullMap" style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:1"></div>
+  <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
+  <!-- Highway mask: covers bottom 50% when speed > 40mph -->
+  <div id="mapHighwayMask" style="display:none;position:absolute;left:0;right:0;bottom:0;height:50%;background:#0b173a;z-index:2;pointer-events:none"></div>
 
     <div class="local-radius-info" id="localRadiusInfo" style="display:none">📍 Local Mode — 100 mi radius</div>
     <div id="routeAlertPill" onclick="switchTab('community')">🚨 Alert on your route — tap</div>
@@ -9024,17 +9026,11 @@ function initDriveHoursDrag() {
 }
 
 function updateSpeedometer(mph) {
-  // ── Map shrink when > 40 mph ──────────────────────────────
-  const mapEl = document.getElementById('fullMap');
-  if (mapEl) {
+  // ── Map shrink when > 40 mph (mask bottom 50%) ───────────
+  const hwMask = document.getElementById('mapHighwayMask');
+  if (hwMask) {
     const isHighway = mph > 40;
-    const wasHighway = mapEl.dataset.highway === '1';
-    if (isHighway !== wasHighway) {
-      mapEl.dataset.highway = isHighway ? '1' : '0';
-      mapEl.style.transition = 'bottom 0.4s ease';
-      mapEl.style.bottom = isHighway ? '50vh' : '0';
-      setTimeout(() => { if (fmMapInst) fmMapInst.invalidateSize(); }, 450);
-    }
+    hwMask.style.display = isHighway ? 'block' : 'none';
   }
 
   // Update the inline speed sign (below speed limit sign)
