@@ -1429,9 +1429,9 @@
     background: rgba(10,16,30,.82);
     backdrop-filter: blur(6px);
     color: #f1f5f9;
-    font-size: 8px; font-weight: 800;
+    font-size: 12px; font-weight: 800;
     letter-spacing: .6px;
-    padding: 2px 7px;
+    padding: 3px 10px;
     border-radius: 999px;
     margin-top: 4px;
     white-space: nowrap;
@@ -2165,6 +2165,13 @@
     box-shadow: 0 2px 12px rgba(0,0,0,0.45);
     touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     transition: transform .15s, background .2s, border-color .3s;
+  }
+  /* Compass button taller to fit icon + label */
+  #mapLeftControls #compassBtn {
+    height: 52px;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 17px;
   }
   #mapLeftControls button:active { transform: scale(.92); }
   #mapLeftControls #btnCenter:active { background: rgba(16,185,129,0.5); }
@@ -7231,7 +7238,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- LEFT SIDE CONTROL COLUMN: estilo, brújula, centrar, color, zoom -->
   <div id="mapLeftControls" class="panel-hidden">
     <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Estilo de mapa">🗺️</button>
-    <button id="compassBtn"  onclick="toggleHeadingUp()"     title="Norte / Heading-up">🧭</button>
+    <button id="compassBtn"  onclick="toggleHeadingUp()"     title="Vista dirección de viaje (toca para Norte)" style="flex-direction:column;gap:1px;height:52px;background:rgba(16,185,129,0.3);border-color:rgba(16,185,129,0.6)"><span style="font-size:17px">🧭</span><span style="font-size:9px;font-weight:800;letter-spacing:.3px;line-height:1">RUTA</span></button>
     <div class="map-ctrl-sep"></div>
     <button id="btnCenter"   title="Centralizar">🎯</button>
     <button id="btnMapColor" onclick="cycleMapColor()"       title="Color del mapa">🎨</button>
@@ -11717,6 +11724,9 @@ async function calculateRoute() {
 function renderResults(hours, speed, depart) {
   document.getElementById('resultsCard').style.display = 'block';
   document.getElementById('shareTrackBtns').style.display = 'grid';
+  // Hide "Calcular Ruta" button while results are visible
+  const _cb = document.getElementById('calcBtn');
+  if (_cb) _cb.style.display = 'none';
 
   const driveHours = routeDistance / speed;
   const pill = document.getElementById('timeVsHours');
@@ -11937,7 +11947,8 @@ let fmPrevLon       = null;
 // POI layers
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
 const fmPoiGroups = {};  // LayerGroup per type for batch rendering
-const fmPoiActive = { scale: true, truck: true, rest: true, reports: true, restrict: true, parking: true };
+// truck/rest/scale start OFF so first tap loads them on demand
+const fmPoiActive = { scale: false, truck: false, rest: false, reports: true, restrict: true, parking: false };
 let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false };
 
 // Community reports (stored in localStorage, shared within session)
@@ -11955,6 +11966,8 @@ function openFullMapScreen() {
   screen.style.flexDirection = 'column';
   document.body.classList.add('map-active');
   setTimeout(_autoHideLeftPanelOnOpen, 400); // mostrar controles 3.5s luego ocultar
+  // Sync compass button label with current heading mode
+  setTimeout(_updateCompassBtn, 450);
 
   // Bridge mode: hide all overlays when height detector is on
   screen.classList.toggle('bridge-mode', !!bridgeActive);
@@ -11963,6 +11976,12 @@ function openFullMapScreen() {
   document.getElementById('fmStopBtn').style.display = 'none';
   document.getElementById('poiLegend').classList.add('visible');
   document.getElementById('fmFollowBtn').classList.add('visible');
+  // Sync chip visual state with fmPoiActive (truck/rest/scale start off)
+  ['scale','truck','rest'].forEach(t => {
+    const cid = t === 'scale' ? 'chipScale' : t === 'truck' ? 'chipTruck' : 'chipRest';
+    const c = document.getElementById(cid);
+    if (c) c.classList.toggle('off', !fmPoiActive[t]);
+  });
 
   if (origin) document.getElementById('fmFrom').textContent = origin.name.split(',')[0];
   if (destination) document.getElementById('fmTo').textContent = destination.name.split(',')[0];
@@ -12498,20 +12517,28 @@ let fmHeadingUpMode = true; // heading-up on by default while tracking
 
 function toggleHeadingUp() {
   fmHeadingUpMode = !fmHeadingUpMode;
-  const btn = document.getElementById('compassBtn');
-  if (btn) {
-    btn.style.background = fmHeadingUpMode ? 'rgba(16,185,129,0.3)' : 'rgba(15,23,42,0.88)';
-    btn.style.borderColor = fmHeadingUpMode ? 'rgba(16,185,129,0.6)' : 'rgba(255,255,255,0.12)';
-    btn.title = fmHeadingUpMode ? 'Heading-up (activo)' : 'North-up (activo)';
-  }
+  _updateCompassBtn();
   // If switching to north-up, immediately reset bearing
   if (!fmHeadingUpMode && fmMapInst && typeof fmMapInst.setBearing === 'function') {
     fmMapInst.setBearing(0);
   }
   showToast('info', fmHeadingUpMode ? '🧭' : '🔼',
-    fmHeadingUpMode ? 'Heading-Up activado' : 'North-Up activado',
+    fmHeadingUpMode ? 'Vista: Dirección de viaje' : 'Vista: Norte arriba',
     fmHeadingUpMode ? 'El mapa gira con la dirección del camión' : 'El mapa apunta al norte siempre',
     2500);
+}
+function _updateCompassBtn() {
+  const btn = document.getElementById('compassBtn');
+  if (!btn) return;
+  btn.innerHTML = fmHeadingUpMode
+    ? '<span style="font-size:17px">🧭</span><span style="font-size:9px;font-weight:800;letter-spacing:.3px;margin-top:2px;line-height:1">RUTA</span>'
+    : '<span style="font-size:17px">🔼</span><span style="font-size:9px;font-weight:800;letter-spacing:.3px;margin-top:2px;line-height:1">NORTE</span>';
+  btn.style.background    = fmHeadingUpMode ? 'rgba(16,185,129,0.3)' : 'rgba(15,23,42,0.88)';
+  btn.style.borderColor   = fmHeadingUpMode ? 'rgba(16,185,129,0.6)' : 'rgba(255,255,255,0.12)';
+  btn.style.display       = 'flex';
+  btn.style.flexDirection = 'column';
+  btn.style.alignItems    = 'center';
+  btn.title = fmHeadingUpMode ? 'Vista dirección de viaje (toca para Norte)' : 'Vista norte arriba (toca para Ruta)';
 }
 
 // ── calcFollowCenter ────────────────────────────────────────────────────────
@@ -13684,6 +13711,8 @@ async function loadAllPOIs(lat, lon) {
   // Load POIs from each waypoint (radius 30 miles = 48km per waypoint)
   const loadFromWaypoints = async (type) => {
     if (!fmMapInst) return;
+    // Skip if user already loaded this type on-demand (avoid overwriting)
+    if (fmPoiLoaded[type] && fmPoiGroups[type]) return;
     if (fmPoiGroups[type]) { try { fmMapInst.removeLayer(fmPoiGroups[type]); } catch {} }
     fmPoiGroups[type] = null;
     fmPoiLayers[type] = [];
@@ -14435,18 +14464,248 @@ async function loadMiniMapRestrictions() {
 
 function togglePOI(type) {
   fmPoiActive[type] = !fmPoiActive[type];
-  const chip = document.getElementById(
-    type === 'scale'    ? 'chipScale'    :
-    type === 'truck'    ? 'chipTruck'    :
-    type === 'rest'     ? 'chipRest'     :
-    type === 'restrict' ? 'chipRestrict' : 'chipReport'
-  );
-  chip.classList.toggle('off', !fmPoiActive[type]);
+  const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck'
+               : type === 'rest'  ? 'chipRest'  : type === 'restrict' ? 'chipRestrict' : 'chipReport';
+  const chip = document.getElementById(chipId);
+  if (chip) chip.classList.toggle('off', !fmPoiActive[type]);
 
+  // Turning OFF — hide group and done
+  if (!fmPoiActive[type]) {
+    const grp = fmPoiGroups[type];
+    if (grp && fmMapInst) { try { fmMapInst.removeLayer(grp); } catch {} }
+    return;
+  }
+
+  // Turning ON — if group already exists, just show it
   const grp = fmPoiGroups[type];
-  if (grp) {
-    if (fmPoiActive[type]) { try { grp.addTo(fmMapInst); } catch {} }
-    else { try { fmMapInst.removeLayer(grp); } catch {} }
+  if (grp && fmMapInst) {
+    try { grp.addTo(fmMapInst); } catch {}
+    return;
+  }
+
+  // Group doesn't exist yet → load on demand immediately
+  if (type === 'truck' || type === 'rest' || type === 'scale') {
+    loadPOIOnDemand(type, chip);
+  }
+}
+
+/* ── loadPOIOnDemand — carga rápida bajo demanda centrada en posición actual ── */
+async function loadPOIOnDemand(type, chipEl) {
+  if (!fmMapInst) return;
+
+  // Show spinner on chip
+  const emoji = type === 'truck' ? '🚛' : type === 'rest' ? '😴' : '⚖️';
+  const label = type === 'truck' ? 'Truck Stops' : type === 'rest' ? 'Rest Areas' : 'Scales';
+  if (chipEl) chipEl.innerHTML = `${emoji} ${label} <span style="display:inline-block;animation:spin 1s linear infinite">⏳</span>`;
+
+  // Get best position: GPS marker → fmLastLat → origin → map center
+  let lat, lon;
+  if (fmGpsMarker) { const ll = fmGpsMarker.getLatLng(); lat = ll.lat; lon = ll.lng; }
+  else if (window.fmLastLat) { lat = window.fmLastLat; lon = window.fmLastLon; }
+  else if (origin) { lat = origin.lat; lon = origin.lon; }
+  else if (fmMapInst) { const c = fmMapInst.getCenter(); lat = c.lat; lon = c.lng; }
+  else return;
+
+  // Fast query: 80 km radius (~50 miles) around current position
+  const R = 80000;
+  const QUERIES_FAST = {
+    truck: `[out:json][timeout:25];
+(
+  node["amenity"="truck_stop"](around:${R},${lat},${lon});
+  node["amenity"="fuel"]["hgv"="yes"](around:${R},${lat},${lon});
+  node["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${R},${lat},${lon});
+  node["name"~"Flying J|Pilot|Love's|Loves Travel|TA Travel|TA-Petro|Petro Stop|Sapp Bros|Kwik Trip|Truck Stop|Travel Plaza|Travel Center|Truck Plaza",i](around:${R},${lat},${lon});
+);
+out center qt 120;`,
+    rest: `[out:json][timeout:20];
+(
+  node["highway"="rest_area"](around:${R},${lat},${lon});
+  node["amenity"="rest_area"](around:${R},${lat},${lon});
+  way["highway"="rest_area"](around:${R},${lat},${lon});
+  way["amenity"="rest_area"](around:${R},${lat},${lon});
+);
+out center qt 80;`,
+    scale: `[out:json][timeout:20];
+(
+  node["amenity"="weigh_station"](around:${R},${lat},${lon});
+  node["highway"="weigh_station"](around:${R},${lat},${lon});
+  node["man_made"="weigh_scale"](around:${R},${lat},${lon});
+  way["amenity"="weigh_station"](around:${R},${lat},${lon});
+  way["highway"="weigh_station"](around:${R},${lat},${lon});
+);
+out center qt 60;`,
+  };
+
+  let elements = [];
+  try {
+    const data = await overpassFetch(QUERIES_FAST[type], 22000);
+    elements = data?.elements || [];
+  } catch(e) {
+    console.warn('loadPOIOnDemand failed:', e.message);
+    if (chipEl) { chipEl.innerHTML = `${emoji} ${label}`; chipEl.classList.add('off'); }
+    fmPoiActive[type] = false;
+    return;
+  }
+
+  // Clear old markers
+  fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+  fmPoiLayers[type] = [];
+  if (fmPoiGroups[type]) { try { fmMapInst.removeLayer(fmPoiGroups[type]); } catch {} }
+
+  const cfg = POI_ICONS[type];
+  const seen = new Set();
+  const pending = [];
+
+  elements.forEach(el => {
+    const elLat = el.lat ?? el.center?.lat;
+    const elLon = el.lon ?? el.center?.lon;
+    if (!elLat || !elLon) return;
+    if (seen.has(el.id)) return;
+    seen.add(el.id);
+
+    const dist = Math.round(haversine(lat, lon, elLat, elLon));
+    const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
+
+    // Popup
+    let popupHtml = `<div style="font-family:'DM Sans',sans-serif;min-width:170px;max-width:230px;padding:4px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:36px;height:36px;border-radius:50%;background:${cfg.color}22;border:2px solid ${cfg.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${cfg.emoji}</div>
+        <div>
+          <div style="font-weight:800;font-size:14px;line-height:1.2">${name}</div>
+          <div style="color:#6b7280;font-size:11px;font-weight:600">${cfg.label}</div>
+        </div>
+      </div>
+      <div style="background:${cfg.color}15;border:1px solid ${cfg.color}40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:${cfg.color}">📏 ${dist} mi away</div>`;
+    if (el.tags?.['addr:city']) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:4px">📍 ${el.tags['addr:city']}</div>`;
+    if (el.tags?.phone) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:3px">📞 ${el.tags.phone}</div>`;
+    popupHtml += '</div>';
+
+    // Icon
+    let iconHtml;
+    if (type === 'scale') {
+      iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:0">
+        <div style="width:40px;height:40px;background:#f59e0b;transform:rotate(45deg);border:3px solid #000;box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <span style="transform:rotate(-45deg);font-size:18px">⚖️</span>
+        </div>
+        <div style="width:3px;height:8px;background:#555;margin-top:-2px"></div>
+        <div style="background:#000;color:#f59e0b;font-size:7px;font-weight:900;padding:2px 4px;border-radius:3px;white-space:nowrap">WEIGH ST.</div>
+      </div>`;
+    } else if (type === 'truck') {
+      const brand = getTruckBrand(name);
+      const bg  = brand ? brand.color : cfg.color;
+      const ico = brand ? brand.logo : '🚛';
+      const sn  = brand ? brand.short : name.substring(0, 11);
+      iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:34px;height:34px;background:${bg};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer">${ico}</div>
+        <div style="background:${bg};color:#fff;font-size:8px;font-weight:900;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis">${sn}</div>
+      </div>`;
+    } else {
+      iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:34px;height:34px;background:${cfg.color};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer">${cfg.emoji}</div>
+        <div style="background:${cfg.color};color:#fff;font-size:8px;font-weight:900;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis">${name.substring(0,11)}</div>
+      </div>`;
+    }
+
+    const icon = L.divIcon({ className:'', html: iconHtml, iconAnchor:[17,17], popupAnchor:[0,-20] });
+    const marker = L.marker([elLat, elLon], { icon }).bindPopup(popupHtml, { maxWidth:250 });
+    pending.push(marker);
+    fmPoiLayers[type].push(marker);
+  });
+
+  const group = L.layerGroup(pending);
+  fmPoiGroups[type] = group;
+  fmPoiLoaded[type] = true;
+  if (fmPoiActive[type] && fmMapInst) group.addTo(fmMapInst);
+
+  const count = pending.length;
+  if (chipEl) {
+    chipEl.innerHTML = `${emoji} ${label} <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:1px 6px;font-size:10px;margin-left:3px">${count}</span>`;
+    if (count === 0) {
+      chipEl.innerHTML += ` <span style="font-size:9px;opacity:.6">sin datos</span>`;
+    }
+  }
+
+  // Background: extend coverage along the full route
+  if (roadGeometry && roadGeometry.length > 2 && count < 30) {
+    setTimeout(() => _extendPOIAlongRoute(type), 300);
+  }
+}
+
+/* Extends already-visible POI with full-route coverage without blocking UI */
+async function _extendPOIAlongRoute(type) {
+  if (!roadGeometry || roadGeometry.length < 2 || !fmMapInst) return;
+  const step = Math.max(1, Math.floor(roadGeometry.length / 10));
+  const wps = [];
+  for (let i = 0; i < roadGeometry.length; i += step) wps.push(roadGeometry[i]);
+  wps.push(roadGeometry[roadGeometry.length - 1]);
+
+  // Dedup waypoints <25 miles apart
+  const filtered = [wps[0]];
+  for (let i = 1; i < wps.length; i++) {
+    if (haversine(filtered[filtered.length-1][0], filtered[filtered.length-1][1], wps[i][0], wps[i][1]) > 25)
+      filtered.push(wps[i]);
+  }
+
+  const cfg = POI_ICONS[type];
+  const existingIds = new Set(fmPoiLayers[type].map(m => {
+    const ll = m.getLatLng(); return `${ll.lat.toFixed(4)},${ll.lng.toFixed(4)}`;
+  }));
+
+  const wpResults = await Promise.allSettled(
+    filtered.map(wp => overpassFetch(OVERPASS_QUERIES[type](wp[0], wp[1], 48000), 25000))
+  );
+
+  const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : (origin?.lat || filtered[0][0]);
+  const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : (origin?.lon || filtered[0][1]);
+  const newMarkers = [];
+
+  for (const res of wpResults) {
+    if (res.status !== 'fulfilled') continue;
+    (res.value?.elements || []).forEach(el => {
+      const elLat = el.lat ?? el.center?.lat;
+      const elLon = el.lon ?? el.center?.lon;
+      if (!elLat || !elLon) return;
+      const key = `${elLat.toFixed(4)},${elLon.toFixed(4)}`;
+      if (existingIds.has(key)) return;
+      if (roadGeometry.length > 1 && !isNearRoute(elLat, elLon, roadGeometry, 30)) return;
+      existingIds.add(key);
+
+      const dist = Math.round(haversine(truckLat, truckLon, elLat, elLon));
+      const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
+      let iconHtml;
+      if (type === 'truck') {
+        const brand = getTruckBrand(name);
+        const bg  = brand ? brand.color : cfg.color;
+        iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="width:34px;height:34px;background:${bg};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px">${brand ? brand.logo : '🚛'}</div>
+          <div style="background:${bg};color:#fff;font-size:8px;font-weight:900;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis">${brand ? brand.short : name.substring(0,11)}</div>
+        </div>`;
+      } else {
+        iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="width:34px;height:34px;background:${cfg.color};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px">${cfg.emoji}</div>
+          <div style="background:${cfg.color};color:#fff;font-size:8px;font-weight:900;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis">${name.substring(0,11)}</div>
+        </div>`;
+      }
+      const icon = L.divIcon({ className:'', html:iconHtml, iconAnchor:[17,17], popupAnchor:[0,-20] });
+      let popupHtml = `<div style="font-family:'DM Sans',sans-serif;min-width:170px;max-width:230px;padding:4px">
+        <div style="font-weight:800;font-size:14px;margin-bottom:6px">${name}</div>
+        <div style="background:${cfg.color}15;border:1px solid ${cfg.color}40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:${cfg.color}">📏 ${dist} mi</div>
+        ${el.tags?.['addr:city'] ? `<div style="font-size:11px;color:#6b7280;margin-top:4px">📍 ${el.tags['addr:city']}</div>` : ''}
+      </div>`;
+      const m = L.marker([elLat, elLon], { icon }).bindPopup(popupHtml, { maxWidth:250 });
+      newMarkers.push(m);
+      fmPoiLayers[type].push(m);
+    });
+  }
+
+  if (newMarkers.length > 0 && fmPoiGroups[type]) {
+    newMarkers.forEach(m => fmPoiGroups[type].addLayer(m));
+    // Update chip count
+    const chipId = type === 'truck' ? 'chipTruck' : type === 'rest' ? 'chipRest' : 'chipScale';
+    const chip = document.getElementById(chipId);
+    const emoji = type === 'truck' ? '🚛' : type === 'rest' ? '😴' : '⚖️';
+    const lbl = type === 'truck' ? 'Truck Stops' : type === 'rest' ? 'Rest Areas' : 'Scales';
+    if (chip && fmPoiActive[type]) chip.innerHTML = `${emoji} ${lbl} <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:1px 6px;font-size:10px;margin-left:3px">${fmPoiLayers[type].length}</span>`;
   }
 }
 
@@ -14910,6 +15169,10 @@ function resetForm() {
   origin = null; destination = null;
   routeDistance = 0; schedule = []; arrivalTime = null; totalTime = 0;
   roadGeometry = null; routeSource = null;
+  // Restore "Calcular Ruta" button
+  const _cb = document.getElementById('calcBtn');
+  if (_cb) { _cb.style.display = ''; _cb.disabled = false; _cb.textContent = ''; }
+  if (_cb) { _cb.innerHTML = '<span style="font-size:22px">🚛</span> Calcular Ruta'; }
   // Clear mini-map POI markers
   ['truck','rest','restrict'].forEach(type => {
     miniPoiMarkers[type].forEach(m => { try { if(miniMap) miniMap.removeLayer(m); } catch {} });
@@ -15863,13 +16126,19 @@ function selectAltRoute(idx) {
     miniMarkersList = mRef.list;
     miniLayer = lRef.layer;
   }
+  // Auto-update LIVE full map route if tracking is active
+  if (fmMapInst && typeof fmRedrawRoute === 'function') {
+    fmRedrawRoute(r.coords);
+    showToast('success', '🛣️', 'Ruta actualizada en mapa', r.miles + ' mi · ' + r.hours + 'h', 3000);
+  } else {
+    showToast('info','🛣️','Route Updated', r.miles + ' miles · ' + r.hours + 'h', 3000);
+  }
   // Recalc schedule with new distance
   const hours  = parseFloat(document.getElementById('hoursInput').value);
   const speed  = parseFloat(document.getElementById('speedInput').value);
   const depart = new Date(document.getElementById('departureInput').value || new Date());
   schedule = calculateSchedule(depart, routeDistance, speed, hours);
   renderResults(hours, speed, depart);
-  showToast('info','🛣️','Route Updated', r.miles + ' miles · ' + r.hours + 'h', 3000);
 }
 
 /* ════════════════════════════════════════════════════════════
