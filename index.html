@@ -11839,10 +11839,8 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
       const hudEl = document.getElementById('fmHud');
       const hudH  = (hudEl && hudEl.style.transform !== 'translateY(100%)')
                     ? (hudEl.offsetHeight || 0) : 0;
-      // Place truck at 65% from top of visible area = shows ~65% road ahead
-      // offsetPx = target_truck_screen_y - screen_center_y
-      // target_truck_screen_y = center of screen
-      offsetPx = 0;
+      // Truck at 72% from top = 72% road ahead, 28% behind
+      offsetPx = 0.22 * (size.y - hudH);
     }
     // pixels to offset the map center (negative = center south of truck = truck above center)
 
