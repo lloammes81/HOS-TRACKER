@@ -10549,95 +10549,31 @@ async function fetchOsrmStepsOnly(orig, dest){
   }catch{ return []; }
 }
 async function fetchRoadRoute(orig, dest) {
-  // ── 1. Try OSRM truck profile first (best for real truck routing) ──────────
-  // truck profile respects: max weight, height, low bridges, hgv restrictions
   return (async () => {
     const coords = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
     const osrmBase = 'https://router.project-osrm.org/route/v1';
 
-    // Try profiles in order: truck → driving (fallback)
-    const profiles = ['truck', 'driving'];
-    for (const profile of profiles) {
-      try {
-        const url = `${osrmBase}/${profile}/${coords}?overview=full&geometries=geojson&steps=true&alternatives=true`;
-        const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-        if (!r.ok) continue;
-        const data = await r.json();
-        if (data.code !== 'Ok') continue;
-
-        // Pick best route — prefer least distance that avoids cities (fewer turns ≈ highway-biased)
-        const routes = data.routes || [];
-        let best = routes[0];
-        if (routes.length > 1) {
-          // Prefer route with more distance (likely highways over city streets for trucks)
-          // but cap at 20% longer than shortest
-          const shortest = routes[0].distance;
-          const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
-            rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
-          if (highway) best = highway;
-        }
-
-        const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-        const miles = Math.round((best.distance || 0) / 1609.344);
-        const steps = best.legs?.[0]?.steps || [];
-
-        console.log(`✅ Route: OSRM-${profile} | ${miles} mi | ${routeCoords.length} pts`);
-        return { coords: routeCoords, miles, steps, source: `OSRM-${profile}` };
-      } catch (e) {
-        console.warn(`OSRM ${profile} failed:`, e.message);
-      }
-    }
-
-    // ── 2. Try OpenRouteService HGV (requires key but has free tier) ──────────
+    // Public OSRM only supports: driving, cycling, walking (no truck profile)
     try {
-      const orsUrl = 'https://api.openrouteservice.org/v2/directions/driving-hgv';
-      // Build avoid_features based on user route type preference
-      const orsAvoid = ['ferries'];
-      if (truckOptions.routeType === 'avoid_tolls')    orsAvoid.push('tollways');
-      if (truckOptions.routeType === 'avoid_highways') orsAvoid.push('highways');
-      // Convert truck dimensions from ft → meters for ORS (uses metric)
-      const ftToM = ft => +(ft * 0.3048).toFixed(2);
-      const orsRestrictions = {};
-      if (truckOptions.height > 0) orsRestrictions.height     = ftToM(truckOptions.height);
-      if (truckOptions.weight > 0) orsRestrictions.weight     = truckOptions.weight;
-      if (truckOptions.width  > 0) orsRestrictions.width      = ftToM(truckOptions.width);
-      if (truckOptions.length > 0) orsRestrictions.length     = ftToM(truckOptions.length);
-      if (truckOptions.axles  > 0) orsRestrictions.axle_count = truckOptions.axles;
-      const orsBody = {
-        coordinates: [[orig.lon, orig.lat], [dest.lon, dest.lat]],
-        profile: 'driving-hgv',
-        format: 'geojson',
-        options: {
-          vehicle_type: truckOptions.hazmat ? 'hgv_hazmat' : 'hgv',
-          avoid_features: orsAvoid,
-          ...(Object.keys(orsRestrictions).length ? { profile_params: { restrictions: orsRestrictions } } : {})
-        },
-        geometry_simplify: false
-      };
-      const orsResp = await fetch(orsUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(orsBody),
-        signal: AbortSignal.timeout(10000)
-      });
-      if (orsResp.ok) {
-        const orsData = await orsResp.json();
-        const feature = orsData.features?.[0];
-        if (feature) {
-          const routeCoords = (feature.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-          const dist = feature.properties?.summary?.distance || 0;
-          if (routeCoords.length > 1) {
-            console.log('✅ Route: ORS HGV (truck-restricted)');
-            return { coords: routeCoords, miles: Math.round(dist / 1609.344), steps: [], source: 'ORS-HGV' };
-          }
+      const url = `${osrmBase}/driving/${coords}?overview=full&geometries=geojson&steps=true&alternatives=true`;
+      const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      if (r.ok) {
+        const data = await r.json();
+        if (data.code === 'Ok' && data.routes?.length) {
+          const best = data.routes[0];
+          const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
+          const miles = Math.round((best.distance || 0) / 1609.344);
+          const steps = best.legs?.[0]?.steps || [];
+          console.log(`✅ Route: OSRM-driving | ${miles} mi | ${routeCoords.length} pts`);
+          return { coords: routeCoords, miles, steps, source: 'OSRM' };
         }
       }
     } catch (e) {
-      console.warn('ORS HGV failed:', e.message);
+      console.warn('OSRM driving failed:', e.message);
     }
 
-    // ── 3. Straight-line fallback ─────────────────────────────────────────────
-    console.warn('⚠️ All routing APIs failed — using straight line');
+    // ── Straight-line fallback ──────────────────────────────
+    console.warn('⚠️ OSRM failed — using straight line');
     const straight = haversine(orig.lat, orig.lon, dest.lat, dest.lon);
     return {
       coords: [[orig.lat, orig.lon], [dest.lat, dest.lon]],
@@ -14845,13 +14781,11 @@ let selectedAltIdx = 0;
 async function fetchAlternativeRoutes(orig, dest) {
   altRoutes = [];
   try {
-    // Use truck profile; add exclude param for route type preferences
-    const profile = 'truck';
     let excludeParam = '';
     if (truckOptions.routeType === 'avoid_highways') excludeParam = '&exclude=motorway';
     else if (truckOptions.routeType === 'avoid_tolls') excludeParam = '&exclude=toll';
-    const url = `https://router.project-osrm.org/route/v1/${profile}/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true&alternatives=3${excludeParam}`;
-    const res  = await fetch(url);
+    const url = `https://router.project-osrm.org/route/v1/driving/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true&alternatives=3${excludeParam}`;
+    const res  = await fetch(url, { signal: AbortSignal.timeout(6000) });
     const data = await res.json();
     if (data.code === 'Ok' && data.routes?.length) {
       altRoutes = data.routes.map((r, i) => ({
