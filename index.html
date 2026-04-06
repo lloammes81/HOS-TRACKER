@@ -11400,6 +11400,15 @@ function openFullMapScreen() {
 
   setTimeout(() => {
     fmMapInst.invalidateSize();
+    // Force map container to fill screen in case of size calculation issues
+    const mapEl = document.getElementById('fullMap');
+    if (mapEl) {
+      mapEl.style.position = 'absolute';
+      mapEl.style.inset = '0';
+      mapEl.style.bottom = '0';
+      mapEl.style.height = '';
+    }
+    setTimeout(() => fmMapInst.invalidateSize(), 400);
     if (origin && destination) {
       // Only redraw if route geometry changed (not on every open)
       const routeKey = (origin.lat||0).toFixed(4) + ',' + (destination.lat||0).toFixed(4) + ',' + (roadGeometry?.length||0);
