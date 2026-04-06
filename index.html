@@ -7139,8 +7139,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 ">
   <!-- MAP fills entire screen -->
   <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
-  <!-- Highway mask: covers bottom 50% when speed > 40mph -->
-  <div id="mapHighwayMask" style="display:none;position:absolute;left:0;right:0;bottom:0;height:50%;background:#0b173a;z-index:2;pointer-events:none"></div>
 
     <div class="local-radius-info" id="localRadiusInfo" style="display:none">📍 Local Mode — 100 mi radius</div>
     <div id="routeAlertPill" onclick="switchTab('community')">🚨 Alert on your route — tap</div>
@@ -9026,13 +9024,6 @@ function initDriveHoursDrag() {
 }
 
 function updateSpeedometer(mph) {
-  // ── Map shrink when > 40 mph (mask bottom 50%) ───────────
-  const hwMask = document.getElementById('mapHighwayMask');
-  if (hwMask) {
-    const isHighway = mph > 40;
-    hwMask.style.display = isHighway ? 'block' : 'none';
-  }
-
   // Update the inline speed sign (below speed limit sign)
   const mySpeedNum = document.getElementById('mssMySpeedNum');
   const mySpeedSign = document.getElementById('mssMySpeed');
