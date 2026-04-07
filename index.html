@@ -8970,7 +8970,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 <!-- Firebase SDK (Realtime Database for cross-device chat) -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -8993,7 +8993,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   let db, messagesRef, presenceRef, connectedRef;
 
   try {
-    const app = initializeApp(firebaseConfig);
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
     db = getDatabase(app);
     messagesRef = ref(db, 'chat/messages');
     connectedRef = ref(db, '.info/connected');
