@@ -8393,14 +8393,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <!-- Firebase SDK (Realtime Database for cross-device chat) -->
 <script type="module">
   import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect }
+  import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect, remove, get, orderByChild, endAt }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  /* ─── FIREBASE CONFIG ───────────────────────────────────────
-     Replace the values below with your own Firebase project.
-     Create one free at https://console.firebase.google.com
-     Enable "Realtime Database" and set rules to allow read/write.
-  ─────────────────────────────────────────────────────────── */
+  /* ─── FIREBASE CONFIG ─────────────────────────────────────── */
   const firebaseConfig = {
     apiKey: "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
     authDomain: "hos-tracker-chat.firebaseapp.com",
@@ -8410,6 +8406,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     messagingSenderId: "390077980024",
     appId: "1:390077980024:web:65d312be4c52809de43c8d"
   };
+
+  const MSG_TTL = 60 * 60 * 1000; // 1 hour in ms
 
   let firebaseReady = false;
   let db, messagesRef, presenceRef, connectedRef;
@@ -8424,6 +8422,30 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     console.warn('[Chat] Firebase init failed – running in local-only mode.', e.message);
   }
 
+  // Delete messages older than 1 hour for a given channel
+  async function cleanupChannel(channelId) {
+    if (!firebaseReady) return;
+    try {
+      const cutoff = Date.now() - MSG_TTL;
+      const chRef = ref(db, `chat/channels/${channelId}/messages`);
+      const oldQ = query(chRef, orderByChild('clientTs'), endAt(cutoff));
+      const snap = await get(oldQ);
+      const removes = [];
+      snap.forEach(child => removes.push(remove(child.ref)));
+      if (removes.length) await Promise.all(removes);
+    } catch(e) {
+      console.warn('[Chat] Cleanup failed for', channelId, e.message);
+    }
+  }
+
+  // Run cleanup every 10 minutes for all channels
+  const CHANNEL_IDS = ['general','northeast','southeast','midwest','southwest','northwest','canada','hazmat'];
+  function scheduleCleanup() {
+    CHANNEL_IDS.forEach(id => cleanupChannel(id));
+    setTimeout(scheduleCleanup, 10 * 60 * 1000);
+  }
+  if (firebaseReady) setTimeout(scheduleCleanup, 5000); // first run 5s after load
+
   // Expose to global scope so non-module code can use these
   window._chatFirebase = {
     ready: () => firebaseReady,
@@ -8434,12 +8456,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       await push(chRef, { ...msgData, ts: serverTimestamp() });
       return true;
     },
-    // Listen to a specific channel (returns unsubscribe fn)
+    // Listen to a specific channel — only messages from last hour
     listenChannel: (channelId, cb) => {
       if (!firebaseReady) return () => {};
       const chRef = ref(db, `chat/channels/${channelId}/messages`);
       const recentQ = query(chRef, limitToLast(80));
-      const unsub = onChildAdded(recentQ, snap => cb(snap.val(), snap.key));
+      const cutoff = Date.now() - MSG_TTL;
+      const unsub = onChildAdded(recentQ, snap => {
+        const msg = snap.val();
+        const msgTs = msg.ts || msg.clientTs || 0;
+        if (msgTs && msgTs < cutoff) return; // skip messages older than 1 hour
+        cb(msg, snap.key);
+      });
       return unsub;
     },
     // Legacy compat
@@ -8450,8 +8478,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     },
     listenMessages: (cb) => {
       if (!firebaseReady) return;
+      const cutoff = Date.now() - MSG_TTL;
       const recentQ = query(ref(db, 'chat/channels/general/messages'), limitToLast(80));
-      onChildAdded(recentQ, snap => cb(snap.val(), snap.key));
+      onChildAdded(recentQ, snap => {
+        const msg = snap.val();
+        const msgTs = msg.ts || msg.clientTs || 0;
+        if (msgTs && msgTs < cutoff) return;
+        cb(msg, snap.key);
+      });
     },
     trackPresence: (userId, displayName) => {
       if (!firebaseReady) return;
@@ -17881,8 +17915,12 @@ FIREBASE_CONFIG = {
       const loading = document.getElementById('chatLoading');
       if (loading) loading.remove();
 
+      const oneHourAgo = Date.now() - 3600000;
       const msgs = [];
-      snap.forEach(child => msgs.push({ id: child.key, ...child.val() }));
+      snap.forEach(child => {
+        const m = child.val();
+        if ((m.ts || 0) >= oneHourAgo) msgs.push({ id: child.key, ...m });
+      });
 
       // Re-render only if there are new messages
       const latestId = msgs.length ? msgs[msgs.length - 1].id : null;
@@ -17943,21 +17981,22 @@ FIREBASE_CONFIG = {
     const text  = input.value.trim();
     if (!text) return;
 
-    if (!currentUser) {
-      showToast('info','🔒',
-        lang==='es'?'Inicia sesión':'Login required',
-        lang==='es'?'Debes tener un perfil para chatear.':'You need a profile to chat.', 3000);
-      return;
-    }
+    // Use currentUser if available, otherwise fall back to driver profile
+    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
+    let senderId   = (currentUser && currentUser.id)        || localStorage.getItem('chat_uid') || ('u_' + Math.random().toString(36).slice(2,10));
+    let senderName = (currentUser && currentUser.name)      || dp.name || 'Driver';
+    let senderTruck= (currentUser && currentUser.truckType) || dp.truckType || '18wheeler';
+    // Persist uid for consistency
+    if (!localStorage.getItem('chat_uid')) localStorage.setItem('chat_uid', senderId);
 
     document.getElementById('panelSendBtn').disabled = true;
     input.value = '';
     input.style.height = 'auto';
 
     window._chatPush(window._chatRef(chatChannel), {
-      userId:    currentUser.id,
-      name:      currentUser.name || 'Driver',
-      truckType: currentUser.truckType || '18wheeler',
+      userId:    senderId,
+      name:      senderName,
+      truckType: senderTruck,
       text:      text,
       ts:        window._chatServerTimestamp()
     }).then(() => {
@@ -19558,25 +19597,47 @@ async function sendScanEmail() {
     if (msg.userId === myUserId) return; // no notificar mensajes propios
     // Ignorar mensajes viejos (anteriores a que se abrió la app)
     const msgTime = msg.ts || msg.clientTs || 0;
-    if (msgTime < _chatStartTime - 5000) return;
-
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (msgTime && msgTime < _chatStartTime - 5000) return;
 
     const chInfo = CHANNELS.find(c => c.id === channelId) || { name: channelId, icon: '🔔' };
     const title  = `${chInfo.icon} ${chInfo.name}`;
     const body   = `${msg.name || 'Driver'}: ${msg.text}`;
-    const icon   = '/icon-192.png';
+    const icon   = './HOS_Tracker_Version1.png';
     const tag    = 'chat-' + channelId;
+    const notifOpts = { body, icon, tag, vibrate: [200, 100, 200], badge: './HOS_Tracker_Version1.png', data: { url: './' }, requireInteraction: false };
 
-    // Usar SW registrado si está disponible
-    const swReg = window._swReg;
-    if (swReg && swReg.active) {
-      swReg.showNotification(title, { body, icon, tag, vibrate: [200, 100, 200], data: { url: '/' } });
-    } else if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body, tag, icon });
-    } else if (Notification.permission === 'granted') {
-      new Notification(title, { body, icon, tag });
+    // Request permission if not yet decided
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') _fireNotif(title, notifOpts);
+      });
+      return;
     }
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    _fireNotif(title, notifOpts);
+  }
+
+  function _fireNotif(title, opts) {
+    // Priority 1: ServiceWorkerRegistration.showNotification — works in background on mobile
+    const swReg = window._swReg;
+    if (swReg) {
+      const active = swReg.active || swReg.waiting || swReg.installing;
+      if (active) {
+        // Post message to SW so it shows a persistent notification
+        active.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body: opts.body, tag: opts.tag, icon: opts.icon });
+        return;
+      }
+      // If reg exists but no active worker yet, try showNotification directly
+      swReg.showNotification(title, opts).catch(() => {});
+      return;
+    }
+    // Priority 2: controller postMessage
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body: opts.body, tag: opts.tag, icon: opts.icon });
+      return;
+    }
+    // Priority 3: fallback in-tab notification
+    try { new Notification(title, opts); } catch(e) {}
   }
 
   // ── Helpers ──────────────────────────────────────────────────
@@ -19747,8 +19808,11 @@ async function sendScanEmail() {
 
   function loadLocalMessages(channelId) {
     const msgs = JSON.parse(localStorage.getItem('chat_ch_' + channelId) || '[]');
-    const cutoff = Date.now() - 86400000;
-    msgs.filter(m => (m.clientTs||0) > cutoff).slice(-80).forEach(m => appendRoomMessage(m, m.localKey));
+    const cutoff = Date.now() - 3600000; // 1 hour
+    // Also prune and save back — remove expired messages from storage
+    const recent = msgs.filter(m => (m.clientTs||0) > cutoff);
+    if (recent.length < msgs.length) localStorage.setItem('chat_ch_' + channelId, JSON.stringify(recent));
+    recent.slice(-80).forEach(m => appendRoomMessage(m, m.localKey));
   }
 
   function saveLocalMsg(channelId, msg) {
