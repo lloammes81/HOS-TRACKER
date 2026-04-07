@@ -258,7 +258,7 @@
      MOBILE REDESIGN — Main Form
   ══════════════════════════════════════════ */
   .form-section-label {
-    font-size: 12px; font-weight: 800; letter-spacing: 1px;
+    font-size: 14px; font-weight: 800; letter-spacing: 1px;
     text-transform: uppercase; color: var(--muted);
     margin: 16px 0 8px; display: flex; align-items: center; gap: 6px;
   }
@@ -292,12 +292,12 @@
   }
   .stop-row-mobile:focus-within { border-color: var(--accent); }
   .stop-row-mobile .stop-icon {
-    font-size: 18px; flex-shrink: 0; width: 28px; text-align: center;
+    font-size: 22px; flex-shrink: 0; width: 32px; text-align: center;
   }
   .stop-row-mobile input {
     background: transparent; border: none; padding: 10px 0;
-    font-size: 15px; box-shadow: none; border-radius: 0;
-    min-height: 44px;
+    font-size: 17px; box-shadow: none; border-radius: 0;
+    min-height: 50px;
     transition: font-size .2s ease, min-height .2s ease;
   }
   .stop-row-mobile input:focus { box-shadow: none; border-color: transparent; }
@@ -315,7 +315,7 @@
     font-size: 30px;
   }
   .stop-row-mobile .stop-gps-label {
-    flex: 1; font-size: 14px; color: var(--text); padding: 10px 0;
+    flex: 1; font-size: 17px; color: var(--text); padding: 10px 0;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .stop-row-mobile .stop-refresh-btn {
@@ -338,14 +338,14 @@
   }
   .param-box:focus-within { border-color: var(--accent); }
   .param-box label {
-    font-size: 12px; font-weight: 800; color: var(--muted);
+    font-size: 14px; font-weight: 800; color: var(--muted);
     text-transform: uppercase; letter-spacing: .8px;
     margin: 0; display: flex; align-items: center; gap: 4px;
   }
   .param-box input {
     background: transparent; border: none; padding: 2px 0;
-    font-size: 16px; font-weight: 700; box-shadow: none;
-    border-radius: 0; min-height: 36px; width: 100%;
+    font-size: 18px; font-weight: 700; box-shadow: none;
+    border-radius: 0; min-height: 40px; width: 100%;
     color: var(--text);
   }
   .param-box input:focus { box-shadow: none; border-color: transparent; }
@@ -418,6 +418,7 @@
   .results-kv.full { grid-column: 1 / -1; }
   .results-k { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
   .results-v { font-size: 16px; font-weight: 700; line-height: 1.3; }
+  .arrival-blink { animation: blink 1s ease-in-out infinite; }
   /* number inputs: hide spinners */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -851,6 +852,19 @@
   }
 
   /* Toast alert banner */
+  /* State border welcome banner */
+  #stateBanner {
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.8);
+    z-index:9999; background:rgba(10,16,35,0.96); border:2px solid #10b981;
+    border-radius:22px; padding:30px 44px; text-align:center;
+    opacity:0; pointer-events:none; transition:all 0.4s cubic-bezier(.16,1,.3,1);
+    box-shadow:0 8px 48px rgba(0,0,0,0.75);
+  }
+  #stateBanner.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  #stateBanner .sb-flag { font-size:52px; display:block; margin-bottom:6px; }
+  #stateBanner .sb-welcome { font-size:11px; color:rgba(255,255,255,.45); font-weight:700; letter-spacing:3px; text-transform:uppercase; }
+  #stateBanner .sb-name { font-size:34px; font-weight:900; color:#10b981; margin-top:6px; line-height:1; }
+
   .safety-toast {
     position: fixed; top: calc(14px + env(safe-area-inset-top,0px));
     left: 14px; right: 14px; z-index: 9000;
@@ -1415,9 +1429,9 @@
     background: rgba(10,16,30,.82);
     backdrop-filter: blur(6px);
     color: #f1f5f9;
-    font-size: 8px; font-weight: 800;
+    font-size: 12px; font-weight: 800;
     letter-spacing: .6px;
-    padding: 2px 7px;
+    padding: 3px 10px;
     border-radius: 999px;
     margin-top: 4px;
     white-space: nowrap;
@@ -1457,65 +1471,29 @@
 
   /* ── SMOOTH TRUCK WRAPPER (CSS rotation transition) ─────── */
   .truck-smooth-wrapper {
-    width: 48px; height: 48px;
+    width: 60px; height: 60px;
     position: relative;
-    display: flex; align-items: center; justify-content: center;
     /* rotation handled by JS inline style for smooth GPU transition */
   }
   .truck-smooth-wrapper .truck-glow {
-    position: absolute; inset: -14px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(59,130,246,.38) 0%, transparent 65%);
+    position: absolute; inset: -8px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(16,185,129,.4) 0%, transparent 68%);
     animation: truckGlow 2s ease-in-out infinite;
     pointer-events: none;
   }
   .truck-smooth-wrapper.stopped .truck-glow {
-    background: radial-gradient(circle, rgba(107,114,128,.22) 0%, transparent 65%);
+    background: radial-gradient(circle, rgba(107,114,128,.25) 0%, transparent 68%);
   }
-  .truck-smooth-wrapper.over-limit .truck-glow {
-    background: radial-gradient(circle, rgba(239,68,68,.45) 0%, transparent 65%);
-  }
-  /* Pulse ring when moving */
+  /* Pulse ring under the truck when moving */
   .truck-smooth-wrapper .truck-pulse {
-    position: absolute; inset: -4px; border-radius: 50%;
-    border: 2px solid rgba(59,130,246,.55);
+    position: absolute; inset: -2px; border-radius: 50%;
+    border: 2px solid rgba(16,185,129,.5);
     animation: truckPulse 1.5s ease-out infinite;
   }
   .truck-smooth-wrapper.stopped .truck-pulse { display: none; }
-  .truck-smooth-wrapper.over-limit .truck-pulse {
-    border-color: rgba(239,68,68,.6);
-  }
   @keyframes truckPulse {
     0%   { transform: scale(1); opacity: .6; }
     100% { transform: scale(1.9); opacity: 0; }
-  }
-
-  /* ── Avatar ring — elemento principal del marcador ──── */
-  .truck-avatar-ring {
-    position: relative;
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    border: 3px solid rgba(255,255,255,.95);
-    overflow: hidden;
-    z-index: 3;
-    pointer-events: none;
-    flex-shrink: 0;
-    box-shadow:
-      0 0 0 4px rgba(59,130,246,.8),
-      0 0 16px 6px rgba(59,130,246,.55),
-      0 0 36px 10px rgba(59,130,246,.25);
-    transition: box-shadow .35s ease, border-color .35s ease;
-  }
-  .truck-smooth-wrapper.over-limit .truck-avatar-ring {
-    border-color: #ef4444;
-    box-shadow:
-      0 0 0 4px rgba(239,68,68,.9),
-      0 0 18px 7px rgba(239,68,68,.65),
-      0 0 40px 12px rgba(239,68,68,.32);
-    animation: overLimitRingPulse .55s ease-in-out infinite alternate;
-  }
-  @keyframes overLimitRingPulse {
-    0%   { box-shadow: 0 0 0 4px rgba(239,68,68,.85), 0 0 16px 5px rgba(239,68,68,.6),   0 0 34px 10px rgba(239,68,68,.28); }
-    100% { box-shadow: 0 0 0 6px rgba(239,68,68,1.0), 0 0 26px 10px rgba(239,68,68,.85), 0 0 50px 16px rgba(239,68,68,.45); }
   }
 
   /* ══════════════════════════════════════════
@@ -1794,7 +1772,7 @@
     margin-top: 5px;
     padding: 3px 10px;
     border-radius: 999px;
-    font-size: 12px; font-weight: 800;
+    font-size: 9px; font-weight: 800;
     letter-spacing: 1px;
     text-transform: uppercase;
     background: rgba(107,114,128,0.25);
@@ -2127,22 +2105,6 @@
   #mapRightControls button:active { transform: scale(.92); }
   /* Compass active state */
   #compassBtn.heading-active { background: rgba(59,130,246,0.75) !important; }
-  /* Rotation buttons */
-  #btnRotateL, #btnRotateR {
-    font-size: 18px;
-    letter-spacing: 0;
-  }
-  #rotateNorthBtn {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: .5px;
-    color: #10b981;
-  }
-  #rotateNorthBtn.manual-active {
-    background: rgba(245,158,11,0.25) !important;
-    border-color: rgba(245,158,11,0.5) !important;
-    color: #f59e0b;
-  }
   /* Left controls column */
   #mapLeftControls {
     position: absolute;
@@ -2203,6 +2165,13 @@
     box-shadow: 0 2px 12px rgba(0,0,0,0.45);
     touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     transition: transform .15s, background .2s, border-color .3s;
+  }
+  /* Compass button taller to fit icon + label */
+  #mapLeftControls #compassBtn {
+    height: 52px;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 17px;
   }
   #mapLeftControls button:active { transform: scale(.92); }
   #mapLeftControls #btnCenter:active { background: rgba(16,185,129,0.5); }
@@ -2433,9 +2402,16 @@
   bottom: calc(var(--stack-base) + 0px) !important;
 }
 
-#sosFab{
-  position: fixed !important;
-  bottom: calc(var(--stack-base) + (var(--stack-size) + var(--stack-gap)) * 1) !important;
+/* SOS ahora está dentro de mapRightControls — sin posicionamiento fijo */
+#mapRightControls #sosFab{
+  position: relative !important;
+  bottom: auto !important; right: auto !important;
+  top: auto !important; left: auto !important;
+  transform: none !important;
+  display: none;
+}
+#mapRightControls #sosFab.visible{
+  display: flex !important;
 }
 #weatherWidget{
   position: fixed !important;
@@ -2475,6 +2451,9 @@
 /* Lower the speed limit window/sign a bit */
 #mapSpeedSign{
   top: calc(96px + env(safe-area-inset-top, 0px)) !important;
+}
+#speedLimitWidget{
+  top: calc(var(--header-pt) + 28px) !important;
 }
 
 /* Keep stack above other floating buttons if present */
@@ -2525,7 +2504,7 @@ body.map-active #sosFab{
 
 body.map-active #weatherWidget{
   position: fixed !important;
-  top:    var(--sl-y) !important;
+  top:    calc(var(--sl-y) + 44px + var(--sl-gap)) !important;
   left:   var(--sl-x) !important;
   right:  auto !important;
   bottom: auto !important;
@@ -2533,14 +2512,6 @@ body.map-active #weatherWidget{
   width: auto !important;
   max-width: 150px !important;
   min-width: 76px !important;
-}
-
-body.map-active #speedLimitWidget{
-  position: fixed !important;
-  top:    calc(var(--sl-y) + 60px + var(--sl-gap)) !important;
-  left:   var(--sl-x) !important;
-  right:  auto !important;
-  bottom: auto !important;
 }
 
 body.map-active #milesRemainingWidget{
@@ -2625,15 +2596,13 @@ body.map-active #driveHoursWidget{
 #mapLeftControls #btnMapColor:active {
   transform: scale(.92) !important;
 }
-/* SOS en columna derecha (#mapRightControls) — fluye como flex item, anula posición fija */
-#mapRightControls #sosFab {
+/* SOS en columna izquierda — fluye como flex item, anula posición fija */
+#fullMapScreen #sosFab {
   position: static !important;
   top: auto !important; right: auto !important;
   bottom: auto !important; left: auto !important;
   transform: none !important;
   z-index: auto !important;
-  display: flex !important;
-  border-radius: 50% !important;
 }
 
 /* ── MAP TILE CLARITY — brighter, more contrast, sharper on mobile ── */
@@ -2641,6 +2610,7 @@ body.map-active #driveHoursWidget{
 #fullMap .leaflet-tile-pane {
   filter: brightness(1.18) contrast(1.12) saturate(1.08);
 }
+
 /* Night mode: don't over-brighten dark tiles */
 body.dark #miniMap .leaflet-tile-pane,
 body.dark #fullMap .leaflet-tile-pane {
@@ -2650,16 +2620,6 @@ body.dark #fullMap .leaflet-tile-pane {
 #miniMap.satellite-style .leaflet-tile-pane,
 #fullMap.satellite-style .leaflet-tile-pane {
   filter: brightness(1.1) contrast(1.15) saturate(1.25);
-}
-
-/* ── MAP COMPACT MODE (speed > 40 mph) ───────────────────────── */
-#fullMap.map-compact {
-  bottom: 50% !important;
-  inset: 0 0 50% 0 !important;
-  transition: bottom 0.4s ease, inset 0.4s ease;
-}
-#fullMap:not(.map-compact) {
-  transition: bottom 0.4s ease, inset 0.4s ease;
 }
 
 
@@ -2817,81 +2777,6 @@ body.dark #fullMap .leaflet-tile-pane {
     cursor:pointer; touch-action:manipulation;
   }
   .tool-body { flex:1; overflow-y:auto; padding:18px 20px calc(24px + env(safe-area-inset-bottom,0px)); -webkit-overflow-scrolling:touch; }
-
-  /* ════════════════════════════════════════════════════════════
-     ⚖️  AXLE WEIGHT CALCULATOR
-  ════════════════════════════════════════════════════════════ */
-  .axw-section-title { font-size:11px; font-weight:800; letter-spacing:.8px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
-  .axw-card {
-    display:flex; align-items:center; gap:12px;
-    background:var(--surface2); border:1.5px solid var(--border);
-    border-radius:14px; padding:12px 14px; margin-bottom:10px;
-    transition:border-color .2s, background .2s;
-  }
-  .axw-card.over { border-color:#ef4444; background:rgba(239,68,68,.07); }
-  .axw-card.warn { border-color:#f59e0b; background:rgba(245,158,11,.07); }
-  .axw-card.ok   { border-color:#10b981; background:rgba(16,185,129,.07); }
-  .axw-card-icon { font-size:24px; width:34px; text-align:center; flex-shrink:0; }
-  .axw-card-label { font-size:13px; font-weight:800; color:var(--text); }
-  .axw-card-sub   { font-size:10px; color:var(--muted); font-weight:600; margin-top:2px; }
-  .axw-badge {
-    font-size:10px; font-weight:800; padding:3px 8px;
-    border-radius:20px; flex-shrink:0; letter-spacing:.3px;
-  }
-  .axw-badge.na   { background:rgba(148,163,184,.12); color:#94a3b8; }
-  .axw-badge.ok   { background:rgba(16,185,129,.15);  color:#10b981; }
-  .axw-badge.warn { background:rgba(245,158,11,.15);  color:#f59e0b; }
-  .axw-badge.over { background:rgba(239,68,68,.15);   color:#ef4444; }
-  .axw-input-wrap {
-    display:flex; align-items:center; gap:6px;
-    background:var(--bg); border:1px solid var(--border);
-    border-radius:10px; padding:7px 12px; margin-top:8px;
-  }
-  .axw-input {
-    flex:1; background:transparent; border:none; outline:none;
-    color:var(--text); font-size:20px; font-weight:800;
-    font-family:'DM Mono','Courier New',monospace; min-width:0;
-  }
-  .axw-input::placeholder { color:var(--muted); opacity:.4; }
-  .axw-unit { font-size:12px; color:var(--muted); font-weight:700; flex-shrink:0; }
-  .axw-pos-row {
-    display:flex; align-items:center; gap:10px;
-    background:var(--surface2); border:1.5px solid var(--border);
-    border-radius:14px; padding:12px 14px; margin-bottom:14px;
-  }
-  .axw-pos-input {
-    width:52px; text-align:center; background:var(--bg);
-    border:1.5px solid var(--border); border-radius:8px;
-    color:var(--text); font-size:18px; font-weight:800; padding:6px 0; outline:none;
-  }
-  .axw-calc-btn {
-    width:100%; padding:15px; border-radius:14px;
-    background:linear-gradient(135deg,#f59e0b,#d97706);
-    border:none; color:#fff; font-size:16px; font-weight:800;
-    letter-spacing:.5px; cursor:pointer; margin-bottom:20px;
-    touch-action:manipulation;
-  }
-  .axw-gross-row {
-    display:flex; justify-content:space-between; align-items:center;
-    background:var(--surface2); border:1.5px solid var(--border);
-    border-radius:12px; padding:10px 14px; margin-bottom:12px;
-  }
-  .axw-gross-val { font-size:18px; font-weight:900; font-family:'DM Mono',monospace; }
-  .axw-gross-val.ok   { color:#10b981; }
-  .axw-gross-val.warn { color:#f59e0b; }
-  .axw-gross-val.over { color:#ef4444; }
-  .axw-svg-wrap {
-    background:var(--surface2); border:1.5px solid var(--border);
-    border-radius:16px; padding:10px; margin-bottom:12px; overflow:hidden;
-  }
-  .axw-svg-wrap svg { width:100%; height:auto; display:block; }
-  .axw-reco {
-    border-radius:14px; padding:14px 16px;
-    font-size:13px; font-weight:700; line-height:1.6; margin-bottom:8px;
-  }
-  .axw-reco.good { background:rgba(16,185,129,.1);  color:#10b981; border:1.5px solid rgba(16,185,129,.3); }
-  .axw-reco.move { background:rgba(245,158,11,.1);  color:#f59e0b; border:1.5px solid rgba(245,158,11,.3); }
-  .axw-reco.bad  { background:rgba(239,68,68,.1);   color:#ef4444; border:1.5px solid rgba(239,68,68,.3);  }
 
   /* ════════════════════════════════════════════════════════════
      💰  FREIGHT CALCULATOR
@@ -3060,18 +2945,18 @@ body.dark #fullMap .leaflet-tile-pane {
     flex-shrink:0;background:var(--surface);
     padding-bottom:calc(14px + env(safe-area-inset-bottom));
   }
-  #chatInput{
+  #panelChatInput{
     flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
     border-radius:22px;padding:10px 16px;color:var(--text);font-size:16px;outline:none;
     font-family:inherit;resize:none;max-height:80px;
   }
-  #chatSendBtn{
+  #panelSendBtn{
     width:42px;height:42px;border-radius:50%;border:none;
     background:linear-gradient(135deg,var(--accent),#6d28d9);
     color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;align-self:flex-end;
     display:flex;align-items:center;justify-content:center;
   }
-  #chatSendBtn:disabled{opacity:.4;cursor:not-allowed;}
+  #panelSendBtn:disabled{opacity:.4;cursor:not-allowed;}
   .chat-setup-msg{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:12px;padding:24px;text-align:center;color:var(--muted);
@@ -3658,11 +3543,11 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .tools-page-title {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 26px; letter-spacing: 1.5px; color: #fff;
+    font-size: 30px; letter-spacing: 1.5px; color: #fff;
     position: relative; z-index: 1; margin-bottom: 2px;
   }
   .tools-page-sub {
-    font-size: 11px; color: rgba(255,255,255,.4); font-weight: 600;
+    font-size: 13px; color: rgba(255,255,255,.4); font-weight: 600;
     position: relative; z-index: 1;
   }
 
@@ -3773,14 +3658,14 @@ body.dark #fullMap .leaflet-tile-pane {
   .tpb-info { flex: 1; min-width: 0; }
   .tpb-title {
     font-family: 'DM Sans', sans-serif;
-    font-size: 15px; font-weight: 800; color: var(--text); line-height: 1.1;
-    margin-bottom: 3px;
+    font-size: 17px; font-weight: 800; color: var(--text); line-height: 1.2;
+    margin-bottom: 4px;
   }
   .tpb-sub {
-    font-size: 11px; color: var(--muted); font-weight: 600; line-height: 1.4;
+    font-size: 13px; color: var(--muted); font-weight: 600; line-height: 1.4;
   }
   .tpb-arrow {
-    font-size: 22px; color: var(--tclr, var(--muted));
+    font-size: 24px; color: var(--tclr, var(--muted));
     font-weight: 300; flex-shrink: 0; position: relative;
     line-height: 1;
   }
@@ -5221,18 +5106,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     flex: 1;
     background: #2a3942;
     border: none;
-    border-radius: 22px; padding: 10px 16px;
-    font-size: 15px; color: #e9edef;
+    border-radius: 22px; padding: 13px 18px;
+    font-size: 16px; color: #e9edef;
     font-family: 'DM Sans', sans-serif;
-    resize: none; max-height: 120px; min-height: 42px;
+    resize: none; max-height: 120px; min-height: 48px;
     -webkit-appearance: none; outline: none; line-height: 1.4;
   }
   #chatInput::placeholder { color: rgba(233,237,239,.35); }
   #chatSendBtn {
-    width: 44px; height: 44px; border-radius: 50%;
+    width: 48px; height: 48px; border-radius: 50%;
     background: #00a884; border: none; color: #fff;
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; cursor: pointer; touch-action: manipulation;
+    font-size: 22px; cursor: pointer; touch-action: manipulation;
     flex-shrink: 0; transition: transform .12s, opacity .12s;
   }
   #chatSendBtn:active { transform: scale(.9); }
@@ -5265,7 +5150,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
     // Expose to global scope for the chat functions
     window._chatDB              = db;
-    window._chatRef             = (ch) => ref(db, `hos_chat/${ch}/messages`);
+    window._chatRef             = (ch) => ref(db, `chat/${ch}/messages`);
     window._chatPush            = push;
     window._chatQuery           = query;
     window._chatOrderByChild    = orderByChild;
@@ -5280,344 +5165,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </head>
 
 <body>
-
-<!-- ══════════════════════════════════════════════════════════
-     PAYWALL SCREEN — Se muestra si el usuario no tiene plan
-══════════════════════════════════════════════════════════ -->
-<style>
-#paywallScreen {
-  position: fixed; inset: 0; z-index: 99999;
-  display: flex; flex-direction: column; align-items: center;
-  background: #0a0b10;
-  overflow-y: auto;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-#paywallScreen.pw-hidden { display: none; }
-
-/* Fondo carretera oscura */
-#pwRoadBg {
-  position: absolute; top: 0; left: 0; width: 100%; height: 52%;
-  overflow: hidden; pointer-events: none;
-  background: linear-gradient(180deg, #0a0b10 0%, #111827 35%, #1c1f2e 60%, #0a0b10 100%);
-}
-#pwRoadBg::before {
-  content: '';
-  position: absolute; bottom: 0; left: 0; right: 0; height: 70%;
-  background:
-    linear-gradient(180deg, transparent 0%, rgba(15,18,30,0.9) 100%),
-    repeating-linear-gradient(
-      180deg,
-      #1a1d2e 0px, #1a1d2e 30px,
-      #0a0c15 30px, #0a0c15 60px
-    );
-}
-/* Carril central */
-#pwRoadBg::after {
-  content: '';
-  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 6px; height: 100%;
-  background: repeating-linear-gradient(
-    180deg,
-    #f97316 0px, #f97316 40px,
-    transparent 40px, transparent 80px
-  );
-  opacity: 0.25;
-  filter: blur(1px);
-}
-
-/* Faros de carretera - efecto de luces */
-.pw-light-left, .pw-light-right {
-  position: absolute;
-  bottom: 0;
-  width: 40%;
-  height: 80%;
-  pointer-events: none;
-}
-.pw-light-left {
-  left: 0;
-  background: radial-gradient(ellipse at 20% 100%, rgba(255,200,50,0.08) 0%, transparent 70%);
-}
-.pw-light-right {
-  right: 0;
-  background: radial-gradient(ellipse at 80% 100%, rgba(255,200,50,0.08) 0%, transparent 70%);
-}
-
-/* Estrellas / ambiente nocturno */
-.pw-stars {
-  position: absolute; top: 0; left: 0; width: 100%; height: 50%;
-  background-image:
-    radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px),
-    radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px),
-    radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px);
-  background-size: 150px 150px, 100px 100px, 200px 200px;
-  background-position: 10px 20px, 60px 80px, 30px 50px;
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Botón X */
-#pwClose {
-  position: absolute; top: 18px; left: 18px; z-index: 10;
-  width: 36px; height: 36px; border-radius: 50%;
-  background: rgba(255,255,255,0.12); border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 18px; font-weight: 700;
-  backdrop-filter: blur(8px);
-  transition: background .2s;
-}
-#pwClose:active { background: rgba(255,255,255,0.2); }
-
-/* Logo area */
-#pwLogoWrap {
-  position: relative; z-index: 5;
-  margin-top: 60px;
-  display: flex; flex-direction: column; align-items: center;
-}
-#pwLogoImg {
-  width: 130px; height: 130px; object-fit: contain;
-  border-radius: 24px;
-  filter: drop-shadow(0 8px 32px rgba(249,115,22,0.4));
-}
-#pwTitle {
-  margin-top: 18px;
-  font-size: 26px; font-weight: 900; color: #ffffff;
-  text-align: center; letter-spacing: -0.5px;
-  text-shadow: 0 2px 20px rgba(0,0,0,0.8);
-  line-height: 1.2;
-}
-#pwSubtitle {
-  margin-top: 8px;
-  font-size: 13px; color: rgba(255,255,255,0.55);
-  text-align: center; max-width: 260px;
-  line-height: 1.5;
-}
-
-/* Cards de planes */
-#pwPlansWrap {
-  position: relative; z-index: 5;
-  width: 100%; max-width: 420px;
-  padding: 0 20px; box-sizing: border-box;
-  margin-top: 28px;
-  display: flex; flex-direction: column; gap: 12px;
-}
-.pw-plan-card {
-  background: rgba(28,32,48,0.9);
-  border: 2px solid rgba(255,255,255,0.08);
-  border-radius: 18px; padding: 16px 18px;
-  cursor: pointer;
-  transition: border-color .2s, transform .15s;
-  backdrop-filter: blur(10px);
-  position: relative;
-}
-.pw-plan-card.pw-selected {
-  border-color: #f97316;
-  background: rgba(249,115,22,0.08);
-}
-.pw-plan-card:active { transform: scale(0.98); }
-.pw-plan-radio {
-  position: absolute; top: 50%; right: 18px; transform: translateY(-50%);
-  width: 24px; height: 24px; border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.2);
-  display: flex; align-items: center; justify-content: center;
-  transition: border-color .2s;
-}
-.pw-plan-radio::after {
-  content: ''; width: 12px; height: 12px; border-radius: 50%;
-  background: #f97316; display: none;
-}
-.pw-plan-card.pw-selected .pw-plan-radio { border-color: #f97316; }
-.pw-plan-card.pw-selected .pw-plan-radio::after { display: block; }
-/* check icon cuando seleccionado */
-.pw-plan-card.pw-selected .pw-radio-check { display: flex !important; }
-.pw-radio-check {
-  display: none; position: absolute; top: 14px; right: 14px;
-  width: 26px; height: 26px; border-radius: 50%;
-  background: #f97316; align-items: center; justify-content: center;
-  font-size: 14px; color: #fff;
-}
-
-.pw-plan-name { font-size: 17px; font-weight: 800; color: #ffffff; margin-bottom: 3px; }
-.pw-plan-price { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 10px; }
-.pw-plan-desc { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.5; max-width: 240px; }
-
-/* Botón principal */
-#pwCta {
-  position: relative; z-index: 5;
-  margin: 24px 20px 40px;
-  width: calc(100% - 40px); max-width: 380px;
-  padding: 17px;
-  background: linear-gradient(135deg, #f97316, #ea580c);
-  color: #fff; border: none; border-radius: 16px;
-  font-size: 17px; font-weight: 900; cursor: pointer;
-  box-shadow: 0 8px 32px rgba(249,115,22,0.45);
-  transition: transform .15s, box-shadow .15s;
-  letter-spacing: 0.3px;
-}
-#pwCta:active { transform: scale(0.97); box-shadow: 0 4px 16px rgba(249,115,22,0.3); }
-
-/* Texto legal */
-#pwLegal {
-  position: relative; z-index: 5;
-  font-size: 10px; color: rgba(255,255,255,0.25);
-  text-align: center; max-width: 300px;
-  margin-bottom: 32px; line-height: 1.6;
-}
-</style>
-
-<div id="paywallScreen">
-  <!-- Fondo carretera -->
-  <div id="pwRoadBg">
-    <div class="pw-stars"></div>
-    <div class="pw-light-left"></div>
-    <div class="pw-light-right"></div>
-  </div>
-
-  <!-- Cerrar -->
-  <button id="pwClose" onclick="pwClose()" title="Continuar sin plan">✕</button>
-
-  <!-- Logo + título -->
-  <div id="pwLogoWrap">
-    <img id="pwLogoImg" src="HOS_Tracker_Version1.png" alt="HOS Tracker" />
-    <div id="pwTitle">HOS Tracker Pro</div>
-    <div id="pwSubtitle">Gestiona tus horas de servicio con GPS, rutas y alertas en tiempo real</div>
-  </div>
-
-  <!-- Planes -->
-  <div id="pwPlansWrap">
-
-    <!-- Plan Trial / Mensual -->
-    <div class="pw-plan-card pw-selected" id="pwCardMonthly" onclick="pwSelectPlan('monthly')">
-      <div class="pw-radio-check" id="pwCheckMonthly">✓</div>
-      <div class="pw-plan-radio" id="pwRadioMonthly"></div>
-      <div class="pw-plan-name">Premium Mensual</div>
-      <div class="pw-plan-price">7 días gratis, luego $9.99/mes</div>
-      <div class="pw-plan-desc">GPS en tiempo real, rutas ilimitadas, alertas DOT y acceso completo.</div>
-    </div>
-
-    <!-- Plan Anual -->
-    <div class="pw-plan-card" id="pwCardYearly" onclick="pwSelectPlan('yearly')">
-      <div class="pw-radio-check" id="pwCheckYearly" style="display:none">✓</div>
-      <div class="pw-plan-radio" id="pwRadioYearly"></div>
-      <div class="pw-plan-name">Premium Anual</div>
-      <div class="pw-plan-price">7 días gratis, luego $49.99/año <span style="color:#10b981;font-weight:800"> — Ahorra 58%</span></div>
-      <div class="pw-plan-desc">GPS en tiempo real, rutas ilimitadas, alertas DOT y acceso completo.</div>
-    </div>
-
-  </div>
-
-  <!-- CTA -->
-  <button id="pwCta" onclick="pwStartTrial()">Probar Gratis 7 Días</button>
-
-  <!-- Legal -->
-  <div id="pwLegal">
-    Sin cargo durante 7 días. Cancela cuando quieras.<br>
-    Al continuar aceptas los Términos de Servicio y Privacidad.
-  </div>
-</div>
-
-<script>
-/* ══════════════════════════════════════════════════════════
-   PAYWALL SCREEN — Logic
-══════════════════════════════════════════════════════════ */
-(function() {
-  const PW_PLAN_KEY = 'hos_subscription';
-  const PW_DONE_KEY = 'hos_onboarding_done';
-  let _pwPlan = 'monthly';
-
-  function pwShow() {
-    document.getElementById('paywallScreen').classList.remove('pw-hidden');
-    // Usar el mismo logo que el onboarding si está disponible
-    const obLogo = document.getElementById('obLogoImg');
-    const pwLogo = document.getElementById('pwLogoImg');
-    if (obLogo && obLogo.src && !obLogo.src.includes('HOS_Tracker_Version1')) {
-      pwLogo.src = obLogo.src;
-    }
-  }
-
-  window.pwClose = function() {
-    // Cerrar con plan "free" básico
-    localStorage.setItem(PW_PLAN_KEY, 'free');
-    localStorage.setItem(PW_DONE_KEY, '1');
-    document.getElementById('paywallScreen').classList.add('pw-hidden');
-  };
-
-  window.pwSelectPlan = function(plan) {
-    _pwPlan = plan;
-    document.getElementById('pwCardMonthly').classList.toggle('pw-selected', plan === 'monthly');
-    document.getElementById('pwCardYearly').classList.toggle('pw-selected', plan === 'yearly');
-    document.getElementById('pwCheckMonthly').style.display = plan === 'monthly' ? 'flex' : 'none';
-    document.getElementById('pwCheckYearly').style.display  = plan === 'yearly'  ? 'flex' : 'none';
-    document.getElementById('pwRadioMonthly').style.display = plan === 'monthly' ? 'none' : '';
-    document.getElementById('pwRadioYearly').style.display  = plan === 'yearly'  ? 'none' : '';
-  };
-
-  window.pwStartTrial = function() {
-    const now = Date.now();
-    const planData = { type: _pwPlan, trialStart: now, trialDays: 7, status: 'trial' };
-    localStorage.setItem(PW_PLAN_KEY, JSON.stringify(planData));
-
-    // Guardar estado del trial en cache para el Service Worker
-    if ('caches' in window) {
-      caches.open('hos-data-v1').then(cache => {
-        cache.put('trial-state', new Response(JSON.stringify(planData)));
-      });
-    }
-
-    // Registrar periodic sync diario para notificaciones del trial
-    if (window._swReg && window._swReg.periodicSync) {
-      window._swReg.periodicSync.register('trial-check', { minInterval: 24 * 60 * 60 * 1000 })
-        .catch(() => {});
-    }
-
-    // Notificación de bienvenida inmediata
-    setTimeout(() => {
-      if (typeof sendHOSAlert === 'function') {
-        sendHOSAlert('🎉 ¡Bienvenido a HOS Tracker Pro! Tu prueba de 7 días ha comenzado. Te notificaremos cada día cuánto tiempo te queda.');
-      }
-    }, 3000);
-
-    // NO establecer OB_KEY aquí — el onboarding debe correr después del paywall
-    document.getElementById('paywallScreen').classList.add('pw-hidden');
-    // Mostrar el onboarding de registro si no se ha completado
-    if (!localStorage.getItem(PW_DONE_KEY)) {
-      const ob = document.getElementById('onboardOverlay');
-      if (ob) {
-        ob.classList.remove('ob-hidden');
-        if (typeof goTo === 'function') goTo(1);
-      }
-    }
-  };
-
-  function pwHide() {
-    document.getElementById('paywallScreen').classList.add('pw-hidden');
-  }
-
-  // Si tiene suscripción válida → ocultar paywall y dejar pasar a la app
-  function pwInit() {
-    const raw = localStorage.getItem(PW_PLAN_KEY);
-    if (!raw) return; // sin plan → paywall queda visible
-
-    try {
-      const plan = JSON.parse(raw);
-      if (!plan || !plan.status || plan.status === 'free') return;
-      if (plan.status === 'trial') {
-        if (!plan.trialStart || !plan.trialDays) return;
-        const elapsed = (Date.now() - plan.trialStart) / (1000 * 60 * 60 * 24);
-        if (elapsed > plan.trialDays) return; // trial vencido → paywall visible
-        pwHide(); return; // trial válido → ocultar paywall
-      }
-      if (plan.status === 'active' || plan.status === 'paid') {
-        pwHide(); return;
-      }
-    } catch(e) {
-      return; // cualquier error → paywall visible
-    }
-  }
-
-  // Ejecutar inmediatamente
-  pwInit();
-})();
-</script>
 
 
 <div class="bg-icons" aria-hidden="true">
@@ -5664,7 +5211,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- FLOATING CHAT BUTTON (hidden — replaced by side tab) -->
-  <button id="chatFab" onclick="openChatPanel()" aria-label="Driver Chat" style="display:none">
+  <button id="chatFab" onclick="openChatChannel('general')" aria-label="Driver Chat" style="display:none">
     💬<span id="chatFabBadge"></span>
   </button>
 
@@ -5693,7 +5240,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <span class="side-tab-label">Comunidad</span>
     </button>
     <!-- Btn 3: Live Chat (conversaciones entre choferes) -->
-    <button class="side-tab-btn" onclick="closeSideTabMenu();openChatPanel()" aria-label="Live Chat">
+    <button class="side-tab-btn" onclick="closeSideTabMenu();openChatChannel('general')" aria-label="Live Chat">
       <span class="side-tab-icon">💬</span>
       <span class="side-tab-label">Live Chat</span>
     </button>
@@ -5770,8 +5317,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
       <div class="hero-btns" style="align-items:center;gap:6px">
-        <button class="hero-btn" id="themeToggle" title="Cambiar color">🌙</button>
-        <button class="hero-btn" id="langToggleBtn" title="Cambiar idioma" style="font-size:12px;font-weight:900;letter-spacing:.5px">US</button>
+        <button class="hero-btn" id="themeToggle" title="Cambiar color" onclick="isDark=!isDark;localStorage.setItem('hos_theme',isDark?'dark':'light');applyTheme()">🌙</button>
         <!-- hidden controls kept for JS compatibility -->
         <button id="gpsBtn" style="display:none"></button>
         <button id="menuBtn" style="display:none"></button>
@@ -5888,7 +5434,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <div id="planAvatarImg"></div>
             <div id="planAvatarName"></div>
           </div>
-          <div style="font-size:13px;font-weight:800;color:var(--text);letter-spacing:.3px">🗺️ Plan de Ruta</div>
+          <div style="font-size:16px;font-weight:800;color:var(--text);letter-spacing:.3px">🗺️ Plan de Ruta</div>
           <button class="hist-trigger-btn" onclick="openRouteHistory()">
             🕐 <span id="histCount"></span>
           </button>
@@ -5911,7 +5457,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div style="position:relative;margin-bottom:8px">
             <div class="stop-row-mobile" id="stopRowDest">
               <span class="stop-icon">🏁</span>
-              <input id="destInput" placeholder="Destino — ciudad o dirección" autocomplete="off" oninput="handleDestInput(this.value)" style="flex:1;background:transparent;border:none;padding:2px 0;font-size:15px;box-shadow:none;min-height:44px;color:var(--text)" />
+              <input id="destInput" placeholder="Destino — ciudad o dirección" autocomplete="off" oninput="handleDestInput(this.value)" style="flex:1;background:transparent;border:none;padding:2px 0;font-size:17px;box-shadow:none;min-height:50px;color:var(--text)" />
             </div>
             <div class="suggestions" id="destSugg" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999"></div>
           </div>
@@ -6194,6 +5740,34 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             </div>
           </div>
 
+          <div class="profile-selects">
+            <div class="profile-select-wrap">
+              <div class="profile-select-label">📍 State</div>
+              <select class="profile-select" id="profileStateSelect" onchange="saveDriverProfile()">
+                <option value="">-- State --</option>
+                <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+                <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+                <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+                <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+                <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+                <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+                <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+                <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+                <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+                <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+                <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+                <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+                <option>Wisconsin</option><option>Wyoming</option><option>Puerto Rico</option>
+              </select>
+              <span class="profile-select-arrow">▾</span>
+            </div>
+            <div class="profile-select-wrap">
+              <div class="profile-select-label">🪪 CDL Number</div>
+              <input class="profile-select" id="profileCdlInput" placeholder="CDL # (opcional)" maxlength="20"
+                style="font-family:inherit;font-size:13px;color:var(--text);background:transparent;border:none;outline:none;width:100%;padding:0"
+                oninput="saveDriverProfile()">
+            </div>
+          </div>
 
           <div class="profile-mode-badge interstate" id="profileModeBadge">
             <div class="profile-mode-dot"></div>
@@ -6211,7 +5785,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <div class="sett-value" id="langVal">English</div>
             <span class="sett-arrow">›</span>
           </div>
-          <div class="sett-row" id="countryRow" style="display:none!important">
+          <div class="sett-row" id="countryRow">
             <div class="sett-icon" style="background:#d1fae5">🌍</div>
             <div class="sett-label" id="settCountryRow">Country Filter</div>
             <div class="sett-value" id="countryVal">All</div>
@@ -6236,7 +5810,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
 
-      <div class="sett-section" id="countryPanel" style="display:none!important">
+      <div class="sett-section" id="countryPanel" style="display:none">
         <div class="sett-section-title" id="settCountryRowTitle">Country Filter</div>
         <div class="sett-group" style="margin:0 14px">
           <div class="sett-row" style="cursor:default">
@@ -6334,7 +5908,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           </div>
 
           <!-- Trailer height input (siempre visible) -->
-          <div id="trailerHeightRow" class="sett-row" style="cursor:default;display:none!important;background:var(--surface2)">
+          <div id="trailerHeightRow" class="sett-row" style="cursor:default;display:flex;background:var(--surface2)">
             <div class="sett-icon" style="background:#fef3c7">📐</div>
             <div class="sett-label" style="font-size:14px">Trailer Height</div>
             <div style="display:flex;align-items:center;gap:6px">
@@ -6746,6 +6320,36 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="tpb-arrow" id="tempArrowStatus">›</div>
       </button>
 
+      <!-- Bridge & Weight Restrictions -->
+      <button class="tool-page-btn" onclick="openBridgeRestrSheet()" style="--tclr:#f97316;--tcbg:rgba(249,115,22,.1);--tcbdr:rgba(249,115,22,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#ea580c,#f97316)">🌉</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Restricciones de Altura/Peso</div>
+          <div class="tpb-sub">Alertas de puentes y carreteras con límite de altura y peso</div>
+        </div>
+        <div class="tpb-arrow">›</div>
+      </button>
+
+      <!-- No-Truck Zones -->
+      <button class="tool-page-btn" onclick="openNoTruckSheet()" style="--tclr:#ec4899;--tcbg:rgba(236,72,153,.1);--tcbdr:rgba(236,72,153,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#be185d,#ec4899)">🚫</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Zonas No-Truck</div>
+          <div class="tpb-sub">Alertas de zonas restringidas para vehículos pesados</div>
+        </div>
+        <div class="tpb-arrow">›</div>
+      </button>
+
+      <!-- Axle Weight Calculator -->
+      <button class="tool-page-btn" onclick="openAxleCalcSheet()" style="--tclr:#a78bfa;--tcbg:rgba(167,139,250,.1);--tcbdr:rgba(167,139,250,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">⚖️</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Calculadora de Peso por Eje</div>
+          <div class="tpb-sub">Distribuye el peso de carga y verifica límites DOT por eje</div>
+        </div>
+        <div class="tpb-arrow">›</div>
+      </button>
+
       <!-- Document Scanner -->
       <button class="tool-page-btn" onclick="openScannerSheet()" style="--tclr:#f59e0b;--tcbg:rgba(245,158,11,.1);--tcbdr:rgba(245,158,11,.3)">
         <div class="tpb-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b)">📄</div>
@@ -6756,156 +6360,182 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="tpb-arrow">›</div>
       </button>
 
-      <!-- Truck Restrictions — expandable inline panel -->
-      <button class="tool-page-btn" id="truckRestrictToggleBtn" onclick="toggleTruckRestrictPanel()" style="--tclr:#6366f1;--tcbg:rgba(99,102,241,.1);--tcbdr:rgba(99,102,241,.3)">
-        <div class="tpb-icon" style="background:linear-gradient(135deg,#4f46e5,#6366f1)">🚛</div>
-        <div class="tpb-info">
-          <div class="tpb-title">Restricciones del Truck</div>
-          <div class="tpb-sub">Altura, peso, ancho, largo, ejes y hazmat para rutas precisas</div>
-        </div>
-        <div class="tpb-arrow" id="truckRestrictArrow">›</div>
-      </button>
-
-      <!-- Inline restrictions panel -->
-      <div id="truckRestrictPanel" style="display:none;margin-bottom:16px;background:var(--card);border-radius:16px;padding:16px;border:1px solid rgba(99,102,241,.3)">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-
-          <!-- Height -->
-          <div style="background:var(--surface2);border-radius:12px;padding:10px 12px;border:1px solid var(--border)">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">📐 Altura (ft)</div>
-            <input type="number" id="truckHeightInput" min="0" max="18" step="0.1" value="13.6"
-              style="width:100%;padding:6px 8px;font-size:15px;font-weight:700;text-align:center;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;box-sizing:border-box"
-              oninput="truckOptions.height=parseFloat(this.value)||0;localStorage.setItem('hos_trailer',this.value)" />
-          </div>
-
-          <!-- Weight -->
-          <div style="background:var(--surface2);border-radius:12px;padding:10px 12px;border:1px solid var(--border)">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">⚖️ Peso (ton)</div>
-            <input type="number" id="truckWeightInput" min="0" max="80" step="0.5" value="0" placeholder="0=sin límite"
-              style="width:100%;padding:6px 8px;font-size:15px;font-weight:700;text-align:center;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;box-sizing:border-box"
-              oninput="truckOptions.weight=parseFloat(this.value)||0;localStorage.setItem('hos_truckWeight',this.value)" />
-          </div>
-
-          <!-- Width -->
-          <div style="background:var(--surface2);border-radius:12px;padding:10px 12px;border:1px solid var(--border)">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">↔️ Ancho (ft)</div>
-            <input type="number" id="truckWidthInput" min="0" max="14" step="0.1" value="0" placeholder="0=sin límite"
-              style="width:100%;padding:6px 8px;font-size:15px;font-weight:700;text-align:center;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;box-sizing:border-box"
-              oninput="truckOptions.width=parseFloat(this.value)||0;localStorage.setItem('hos_truckWidth',this.value)" />
-          </div>
-
-          <!-- Length -->
-          <div style="background:var(--surface2);border-radius:12px;padding:10px 12px;border:1px solid var(--border)">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">↕️ Largo (ft)</div>
-            <input type="number" id="truckLengthInput" min="0" max="80" step="1" value="0" placeholder="0=sin límite"
-              style="width:100%;padding:6px 8px;font-size:15px;font-weight:700;text-align:center;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;box-sizing:border-box"
-              oninput="truckOptions.length=parseFloat(this.value)||0;localStorage.setItem('hos_truckLength',this.value)" />
-          </div>
-
-          <!-- Axles -->
-          <div style="background:var(--surface2);border-radius:12px;padding:10px 12px;border:1px solid var(--border)">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">⚙️ Ejes</div>
-            <input type="number" id="truckAxlesInput" min="2" max="9" step="1" value="5"
-              style="width:100%;padding:6px 8px;font-size:15px;font-weight:700;text-align:center;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;box-sizing:border-box"
-              oninput="truckOptions.axles=parseInt(this.value)||5;localStorage.setItem('hos_truckAxles',this.value)" />
-          </div>
-
-          <!-- Hazmat -->
-          <div style="background:var(--surface2);border-radius:12px;padding:10px 12px;border:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">☢️ Hazmat</div>
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <span style="font-size:12px;font-weight:700;color:var(--text)" id="truckHazmatLabel">No</span>
-              <button class="sett-toggle" id="truckHazmatToggle" onclick="truckOptions.hazmat=!truckOptions.hazmat;document.getElementById('truckHazmatLabel').textContent=truckOptions.hazmat?'Sí':'No';this.classList.toggle('on',truckOptions.hazmat);localStorage.setItem('hos_truckHazmat',truckOptions.hazmat)"></button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Axle Weight Calculator — expandable inline panel -->
-      <button class="tool-page-btn" id="axwToggleBtn" onclick="openAxleWeight()" style="--tclr:#10b981;--tcbg:rgba(16,185,129,.1);--tcbdr:rgba(16,185,129,.3)">
-        <div class="tpb-icon" style="background:linear-gradient(135deg,#059669,#10b981)">⚖️</div>
-        <div class="tpb-info">
-          <div class="tpb-title">Peso por Eje</div>
-          <div class="tpb-sub">Ingresa el ticket de báscula — te dice cuántos huecos mover el tandem</div>
-        </div>
-        <div class="tpb-arrow" id="axwToggleArrow">›</div>
-      </button>
-
-      <!-- Inline panel (hidden by default) -->
-      <div id="axwPanel" style="display:none;margin-bottom:16px">
-
-        <div class="axw-section-title" style="margin-top:4px">📋 Pesos del ticket de báscula</div>
-
-        <div class="axw-card" id="axwCardSteer">
-          <div class="axw-card-icon">🚛</div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <div class="axw-card-label">Eje Delantero (Steer)</div>
-              <span class="axw-badge na" id="axwBadgeSteer">—</span>
-            </div>
-            <div class="axw-card-sub">Límite: 12,000 lbs</div>
-            <div class="axw-input-wrap">
-              <input class="axw-input" type="number" id="axwSteer" placeholder="0" min="0" max="20000" inputmode="numeric" oninput="axwLive()">
-              <span class="axw-unit">lbs</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="axw-card" id="axwCardDrive">
-          <div class="axw-card-icon">⚙️</div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <div class="axw-card-label">Ejes Tracción (Drive)</div>
-              <span class="axw-badge na" id="axwBadgeDrive">—</span>
-            </div>
-            <div class="axw-card-sub">Límite: 34,000 lbs</div>
-            <div class="axw-input-wrap">
-              <input class="axw-input" type="number" id="axwDrive" placeholder="0" min="0" max="50000" inputmode="numeric" oninput="axwLive()">
-              <span class="axw-unit">lbs</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="axw-card" id="axwCardTrailer">
-          <div class="axw-card-icon">🔩</div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <div class="axw-card-label">Ejes Trailer</div>
-              <span class="axw-badge na" id="axwBadgeTrailer">—</span>
-            </div>
-            <div class="axw-card-sub">Límite: 34,000 lbs</div>
-            <div class="axw-input-wrap">
-              <input class="axw-input" type="number" id="axwTrailer" placeholder="0" min="0" max="50000" inputmode="numeric" oninput="axwLive()">
-              <span class="axw-unit">lbs</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="axw-pos-row">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:800;color:var(--text)">Posición actual del tandem</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">Hueco donde están los pines ahora (1 = más al frente)</div>
-          </div>
-          <input class="axw-pos-input" type="number" id="axwCurPos" value="13" min="1" max="25" inputmode="numeric">
-          <span style="font-size:12px;color:var(--muted);font-weight:700">/25</span>
-        </div>
-
-        <button class="axw-calc-btn" onclick="calcAxleWeight()">⚖️ Calcular Balance</button>
-
-        <div id="axwResults" style="display:none">
-          <div class="axw-gross-row">
-            <span style="font-size:12px;font-weight:700;color:var(--muted)">Peso Bruto Total</span>
-            <span class="axw-gross-val ok" id="axwGrossVal">0 lbs</span>
-          </div>
-          <div class="axw-svg-wrap" id="axwSvgWrap"></div>
-          <div class="axw-reco good" id="axwReco"></div>
-        </div>
-
-      </div>
-
     </div>
   </div>
+
+<!-- ══════════════════════════════════════════════════════════
+     🌉  BRIDGE / WEIGHT RESTRICTIONS SHEET
+══════════════════════════════════════════════════════════ -->
+<style>
+.restr-sheet {
+  position:fixed;inset:0;z-index:800;background:#0b173a;
+  display:none;flex-direction:column;overflow-y:auto;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+}
+.restr-sheet.open { display:flex; }
+.restr-topbar {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);
+  background:rgba(15,23,42,.95);position:sticky;top:0;z-index:2;
+}
+.restr-topbar-title { font-size:16px;font-weight:800;color:#f1f5f9; }
+.restr-close { background:rgba(255,255,255,.08);border:none;color:#f1f5f9;font-size:20px;width:36px;height:36px;border-radius:50%;cursor:pointer; }
+.restr-body { padding:16px;display:flex;flex-direction:column;gap:14px; }
+.restr-section { background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px; }
+.restr-section-title { font-size:11px;font-weight:800;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px; }
+.restr-row { display:flex;align-items:center;gap:10px;margin-bottom:10px; }
+.restr-row:last-child { margin-bottom:0; }
+.restr-label { font-size:13px;color:rgba(255,255,255,.7);font-weight:600;flex:1; }
+.restr-input { background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f1f5f9;font-size:14px;font-weight:700;padding:8px 10px;width:90px;text-align:center; }
+.restr-alert-item { display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;margin-bottom:8px; }
+.restr-alert-item:last-child { margin-bottom:0; }
+.restr-alert-item.warn { background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3); }
+.restr-alert-item.danger { background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3); }
+.restr-alert-item.ok { background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2); }
+.restr-alert-ico { font-size:22px;flex-shrink:0;margin-top:1px; }
+.restr-alert-title { font-size:13px;font-weight:800;color:#f1f5f9; }
+.restr-alert-sub { font-size:11px;color:rgba(255,255,255,.5);margin-top:2px; }
+.restr-toggle-row { display:flex;align-items:center;justify-content:space-between;padding:10px 0; }
+.restr-toggle { position:relative;width:46px;height:26px; }
+.restr-toggle input { opacity:0;width:0;height:0; }
+.restr-toggle-slider { position:absolute;inset:0;background:#374151;border-radius:13px;transition:.3s; }
+.restr-toggle input:checked + .restr-toggle-slider { background:#10b981; }
+.restr-toggle-slider:before { content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s; }
+.restr-toggle input:checked + .restr-toggle-slider:before { transform:translateX(20px); }
+/* Axle calc */
+.axle-row { display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06); }
+.axle-row:last-child { border-bottom:none; }
+.axle-name { font-size:13px;font-weight:700;color:#f1f5f9;width:120px;flex-shrink:0; }
+.axle-bar-wrap { flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden; }
+.axle-bar { height:100%;border-radius:4px;transition:width .5s; }
+.axle-val { font-size:13px;font-weight:800;width:80px;text-align:right;flex-shrink:0; }
+.axle-limit { font-size:10px;color:rgba(255,255,255,.35);width:60px;text-align:right;flex-shrink:0; }
+</style>
+
+<!-- Bridge/Weight Restrictions Sheet -->
+<div id="bridgeRestrSheet" class="restr-sheet">
+  <div class="restr-topbar">
+    <button class="restr-close" onclick="closeBridgeRestrSheet()">✕</button>
+    <div class="restr-topbar-title">🌉 Restricciones Altura/Peso</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="restr-body">
+    <!-- Toggle -->
+    <div class="restr-section">
+      <div class="restr-toggle-row">
+        <div>
+          <div style="font-size:14px;font-weight:800;color:#f1f5f9">Alertas activas</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">Avisa cuando una ruta tenga restricción</div>
+        </div>
+        <label class="restr-toggle"><input type="checkbox" id="bridgeAlertToggle" checked onchange="saveBridgeSettings()"><span class="restr-toggle-slider"></span></label>
+      </div>
+    </div>
+    <!-- Truck dimensions -->
+    <div class="restr-section">
+      <div class="restr-section-title">Dimensiones del camión</div>
+      <div class="restr-row">
+        <div class="restr-label">🚛 Altura (ft)</div>
+        <input class="restr-input" type="number" id="truckHeightFt" value="13" min="8" max="18" step="0.1" oninput="saveBridgeSettings()">
+      </div>
+      <div class="restr-row">
+        <div class="restr-label">⚖️ Peso bruto (lbs)</div>
+        <input class="restr-input" type="number" id="truckGrossLbs" value="80000" min="10000" max="130000" step="1000" oninput="saveBridgeSettings()">
+      </div>
+      <div class="restr-row">
+        <div class="restr-label">↔️ Ancho (ft)</div>
+        <input class="restr-input" type="number" id="truckWidthFt" value="8.5" min="6" max="10" step="0.1" oninput="saveBridgeSettings()">
+      </div>
+    </div>
+    <!-- Nearby alerts -->
+    <div class="restr-section">
+      <div class="restr-section-title">Restricciones cercanas</div>
+      <div id="bridgeAlertList">
+        <div class="restr-alert-item ok">
+          <div class="restr-alert-ico">✅</div>
+          <div><div class="restr-alert-title">Sin restricciones detectadas</div><div class="restr-alert-sub">Activa el GPS para verificar en tiempo real</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- No-Truck Zones Sheet -->
+<div id="noTruckSheet" class="restr-sheet">
+  <div class="restr-topbar">
+    <button class="restr-close" onclick="closeNoTruckSheet()">✕</button>
+    <div class="restr-topbar-title">🚫 Zonas No-Truck</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="restr-body">
+    <!-- Toggle -->
+    <div class="restr-section">
+      <div class="restr-toggle-row">
+        <div>
+          <div style="font-size:14px;font-weight:800;color:#f1f5f9">Alertas activas</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">Avisa al entrar a zona restringida para camiones</div>
+        </div>
+        <label class="restr-toggle"><input type="checkbox" id="noTruckToggle" checked onchange="saveNoTruckSettings()"><span class="restr-toggle-slider"></span></label>
+      </div>
+    </div>
+    <!-- Info -->
+    <div class="restr-section">
+      <div class="restr-section-title">Tipos de restricción</div>
+      <div class="restr-alert-item warn"><div class="restr-alert-ico">🚛</div><div><div class="restr-alert-title">HGV Prohibido</div><div class="restr-alert-sub">Vehículos pesados no permitidos (hgv=no)</div></div></div>
+      <div class="restr-alert-item warn"><div class="restr-alert-ico">🏙️</div><div><div class="restr-alert-title">Zona urbana restringida</div><div class="restr-alert-sub">Calles residenciales sin acceso para camiones</div></div></div>
+      <div class="restr-alert-item warn"><div class="restr-alert-ico">⏰</div><div><div class="restr-alert-title">Restricción por horario</div><div class="restr-alert-sub">Algunas zonas restringen camiones en horas pico</div></div></div>
+    </div>
+    <!-- Nearby alerts -->
+    <div class="restr-section">
+      <div class="restr-section-title">Zonas cercanas detectadas</div>
+      <div id="noTruckAlertList">
+        <div class="restr-alert-item ok">
+          <div class="restr-alert-ico">✅</div>
+          <div><div class="restr-alert-title">Ruta libre</div><div class="restr-alert-sub">No se detectaron zonas no-truck cercanas</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Axle Weight Calculator Sheet -->
+<div id="axleCalcSheet" class="restr-sheet">
+  <div class="restr-topbar">
+    <button class="restr-close" onclick="closeAxleCalcSheet()">✕</button>
+    <div class="restr-topbar-title">⚖️ Peso por Eje</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="restr-body">
+    <!-- Inputs -->
+    <div class="restr-section">
+      <div class="restr-section-title">Datos del camión</div>
+      <div class="restr-row">
+        <div class="restr-label">⚖️ Peso bruto total (lbs)</div>
+        <input class="restr-input" type="number" id="axleGrossLbs" value="80000" min="20000" max="130000" step="500" oninput="calcAxleWeight()">
+      </div>
+      <div class="restr-row">
+        <div class="restr-label">🚛 Peso camión vacío (lbs)</div>
+        <input class="restr-input" type="number" id="axleTruckLbs" value="35000" min="10000" max="60000" step="500" oninput="calcAxleWeight()">
+      </div>
+      <div class="restr-row">
+        <div class="restr-label">📦 Carga (calculada)</div>
+        <div id="axleCargoDisplay" style="font-size:14px;font-weight:800;color:#10b981">45,000 lbs</div>
+      </div>
+    </div>
+    <!-- Results -->
+    <div class="restr-section">
+      <div class="restr-section-title">Distribución por eje (18-Wheeler)</div>
+      <div id="axleResults"></div>
+    </div>
+    <!-- DOT Limits reference -->
+    <div class="restr-section">
+      <div class="restr-section-title">Límites DOT federales</div>
+      <div class="restr-alert-item ok"><div class="restr-alert-ico">ℹ️</div><div>
+        <div class="restr-alert-title">Peso máximo legal</div>
+        <div class="restr-alert-sub">Eje delantero (steer): 12,000 lbs · Tándem tractora: 34,000 lbs · Tándem trailer: 34,000 lbs · Gross total: 80,000 lbs</div>
+      </div></div>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════════
      📄  DOCUMENT SCANNER SHEET
@@ -7723,6 +7353,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 ">
   <!-- MAP fills entire screen -->
   <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
+  <!-- Highway mask: covers bottom 50% when speed > 40mph -->
+  <div id="mapHighwayMask" style="display:none;position:absolute;left:0;right:0;bottom:0;height:50%;background:#0b173a;z-index:2;pointer-events:none"></div>
+
     <div class="local-radius-info" id="localRadiusInfo" style="display:none">📍 Local Mode — 100 mi radius</div>
     <div id="routeAlertPill" onclick="switchTab('community')">🚨 Alert on your route — tap</div>
 
@@ -7734,6 +7367,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- MAP SPEED LIMIT SIGN (display only — no buttons inside) -->
   <div id="mapSpeedSign">
+    <!-- Reloj encima del letrero -->
+    <div id="mapSpeedClock" style="
+      background:rgba(10,16,30,0.88);backdrop-filter:blur(8px);
+      border-radius:8px;padding:4px 10px;margin-bottom:5px;
+      text-align:center;font-size:14px;font-weight:800;
+      color:#f1f5f9;letter-spacing:0.5px;pointer-events:none;
+      box-shadow:0 2px 10px rgba(0,0,0,.45);white-space:nowrap;
+    ">--:--</div>
     <div class="mss-sign" id="mssSign">
       <div class="mss-top">SPEED&#10;LIMIT</div>
       <div class="mss-num" id="mssNum">65</div>
@@ -7798,21 +7439,38 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- LEFT PANEL TOGGLE TAB -->
-  <button id="mapLeftPanelBtn" class="open" onclick="toggleMapLeftPanel()" title="Controles del mapa">‹</button>
+  <button id="mapLeftPanelBtn" onclick="toggleMapLeftPanel()" title="Controles del mapa">›</button>
 
   <!-- LEFT SIDE CONTROL COLUMN: estilo, brújula, centrar, color, zoom -->
-  <div id="mapLeftControls">
+  <div id="mapLeftControls" class="panel-hidden">
     <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Estilo de mapa">🗺️</button>
-    <button id="compassBtn"  onclick="toggleHeadingUp()"     title="Norte / Heading-up">🧭</button>
-    <button id="btnRotateL"  onclick="fmRotateMap(-15)"      title="Rotar izquierda 15°">↺</button>
-    <button id="btnRotateR"  onclick="fmRotateMap(15)"       title="Rotar derecha 15°">↻</button>
-    <button id="rotateNorthBtn" onclick="fmResetRotation()" title="Resetear rotación">N↑</button>
+    <button id="compassBtn"  onclick="toggleHeadingUp()"     title="Vista dirección de viaje (toca para Norte)" style="flex-direction:column;gap:1px;height:52px;background:rgba(16,185,129,0.3);border-color:rgba(16,185,129,0.6)"><span style="font-size:17px">🧭</span><span style="font-size:9px;font-weight:800;letter-spacing:.3px;line-height:1">RUTA</span></button>
     <div class="map-ctrl-sep"></div>
     <button id="btnCenter"   title="Centralizar">🎯</button>
     <button id="btnMapColor" onclick="cycleMapColor()"       title="Color del mapa">🎨</button>
     <div class="map-ctrl-sep"></div>
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomIn()">+</button>
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
+    <div class="map-ctrl-sep"></div>
+    <button id="mapSearchBtn" onclick="toggleMapSearch()" title="Buscar destino" style="font-size:18px">🔍</button>
+  </div>
+
+  <!-- BARRA DE BÚSQUEDA DEL MAPA -->
+  <div id="mapSearchOverlay" style="
+    display:none;position:absolute;
+    top:calc(58px + env(safe-area-inset-top,0px));
+    left:8px;right:8px;z-index:20;pointer-events:all;
+  ">
+    <div style="background:rgba(10,16,30,0.96);border-radius:14px;padding:10px 14px;backdrop-filter:blur(14px);box-shadow:0 4px 28px rgba(0,0,0,.7);border:1px solid rgba(255,255,255,0.1)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:17px;flex-shrink:0">🔍</span>
+        <input id="mapSearchInput" type="text" placeholder="Buscar destino..." autocomplete="off"
+               oninput="handleMapSearch(this.value)"
+               style="flex:1;background:transparent;border:none;color:#f1f5f9;font-size:15px;outline:none;min-height:38px;caret-color:#06b6d4" />
+        <button onclick="closeMapSearch()" style="background:none;border:none;color:#6b7280;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent">✕</button>
+      </div>
+    </div>
+    <div id="mapSearchSugg" style="display:none;background:rgba(10,16,30,0.97);border-radius:12px;margin-top:5px;overflow:hidden;box-shadow:0 4px 28px rgba(0,0,0,.6);max-height:270px;overflow-y:auto"></div>
   </div>
 
   <!-- AUTO-FOLLOW button (bottom-left) -->
@@ -7821,7 +7479,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- RIGHT SIDE CONTROL COLUMN: Community Reports + SOS -->
   <div id="mapRightControls">
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
-    <button id="sosFab" onclick="triggerSOS()">SOS</button>
+    <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
   </div>
 
   <!-- POI Filter chips (ocultos, se activan por JS) -->
@@ -7835,7 +7493,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- TOP BAR -->
   <div style="
-    position:fixed;top:0;left:0;right:0;z-index:20200;
+    position:absolute;top:0;left:0;right:0;z-index:10;
     padding-top:calc(10px + env(safe-area-inset-top, 0px));
     padding-left:calc(10px + env(safe-area-inset-left, 0px));
     padding-right:calc(10px + env(safe-area-inset-right, 0px));
@@ -7865,6 +7523,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
         <div class="wx-desc" id="wxDesc">Clima</div>
       </div>
+
+      <!-- SOS ahora está en mapRightControls -->
 
     </div>
 
@@ -8041,6 +7701,39 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
+    <!-- BREAK TIMER OVERLAY (aparece cuando el driver se detiene para el descanso) -->
+    <div id="breakTimerOverlay" style="display:none;position:absolute;bottom:calc(108px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:25;pointer-events:none;white-space:nowrap">
+      <div style="background:rgba(10,16,30,0.96);border-radius:22px;padding:16px 28px;text-align:center;backdrop-filter:blur(16px);border:2.5px solid #10b981;box-shadow:0 8px 36px rgba(0,0,0,.7);min-width:210px">
+        <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.2px;color:#10b981;margin-bottom:2px">⏸ DESCANSO OBLIGATORIO</div>
+        <div id="breakTimerCount" style="font-size:46px;font-weight:900;color:#fff;font-family:'Courier New',monospace;letter-spacing:3px;line-height:1.15;text-shadow:0 2px 10px rgba(16,185,129,.4)">30:00</div>
+        <div id="breakTimerLabel" style="font-size:11px;color:#94a3b8;margin-top:2px">Tiempo restante de pausa</div>
+        <div style="height:5px;background:rgba(255,255,255,.08);border-radius:999px;margin-top:10px;overflow:hidden">
+          <div id="breakTimerBar" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width .8s ease"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIOLATION OVERLAY (si sigue manejando sin tomar pausa) -->
+    <div id="breakViolationBanner" style="display:none;position:absolute;top:calc(64px + env(safe-area-inset-top,0px));left:10px;right:10px;z-index:26;pointer-events:all">
+      <div style="background:rgba(127,29,29,0.97);border-radius:16px;padding:14px 16px;backdrop-filter:blur(14px);border:2px solid #ef4444;box-shadow:0 6px 28px rgba(239,68,68,.5)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:28px">🚨</span>
+          <div>
+            <div style="font-size:14px;font-weight:900;color:#fff;letter-spacing:.3px">VIOLACIÓN HOS — 30-MIN BREAK</div>
+            <div style="font-size:11px;color:rgba(255,180,180,0.9);margin-top:1px">8 horas manejando sin descanso obligatorio</div>
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,.35);border-radius:10px;padding:10px 12px;font-size:11px;color:#fca5a5;line-height:1.6">
+          ⚖️ <b style="color:#fff">Multa FMCSA: $1,000 – $16,000</b> por conductor<br>
+          📋 <b style="color:#fff">CSA Points: +7</b> (puede causar out-of-service)<br>
+          🏢 <b style="color:#fff">Empresa: hasta $91,000</b> si hay patrón de violaciones
+        </div>
+        <button onclick="document.getElementById('breakViolationBanner').style.display='none'" style="margin-top:10px;width:100%;padding:10px;background:rgba(239,68,68,0.25);border:1.5px solid #ef4444;border-radius:10px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">
+          ✓ Entendido — Deteniéndome ahora
+        </button>
+      </div>
+    </div>
+
     <!-- Stop button (only when tracking) -->
     <button id="fmStopBtn" onclick="fmStopTracking()" style="
       display:none;width:100%;margin-top:12px;padding:14px;
@@ -8054,6 +7747,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 <style>
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+@keyframes truckBubblePulse { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 4px rgba(16,185,129,.0)} 50%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 8px rgba(16,185,129,.35)} }
+@keyframes glowGreen { 0%,100%{box-shadow:0 0 0 3px rgba(59,130,246,.9),0 0 0 9px rgba(59,130,246,.35),0 0 0 18px rgba(59,130,246,.12),0 6px 24px rgba(0,0,0,.7)} 50%{box-shadow:0 0 0 3px rgba(59,130,246,1),0 0 0 13px rgba(59,130,246,.45),0 0 0 26px rgba(59,130,246,.18),0 6px 24px rgba(0,0,0,.7)} }
+@keyframes glowRed   { 0%,100%{box-shadow:0 0 0 3px rgba(239,68,68,.9),0 0 0 9px rgba(239,68,68,.4),0 0 0 18px rgba(239,68,68,.15),0 6px 24px rgba(0,0,0,.7)} 50%{box-shadow:0 0 0 3px rgba(239,68,68,1),0 0 0 14px rgba(239,68,68,.5),0 0 0 28px rgba(239,68,68,.2),0 6px 24px rgba(0,0,0,.7)} }
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
@@ -8383,6 +8079,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div id="pvTruck" style="color:#a78bfa;font-size:13px;font-weight:700">—</div>
           <div style="color:#64748b;font-size:11px;margin-top:2px">Camión</div>
         </div>
+        <div style="background:#0f172a;border-radius:12px;padding:12px;text-align:center;grid-column:1/-1">
+          <div id="pvCdl" style="color:#38bdf8;font-size:13px;font-weight:700;letter-spacing:.5px">—</div>
+          <div style="color:#64748b;font-size:11px;margin-top:2px">🪪 CDL Number</div>
+        </div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -8455,6 +8155,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 ══════════════════════════════════════════════════════════ -->
 
 <!-- Toast notification (shared) -->
+<!-- State border welcome banner -->
+<div id="stateBanner">
+  <span class="sb-flag">🏁</span>
+  <div class="sb-welcome">Bienvenido a</div>
+  <div class="sb-name" id="stateBannerName">—</div>
+</div>
+
 <div class="safety-toast" id="safetyToast">
   <div class="toast-icon" id="toastIcon">⚠️</div>
   <div class="toast-body">
@@ -8970,7 +8677,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 <!-- Firebase SDK (Realtime Database for cross-device chat) -->
 <script type="module">
-  import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -8993,7 +8700,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   let db, messagesRef, presenceRef, connectedRef;
 
   try {
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
     db = getDatabase(app);
     messagesRef = ref(db, 'chat/messages');
     connectedRef = ref(db, '.info/connected');
@@ -9174,12 +8881,12 @@ let trailerHeight   = parseFloat(localStorage.getItem('hos_trailer') || '13.6');
 /* ── Truck route options ──────────────────────── */
 let truckOptions = {
   routeType: 'fastest', // fastest | shortest | avoid_tolls | avoid_highways
-  height: parseFloat(localStorage.getItem('hos_trailer')     || '13.6'),
-  weight: parseFloat(localStorage.getItem('hos_truckWeight') || '0'),
-  width:  parseFloat(localStorage.getItem('hos_truckWidth')  || '0'),
-  length: parseFloat(localStorage.getItem('hos_truckLength') || '0'),
-  axles:  parseInt( localStorage.getItem('hos_truckAxles')   || '5'),
-  hazmat: localStorage.getItem('hos_truckHazmat') === 'true',
+  height: parseFloat(localStorage.getItem('hos_trailer') || '13.6'), // ft
+  weight: 0,   // metric tons (0 = no restriction)
+  width:  0,   // ft (0 = no restriction)
+  length: 0,   // ft (0 = no restriction)
+  axles:  5,
+  hazmat: false,
 };
 
 // Fatigue internals
@@ -9245,6 +8952,35 @@ function getGPSPosition(maxAgeMs = 4000, timeoutMs = 12000) {
    SHARED TOAST SYSTEM
 ════════════════════════════════════════════════════════════ */
 let toastTimer = null;
+/* ── Sonidos de notificación (Web Audio API) ── */
+function playNotifSound(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const play = (freq, start, dur, vol = 0.28) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + start);
+      gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur + 0.05);
+    };
+    if (type === 'danger') {
+      play(880, 0, 0.14, 0.45); play(880, 0.18, 0.14, 0.45); play(880, 0.36, 0.28, 0.55);
+    } else if (type === 'warning') {
+      play(660, 0, 0.18, 0.3); play(880, 0.24, 0.22, 0.35);
+    } else if (type === 'success') {
+      play(523, 0, 0.1); play(659, 0.13, 0.1); play(784, 0.26, 0.22, 0.35);
+    } else {
+      play(520, 0, 0.18);
+    }
+  } catch {}
+}
+
 function showToast(type, icon, title, msg, autoDismiss = 6000) {
   const el = document.getElementById('safetyToast');
   el.className = `safety-toast ${type}`;
@@ -9257,6 +8993,7 @@ function showToast(type, icon, title, msg, autoDismiss = 6000) {
   if (toastTimer) clearTimeout(toastTimer);
   if (autoDismiss) toastTimer = setTimeout(hideToast, autoDismiss);
   vibrate(type === 'danger' ? [200,80,200,80,400] : [100,50,100]);
+  playNotifSound(type);
 }
 function hideToast() {
   document.getElementById('safetyToast').classList.remove('show');
@@ -10000,6 +9737,13 @@ function initDriveHoursDrag() {
 }
 
 function updateSpeedometer(mph) {
+  // ── Map shrink when > 40 mph (mask bottom 50%) ───────────
+  const hwMask = document.getElementById('mapHighwayMask');
+  if (hwMask) {
+    const isHighway = mph > 40;
+    hwMask.style.display = isHighway ? 'block' : 'none';
+  }
+
   // Update the inline speed sign (below speed limit sign)
   const mySpeedNum = document.getElementById('mssMySpeedNum');
   const mySpeedSign = document.getElementById('mssMySpeed');
@@ -10256,6 +10000,9 @@ let speedLimitExceeded = false;
 let speedToastTimer    = null;
 let lastStateCheck     = 0;
 let lastRoadSpeedCheck = 0;
+let lastBorderWarnState = '';
+let lastBorderWarnCheck = 0;
+let stateBannerTimer    = null;
 
 function toggleSpeedLimit(btn) {
   speedLimitActive = !speedLimitActive;
@@ -10266,6 +10013,61 @@ function toggleSpeedLimit(btn) {
   if (!speedLimitActive) {
     document.getElementById('speedLimitWidget').classList.remove('visible');
   }
+}
+
+function showStateBanner(name) {
+  const el = document.getElementById('stateBanner');
+  const nm = document.getElementById('stateBannerName');
+  if (!el || !nm) return;
+  nm.textContent = name;
+  el.classList.add('show');
+  if (stateBannerTimer) clearTimeout(stateBannerTimer);
+  stateBannerTimer = setTimeout(() => el.classList.remove('show'), 5000);
+  vibrate([150, 60, 150, 60, 300]);
+}
+
+function destPointMiles(lat, lon, headingDeg, miles) {
+  const R = 3958.8;
+  const d = miles / R;
+  const b = headingDeg * Math.PI / 180;
+  const φ1 = lat * Math.PI / 180;
+  const λ1 = lon * Math.PI / 180;
+  const φ2 = Math.asin(Math.sin(φ1)*Math.cos(d) + Math.cos(φ1)*Math.sin(d)*Math.cos(b));
+  const λ2 = λ1 + Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(φ1), Math.cos(d)-Math.sin(φ1)*Math.sin(φ2));
+  return { lat: φ2 * 180/Math.PI, lon: λ2 * 180/Math.PI };
+}
+
+async function checkStateBorderAhead(lat, lon, heading) {
+  const now = Date.now();
+  if (now - lastBorderWarnCheck < 30000) return;
+  lastBorderWarnCheck = now;
+  if (!currentStateCode) return;
+  try {
+    const ahead = destPointMiles(lat, lon, heading ?? 0, 5);
+    const r = await fetch(`https://photon.komoot.io/reverse?lat=${ahead.lat}&lon=${ahead.lon}`);
+    const d = await r.json();
+    const p = d.features?.[0]?.properties || {};
+    const stateRaw = p.state || p.region || '';
+    const stateMap = {
+      'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+      'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
+      'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS',
+      'Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA',
+      'Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT',
+      'Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM',
+      'New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK',
+      'Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
+      'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT',
+      'Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
+      'México':'MX','Mexico':'MX','Ontario':'ON','British Columbia':'BC','Alberta':'AB','Quebec':'QC'
+    };
+    const code = stateMap[stateRaw] || stateRaw.slice(0,2).toUpperCase();
+    if (code && code !== currentStateCode && code !== lastBorderWarnState) {
+      lastBorderWarnState = code;
+      showToast('info', '🚧', `En 5 millas: ${stateRaw || code}`,
+        lang === 'es' ? `Entrando al estado de ${stateRaw || code}` : `Entering ${stateRaw || code}`, 8000);
+    }
+  } catch(e) {}
 }
 
 async function detectStateAndUpdateLimit(lat, lon) {
@@ -10293,7 +10095,9 @@ async function detectStateAndUpdateLimit(lat, lon) {
     };
     const code = stateMap[stateRaw] || stateRaw.slice(0,2).toUpperCase();
     if (code && code !== currentStateCode) {
+      const prevCode = currentStateCode;
       currentStateCode = code;
+      lastBorderWarnState = ''; // reset border warning for next state
       const limits = STATE_SPEED_LIMITS[code];
       if (limits) {
         // --- Settings widget (draggable) ---
@@ -10303,13 +10107,10 @@ async function detectStateAndUpdateLimit(lat, lon) {
 
         // --- Map speed sign ---
         updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
-
-        // Toast when entering new state (skip on first load to avoid spam)
-        if (currentStateCode !== code || !document.getElementById('mapSpeedSign').classList.contains('visible')) {
-          const unit = code === 'ON' || code === 'BC' || code === 'AB' || code === 'QC' ? 'km/h' : 'mph';
-          showToast('info', '🚦', `${stateRaw || code} — Truck limit: ${limits.truck} ${unit}`,
-            `Car: ${limits.car} ${unit}${limits.truck < limits.car ? ' · Trucks must go slower' : ''}`, 6000);
-        }
+      }
+      // Welcome banner when entering a new state (not on first load)
+      if (prevCode) {
+        showStateBanner(stateRaw || code);
       }
     } else if (code && code === currentStateCode) {
       // Same state — ensure sign stays visible if it was somehow hidden
@@ -10458,7 +10259,6 @@ function checkSpeedLimit(gpsSpeed) {
       if (speedToastTimer) clearTimeout(speedToastTimer);
       speedToastTimer = setTimeout(() => {
         toast.classList.remove('show');
-        speedLimitExceeded = false;
       }, 6000);
     }
   } else {
@@ -11546,98 +11346,49 @@ async function fetchOsrmStepsOnly(orig, dest){
   }catch{ return []; }
 }
 async function fetchRoadRoute(orig, dest) {
-  const coords = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
-  const osrmBase = 'https://router.project-osrm.org/route/v1';
+  // Usa OSRM driving con timeout generoso (20s)
+  {
+    const coords = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
+    const osrmBase = 'https://router.project-osrm.org/route/v1';
 
-  // ── 1. Race OSRM truck and driving profiles in parallel ───────────────────
-  // Public OSRM only supports driving/walking/cycling — truck falls back fast.
-  // Racing both simultaneously means we get a result as soon as either responds.
-  function osrmFetch(profile) {
-    const url = `${osrmBase}/${profile}/${coords}?overview=full&geometries=geojson&steps=true&alternatives=true`;
-    return fetch(url, { signal: AbortSignal.timeout(7000) })
-      .then(r => { if (!r.ok) throw new Error(`${profile} ${r.status}`); return r.json(); })
-      .then(data => {
-        if (data.code !== 'Ok') throw new Error(`${profile} code=${data.code}`);
-        const routes = data.routes || [];
-        let best = routes[0];
-        if (routes.length > 1) {
-          const shortest = routes[0].distance;
-          const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
-            rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
-          if (highway) best = highway;
-        }
-        const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-        const miles = Math.round((best.distance || 0) / 1609.344);
-        const steps = best.legs?.[0]?.steps || [];
-        console.log(`✅ Route: OSRM-${profile} | ${miles} mi | ${routeCoords.length} pts`);
-        return { coords: routeCoords, miles, steps, source: `OSRM-${profile}` };
-      });
-  }
-
-  try {
-    const result = await Promise.any([osrmFetch('truck'), osrmFetch('driving')]);
-    return result;
-  } catch (e) {
-    console.warn('OSRM failed (both profiles):', e.message);
-  }
-
-  // ── 2. Try OpenRouteService HGV (applies truck restrictions: height/weight/width/length/axles) ──
-  try {
-    const orsUrl = 'https://api.openrouteservice.org/v2/directions/driving-hgv';
-    const orsAvoid = ['ferries'];
-    if (truckOptions.routeType === 'avoid_tolls')    orsAvoid.push('tollways');
-    if (truckOptions.routeType === 'avoid_highways') orsAvoid.push('highways');
-    const ftToM = ft => +(ft * 0.3048).toFixed(2);
-    const orsRestrictions = {};
-    if (truckOptions.height > 0) orsRestrictions.height     = ftToM(truckOptions.height);
-    if (truckOptions.weight > 0) orsRestrictions.weight     = truckOptions.weight;
-    if (truckOptions.width  > 0) orsRestrictions.width      = ftToM(truckOptions.width);
-    if (truckOptions.length > 0) orsRestrictions.length     = ftToM(truckOptions.length);
-    if (truckOptions.axles  > 0) orsRestrictions.axle_count = truckOptions.axles;
-    const orsBody = {
-      coordinates: [[orig.lon, orig.lat], [dest.lon, dest.lat]],
-      profile: 'driving-hgv',
-      format: 'geojson',
-      options: {
-        vehicle_type: truckOptions.hazmat ? 'hgv_hazmat' : 'hgv',
-        avoid_features: orsAvoid,
-        ...(Object.keys(orsRestrictions).length ? { profile_params: { restrictions: orsRestrictions } } : {})
-      },
-      geometry_simplify: false
-    };
-    const orsResp = await fetch(orsUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(orsBody),
-      signal: AbortSignal.timeout(10000)
-    });
-    if (orsResp.ok) {
-      const orsData = await orsResp.json();
-      const feature = orsData.features?.[0];
-      if (feature) {
-        const routeCoords = (feature.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-        const dist = feature.properties?.summary?.distance || 0;
-        if (routeCoords.length > 1) {
-          console.log('✅ Route: ORS HGV (truck-restricted)');
-          return { coords: routeCoords, miles: Math.round(dist / 1609.344), steps: [], source: 'ORS-HGV' };
+    try {
+      const url = `${osrmBase}/driving/${coords}?overview=full&geometries=geojson&steps=true&alternatives=true`;
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 20000);
+      const r = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(t);
+      if (r.ok) {
+        const data = await r.json();
+        if (data.code === 'Ok' && data.routes?.length) {
+          const routes = data.routes;
+          let best = routes[0];
+          if (routes.length > 1) {
+            const shortest = routes[0].distance;
+            const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
+              rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
+            if (highway) best = highway;
+          }
+          const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
+          const miles = Math.round((best.distance || 0) / 1609.344);
+          const steps = best.legs?.[0]?.steps || [];
+          console.log(`✅ Route: OSRM-driving | ${miles} mi | ${routeCoords.length} pts`);
+          return { coords: routeCoords, miles, steps, source: 'OSRM-driving' };
         }
       }
+    } catch (e) {
+      console.warn('OSRM driving failed:', e.message);
     }
-  } catch (e) {
-    console.warn('ORS HGV failed:', e.message);
-  }
 
-  // ── 3. Straight-line fallback ─────────────────────────────────────────────
-  console.warn('⚠️ All routing APIs failed — using straight-line estimate');
-  showToast('warning', '📡', lang === 'es' ? 'Ruta aproximada' : 'Approximate route',
-    lang === 'es' ? 'No se pudo obtener ruta vial. Mostrando distancia estimada.' : 'Could not get road route. Showing estimated distance.', 5000);
-  const straight = haversine(orig.lat, orig.lon, dest.lat, dest.lon);
-  return {
-    coords: [[orig.lat, orig.lon], [dest.lat, dest.lon]],
-    miles: Math.round(straight * 1.35),
-    steps: [],
-    source: 'Fallback'
-  };
+    // Fallback: línea recta
+    console.warn('⚠️ OSRM falló — usando línea recta');
+    const straight = haversine(orig.lat, orig.lon, dest.lat, dest.lon);
+    return {
+      coords: [[orig.lat, orig.lon], [dest.lat, dest.lon]],
+      miles: Math.round(straight * 1.35),
+      steps: [],
+      source: 'Fallback'
+    };
+  }
 }
 // ── Road-name markers (labels) ──────────────────────────────
 function extractRoadLabel(step){
@@ -12171,7 +11922,6 @@ async function calculateRoute() {
 
   calcBtn.textContent = t('btnCalc');
   calcBtn.disabled = false;
-  calcBtn.style.display = 'none';
 
   renderDrives();
   renderSummary();
@@ -12182,6 +11932,9 @@ async function calculateRoute() {
 function renderResults(hours, speed, depart) {
   document.getElementById('resultsCard').style.display = 'block';
   document.getElementById('shareTrackBtns').style.display = 'grid';
+  // Hide "Calcular Ruta" button while results are visible
+  const _cb = document.getElementById('calcBtn');
+  if (_cb) _cb.style.display = 'none';
 
   const driveHours = routeDistance / speed;
   const pill = document.getElementById('timeVsHours');
@@ -12192,7 +11945,10 @@ function renderResults(hours, speed, depart) {
   document.getElementById('fromVal').textContent = origin.name;
   document.getElementById('toVal').textContent = destination.name;
   document.getElementById('departureVal').textContent = fmtDateTime(depart);
-  document.getElementById('arrivalVal').textContent = fmtDateTime(arrivalTime);
+  const arrivalValEl = document.getElementById('arrivalVal');
+  arrivalValEl.textContent = fmtDateTime(arrivalTime);
+  arrivalValEl.classList.add('arrival-blink');
+  document.getElementById('arrivalLbl').classList.add('arrival-blink');
   document.getElementById('totalTimeVal').textContent = fmtH(totalTime);
 
   const sl = document.getElementById('scheduleList');
@@ -12302,7 +12058,7 @@ function useGPS() {
   if (lbl) { lbl.textContent = lang==='es' ? '📡 Obteniendo tu ubicación…' : '📡 Getting your location…'; lbl.style.color = 'var(--muted)'; }
   origin = null;
 
-  getGPSPosition(30000, 12000).then(async pos => {
+  navigator.geolocation.getCurrentPosition(async pos => {
     const { latitude, longitude } = pos.coords;
 
     // Helper: manual timeout-safe fetch (AbortSignal.timeout not available on iOS < 16)
@@ -12321,42 +12077,42 @@ function useGPS() {
 
     let name = '';
 
-    // Race Nominatim and Photon in parallel — first valid response wins
+    // 1. Try Nominatim first — more reliable city names
     try {
-      name = await Promise.any([
-        fetchWithTimeout(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
-          { headers: { 'Accept-Language': 'en' } }, 7000)
-          .then(r => r.json()).then(d => {
-            const a = d.address || {};
-            const city = a.city || a.town || a.village || a.hamlet || a.suburb || a.county || '';
-            const state = a.state || '';
-            const sa = stateAbbr[state] || (state.length <= 3 ? state : '');
-            const n = city && sa ? `${city}, ${sa}` : city;
-            if (!n) throw new Error();
-            return n;
-          }),
-        fetchWithTimeout(
-          `https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}&zoom=10`, {}, 6000)
-          .then(r => r.json()).then(data => {
-            const p = data.features?.[0]?.properties || {};
-            const city = p.city || p.locality || p.district || p.county || (p.type === 'city' || p.type === 'town' || p.type === 'village' ? p.name : '') || '';
-            const state = p.state || '';
-            const sa = stateAbbr[state] || (state.length <= 3 ? state : '');
-            const n = city && sa ? `${city}, ${sa}` : city;
-            if (!n) throw new Error();
-            return n;
-          }),
-      ]);
+      const r = await fetchWithTimeout(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+        { headers: { 'Accept-Language': 'en' } }, 7000);
+      const d = await r.json();
+      const a = d.address || {};
+      const city = a.city || a.town || a.village || a.hamlet || a.suburb || a.county || '';
+      const state = a.state || '';
+      const sa = stateAbbr[state] || (state.length <= 3 ? state : '');
+      if (city && sa) name = `${city}, ${sa}`;
+      else if (city) name = city;
     } catch {}
+
+    // 2. Fallback: Photon — zoom=10 to request city-level result
+    if (!name) {
+      try {
+        const r2 = await fetchWithTimeout(
+          `https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}&zoom=10`, {}, 6000);
+        const data = await r2.json();
+        const p = data.features?.[0]?.properties || {};
+        const city = p.city || p.locality || p.district || p.county || (p.type === 'city' || p.type === 'town' || p.type === 'village' ? p.name : '') || '';
+        const state = p.state || '';
+        const sa = stateAbbr[state] || (state.length <= 3 ? state : '');
+        if (city && sa) name = `${city}, ${sa}`;
+        else if (city) name = city;
+      } catch {}
+    }
 
     if (!name) name = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
     origin = { name, lat: latitude, lon: longitude };
     if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; }
-  }).catch(() => {
+  }, () => {
     if (lbl) { lbl.textContent = lang==='es' ? '⚠️ Permiso de ubicación denegado' : '⚠️ Location permission denied'; lbl.style.color = '#ef4444'; }
     showToast('danger','📡', lang==='es'?'Ubicación no disponible':'Location unavailable', t('gpsDenied'), 4000);
-  });
+  }, { enableHighAccuracy: true, timeout: 12000 });
 }
 
 async function shareRoute() {
@@ -12399,7 +12155,8 @@ let fmPrevLon       = null;
 // POI layers
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
 const fmPoiGroups = {};  // LayerGroup per type for batch rendering
-const fmPoiActive = { scale: true, truck: true, rest: true, reports: true, restrict: true, parking: true };
+// truck/rest/scale start OFF so first tap loads them on demand
+const fmPoiActive = { scale: false, truck: false, rest: false, reports: true, restrict: true, parking: false };
 let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false };
 
 // Community reports (stored in localStorage, shared within session)
@@ -12416,36 +12173,9 @@ function openFullMapScreen() {
   screen.style.display = 'flex';
   screen.style.flexDirection = 'column';
   document.body.classList.add('map-active');
-
-  // Menú lateral empieza oculto al abrir el mapa
-  const _lc = document.getElementById('mapLeftControls');
-  const _lb = document.getElementById('mapLeftPanelBtn');
-  if (_lc) { _lc.classList.add('panel-hidden'); }
-  if (_lb) { _lb.textContent = '›'; _lb.classList.remove('open'); }
-
-  // Posicionar weather ENCIMA del speed limit (fix JS para garantizar orden)
-  requestAnimationFrame(() => {
-    const safeTop  = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sl-y')) || 12;
-    const safeLeft = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sl-x')) || 12;
-    const wx = document.getElementById('weatherWidget');
-    const sl = document.getElementById('speedLimitWidget');
-    if (wx) {
-      wx.style.setProperty('position','fixed','important');
-      wx.style.setProperty('top', `calc(env(safe-area-inset-top,0px) + 12px)`,'important');
-      wx.style.setProperty('left',`calc(env(safe-area-inset-left,0px) + 12px)`,'important');
-      wx.style.setProperty('bottom','auto','important');
-      wx.style.setProperty('right','auto','important');
-      wx.style.setProperty('z-index','20009','important');
-    }
-    if (sl) {
-      const wxH = wx ? (wx.offsetHeight || 52) : 52;
-      sl.style.setProperty('position','fixed','important');
-      sl.style.setProperty('top', `calc(env(safe-area-inset-top,0px) + 12px + ${wxH + 8}px)`,'important');
-      sl.style.setProperty('left',`calc(env(safe-area-inset-left,0px) + 12px)`,'important');
-      sl.style.setProperty('bottom','auto','important');
-      sl.style.setProperty('right','auto','important');
-    }
-  });
+  setTimeout(_autoHideLeftPanelOnOpen, 400); // mostrar controles 3.5s luego ocultar
+  // Sync compass button label with current heading mode
+  setTimeout(_updateCompassBtn, 450);
 
   // Bridge mode: hide all overlays when height detector is on
   screen.classList.toggle('bridge-mode', !!bridgeActive);
@@ -12454,6 +12184,12 @@ function openFullMapScreen() {
   document.getElementById('fmStopBtn').style.display = 'none';
   document.getElementById('poiLegend').classList.add('visible');
   document.getElementById('fmFollowBtn').classList.add('visible');
+  // Sync chip visual state with fmPoiActive (truck/rest/scale start off)
+  ['scale','truck','rest'].forEach(t => {
+    const cid = t === 'scale' ? 'chipScale' : t === 'truck' ? 'chipTruck' : 'chipRest';
+    const c = document.getElementById(cid);
+    if (c) c.classList.toggle('off', !fmPoiActive[t]);
+  });
 
   if (origin) document.getElementById('fmFrom').textContent = origin.name.split(',')[0];
   if (destination) document.getElementById('fmTo').textContent = destination.name.split(',')[0];
@@ -12484,38 +12220,30 @@ function openFullMapScreen() {
       fadeAnimation: true,
       rotate: true,          // leaflet-rotate plugin
       bearing: 0,
-      touchRotate: true,     // allow two-finger manual rotation
+      touchRotate: false,    // disable touch-rotate gesture (GPS drives it)
       rotateControl: false
     }).setView([39.5, -98.35], 4);
 
     const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
     fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
 
-    // Detect when user drags map — pause auto-follow
+    // Detect when user drags map — pause auto-follow (resume after 8s)
     fmMapInst.on('dragstart', () => {
       if (window._fmProgrammaticMove) return; // ignore programmatic pans
       fmUserDragged = true;
       fmFollowing = false;
       document.getElementById('fmFollowBtn').classList.remove('active');
+      _scheduleAutoResumeFollow();
     });
 
-    // Detect two-finger manual rotation — pause heading-up
-    fmMapInst.on('rotate', () => {
-      if (window._fmProgrammaticMove) return;
-      fmHeadingUpMode = false;
-      fmManualBearing = fmMapInst.getBearing ? fmMapInst.getBearing() : 0;
-      document.getElementById('rotateNorthBtn')?.classList.add('manual-active');
-      const cb = document.getElementById('compassBtn');
-      if (cb) { cb.style.background = ''; cb.style.borderColor = ''; }
-    });
-
-    // Detect when user zooms (pinch) — pause auto-follow
+    // Detect when user zooms (pinch) — pause auto-follow (resume after 8s)
     fmMapInst.on('zoomstart', () => {
       if (window._fmProgrammaticMove) return; // ignore programmatic zoom
       fmUserDragged = true;
       fmFollowing = false;
       const fb = document.getElementById('fmFollowBtn');
       if (fb) fb.classList.remove('active');
+      _scheduleAutoResumeFollow();
     });
 
     // Center button — re-enable follow and center on last GPS fix
@@ -12557,8 +12285,6 @@ function openFullMapScreen() {
     }
     document.getElementById('fmHud').style.transform = 'translateY(0)';
   }, 200);
-  // Second invalidateSize pass — ensures tiles fill the viewport after GPS jumps to real position
-  setTimeout(() => { fmMapInst.invalidateSize(); }, 450);
 
   fmTickClock();
   if (fmClockTimer) clearInterval(fmClockTimer);
@@ -12637,45 +12363,49 @@ let truckAnimFrame = null;       // requestAnimationFrame handle
 let truckFrom = null;            // { lat, lon, heading }
 let truckTo   = null;            // { lat, lon, heading }
 let truckAnimStart  = 0;
+let fmLastSpeeding  = false;     // track speeding state for icon color
 const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 
 // The static truck icon element — we reuse the same DOM, only move/rotate
 let fmTruckEl = null;  // the inner div element for rotation
 
 function buildTruckIconHTML(heading, isMoving) {
-  const rot  = heading != null ? heading : 0;
-  const cab  = isMoving ? '#10b981' : '#6b7280';
-  const trl  = isMoving ? '#0a7a65' : '#374151';
-  const tire = isMoving ? '#10b981' : '#4b5563';
-  const hl   = isMoving ? '#fef08a' : '#9ca3af';
+  const user = typeof currentUser !== 'undefined' ? currentUser : null;
+  const overLimit = typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded;
 
-  // ── Avatar ring (photo or initials) ─────────────────
-  const _u = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
-  const _photo = (_u && _u.photoData) ||
-    (typeof truckUploadData !== 'undefined' && typeof truckIconMode !== 'undefined' &&
-     truckIconMode && truckIconMode.startsWith('upload:') && truckUploadData ? truckUploadData : null) ||
-    localStorage.getItem('hos_profile_photo') || null;
-  let _avatarInner = '';
-  if (_photo) {
-    _avatarInner = `<img src="${_photo}" style="width:100%;height:100%;object-fit:cover;display:block">`;
-  } else {
-    const _name = (_u && _u.name) || (typeof driverProfile !== 'undefined' && driverProfile && driverProfile.name) || null;
-    if (_name) {
-      const _ini = _name.trim().split(/\s+/).map(w => w[0] && w[0].toUpperCase()).filter(Boolean).slice(0,2).join('');
-      const _pal = ['#1d4ed8','#7c3aed','#059669','#dc2626','#d97706','#0891b2','#be185d','#4f46e5'];
-      let _h = 0; for (const c of _name) _h = (_h * 31 + c.charCodeAt(0)) & 0xFFFF;
-      _avatarInner = `<div style="width:100%;height:100%;background:${_pal[_h % _pal.length]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;font-family:system-ui,sans-serif">${_ini||'?'}</div>`;
+  // Glow color: red if over limit, green if moving, gray if stopped
+  let glowAnim = 'none';
+  let borderColor = '#6b7280';
+  if (isMoving) {
+    if (overLimit) {
+      glowAnim = 'glowRed 1.2s ease-in-out infinite';
+      borderColor = '#ef4444';
+    } else {
+      glowAnim = 'glowGreen 1.6s ease-in-out infinite';
+      borderColor = '#3b82f6';
     }
   }
-  const _avatarContent = _avatarInner ||
-    `<div style="width:100%;height:100%;background:#1d4ed8;display:flex;align-items:center;justify-content:center;font-size:18px">🚛</div>`;
+
+  // Photo or avatar inside circle
+  let inner = '';
+  if (user && user.photoData) {
+    inner = `<img src="${user.photoData}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;display:block" />`;
+  } else if (user && user.avatar) {
+    inner = `<span style="font-size:26px;line-height:50px">${user.avatar}</span>`;
+  } else {
+    inner = `<span style="font-size:24px;line-height:50px">🚛</span>`;
+  }
 
   return `
     <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
-         style="transform:rotate(${rot}deg);transition:transform 0.6s cubic-bezier(.4,0,.2,1)">
-      <div class="truck-glow"></div>
-      <div class="truck-pulse"></div>
-      <div class="truck-avatar-ring">${_avatarContent}</div>
+         style="display:flex;align-items:center;justify-content:center;">
+      <div style="
+        width:50px;height:50px;border-radius:50%;
+        border:3px solid ${borderColor};
+        overflow:hidden;display:flex;align-items:center;justify-content:center;
+        background:rgba(15,23,42,.95);
+        animation:${glowAnim};
+      ">${inner}</div>
     </div>`;
 }
 
@@ -12728,28 +12458,13 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   // doesn't bail out early and the marker is immediately repositioned.
   if (!truckFrom) truckFrom = { lat, lon, heading: heading ?? 0 };
 
+  const html = buildTruckIconHTML(heading, isMoving);
+  const icon = L.divIcon({ className: '', html, iconAnchor: [28, 28], iconSize: [56, 56] });
   if (!fmGpsMarker) {
-    // First placement — create marker
-    const html  = buildTruckIconHTML(heading, isMoving);
-    const icon  = L.divIcon({ className: '', html, iconAnchor: [24, 24], iconSize: [48, 48] });
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
-    // Force tile refresh after GPS marker is placed for the first time
-    setTimeout(() => { if (fmMapInst) fmMapInst.invalidateSize(); }, 100);
-
   } else {
-    // Refresh icon if moving state changed (to swap colors/pulse)
-    const wrapper = document.getElementById('truckWrapper');
-    if (wrapper) {
-      // Toggle moving/stopped classes without rebuilding full icon
-      wrapper.classList.toggle('stopped', !isMoving);
-    } else {
-      // Wrapper gone (rare) — recreate icon
-      const html = buildTruckIconHTML(heading, isMoving);
-      const icon = L.divIcon({ className: '', html, iconAnchor: [24, 24], iconSize: [48, 48] });
-      fmGpsMarker.setIcon(icon);
-      truckFrom = { lat, lon, heading: heading ?? 0 };
-    }
+    fmGpsMarker.setIcon(icon);
   }
 
   // Cancel previous animation and start fresh
@@ -12807,8 +12522,108 @@ function calcHeading(lat1, lon1, lat2, lon2) {
 
 function fmTickClock() {
   const now = new Date();
-  document.getElementById('fmClockTxt').textContent = now.toLocaleTimeString(lang==='es'?'es-US':'en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
-  document.getElementById('fmDateTxt').textContent = now.toLocaleDateString(lang==='es'?'es-ES':'en-US',{weekday:'short',month:'short',day:'numeric'});
+  const locale = (typeof lang !== 'undefined' && lang === 'es') ? 'es-US' : 'en-US';
+  const timeStr = now.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+  const dateStr = now.toLocaleDateString(locale === 'es-US' ? 'es-ES' : 'en-US', {weekday:'short',month:'short',day:'numeric'});
+  document.getElementById('fmClockTxt').textContent = timeStr;
+  document.getElementById('fmDateTxt').textContent  = dateStr;
+  // Reloj encima del letrero de velocidad (solo hora:min)
+  const speedClock = document.getElementById('mapSpeedClock');
+  if (speedClock) {
+    speedClock.textContent = now.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit',hour12:true});
+  }
+}
+
+/* ── Búsqueda de destino desde el mapa ── */
+let mapSearchDebounce;
+function toggleMapSearch() {
+  const overlay = document.getElementById('mapSearchOverlay');
+  const visible = overlay && overlay.style.display !== 'none';
+  if (overlay) overlay.style.display = visible ? 'none' : 'block';
+  if (!visible) setTimeout(() => document.getElementById('mapSearchInput')?.focus(), 120);
+}
+function closeMapSearch() {
+  const overlay = document.getElementById('mapSearchOverlay');
+  if (overlay) overlay.style.display = 'none';
+  const inp  = document.getElementById('mapSearchInput');
+  const sugg = document.getElementById('mapSearchSugg');
+  if (inp)  inp.value = '';
+  if (sugg) sugg.style.display = 'none';
+}
+function handleMapSearch(val) {
+  clearTimeout(mapSearchDebounce);
+  const sugg = document.getElementById('mapSearchSugg');
+  const q = (val || '').trim();
+  if (q.length < 3) { if (sugg) sugg.style.display = 'none'; return; }
+  sugg.innerHTML = '<div style="padding:12px 14px;font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:8px"><span style="animation:spin 1s linear infinite;display:inline-block">⏳</span> Buscando...</div>';
+  sugg.style.display = 'block';
+  mapSearchDebounce = setTimeout(async () => {
+    const mkItem = (name, lat, lon, state, cc, isAddr) =>
+      ({ name, lat, lon, state: (state||'').trim(), country_code: (cc||'').toUpperCase(), isAddress: !!isAddr });
+
+    // 1️⃣ Nominatim PRIMARY
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8&addressdetails=1&countrycodes=us&accept-language=en`,
+        { signal: ctrl.signal, headers: { 'Accept-Language': 'en' } }
+      );
+      clearTimeout(t);
+      const data = await r.json();
+      if (data && data.length) {
+        const items = data.map(d => {
+          const a = d.address || {};
+          const street = a.house_number && a.road ? `${a.house_number} ${a.road}` : (a.road || a.pedestrian || '');
+          const city   = a.city || a.town || a.village || a.suburb || a.county || '';
+          const parts  = [street, city, a.state, 'USA'].filter(Boolean).filter((v,i,arr) => arr.indexOf(v)===i);
+          const name   = parts.join(', ') || d.display_name.split(',').slice(0,4).join(',').trim();
+          return mkItem(name, parseFloat(d.lat), parseFloat(d.lon), a.state, d.address?.country_code, !!(a.house_number || a.road));
+        }).filter(x => x.name);
+        items.sort((a,b) => {
+          const sA = /^\d/.test(a.name)?2:a.isAddress?1:0;
+          const sB = /^\d/.test(b.name)?2:b.isAddress?1:0;
+          return sB - sA;
+        });
+        if (items.length) {
+          showSuggestions('mapSearchSugg', items, it => { setDestinationWithLocalCheck(it); closeMapSearch(); });
+          return;
+        }
+      }
+    } catch(e1) { console.warn('MapSearch Nominatim failed:', e1.message); }
+
+    // 2️⃣ Photon FALLBACK
+    try {
+      const ctrl2 = new AbortController();
+      const t2 = setTimeout(() => ctrl2.abort(), 7000);
+      const r2 = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10`, { signal: ctrl2.signal });
+      clearTimeout(t2);
+      const data2 = await r2.json();
+      const items2 = (data2.features || []).map(f => {
+        const p = f.properties;
+        const cc = (p.countrycode || '').toLowerCase();
+        if (cc && cc !== 'us') return null;
+        const street = p.housenumber && p.street ? `${p.housenumber} ${p.street}` : (p.street || '');
+        const city   = p.city || p.town || p.village || p.name || '';
+        const parts  = [street, city, p.state, 'USA'].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+        return mkItem(parts.join(', '), f.geometry.coordinates[1], f.geometry.coordinates[0], p.state, p.countrycode, !!(p.housenumber||p.street));
+      }).filter(x => x && x.name);
+      items2.sort((a,b) => {
+        const sA = /^\d/.test(a.name)?2:a.isAddress?1:0;
+        const sB = /^\d/.test(b.name)?2:b.isAddress?1:0;
+        return sB - sA;
+      });
+      if (items2.length) {
+        showSuggestions('mapSearchSugg', items2, it => { setDestinationWithLocalCheck(it); closeMapSearch(); });
+        return;
+      }
+    } catch(e2) {
+      if (sugg) sugg.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:#ef4444">⚠️ Sin conexión. Intenta de nuevo.</div>`;
+      return;
+    }
+
+    if (sugg) sugg.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:#94a3b8">Sin resultados para "<b>${q}</b>"</div>`;
+  }, 300);
 }
 
 function closeFullMapScreen() {
@@ -12876,51 +12691,36 @@ function reopenMap() {
   if (fmGpsMarker && fmMapInst) {
     fmMapInst.setView(fmGpsMarker.getLatLng(), fmMapInst.getZoom());
   }
+  setTimeout(_autoHideLeftPanelOnOpen, 400);
 }
 
 
 let fmHeadingUpMode = true; // heading-up on by default while tracking
-let fmManualBearing = 0;   // bearing set by manual rotation
-
-function fmRotateMap(deltaDeg) {
-  if (!fmMapInst || typeof fmMapInst.setBearing !== 'function') return;
-  const current = fmMapInst.getBearing ? fmMapInst.getBearing() : fmManualBearing;
-  fmManualBearing = ((current + deltaDeg) % 360 + 360) % 360;
-  fmHeadingUpMode = false;
-  window._fmProgrammaticMove = true;
-  fmMapInst.setBearing(fmManualBearing);
-  setTimeout(() => { window._fmProgrammaticMove = false; }, 600);
-  document.getElementById('rotateNorthBtn')?.classList.add('manual-active');
-  const cb = document.getElementById('compassBtn');
-  if (cb) { cb.style.background = ''; cb.style.borderColor = ''; }
-}
-
-function fmResetRotation() {
-  if (!fmMapInst || typeof fmMapInst.setBearing !== 'function') return;
-  fmManualBearing = 0;
-  window._fmProgrammaticMove = true;
-  fmMapInst.setBearing(0);
-  setTimeout(() => { window._fmProgrammaticMove = false; }, 600);
-  document.getElementById('rotateNorthBtn')?.classList.remove('manual-active');
-  showToast('info', '🔼', 'Norte restaurado', 'El mapa apunta al norte', 1800);
-}
 
 function toggleHeadingUp() {
   fmHeadingUpMode = !fmHeadingUpMode;
-  const btn = document.getElementById('compassBtn');
-  if (btn) {
-    btn.style.background = fmHeadingUpMode ? 'rgba(16,185,129,0.3)' : 'rgba(15,23,42,0.88)';
-    btn.style.borderColor = fmHeadingUpMode ? 'rgba(16,185,129,0.6)' : 'rgba(255,255,255,0.12)';
-    btn.title = fmHeadingUpMode ? 'Heading-up (activo)' : 'North-up (activo)';
-  }
+  _updateCompassBtn();
   // If switching to north-up, immediately reset bearing
   if (!fmHeadingUpMode && fmMapInst && typeof fmMapInst.setBearing === 'function') {
     fmMapInst.setBearing(0);
   }
   showToast('info', fmHeadingUpMode ? '🧭' : '🔼',
-    fmHeadingUpMode ? 'Heading-Up activado' : 'North-Up activado',
+    fmHeadingUpMode ? 'Vista: Dirección de viaje' : 'Vista: Norte arriba',
     fmHeadingUpMode ? 'El mapa gira con la dirección del camión' : 'El mapa apunta al norte siempre',
     2500);
+}
+function _updateCompassBtn() {
+  const btn = document.getElementById('compassBtn');
+  if (!btn) return;
+  btn.innerHTML = fmHeadingUpMode
+    ? '<span style="font-size:17px">🧭</span><span style="font-size:9px;font-weight:800;letter-spacing:.3px;margin-top:2px;line-height:1">RUTA</span>'
+    : '<span style="font-size:17px">🔼</span><span style="font-size:9px;font-weight:800;letter-spacing:.3px;margin-top:2px;line-height:1">NORTE</span>';
+  btn.style.background    = fmHeadingUpMode ? 'rgba(16,185,129,0.3)' : 'rgba(15,23,42,0.88)';
+  btn.style.borderColor   = fmHeadingUpMode ? 'rgba(16,185,129,0.6)' : 'rgba(255,255,255,0.12)';
+  btn.style.display       = 'flex';
+  btn.style.flexDirection = 'column';
+  btn.style.alignItems    = 'center';
+  btn.title = fmHeadingUpMode ? 'Vista dirección de viaje (toca para Norte)' : 'Vista norte arriba (toca para Ruta)';
 }
 
 // ── calcFollowCenter ────────────────────────────────────────────────────────
@@ -12943,8 +12743,8 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
                     ? (hudEl.offsetHeight || 0) : 0;
       // Place truck at 65% from top of visible area = shows ~65% road ahead
       // offsetPx = target_truck_screen_y - screen_center_y
-      // target_truck_screen_y = 0.65 * (size.y - hudH)
-      offsetPx = 0.65 * (size.y - hudH) - size.y * 0.5;
+      // target_truck_screen_y = center of screen
+      offsetPx = 0;
     }
     // pixels to offset the map center (negative = center south of truck = truck above center)
 
@@ -12980,6 +12780,238 @@ function toggleFollow() {
     const ll = fmGpsMarker.getLatLng();
     const rc = calcFollowCenter(ll.lat, ll.lng, fmLastHeading);
     fmMapInst.setView(rc, fmCurrentZoom, { animate: true, duration: 0.8 });
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   ⏸  SISTEMA DE PAUSA OBLIGATORIA DE 30 MIN (FMCSA HOS)
+   Regla: tras 8h de manejo continuo, se requiere pausa de ≥30 min
+════════════════════════════════════════════════════════════ */
+let b30DriveSecs  = 0;      // segundos manejados desde última pausa válida
+let b30StopSecs   = 0;      // segundos detenido consecutivo actual
+let b30LastTs     = null;   // timestamp del último GPS fix
+let b30Warned1h   = false;  // aviso 1 hora antes (7h conducidos)
+let b30Warned30m  = false;  // aviso 30 min antes (7.5h)
+let b30Warned2m   = false;  // aviso 2 min antes (7h58m)
+let b30ViolShown  = false;  // banner de violación visible
+let b30InBreak    = false;  // pausa en progreso (detenido, contando)
+let b30BreakStart = null;   // timestamp inicio pausa
+let b30Complete   = false;  // pausa de 30 min completada
+let b30TickId     = null;   // setInterval del temporizador
+
+const B30_DRIVE_LIMIT  = 8 * 3600;   // 8 horas en segundos
+const B30_BREAK_MIN    = 30 * 60;    // 30 minutos en segundos
+
+function b30Reset() {
+  b30DriveSecs = 0; b30StopSecs = 0; b30LastTs = null;
+  b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
+  b30ViolShown = false; b30InBreak = false; b30BreakStart = null;
+  b30Complete = false;
+  if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
+  document.getElementById('breakTimerOverlay').style.display = 'none';
+  document.getElementById('breakViolationBanner').style.display = 'none';
+}
+
+function b30UpdateTimer() {
+  if (!b30BreakStart) return;
+  const elapsed = (Date.now() - b30BreakStart) / 1000;
+  const remaining = Math.max(0, B30_BREAK_MIN - elapsed);
+  const pct = Math.min(100, (elapsed / B30_BREAK_MIN) * 100);
+  const m = Math.floor(remaining / 60);
+  const s = Math.floor(remaining % 60);
+  const display = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+  const countEl = document.getElementById('breakTimerCount');
+  const barEl   = document.getElementById('breakTimerBar');
+  const lblEl   = document.getElementById('breakTimerLabel');
+  const overlay = document.getElementById('breakTimerOverlay');
+  if (!countEl) return;
+
+  if (remaining <= 0 && !b30Complete) {
+    // ¡Pausa completada!
+    b30Complete = true;
+    b30DriveSecs = 0; b30StopSecs = 0;
+    b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
+    b30ViolShown = false;
+    if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
+
+    countEl.textContent = '✓ 30:00';
+    countEl.style.color = '#10b981';
+    if (barEl) { barEl.style.width = '100%'; barEl.style.background = '#10b981'; }
+    if (lblEl) lblEl.textContent = '¡Pausa completada! Puedes continuar.';
+    const inner = overlay.querySelector('div');
+    if (inner) { inner.style.borderColor = '#10b981'; inner.style.animation = 'none'; }
+
+    showToast('success','✅',
+      '¡PAUSA COMPLETADA!',
+      'Descansaste 30 minutos. Puedes continuar manejando.',
+      10000);
+    vibrate([200,80,200]);
+
+    // Ocultar overlay después de 8 segundos
+    setTimeout(() => {
+      const ov = document.getElementById('breakTimerOverlay');
+      if (ov) ov.style.display = 'none';
+      b30InBreak = false;
+    }, 8000);
+
+  } else if (remaining > 0) {
+    countEl.textContent = display;
+    countEl.style.color = remaining < 300 ? '#34d399' : '#fff';
+    if (barEl) barEl.style.width = pct + '%';
+    // Actualizar contador hacia arriba (cuánto llevas)
+    const done = Math.floor(elapsed / 60);
+    const doneSec = Math.floor(elapsed % 60);
+    if (lblEl) lblEl.textContent = `Llevas ${String(done).padStart(2,'0')}:${String(doneSec).padStart(2,'0')} — Faltan ${display}`;
+  }
+}
+
+function b30ShowBreakTimer() {
+  const overlay = document.getElementById('breakTimerOverlay');
+  if (!overlay || b30Complete) return;
+  b30InBreak = true;
+  b30BreakStart = Date.now();
+  overlay.style.display = 'block';
+  const inner = overlay.querySelector('div');
+  if (inner) inner.classList.add('bto-pulse');
+
+  // Ocultar banner de violación si está visible
+  const viol = document.getElementById('breakViolationBanner');
+  if (viol) viol.style.display = 'none';
+  b30ViolShown = false;
+
+  // Iniciar tick cada segundo
+  if (b30TickId) clearInterval(b30TickId);
+  b30TickId = setInterval(b30UpdateTimer, 1000);
+  b30UpdateTimer();
+}
+
+function b30Check(isMoving) {
+  if (!fmIsTracking || !use30min) return;
+  const now = Date.now();
+
+  // Calcular delta tiempo real entre GPS fixes
+  const delta = b30LastTs ? Math.min((now - b30LastTs) / 1000, 30) : 0;
+  b30LastTs = now;
+
+  if (isMoving) {
+    // Si el driver retoma marcha en medio de una pausa incompleta, cancelar pausa
+    if (b30InBreak && !b30Complete && b30StopSecs < B30_BREAK_MIN) {
+      b30InBreak = false;
+      b30BreakStart = null;
+      b30StopSecs = 0;
+      if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
+      document.getElementById('breakTimerOverlay').style.display = 'none';
+    }
+    b30StopSecs = 0;
+    if (!b30Complete) b30DriveSecs += delta;
+
+    // ── Notificaciones progresivas ──────────────────────────
+    if (!b30Warned1h && b30DriveSecs >= 7 * 3600) {
+      b30Warned1h = true;
+      showToast('warning','☕',
+        '☕ PAUSA EN 1 HORA',
+        'Llevas 7 horas manejando. En 1 hora necesitarás pausa obligatoria de 30 min (FMCSA).',
+        12000);
+      vibrate([150, 80, 150]);
+    }
+    if (!b30Warned30m && b30DriveSecs >= 7.5 * 3600) {
+      b30Warned30m = true;
+      showToast('warning','⏰',
+        '⏰ PAUSA EN 30 MINUTOS',
+        'Llevas 7.5 horas. En 30 min debes detenerte 30 min obligatorios por ley federal.',
+        15000);
+      vibrate([200, 80, 200, 80, 200]);
+    }
+    if (!b30Warned2m && b30DriveSecs >= (B30_DRIVE_LIMIT - 120)) {
+      b30Warned2m = true;
+      showToast('danger','🛑',
+        '🛑 ¡DETENTE EN 2 MINUTOS!',
+        'Quedan 2 min para completar 8h. DETENTE a descansar 30 min obligatorios ahora.',
+        0);
+      vibrate([300,100,300,100,500]);
+      flashDanger(3000);
+    }
+    // ── Violación: 8 horas sin pausa, sigue manejando ──────
+    if (b30DriveSecs >= B30_DRIVE_LIMIT && !b30ViolShown) {
+      b30ViolShown = true;
+      const viol = document.getElementById('breakViolationBanner');
+      if (viol) viol.style.display = 'block';
+      showToast('danger','⚖️',
+        '⚖️ VIOLACIÓN HOS',
+        'Multa $1,000–$16,000. Detente AHORA.',
+        0);
+      vibrate([500,150,500,150,500,150,500]);
+      flashDanger(5000);
+    }
+  } else {
+    // Driver detenido
+    b30StopSecs += delta;
+
+    // Si lleva suficiente tiempo manejando, mostrar temporizador de pausa
+    const needsBreak = b30DriveSecs >= B30_DRIVE_LIMIT - 120 || b30Warned30m;
+    if (needsBreak && !b30InBreak && !b30Complete) {
+      b30ShowBreakTimer();
+    }
+    // Ocultar banner de violación mientras está parado
+    if (b30ViolShown) {
+      const viol = document.getElementById('breakViolationBanner');
+      if (viol) viol.style.display = 'none';
+      b30ViolShown = false;
+    }
+  }
+}
+
+// ── Auto-resume follow after user stops touching the map ──────────────────
+let _autoResumeTimer = null;
+function _scheduleAutoResumeFollow() {
+  if (_autoResumeTimer) clearTimeout(_autoResumeTimer);
+  _autoResumeTimer = setTimeout(() => {
+    if (!fmIsTracking) return;
+    fmFollowing = true;
+    fmUserDragged = false;
+    const fb = document.getElementById('fmFollowBtn');
+    if (fb) fb.classList.add('active');
+    if (fmGpsMarker && fmMapInst) {
+      const ll = fmGpsMarker.getLatLng();
+      window._fmProgrammaticMove = true;
+      fmMapInst.setView(calcFollowCenter(ll.lat, ll.lng, fmLastHeading), fmCurrentZoom, { animate: true, duration: 0.9 });
+      if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
+      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
+    }
+  }, 8000); // reanuda seguimiento 8s después de que el usuario deja de tocar el mapa
+}
+
+// ── Báscula (Weigh Station) — notificar 5 millas antes ────────────────────
+const _weighNotified = new Set();
+function checkWeighStations(lat, lon) {
+  if (!fmIsTracking || !destination || !fmPoiLayers['scale']?.length) return;
+  const distToDest = haversine(lat, lon, destination.lat, destination.lon);
+
+  for (const marker of fmPoiLayers['scale']) {
+    const ll  = marker.getLatLng();
+    const key = `${ll.lat.toFixed(4)},${ll.lng.toFixed(4)}`;
+    if (_weighNotified.has(key)) continue;
+
+    const distToScale = haversine(lat, lon, ll.lat, ll.lng);
+    if (distToScale > 5.5 || distToScale < 0.2) continue; // fuera del rango de aviso
+
+    // Confirmar que está ADELANTE (más cerca al destino que nosotros)
+    const scaleToDest = haversine(ll.lat, ll.lng, destination.lat, destination.lon);
+    if (scaleToDest >= distToDest) continue; // está detrás
+
+    _weighNotified.add(key);
+    const mi = distToScale.toFixed(1);
+    showToast(
+      'warning', '⚖️',
+      lang === 'es' ? '⚖️ BÁSCULA EN RUTA' : '⚖️ WEIGH STATION AHEAD',
+      lang === 'es'
+        ? `Báscula a ${mi} millas. Prepara documentos y reduce velocidad.`
+        : `Weigh station ${mi} miles ahead. Prepare documents and slow down.`,
+      15000
+    );
+    vibrate([300, 100, 300, 100, 300]);
+    break; // solo una notificación por ciclo GPS
   }
 }
 
@@ -13063,6 +13095,8 @@ function fmStartTracking() {
   lastStateCheck = 0;
   lastFuelCheck  = 0;
   lastRoadSpeedCheck = 0;
+  _weighNotified.clear(); // reinicia báscula alertas para nuevo viaje
+  b30Reset();             // reinicia sistema de pausa 30 min
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
   showDriveHoursWidget();
@@ -13111,24 +13145,6 @@ function fmStartTracking() {
     fmCurrentSpeed = gpsSpeed;
     fmVehicleMoving = isMoving;
 
-    // ── Avatar ring: toggle over-limit glow ─────────────────────────────
-    const _tw = document.getElementById('truckWrapper');
-    if (_tw) {
-      const _isOver = currentTruckSpeedLimit != null && gpsSpeed > (currentTruckSpeedLimit + 0.5);
-      _tw.classList.toggle('over-limit', _isOver);
-    }
-
-    // ── MAP COMPACT MODE: shrink map to 50% height when speed > 40 mph ──
-    const mapEl = document.getElementById('fullMap');
-    if (mapEl) {
-      const shouldCompact = gpsSpeed > 40;
-      const isCompact = mapEl.classList.contains('map-compact');
-      if (shouldCompact !== isCompact) {
-        mapEl.classList.toggle('map-compact', shouldCompact);
-        setTimeout(() => { if (fmMapInst) fmMapInst.invalidateSize(); }, 420);
-      }
-    }
-
     // ── Heading: prefer GPS bearing ─────────────────────────
     let heading = pos.coords.heading;
     fmLastHeading = heading;
@@ -13149,13 +13165,16 @@ function fmStartTracking() {
     // Always derive heading from consecutive snapped positions so the truck
     // icon aligns with the actual road direction (GPS heading can lag or
     // be wrong on curves; snapped positions are more accurate).
-    if (fmPrevLat != null && isMoving) {
+    if (fmPrevLat != null && (snapLat !== fmPrevLat || snapLon !== fmPrevLon)) {
       heading = calcHeading(fmPrevLat, fmPrevLon, snapLat, snapLon);
     } else if (!heading || heading < 0) {
       heading = fmLastHeading ?? 0;
     }
-    if (isMoving) { fmPrevLat = snapLat; fmPrevLon = snapLon; }
+    fmPrevLat = snapLat; fmPrevLon = snapLon;
     fmLastHeading = heading;
+
+    // ── Speed limit check (must run before truck marker so color is correct) ──
+    checkSpeedLimit(gpsSpeed);
 
     // ── Update truck marker at snapped on-road position ─────
     fmUpdateTruckMarker(snapLat, snapLon, heading, isMoving);
@@ -13168,25 +13187,28 @@ function fmStartTracking() {
         fmCurrentZoom = 16;
       }
       window._fmProgrammaticMove = true;
-      const followCenter = calcFollowCenter(snapLat, snapLon, heading);
-      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
-      // ── Heading-up: rotate map to match truck direction ──
-      if (fmHeadingUpMode && isMoving && heading != null && heading >= 0) {
-        if (typeof fmMapInst.setBearing === 'function') {
+      // Rotate BEFORE pan so the bearing event fires while flag is set
+      if (typeof fmMapInst.setBearing === 'function') {
+        if (fmHeadingUpMode && heading != null && heading >= 0) {
           fmMapInst.setBearing(heading);
-        }
-      } else if (!fmHeadingUpMode || !isMoving) {
-        // North-up when stopped or user disabled heading-up
-        if (typeof fmMapInst.setBearing === 'function') {
+        } else if (!fmHeadingUpMode) {
           fmMapInst.setBearing(0);
         }
       }
-      setTimeout(() => { window._fmProgrammaticMove = false; }, 1200);
+      const followCenter = calcFollowCenter(snapLat, snapLon, heading);
+      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
+      // Keep flag true until animation fully settles (longer than GPS poll interval)
+      if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
+      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
     }
 
     
     // ── NEXT TURN / EXIT (local) ───────────────────────────
     updateNavInstruction(lat, lon);
+    // ── Weigh station warning ─────────────────────────────
+    if (isMoving) checkWeighStations(lat, lon);
+    // ── 30-min break rule check ────────────────────────────
+    b30Check(isMoving);
 // ── HUD stats ────────────────────────────────────────────
     const remaining = haversine(lat, lon, destination.lat, destination.lon);
     const traveled  = Math.max(0, routeDistance - remaining);
@@ -13318,13 +13340,40 @@ function fmStartTracking() {
     const nowGeo = Date.now();
     if (nowGeo - fmLastGeocode > 12000) {
       fmLastGeocode = nowGeo;
-      try {
-        const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`);
-        const d = await r.json();
-        const p = d.features?.[0]?.properties || {};
-        document.getElementById('fmLocVal').textContent =
-          [p.name, p.city, p.state].filter(Boolean).join(', ') || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-      } catch { document.getElementById('fmLocVal').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`; }
+      (async () => {
+        const locEl = document.getElementById('fmLocVal');
+        if (!locEl) return;
+
+        // 1️⃣ Photon reverse PRIMARY
+        try {
+          const rP = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&lang=en`);
+          const dP = await rP.json();
+          const p  = dP.features?.[0]?.properties || {};
+          const addr = [p.name, p.city || p.town || p.village, p.state].filter(Boolean).join(', ');
+          if (addr) { locEl.textContent = addr; return; }
+        } catch(eP) { console.warn('Photon reverse failed:', eP.message); }
+
+        // 2️⃣ Nominatim reverse FALLBACK
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 8000);
+          const rN = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&zoom=14&addressdetails=1`,
+            { signal: ctrl.signal, headers: { 'Accept-Language': 'en' } }
+          );
+          clearTimeout(t);
+          const dN = await rN.json();
+          const a  = dN.address || {};
+          const city  = a.city || a.town || a.village || a.suburb || a.county || '';
+          const state = a.state || '';
+          const road  = a.road || a.pedestrian || '';
+          const addr2 = [road, city, state].filter(Boolean).join(', ') || dN.display_name?.split(',').slice(0,3).join(',').trim();
+          if (addr2) { locEl.textContent = addr2; return; }
+        } catch(eN) { console.warn('Nominatim reverse failed:', eN.message); }
+
+        // 3️⃣ Last resort: coordinates
+        locEl.textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+      })();
     }
 
     // ── Check nearby community reports ─────────────────────
@@ -13334,11 +13383,10 @@ function fmStartTracking() {
     // ── Bridge check: also trigger from GPS when moving (in addition to timer) ──
     if (bridgeActive && isMoving) checkBridges();
 
-    // ── Speed limit check ────────────────────────────────────
-    checkSpeedLimit(gpsSpeed);
-
     // ── Detect state + fetch cheap fuel (throttled) ──────────
     detectStateAndUpdateLimit(lat, lon);
+    checkStateBorderAhead(lat, lon, fmLastHeading);
+    checkRoadRestrictions(lat, lon);
     fetchRoadSpeedLimit(lat, lon);
     fetchCheapFuel(lat, lon);
 
@@ -13369,12 +13417,17 @@ function fmStartTracking() {
       fmLastHeading = finalHdg;
       fmUpdateTruckMarker(snap.lat, snap.lon, finalHdg, moving);
       if (fmFollowing && fmMapInst) {
+        window._fmProgrammaticMove = true;
+        if (typeof fmMapInst.setBearing === 'function') {
+          if (fmHeadingUpMode && finalHdg != null && finalHdg >= 0) fmMapInst.setBearing(finalHdg);
+          else if (!fmHeadingUpMode) fmMapInst.setBearing(0);
+        }
         const ctr = moving
           ? calcFollowCenter(snap.lat, snap.lon, finalHdg)
           : [snap.lat, snap.lon];
-        window._fmProgrammaticMove = true;
         fmMapInst.setView(ctr, fmCurrentZoom, { animate: true, duration: 0.6, noMoveStart: true });
-        setTimeout(() => { window._fmProgrammaticMove = false; }, 800);
+        if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
+        window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
       }
       fmCurrentSpeed = rawSpd != null && rawSpd >= 0 ? Math.round(rawSpd * 2.237) : 0;
       fmVehicleMoving = moving;
@@ -13389,6 +13442,7 @@ function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
+  b30Reset(); // limpiar sistema de pausa al detener rastreo
   // Release Wake Lock
   if (fmWakeLock) { fmWakeLock.release().catch(() => {}); fmWakeLock = null; }
   // Restart warm-cache watcher now that tracking is stopped
@@ -13840,6 +13894,8 @@ async function loadAllPOIs(lat, lon) {
   // Load POIs from each waypoint (radius 30 miles = 48km per waypoint)
   const loadFromWaypoints = async (type) => {
     if (!fmMapInst) return;
+    // Skip if user already loaded this type on-demand (avoid overwriting)
+    if (fmPoiLoaded[type] && fmPoiGroups[type]) return;
     if (fmPoiGroups[type]) { try { fmMapInst.removeLayer(fmPoiGroups[type]); } catch {} }
     fmPoiGroups[type] = null;
     fmPoiLayers[type] = [];
@@ -13879,18 +13935,40 @@ async function loadAllPOIs(lat, lon) {
           const distStr = dist < 1000 ? dist.toFixed(0) + ' mi' : '999+ mi';
           const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
 
-          let popupHtml = `
-            <div style="font-family:'DM Sans',sans-serif;min-width:170px;max-width:230px;padding:4px">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-                <div style="width:36px;height:36px;border-radius:50%;background:${cfg.color}22;border:2px solid ${cfg.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${cfg.emoji}</div>
-                <div>
-                  <div style="font-weight:800;font-size:14px;line-height:1.2">${name}</div>
-                  <div style="color:#6b7280;font-size:11px;font-weight:600">${cfg.label}</div>
+          // Popup especial para básculas
+          let popupHtml;
+          if (type === 'scale') {
+            popupHtml = `
+              <div style="font-family:'DM Sans',sans-serif;min-width:180px;max-width:240px;padding:4px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                  <div style="width:40px;height:40px;background:#f59e0b;transform:rotate(45deg);border:2px solid #000;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <span style="transform:rotate(-45deg);font-size:18px">⚖️</span>
+                  </div>
+                  <div>
+                    <div style="font-weight:900;font-size:14px;line-height:1.2;color:#f59e0b">WEIGH STATION</div>
+                    <div style="color:#6b7280;font-size:11px;font-weight:600">${name}</div>
+                  </div>
                 </div>
-              </div>
-              <div style="background:${cfg.color}15;border:1px solid ${cfg.color}40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:${cfg.color}">
-                📏 ${distStr} from start
-              </div>`;
+                <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">
+                  ⚠️ Reduce velocidad — Ten documentos listos
+                </div>
+                <div style="background:#f59e0b15;border:1px solid #f59e0b40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:#f59e0b">
+                  📏 ${distStr} desde el inicio
+                </div>`;
+          } else {
+            popupHtml = `
+              <div style="font-family:'DM Sans',sans-serif;min-width:170px;max-width:230px;padding:4px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                  <div style="width:36px;height:36px;border-radius:50%;background:${cfg.color}22;border:2px solid ${cfg.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${cfg.emoji}</div>
+                  <div>
+                    <div style="font-weight:800;font-size:14px;line-height:1.2">${name}</div>
+                    <div style="color:#6b7280;font-size:11px;font-weight:600">${cfg.label}</div>
+                  </div>
+                </div>
+                <div style="background:${cfg.color}15;border:1px solid ${cfg.color}40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:${cfg.color}">
+                  📏 ${distStr} from start
+                </div>`;
+          }
           if (el.tags?.opening_hours) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:6px">🕐 ${el.tags.opening_hours}</div>`;
           if (el.tags?.phone) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:3px">📞 ${el.tags.phone}</div>`;
           if (el.tags?.['addr:city']) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:3px">📍 ${el.tags['addr:city']}</div>`;
@@ -13903,31 +13981,67 @@ async function loadAllPOIs(lat, lon) {
             : type === 'truck' ? (brand ? brand.logo : '🚛') : type === 'rest' ? '😴' : '⚖️';
           const shortName = brand ? brand.short : name.split(',')[0].substring(0, 13);
 
-          const icon = L.divIcon({
-            className: '',
-            html: `
-              <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-                <div style="
-                  width:34px; height:34px;
-                  background:${markerBg};
-                  border-radius:50%;
-                  border:2.5px solid rgba(255,255,255,.95);
-                  box-shadow:0 3px 12px rgba(0,0,0,.5);
-                  display:flex; align-items:center; justify-content:center;
-                  font-size:15px; line-height:1; cursor:pointer;
-                ">${typeIcon}</div>
-                <div style="
-                  background:${markerBg}; color:#fff;
-                  font-size:8px; font-weight:900;
-                  padding:2px 6px; border-radius:6px;
-                  white-space:nowrap; font-family:'DM Sans',sans-serif;
-                  box-shadow:0 2px 5px rgba(0,0,0,.4);
-                  max-width:75px; overflow:hidden; text-overflow:ellipsis;
-                ">${shortName}</div>
-              </div>`,
-            iconAnchor: [17, 17],
-            popupAnchor: [0, -20]
-          });
+          // Básculas: icono tipo señal de tráfico (más grande y visible)
+          let icon;
+          if (type === 'scale') {
+            icon = L.divIcon({
+              className: '',
+              html: `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+                  <!-- Señal de rombo amarillo -->
+                  <div style="
+                    width:44px;height:44px;
+                    background:#f59e0b;
+                    transform:rotate(45deg);
+                    border:3px solid #000;
+                    box-shadow:0 3px 14px rgba(0,0,0,.55);
+                    display:flex;align-items:center;justify-content:center;
+                    cursor:pointer;
+                  ">
+                    <span style="transform:rotate(-45deg);font-size:20px;line-height:1">⚖️</span>
+                  </div>
+                  <!-- Poste -->
+                  <div style="width:3px;height:10px;background:#555;margin-top:-2px"></div>
+                  <!-- Etiqueta -->
+                  <div style="
+                    background:#000;color:#f59e0b;
+                    font-size:7px;font-weight:900;letter-spacing:.4px;
+                    padding:2px 5px;border-radius:4px;
+                    white-space:nowrap;font-family:'DM Sans',sans-serif;
+                    box-shadow:0 2px 5px rgba(0,0,0,.5);
+                    margin-top:1px;
+                  ">WEIGH ST.</div>
+                </div>`,
+              iconAnchor: [22, 28],
+              popupAnchor: [0, -32]
+            });
+          } else {
+            icon = L.divIcon({
+              className: '',
+              html: `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                  <div style="
+                    width:34px; height:34px;
+                    background:${markerBg};
+                    border-radius:50%;
+                    border:2.5px solid rgba(255,255,255,.95);
+                    box-shadow:0 3px 12px rgba(0,0,0,.5);
+                    display:flex; align-items:center; justify-content:center;
+                    font-size:15px; line-height:1; cursor:pointer;
+                  ">${typeIcon}</div>
+                  <div style="
+                    background:${markerBg}; color:#fff;
+                    font-size:8px; font-weight:900;
+                    padding:2px 6px; border-radius:6px;
+                    white-space:nowrap; font-family:'DM Sans',sans-serif;
+                    box-shadow:0 2px 5px rgba(0,0,0,.4);
+                    max-width:75px; overflow:hidden; text-overflow:ellipsis;
+                  ">${shortName}</div>
+                </div>`,
+              iconAnchor: [17, 17],
+              popupAnchor: [0, -20]
+            });
+          }
 
           const marker = L.marker([elLat, elLon], { icon })
             .bindPopup(popupHtml, { maxWidth: 260 });
@@ -14533,18 +14647,248 @@ async function loadMiniMapRestrictions() {
 
 function togglePOI(type) {
   fmPoiActive[type] = !fmPoiActive[type];
-  const chip = document.getElementById(
-    type === 'scale'    ? 'chipScale'    :
-    type === 'truck'    ? 'chipTruck'    :
-    type === 'rest'     ? 'chipRest'     :
-    type === 'restrict' ? 'chipRestrict' : 'chipReport'
-  );
-  chip.classList.toggle('off', !fmPoiActive[type]);
+  const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck'
+               : type === 'rest'  ? 'chipRest'  : type === 'restrict' ? 'chipRestrict' : 'chipReport';
+  const chip = document.getElementById(chipId);
+  if (chip) chip.classList.toggle('off', !fmPoiActive[type]);
 
+  // Turning OFF — hide group and done
+  if (!fmPoiActive[type]) {
+    const grp = fmPoiGroups[type];
+    if (grp && fmMapInst) { try { fmMapInst.removeLayer(grp); } catch {} }
+    return;
+  }
+
+  // Turning ON — if group already exists, just show it
   const grp = fmPoiGroups[type];
-  if (grp) {
-    if (fmPoiActive[type]) { try { grp.addTo(fmMapInst); } catch {} }
-    else { try { fmMapInst.removeLayer(grp); } catch {} }
+  if (grp && fmMapInst) {
+    try { grp.addTo(fmMapInst); } catch {}
+    return;
+  }
+
+  // Group doesn't exist yet → load on demand immediately
+  if (type === 'truck' || type === 'rest' || type === 'scale') {
+    loadPOIOnDemand(type, chip);
+  }
+}
+
+/* ── loadPOIOnDemand — carga rápida bajo demanda centrada en posición actual ── */
+async function loadPOIOnDemand(type, chipEl) {
+  if (!fmMapInst) return;
+
+  // Show spinner on chip
+  const emoji = type === 'truck' ? '🚛' : type === 'rest' ? '😴' : '⚖️';
+  const label = type === 'truck' ? 'Truck Stops' : type === 'rest' ? 'Rest Areas' : 'Scales';
+  if (chipEl) chipEl.innerHTML = `${emoji} ${label} <span style="display:inline-block;animation:spin 1s linear infinite">⏳</span>`;
+
+  // Get best position: GPS marker → fmLastLat → origin → map center
+  let lat, lon;
+  if (fmGpsMarker) { const ll = fmGpsMarker.getLatLng(); lat = ll.lat; lon = ll.lng; }
+  else if (window.fmLastLat) { lat = window.fmLastLat; lon = window.fmLastLon; }
+  else if (origin) { lat = origin.lat; lon = origin.lon; }
+  else if (fmMapInst) { const c = fmMapInst.getCenter(); lat = c.lat; lon = c.lng; }
+  else return;
+
+  // Fast query: 80 km radius (~50 miles) around current position
+  const R = 80000;
+  const QUERIES_FAST = {
+    truck: `[out:json][timeout:25];
+(
+  node["amenity"="truck_stop"](around:${R},${lat},${lon});
+  node["amenity"="fuel"]["hgv"="yes"](around:${R},${lat},${lon});
+  node["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${R},${lat},${lon});
+  node["name"~"Flying J|Pilot|Love's|Loves Travel|TA Travel|TA-Petro|Petro Stop|Sapp Bros|Kwik Trip|Truck Stop|Travel Plaza|Travel Center|Truck Plaza",i](around:${R},${lat},${lon});
+);
+out center qt 120;`,
+    rest: `[out:json][timeout:20];
+(
+  node["highway"="rest_area"](around:${R},${lat},${lon});
+  node["amenity"="rest_area"](around:${R},${lat},${lon});
+  way["highway"="rest_area"](around:${R},${lat},${lon});
+  way["amenity"="rest_area"](around:${R},${lat},${lon});
+);
+out center qt 80;`,
+    scale: `[out:json][timeout:20];
+(
+  node["amenity"="weigh_station"](around:${R},${lat},${lon});
+  node["highway"="weigh_station"](around:${R},${lat},${lon});
+  node["man_made"="weigh_scale"](around:${R},${lat},${lon});
+  way["amenity"="weigh_station"](around:${R},${lat},${lon});
+  way["highway"="weigh_station"](around:${R},${lat},${lon});
+);
+out center qt 60;`,
+  };
+
+  let elements = [];
+  try {
+    const data = await overpassFetch(QUERIES_FAST[type], 22000);
+    elements = data?.elements || [];
+  } catch(e) {
+    console.warn('loadPOIOnDemand failed:', e.message);
+    if (chipEl) { chipEl.innerHTML = `${emoji} ${label}`; chipEl.classList.add('off'); }
+    fmPoiActive[type] = false;
+    return;
+  }
+
+  // Clear old markers
+  fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
+  fmPoiLayers[type] = [];
+  if (fmPoiGroups[type]) { try { fmMapInst.removeLayer(fmPoiGroups[type]); } catch {} }
+
+  const cfg = POI_ICONS[type];
+  const seen = new Set();
+  const pending = [];
+
+  elements.forEach(el => {
+    const elLat = el.lat ?? el.center?.lat;
+    const elLon = el.lon ?? el.center?.lon;
+    if (!elLat || !elLon) return;
+    if (seen.has(el.id)) return;
+    seen.add(el.id);
+
+    const dist = Math.round(haversine(lat, lon, elLat, elLon));
+    const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
+
+    // Popup
+    let popupHtml = `<div style="font-family:'DM Sans',sans-serif;min-width:170px;max-width:230px;padding:4px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:36px;height:36px;border-radius:50%;background:${cfg.color}22;border:2px solid ${cfg.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${cfg.emoji}</div>
+        <div>
+          <div style="font-weight:800;font-size:14px;line-height:1.2">${name}</div>
+          <div style="color:#6b7280;font-size:11px;font-weight:600">${cfg.label}</div>
+        </div>
+      </div>
+      <div style="background:${cfg.color}15;border:1px solid ${cfg.color}40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:${cfg.color}">📏 ${dist} mi away</div>`;
+    if (el.tags?.['addr:city']) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:4px">📍 ${el.tags['addr:city']}</div>`;
+    if (el.tags?.phone) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:3px">📞 ${el.tags.phone}</div>`;
+    popupHtml += '</div>';
+
+    // Icon
+    let iconHtml;
+    if (type === 'scale') {
+      iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:0">
+        <div style="width:40px;height:40px;background:#f59e0b;transform:rotate(45deg);border:3px solid #000;box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <span style="transform:rotate(-45deg);font-size:18px">⚖️</span>
+        </div>
+        <div style="width:3px;height:8px;background:#555;margin-top:-2px"></div>
+        <div style="background:#000;color:#f59e0b;font-size:7px;font-weight:900;padding:2px 4px;border-radius:3px;white-space:nowrap">WEIGH ST.</div>
+      </div>`;
+    } else if (type === 'truck') {
+      const brand = getTruckBrand(name);
+      const bg  = brand ? brand.color : cfg.color;
+      const ico = brand ? brand.logo : '🚛';
+      const sn  = brand ? brand.short : name.substring(0, 11);
+      iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:34px;height:34px;background:${bg};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer">${ico}</div>
+        <div style="background:${bg};color:#fff;font-size:8px;font-weight:900;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis">${sn}</div>
+      </div>`;
+    } else {
+      iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:34px;height:34px;background:${cfg.color};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer">${cfg.emoji}</div>
+        <div style="background:${cfg.color};color:#fff;font-size:8px;font-weight:900;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis">${name.substring(0,11)}</div>
+      </div>`;
+    }
+
+    const icon = L.divIcon({ className:'', html: iconHtml, iconAnchor:[17,17], popupAnchor:[0,-20] });
+    const marker = L.marker([elLat, elLon], { icon }).bindPopup(popupHtml, { maxWidth:250 });
+    pending.push(marker);
+    fmPoiLayers[type].push(marker);
+  });
+
+  const group = L.layerGroup(pending);
+  fmPoiGroups[type] = group;
+  fmPoiLoaded[type] = true;
+  if (fmPoiActive[type] && fmMapInst) group.addTo(fmMapInst);
+
+  const count = pending.length;
+  if (chipEl) {
+    chipEl.innerHTML = `${emoji} ${label} <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:1px 6px;font-size:10px;margin-left:3px">${count}</span>`;
+    if (count === 0) {
+      chipEl.innerHTML += ` <span style="font-size:9px;opacity:.6">sin datos</span>`;
+    }
+  }
+
+  // Background: extend coverage along the full route
+  if (roadGeometry && roadGeometry.length > 2 && count < 30) {
+    setTimeout(() => _extendPOIAlongRoute(type), 300);
+  }
+}
+
+/* Extends already-visible POI with full-route coverage without blocking UI */
+async function _extendPOIAlongRoute(type) {
+  if (!roadGeometry || roadGeometry.length < 2 || !fmMapInst) return;
+  const step = Math.max(1, Math.floor(roadGeometry.length / 10));
+  const wps = [];
+  for (let i = 0; i < roadGeometry.length; i += step) wps.push(roadGeometry[i]);
+  wps.push(roadGeometry[roadGeometry.length - 1]);
+
+  // Dedup waypoints <25 miles apart
+  const filtered = [wps[0]];
+  for (let i = 1; i < wps.length; i++) {
+    if (haversine(filtered[filtered.length-1][0], filtered[filtered.length-1][1], wps[i][0], wps[i][1]) > 25)
+      filtered.push(wps[i]);
+  }
+
+  const cfg = POI_ICONS[type];
+  const existingIds = new Set(fmPoiLayers[type].map(m => {
+    const ll = m.getLatLng(); return `${ll.lat.toFixed(4)},${ll.lng.toFixed(4)}`;
+  }));
+
+  const wpResults = await Promise.allSettled(
+    filtered.map(wp => overpassFetch(OVERPASS_QUERIES[type](wp[0], wp[1], 48000), 25000))
+  );
+
+  const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : (origin?.lat || filtered[0][0]);
+  const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : (origin?.lon || filtered[0][1]);
+  const newMarkers = [];
+
+  for (const res of wpResults) {
+    if (res.status !== 'fulfilled') continue;
+    (res.value?.elements || []).forEach(el => {
+      const elLat = el.lat ?? el.center?.lat;
+      const elLon = el.lon ?? el.center?.lon;
+      if (!elLat || !elLon) return;
+      const key = `${elLat.toFixed(4)},${elLon.toFixed(4)}`;
+      if (existingIds.has(key)) return;
+      if (roadGeometry.length > 1 && !isNearRoute(elLat, elLon, roadGeometry, 30)) return;
+      existingIds.add(key);
+
+      const dist = Math.round(haversine(truckLat, truckLon, elLat, elLon));
+      const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
+      let iconHtml;
+      if (type === 'truck') {
+        const brand = getTruckBrand(name);
+        const bg  = brand ? brand.color : cfg.color;
+        iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="width:34px;height:34px;background:${bg};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px">${brand ? brand.logo : '🚛'}</div>
+          <div style="background:${bg};color:#fff;font-size:8px;font-weight:900;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis">${brand ? brand.short : name.substring(0,11)}</div>
+        </div>`;
+      } else {
+        iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="width:34px;height:34px;background:${cfg.color};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px">${cfg.emoji}</div>
+          <div style="background:${cfg.color};color:#fff;font-size:8px;font-weight:900;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis">${name.substring(0,11)}</div>
+        </div>`;
+      }
+      const icon = L.divIcon({ className:'', html:iconHtml, iconAnchor:[17,17], popupAnchor:[0,-20] });
+      let popupHtml = `<div style="font-family:'DM Sans',sans-serif;min-width:170px;max-width:230px;padding:4px">
+        <div style="font-weight:800;font-size:14px;margin-bottom:6px">${name}</div>
+        <div style="background:${cfg.color}15;border:1px solid ${cfg.color}40;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:${cfg.color}">📏 ${dist} mi</div>
+        ${el.tags?.['addr:city'] ? `<div style="font-size:11px;color:#6b7280;margin-top:4px">📍 ${el.tags['addr:city']}</div>` : ''}
+      </div>`;
+      const m = L.marker([elLat, elLon], { icon }).bindPopup(popupHtml, { maxWidth:250 });
+      newMarkers.push(m);
+      fmPoiLayers[type].push(m);
+    });
+  }
+
+  if (newMarkers.length > 0 && fmPoiGroups[type]) {
+    newMarkers.forEach(m => fmPoiGroups[type].addLayer(m));
+    // Update chip count
+    const chipId = type === 'truck' ? 'chipTruck' : type === 'rest' ? 'chipRest' : 'chipScale';
+    const chip = document.getElementById(chipId);
+    const emoji = type === 'truck' ? '🚛' : type === 'rest' ? '😴' : '⚖️';
+    const lbl = type === 'truck' ? 'Truck Stops' : type === 'rest' ? 'Rest Areas' : 'Scales';
+    if (chip && fmPoiActive[type]) chip.innerHTML = `${emoji} ${lbl} <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:1px 6px;font-size:10px;margin-left:3px">${fmPoiLayers[type].length}</span>`;
   }
 }
 
@@ -15008,6 +15352,10 @@ function resetForm() {
   origin = null; destination = null;
   routeDistance = 0; schedule = []; arrivalTime = null; totalTime = 0;
   roadGeometry = null; routeSource = null;
+  // Restore "Calcular Ruta" button
+  const _cb = document.getElementById('calcBtn');
+  if (_cb) { _cb.style.display = ''; _cb.disabled = false; _cb.textContent = ''; }
+  if (_cb) { _cb.innerHTML = '<span style="font-size:22px">🚛</span> Calcular Ruta'; }
   // Clear mini-map POI markers
   ['truck','rest','restrict'].forEach(type => {
     miniPoiMarkers[type].forEach(m => { try { if(miniMap) miniMap.removeLayer(m); } catch {} });
@@ -15021,8 +15369,6 @@ function resetForm() {
   document.getElementById('resultsCard').style.display = 'none';
   document.getElementById('shareTrackBtns').style.display = 'none';
   document.getElementById('miniMapCard').style.display = 'none';
-  const _cb = document.getElementById('calcBtn');
-  if (_cb) { _cb.style.display = ''; }
   hideError();
 }
 
@@ -15063,20 +15409,6 @@ function bindEvents() {
 
   document.getElementById('langSelect').value = lang;
   document.getElementById('langSelect').addEventListener('change', e => { lang = e.target.value; localStorage.setItem('hos_lang', lang); applyLang(); updateSettingsChecks(); });
-
-  // Botón de idioma en menú principal
-  const _langBtn = document.getElementById('langToggleBtn');
-  if (_langBtn) {
-    _langBtn.textContent = lang === 'es' ? 'ES' : 'US';
-    _langBtn.addEventListener('click', () => {
-      lang = lang === 'en' ? 'es' : 'en';
-      localStorage.setItem('hos_lang', lang);
-      document.getElementById('langSelect').value = lang;
-      applyLang();
-      updateSettingsChecks();
-      _langBtn.textContent = lang === 'es' ? 'ES' : 'US';
-    });
-  }
 
   document.getElementById('langRow').addEventListener('click', () => {
     document.getElementById('langPanel').style.display = document.getElementById('langPanel').style.display === 'none' ? 'block' : 'none';
@@ -15313,6 +15645,190 @@ function initResetTimer() {
 /* ════════════════════════════════════════════════════════════
    💰  FREIGHT CALCULATOR
 ════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   🌉  BRIDGE / WEIGHT RESTRICTIONS
+═══════════════════════════════════════════════ */
+let bridgeAlertActive = localStorage.getItem('hos_bridgeAlert') !== 'false';
+let noTruckAlertActive = localStorage.getItem('hos_noTruckAlert') !== 'false';
+let lastRestrCheck = 0;
+
+function openBridgeRestrSheet() {
+  const s = document.getElementById('bridgeRestrSheet');
+  s.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  // Load saved settings
+  document.getElementById('bridgeAlertToggle').checked = bridgeAlertActive;
+  const h = localStorage.getItem('hos_truckHeight') || '13';
+  const w = localStorage.getItem('hos_truckWeight') || '80000';
+  const wd = localStorage.getItem('hos_truckWidth') || '8.5';
+  document.getElementById('truckHeightFt').value = h;
+  document.getElementById('truckGrossLbs').value = w;
+  document.getElementById('truckWidthFt').value = wd;
+}
+function closeBridgeRestrSheet() {
+  document.getElementById('bridgeRestrSheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function saveBridgeSettings() {
+  bridgeAlertActive = document.getElementById('bridgeAlertToggle').checked;
+  localStorage.setItem('hos_bridgeAlert', bridgeAlertActive);
+  localStorage.setItem('hos_truckHeight', document.getElementById('truckHeightFt').value);
+  localStorage.setItem('hos_truckWeight', document.getElementById('truckGrossLbs').value);
+  localStorage.setItem('hos_truckWidth', document.getElementById('truckWidthFt').value);
+}
+
+function openNoTruckSheet() {
+  document.getElementById('noTruckSheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('noTruckToggle').checked = noTruckAlertActive;
+}
+function closeNoTruckSheet() {
+  document.getElementById('noTruckSheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function saveNoTruckSettings() {
+  noTruckAlertActive = document.getElementById('noTruckToggle').checked;
+  localStorage.setItem('hos_noTruckAlert', noTruckAlertActive);
+}
+
+async function checkRoadRestrictions(lat, lon) {
+  const now = Date.now();
+  if (now - lastRestrCheck < 45000) return;
+  lastRestrCheck = now;
+
+  const truckH  = parseFloat(localStorage.getItem('hos_truckHeight') || '13');
+  const truckW  = parseFloat(localStorage.getItem('hos_truckWeight') || '80000');
+  const wTons   = (truckW * 0.000453592).toFixed(1);
+  const hMeters = (truckH * 0.3048).toFixed(2);
+  const r = 0.15; // ~150m radius
+
+  try {
+    const query = `[out:json][timeout:10];
+      (
+        way(around:${r*1000},${lat},${lon})[maxheight];
+        way(around:${r*1000},${lat},${lon})[maxweight];
+        way(around:${r*1000},${lat},${lon})[hgv=no];
+        way(around:${r*1000},${lat},${lon})[access=no][motor_vehicle!=yes];
+      );out tags;`;
+    const res = await fetch('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query));
+    const data = await res.json();
+    const elements = data.elements || [];
+
+    const bridgeList = document.getElementById('bridgeAlertList');
+    const noTruckList = document.getElementById('noTruckAlertList');
+    let bridgeAlerts = [];
+    let noTruckAlerts = [];
+
+    elements.forEach(el => {
+      const t = el.tags || {};
+      // Height restriction
+      if (t.maxheight) {
+        const mh = parseFloat(t.maxheight);
+        if (!isNaN(mh) && mh < parseFloat(hMeters)) {
+          bridgeAlerts.push({ type:'danger', ico:'⚠️', title:`Altura máx: ${t.maxheight}m`, sub:`Tu camión: ${truckH}ft (${hMeters}m) — NO PASA` });
+        } else if (!isNaN(mh)) {
+          bridgeAlerts.push({ type:'warn', ico:'🌉', title:`Altura máx: ${t.maxheight}m`, sub:`Tu camión: ${hMeters}m — Pasa con margen` });
+        }
+      }
+      // Weight restriction
+      if (t.maxweight) {
+        const mw = parseFloat(t.maxweight);
+        if (!isNaN(mw) && mw < parseFloat(wTons)) {
+          bridgeAlerts.push({ type:'danger', ico:'⚠️', title:`Peso máx: ${t.maxweight}t`, sub:`Tu camión: ${wTons}t — EXCEDE LÍMITE` });
+        }
+      }
+      // No-truck / HGV
+      if (t.hgv === 'no' || t.access === 'no') {
+        const road = t.name || t.ref || 'Vía actual';
+        noTruckAlerts.push({ type:'danger', ico:'🚫', title:`Zona restringida: ${road}`, sub:'Camiones pesados no permitidos en esta vía' });
+      }
+    });
+
+    // Update bridge list
+    if (bridgeAlerts.length) {
+      bridgeList.innerHTML = bridgeAlerts.map(a =>
+        `<div class="restr-alert-item ${a.type}"><div class="restr-alert-ico">${a.ico}</div><div><div class="restr-alert-title">${a.title}</div><div class="restr-alert-sub">${a.sub}</div></div></div>`
+      ).join('');
+      if (bridgeAlertActive && bridgeAlerts.some(a => a.type === 'danger')) {
+        showToast('danger','⚠️','Restricción de altura/peso','Verifica la ruta — posible restricción adelante', 10000);
+      }
+    } else if (bridgeList) {
+      bridgeList.innerHTML = `<div class="restr-alert-item ok"><div class="restr-alert-ico">✅</div><div><div class="restr-alert-title">Sin restricciones detectadas</div><div class="restr-alert-sub">Ruta libre de restricciones de altura y peso</div></div></div>`;
+    }
+
+    // Update no-truck list
+    if (noTruckAlerts.length) {
+      noTruckList.innerHTML = noTruckAlerts.map(a =>
+        `<div class="restr-alert-item ${a.type}"><div class="restr-alert-ico">${a.ico}</div><div><div class="restr-alert-title">${a.title}</div><div class="restr-alert-sub">${a.sub}</div></div></div>`
+      ).join('');
+      if (noTruckAlertActive) {
+        showToast('danger','🚫','Zona restringida para camiones','No-truck zone detectada cerca de tu posición', 10000);
+        vibrate([200,80,200]);
+      }
+    } else if (noTruckList) {
+      noTruckList.innerHTML = `<div class="restr-alert-item ok"><div class="restr-alert-ico">✅</div><div><div class="restr-alert-title">Ruta libre</div><div class="restr-alert-sub">No se detectaron zonas no-truck cercanas</div></div></div>`;
+    }
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════
+   ⚖️  AXLE WEIGHT CALCULATOR
+═══════════════════════════════════════════════ */
+function openAxleCalcSheet() {
+  document.getElementById('axleCalcSheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  calcAxleWeight();
+}
+function closeAxleCalcSheet() {
+  document.getElementById('axleCalcSheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function calcAxleWeight() {
+  const gross  = parseFloat(document.getElementById('axleGrossLbs').value) || 80000;
+  const empty  = parseFloat(document.getElementById('axleTruckLbs').value) || 35000;
+  const cargo  = Math.max(0, gross - empty);
+  document.getElementById('axleCargoDisplay').textContent = cargo.toLocaleString() + ' lbs';
+
+  // Standard 18-wheeler distribution (approximate percentages based on load)
+  // Steer axle: ~12% of gross (but capped at 12,000)
+  // Drive tandem: ~42.5% of gross
+  // Trailer tandem: ~42.5% of gross (but calculated from actual cargo distribution)
+  const steer   = Math.min(12000, gross * 0.12);
+  const drive   = (gross - steer) * 0.50;
+  const trailer = gross - steer - drive;
+
+  const limits = { steer: 12000, drive: 34000, trailer: 34000 };
+  const axles = [
+    { name:'Eje delantero', weight: steer,   limit: limits.steer,   emoji:'🔵' },
+    { name:'Tándem tractora', weight: drive,  limit: limits.drive,   emoji:'🟢' },
+    { name:'Tándem trailer',  weight: trailer,limit: limits.trailer, emoji:'🟢' },
+  ];
+
+  const maxGross = 80000;
+  const grossOk = gross <= maxGross;
+
+  let html = axles.map(ax => {
+    const pct = Math.min(100, (ax.weight / ax.limit) * 100);
+    const over = ax.weight > ax.limit;
+    const color = over ? '#ef4444' : pct > 85 ? '#f59e0b' : '#10b981';
+    return `<div class="axle-row">
+      <div class="axle-name">${ax.name}</div>
+      <div class="axle-bar-wrap"><div class="axle-bar" style="width:${pct}%;background:${color}"></div></div>
+      <div class="axle-val" style="color:${color}">${Math.round(ax.weight).toLocaleString()}</div>
+      <div class="axle-limit">/ ${ax.limit.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+
+  html += `<div class="axle-row" style="border-top:1px solid rgba(255,255,255,.12);margin-top:6px;padding-top:14px">
+    <div class="axle-name" style="font-weight:900">TOTAL BRUTO</div>
+    <div class="axle-bar-wrap"><div class="axle-bar" style="width:${Math.min(100,(gross/maxGross)*100)}%;background:${grossOk?'#10b981':'#ef4444'}"></div></div>
+    <div class="axle-val" style="color:${grossOk?'#10b981':'#ef4444'}">${gross.toLocaleString()}</div>
+    <div class="axle-limit">/ ${maxGross.toLocaleString()}</div>
+  </div>`;
+
+  document.getElementById('axleResults').innerHTML = html;
+}
+
 function openFreightCalc() {
   // Auto-fill miles from current route if available
   if (typeof totalDistanceMiles !== 'undefined' && totalDistanceMiles > 0) {
@@ -15325,259 +15841,6 @@ function openFreightCalc() {
 function closeFreightCalc() {
   document.getElementById('freightOverlay').classList.remove('open');
   document.body.style.overflow = '';
-}
-
-/* ═══════════════════════════════════════════════════════════
-   ⚖️  AXLE WEIGHT CALCULATOR
-═══════════════════════════════════════════════════════════ */
-function openAxleWeight() {
-  const panel = document.getElementById('axwPanel');
-  const arrow = document.getElementById('axwToggleArrow');
-  const isOpen = panel.style.display !== 'none';
-  if (isOpen) {
-    panel.style.display = 'none';
-    arrow.textContent = '›';
-  } else {
-    panel.style.display = 'block';
-    arrow.textContent = '⌄';
-    setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
-  }
-}
-function closeAxleWeight() {
-  document.getElementById('axwPanel').style.display = 'none';
-  document.getElementById('axwToggleArrow').textContent = '›';
-}
-
-function axwLive() {
-  const vals  = [
-    { id:'Steer',   v: +document.getElementById('axwSteer').value   || 0, lim: 12000 },
-    { id:'Drive',   v: +document.getElementById('axwDrive').value   || 0, lim: 34000 },
-    { id:'Trailer', v: +document.getElementById('axwTrailer').value || 0, lim: 34000 },
-  ];
-  vals.forEach(({ id, v, lim }) => {
-    const badge = document.getElementById('axwBadge'+id);
-    const card  = document.getElementById('axwCard'+id);
-    if (!v) { badge.className='axw-badge na'; badge.textContent='—'; card.className='axw-card'; return; }
-    if (v > lim)        { badge.className='axw-badge over'; badge.textContent='+'+((v-lim).toLocaleString())+' lbs'; card.className='axw-card over'; }
-    else if (v > lim*.95){ badge.className='axw-badge warn'; badge.textContent=v.toLocaleString()+' lbs'; card.className='axw-card warn'; }
-    else                { badge.className='axw-badge ok';   badge.textContent=v.toLocaleString()+' lbs'; card.className='axw-card ok'; }
-  });
-}
-
-function calcAxleWeight() {
-  const steer   = +document.getElementById('axwSteer').value   || 0;
-  const drive   = +document.getElementById('axwDrive').value   || 0;
-  const trailer = +document.getElementById('axwTrailer').value || 0;
-  const curPos  = Math.max(1, Math.min(25, +document.getElementById('axwCurPos').value || 13));
-
-  if (!steer && !drive && !trailer) {
-    if (typeof showToast === 'function') showToast('warn','⚠️','Sin datos','Ingresa los pesos del ticket de báscula', 2500);
-    return;
-  }
-
-  const STEER_LIM  = 12000, TANDEM_LIM = 34000, GROSS_LIM = 80000;
-  const LBS_PER_HOLE = 200;   // ~200 lbs por hueco de 2"
-  const gross = steer + drive + trailer;
-
-  // ── Gross weight indicator ───────────────────────────────
-  const gEl = document.getElementById('axwGrossVal');
-  gEl.textContent = gross.toLocaleString() + ' lbs';
-  gEl.className = 'axw-gross-val ' + (gross > GROSS_LIM ? 'over' : gross > GROSS_LIM * .97 ? 'warn' : 'ok');
-
-  // ── Calculate tandem adjustment needed ───────────────────
-  // Positive holes = mover hacia ADELANTE (sube peso trailer, baja drive)
-  // Negative holes = mover hacia ATRÁS    (baja peso trailer, sube drive)
-  let holes = 0, recoClass = 'good', recoMsg = '';
-
-  if (drive > TANDEM_LIM && trailer <= TANDEM_LIM) {
-    const excess      = drive - TANDEM_LIM;
-    const headroom    = TANDEM_LIM - trailer;
-    const transferable = Math.min(excess, headroom);
-    holes = Math.ceil(transferable / LBS_PER_HOLE);
-    recoClass = 'move';
-    recoMsg = `🔧 Mueve el tandem del trailer <strong>${holes} hueco${holes>1?'s':''} hacia ADELANTE</strong> (hacia la cabina).<br><br>`
-            + `Esto transfiere ≈ ${(holes*LBS_PER_HOLE).toLocaleString()} lbs de los ejes de tracción a los ejes del trailer.`;
-    if (drive - transferable > TANDEM_LIM) {
-      recoMsg += `<br><br>⚠️ No hay suficiente recorrido para corregir por completo — redistribuye la carga en el trailer.`;
-      recoClass = 'bad';
-    }
-  } else if (trailer > TANDEM_LIM && drive <= TANDEM_LIM) {
-    const excess      = trailer - TANDEM_LIM;
-    const headroom    = TANDEM_LIM - drive;
-    const transferable = Math.min(excess, headroom);
-    holes = -Math.ceil(transferable / LBS_PER_HOLE);
-    recoClass = 'move';
-    recoMsg = `🔧 Mueve el tandem del trailer <strong>${Math.abs(holes)} hueco${Math.abs(holes)>1?'s':''} hacia ATRÁS</strong> (alejarse de la cabina).<br><br>`
-            + `Esto transfiere ≈ ${(Math.abs(holes)*LBS_PER_HOLE).toLocaleString()} lbs de los ejes del trailer a los ejes de tracción.`;
-    if (trailer - transferable > TANDEM_LIM) {
-      recoMsg += `<br><br>⚠️ No hay suficiente recorrido — redistribuye la carga en el trailer.`;
-      recoClass = 'bad';
-    }
-  } else if (drive > TANDEM_LIM && trailer > TANDEM_LIM) {
-    recoClass = 'bad';
-    recoMsg = '🚨 Ambos tandems están sobre el límite. El slider no puede corregir esto solo — <strong>redistribuye la carga</strong> dentro del trailer.';
-  } else if (gross > GROSS_LIM) {
-    recoClass = 'bad';
-    recoMsg = '🚨 El peso bruto total excede 80,000 lbs. Debes <strong>reducir la carga</strong>.';
-  } else if (steer > STEER_LIM) {
-    recoClass = 'bad';
-    recoMsg = '⚠️ El eje delantero está sobre el límite. Mueve la <strong>quinta rueda hacia ATRÁS</strong> para transferir peso del steer a los ejes de tracción.';
-  } else {
-    recoClass = 'good';
-    recoMsg = '✅ <strong>Todos los ejes están dentro del límite legal.</strong> El peso está balanceado — no necesitas mover el tandem.';
-  }
-
-  const targetPos = Math.max(1, Math.min(25, curPos + holes));
-
-  document.getElementById('axwSvgWrap').innerHTML = _buildAxwSvg(steer, drive, trailer, curPos, targetPos, holes);
-  const rc = document.getElementById('axwReco');
-  rc.className = 'axw-reco ' + recoClass;
-  rc.innerHTML = recoMsg;
-  document.getElementById('axwResults').style.display = 'block';
-  setTimeout(() => document.getElementById('axwResults').scrollIntoView({ behavior:'smooth', block:'nearest' }), 80);
-}
-
-function _buildAxwSvg(steer, drive, trailer, curPos, targetPos, holesDelta) {
-  const W = 370;
-  const STEER_LIM = 12000, TDM_LIM = 34000;
-
-  function wc(v, lim) {
-    if (!v) return '#64748b';
-    if (v > lim)       return '#ef4444';
-    if (v > lim * .95) return '#f59e0b';
-    return '#10b981';
-  }
-  const sc = wc(steer, STEER_LIM), dc = wc(drive, TDM_LIM), tc = wc(trailer, TDM_LIM);
-
-  // ── Truck side-view (SVG units) ──────────────────────────
-  // Key X: steer=65, drive1=128, drive2=147, trail1=286, trail2=305
-  const GY = 138;   // ground Y
-  const WR = 13;    // steer wheel radius
-  const DR = 11;    // dual wheel radius
-
-  function wheel(x, r, col) {
-    return `<circle cx="${x}" cy="${GY}" r="${r}" fill="#0f172a" stroke="${col}" stroke-width="2.5"/>
-            <circle cx="${x}" cy="${GY}" r="${r*.5}" fill="${col}" opacity=".35"/>`;
-  }
-  function dualW(x, r, col) {
-    const x2 = x + r*2+3;
-    return `<circle cx="${x}" cy="${GY}" r="${r}" fill="#0f172a" stroke="${col}" stroke-width="2"/>
-            <circle cx="${x}" cy="${GY}" r="${r*.5}" fill="${col}" opacity=".3"/>
-            <circle cx="${x2}" cy="${GY}" r="${r}" fill="#0f172a" stroke="${col}" stroke-width="2"/>
-            <circle cx="${x2}" cy="${GY}" r="${r*.5}" fill="${col}" opacity=".3"/>`;
-  }
-  function wtxt(x, v, lim, lbl) {
-    const col = wc(v, lim);
-    const txt = v ? v.toLocaleString() : '?';
-    return `<text x="${x}" y="${GY+18}" text-anchor="middle" fill="${col}" font-size="8.5" font-weight="800" font-family="monospace">${txt}</text>
-            <text x="${x}" y="${GY+27}" text-anchor="middle" fill="#64748b" font-size="7.5" font-family="system-ui">${lbl}</text>`;
-  }
-
-  // Tandem holes — 25 holes spread across trailer rear frame
-  const HS = 192, HE = 348;   // hole strip start / end X
-  const hGap = (HE - HS) / 24;
-  const hY = 105;             // holes Y (on trailer frame)
-  let holeSvg = '';
-  for (let i = 1; i <= 25; i++) {
-    const hx = HS + (i-1)*hGap;
-    const isCur = i === curPos, isTgt = i === targetPos;
-    const onPath = holesDelta !== 0 && (holesDelta > 0 ? (i > curPos && i < targetPos) : (i < curPos && i > targetPos));
-    if (isCur && isTgt)
-      holeSvg += `<circle cx="${hx}" cy="${hY}" r="5.5" fill="#10b981" stroke="#34d399" stroke-width="2"/>`;
-    else if (isCur)
-      holeSvg += `<circle cx="${hx}" cy="${hY}" r="5" fill="#3b82f6" stroke="#60a5fa" stroke-width="2"/>`
-              +  `<text x="${hx}" y="${hY-8}" text-anchor="middle" fill="#60a5fa" font-size="8" font-weight="800" font-family="system-ui">ACT</text>`;
-    else if (isTgt)
-      holeSvg += `<circle cx="${hx}" cy="${hY}" r="6" fill="#10b981" stroke="#34d399" stroke-width="2"/>`
-              +  `<text x="${hx}" y="${hY-8}" text-anchor="middle" fill="#34d399" font-size="8" font-weight="800" font-family="system-ui">META</text>`;
-    else if (onPath)
-      holeSvg += `<circle cx="${hx}" cy="${hY}" r="3.5" fill="rgba(245,158,11,.2)" stroke="#f59e0b" stroke-width="1.5"/>`;
-    else
-      holeSvg += `<circle cx="${hx}" cy="${hY}" r="3" fill="#1e293b" stroke="#334155" stroke-width="1"/>`;
-  }
-
-  // Arrow current → target
-  let arrowSvg = '';
-  if (curPos !== targetPos) {
-    const cx = HS + (curPos-1)*hGap, tx = HS + (targetPos-1)*hGap;
-    const dir = tx > cx ? 1 : -1;
-    arrowSvg = `<line x1="${cx}" y1="${hY}" x2="${tx - dir*9}" y2="${hY}" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 3" opacity=".85"/>
-                <polygon points="${tx},${hY} ${tx-dir*9},${hY-4} ${tx-dir*9},${hY+4}" fill="#f59e0b" opacity=".9"/>`;
-  }
-
-  // Hole position number labels (every 6th hole)
-  let hNumSvg = '';
-  [1,5,10,15,20,25].forEach(i => {
-    const hx = HS + (i-1)*hGap;
-    hNumSvg += `<text x="${hx}" y="${hY+14}" text-anchor="middle" fill="#475569" font-size="7" font-family="monospace">${i}</text>`;
-  });
-
-  return `<svg viewBox="0 0 ${W} 168" xmlns="http://www.w3.org/2000/svg">
-    <!-- Ground -->
-    <line x1="0" y1="${GY+WR+2}" x2="${W}" y2="${GY+WR+2}" stroke="#1e293b" stroke-width="1.5"/>
-
-    <!-- Trailer body -->
-    <rect x="172" y="38" width="190" height="70" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-    <rect x="354" y="42" width="4" height="58" rx="2" fill="#475569"/>
-
-    <!-- Trailer frame / tandem slider rail -->
-    <rect x="172" y="108" width="190" height="9" rx="2" fill="#293548" stroke="#334155" stroke-width="1"/>
-    <!-- Slider rail highlight -->
-    <rect x="${HS-4}" y="109" width="${HE-HS+8}" height="7" rx="2" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-
-    <!-- Tractor chassis -->
-    <rect x="82" y="108" width="92" height="9" rx="2" fill="#334155" stroke="#475569" stroke-width="1"/>
-
-    <!-- Engine hood -->
-    <rect x="82" y="70" width="32" height="47" rx="3" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-
-    <!-- Cab body -->
-    <rect x="12" y="40" width="72" height="79" rx="5" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-    <!-- Cab window -->
-    <rect x="15" y="43" width="33" height="35" rx="3" fill="#172554" stroke="#3b82f6" stroke-width=".8" opacity=".7"/>
-    <!-- Cab side window -->
-    <rect x="54" y="48" width="25" height="22" rx="2" fill="#172554" stroke="#3b82f6" stroke-width=".6" opacity=".5"/>
-    <!-- Cab lower fascia -->
-    <rect x="12" y="107" width="72" height="10" rx="0" fill="#293548" stroke="#475569" stroke-width="1"/>
-    <!-- Exhaust stacks -->
-    <rect x="22" y="18" width="7" height="24" rx="2" fill="#64748b"/>
-    <rect x="33" y="22" width="5" height="20" rx="2" fill="#64748b"/>
-
-    <!-- Fifth wheel -->
-    <rect x="162" y="103" width="20" height="7" rx="2" fill="#94a3b8"/>
-
-    <!-- Tandem holes -->
-    ${holeSvg}
-    ${arrowSvg}
-    ${hNumSvg}
-
-    <!-- Axle stubs -->
-    <line x1="65"  y1="117" x2="65"  y2="${GY-WR}" stroke="#64748b" stroke-width="2.5"/>
-    <line x1="128" y1="117" x2="128" y2="${GY-DR}" stroke="#64748b" stroke-width="2"/>
-    <line x1="150" y1="117" x2="150" y2="${GY-DR}" stroke="#64748b" stroke-width="2"/>
-    <line x1="286" y1="117" x2="286" y2="${GY-DR}" stroke="#64748b" stroke-width="2"/>
-    <line x1="308" y1="117" x2="308" y2="${GY-DR}" stroke="#64748b" stroke-width="2"/>
-
-    <!-- Wheels -->
-    ${wheel(65, WR, sc)}
-    ${dualW(117, DR, dc)}   ${dualW(139, DR, dc)}
-    ${dualW(275, DR, tc)}   ${dualW(297, DR, tc)}
-
-    <!-- Weight labels -->
-    ${wtxt(65,  steer,   STEER_LIM, 'STEER')}
-    ${wtxt(136, drive,   TDM_LIM,   'DRIVE')}
-    ${wtxt(294, trailer, TDM_LIM,   'TRAILER')}
-
-    <!-- Legend -->
-    <rect x="4" y="4" width="362" height="14" rx="4" fill="rgba(15,23,42,.6)"/>
-    <circle cx="12" cy="11" r="4" fill="#3b82f6"/>
-    <text x="19" y="14" fill="#94a3b8" font-size="8" font-family="system-ui">Posición actual</text>
-    <circle cx="90" cy="11" r="4" fill="#10b981"/>
-    <text x="97" y="14" fill="#94a3b8" font-size="8" font-family="system-ui">Meta</text>
-    <circle cx="135" cy="11" r="3.5" fill="rgba(245,158,11,.2)" stroke="#f59e0b" stroke-width="1.5"/>
-    <text x="142" y="14" fill="#94a3b8" font-size="8" font-family="system-ui">Recorrido</text>
-    <text x="200" y="14" fill="#475569" font-size="7.5" font-family="system-ui">Nº = hueco del tandem (1=adelante · 25=atrás)</text>
-  </svg>`;
 }
 
 function calcFreight() {
@@ -15730,33 +15993,33 @@ function toggleSideTabMenu() {
     document.getElementById('commQuickOverlay')?.classList.remove('show');
   }
 }
-let _mapLeftAutoHideTimer = null;
-function _startMapLeftAutoHide() {
-  clearTimeout(_mapLeftAutoHideTimer);
-  _mapLeftAutoHideTimer = setTimeout(() => {
-    const ctrl = document.getElementById('mapLeftControls');
-    const btn  = document.getElementById('mapLeftPanelBtn');
-    if (ctrl && !ctrl.classList.contains('panel-hidden')) {
-      ctrl.classList.add('panel-hidden');
-      btn && (btn.textContent = '›') && btn.classList.remove('open');
-    }
-  }, 5000);
-}
-function toggleMapLeftPanel() {
+let _leftPanelAutoHideTimer = null;
+function toggleMapLeftPanel(forceHide) {
   const ctrl = document.getElementById('mapLeftControls');
   const btn  = document.getElementById('mapLeftPanelBtn');
   if (!ctrl || !btn) return;
-  const hiding = !ctrl.classList.contains('panel-hidden');
+  const hiding = forceHide === true ? true : !ctrl.classList.contains('panel-hidden');
   ctrl.classList.toggle('panel-hidden', hiding);
   btn.classList.toggle('open', !hiding);
   btn.textContent = hiding ? '›' : '‹';
-  if (!hiding) _startMapLeftAutoHide();
-  else clearTimeout(_mapLeftAutoHideTimer);
+  // Si se abre, programar auto-ocultamiento a los 5 segundos
+  if (_leftPanelAutoHideTimer) clearTimeout(_leftPanelAutoHideTimer);
+  if (!hiding) {
+    _leftPanelAutoHideTimer = setTimeout(() => toggleMapLeftPanel(true), 5000);
+  }
 }
-// Reset auto-hide timer whenever user interacts with a sidebar button
-document.addEventListener('click', e => {
-  if (e.target.closest('#mapLeftControls')) _startMapLeftAutoHide();
-});
+function _autoHideLeftPanelOnOpen() {
+  // Al abrir el mapa: mostrar controles 3 segundos, luego ocultar
+  const ctrl = document.getElementById('mapLeftControls');
+  const btn  = document.getElementById('mapLeftPanelBtn');
+  if (!ctrl || !btn) return;
+  // Mostrar
+  ctrl.classList.remove('panel-hidden');
+  btn.classList.add('open');
+  btn.textContent = '‹';
+  if (_leftPanelAutoHideTimer) clearTimeout(_leftPanelAutoHideTimer);
+  _leftPanelAutoHideTimer = setTimeout(() => toggleMapLeftPanel(true), 3500);
+}
 
 function closeSideTabMenu() {
   const stack  = document.getElementById('sideTabStack');
@@ -15940,17 +16203,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Start warm GPS cache immediately so all features get instant fixes
   startGPSWarm();
 
-  // Sync truck restriction inputs with saved values
-  const th = document.getElementById('truckHeightInput');  if (th) th.value = truckOptions.height;
-  const tw = document.getElementById('truckWeightInput');  if (tw) tw.value = truckOptions.weight;
-  const twd = document.getElementById('truckWidthInput'); if (twd) twd.value = truckOptions.width;
-  const tl = document.getElementById('truckLengthInput'); if (tl) tl.value = truckOptions.length;
-  const ta = document.getElementById('truckAxlesInput');  if (ta) ta.value = truckOptions.axles;
-  const thz = document.getElementById('truckHazmatToggle');
-  const thl = document.getElementById('truckHazmatLabel');
-  if (thz) thz.classList.toggle('on', truckOptions.hazmat);
-  if (thl) thl.textContent = truckOptions.hazmat ? 'Sí' : 'No';
-
   const di = document.getElementById('dotInput');
   if (di) di.addEventListener('keydown', e => { if (e.key === 'Enter') searchDOT(); });
 
@@ -16119,13 +16371,16 @@ let selectedAltIdx = 0;
 async function fetchAlternativeRoutes(orig, dest) {
   altRoutes = [];
   try {
-    // Use truck profile; add exclude param for route type preferences
-    const profile = 'truck';
+    // Perfil driving (único disponible en OSRM público) + timeout 20s
+    const profile = 'driving';
     let excludeParam = '';
     if (truckOptions.routeType === 'avoid_highways') excludeParam = '&exclude=motorway';
     else if (truckOptions.routeType === 'avoid_tolls') excludeParam = '&exclude=toll';
     const url = `https://router.project-osrm.org/route/v1/${profile}/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true&alternatives=3${excludeParam}`;
-    const res  = await fetch(url);
+    const altCtrl = new AbortController();
+    const altT = setTimeout(() => altCtrl.abort(), 20000);
+    const res  = await fetch(url, { signal: altCtrl.signal });
+    clearTimeout(altT);
     const data = await res.json();
     if (data.code === 'Ok' && data.routes?.length) {
       altRoutes = data.routes.map((r, i) => ({
@@ -16238,13 +16493,19 @@ function selectAltRoute(idx) {
     miniMarkersList = mRef.list;
     miniLayer = lRef.layer;
   }
+  // Auto-update LIVE full map route if tracking is active
+  if (fmMapInst && typeof fmRedrawRoute === 'function') {
+    fmRedrawRoute(r.coords);
+    showToast('success', '🛣️', 'Ruta actualizada en mapa', r.miles + ' mi · ' + r.hours + 'h', 3000);
+  } else {
+    showToast('info','🛣️','Route Updated', r.miles + ' miles · ' + r.hours + 'h', 3000);
+  }
   // Recalc schedule with new distance
   const hours  = parseFloat(document.getElementById('hoursInput').value);
   const speed  = parseFloat(document.getElementById('speedInput').value);
   const depart = new Date(document.getElementById('departureInput').value || new Date());
   schedule = calculateSchedule(depart, routeDistance, speed, hours);
   renderResults(hours, speed, depart);
-  showToast('info','🛣️','Route Updated', r.miles + ' miles · ' + r.hours + 'h', 3000);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -16492,7 +16753,7 @@ calculateRoute = async function() {
       : (isNetwork ? 'No internet connection. Check your network and try again.' : 'Error calculating route. Check your origin and destination.');
     showError(msg);
   } finally {
-    if (calcBtn2) { calcBtn2.textContent = t('btnCalc'); calcBtn2.disabled = false; calcBtn2.style.display = 'none'; }
+    if (calcBtn2) { calcBtn2.textContent = t('btnCalc'); calcBtn2.disabled = false; }
   }
 };
 
@@ -17807,14 +18068,6 @@ function toggleTruckOpts() {
   arrow.classList.toggle('open', opening);
 }
 
-function toggleTruckRestrictPanel() {
-  const panel = document.getElementById('truckRestrictPanel');
-  const arrow = document.getElementById('truckRestrictArrow');
-  const opening = panel.style.display === 'none';
-  panel.style.display = opening ? 'block' : 'none';
-  arrow.textContent = opening ? '⌄' : '›';
-}
-
 function setRouteType(type) {
   truckOptions.routeType = type;
   document.querySelectorAll('.rt-pill').forEach(p => {
@@ -18838,10 +19091,10 @@ FIREBASE_CONFIG = {
   }
 
   /* ── Send message ──────────────────────────────────── */
-  window.sendChatMessage = function() {
+  window.sendPanelMessage = function() {
     if (!window._chatReady) return;
 
-    const input = document.getElementById('chatInput');
+    const input = document.getElementById('panelChatInput');
     const text  = input.value.trim();
     if (!text) return;
 
@@ -18852,7 +19105,7 @@ FIREBASE_CONFIG = {
       return;
     }
 
-    document.getElementById('chatSendBtn').disabled = true;
+    document.getElementById('panelSendBtn').disabled = true;
     input.value = '';
     input.style.height = 'auto';
 
@@ -18863,9 +19116,9 @@ FIREBASE_CONFIG = {
       text:      text,
       ts:        window._chatServerTimestamp()
     }).then(() => {
-      document.getElementById('chatSendBtn').disabled = false;
+      document.getElementById('panelSendBtn').disabled = false;
     }).catch(err => {
-      document.getElementById('chatSendBtn').disabled = false;
+      document.getElementById('panelSendBtn').disabled = false;
       showToast('danger','⚠️','Chat error', err.message, 4000);
     });
   };
@@ -18945,13 +19198,13 @@ FIREBASE_CONFIG = {
 
     <!-- Input row -->
     <div id="chatInputWrap">
-      <textarea id="chatInput" rows="1"
+      <textarea id="panelChatInput" rows="1"
         placeholder="Escribe un mensaje…"
         maxlength="300"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendPanelMessage();}"
         oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'">
       </textarea>
-      <button id="chatSendBtn" onclick="sendChatMessage()" title="Enviar">
+      <button id="panelSendBtn" onclick="sendPanelMessage()" title="Enviar">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
         </svg>
@@ -20447,6 +20700,41 @@ async function sendScanEmail() {
   // channelMeta[id] = { lastMsg, lastTime, unread }
   let channelMeta = JSON.parse(localStorage.getItem('chat_meta') || '{}');
 
+  // ── Alert channels that trigger push notifications ───────────
+  const ALERT_CHANNELS = new Set(['sos','warning','weighstation','mechanics','towing']);
+
+  // ── Request notification permission on first use ─────────────
+  function requestNotifPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+  setTimeout(requestNotifPermission, 3000);
+
+  // ── Show push notification via Service Worker ─────────────────
+  function showChatNotif(channelId, msg) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (msg.userId === myUserId) return; // don't notify own messages
+    if (!ALERT_CHANNELS.has(channelId)) return;
+
+    const chInfo = CHANNELS.find(c => c.id === channelId) || { name: channelId, icon: '🔔' };
+    const title  = `${chInfo.icon} ${chInfo.name} — Alerta de conductor`;
+    const body   = `${msg.name || 'Driver'}: ${msg.text}`;
+
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SCHEDULE_NOTIFICATION',
+        delay: 0,
+        title,
+        body,
+        tag:  'chat-alert-' + channelId,
+        icon: '/icon-192.png'
+      });
+    } else {
+      new Notification(title, { body, icon: '/icon-192.png', tag: 'chat-alert-' + channelId, vibrate: [200,100,200] });
+    }
+  }
+
   // ── Helpers ──────────────────────────────────────────────────
   function getEl(id) { return document.getElementById(id); }
 
@@ -20596,6 +20884,7 @@ async function sendScanEmail() {
       channelListeners[channelId] = fb.listenChannel(channelId, (msg, key) => {
         if (currentChannelId === channelId) appendRoomMessage(msg, key);
         updateChannelMeta(channelId, msg);
+        showChatNotif(channelId, msg);
       });
     } else {
       // Local fallback
