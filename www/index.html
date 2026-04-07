@@ -2916,18 +2916,18 @@ body.dark #fullMap .leaflet-tile-pane {
     flex-shrink:0;background:var(--surface);
     padding-bottom:calc(14px + env(safe-area-inset-bottom));
   }
-  #chatInput{
+  #panelChatInput{
     flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
     border-radius:22px;padding:10px 16px;color:var(--text);font-size:16px;outline:none;
     font-family:inherit;resize:none;max-height:80px;
   }
-  #chatSendBtn{
+  #panelSendBtn{
     width:42px;height:42px;border-radius:50%;border:none;
     background:linear-gradient(135deg,var(--accent),#6d28d9);
     color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;align-self:flex-end;
     display:flex;align-items:center;justify-content:center;
   }
-  #chatSendBtn:disabled{opacity:.4;cursor:not-allowed;}
+  #panelSendBtn:disabled{opacity:.4;cursor:not-allowed;}
   .chat-setup-msg{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:12px;padding:24px;text-align:center;color:var(--muted);
@@ -5068,6 +5068,22 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   }
   .room-empty-icon { font-size: 44px; opacity: .45; }
   .room-empty-text { font-size: 13px; color: rgba(255,255,255,.35); font-weight: 600; }
+  .room-quick-alerts {
+    display: flex; gap: 6px; padding: 8px 10px 4px;
+    background: #1f2c34; overflow-x: auto; flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .room-quick-alerts::-webkit-scrollbar { display: none; }
+  .rqa-btn {
+    white-space: nowrap; border: none; border-radius: 16px;
+    padding: 6px 12px; font-size: 13px; font-weight: 600;
+    background: #2a3942; color: #aebac1; cursor: pointer;
+    touch-action: manipulation; flex-shrink: 0;
+    transition: background .15s, color .15s;
+  }
+  .rqa-btn:active { background: #00a884; color: #fff; }
+  .rqa-btn.rqa-alert { background: rgba(239,68,68,.15); color: #f87171; }
+  .rqa-btn.rqa-alert:active { background: #ef4444; color: #fff; }
   .room-input-row {
     display: flex; gap: 8px; align-items: flex-end;
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom,0px));
@@ -5077,18 +5093,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     flex: 1;
     background: #2a3942;
     border: none;
-    border-radius: 22px; padding: 10px 16px;
-    font-size: 15px; color: #e9edef;
+    border-radius: 22px; padding: 13px 18px;
+    font-size: 16px; color: #e9edef;
     font-family: 'DM Sans', sans-serif;
-    resize: none; max-height: 120px; min-height: 42px;
+    resize: none; max-height: 120px; min-height: 48px;
     -webkit-appearance: none; outline: none; line-height: 1.4;
   }
   #chatInput::placeholder { color: rgba(233,237,239,.35); }
   #chatSendBtn {
-    width: 44px; height: 44px; border-radius: 50%;
+    width: 48px; height: 48px; border-radius: 50%;
     background: #00a884; border: none; color: #fff;
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; cursor: pointer; touch-action: manipulation;
+    font-size: 22px; cursor: pointer; touch-action: manipulation;
     flex-shrink: 0; transition: transform .12s, opacity .12s;
   }
   #chatSendBtn:active { transform: scale(.9); }
@@ -5102,13 +5118,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   //  https://console.firebase.google.com → Configuración del proyecto
   // ══════════════════════════════════════════════════════════
   const FIREBASE_CONFIG = {
-    apiKey:            "TU_API_KEY",
-    authDomain:        "tu-proyecto.firebaseapp.com",
-    databaseURL:       "https://tu-proyecto-default-rtdb.firebaseio.com",
-    projectId:         "tu-proyecto",
-    storageBucket:     "tu-proyecto.appspot.com",
-    messagingSenderId: "000000000000",
-    appId:             "1:000000000000:web:0000000000000000"
+    apiKey:            "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
+    authDomain:        "hos-tracker-chat.firebaseapp.com",
+    databaseURL:       "https://hos-tracker-chat-default-rtdb.firebaseio.com",
+    projectId:         "hos-tracker-chat",
+    storageBucket:     "hos-tracker-chat.firebasestorage.app",
+    messagingSenderId: "390077980024",
+    appId:             "1:390077980024:web:65d312be4c52809de43c8d"
   };
   const CHAT_CONFIGURED = FIREBASE_CONFIG.apiKey !== "TU_API_KEY";
 
@@ -5121,7 +5137,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
     // Expose to global scope for the chat functions
     window._chatDB              = db;
-    window._chatRef             = (ch) => ref(db, `hos_chat/${ch}/messages`);
+    window._chatRef             = (ch) => ref(db, `chat/${ch}/messages`);
     window._chatPush            = push;
     window._chatQuery           = query;
     window._chatOrderByChild    = orderByChild;
@@ -6322,7 +6338,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- FLOATING CHAT BUTTON (hidden — replaced by side tab) -->
-  <button id="chatFab" onclick="openChatPanel()" aria-label="Driver Chat" style="display:none">
+  <button id="chatFab" onclick="openChatChannel('general')" aria-label="Driver Chat" style="display:none">
     💬<span id="chatFabBadge"></span>
   </button>
 
@@ -6351,7 +6367,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <span class="side-tab-label">Comunidad</span>
     </button>
     <!-- Btn 3: Live Chat (conversaciones entre choferes) -->
-    <button class="side-tab-btn" onclick="closeSideTabMenu();openChatPanel()" aria-label="Live Chat">
+    <button class="side-tab-btn" onclick="closeSideTabMenu();openChatChannel('general')" aria-label="Live Chat">
       <span class="side-tab-icon">💬</span>
       <span class="side-tab-label">Live Chat</span>
     </button>
@@ -7813,6 +7829,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="room-empty-icon">💬</div>
         <div class="room-empty-text">No messages yet</div>
       </div>
+    </div>
+    <div class="room-quick-alerts" id="roomQuickAlerts">
+      <button class="rqa-btn" onclick="sendQuickAlert('🚔 Policía en área — precaución')">🚔 Policía</button>
+      <button class="rqa-btn" onclick="sendQuickAlert('📋 Inspección DOT activa — adelante')">📋 DOT</button>
+      <button class="rqa-btn" onclick="sendQuickAlert('🔍 Inspección de vehículo en progreso')">🔍 Inspección</button>
+      <button class="rqa-btn rqa-alert" onclick="sendQuickAlert('🚨 Accidente en la vía — tener cuidado')">🚨 Accidente</button>
     </div>
     <div class="room-input-row">
       <textarea
@@ -9510,7 +9532,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 <!-- Firebase SDK (Realtime Database for cross-device chat) -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -9520,20 +9542,20 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
      Enable "Realtime Database" and set rules to allow read/write.
   ─────────────────────────────────────────────────────────── */
   const firebaseConfig = {
-    apiKey: "AIzaSyDemo_HOS_TRACKER_Replace_This_Key",
+    apiKey: "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
     authDomain: "hos-tracker-chat.firebaseapp.com",
     databaseURL: "https://hos-tracker-chat-default-rtdb.firebaseio.com",
     projectId: "hos-tracker-chat",
-    storageBucket: "hos-tracker-chat.appspot.com",
-    messagingSenderId: "000000000000",
-    appId: "1:000000000000:web:0000000000000000000000"
+    storageBucket: "hos-tracker-chat.firebasestorage.app",
+    messagingSenderId: "390077980024",
+    appId: "1:390077980024:web:65d312be4c52809de43c8d"
   };
 
   let firebaseReady = false;
   let db, messagesRef, presenceRef, connectedRef;
 
   try {
-    const app = initializeApp(firebaseConfig);
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     db = getDatabase(app);
     messagesRef = ref(db, 'chat/messages');
     connectedRef = ref(db, '.info/connected');
@@ -19054,10 +19076,10 @@ FIREBASE_CONFIG = {
   }
 
   /* ── Send message ──────────────────────────────────── */
-  window.sendChatMessage = function() {
+  window.sendPanelMessage = function() {
     if (!window._chatReady) return;
 
-    const input = document.getElementById('chatInput');
+    const input = document.getElementById('panelChatInput');
     const text  = input.value.trim();
     if (!text) return;
 
@@ -19068,7 +19090,7 @@ FIREBASE_CONFIG = {
       return;
     }
 
-    document.getElementById('chatSendBtn').disabled = true;
+    document.getElementById('panelSendBtn').disabled = true;
     input.value = '';
     input.style.height = 'auto';
 
@@ -19079,9 +19101,9 @@ FIREBASE_CONFIG = {
       text:      text,
       ts:        window._chatServerTimestamp()
     }).then(() => {
-      document.getElementById('chatSendBtn').disabled = false;
+      document.getElementById('panelSendBtn').disabled = false;
     }).catch(err => {
-      document.getElementById('chatSendBtn').disabled = false;
+      document.getElementById('panelSendBtn').disabled = false;
       showToast('danger','⚠️','Chat error', err.message, 4000);
     });
   };
@@ -19161,13 +19183,13 @@ FIREBASE_CONFIG = {
 
     <!-- Input row -->
     <div id="chatInputWrap">
-      <textarea id="chatInput" rows="1"
+      <textarea id="panelChatInput" rows="1"
         placeholder="Escribe un mensaje…"
         maxlength="300"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendPanelMessage();}"
         oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'">
       </textarea>
-      <button id="chatSendBtn" onclick="sendChatMessage()" title="Enviar">
+      <button id="panelSendBtn" onclick="sendPanelMessage()" title="Enviar">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
         </svg>
@@ -20663,6 +20685,40 @@ async function sendScanEmail() {
   // channelMeta[id] = { lastMsg, lastTime, unread }
   let channelMeta = JSON.parse(localStorage.getItem('chat_meta') || '{}');
 
+  // ── Timestamp to ignore old messages on listener init ────────
+  const _chatStartTime = Date.now();
+
+  // ── Request notification permission immediately ───────────────
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+
+  // ── Show push notification for any chat message ───────────────
+  function showChatNotif(channelId, msg) {
+    if (msg.userId === myUserId) return; // no notificar mensajes propios
+    // Ignorar mensajes viejos (anteriores a que se abrió la app)
+    const msgTime = msg.ts || msg.clientTs || 0;
+    if (msgTime < _chatStartTime - 5000) return;
+
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const chInfo = CHANNELS.find(c => c.id === channelId) || { name: channelId, icon: '🔔' };
+    const title  = `${chInfo.icon} ${chInfo.name}`;
+    const body   = `${msg.name || 'Driver'}: ${msg.text}`;
+    const icon   = '/icon-192.png';
+    const tag    = 'chat-' + channelId;
+
+    // Usar SW registrado si está disponible
+    const swReg = window._swReg;
+    if (swReg && swReg.active) {
+      swReg.showNotification(title, { body, icon, tag, vibrate: [200, 100, 200], data: { url: '/' } });
+    } else if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body, tag, icon });
+    } else if (Notification.permission === 'granted') {
+      new Notification(title, { body, icon, tag });
+    }
+  }
+
   // ── Helpers ──────────────────────────────────────────────────
   function getEl(id) { return document.getElementById(id); }
 
@@ -20812,6 +20868,7 @@ async function sendScanEmail() {
       channelListeners[channelId] = fb.listenChannel(channelId, (msg, key) => {
         if (currentChannelId === channelId) appendRoomMessage(msg, key);
         updateChannelMeta(channelId, msg);
+        showChatNotif(channelId, msg);
       });
     } else {
       // Local fallback
@@ -20901,6 +20958,16 @@ async function sendScanEmail() {
   function saveChannelMeta() {
     try { localStorage.setItem('chat_meta', JSON.stringify(channelMeta)); } catch {}
   }
+
+  // ── Send quick alert preset ───────────────────────────────────
+  async function sendQuickAlert(text) {
+    if (!currentChannelId) { window.openChatChannel('general'); await new Promise(r => setTimeout(r,300)); }
+    const input = getEl('chatInput');
+    input.value = text;
+    autoresizeChatInput(input);
+    await sendChatMessage();
+  }
+  window.sendQuickAlert = sendQuickAlert;
 
   // ── Send message ─────────────────────────────────────────────
   async function sendChatMessage() {
