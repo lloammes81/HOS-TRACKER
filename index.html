@@ -5097,6 +5097,22 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   }
   .room-empty-icon { font-size: 44px; opacity: .45; }
   .room-empty-text { font-size: 13px; color: rgba(255,255,255,.35); font-weight: 600; }
+  .room-quick-alerts {
+    display: flex; gap: 6px; padding: 8px 10px 4px;
+    background: #1f2c34; overflow-x: auto; flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .room-quick-alerts::-webkit-scrollbar { display: none; }
+  .rqa-btn {
+    white-space: nowrap; border: none; border-radius: 16px;
+    padding: 6px 12px; font-size: 13px; font-weight: 600;
+    background: #2a3942; color: #aebac1; cursor: pointer;
+    touch-action: manipulation; flex-shrink: 0;
+    transition: background .15s, color .15s;
+  }
+  .rqa-btn:active { background: #00a884; color: #fff; }
+  .rqa-btn.rqa-alert { background: rgba(239,68,68,.15); color: #f87171; }
+  .rqa-btn.rqa-alert:active { background: #ef4444; color: #fff; }
   .room-input-row {
     display: flex; gap: 8px; align-items: flex-end;
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom,0px));
@@ -6907,6 +6923,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="room-empty-text">No messages yet</div>
       </div>
     </div>
+    <div class="room-quick-alerts" id="roomQuickAlerts">
+      <button class="rqa-btn" onclick="sendQuickAlert('🚔 Policía en área — precaución')">🚔 Policía</button>
+      <button class="rqa-btn" onclick="sendQuickAlert('📋 Inspección DOT activa — adelante')">📋 DOT</button>
+      <button class="rqa-btn" onclick="sendQuickAlert('🔍 Inspección de vehículo en progreso')">🔍 Inspección</button>
+      <button class="rqa-btn rqa-alert" onclick="sendQuickAlert('🚨 Accidente en la vía — tener cuidado')">🚨 Accidente</button>
+    </div>
     <div class="room-input-row">
       <textarea
         id="chatInput"
@@ -8677,7 +8699,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 <!-- Firebase SDK (Realtime Database for cross-device chat) -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -8700,7 +8722,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   let db, messagesRef, presenceRef, connectedRef;
 
   try {
-    const app = initializeApp(firebaseConfig);
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     db = getDatabase(app);
     messagesRef = ref(db, 'chat/messages');
     connectedRef = ref(db, '.info/connected');
@@ -20700,38 +20722,37 @@ async function sendScanEmail() {
   // channelMeta[id] = { lastMsg, lastTime, unread }
   let channelMeta = JSON.parse(localStorage.getItem('chat_meta') || '{}');
 
-  // ── Alert channels that trigger push notifications ───────────
-  const ALERT_CHANNELS = new Set(['sos','warning','weighstation','mechanics','towing']);
+  // ── Timestamp to ignore old messages on listener init ────────
+  const _chatStartTime = Date.now();
 
-  // ── Request notification permission on first use ─────────────
-  function requestNotifPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
+  // ── Request notification permission immediately ───────────────
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
   }
-  setTimeout(requestNotifPermission, 3000);
 
-  // ── Show push notification via Service Worker ─────────────────
+  // ── Show push notification for any chat message ───────────────
   function showChatNotif(channelId, msg) {
+    if (msg.userId === myUserId) return; // no notificar mensajes propios
+    // Ignorar mensajes viejos (anteriores a que se abrió la app)
+    const msgTime = msg.ts || msg.clientTs || 0;
+    if (msgTime < _chatStartTime - 5000) return;
+
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
-    if (msg.userId === myUserId) return; // don't notify own messages
-    if (!ALERT_CHANNELS.has(channelId)) return;
 
     const chInfo = CHANNELS.find(c => c.id === channelId) || { name: channelId, icon: '🔔' };
-    const title  = `${chInfo.icon} ${chInfo.name} — Alerta de conductor`;
+    const title  = `${chInfo.icon} ${chInfo.name}`;
     const body   = `${msg.name || 'Driver'}: ${msg.text}`;
+    const icon   = '/icon-192.png';
+    const tag    = 'chat-' + channelId;
 
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'SCHEDULE_NOTIFICATION',
-        delay: 0,
-        title,
-        body,
-        tag:  'chat-alert-' + channelId,
-        icon: '/icon-192.png'
-      });
-    } else {
-      new Notification(title, { body, icon: '/icon-192.png', tag: 'chat-alert-' + channelId, vibrate: [200,100,200] });
+    // Usar SW registrado si está disponible
+    const swReg = window._swReg;
+    if (swReg && swReg.active) {
+      swReg.showNotification(title, { body, icon, tag, vibrate: [200, 100, 200], data: { url: '/' } });
+    } else if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body, tag, icon });
+    } else if (Notification.permission === 'granted') {
+      new Notification(title, { body, icon, tag });
     }
   }
 
@@ -20974,6 +20995,16 @@ async function sendScanEmail() {
   function saveChannelMeta() {
     try { localStorage.setItem('chat_meta', JSON.stringify(channelMeta)); } catch {}
   }
+
+  // ── Send quick alert preset ───────────────────────────────────
+  async function sendQuickAlert(text) {
+    if (!currentChannelId) { window.openChatChannel('general'); await new Promise(r => setTimeout(r,300)); }
+    const input = getEl('chatInput');
+    input.value = text;
+    autoresizeChatInput(input);
+    await sendChatMessage();
+  }
+  window.sendQuickAlert = sendQuickAlert;
 
   // ── Send message ─────────────────────────────────────────────
   async function sendChatMessage() {
