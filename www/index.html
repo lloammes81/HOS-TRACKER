@@ -963,10 +963,32 @@
     display: flex;
     animation: policeFlash .6s ease-in-out 4;
   }
-  #policeAlert .pa-officer {
-    font-size: 90px;
-    animation: badgeWiggle .5s ease-in-out infinite;
-    filter: drop-shadow(0 0 20px rgba(239,68,68,.8));
+  .pa-officer-3d {
+    perspective: 400px;
+    width: 160px; height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .pa-officer-3d .pa-shadow-ring {
+    position: absolute; bottom: -6px;
+    width: 110px; height: 22px;
+    background: radial-gradient(ellipse, rgba(239,68,68,.55) 0%, transparent 75%);
+    border-radius: 50%; filter: blur(4px);
+  }
+  .pa-officer-3d .pa-emoji {
+    font-size: 110px; line-height: 1;
+    display: block;
+    transform: perspective(300px) rotateX(10deg) scale(1);
+    filter:
+      drop-shadow(0px 12px 0px rgba(0,0,0,.65))
+      drop-shadow(0px 6px 4px rgba(0,0,0,.45))
+      drop-shadow(0 0 28px rgba(239,68,68,.9))
+      drop-shadow(0 0 60px rgba(239,68,68,.4));
+    animation: officer3dPop 0.55s ease-in-out infinite alternate;
+  }
+  @keyframes officer3dPop {
+    0%   { transform: perspective(300px) rotateX(10deg) scale(1)   translateY(0px);   }
+    100% { transform: perspective(300px) rotateX(6deg)  scale(1.08) translateY(-6px); }
   }
   #policeAlert .pa-title {
     font-family:"Bebas Neue",sans-serif;
@@ -8717,7 +8739,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 <!-- ── POLICE ALERT full screen ──────────────────────────── -->
 <div id="policeAlert" onclick="dismissPoliceAlert()">
-  <div class="pa-officer">👮</div>
+  <div class="pa-officer-3d">
+    <span class="pa-emoji">👮</span>
+    <div class="pa-shadow-ring"></div>
+  </div>
   <div class="pa-title">¡INFRACCIÓN!</div>
   <div class="pa-ticket">
     <div>🚨 Velocidad excesiva</div>
@@ -13322,14 +13347,12 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
     if (offsetFrac !== undefined) {
       offsetPx = size.y * offsetFrac;
     } else {
-      // Measure the visible HUD height (it's 0 when hidden via translateY(100%))
+      // Place truck just above the HUD circles (not at center)
       const hudEl = document.getElementById('fmHud');
-      const hudH  = (hudEl && hudEl.style.transform !== 'translateY(100%)')
-                    ? (hudEl.offsetHeight || 0) : 0;
-      // Place truck at 65% from top of visible area = shows ~65% road ahead
-      // offsetPx = target_truck_screen_y - screen_center_y
-      // target_truck_screen_y = center of screen
-      offsetPx = 0;
+      const hudH  = (hudEl && hudEl.offsetHeight) ? hudEl.offsetHeight : 130;
+      const truckTargetY = size.y - hudH - 20;  // 20px buffer above HUD
+      offsetPx = truckTargetY - size.y / 2;
+      offsetPx = Math.max(40, Math.min(offsetPx, size.y * 0.42)); // clamp
     }
     // pixels to offset the map center (negative = center south of truck = truck above center)
 
