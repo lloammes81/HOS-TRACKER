@@ -2567,9 +2567,9 @@
   margin: 0 auto !important;
 }
 
-/* Lower the speed limit window/sign a bit */
+/* Speed sign positioned below weather widget */
 #mapSpeedSign{
-  top: calc(96px + env(safe-area-inset-top, 0px)) !important;
+  top: calc(90px + env(safe-area-inset-top, 0px)) !important;
 }
 #speedLimitWidget{
   top: calc(var(--header-pt) + 4px) !important;
@@ -2595,9 +2595,9 @@
     top: calc(228px + env(safe-area-inset-top,0px)) !important;
   }
 
-  /* Move speed sign down a bit more */
+  /* Speed sign below weather widget (weather is now top-right) */
   #mapSpeedSign{
-    top: calc(120px + env(safe-area-inset-top,0px)) !important;
+    top: calc(90px + env(safe-area-inset-top,0px)) !important;
   }
 
 
@@ -2623,9 +2623,9 @@ body.map-active #sosFab{
 
 body.map-active #weatherWidget{
   position: fixed !important;
-  top:    calc(var(--sl-y) + 44px + var(--sl-gap)) !important;
-  left:   var(--sl-x) !important;
-  right:  auto !important;
+  top:    calc(var(--sl-y) + 8px) !important;
+  right:  calc(env(safe-area-inset-right, 0px) + 12px) !important;
+  left:   auto !important;
   bottom: auto !important;
   z-index: 20009 !important;
   width: auto !important;
@@ -7509,14 +7509,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- MAP SPEED LIMIT SIGN (display only — no buttons inside) -->
   <div id="mapSpeedSign">
-    <!-- Reloj encima del letrero -->
-    <div id="mapSpeedClock" style="
-      background:rgba(10,16,30,0.88);backdrop-filter:blur(8px);
-      border-radius:8px;padding:4px 10px;margin-bottom:5px;
-      text-align:center;font-size:14px;font-weight:800;
-      color:#f1f5f9;letter-spacing:0.5px;pointer-events:none;
-      box-shadow:0 2px 10px rgba(0,0,0,.45);white-space:nowrap;
-    ">--:--</div>
     <div class="mss-sign" id="mssSign">
       <div class="mss-top">SPEED&#10;LIMIT</div>
       <div class="mss-num" id="mssNum">65</div>
@@ -7617,9 +7609,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- AUTO-FOLLOW button (bottom-left) -->
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
-
-  <!-- RIGHT PANEL TOGGLE TAB -->
-  <button id="mapRightPanelBtn" onclick="toggleMapRightPanel()" title="Community & SOS">‹</button>
 
   <!-- RIGHT SIDE CONTROL COLUMN: Community Reports + SOS -->
   <div id="mapRightControls">
@@ -10624,6 +10613,11 @@ function checkSpeedLimit(gpsSpeed) {
   if (overLimit) {
     if (!speedLimitExceeded) {
       speedLimitExceeded = true;
+      // Rebuild truck marker immediately to show red border
+      if (fmGpsMarker) {
+        const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
+        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [28, 28], iconSize: [56, 56] }));
+      }
       toast.classList.add('show');
       toast.textContent = `🚨 ${gpsSpeed} mph — Límite: ${limit} mph`;
       vibrate([200,100,200]);
@@ -10635,7 +10629,14 @@ function checkSpeedLimit(gpsSpeed) {
   } else {
     sign?.classList.remove('over-limit');
     mssSign?.classList.remove('warn');
-    speedLimitExceeded = false;
+    if (speedLimitExceeded) {
+      speedLimitExceeded = false;
+      // Rebuild truck marker to restore blue border
+      if (fmGpsMarker) {
+        const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
+        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [28, 28], iconSize: [56, 56] }));
+      }
+    }
   }
 }
 
@@ -16378,28 +16379,11 @@ function toggleSideTabMenu() {
   }
 }
 let _rightPanelAutoHideTimer = null;
-function toggleMapRightPanel(forceHide) {
-  const ctrl = document.getElementById('mapRightControls');
-  const btn  = document.getElementById('mapRightPanelBtn');
-  if (!ctrl || !btn) return;
-  const hiding = forceHide === true ? true : !ctrl.classList.contains('panel-hidden');
-  ctrl.classList.toggle('panel-hidden', hiding);
-  btn.classList.toggle('open', !hiding);
-  btn.textContent = hiding ? '‹' : '›';
-  if (_rightPanelAutoHideTimer) clearTimeout(_rightPanelAutoHideTimer);
-  if (!hiding) {
-    _rightPanelAutoHideTimer = setTimeout(() => toggleMapRightPanel(true), 5000);
-  }
-}
+function toggleMapRightPanel() { /* panel is always visible — button removed */ }
 function _autoHideRightPanelOnOpen() {
   const ctrl = document.getElementById('mapRightControls');
-  const btn  = document.getElementById('mapRightPanelBtn');
-  if (!ctrl || !btn) return;
+  if (!ctrl) return;
   ctrl.classList.remove('panel-hidden');
-  btn.classList.add('open');
-  btn.textContent = '›';
-  if (_rightPanelAutoHideTimer) clearTimeout(_rightPanelAutoHideTimer);
-  _rightPanelAutoHideTimer = setTimeout(() => toggleMapRightPanel(true), 3500);
 }
 
 let _leftPanelAutoHideTimer = null;
