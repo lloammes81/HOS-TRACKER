@@ -9928,6 +9928,20 @@ function initDriveHoursDrag() {
 }
 
 function updateSpeedometer(mph) {
+  // ── Highway mode: change route color when speed > 40 mph ─────────
+  const isHighway = mph > 40;
+  if (fmLayer || fmGlowLayer || fmCasingLayer) {
+    if (isHighway) {
+      fmLayer      && fmLayer.setStyle({ color: '#f472b6', weight: 6, opacity: 0.97 });
+      fmGlowLayer  && fmGlowLayer.setStyle({ color: '#f472b6', weight: 24, opacity: 0.13 });
+      fmCasingLayer&& fmCasingLayer.setStyle({ color: '#831843', weight: 10, opacity: 0.65 });
+    } else {
+      fmLayer      && fmLayer.setStyle({ color: '#10b981', weight: 5, opacity: 0.97 });
+      fmGlowLayer  && fmGlowLayer.setStyle({ color: '#10b981', weight: 22, opacity: 0.11 });
+      fmCasingLayer&& fmCasingLayer.setStyle({ color: '#064e3b', weight: 9,  opacity: 0.60 });
+    }
+  }
+
   // Update the inline speed sign (below speed limit sign)
   const mySpeedNum = document.getElementById('mssMySpeedNum');
   const mySpeedSign = document.getElementById('mssMySpeed');
@@ -12501,6 +12515,8 @@ async function shareRoute() {
 let fmMapInst    = null;
 let fmMarkers    = [];
 let fmLayer      = null;
+let fmGlowLayer  = null;  // route glow polyline
+let fmCasingLayer= null;  // route casing polyline
 let fmGpsMarker  = null;  // the animated truck
 let fmAccMarker  = null;  // accuracy circle
 let fmWatchId    = null;
@@ -12680,9 +12696,11 @@ function fmRedrawRoute(coords) {
   fmLastStepsHash = showInterstateShields ? '' : 'disabled'; // only re-add if shields on
 
   // ── Glow exterior (muy grueso, muy transparente)
-  const glow   = L.polyline(routeCoords,{ color:'#10b981', weight:22, opacity:0.11, interactive:false }).addTo(fmMapInst);
+  fmGlowLayer   = L.polyline(routeCoords,{ color:'#10b981', weight:22, opacity:0.11, interactive:false }).addTo(fmMapInst);
+  const glow    = fmGlowLayer;
   // ── Casing oscuro (borde de la ruta)
-  const casing = L.polyline(routeCoords,{ color:'#064e3b', weight:9,  opacity:0.60, interactive:false }).addTo(fmMapInst);
+  fmCasingLayer = L.polyline(routeCoords,{ color:'#064e3b', weight:9,  opacity:0.60, interactive:false }).addTo(fmMapInst);
+  const casing  = fmCasingLayer;
   // ── Ruta principal brillante
   fmLayer = L.polyline(routeCoords,{ color:'#10b981', weight:5, opacity:0.97 }).addTo(fmMapInst);
 
