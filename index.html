@@ -12683,6 +12683,7 @@ let fmLastGeocode = 0;
 // Auto-follow & zoom
 let fmFollowing     = true;   // whether map auto-follows truck
 let fmUserDragged   = false;  // user manually moved map
+let fmUserRotated   = false;  // user manually rotated map (pauses auto-bearing)
 let fmCurrentZoom   = 15;     // zoom level when following
 let fmLastHeading   = null;   // last GPS heading for truck rotation
 let fmPrevLat       = null;   // for calculating heading when GPS doesn't provide it
@@ -12785,6 +12786,13 @@ function openFullMapScreen() {
       _scheduleAutoResumeFollow();
     });
 
+    // Detect when user manually rotates — pause auto-bearing for 10s
+    fmMapInst.on('rotatestart', () => {
+      if (window._fmProgrammaticMove) return;
+      fmUserRotated = true;
+      _scheduleAutoResumeRotation();
+    });
+
     // Center button — re-enable follow and center on last GPS fix
     const centerBtn = document.getElementById('btnCenter');
     if (centerBtn && !centerBtn.dataset.bound) {
@@ -12793,6 +12801,8 @@ function openFullMapScreen() {
         if (!window.lastFixFm) return;
         fmFollowing = true;
         fmUserDragged = false;
+        fmUserRotated = false;
+        if (_autoResumeRotationTimer) { clearTimeout(_autoResumeRotationTimer); _autoResumeRotationTimer = null; }
         const fb = document.getElementById('fmFollowBtn');
         if (fb) fb.classList.add('active');
         const lf = window.lastFixFm;
@@ -13540,6 +13550,21 @@ function _scheduleAutoResumeFollow() {
   }, 8000); // reanuda seguimiento 8s después de que el usuario deja de tocar el mapa
 }
 
+// ── Auto-resume bearing after user manually rotates ───────────────────────
+let _autoResumeRotationTimer = null;
+function _scheduleAutoResumeRotation() {
+  if (_autoResumeRotationTimer) clearTimeout(_autoResumeRotationTimer);
+  _autoResumeRotationTimer = setTimeout(() => {
+    fmUserRotated = false;
+    // Snap bearing back to current heading
+    if (fmMapInst && fmLastHeading != null && typeof fmMapInst.setBearing === 'function') {
+      window._fmProgrammaticMove = true;
+      fmMapInst.setBearing(fmLastHeading, { animate: true });
+      setTimeout(() => { window._fmProgrammaticMove = false; }, 800);
+    }
+  }, 10000); // resume auto-bearing 10s after user stops rotating
+}
+
 // ── Báscula (Weigh Station) — notificar 5 millas antes ────────────────────
 const _weighNotified = new Set();
 function checkWeighStations(lat, lon) {
@@ -13746,7 +13771,7 @@ function fmStartTracking() {
       }
       window._fmProgrammaticMove = true;
       // Rotate BEFORE pan so the bearing event fires while flag is set
-      if (typeof fmMapInst.setBearing === 'function') {
+      if (!fmUserRotated && typeof fmMapInst.setBearing === 'function') {
         if (fmHeadingUpMode && heading != null && heading >= 0) {
           fmMapInst.setBearing(heading);
         } else if (!fmHeadingUpMode) {
@@ -13976,7 +14001,7 @@ function fmStartTracking() {
       fmUpdateTruckMarker(snap.lat, snap.lon, finalHdg, moving);
       if (fmFollowing && fmMapInst) {
         window._fmProgrammaticMove = true;
-        if (typeof fmMapInst.setBearing === 'function') {
+        if (!fmUserRotated && typeof fmMapInst.setBearing === 'function') {
           if (fmHeadingUpMode && finalHdg != null && finalHdg >= 0) fmMapInst.setBearing(finalHdg);
           else if (!fmHeadingUpMode) fmMapInst.setBearing(0);
         }
