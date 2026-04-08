@@ -2091,7 +2091,45 @@
     align-items: center;
     gap: 8px;
     pointer-events: all;
+    transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .3s;
   }
+  #mapRightControls.panel-hidden {
+    transform: translateY(-50%) translateX(calc(10px + env(safe-area-inset-right,0px) + 60px));
+    opacity: 0;
+    pointer-events: none;
+  }
+  #mapRightPanelBtn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 651;
+    width: 16px;
+    height: 64px;
+    background: rgba(59,130,246,0.32);
+    border: 1px solid rgba(59,130,246,0.45);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    color: rgba(255,255,255,.9);
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: right .35s cubic-bezier(.4,0,.2,1), background .15s;
+    padding: 0;
+    line-height: 1;
+  }
+  #mapRightPanelBtn.open {
+    right: calc(10px + env(safe-area-inset-right,0px) + 44px + 6px);
+    background: rgba(59,130,246,0.5);
+  }
+  #mapRightPanelBtn:active { opacity: .65; }
   #mapRightControls button {
     width: 44px; height: 44px;
     border-radius: 12px; border: 2px solid transparent;
@@ -7498,8 +7536,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- AUTO-FOLLOW button (bottom-left) -->
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
 
+  <!-- RIGHT PANEL TOGGLE TAB -->
+  <button id="mapRightPanelBtn" onclick="toggleMapRightPanel()" title="Community & SOS">‹</button>
+
   <!-- RIGHT SIDE CONTROL COLUMN: Community Reports + SOS -->
-  <div id="mapRightControls">
+  <div id="mapRightControls" class="panel-hidden">
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
     <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
   </div>
@@ -12230,6 +12271,7 @@ function openFullMapScreen() {
   screen.style.flexDirection = 'column';
   document.body.classList.add('map-active');
   setTimeout(_autoHideLeftPanelOnOpen, 400); // mostrar controles 3.5s luego ocultar
+  setTimeout(_autoHideRightPanelOnOpen, 400);
   // Sync compass button label with current heading mode
   setTimeout(_updateCompassBtn, 450);
 
@@ -12426,10 +12468,9 @@ const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 let fmTruckEl = null;  // the inner div element for rotation
 
 function buildTruckIconHTML(heading, isMoving) {
-  const user = typeof currentUser !== 'undefined' ? currentUser : null;
   const overLimit = typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded;
 
-  // Glow color: red if over limit, green if moving, gray if stopped
+  // Glow: azul brillante en movimiento normal, rojo al pasar el límite de velocidad
   let glowAnim = 'none';
   let borderColor = '#6b7280';
   if (isMoving) {
@@ -12442,14 +12483,27 @@ function buildTruckIconHTML(heading, isMoving) {
     }
   }
 
-  // Photo or avatar inside circle
-  let inner = '';
-  if (user && user.photoData) {
-    inner = `<img src="${user.photoData}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;display:block" />`;
-  } else if (user && user.avatar) {
-    inner = `<span style="font-size:26px;line-height:50px">${user.avatar}</span>`;
+  // Obtener foto del usuario de todas las fuentes posibles
+  const user = typeof currentUser !== 'undefined' ? currentUser : null;
+  const photoData =
+    (user && user.photoData) ||
+    (typeof truckUploadData !== 'undefined' && typeof truckIconMode !== 'undefined' && truckIconMode && truckIconMode.startsWith('upload:') ? truckUploadData : null) ||
+    (typeof driverProfile !== 'undefined' && driverProfile && driverProfile.photo ? driverProfile.photo : null) ||
+    localStorage.getItem('hos_profile_photo') ||
+    null;
+
+  let inner;
+  if (photoData) {
+    inner = `<img src="${photoData}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;display:block">`;
   } else {
-    inner = `<span style="font-size:24px;line-height:50px">🚛</span>`;
+    const name = (user && user.name) ||
+      (typeof driverProfile !== 'undefined' && driverProfile && driverProfile.name) || '';
+    if (name) {
+      const initials = name.trim().split(/\s+/).map(w => w[0] && w[0].toUpperCase()).filter(Boolean).slice(0,2).join('');
+      inner = `<span style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.5px">${initials||'?'}</span>`;
+    } else {
+      inner = `<span style="font-size:24px;line-height:50px">🚛</span>`;
+    }
   }
 
   return `
@@ -12748,6 +12802,7 @@ function reopenMap() {
     fmMapInst.setView(fmGpsMarker.getLatLng(), fmMapInst.getZoom());
   }
   setTimeout(_autoHideLeftPanelOnOpen, 400);
+  setTimeout(_autoHideRightPanelOnOpen, 400);
 }
 
 
@@ -16049,6 +16104,31 @@ function toggleSideTabMenu() {
     document.getElementById('commQuickOverlay')?.classList.remove('show');
   }
 }
+let _rightPanelAutoHideTimer = null;
+function toggleMapRightPanel(forceHide) {
+  const ctrl = document.getElementById('mapRightControls');
+  const btn  = document.getElementById('mapRightPanelBtn');
+  if (!ctrl || !btn) return;
+  const hiding = forceHide === true ? true : !ctrl.classList.contains('panel-hidden');
+  ctrl.classList.toggle('panel-hidden', hiding);
+  btn.classList.toggle('open', !hiding);
+  btn.textContent = hiding ? '‹' : '›';
+  if (_rightPanelAutoHideTimer) clearTimeout(_rightPanelAutoHideTimer);
+  if (!hiding) {
+    _rightPanelAutoHideTimer = setTimeout(() => toggleMapRightPanel(true), 5000);
+  }
+}
+function _autoHideRightPanelOnOpen() {
+  const ctrl = document.getElementById('mapRightControls');
+  const btn  = document.getElementById('mapRightPanelBtn');
+  if (!ctrl || !btn) return;
+  ctrl.classList.remove('panel-hidden');
+  btn.classList.add('open');
+  btn.textContent = '›';
+  if (_rightPanelAutoHideTimer) clearTimeout(_rightPanelAutoHideTimer);
+  _rightPanelAutoHideTimer = setTimeout(() => toggleMapRightPanel(true), 3500);
+}
+
 let _leftPanelAutoHideTimer = null;
 function toggleMapLeftPanel(forceHide) {
   const ctrl = document.getElementById('mapLeftControls');
@@ -16809,7 +16889,14 @@ calculateRoute = async function() {
       : (isNetwork ? 'No internet connection. Check your network and try again.' : 'Error calculating route. Check your origin and destination.');
     showError(msg);
   } finally {
-    if (calcBtn2) { calcBtn2.textContent = t('btnCalc'); calcBtn2.disabled = false; }
+    if (calcBtn2) {
+      calcBtn2.textContent = t('btnCalc');
+      calcBtn2.disabled = false;
+      // Mantener oculto si los resultados ya están visibles (ruta calculada)
+      if (document.getElementById('resultsCard')?.style.display === 'block') {
+        calcBtn2.style.display = 'none';
+      }
+    }
   }
 };
 
