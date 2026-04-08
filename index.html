@@ -2011,7 +2011,7 @@
     line-height: 1;
   }
   .rest-alarm-dismiss {
-    margin-top: 28px; padding: 18px 48px;
+    margin-top: 20px; padding: 18px 48px;
     border-radius: 16px; border: none;
     background: #3b82f6; color: #fff;
     font-family: "DM Sans", sans-serif;
@@ -2019,6 +2019,58 @@
     min-width: 260px;
     box-shadow: 0 4px 20px rgba(59,130,246,0.5);
   }
+  /* Panel de notificaciones dentro del overlay de descanso */
+  .rest-notif-panel {
+    margin-top: 16px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 12px 16px;
+    width: 100%; max-width: 320px;
+    display: none;
+  }
+  .rest-notif-panel.active { display: block; }
+  .rest-notif-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .rest-notif-label {
+    font-size: 13px; font-weight: 700;
+    color: rgba(255,255,255,0.8); letter-spacing: .3px;
+  }
+  .rest-notif-toggle {
+    background: none; border: none; cursor: pointer;
+    font-size: 22px; padding: 0; line-height: 1;
+  }
+  .rest-notif-pills {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .rest-notif-pill {
+    background: rgba(59,130,246,0.18);
+    border: 1px solid rgba(59,130,246,0.35);
+    border-radius: 20px; padding: 4px 10px;
+    font-size: 11px; font-weight: 700; color: #93c5fd;
+    white-space: nowrap;
+  }
+  .rest-notif-pill.done { color: #6ee7b7; border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.12); }
+  .rest-notif-pill.fired { opacity: .45; text-decoration: line-through; }
+  /* Botón descanso manual en plan tab */
+  .btn-manual-rest {
+    margin-top: 8px; padding: 12px 20px;
+    border-radius: 12px; border: 1.5px solid #f59e0b;
+    background: rgba(245,158,11,0.10); color: #fbbf24;
+    font-size: 14px; font-weight: 800; cursor: pointer;
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    touch-action: manipulation;
+  }
+  .btn-manual-rest:active { background: rgba(245,158,11,0.22); }
+  /* Badge de descanso activo (visible en tab-bar) */
+  #restActiveBadge {
+    display: none; position: absolute; top: 2px; right: calc(50% - 20px);
+    background: #f59e0b; color: #000; border-radius: 50%;
+    width: 8px; height: 8px; font-size: 0;
+  }
+  #restActiveBadge.show { display: block; }
 
   /* Auto-follow toggle button */
   #fmFollowBtn {
@@ -5607,6 +5659,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
         <div class="schedule" id="scheduleList"></div>
         <button class="btn btn-red" id="resetBtn" onclick="resetForm()" style="margin-top:10px">🔄 Nueva Ruta</button>
+        <button class="btn-manual-rest" id="manualRestBtn" onclick="startManualRest10h()">
+          😴 Iniciar descanso de 10 horas
+        </button>
       </div>
 
 
@@ -8726,10 +8781,24 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div class="rest-alarm-emoji" id="restAlarmEmoji">😴</div>
   <div class="rest-alarm-title" id="restAlarmTitle">¡HORA DE DESCANSAR!</div>
   <div class="rest-alarm-sub" id="restAlarmSub">Has manejado 8 horas. DOT requiere descanso de 10 horas.</div>
-  <div class="rest-alarm-timer" id="restAlarmTimer">10:00</div>
+  <div class="rest-alarm-timer" id="restAlarmTimer">10:00:00</div>
   <button class="rest-alarm-dismiss" onclick="dismissRestAlarm()">
     😴 INICIAR DESCANSO
   </button>
+
+  <!-- Panel de notificaciones de descanso -->
+  <div class="rest-notif-panel" id="restNotifPanel">
+    <div class="rest-notif-header">
+      <span class="rest-notif-label">🔔 Alarmas programadas</span>
+      <button class="rest-notif-toggle" id="restNotifToggleBtn" onclick="toggleRestNotifications()" title="Activar/desactivar notificaciones">🔔</button>
+    </div>
+    <div class="rest-notif-pills" id="restNotifPills">
+      <span class="rest-notif-pill" id="rnPill1h">–1h ⏰</span>
+      <span class="rest-notif-pill" id="rnPill30m">–30min ⏰</span>
+      <span class="rest-notif-pill" id="rnPill10m">–10min ⏰</span>
+      <span class="rest-notif-pill done" id="rnPillDone">¡A manejar! ✅</span>
+    </div>
+  </div>
 </div>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -9912,6 +9981,8 @@ let hosRestCountdown = null;
 let hosRestSecondsLeft = 0;
 let hosRestActive = false;
 let hosRestEndAlarmFired = false;
+let hosRestNotifEnabled = true;   // notificaciones ON por defecto
+let hosRestEndTime = null;        // timestamp cuando termina el descanso actual
 
 // Called when a route is calculated — schedules alarms for each rest segment
 function scheduleRestAlarms(scheduleData, departureTime) {
@@ -9964,6 +10035,7 @@ function triggerRestStartAlarm(seg) {
   const isReset = seg.type === 'reset';
   const totalSecs = isShort ? 30 * 60 : isReset ? 34 * 3600 : 10 * 3600;
   hosRestSecondsLeft = totalSecs;
+  hosRestEndTime = Date.now() + totalSecs * 1000;
 
   const overlay = document.getElementById('restAlarmOverlay');
   document.getElementById('restAlarmEmoji').textContent = isReset ? '🔄' : '😴';
@@ -9978,12 +10050,20 @@ function triggerRestStartAlarm(seg) {
   playAlertSound();
   vibrate([500,200,500,200,500,500,500]);
 
+  // Mostrar panel de notificaciones solo en descanso de 10h o reset
+  const notifPanel = document.getElementById('restNotifPanel');
+  if (notifPanel) notifPanel.classList.toggle('active', !isShort);
+
+  // Programar notificaciones push para descanso de 10h/34h
+  if (!isShort) _scheduleRestNotifications(hosRestEndTime, isReset);
+
   // Start countdown
   if (hosRestCountdown) clearInterval(hosRestCountdown);
   updateRestTimer(hosRestSecondsLeft);
   hosRestCountdown = setInterval(() => {
     hosRestSecondsLeft--;
     updateRestTimer(hosRestSecondsLeft);
+    _updateRestNotifPills();
     if (hosRestSecondsLeft <= 0) {
       clearInterval(hosRestCountdown);
       hosRestCountdown = null;
@@ -9995,9 +10075,10 @@ function triggerRestEndAlarm(seg) {
   if (hosRestEndAlarmFired) return;
   hosRestEndAlarmFired = true;
   hosRestActive = false;
+  hosRestEndTime = null;
 
-  // Dismiss the rest overlay if showing
   document.getElementById('restAlarmOverlay').classList.remove('show');
+  document.getElementById('manualRestBtn').style.display = '';
 
   const isShort = seg.type === 'break30';
   const isReset = seg.type === 'reset';
@@ -10012,23 +10093,156 @@ function triggerRestEndAlarm(seg) {
   );
   playAlertSound();
   vibrate([200, 100, 200]);
+
+  // Notificación push de fin de descanso
+  if (!isShort) {
+    _sendRestPushNotification(
+      isReset ? '🔄 ¡Ciclo renovado! — HOS Tracker' : '✅ ¡Ya puedes manejar! — HOS Tracker',
+      isReset ? 'Tus 34 horas se completaron. Ciclo de 70h reiniciado.' : 'Tus 10 horas de descanso se completaron. ¡Buen viaje!',
+      'rest-done'
+    );
+  }
 }
 
 function updateRestTimer(secs) {
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60);
   const s = secs % 60;
-  let txt = '';
-  if (h > 0) txt = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  else txt = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  document.getElementById('restAlarmTimer').textContent = txt;
+  document.getElementById('restAlarmTimer').textContent =
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
 function dismissRestAlarm() {
   document.getElementById('restAlarmOverlay').classList.remove('show');
   hosRestActive = false;
   if (hosRestCountdown) { clearInterval(hosRestCountdown); hosRestCountdown = null; }
+  // Las notificaciones siguen activas en background (no se cancelan al cerrar el overlay)
 }
+
+/* ── Descanso manual de 10 horas ── */
+function startManualRest10h() {
+  const seg = { type: 'rest', start: new Date(), end: new Date(Date.now() + 10 * 3600000) };
+  triggerRestStartAlarm(seg);
+  // Ocultar el botón mientras el descanso está activo
+  document.getElementById('manualRestBtn').style.display = 'none';
+}
+
+/* ── Programar notificaciones push para el descanso ── */
+function _scheduleRestNotifications(endTime, isReset) {
+  if (!hosRestNotifEnabled) return;
+  if (Notification.permission !== 'granted') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') _scheduleRestNotifications(endTime, isReset);
+    });
+    return;
+  }
+
+  const label = isReset ? '34 horas' : '10 horas';
+  const alerts = [
+    { tag: 'rest-1h',   delayMs: endTime - Date.now() - 3600000,
+      title: `⏰ Falta 1 hora — HOS Tracker`,
+      body:  `En 1 hora se completan tus ${label} de descanso. Prepárate.` },
+    { tag: 'rest-30min', delayMs: endTime - Date.now() - 1800000,
+      title: `⏰ Faltan 30 minutos — HOS Tracker`,
+      body:  `Casi listo. En 30 min podrás volver al volante.` },
+    { tag: 'rest-10min', delayMs: endTime - Date.now() - 600000,
+      title: `⏰ Faltan 10 minutos — HOS Tracker`,
+      body:  `¡10 min para poder manejar! Prepara el camión.` },
+  ];
+
+  alerts.forEach(a => {
+    if (a.delayMs <= 0) return;
+    // Timer en la app (funciona con la app abierta o en background)
+    const t = setTimeout(() => _sendRestPushNotification(a.title, a.body, a.tag), a.delayMs);
+    hosRestTimers.push(t);
+    // También vía Service Worker (funciona con la app cerrada)
+    if (window._swReg && window._swReg.active) {
+      window._swReg.active.postMessage({
+        type: 'SCHEDULE_NOTIFICATION', delay: a.delayMs,
+        title: a.title, body: a.body, tag: a.tag, icon: './icon-192.png'
+      });
+    }
+  });
+
+  // Guardar en localStorage para sobrevivir recargas
+  localStorage.setItem('hos_rest_notifs', JSON.stringify({
+    endTime, isReset,
+    scheduled: alerts.filter(a => a.delayMs > 0).map(a => ({
+      tag: a.tag, fireAt: Date.now() + a.delayMs, title: a.title, body: a.body
+    }))
+  }));
+
+  _updateRestNotifPills();
+}
+
+function _sendRestPushNotification(title, body, tag) {
+  const reg = window._swReg;
+  if (reg && typeof reg.showNotification === 'function') {
+    reg.showNotification(title, {
+      body, icon: './icon-192.png', badge: './icon-192.png', tag,
+      vibrate: [300, 100, 300, 100, 300],
+      requireInteraction: tag === 'rest-done',
+      data: { url: '/' }
+    });
+  } else if (Notification.permission === 'granted') {
+    new Notification(title, { body, icon: './icon-192.png', tag });
+  }
+  // Marcar pill como disparada
+  const pillMap = { 'rest-1h':'rnPill1h','rest-30min':'rnPill30m','rest-10min':'rnPill10m','rest-done':'rnPillDone' };
+  const pill = document.getElementById(pillMap[tag]);
+  if (pill) pill.classList.add('fired');
+}
+
+function _updateRestNotifPills() {
+  if (!hosRestEndTime) return;
+  const remaining = hosRestSecondsLeft;
+  const p1h   = document.getElementById('rnPill1h');
+  const p30m  = document.getElementById('rnPill30m');
+  const p10m  = document.getElementById('rnPill10m');
+  const hLeft = Math.floor(remaining / 3600);
+  const mLeft = Math.floor((remaining % 3600) / 60);
+  if (p1h)  p1h.textContent  = remaining > 3600  ? `–1h (a las ${_fmtAlarmTime(hosRestEndTime - 3600000)}) ⏰`  : (p1h.classList.add('fired'), p1h.textContent);
+  if (p30m) p30m.textContent = remaining > 1800  ? `–30min (${_fmtAlarmTime(hosRestEndTime - 1800000)}) ⏰` : (p30m.classList.add('fired'), p30m.textContent);
+  if (p10m) p10m.textContent = remaining > 600   ? `–10min (${_fmtAlarmTime(hosRestEndTime - 600000)}) ⏰`  : (p10m.classList.add('fired'), p10m.textContent);
+}
+
+function _fmtAlarmTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function toggleRestNotifications() {
+  hosRestNotifEnabled = !hosRestNotifEnabled;
+  const btn = document.getElementById('restNotifToggleBtn');
+  if (btn) btn.textContent = hosRestNotifEnabled ? '🔔' : '🔕';
+  if (hosRestNotifEnabled && hosRestEndTime) {
+    _scheduleRestNotifications(hosRestEndTime, false);
+    showToast('success','🔔','Alarmas activadas','Recibirás notificaciones antes de que termine el descanso',3000);
+  } else {
+    // Cancelar en SW
+    if (window._swReg && window._swReg.active) {
+      window._swReg.active.postMessage({ type: 'CANCEL_REST_NOTIFICATIONS' });
+    }
+    showToast('info','🔕','Alarmas desactivadas','No recibirás notificaciones de descanso',3000);
+  }
+}
+
+/* ── Al iniciar la app, restaurar notificaciones pendientes desde localStorage ── */
+(function _restoreRestNotifications() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('hos_rest_notifs') || 'null');
+    if (!saved || !saved.endTime) return;
+    const now = Date.now();
+    if (saved.endTime <= now) { localStorage.removeItem('hos_rest_notifs'); return; }
+    // Hay un descanso activo — reprogramar las notificaciones que falten
+    (saved.scheduled || []).forEach(n => {
+      const delay = n.fireAt - now;
+      if (delay <= 0) return;
+      const t = setTimeout(() => _sendRestPushNotification(n.title, n.body, n.tag), delay);
+      hosRestTimers.push(t);
+    });
+  } catch(e) {}
+})();
 
 /* ════════════════════════════════════════════════════════════
    🚦  SPEED LIMITS BY STATE (US)
