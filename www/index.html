@@ -953,69 +953,48 @@
     100%{ transform:translateY(0);    opacity:1; }
   }
   #policeAlert {
-    position: fixed; inset: 0; z-index: 9400;
-    display: none; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 10px; padding: 32px; text-align: center;
-    background: rgba(30,0,0,0.96);
+    position: fixed;
+    top: calc(70px + env(safe-area-inset-top, 0px));
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    z-index: 9400;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+    background: none;
+    opacity: 0;
+    transition: opacity .3s, transform .3s;
   }
   #policeAlert.show {
     display: flex;
-    animation: policeFlash .6s ease-in-out 4;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
   .pa-officer-3d {
-    perspective: 400px;
-    width: 160px; height: 160px;
+    perspective: 300px;
+    width: 80px; height: 80px;
     display: flex; align-items: center; justify-content: center;
     position: relative;
   }
   .pa-officer-3d .pa-shadow-ring {
-    position: absolute; bottom: -6px;
-    width: 110px; height: 22px;
-    background: radial-gradient(ellipse, rgba(239,68,68,.55) 0%, transparent 75%);
-    border-radius: 50%; filter: blur(4px);
+    position: absolute; bottom: -4px;
+    width: 54px; height: 12px;
+    background: radial-gradient(ellipse, rgba(0,0,0,.45) 0%, transparent 75%);
+    border-radius: 50%; filter: blur(3px);
   }
   .pa-officer-3d .pa-emoji {
-    font-size: 110px; line-height: 1;
+    font-size: 54px; line-height: 1;
     display: block;
-    transform: perspective(300px) rotateX(10deg) scale(1);
+    transform: perspective(200px) rotateX(10deg) scale(1);
     filter:
-      drop-shadow(0px 12px 0px rgba(0,0,0,.65))
-      drop-shadow(0px 6px 4px rgba(0,0,0,.45))
-      drop-shadow(0 0 28px rgba(239,68,68,.9))
-      drop-shadow(0 0 60px rgba(239,68,68,.4));
+      drop-shadow(0px 8px 0px rgba(0,0,0,.5))
+      drop-shadow(0px 3px 3px rgba(0,0,0,.35));
     animation: officer3dPop 0.55s ease-in-out infinite alternate;
   }
   @keyframes officer3dPop {
-    0%   { transform: perspective(300px) rotateX(10deg) scale(1)   translateY(0px);   }
-    100% { transform: perspective(300px) rotateX(6deg)  scale(1.08) translateY(-6px); }
-  }
-  #policeAlert .pa-title {
-    font-family:"Bebas Neue",sans-serif;
-    font-size: 48px; color: #ef4444;
-    letter-spacing: 3px; line-height: 1;
-    text-shadow: 0 0 20px rgba(239,68,68,.6);
-  }
-  #policeAlert .pa-ticket {
-    font-size: 15px; font-weight: 700;
-    color: rgba(255,255,255,.9);
-    background: rgba(255,255,255,.1);
-    border-radius: 12px; padding: 12px 20px;
-    border: 1px solid rgba(239,68,68,.4);
-    animation: ticketSlide .4s ease-out both;
-    line-height: 1.6;
-  }
-  #policeAlert .pa-speed {
-    font-size: 36px; font-weight: 900;
-    color: #ef4444; letter-spacing: 1px;
-  }
-  #policeAlert .pa-dismiss {
-    margin-top: 12px; padding: 14px 40px;
-    border-radius: 14px; border: none;
-    background: #ef4444; color: #fff;
-    font-family: "DM Sans",sans-serif;
-    font-size: 16px; font-weight: 900;
-    cursor: pointer; letter-spacing: .5px;
+    0%   { transform: perspective(200px) rotateX(10deg) scale(1)    translateY(0px);  }
+    100% { transform: perspective(200px) rotateX(6deg)  scale(1.1)  translateY(-4px); }
   }
 
 
@@ -8737,19 +8716,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <button class="alert-dismiss" onclick="dismissFatigueAlert()">✅ I'M AWAKE — DISMISS</button>
 </div>
 
-<!-- ── POLICE ALERT full screen ──────────────────────────── -->
+<!-- ── POLICE ALERT floating figure (top of map) ────────── -->
 <div id="policeAlert" onclick="dismissPoliceAlert()">
   <div class="pa-officer-3d">
     <span class="pa-emoji">👮</span>
     <div class="pa-shadow-ring"></div>
   </div>
-  <div class="pa-title">¡INFRACCIÓN!</div>
-  <div class="pa-ticket">
-    <div>🚨 Velocidad excesiva</div>
-    <div class="pa-speed" id="paSpeedTxt">-- mph</div>
-    <div id="paLimitTxt" style="font-size:13px;color:rgba(255,255,255,.7)">Límite: -- mph</div>
-  </div>
-  <button class="pa-dismiss" onclick="dismissPoliceAlert()">✅ Entendido — Reducir velocidad</button>
 </div>
 
 <!-- ── WEATHER WIDGET ───────────────────────────────────── -->
