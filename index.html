@@ -2440,15 +2440,12 @@
   bottom: calc(var(--stack-base) + 0px) !important;
 }
 
-/* SOS ahora está dentro de mapRightControls — sin posicionamiento fijo */
+/* SOS siempre visible dentro de mapRightControls */
 #mapRightControls #sosFab{
   position: relative !important;
   bottom: auto !important; right: auto !important;
   top: auto !important; left: auto !important;
   transform: none !important;
-  display: none;
-}
-#mapRightControls #sosFab.visible{
   display: flex !important;
 }
 #weatherWidget{
@@ -2491,7 +2488,7 @@
   top: calc(96px + env(safe-area-inset-top, 0px)) !important;
 }
 #speedLimitWidget{
-  top: calc(var(--header-pt) + 28px) !important;
+  top: calc(var(--header-pt) + 4px) !important;
 }
 
 /* Keep stack above other floating buttons if present */
@@ -7540,7 +7537,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <button id="mapRightPanelBtn" onclick="toggleMapRightPanel()" title="Community & SOS">‹</button>
 
   <!-- RIGHT SIDE CONTROL COLUMN: Community Reports + SOS -->
-  <div id="mapRightControls" class="panel-hidden">
+  <div id="mapRightControls">
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
     <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
   </div>
@@ -7598,11 +7595,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       margin-top:2px;
     ">
 
-      <!-- Clock pill -->
+      <!-- Clock pill (oculto) -->
       <div style="
         background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
         border-radius:10px;padding:6px 12px;
-        display:flex;flex-direction:column;align-items:center;
+        display:none;flex-direction:column;align-items:center;
         box-shadow:0 2px 10px rgba(0,0,0,0.3);
       ">
         <div style="display:flex;align-items:center;gap:5px">
@@ -10897,8 +10894,8 @@ function applySpeedometerPos() {
   // Default position: left stack, below miles remaining widget
   const safeTop  = (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sl-y')) || 0);
   const defaultX = 12 + (window.safeAreaLeft || 0);
-  // 44(sos) + 8(gap) + 52(weather) + 8(gap) + 56(miles) + 8(gap) = 176
-  const defaultY = 12 + (window.safeAreaTop || 0) + 176;
+  // 52(weather) + 8(gap) + 56(miles) + 8(gap) = 124 — SOS ahora está en panel derecho
+  const defaultY = 12 + (window.safeAreaTop || 0) + 100;
 
   if (speedometerPos && typeof speedometerPos.x === 'number' && typeof speedometerPos.y === 'number') {
     w.style.cssText += ';position:fixed !important;left:' + speedometerPos.x + 'px !important;top:' + speedometerPos.y + 'px !important;right:auto !important;bottom:auto !important;transform:none !important';
@@ -12237,7 +12234,6 @@ function openFullMapScreen() {
   screen.style.flexDirection = 'column';
   document.body.classList.add('map-active');
   setTimeout(_autoHideLeftPanelOnOpen, 400); // mostrar controles 3.5s luego ocultar
-  setTimeout(_autoHideRightPanelOnOpen, 400);
   // Sync compass button label with current heading mode
   setTimeout(_updateCompassBtn, 450);
 
@@ -12436,17 +12432,17 @@ let fmTruckEl = null;  // the inner div element for rotation
 function buildTruckIconHTML(heading, isMoving) {
   const overLimit = typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded;
 
-  // Glow: azul brillante en movimiento normal, rojo al pasar el límite de velocidad
+  // Glow: siempre azul (parado=suave, movimiento=brillante), rojo si sobrepasa límite
   let glowAnim = 'none';
-  let borderColor = '#6b7280';
-  if (isMoving) {
-    if (overLimit) {
-      glowAnim = 'glowRed 1.2s ease-in-out infinite';
-      borderColor = '#ef4444';
-    } else {
-      glowAnim = 'glowGreen 1.6s ease-in-out infinite';
-      borderColor = '#3b82f6';
-    }
+  let borderColor = '#3b82f6'; // siempre azul
+  let extraShadow = '0 0 0 3px rgba(59,130,246,0.20), 0 0 10px rgba(59,130,246,0.12)'; // brillo suave parado
+  if (isMoving && overLimit) {
+    glowAnim = 'glowRed 1.2s ease-in-out infinite';
+    borderColor = '#ef4444';
+    extraShadow = '';
+  } else if (isMoving) {
+    glowAnim = 'glowGreen 1.6s ease-in-out infinite';
+    extraShadow = '';
   }
 
   // Obtener foto del usuario de todas las fuentes posibles
@@ -12481,6 +12477,7 @@ function buildTruckIconHTML(heading, isMoving) {
         overflow:hidden;display:flex;align-items:center;justify-content:center;
         background:rgba(15,23,42,.95);
         animation:${glowAnim};
+        box-shadow:${extraShadow};
       ">${inner}</div>
     </div>`;
 }
@@ -12768,7 +12765,6 @@ function reopenMap() {
     fmMapInst.setView(fmGpsMarker.getLatLng(), fmMapInst.getZoom());
   }
   setTimeout(_autoHideLeftPanelOnOpen, 400);
-  setTimeout(_autoHideRightPanelOnOpen, 400);
 }
 
 
