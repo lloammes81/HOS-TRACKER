@@ -12950,16 +12950,27 @@ function buildTruckIconHTML(heading, isMoving) {
   }
 
   return `
-    <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
-         style="display:flex;align-items:center;justify-content:center;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none">
+      <!-- Arrow outside truckWrapper: rotates with map bearing → always points direction of travel -->
       <div style="
-        width:50px;height:50px;border-radius:50%;
-        border:3px solid ${borderColor};
-        overflow:hidden;display:flex;align-items:center;justify-content:center;
-        background:rgba(15,23,42,.95);
-        animation:${glowAnim};
-        box-shadow:${extraShadow};
-      ">${inner}</div>
+        width:0;height:0;
+        border-left:9px solid transparent;
+        border-right:9px solid transparent;
+        border-bottom:16px solid ${borderColor};
+        filter:drop-shadow(0 2px 6px rgba(0,0,0,.55));
+        flex-shrink:0;
+      "></div>
+      <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
+           style="display:flex;align-items:center;justify-content:center;">
+        <div style="
+          width:50px;height:50px;border-radius:50%;
+          border:3px solid ${borderColor};
+          overflow:hidden;display:flex;align-items:center;justify-content:center;
+          background:rgba(15,23,42,.95);
+          animation:${glowAnim};
+          box-shadow:${extraShadow};
+        ">${inner}</div>
+      </div>
     </div>`;
 }
 
@@ -13013,7 +13024,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   if (!truckFrom) truckFrom = { lat, lon, heading: heading ?? 0 };
 
   const html = buildTruckIconHTML(heading, isMoving);
-  const icon = L.divIcon({ className: '', html, iconAnchor: [28, 28], iconSize: [56, 56] });
+  const icon = L.divIcon({ className: '', html, iconAnchor: [28, 44], iconSize: [56, 72] });
   if (!fmGpsMarker) {
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
@@ -13249,19 +13260,12 @@ function reopenMap() {
 }
 
 
-let fmHeadingUpMode = true; // heading-up on by default while tracking
+const fmHeadingUpMode = true; // always heading-up — locked
 
 function toggleHeadingUp() {
-  fmHeadingUpMode = !fmHeadingUpMode;
-  _updateCompassBtn();
-  // If switching to north-up, immediately reset bearing
-  if (!fmHeadingUpMode && fmMapInst && typeof fmMapInst.setBearing === 'function') {
-    fmMapInst.setBearing(0);
-  }
-  showToast('info', fmHeadingUpMode ? '🧭' : '🔼',
-    fmHeadingUpMode ? 'Vista: Dirección de viaje' : 'Vista: Norte arriba',
-    fmHeadingUpMode ? 'El mapa gira con la dirección del camión' : 'El mapa apunta al norte siempre',
-    2500);
+  // Heading-up is permanently locked; just remind the user
+  showToast('info', '🧭', 'Vista: Dirección de viaje',
+    'El mapa siempre apunta en la dirección de viaje', 2000);
 }
 function _updateCompassBtn() {
   const btn = document.getElementById('compassBtn');
