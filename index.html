@@ -5749,7 +5749,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
         <div class="schedule" id="scheduleList"></div>
         <button class="btn btn-red" id="resetBtn" onclick="resetForm()" style="margin-top:10px">🔄 Nueva Ruta</button>
-        <button class="btn-manual-rest" id="manualRestBtn" onclick="startManualRest10h()">
+        <button class="btn-manual-rest" id="manualRestBtn" onclick="startManualRest10h()" style="display:none">
           😴 Iniciar descanso de 10 horas
         </button>
       </div>
@@ -10150,6 +10150,11 @@ function scheduleRestAlarms(scheduleData, departureTime) {
           showToast('warning', '⏰', '15 min para descansar',
             `En 15 min deberás detenerte a descansar (${seg.type === 'break30' ? '30 min' : '10 horas'})`, 8000);
           vibrate([100, 50, 100]);
+          // Show manual rest button only for mandatory 10-hour rest
+          if (seg.type === 'rest') {
+            const btn = document.getElementById('manualRestBtn');
+            if (btn) btn.style.display = '';
+          }
         }, warn15);
         hosRestTimers.push(tw);
       }
@@ -10185,6 +10190,12 @@ function triggerRestStartAlarm(seg) {
     ? 'Reset de 34 horas para recuperar ciclo'
     : 'Descanso obligatorio de 10 horas (DOT HOS)';
 
+  // Show manual rest button in plan tab only for 10-hour mandatory rest
+  if (!isShort && !isReset) {
+    const btn = document.getElementById('manualRestBtn');
+    if (btn) btn.style.display = '';
+  }
+
   overlay.classList.add('show');
   playAlertSound();
   vibrate([500,200,500,200,500,500,500]);
@@ -10216,7 +10227,7 @@ function triggerRestEndAlarm(seg) {
   hosRestEndTime = null;
 
   document.getElementById('restAlarmOverlay').classList.remove('show');
-  document.getElementById('manualRestBtn').style.display = '';
+  document.getElementById('manualRestBtn').style.display = 'none'; // hide after rest completes
 
   const isShort = seg.type === 'break30';
   const isReset = seg.type === 'reset';
