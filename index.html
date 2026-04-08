@@ -2019,9 +2019,41 @@
     min-width: 260px;
     box-shadow: 0 4px 20px rgba(59,130,246,0.5);
   }
+  /* Pregunta de notificación */
+  .rest-notif-ask {
+    margin-top: 16px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 16px 18px;
+    width: 100%; max-width: 320px;
+    display: none;
+    flex-direction: column; align-items: center; gap: 12px;
+  }
+  .rest-notif-ask.active { display: flex; }
+  .rest-notif-ask-q {
+    font-size: 15px; font-weight: 700;
+    color: #f1f5f9; text-align: center; line-height: 1.45;
+  }
+  .rest-notif-ask-btns {
+    display: flex; gap: 10px; width: 100%;
+  }
+  .rest-notif-yes {
+    flex: 1; padding: 11px 8px;
+    border-radius: 12px; border: none;
+    background: #3b82f6; color: #fff;
+    font-size: 14px; font-weight: 800; cursor: pointer;
+    box-shadow: 0 2px 10px rgba(59,130,246,0.45);
+  }
+  .rest-notif-no {
+    flex: 1; padding: 11px 8px;
+    border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.65);
+    font-size: 14px; font-weight: 700; cursor: pointer;
+  }
   /* Panel de notificaciones dentro del overlay de descanso */
   .rest-notif-panel {
-    margin-top: 16px;
+    margin-top: 10px;
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.12);
     border-radius: 14px;
@@ -8786,11 +8818,20 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     😴 INICIAR DESCANSO
   </button>
 
-  <!-- Panel de notificaciones de descanso -->
+  <!-- Pregunta: ¿quieres notificación cuando terminen las 10h? -->
+  <div class="rest-notif-ask" id="restNotifAsk">
+    <div class="rest-notif-ask-q">¿Quieres que te avisemos<br>cuando puedas volver a manejar?</div>
+    <div class="rest-notif-ask-btns">
+      <button class="rest-notif-yes" onclick="acceptRestNotifications()">🔔 Sí, avísame</button>
+      <button class="rest-notif-no"  onclick="declineRestNotifications()">🔕 No, gracias</button>
+    </div>
+  </div>
+
+  <!-- Panel de alarmas confirmadas (se muestra si acepta) -->
   <div class="rest-notif-panel" id="restNotifPanel">
     <div class="rest-notif-header">
       <span class="rest-notif-label">🔔 Alarmas programadas</span>
-      <button class="rest-notif-toggle" id="restNotifToggleBtn" onclick="toggleRestNotifications()" title="Activar/desactivar notificaciones">🔔</button>
+      <button class="rest-notif-toggle" id="restNotifToggleBtn" onclick="toggleRestNotifications()" title="Cancelar notificaciones">✕</button>
     </div>
     <div class="rest-notif-pills" id="restNotifPills">
       <span class="rest-notif-pill" id="rnPill1h">–1h ⏰</span>
@@ -10084,12 +10125,11 @@ function triggerRestStartAlarm(seg) {
   playAlertSound();
   vibrate([500,200,500,200,500,500,500]);
 
-  // Mostrar panel de notificaciones solo en descanso de 10h o reset
+  // Mostrar pregunta de notificación solo en descanso de 10h o reset
+  const askPanel  = document.getElementById('restNotifAsk');
   const notifPanel = document.getElementById('restNotifPanel');
-  if (notifPanel) notifPanel.classList.toggle('active', !isShort);
-
-  // Programar notificaciones push para descanso de 10h/34h
-  if (!isShort) _scheduleRestNotifications(hosRestEndTime, isReset);
+  if (askPanel)  askPanel.classList.toggle('active', !isShort);
+  if (notifPanel) notifPanel.classList.remove('active'); // ocultar hasta que acepte
 
   // Start countdown
   if (hosRestCountdown) clearInterval(hosRestCountdown);
@@ -10245,20 +10285,52 @@ function _fmtAlarmTime(ts) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function toggleRestNotifications() {
-  hosRestNotifEnabled = !hosRestNotifEnabled;
-  const btn = document.getElementById('restNotifToggleBtn');
-  if (btn) btn.textContent = hosRestNotifEnabled ? '🔔' : '🔕';
-  if (hosRestNotifEnabled && hosRestEndTime) {
+function acceptRestNotifications() {
+  // Ocultar pregunta
+  const ask = document.getElementById('restNotifAsk');
+  if (ask) ask.classList.remove('active');
+
+  const proceed = () => {
+    hosRestNotifEnabled = true;
     _scheduleRestNotifications(hosRestEndTime, false);
-    showToast('success','🔔','Alarmas activadas','Recibirás notificaciones antes de que termine el descanso',3000);
+    // Mostrar panel de alarmas confirmadas
+    const panel = document.getElementById('restNotifPanel');
+    if (panel) panel.classList.add('active');
+    _updateRestNotifPills();
+    showToast('success','🔔','Alarmas activadas','Te avisaremos antes de que terminen las 10 horas',3000);
+  };
+
+  if (Notification.permission === 'granted') {
+    proceed();
+  } else if (Notification.permission === 'default') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') proceed();
+      else showToast('warning','🔕','Permiso denegado','Activa las notificaciones en la configuración del teléfono',4000);
+    });
   } else {
-    // Cancelar en SW
-    if (window._swReg && window._swReg.active) {
-      window._swReg.active.postMessage({ type: 'CANCEL_REST_NOTIFICATIONS' });
-    }
-    showToast('info','🔕','Alarmas desactivadas','No recibirás notificaciones de descanso',3000);
+    showToast('warning','🔕','Notificaciones bloqueadas','Activa las notificaciones en la configuración del teléfono para recibir alarmas',5000);
   }
+}
+
+function declineRestNotifications() {
+  const ask = document.getElementById('restNotifAsk');
+  if (ask) ask.classList.remove('active');
+  hosRestNotifEnabled = false;
+}
+
+function toggleRestNotifications() {
+  // Desde el panel de alarmas confirmadas: cancelar notificaciones
+  hosRestNotifEnabled = false;
+  if (window._swReg && window._swReg.active) {
+    window._swReg.active.postMessage({ type: 'CANCEL_REST_NOTIFICATIONS' });
+  }
+  localStorage.removeItem('hos_rest_notifs');
+  const panel = document.getElementById('restNotifPanel');
+  if (panel) panel.classList.remove('active');
+  // Volver a mostrar la pregunta por si quiere reactivar
+  const ask = document.getElementById('restNotifAsk');
+  if (ask && hosRestEndTime) ask.classList.add('active');
+  showToast('info','🔕','Alarmas canceladas','No recibirás notificaciones de descanso',3000);
 }
 
 /* ── Al iniciar la app, restaurar notificaciones pendientes desde localStorage ── */
