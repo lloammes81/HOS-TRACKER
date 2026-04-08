@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rutas-dot-v53';
+const CACHE_NAME = 'rutas-dot-v54';
 const urlsToCache = [
   '/',
   '/index.html'
