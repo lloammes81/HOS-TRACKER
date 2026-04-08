@@ -937,8 +937,66 @@
     50%    { transform:rotate(8deg); }
   }
 
-  
-  /* ── WEATHER WIDGET ──────────────────────── */
+  /* ── POLICE ALERT ──────────────────────── */
+  @keyframes policeFlash {
+    0%,100%{ background:rgba(30,0,0,0.96); }
+    50%    { background:rgba(80,10,10,0.98); }
+  }
+  @keyframes badgeWiggle {
+    0%,100%{ transform:rotate(-6deg) scale(1); }
+    25%    { transform:rotate(6deg) scale(1.1); }
+    50%    { transform:rotate(-4deg) scale(1.05); }
+    75%    { transform:rotate(4deg) scale(1.08); }
+  }
+  @keyframes ticketSlide {
+    0%  { transform:translateY(30px); opacity:0; }
+    100%{ transform:translateY(0);    opacity:1; }
+  }
+  #policeAlert {
+    position: fixed; inset: 0; z-index: 9400;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px; padding: 32px; text-align: center;
+    background: rgba(30,0,0,0.96);
+  }
+  #policeAlert.show {
+    display: flex;
+    animation: policeFlash .6s ease-in-out 4;
+  }
+  #policeAlert .pa-officer {
+    font-size: 90px;
+    animation: badgeWiggle .5s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(239,68,68,.8));
+  }
+  #policeAlert .pa-title {
+    font-family:"Bebas Neue",sans-serif;
+    font-size: 48px; color: #ef4444;
+    letter-spacing: 3px; line-height: 1;
+    text-shadow: 0 0 20px rgba(239,68,68,.6);
+  }
+  #policeAlert .pa-ticket {
+    font-size: 15px; font-weight: 700;
+    color: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.1);
+    border-radius: 12px; padding: 12px 20px;
+    border: 1px solid rgba(239,68,68,.4);
+    animation: ticketSlide .4s ease-out both;
+    line-height: 1.6;
+  }
+  #policeAlert .pa-speed {
+    font-size: 36px; font-weight: 900;
+    color: #ef4444; letter-spacing: 1px;
+  }
+  #policeAlert .pa-dismiss {
+    margin-top: 12px; padding: 14px 40px;
+    border-radius: 14px; border: none;
+    background: #ef4444; color: #fff;
+    font-family: "DM Sans",sans-serif;
+    font-size: 16px; font-weight: 900;
+    cursor: pointer; letter-spacing: .5px;
+  }
+
+
   /* Weather widget — compact card top-left of fullscreen map */
   #weatherWidget {
     position: fixed;
@@ -8652,6 +8710,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <button class="alert-dismiss" onclick="dismissFatigueAlert()">✅ I'M AWAKE — DISMISS</button>
 </div>
 
+<!-- ── POLICE ALERT full screen ──────────────────────────── -->
+<div id="policeAlert" onclick="dismissPoliceAlert()">
+  <div class="pa-officer">👮</div>
+  <div class="pa-title">¡INFRACCIÓN!</div>
+  <div class="pa-ticket">
+    <div>🚨 Velocidad excesiva</div>
+    <div class="pa-speed" id="paSpeedTxt">-- mph</div>
+    <div id="paLimitTxt" style="font-size:13px;color:rgba(255,255,255,.7)">Límite: -- mph</div>
+  </div>
+  <button class="pa-dismiss" onclick="dismissPoliceAlert()">✅ Entendido — Reducir velocidad</button>
+</div>
+
 <!-- ── WEATHER WIDGET ───────────────────────────────────── -->
 <!-- ── BRIDGE WIDGET ────────────────────────────────────── -->
 <div id="bridgeInput">
@@ -10369,9 +10439,11 @@ const STATE_SPEED_LIMITS = {
 };
 
 let currentStateCode   = '';
-let speedLimitActive   = localStorage.getItem('hos_speedlimit') !== 'false';
-let speedLimitExceeded = false;
-let speedToastTimer    = null;
+let speedLimitActive     = localStorage.getItem('hos_speedlimit') !== 'false';
+let speedLimitExceeded   = false;
+let speedToastTimer      = null;
+let policeAlertCooldown  = false;
+let policeAlertTimer     = null;
 let lastStateCheck     = 0;
 let lastRoadSpeedCheck = 0;
 let lastBorderWarnState = '';
@@ -10613,6 +10685,30 @@ function hideMapSpeedSign() {
   document.getElementById('mapSpeedSign')?.classList.remove('visible');
 }
 
+function showPoliceAlert(gpsSpeed, limit) {
+  if (policeAlertCooldown) return;
+  policeAlertCooldown = true;
+  const el = document.getElementById('policeAlert');
+  document.getElementById('paSpeedTxt').textContent  = `${Math.round(gpsSpeed)} mph`;
+  document.getElementById('paLimitTxt').textContent  = `Límite: ${limit} mph`;
+  el.classList.add('show');
+  vibrate([300,100,300,100,600]);
+  // Auto-dismiss after 8 seconds
+  if (policeAlertTimer) clearTimeout(policeAlertTimer);
+  policeAlertTimer = setTimeout(() => dismissPoliceAlert(false), 8000);
+}
+function dismissPoliceAlert(resetCooldown = true) {
+  document.getElementById('policeAlert').classList.remove('show');
+  if (policeAlertTimer) { clearTimeout(policeAlertTimer); policeAlertTimer = null; }
+  // Cooldown: don't re-show for 90 seconds after dismiss
+  if (resetCooldown) {
+    setTimeout(() => { policeAlertCooldown = false; }, 90000);
+  } else {
+    // Auto-dismissed — shorter cooldown (30s) so it can show again sooner
+    setTimeout(() => { policeAlertCooldown = false; }, 30000);
+  }
+}
+
 function checkSpeedLimit(gpsSpeed) {
   if (!speedLimitActive || !currentTruckSpeedLimit) return;
   const limit   = currentTruckSpeedLimit;
@@ -10620,6 +10716,9 @@ function checkSpeedLimit(gpsSpeed) {
   const mssSign = document.getElementById('mssSign');
   const toast   = document.getElementById('speedToast');
   const overLimit = gpsSpeed > limit + 5;
+
+  // Police alert: > 10 mph over the limit
+  if (gpsSpeed > limit + 10) showPoliceAlert(gpsSpeed, limit);
 
   if (sign)    sign.classList.toggle('over-limit', overLimit);
   if (mssSign) mssSign.classList.toggle('warn', overLimit);
