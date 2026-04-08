@@ -12824,14 +12824,15 @@ function openFullMapScreen() {
       _scheduleAutoResumeFollow();
     });
 
-    // Detect when user manually rotates — pause auto-bearing for 15s
-    // NOTE: do NOT check _fmProgrammaticMove here — GPS updates keep that
-    // flag true almost continuously, which would block the user from rotating.
+    // Detect when user manually rotates — pause auto-bearing for 20s
+    // Use _fmProgrammaticBearing to skip GPS-triggered rotatestart events
     fmMapInst.on('rotatestart', () => {
+      if (window._fmProgrammaticBearing) return; // GPS rotation — ignore
       fmUserRotated = true;
       if (_autoResumeRotationTimer) clearTimeout(_autoResumeRotationTimer);
     });
     fmMapInst.on('rotateend', () => {
+      if (window._fmProgrammaticBearing) return;
       _scheduleAutoResumeRotation();
     });
 
@@ -13347,25 +13348,22 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
     if (offsetFrac !== undefined) {
       offsetPx = size.y * offsetFrac;
     } else {
-      // Place truck just above the HUD circles (not at center)
+      // Place truck just above the HUD circles
       const hudEl = document.getElementById('fmHud');
       const hudH  = (hudEl && hudEl.offsetHeight) ? hudEl.offsetHeight : 130;
       const truckTargetY = size.y - hudH - 20;  // 20px buffer above HUD
       offsetPx = truckTargetY - size.y / 2;
       offsetPx = Math.max(40, Math.min(offsetPx, size.y * 0.42)); // clamp
     }
-    // pixels to offset the map center (negative = center south of truck = truck above center)
-
-    // Bearing in radians (0 = north, 90 = east …)
-    const bear = (fmHeadingUpMode && heading != null && heading >= 0) ? heading : 0;
-    const rad  = bear * Math.PI / 180;
 
     // Project truck position to Mercator pixel space at current zoom
     const truckPx = fmMapInst.project([lat, lon], zoom);
 
-    // Shift the center AHEAD (in the heading direction):
-    //   Px.x += offsetPx * sin(bearing)   → east component
-    //   Px.y -= offsetPx * cos(bearing)   → north component (Y flipped in pixels)
+    // In heading-up mode the map is rotated by setBearing so the heading
+    // direction is always "up" on screen. We only need a pure-Y shift (north)
+    // to put the truck in the lower portion — the visual rotation handles the rest.
+    const bear = (fmHeadingUpMode && heading != null && heading >= 0) ? heading : 0;
+    const rad  = bear * Math.PI / 180;
     const centerPx = L.point(
       truckPx.x + offsetPx * Math.sin(rad),
       truckPx.y - offsetPx * Math.cos(rad)
@@ -13599,8 +13597,9 @@ function _scheduleAutoResumeRotation() {
     // Snap bearing back to current heading
     if (fmMapInst && fmLastHeading != null && typeof fmMapInst.setBearing === 'function') {
       window._fmProgrammaticMove = true;
+      window._fmProgrammaticBearing = true;
       fmMapInst.setBearing(fmLastHeading, { animate: true });
-      setTimeout(() => { window._fmProgrammaticMove = false; }, 800);
+      setTimeout(() => { window._fmProgrammaticMove = false; window._fmProgrammaticBearing = false; }, 800);
     }
   }, 20000); // resume auto-bearing 20s after user finishes rotating
 }
@@ -13810,13 +13809,16 @@ function fmStartTracking() {
         fmCurrentZoom = 16;
       }
       window._fmProgrammaticMove = true;
-      // Rotate BEFORE pan so the bearing event fires while flag is set
+      // Rotate BEFORE pan — flag as programmatic so rotatestart doesn't
+      // set fmUserRotated and block future GPS-driven rotations
       if (!fmUserRotated && typeof fmMapInst.setBearing === 'function') {
+        window._fmProgrammaticBearing = true;
         if (fmHeadingUpMode && heading != null && heading >= 0) {
           fmMapInst.setBearing(heading);
         } else if (!fmHeadingUpMode) {
           fmMapInst.setBearing(0);
         }
+        setTimeout(() => { window._fmProgrammaticBearing = false; }, 300);
       }
       const followCenter = calcFollowCenter(snapLat, snapLon, heading);
       fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
@@ -14042,8 +14044,10 @@ function fmStartTracking() {
       if (fmFollowing && fmMapInst) {
         window._fmProgrammaticMove = true;
         if (!fmUserRotated && typeof fmMapInst.setBearing === 'function') {
+          window._fmProgrammaticBearing = true;
           if (fmHeadingUpMode && finalHdg != null && finalHdg >= 0) fmMapInst.setBearing(finalHdg);
           else if (!fmHeadingUpMode) fmMapInst.setBearing(0);
+          setTimeout(() => { window._fmProgrammaticBearing = false; }, 300);
         }
         const ctr = moving
           ? calcFollowCenter(snap.lat, snap.lon, finalHdg)
