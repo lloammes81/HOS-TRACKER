@@ -12799,10 +12799,14 @@ function openFullMapScreen() {
       _scheduleAutoResumeFollow();
     });
 
-    // Detect when user manually rotates — pause auto-bearing for 10s
+    // Detect when user manually rotates — pause auto-bearing for 15s
+    // NOTE: do NOT check _fmProgrammaticMove here — GPS updates keep that
+    // flag true almost continuously, which would block the user from rotating.
     fmMapInst.on('rotatestart', () => {
-      if (window._fmProgrammaticMove) return;
       fmUserRotated = true;
+      if (_autoResumeRotationTimer) clearTimeout(_autoResumeRotationTimer);
+    });
+    fmMapInst.on('rotateend', () => {
       _scheduleAutoResumeRotation();
     });
 
@@ -13575,7 +13579,7 @@ function _scheduleAutoResumeRotation() {
       fmMapInst.setBearing(fmLastHeading, { animate: true });
       setTimeout(() => { window._fmProgrammaticMove = false; }, 800);
     }
-  }, 10000); // resume auto-bearing 10s after user stops rotating
+  }, 20000); // resume auto-bearing 20s after user finishes rotating
 }
 
 // ── Báscula (Weigh Station) — notificar 5 millas antes ────────────────────
@@ -14049,10 +14053,8 @@ function fmStopTracking() {
   // Stop smooth animation
   if (truckAnimFrame) { cancelAnimationFrame(truckAnimFrame); truckAnimFrame = null; }
   truckFrom = null; truckTo = null;
-  // Reset map to north-up when stopped
-  if (fmMapInst && typeof fmMapInst.setBearing === 'function') {
-    fmMapInst.setBearing(0);
-  }
+  // Keep last heading when stopped (do NOT reset to north)
+  // The bearing will update again once the truck starts moving
   hideSpeedometer();
   hideDriveHoursWidget();
   // Hide miles remaining widget
