@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rutas-dot-v53';
+const CACHE_NAME = 'rutas-dot-v51';
 const urlsToCache = [
   '/',
   '/index.html'
@@ -13,7 +13,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('fetch', event => {
@@ -23,52 +23,80 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// ── Handle messages from the page (show notifications) ──────────
-self.addEventListener('message', event => {
-  const data = event.data;
-  if (!data) return;
+/* ── Notification timers (keyed by tag so we can cancel them) ── */
+const _notifTimers = {};
 
-  if (data.type === 'SCHEDULE_NOTIFICATION') {
-    const delay = data.delay || 0;
-    const show = () => {
-      self.registration.showNotification(data.title || 'HOS Tracker', {
-        body:    data.body  || '',
-        icon:    data.icon  || './HOS_Tracker_Version1.png',
-        badge:   './HOS_Tracker_Version1.png',
-        tag:     data.tag   || 'hos-chat',
+self.addEventListener('message', event => {
+  const d = event.data;
+  if (!d || !d.type) return;
+
+  /* Programar notificación con retardo */
+  if (d.type === 'SCHEDULE_NOTIFICATION') {
+    const delay = Math.max(0, d.delay || 0);
+    const tag   = d.tag || 'hos-alert';
+
+    // Cancelar timer anterior con el mismo tag
+    if (_notifTimers[tag]) {
+      clearTimeout(_notifTimers[tag]);
+      delete _notifTimers[tag];
+    }
+
+    if (delay === 0) {
+      self.registration.showNotification(d.title || 'HOS Tracker', {
+        body:    d.body  || '',
+        icon:    d.icon  || './icon-192.png',
+        badge:   './icon-192.png',
+        tag,
         vibrate: [200, 100, 200],
-        requireInteraction: false,
-        data: { url: './' }
+        requireInteraction: tag === 'rest-done',
+        data: { url: '/' }
       });
-    };
-    if (delay > 0) setTimeout(show, delay);
-    else show();
-    return;
+    } else {
+      _notifTimers[tag] = setTimeout(() => {
+        delete _notifTimers[tag];
+        self.registration.showNotification(d.title || 'HOS Tracker', {
+          body:    d.body  || '',
+          icon:    d.icon  || './icon-192.png',
+          badge:   './icon-192.png',
+          tag,
+          vibrate: [200, 100, 200],
+          requireInteraction: tag === 'rest-done',
+          data: { url: '/' }
+        });
+      }, delay);
+    }
   }
 
-  if (data.type === 'HOS_ALERT') {
-    self.registration.showNotification('HOS Tracker', {
-      body:    data.body || 'Alerta HOS',
-      icon:    './HOS_Tracker_Version1.png',
-      badge:   './HOS_Tracker_Version1.png',
-      tag:     'hos-alert',
-      vibrate: [300, 150, 300],
+  /* Alerta HOS inmediata */
+  if (d.type === 'HOS_ALERT') {
+    self.registration.showNotification('🚛 HOS Tracker', {
+      body:    d.body || 'Alerta HOS',
+      icon:    './icon-192.png',
+      badge:   './icon-192.png',
+      tag:     'hos-alert-now',
+      vibrate: [300, 100, 300],
       requireInteraction: true,
-      data: { url: './' }
+      data: { url: '/' }
+    });
+  }
+
+  /* Cancelar todas las notificaciones de descanso */
+  if (d.type === 'CANCEL_REST_NOTIFICATIONS') {
+    ['rest-1h','rest-30min','rest-10min','rest-done'].forEach(tag => {
+      if (_notifTimers[tag]) { clearTimeout(_notifTimers[tag]); delete _notifTimers[tag]; }
     });
   }
 });
 
-// ── Handle notification tap — open or focus the app ─────────────
+/* Abrir la app al tocar la notificación */
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || './';
+  const url = (event.notification.data && event.notification.data.url) || '/';
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      for (const client of list) {
-        if ('focus' in client) return client.focus();
-      }
-      return clients.openWindow(url);
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+      const existing = clients.find(c => c.url.includes(url) && 'focus' in c);
+      if (existing) return existing.focus();
+      return self.clients.openWindow(url);
     })
   );
 });
