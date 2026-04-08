@@ -88,6 +88,39 @@ self.addEventListener('message', event => {
   }
 });
 
+/* ── Web Push (FCM-ready): receive push from server ── */
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch(e) {}
+  const title = data.title || '🚛 HOS Tracker';
+  const opts  = {
+    body:               data.body    || 'Nueva notificación',
+    icon:               data.icon    || './icon-192.png',
+    badge:              './icon-192.png',
+    tag:                data.tag     || 'hos-push',
+    vibrate:            [200, 100, 200],
+    requireInteraction: data.requireInteraction || false,
+    data:               { url: data.url || '/' }
+  };
+  event.waitUntil(self.registration.showNotification(title, opts));
+});
+
+/* ── Periodic background sync: check for new alerts ── */
+self.addEventListener('periodicsync', event => {
+  if (event.tag === 'hos-news-check') {
+    event.waitUntil(
+      self.registration.showNotification('🚛 HOS Tracker — Noticias DOT', {
+        body:    'Hay actualizaciones de regulaciones y alertas disponibles. Toca para revisar.',
+        icon:    './icon-192.png',
+        badge:   './icon-192.png',
+        tag:     'hos-periodic-news',
+        vibrate: [150, 60, 150],
+        data:    { url: '/' }
+      })
+    );
+  }
+});
+
 /* Abrir la app al tocar la notificación */
 self.addEventListener('notificationclick', event => {
   event.notification.close();

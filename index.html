@@ -10300,17 +10300,22 @@ function _scheduleRestNotifications(endTime, isReset) {
       body:  `¡10 min para poder manejar! Prepara el camión.` },
   ];
 
+  const localIds = { 'rest-1h': 3001, 'rest-30min': 3002, 'rest-10min': 3003, 'rest-done': 3004 };
   alerts.forEach(a => {
     if (a.delayMs <= 0) return;
     // Timer en la app (funciona con la app abierta o en background)
     const t = setTimeout(() => _sendRestPushNotification(a.title, a.body, a.tag), a.delayMs);
     hosRestTimers.push(t);
-    // También vía Service Worker (funciona con la app cerrada)
+    // Service Worker (background, puede morir si el SO cierra la app)
     if (window._swReg && window._swReg.active) {
       window._swReg.active.postMessage({
         type: 'SCHEDULE_NOTIFICATION', delay: a.delayMs,
         title: a.title, body: a.body, tag: a.tag, icon: './icon-192.png'
       });
+    }
+    // Local Notifications nativas (persisten aunque la app esté completamente cerrada)
+    if (window.scheduleLocalHOSAlert) {
+      window.scheduleLocalHOSAlert(a.delayMs, a.title, a.body, localIds[a.tag] || 3000);
     }
   });
 
@@ -10399,6 +10404,10 @@ function toggleRestNotifications() {
   hosRestNotifEnabled = false;
   if (window._swReg && window._swReg.active) {
     window._swReg.active.postMessage({ type: 'CANCEL_REST_NOTIFICATIONS' });
+  }
+  // Cancelar notificaciones locales nativas (persisten con app cerrada)
+  if (window.cancelLocalHOSAlert) {
+    [3001, 3002, 3003, 3004].forEach(id => window.cancelLocalHOSAlert(id));
   }
   localStorage.removeItem('hos_rest_notifs');
   const panel = document.getElementById('restNotifPanel');
@@ -18993,6 +19002,89 @@ init();
       cache.put('hos-state', new Response(JSON.stringify(state)));
     });
   };
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   BACKGROUND NOTIFICATIONS — @capacitor/local-notifications
+   Persiste aunque la app esté completamente cerrada
+══════════════════════════════════════════════════════════════ */
+(async function initLocalNotifications() {
+  try {
+    const { LocalNotifications } = await import('https://esm.sh/@capacitor/local-notifications@8');
+
+    // Solicitar permiso
+    const { display } = await LocalNotifications.requestPermissions();
+    if (display !== 'granted') return;
+
+    window._localNotif = LocalNotifications;
+
+    // ── Noticias DOT: notificar items no vistos ─────────────────
+    const seenNews = JSON.parse(localStorage.getItem('hos_seen_news') || '[]');
+    const newItems = (typeof _dotNewsData !== 'undefined' ? _dotNewsData : [])
+      .map((item, i) => ({ ...item, id: i }))
+      .filter(item => !seenNews.includes(item.id));
+
+    const newsNotifs = newItems.slice(0, 3).map((item, i) => ({
+      id:    2000 + item.id,
+      title: `🚛 ${item.tag} — HOS Tracker`,
+      body:  item.title,
+      schedule: { at: new Date(Date.now() + (i + 1) * 30 * 60 * 1000) }, // cada 30 min
+      smallIcon:  'ic_stat_icon_config_sample',
+      channelId:  'hos_news'
+    }));
+
+    // ── Recordatorio diario a las 8:00 AM ──────────────────────
+    const tomorrow8am = new Date();
+    tomorrow8am.setDate(tomorrow8am.getDate() + 1);
+    tomorrow8am.setHours(8, 0, 0, 0);
+    const dailyNotif = {
+      id:    9000,
+      title: '🚛 HOS Tracker — Noticias DOT',
+      body:  'Revisa las últimas alertas y regulaciones del día.',
+      schedule: { at: tomorrow8am, repeats: true, every: 'day' },
+      smallIcon:  'ic_stat_icon_config_sample',
+      channelId:  'hos_news'
+    };
+
+    // ── Cancelar notifs de noticias anteriores y reprogramar ───
+    const toCancel = newItems.slice(0, 3).map(item => ({ id: 2000 + item.id }));
+    if (toCancel.length) await LocalNotifications.cancel({ notifications: toCancel }).catch(() => {});
+
+    const allNotifs = [...newsNotifs, dailyNotif];
+    if (allNotifs.length) {
+      await LocalNotifications.schedule({ notifications: allNotifs });
+      // Marcar items como "notificados"
+      const nowSeen = [...seenNews, ...newItems.map(i => i.id)];
+      localStorage.setItem('hos_seen_news', JSON.stringify(nowSeen));
+    }
+
+    // ── Exponer función para alertas HOS nativas ────────────────
+    window.scheduleLocalHOSAlert = async function(delayMs, title, body, id) {
+      if (!window._localNotif) return;
+      await window._localNotif.cancel({ notifications: [{ id }] }).catch(() => {});
+      await window._localNotif.schedule({ notifications: [{
+        id,
+        title,
+        body,
+        schedule: { at: new Date(Date.now() + delayMs) },
+        smallIcon: 'ic_stat_icon_config_sample',
+        channelId: 'hos_alerts'
+      }]});
+    };
+
+    window.cancelLocalHOSAlert = async function(id) {
+      if (!window._localNotif) return;
+      await window._localNotif.cancel({ notifications: [{ id }] }).catch(() => {});
+    };
+
+    // Abrir la app en la pestaña correcta al tocar la notificación
+    LocalNotifications.addListener('localNotificationActionPerformed', () => {
+      switchTab && switchTab('community');
+    });
+
+  } catch(e) {
+    console.warn('[HOS] Local notifications not available:', e.message || e);
+  }
 })();
 
 /* ── Mobile enhancements ──────────────────────────────────── */
