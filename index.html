@@ -8350,6 +8350,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <!-- State border welcome banner -->
 <div id="stateBanner">
   <span class="sb-flag">🏁</span>
+  <div class="sb-greeting" id="stateBannerGreeting" style="font-size:14px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:.3px;margin-bottom:2px"></div>
   <div class="sb-welcome">Bienvenido a</div>
   <div class="sb-name" id="stateBannerName">—</div>
 </div>
@@ -10475,11 +10476,15 @@ function toggleSpeedLimit(btn) {
 function showStateBanner(name) {
   const el = document.getElementById('stateBanner');
   const nm = document.getElementById('stateBannerName');
+  const gr = document.getElementById('stateBannerGreeting');
   if (!el || !nm) return;
+  const userName = (typeof currentUser !== 'undefined' && currentUser?.name) ||
+                   (typeof driverProfile !== 'undefined' && driverProfile?.name) || '';
+  if (gr) gr.textContent = userName ? `¡Hola, ${userName}!` : '';
   nm.textContent = name;
   el.classList.add('show');
   if (stateBannerTimer) clearTimeout(stateBannerTimer);
-  stateBannerTimer = setTimeout(() => el.classList.remove('show'), 5000);
+  stateBannerTimer = setTimeout(() => el.classList.remove('show'), 6000);
   vibrate([150, 60, 150, 60, 300]);
 }
 
@@ -10521,8 +10526,15 @@ async function checkStateBorderAhead(lat, lon, heading) {
     const code = stateMap[stateRaw] || stateRaw.slice(0,2).toUpperCase();
     if (code && code !== currentStateCode && code !== lastBorderWarnState) {
       lastBorderWarnState = code;
-      showToast('info', '🚧', `En 5 millas: ${stateRaw || code}`,
-        lang === 'es' ? `Entrando al estado de ${stateRaw || code}` : `Entering ${stateRaw || code}`, 8000);
+      const _uName = (typeof currentUser !== 'undefined' && currentUser?.name) ||
+                     (typeof driverProfile !== 'undefined' && driverProfile?.name) || '';
+      const _stName = stateRaw || code;
+      showToast('info', '🚧',
+        `En 5 millas: ${_stName}`,
+        _uName
+          ? `${_uName}, en 5 millas entrarás a ${_stName}`
+          : `Entrando al estado de ${_stName}`,
+        8000);
     }
   } catch(e) {}
 }
@@ -12624,6 +12636,32 @@ async function shareRoute() {
    ============================================================ */
 let fmMapInst    = null;
 let fmMarkers    = [];
+let fmStateBoundaryLayer = null;
+
+async function loadStateBoundaries() {
+  if (fmStateBoundaryLayer || !fmMapInst) return;
+  try {
+    let data;
+    const cached = sessionStorage.getItem('hos_state_boundaries');
+    if (cached) {
+      data = JSON.parse(cached);
+    } else {
+      const res = await fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json');
+      data = await res.json();
+      try { sessionStorage.setItem('hos_state_boundaries', JSON.stringify(data)); } catch {}
+    }
+    fmStateBoundaryLayer = L.geoJSON(data, {
+      style: {
+        color: '#a78bfa',
+        weight: 1.8,
+        opacity: 0.6,
+        fill: false
+      },
+      interactive: false
+    }).addTo(fmMapInst);
+    fmStateBoundaryLayer.bringToBack();
+  } catch(e) { console.warn('State boundaries failed to load:', e); }
+}
 let fmLayer      = null;
 let fmGlowLayer  = null;  // route glow polyline
 let fmCasingLayer= null;  // route casing polyline
@@ -12724,6 +12762,9 @@ function openFullMapScreen() {
 
     const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
     fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
+
+    // Load US state boundary lines (always visible)
+    loadStateBoundaries();
 
     // Detect when user drags map — pause auto-follow (resume after 8s)
     fmMapInst.on('dragstart', () => {
