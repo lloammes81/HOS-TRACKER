@@ -7947,7 +7947,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;">Descanso req.</div>
     </div>
     <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:12px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
-      <div id="dashRiesgo" style="font-size:17px;font-weight:900;color:#10b981;">0</div>
+      <div id="dashRiesgo" style="font-size:17px;font-weight:900;color:#f1f5f9;">0</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;">Riesgo</div>
     </div>
   </div>
@@ -14251,12 +14251,13 @@ function initHosMinimap() {
     hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [22, 22], maxZoom: 11 });
   }
 
-  // Marcador del camión (más visible)
-  const truckIcon = L.divIcon({
-    className: '',
-    html: '<div style="width:18px;height:18px;border-radius:50%;background:#10b981;border:3px solid #fff;box-shadow:0 0 12px rgba(16,185,129,.85),0 2px 6px rgba(0,0,0,.6)"></div>',
-    iconAnchor: [9, 9]
-  });
+  // Marcador del camión: icono redondo con foto/emoji del usuario
+  const _uPhoto = (typeof driverProfile !== 'undefined' && driverProfile?.photo) || null;
+  const _uEmoji = (typeof TRUCK_EMOJIS !== 'undefined' && driverProfile?.truckType) ? (TRUCK_EMOJIS[driverProfile.truckType] || '🚛') : '🚛';
+  const truckHtml = _uPhoto
+    ? `<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:3px solid #10b981;box-shadow:0 0 0 2px rgba(16,185,129,0.45),0 3px 10px rgba(0,0,0,.75);"><img src="${_uPhoto}" style="width:100%;height:100%;object-fit:cover;display:block;"></div>`
+    : `<div style="width:34px;height:34px;border-radius:50%;background:#0f172a;border:3px solid #10b981;box-shadow:0 0 0 2px rgba(16,185,129,0.45),0 3px 10px rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;font-size:17px;">${_uEmoji}</div>`;
+  const truckIcon = L.divIcon({ className: '', html: truckHtml, iconAnchor: [17, 17] });
   hosMinimapTruck = L.marker([lat, lon], { icon: truckIcon }).addTo(hosMinimapInst);
 
   // Marcador origen (punto de partida)
@@ -14281,8 +14282,9 @@ function initHosMinimap() {
   setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 250);
   setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 600);
 
-  // Cargar iconos de truck stops
+  // Cargar iconos de truck stops e interstates
   loadMiniMapTruckStops(lat, lon);
+  loadMiniMapInterstates(lat, lon);
 
   // Tap en mini mapa → ir al mapa completo
   el.addEventListener('click', showFullMapFromDash);
@@ -14319,6 +14321,37 @@ function loadMiniMapTruckStops(lat, lon) {
     .catch(() => {});
 }
 
+function loadMiniMapInterstates(lat, lon) {
+  if (!hosMinimapInst) return;
+  const r = 0.9;
+  const bbox = `${lat - r},${lon - r},${lat + r},${lon + r}`;
+  // Buscar autopistas con referencia (I-40, I-10, etc.)
+  const query = `[out:json][timeout:10];way["highway"~"motorway|trunk"]["ref"](${bbox});out tags center 30;`;
+  fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      if (!hosMinimapInst || !data?.elements?.length) return;
+      const seen = new Set();
+      data.elements.forEach(way => {
+        const ref = (way.tags?.ref || '').trim();
+        if (!ref || seen.has(ref) || !way.center) return;
+        seen.add(ref);
+        // Limpiar referencia: "I-40" → "40", "US-60" → "60"
+        const num = ref.replace(/^(I-|US-|SR-|SH-|HWY\s*)/i,'').split(';')[0].trim();
+        const isIntl = /^I-/i.test(ref) || /^\d/.test(ref);
+        const bg = isIntl ? '#003087' : '#2d6a00';
+        const shieldHtml = `<div style="display:inline-flex;flex-direction:column;align-items:center;background:${bg};border:2px solid #fff;border-radius:5px 5px 4px 4px;padding:1px 5px 3px;box-shadow:0 2px 8px rgba(0,0,0,.65);min-width:24px;text-align:center;font-family:sans-serif;">
+          <span style="font-size:6px;color:#fff;font-weight:900;letter-spacing:.4px;line-height:1.2;">${isIntl?'INTER':'HWY'}</span>
+          <span style="font-size:12px;color:#fff;font-weight:900;line-height:1;">${num}</span>
+          ${isIntl?'<span style="font-size:6px;color:#fff;font-weight:900;letter-spacing:.4px;line-height:1.2;">STATE</span>':''}
+        </div>`;
+        const icon = L.divIcon({ className: '', html: shieldHtml, iconAnchor: [16, 20] });
+        L.marker([way.center.lat, way.center.lon], { icon, zIndexOffset: -100 }).addTo(hosMinimapInst);
+      });
+    })
+    .catch(() => {});
+}
+
 function updateHosDashMinimap(lat, lon) {
   if (!hosMinimapInst || !hosMinimapTruck) return;
   hosMinimapTruck.setLatLng([lat, lon]);
@@ -14339,33 +14372,32 @@ function updateHosDashboard(driveLeft, driveMax) {
   const isWarn = driveLeft < 4 && driveLeft >= 2;
   const color  = isCrit ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981';
   arc.style.stroke = color;
-  // Actualizar también el texto de riesgo
+  // Riesgo — siempre blanco
   const riesgoEl = document.getElementById('dashRiesgo');
   if (riesgoEl) {
-    const risk = isCrit ? 2 : isWarn ? 1 : 0;
-    riesgoEl.textContent = risk;
-    riesgoEl.style.color = color;
+    riesgoEl.textContent = isCrit ? 2 : isWarn ? 1 : 0;
+    riesgoEl.style.color = '#f1f5f9';
   }
 
-  // Texto de tiempo restante
+  // Texto de tiempo restante (el anillo sí usa color de criticidad)
   const totalMins = Math.round(driveLeft * 60);
   const h = Math.floor(totalMins / 60);
   const m = totalMins % 60;
   timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
   timeEl.style.color = color;
 
-  // Horas hoy (tiempo ya conducido)
+  // Horas hoy (tiempo ya conducido) — siempre blanco
   const elapsed = driveMax - driveLeft;
   const eh = Math.floor(elapsed); const em = Math.round((elapsed - eh) * 60);
   const horasEl = document.getElementById('dashHorasHoy');
-  if (horasEl) horasEl.textContent = eh > 0 ? `${eh}h ${em}m` : `${em}m`;
+  if (horasEl) { horasEl.textContent = eh > 0 ? `${eh}h ${em}m` : `${em}m`; horasEl.style.color = '#f1f5f9'; }
 
-  // Descanso requerido: si b30DriveSecs > 0 y no se ha completado la pausa
+  // Descanso requerido — siempre blanco
   const descansoEl = document.getElementById('dashDescanso');
   if (descansoEl) {
     const needBreak = (typeof b30DriveSecs !== 'undefined' && b30DriveSecs > 0 && !(typeof b30Complete !== 'undefined' && b30Complete));
     descansoEl.textContent = needBreak ? '30m' : '✓';
-    descansoEl.style.color = needBreak ? '#f59e0b' : '#10b981';
+    descansoEl.style.color = '#f1f5f9';
   }
 }
 
