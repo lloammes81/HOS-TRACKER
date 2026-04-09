@@ -13739,10 +13739,9 @@ function fmStartTracking() {
         setTimeout(() => { window._fmProgrammaticBearing = false; }, 300);
       }
       const followCenter = calcFollowCenter(snapLat, snapLon, heading);
-      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
-      // Keep flag true until animation fully settles (longer than GPS poll interval)
+      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.5, noMoveStart: true });
       if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
-      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
+      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 800);
     }
 
     
@@ -13959,7 +13958,8 @@ function fmStartTracking() {
       if (moving) { fmPrevLat = snap.lat; fmPrevLon = snap.lon; }
       fmLastHeading = finalHdg;
       fmUpdateTruckMarker(snap.lat, snap.lon, finalHdg, moving);
-      if (fmFollowing && fmMapInst) {
+      // Skip if watchPosition already triggered a setView recently (avoid flicker)
+      if (fmFollowing && fmMapInst && !window._fmProgrammaticMove) {
         window._fmProgrammaticMove = true;
         if (!fmUserRotated && typeof fmMapInst.setBearing === 'function') {
           window._fmProgrammaticBearing = true;
@@ -13970,9 +13970,9 @@ function fmStartTracking() {
         const ctr = moving
           ? calcFollowCenter(snap.lat, snap.lon, finalHdg)
           : [snap.lat, snap.lon];
-        fmMapInst.setView(ctr, fmCurrentZoom, { animate: true, duration: 0.6, noMoveStart: true });
+        fmMapInst.setView(ctr, fmCurrentZoom, { animate: false, noMoveStart: true });
         if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
-        window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
+        window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1000);
       }
       fmCurrentSpeed = rawSpd != null && rawSpd >= 0 ? Math.round(rawSpd * 2.237) : 0;
       fmVehicleMoving = moving;
