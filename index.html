@@ -12778,6 +12778,11 @@ function openFullMapScreen() {
       if (fb) fb.classList.remove('active');
       _scheduleAutoResumeFollow();
     });
+    // Save user's manual zoom so auto-follow doesn't override it
+    fmMapInst.on('zoomend', () => {
+      if (window._fmProgrammaticMove) return;
+      fmCurrentZoom = fmMapInst.getZoom();
+    });
 
     // Detect when user manually rotates — pause auto-bearing for 20s
     // Use _fmProgrammaticBearing to skip GPS-triggered rotatestart events
@@ -13546,17 +13551,7 @@ function _scheduleAutoResumeFollow() {
 // ── Auto-resume bearing after user manually rotates ───────────────────────
 let _autoResumeRotationTimer = null;
 function _scheduleAutoResumeRotation() {
-  if (_autoResumeRotationTimer) clearTimeout(_autoResumeRotationTimer);
-  _autoResumeRotationTimer = setTimeout(() => {
-    fmUserRotated = false;
-    // Snap bearing back to current heading
-    if (fmMapInst && fmLastHeading != null && typeof fmMapInst.setBearing === 'function') {
-      window._fmProgrammaticMove = true;
-      window._fmProgrammaticBearing = true;
-      fmMapInst.setBearing(fmLastHeading, { animate: true });
-      setTimeout(() => { window._fmProgrammaticMove = false; window._fmProgrammaticBearing = false; }, 800);
-    }
-  }, 20000); // resume auto-bearing 20s after user finishes rotating
+  // No auto-snap — user rotation stays until they tap the center/follow button
 }
 
 // ── Báscula (Weigh Station) — notificar 5 millas antes ────────────────────
