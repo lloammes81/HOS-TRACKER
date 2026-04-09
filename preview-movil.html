@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vista Móvil — Pleaseme</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #111;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  /* ── CONTROLES FLOTANTES ── */
+  .controls {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(20,20,20,0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(201,151,58,0.3);
+    border-radius: 40px;
+    padding: 8px 14px;
+    z-index: 9999;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+  .device-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #aaa;
+    font-size: 11px;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-radius: 20px;
+    transition: all 0.2s;
+  }
+  .device-btn:hover  { color: #C9973A; }
+  .device-btn.active { border-color: #C9973A; color: #C9973A; background: rgba(201,151,58,0.12); }
+  .sep { width: 1px; height: 16px; background: rgba(255,255,255,0.12); flex-shrink: 0; }
+  .rotate-btn {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 20px;
+    font-size: 15px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .rotate-btn:hover { color: #C9973A; }
+  .res-label {
+    font-size: 10px;
+    color: #555;
+    flex-shrink: 0;
+  }
+
+  /* ── STAGE ── */
+  .stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px 80px;
+    min-height: 100vh;
+  }
+
+  /* ── PHONE FRAME ── */
+  .phone-wrap {
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .phone-frame {
+    position: relative;
+    background: #1c1c1e;
+    border-radius: 44px;
+    box-shadow:
+      0 0 0 1px #3a3a3a,
+      0 0 0 3px #111,
+      0 0 0 4px #3a3a3a,
+      0 40px 80px rgba(0,0,0,0.5);
+    padding: 14px;
+    transition: all 0.4s;
+  }
+
+  /* Botones laterales */
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 90px;
+    width: 3px;
+    height: 32px;
+    background: #2a2a2a;
+    border-radius: 2px 0 0 2px;
+    box-shadow: 0 44px 0 #2a2a2a, 0 80px 0 #2a2a2a;
+  }
+  .phone-frame::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 130px;
+    width: 3px;
+    height: 60px;
+    background: #2a2a2a;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .phone-screen {
+    background: #000;
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Notch / isla dinámica */
+  .phone-notch {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 110px;
+    height: 30px;
+    background: #1c1c1e;
+    border-radius: 20px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .notch-camera {
+    width: 10px; height: 10px;
+    background: #0a0a0a;
+    border-radius: 50%;
+    border: 1px solid #333;
+  }
+  .notch-dot {
+    width: 6px; height: 6px;
+    background: #1a2a1a;
+    border-radius: 50%;
+  }
+
+  /* Status bar */
+  .phone-status {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 12px 20px 0;
+    z-index: 9;
+    pointer-events: none;
+  }
+  .status-time {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    font-family: -apple-system, sans-serif;
+  }
+  .status-icons {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .status-icons svg { color: #fff; }
+
+  /* Home indicator */
+  .phone-home {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 4px;
+    z-index: 10;
+  }
+
+  iframe {
+    display: block;
+    border: none;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── DEVICE CONFIGS ── */
+  .phone-wrap[data-device="iphone15"] .phone-frame { border-radius: 44px; }
+  .phone-wrap[data-device="iphone15"] .phone-screen { border-radius: 32px; }
+  .phone-wrap[data-device="samsung"]  .phone-frame { border-radius: 36px; }
+  .phone-wrap[data-device="samsung"]  .phone-screen { border-radius: 24px; }
+  .phone-wrap[data-device="samsung"]  .phone-notch {
+    width: 12px; height: 12px; border-radius: 50%; top: 14px;
+  }
+  .phone-wrap[data-device="samsung"]  .notch-dot { display: none; }
+
+  /* Landscape */
+  .phone-wrap.landscape .phone-frame { border-radius: 36px; }
+  .phone-wrap.landscape .phone-notch {
+    top: 50%; left: 10px;
+    transform: translateY(-50%);
+    width: 30px; height: 110px;
+    flex-direction: column;
+  }
+  .phone-wrap.landscape .phone-home {
+    bottom: 50%; right: 8px; left: auto;
+    transform: translateY(50%);
+    width: 4px; height: 120px;
+  }
+  .phone-wrap.landscape .phone-status {
+    writing-mode: vertical-lr;
+    top: 0; bottom: 0; right: 0; left: auto;
+    width: 50px; height: auto;
+    padding: 20px 12px 20px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="phone-wrap" id="phoneWrap" data-device="iphone15">
+    <div class="phone-frame">
+      <div class="phone-screen" id="phoneScreen">
+        <div class="phone-notch">
+          <div class="notch-camera"></div>
+          <div class="notch-dot"></div>
+        </div>
+        <div class="phone-status">
+          <span class="status-time" id="statusTime">9:41</span>
+          <div class="status-icons">
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
+              <rect x="0" y="4" width="3" height="8" rx="1" opacity="0.4"/>
+              <rect x="4" y="2" width="3" height="10" rx="1" opacity="0.6"/>
+              <rect x="8" y="0" width="3" height="12" rx="1"/>
+              <rect x="12" y="0" width="3" height="12" rx="1"/>
+            </svg>
+            <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor">
+              <path d="M7 2.5C9.5 2.5 11.7 3.6 13.2 5.4L14 4.5C12.2 2.4 9.8 1 7 1S1.8 2.4 0 4.5L0.8 5.4C2.3 3.6 4.5 2.5 7 2.5Z" opacity="0.4"/>
+              <path d="M7 5C8.7 5 10.2 5.7 11.3 6.9L12.1 6C10.7 4.5 8.9 3.5 7 3.5S3.3 4.5 1.9 6L2.7 6.9C3.8 5.7 5.3 5 7 5Z" opacity="0.7"/>
+              <path d="M7 7.5C8 7.5 8.9 7.9 9.5 8.6L10.4 7.7C9.4 6.7 8.3 6 7 6S4.6 6.7 3.6 7.7L4.5 8.6C5.1 7.9 6 7.5 7 7.5Z"/>
+              <circle cx="7" cy="11" r="1.2"/>
+            </svg>
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor">
+              <rect x="0" y="1" width="21" height="10" rx="2" stroke="currentColor" stroke-width="1" fill="none" opacity="0.35"/>
+              <rect x="22" y="3.5" width="2" height="5" rx="1" opacity="0.4"/>
+              <rect x="1.5" y="2.5" width="16" height="7" rx="1.2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="phone-home" id="phoneHome"></div>
+        <iframe id="phoneIframe" src="index.html"
+          width="390" height="844" scrolling="yes"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Controles flotantes -->
+<div class="controls">
+  <button class="device-btn active" onclick="setDevice('iphone15', 390, 844)">iPhone 15</button>
+  <button class="device-btn" onclick="setDevice('iphone15', 375, 667)">iPhone SE</button>
+  <button class="device-btn" onclick="setDevice('iphone15', 430, 932)">16 Pro Max</button>
+  <button class="device-btn" onclick="setDevice('iphone15', 440, 956)">17 Pro Max</button>
+  <div class="sep"></div>
+  <button class="device-btn" onclick="setDevice('samsung', 360, 780)">Samsung S</button>
+  <button class="device-btn" onclick="setDevice('samsung', 412, 915)">Samsung+</button>
+  <div class="sep"></div>
+  <button class="rotate-btn" onclick="toggleLandscape()" title="Rotar">⟳</button>
+  <span class="res-label" id="resLabel">390×844</span>
+</div>
+
+<script>
+let currentW = 390, currentH = 844, isLandscape = false;
+let currentDevice = 'iphone15';
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('statusTime').textContent =
+    now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+function applySize(w, h) {
+  const iframe  = document.getElementById('phoneIframe');
+  const screen  = document.getElementById('phoneScreen');
+  iframe.width  = w;
+  iframe.height = h;
+  screen.style.width  = w + 'px';
+  screen.style.height = h + 'px';
+  document.getElementById('resLabel').textContent = w + '×' + h;
+}
+
+function setDevice(device, w, h) {
+  currentDevice = device;
+  currentW = w; currentH = h;
+  isLandscape = false;
+
+  document.getElementById('phoneWrap').dataset.device = device;
+  document.getElementById('phoneWrap').classList.remove('landscape');
+
+  document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  applySize(w, h);
+}
+
+function toggleLandscape() {
+  isLandscape = !isLandscape;
+  const wrap = document.getElementById('phoneWrap');
+  wrap.classList.toggle('landscape', isLandscape);
+  applySize(isLandscape ? currentH : currentW, isLandscape ? currentW : currentH);
+}
+
+applySize(390, 844);
+</script>
+</body>
+</html>
