@@ -12645,6 +12645,7 @@ let fmCurrentZoom   = 15;     // zoom level when following
 let fmLastHeading   = null;   // last GPS heading for truck rotation
 let fmPrevLat       = null;   // for calculating heading when GPS doesn't provide it
 let fmPrevLon       = null;
+let fmLastStablePos = null;   // last accepted position (jitter filter)
 
 // POI layers
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
@@ -13710,6 +13711,16 @@ function fmStartTracking() {
     }
     fmPrevLat = snapLat; fmPrevLon = snapLon;
     fmLastHeading = heading;
+
+    // ── GPS jitter filter: ignore tiny position changes when stationary ────
+    if (!isMoving && fmLastStablePos) {
+      const dLat = (snapLat - fmLastStablePos.lat) * Math.PI / 180;
+      const dLon = (snapLon - fmLastStablePos.lon) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(fmLastStablePos.lat * Math.PI/180) * Math.cos(snapLat * Math.PI/180) * Math.sin(dLon/2)**2;
+      const distM = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      if (distM < 10) return; // menos de 10m parado — ignorar actualización
+    }
+    fmLastStablePos = { lat: snapLat, lon: snapLon };
 
     // ── Speed limit check (must run before truck marker so color is correct) ──
     checkSpeedLimit(gpsSpeed);
