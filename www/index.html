@@ -4732,33 +4732,34 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   #fmHud.compact .fm-hide{ display:none !important; }
 
   #fmHud.compact .fm-stats-row{
-    display:flex !important;
-    gap: 10px !important;
-    justify-content: space-between !important;
+    display:grid !important;
+    grid-template-columns: 1fr 1fr 1fr 1fr !important;
+    gap: 5px !important;
     margin: 0 !important;
   }
 
   #fmHud.compact .fm-stat{
-    width: 96px !important;
-    height: 96px !important;
-    border-radius: 999px !important;
-    padding: 12px !important;
-    background: #f3f4f6 !important;
-    border: 1.5px solid rgba(0,0,0,0.15) !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.25) !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    padding: 6px 8px !important;
+    background: #d1d5db !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
     display:flex !important;
     flex-direction:column !important;
     align-items:center !important;
     justify-content:center !important;
     text-align:center !important;
     transform: translateZ(0);
-    transition: transform .16s cubic-bezier(.34,1.56,.64,1), filter .16s;
+    transition: filter .16s;
     touch-action: manipulation;
     user-select:none;
     cursor:pointer;
   }
   #fmHud.compact .fm-stat:active{
-    transform: scale(1.22);
     filter: brightness(1.08);
   }
   #fmHud.compact .fm-stat.fm-pop{
@@ -4766,19 +4767,22 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   }
   @keyframes fmPop{
     0%{transform:scale(1)}
-    60%{transform:scale(1.25)}
+    60%{transform:scale(1.04)}
     100%{transform:scale(1)}
   }
   #fmHud.compact .fm-stat > div:first-child{
-    font-size: 13px !important;
+    font-size: 8px !important;
     font-weight: 700 !important;
-    color: #374151 !important;
-    margin-bottom: 4px !important;
+    color: #6b7280 !important;
+    margin-bottom: 2px !important;
+    text-transform: uppercase !important;
+    letter-spacing: .3px !important;
   }
   #fmHud.compact .fm-stat > div:last-child{
-    font-size: 26px !important;
+    font-size: 14px !important;
     font-weight: 900 !important;
     color: #111827 !important;
+    line-height: 1.2 !important;
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -5941,34 +5945,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             </div>
           </div>
 
-          <div class="profile-selects">
-            <div class="profile-select-wrap">
-              <div class="profile-select-label">📍 State</div>
-              <select class="profile-select" id="profileStateSelect" onchange="saveDriverProfile()">
-                <option value="">-- State --</option>
-                <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
-                <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
-                <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
-                <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
-                <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
-                <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
-                <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
-                <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
-                <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
-                <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
-                <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
-                <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
-                <option>Wisconsin</option><option>Wyoming</option><option>Puerto Rico</option>
-              </select>
-              <span class="profile-select-arrow">▾</span>
-            </div>
-            <div class="profile-select-wrap">
-              <div class="profile-select-label">🪪 CDL Number</div>
-              <input class="profile-select" id="profileCdlInput" placeholder="CDL # (opcional)" maxlength="20"
-                style="font-family:inherit;font-size:13px;color:var(--text);background:transparent;border:none;outline:none;width:100%;padding:0"
-                oninput="saveDriverProfile()">
-            </div>
-          </div>
+          <input type="hidden" id="profileStateSelect" value="">
+          <input type="hidden" id="profileCdlInput" value="">
 
           <div class="profile-mode-badge interstate" id="profileModeBadge">
             <div class="profile-mode-dot"></div>
@@ -6108,18 +6086,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <button class="sett-toggle" id="weatherToggle"></button>
           </div>
 
-          <!-- Trailer height input (siempre visible) -->
-          <div id="trailerHeightRow" class="sett-row" style="cursor:default;display:flex;background:var(--surface2)">
-            <div class="sett-icon" style="background:#fef3c7">📐</div>
-            <div class="sett-label" style="font-size:14px">Trailer Height</div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <input type="number" id="trailerHeightInput" min="8" max="18" step="0.1" value="13.6"
-                style="width:70px;padding:6px 8px;font-size:15px;font-weight:700;text-align:center;
-                       border-radius:8px;border:1.5px solid var(--border);background:var(--bg);
-                       color:var(--text);font-family:'DM Sans',sans-serif" />
-              <span style="font-size:12px;color:var(--muted);font-weight:700">ft</span>
-            </div>
-          </div>
+          <input type="hidden" id="trailerHeightInput" value="13.6">
 
           <!-- ─── INCIDENT REPORTS (inside same Safety group) ─── -->
           <div style="padding:12px 16px 6px;border-top:1px solid var(--border)">
@@ -7837,53 +7804,32 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- 4 stat bubbles: LLEGADA · MANEJO-ring · RESTANTE · 70 HRS -->
-    <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr 1fr;gap:4px;margin-bottom:12px;align-items:center">
-      <div style="background:#f3f4f6;border:1.5px solid rgba(0,0,0,0.15);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden">
-        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
-          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="5"/>
-          <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#06b6d4" stroke-width="5"
-                  stroke-linecap="round" stroke-dasharray="0 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
-        </svg>
-        <div style="position:relative">
-          <div style="font-size:8px;color:#374151;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;font-weight:700" id="fmEtaLbl">LLEGADA</div>
-          <div style="font-size:15px;font-weight:900;color:#111827;line-height:1" id="fmEta">--</div>
-        </div>
+    <!-- 4 stat cards: LLEGADA · MANEJO · RESTANTE · 70 HRS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:12px">
+      <div style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #06b6d4;text-align:center">
+        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fmEtaLbl">LLEGADA</div>
+        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fmEta">--</div>
       </div>
-      <div id="hudManejoCell" style="background:#f3f4f6;border:1.5px solid rgba(0,0,0,0.15);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden;transition:transform .4s cubic-bezier(.34,1.56,.64,1),background .4s,box-shadow .4s,border-color .4s;transform-origin:center">
-        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
-          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="5"/>
-          <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#10b981" stroke-width="5"
-                  stroke-linecap="round" stroke-dasharray="0 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
-        </svg>
-        <div style="position:relative">
-          <div style="font-size:8px;color:#374151;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;font-weight:700" id="fmDriveLbl">MANEJO</div>
-          <div style="font-size:15px;font-weight:900;color:#111827;line-height:1" id="fmDriveLeft">11h</div>
-        </div>
+      <div id="hudManejoCell" style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #10b981;text-align:center">
+        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fmDriveLbl">MANEJO</div>
+        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fmDriveLeft">11h</div>
       </div>
-      <div style="background:#f3f4f6;border:1.5px solid rgba(0,0,0,0.15);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden">
-        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
-          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="5"/>
-          <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#3b82f6" stroke-width="5"
-                  stroke-linecap="round" stroke-dasharray="226 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
-        </svg>
-        <div style="position:relative">
-          <div style="font-size:8px;color:#374151;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;font-weight:700" id="fmRemLbl">RESTANTE</div>
-          <div style="font-size:15px;font-weight:900;color:#111827;line-height:1" id="fmRem">--</div>
-        </div>
+      <div style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #3b82f6;text-align:center">
+        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fmRemLbl">RESTANTE</div>
+        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fmRem">--</div>
       </div>
-      <div style="background:#f3f4f6;border:1.5px solid rgba(0,0,0,0.15);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden">
-        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
-          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="5"/>
-          <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#8b5cf6" stroke-width="5"
-                  stroke-linecap="round" stroke-dasharray="226 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
-        </svg>
-        <div style="position:relative">
-          <div style="font-size:8px;color:#374151;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;font-weight:700" id="fm70Lbl">70 HRS</div>
-          <div style="font-size:15px;font-weight:900;color:#111827;line-height:1" id="fm70Left">70h</div>
-        </div>
+      <div style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #8b5cf6;text-align:center">
+        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fm70Lbl">70 HRS</div>
+        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fm70Left">70h</div>
       </div>
     </div>
+    <!-- SVG arcs ocultos — mantienen referencias para el JS de animación -->
+    <svg style="display:none" aria-hidden="true">
+      <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+      <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+      <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+      <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+    </svg>
 
     <!-- Route from → to -->
     <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:12px">
@@ -7942,7 +7888,124 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 </div>
 
+<!-- ══════════════════════════════════════
+     HOS DASHBOARD SCREEN
+     Muestra info HOS cuando inicia el rastreo
+══════════════════════════════════════ -->
+<div id="hosDashScreen" style="display:none;position:fixed;inset:0;z-index:600;background:#0a101e;flex-direction:column;font-family:'DM Sans',sans-serif;">
+
+  <!-- HEADER: tarjeta de perfil con sombra -->
+  <div style="padding:calc(10px + env(safe-area-inset-top,0px)) 14px 0;background:#0a101e;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+
+      <!-- Botón volver -->
+      <button onclick="showFullMapFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:22px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
+
+      <!-- TARJETA DE PERFIL CON SOMBRA -->
+      <div style="flex:1;display:flex;align-items:center;gap:13px;background:rgba(15,28,50,0.96);border:1px solid rgba(255,255,255,0.09);border-radius:18px;padding:10px 14px;box-shadow:0 6px 24px rgba(0,0,0,0.55),0 1px 0 rgba(255,255,255,0.05) inset;">
+        <div id="dashProfilePhoto" style="width:50px;height:50px;border-radius:50%;flex-shrink:0;background:#1e293b;border:2.5px solid #10b981;box-shadow:0 0 0 4px rgba(16,185,129,0.18),0 4px 14px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;"></div>
+        <div style="flex:1;min-width:0;">
+          <div id="dashProfileName" style="font-size:17px;font-weight:800;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Driver</div>
+          <div style="font-size:11px;margin-top:2px;display:flex;align-items:center;gap:4px;">
+            <span style="color:rgba(255,255,255,0.35);">Estado</span>
+            <span style="color:rgba(255,255,255,0.18);">|</span>
+            <span id="dashStatusLabel" style="color:#10b981;font-weight:700;">Conduciendo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón mapa completo -->
+      <button onclick="showFullMapFromDash()" style="background:rgba(16,185,129,0.12);border:1.5px solid rgba(16,185,129,0.3);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:#10b981;font-size:18px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">🗺️</button>
+    </div>
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:16px 16px 10px;min-height:0;overflow:hidden;">
+
+    <!-- ANILLO HOS GRANDE -->
+    <div style="position:relative;width:185px;height:185px;flex-shrink:0;margin-bottom:16px;">
+      <svg viewBox="0 0 185 185" style="width:100%;height:100%;position:absolute;inset:0;">
+        <!-- Pista de fondo -->
+        <circle cx="92.5" cy="92.5" r="80" fill="none" stroke="rgba(16,185,129,0.15)" stroke-width="9"/>
+        <!-- Arco de horas restantes -->
+        <circle cx="92.5" cy="92.5" r="80" fill="none"
+                stroke="#10b981" stroke-width="9"
+                stroke-linecap="round"
+                stroke-dasharray="503 503"
+                id="dashRingArc"
+                transform="rotate(-90 92.5 92.5)"
+                style="transition:stroke-dasharray 0.8s ease,stroke 0.4s ease;"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="dashHosTime" style="font-size:32px;font-weight:900;color:#f1f5f9;line-height:1;letter-spacing:-1px;">11h 0m</div>
+        <div style="font-size:10px;font-weight:500;color:rgba(255,255,255,0.4);text-align:center;margin-top:8px;max-width:95px;line-height:1.4;">Tiempo de conducción restante</div>
+      </div>
+    </div>
+
+    <!-- TARJETAS DE ESTADÍSTICAS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;margin-bottom:12px;">
+      <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:11px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
+        <div id="dashHorasHoy" style="font-size:16px;font-weight:900;color:#f1f5f9;">0h 0m</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;letter-spacing:.2px;">Horas hoy</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:11px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
+        <div id="dashDescanso" style="font-size:16px;font-weight:900;color:#f1f5f9;">30m</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;letter-spacing:.2px;">Descanso req.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:11px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
+        <div id="dashRiesgo" style="font-size:16px;font-weight:900;color:#10b981;">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;letter-spacing:.2px;">Riesgo</div>
+      </div>
+    </div>
+
+    <!-- PESTAÑAS DE ESTADO -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;width:100%;">
+      <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
+      <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
+      <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">Espera</button>
+      <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Off Duty</button>
+    </div>
+
+  </div>
+
+  <!-- MINI MAPA -->
+  <div id="hosMiniMap" style="flex:0 0 36vh;min-height:150px;max-height:260px;background:#0f1c2e;position:relative;border-top:1px solid rgba(255,255,255,0.06);">
+    <!-- El mapa Leaflet se monta aquí -->
+  </div>
+
+</div>
+
 <style>
+/* ── HOS Dashboard ───────────────────────── */
+.dash-tab {
+  padding:10px 4px;border-radius:10px;
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.06);
+  color:rgba(255,255,255,0.55);
+  font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .2s,color .2s,border-color .2s;
+}
+.dash-tab-active {
+  background:#10b981!important;
+  color:#fff!important;
+  border-color:#10b981!important;
+}
+/* Tooltip del mini mapa */
+.hosMapTooltip {
+  background:rgba(10,16,30,0.95)!important;
+  border:1px solid rgba(255,255,255,0.12)!important;
+  color:#f1f5f9!important;
+  font-family:'DM Sans',sans-serif!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  border-radius:8px!important;
+  padding:4px 8px!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.5)!important;
+  white-space:nowrap!important;
+}
+.hosMapTooltip::before { border-top-color:rgba(10,16,30,0.95)!important; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
 @keyframes truckBubblePulse { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 4px rgba(16,185,129,.0)} 50%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 8px rgba(16,185,129,.35)} }
 @keyframes glowGreen { 0%,100%{box-shadow:0 0 0 3px rgba(59,130,246,.9),0 0 0 9px rgba(59,130,246,.35),0 0 0 18px rgba(59,130,246,.12),0 6px 24px rgba(0,0,0,.7)} 50%{box-shadow:0 0 0 3px rgba(59,130,246,1),0 0 0 13px rgba(59,130,246,.45),0 0 0 26px rgba(59,130,246,.18),0 6px 24px rgba(0,0,0,.7)} }
@@ -9936,6 +9999,10 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   if (hudCell) {
     hudCell.classList.toggle('warn',     isWarn && !isCritical);
     hudCell.classList.toggle('critical', isCritical);
+  }
+  // Actualizar también el dashboard HOS si está visible
+  if (document.getElementById('hosDashScreen')?.style.display !== 'none') {
+    updateHosDashboard(hoursLeft, maxHours);
   }
 }
 
@@ -12694,10 +12761,12 @@ let fmLastGeocode = 0;
 let fmFollowing     = true;   // whether map auto-follows truck
 let fmUserDragged   = false;  // user manually moved map
 let fmUserRotated   = false;  // user manually rotated map (pauses auto-bearing)
+let fmUserZoomed    = false;  // user manually pinched zoom (pauses auto-zoom)
 let fmCurrentZoom   = 15;     // zoom level when following
 let fmLastHeading   = null;   // last GPS heading for truck rotation
 let fmPrevLat       = null;   // for calculating heading when GPS doesn't provide it
 let fmPrevLon       = null;
+let fmLastStablePos = null;   // last accepted position (jitter filter)
 
 // POI layers
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
@@ -12795,6 +12864,12 @@ function openFullMapScreen() {
       if (fb) fb.classList.remove('active');
       _scheduleAutoResumeFollow();
     });
+    // Save user's manual zoom so auto-follow doesn't override it
+    fmMapInst.on('zoomend', () => {
+      if (window._fmProgrammaticMove) return;
+      fmUserZoomed = true;
+      fmCurrentZoom = fmMapInst.getZoom();
+    });
 
     // Detect when user manually rotates — pause auto-bearing for 20s
     // Use _fmProgrammaticBearing to skip GPS-triggered rotatestart events
@@ -12817,6 +12892,7 @@ function openFullMapScreen() {
         fmFollowing = true;
         fmUserDragged = false;
         fmUserRotated = false;
+        fmUserZoomed = false;
         if (_autoResumeRotationTimer) { clearTimeout(_autoResumeRotationTimer); _autoResumeRotationTimer = null; }
         const fb = document.getElementById('fmFollowBtn');
         if (fb) fb.classList.add('active');
@@ -13563,17 +13639,7 @@ function _scheduleAutoResumeFollow() {
 // ── Auto-resume bearing after user manually rotates ───────────────────────
 let _autoResumeRotationTimer = null;
 function _scheduleAutoResumeRotation() {
-  if (_autoResumeRotationTimer) clearTimeout(_autoResumeRotationTimer);
-  _autoResumeRotationTimer = setTimeout(() => {
-    fmUserRotated = false;
-    // Snap bearing back to current heading
-    if (fmMapInst && fmLastHeading != null && typeof fmMapInst.setBearing === 'function') {
-      window._fmProgrammaticMove = true;
-      window._fmProgrammaticBearing = true;
-      fmMapInst.setBearing(fmLastHeading, { animate: true });
-      setTimeout(() => { window._fmProgrammaticMove = false; window._fmProgrammaticBearing = false; }, 800);
-    }
-  }, 20000); // resume auto-bearing 20s after user finishes rotating
+  // No auto-snap — user rotation stays until they tap the center/follow button
 }
 
 // ── Báscula (Weigh Station) — notificar 5 millas antes ────────────────────
@@ -13698,6 +13764,8 @@ function fmStartTracking() {
   const initCycleHours = Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 70);
   const initDriveMax = Math.min(11, initCycleHours);
   updateDriveHoursWidget(initDriveMax, initDriveMax);
+  // Mostrar dashboard HOS en lugar del mapa completo
+  showHosDashboard();
   // Show speed sign immediately — will update with real state on first GPS fix
   if (speedLimitActive) {
     const initSign = document.getElementById('mapSpeedSign');
@@ -13767,18 +13835,32 @@ function fmStartTracking() {
     fmPrevLat = snapLat; fmPrevLon = snapLon;
     fmLastHeading = heading;
 
+    // ── GPS jitter filter: ignore tiny position changes when stationary ────
+    if (!isMoving && fmLastStablePos) {
+      const dLat = (snapLat - fmLastStablePos.lat) * Math.PI / 180;
+      const dLon = (snapLon - fmLastStablePos.lon) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(fmLastStablePos.lat * Math.PI/180) * Math.cos(snapLat * Math.PI/180) * Math.sin(dLon/2)**2;
+      const distM = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      if (distM < 10) return; // menos de 10m parado — ignorar actualización
+    }
+    fmLastStablePos = { lat: snapLat, lon: snapLon };
+
     // ── Speed limit check (must run before truck marker so color is correct) ──
     checkSpeedLimit(gpsSpeed);
 
     // ── Update truck marker at snapped on-road position ─────
     fmUpdateTruckMarker(snapLat, snapLon, heading, isMoving);
+    // Actualizar mini mapa del dashboard si está visible
+    updateHosDashMinimap(snapLat, snapLon);
 
     // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
-      if (isMoving) {
-        fmCurrentZoom = gpsSpeed > 40 ? 9 : gpsSpeed > 25 ? 13 : 15;
-      } else {
-        fmCurrentZoom = 16;
+      if (!fmUserZoomed) {
+        if (isMoving) {
+          fmCurrentZoom = gpsSpeed > 40 ? 9 : gpsSpeed > 25 ? 13 : 15;
+        } else {
+          fmCurrentZoom = 16;
+        }
       }
       window._fmProgrammaticMove = true;
       // Rotate BEFORE pan — flag as programmatic so rotatestart doesn't
@@ -13793,10 +13875,9 @@ function fmStartTracking() {
         setTimeout(() => { window._fmProgrammaticBearing = false; }, 300);
       }
       const followCenter = calcFollowCenter(snapLat, snapLon, heading);
-      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
-      // Keep flag true until animation fully settles (longer than GPS poll interval)
+      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.5, noMoveStart: true });
       if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
-      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
+      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 800);
     }
 
     
@@ -14013,7 +14094,8 @@ function fmStartTracking() {
       if (moving) { fmPrevLat = snap.lat; fmPrevLon = snap.lon; }
       fmLastHeading = finalHdg;
       fmUpdateTruckMarker(snap.lat, snap.lon, finalHdg, moving);
-      if (fmFollowing && fmMapInst) {
+      // Skip if watchPosition already triggered a setView recently (avoid flicker)
+      if (fmFollowing && fmMapInst && !window._fmProgrammaticMove) {
         window._fmProgrammaticMove = true;
         if (!fmUserRotated && typeof fmMapInst.setBearing === 'function') {
           window._fmProgrammaticBearing = true;
@@ -14024,9 +14106,9 @@ function fmStartTracking() {
         const ctr = moving
           ? calcFollowCenter(snap.lat, snap.lon, finalHdg)
           : [snap.lat, snap.lon];
-        fmMapInst.setView(ctr, fmCurrentZoom, { animate: true, duration: 0.6, noMoveStart: true });
+        fmMapInst.setView(ctr, fmCurrentZoom, { animate: false, noMoveStart: true });
         if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
-        window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
+        window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1000);
       }
       fmCurrentSpeed = rawSpd != null && rawSpd >= 0 ? Math.round(rawSpd * 2.237) : 0;
       fmVehicleMoving = moving;
@@ -14081,6 +14163,256 @@ function fmStopTracking() {
   document.getElementById('fmLiveDot').style.boxShadow = 'none';
   document.getElementById('fmLiveDot').style.animation = 'none';
   if (fmAccMarker) { try { fmMapInst.removeLayer(fmAccMarker); } catch {} fmAccMarker = null; }
+  hideHosDashboard();
+}
+
+/* ════════════════════════════════════════════════════════════
+   📊  HOS DASHBOARD — pantalla de estado al iniciar rastreo
+════════════════════════════════════════════════════════════ */
+let hosMinimapInst    = null;  // instancia Leaflet del mini mapa
+let hosMinimapTruck   = null;  // marcador del camión en mini mapa
+let hosMinimapRoute   = null;  // polyline de ruta en mini mapa
+let _dashCurrentStatus = 'driving';
+
+function showHosDashboard() {
+  const screen = document.getElementById('hosDashScreen');
+  if (!screen) return;
+  screen.style.display = 'flex';
+
+  // Llenar datos del perfil
+  const name  = (typeof driverProfile !== 'undefined' && driverProfile?.name) || 'Driver';
+  const photo = (typeof driverProfile !== 'undefined' && driverProfile?.photo) || null;
+  const emoji = (typeof TRUCK_EMOJIS !== 'undefined' && driverProfile?.truckType)
+                ? (TRUCK_EMOJIS[driverProfile.truckType] || '🚛') : '🚛';
+
+  const nameEl  = document.getElementById('dashProfileName');
+  const photoEl = document.getElementById('dashProfilePhoto');
+  if (nameEl)  nameEl.textContent = name;
+  if (photoEl) {
+    if (photo) {
+      photoEl.innerHTML = `<img src="${photo}" alt="foto" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`;
+    } else {
+      photoEl.textContent = emoji;
+    }
+  }
+
+  // Estado inicial: Conduciendo
+  setDashStatus('driving');
+
+  // Iniciar mini mapa después de un tick para que el div sea visible
+  setTimeout(initHosMinimap, 120);
+}
+
+function hideHosDashboard() {
+  const screen = document.getElementById('hosDashScreen');
+  if (screen) screen.style.display = 'none';
+  // Destruir mini mapa para liberar recursos
+  if (hosMinimapInst) {
+    try { hosMinimapInst.remove(); } catch(e) {}
+    hosMinimapInst  = null;
+    hosMinimapTruck = null;
+    hosMinimapRoute = null;
+  }
+}
+
+function initHosMinimap() {
+  const el = document.getElementById('hosMiniMap');
+  if (!el || hosMinimapInst) return;
+
+  const lat = (typeof origin !== 'undefined' && origin?.lat) ? origin.lat : 39.5;
+  const lon = (typeof origin !== 'undefined' && origin?.lon) ? origin.lon : -98.35;
+
+  hosMinimapInst = L.map(el, {
+    zoomControl: false,
+    attributionControl: false,
+    dragging: true,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    tap: true
+  }).setView([lat, lon], 10);
+
+  // Tiles oscuros (igual al mapa principal)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19, subdomains: 'abcd'
+  }).addTo(hosMinimapInst);
+
+  // Dibujar ruta si existe
+  if (typeof roadGeometry !== 'undefined' && roadGeometry?.length) {
+    hosMinimapRoute = L.polyline(roadGeometry, {
+      color: '#10b981', weight: 5, opacity: 0.9
+    }).addTo(hosMinimapInst);
+    // Ajustar vista a la ruta completa con zoom que muestre iconos
+    hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [22, 22], maxZoom: 11 });
+  }
+
+  // Marcador del camión (más visible)
+  const truckIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:18px;height:18px;border-radius:50%;background:#10b981;border:3px solid #fff;box-shadow:0 0 12px rgba(16,185,129,.85),0 2px 6px rgba(0,0,0,.6)"></div>',
+    iconAnchor: [9, 9]
+  });
+  hosMinimapTruck = L.marker([lat, lon], { icon: truckIcon }).addTo(hosMinimapInst);
+
+  // Marcador origen (punto de partida)
+  const originIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:12px;height:12px;border-radius:50%;background:#3b82f6;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>',
+    iconAnchor: [6, 6]
+  });
+  L.marker([lat, lon], { icon: originIcon }).addTo(hosMinimapInst);
+
+  // Marcador destino
+  if (typeof destination !== 'undefined' && destination?.lat) {
+    const destIcon = L.divIcon({
+      className: '',
+      html: '<div style="width:12px;height:12px;border-radius:50%;background:#ef4444;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>',
+      iconAnchor: [6, 6]
+    });
+    L.marker([destination.lat, destination.lon], { icon: destIcon }).addTo(hosMinimapInst);
+  }
+
+  // invalidateSize para que el mapa se renderice correctamente
+  setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 250);
+  setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 600);
+
+  // Cargar iconos de truck stops
+  loadMiniMapTruckStops(lat, lon);
+
+  // Tap en mini mapa → ir al mapa completo
+  el.addEventListener('click', showFullMapFromDash);
+}
+
+function loadMiniMapTruckStops(lat, lon) {
+  if (!hosMinimapInst) return;
+  // Radio ~1 grado (~111 km) para mostrar paradas a lo largo de la ruta
+  const r = 0.8;
+  const bbox = `${lat - r},${lon - r},${lat + r},${lon + r}`;
+  const query = `[out:json][timeout:10];(node["amenity"="fuel"]["hgv"="yes"](${bbox});node["amenity"="truck_stop"](${bbox});node["highway"="rest_area"](${bbox});node["amenity"="rest_area"](${bbox}););out 25;`;
+
+  fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      if (!hosMinimapInst || !data?.elements?.length) return;
+      data.elements.slice(0, 20).forEach(node => {
+        const isTruck = node.tags?.amenity === 'truck_stop' || node.tags?.hgv === 'yes';
+        const isRest  = node.tags?.highway === 'rest_area' || node.tags?.amenity === 'rest_area';
+        const emoji   = isTruck ? '🚛' : isRest ? '😴' : '⛽';
+        const bg      = isTruck ? '#3b82f6' : isRest ? '#8b5cf6' : '#f59e0b';
+        const poiIcon = L.divIcon({
+          className: '',
+          html: `<div style="width:22px;height:22px;border-radius:6px;background:${bg};border:2px solid rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.55);line-height:1;">${emoji}</div>`,
+          iconAnchor: [11, 11]
+        });
+        L.marker([node.lat, node.lon], { icon: poiIcon })
+          .bindTooltip(node.tags?.name || (isTruck ? 'Truck Stop' : isRest ? 'Rest Area' : 'Diesel'), {
+            permanent: false, direction: 'top', className: 'hosMapTooltip'
+          })
+          .addTo(hosMinimapInst);
+      });
+    })
+    .catch(() => {});
+}
+
+function updateHosDashMinimap(lat, lon) {
+  if (!hosMinimapInst || !hosMinimapTruck) return;
+  hosMinimapTruck.setLatLng([lat, lon]);
+}
+
+function updateHosDashboard(driveLeft, driveMax) {
+  // Anillo grande
+  const arc = document.getElementById('dashRingArc');
+  const timeEl = document.getElementById('dashHosTime');
+  if (!arc || !timeEl) return;
+
+  const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
+  const circumference = 503; // 2π×80 ≈ 502.7
+  arc.setAttribute('stroke-dasharray', `${(pct * circumference).toFixed(1)} ${circumference}`);
+
+  // Color según criticidad
+  const isCrit = driveLeft < 2;
+  const isWarn = driveLeft < 4 && driveLeft >= 2;
+  const color  = isCrit ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981';
+  arc.style.stroke = color;
+  // Actualizar también el texto de riesgo
+  const riesgoEl = document.getElementById('dashRiesgo');
+  if (riesgoEl) {
+    const risk = isCrit ? 2 : isWarn ? 1 : 0;
+    riesgoEl.textContent = risk;
+    riesgoEl.style.color = color;
+  }
+
+  // Texto de tiempo restante
+  const totalMins = Math.round(driveLeft * 60);
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+  timeEl.style.color = color;
+
+  // Horas hoy (tiempo ya conducido)
+  const elapsed = driveMax - driveLeft;
+  const eh = Math.floor(elapsed); const em = Math.round((elapsed - eh) * 60);
+  const horasEl = document.getElementById('dashHorasHoy');
+  if (horasEl) horasEl.textContent = eh > 0 ? `${eh}h ${em}m` : `${em}m`;
+
+  // Descanso requerido: si b30DriveSecs > 0 y no se ha completado la pausa
+  const descansoEl = document.getElementById('dashDescanso');
+  if (descansoEl) {
+    const needBreak = (typeof b30DriveSecs !== 'undefined' && b30DriveSecs > 0 && !(typeof b30Complete !== 'undefined' && b30Complete));
+    descansoEl.textContent = needBreak ? '30m' : '✓';
+    descansoEl.style.color = needBreak ? '#f59e0b' : '#10b981';
+  }
+}
+
+function showFullMapFromDash() {
+  // Ocultar dashboard, dejar fullMapScreen visible (sigue activo detrás)
+  const screen = document.getElementById('hosDashScreen');
+  if (screen) screen.style.display = 'none';
+  // Invalidar tamaño del mapa principal para que se redibuje correctamente
+  setTimeout(() => { if (typeof fmMapInst !== 'undefined' && fmMapInst) fmMapInst.invalidateSize(); }, 150);
+}
+
+// Botón "Volver al Dashboard" que aparece en el mapa completo durante rastreo
+function showDashFromMap() {
+  showHosDashboard();
+}
+
+function setDashStatus(status) {
+  _dashCurrentStatus = status;
+  const tabs = {
+    driving: document.getElementById('dashTabDriving'),
+    rest:    document.getElementById('dashTabRest'),
+    wait:    document.getElementById('dashTabWait'),
+    off:     document.getElementById('dashTabOff')
+  };
+  const labels = {
+    driving: 'Conduciendo',
+    rest:    'Descansando',
+    wait:    'En espera',
+    off:     'Off Duty'
+  };
+  const colors = {
+    driving: '#10b981',
+    rest:    '#3b82f6',
+    wait:    '#f59e0b',
+    off:     '#6b7280'
+  };
+  Object.keys(tabs).forEach(k => {
+    if (!tabs[k]) return;
+    if (k === status) {
+      tabs[k].classList.add('dash-tab-active');
+      tabs[k].style.background = colors[k];
+      tabs[k].style.borderColor = colors[k];
+    } else {
+      tabs[k].classList.remove('dash-tab-active');
+      tabs[k].style.background = '';
+      tabs[k].style.borderColor = '';
+    }
+  });
+  const statusEl = document.getElementById('dashStatusLabel');
+  if (statusEl) {
+    statusEl.textContent = labels[status] || status;
+    statusEl.style.color  = colors[status] || '#10b981';
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
