@@ -14257,8 +14257,14 @@ function initHosMinimap() {
     hosMinimapRoute = L.polyline(roadGeometry, {
       color: '#10b981', weight: 4, opacity: 0.95
     }).addTo(hosMinimapInst);
-    // Ajustar vista a la ruta completa
+    // Ajustar vista: intentar mostrar la ruta completa pero sin alejarse más de zoom 8
+    // (por debajo de zoom 8 las carreteras dejan de ser visibles)
     hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [28, 28], maxZoom: 11 });
+    setTimeout(() => {
+      if (hosMinimapInst && hosMinimapInst.getZoom() < 8) {
+        hosMinimapInst.setView([lat, lon], 8, { animate: false });
+      }
+    }, 60);
   }
 
   // Marcador origen — círculo verde grande
