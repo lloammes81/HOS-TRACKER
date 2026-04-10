@@ -14242,38 +14242,48 @@ function initHosMinimap() {
     maxZoom: 19, subdomains: 'abcd'
   }).addTo(hosMinimapInst);
 
-  // Dibujar ruta si existe
-  if (typeof roadGeometry !== 'undefined' && roadGeometry?.length) {
-    hosMinimapRoute = L.polyline(roadGeometry, {
-      color: '#10b981', weight: 5, opacity: 0.9
-    }).addTo(hosMinimapInst);
-    // Ajustar vista a la ruta completa con zoom que muestre iconos
-    hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [22, 22], maxZoom: 11 });
+  // Helper: crea el HTML de un marcador círculo verde con punto blanco interior
+  function _greenDotHtml(size) {
+    const s = size || 22;
+    const inner = Math.round(s * 0.32);
+    return `<div style="width:${s}px;height:${s}px;border-radius:50%;background:#10b981;border:2.5px solid rgba(255,255,255,0.88);box-shadow:0 0 0 3px rgba(16,185,129,0.28),0 3px 10px rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;"><div style="width:${inner}px;height:${inner}px;border-radius:50%;background:rgba(255,255,255,0.9);"></div></div>`;
   }
 
-  // Marcador del camión: icono redondo con foto/emoji del usuario
-  const _uPhoto = (typeof driverProfile !== 'undefined' && driverProfile?.photo) || null;
-  const _uEmoji = (typeof TRUCK_EMOJIS !== 'undefined' && driverProfile?.truckType) ? (TRUCK_EMOJIS[driverProfile.truckType] || '🚛') : '🚛';
-  const truckHtml = _uPhoto
-    ? `<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:3px solid #10b981;box-shadow:0 0 0 2px rgba(16,185,129,0.45),0 3px 10px rgba(0,0,0,.75);"><img src="${_uPhoto}" style="width:100%;height:100%;object-fit:cover;display:block;"></div>`
-    : `<div style="width:34px;height:34px;border-radius:50%;background:#0f172a;border:3px solid #10b981;box-shadow:0 0 0 2px rgba(16,185,129,0.45),0 3px 10px rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;font-size:17px;">${_uEmoji}</div>`;
-  const truckIcon = L.divIcon({ className: '', html: truckHtml, iconAnchor: [17, 17] });
-  hosMinimapTruck = L.marker([lat, lon], { icon: truckIcon }).addTo(hosMinimapInst);
+  // Dibujar ruta si existe
+  if (typeof roadGeometry !== 'undefined' && roadGeometry?.length) {
+    // Capa glow (brillo difuso bajo la línea principal)
+    L.polyline(roadGeometry, { color: '#10b981', weight: 14, opacity: 0.13 }).addTo(hosMinimapInst);
+    // Capa principal
+    hosMinimapRoute = L.polyline(roadGeometry, {
+      color: '#10b981', weight: 4, opacity: 0.95
+    }).addTo(hosMinimapInst);
+    // Ajustar vista a la ruta completa
+    hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [28, 28], maxZoom: 11 });
+  }
 
-  // Marcador origen (punto de partida)
+  // Marcador origen — círculo verde grande
   const originIcon = L.divIcon({
     className: '',
-    html: '<div style="width:12px;height:12px;border-radius:50%;background:#3b82f6;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>',
-    iconAnchor: [6, 6]
+    html: _greenDotHtml(22),
+    iconAnchor: [11, 11]
   });
   L.marker([lat, lon], { icon: originIcon }).addTo(hosMinimapInst);
 
-  // Marcador destino
+  // Marcador del camión (posición actual): foto o emoji sobre anillo verde
+  const _uPhoto = (typeof driverProfile !== 'undefined' && driverProfile?.photo) || null;
+  const _uEmoji = (typeof TRUCK_EMOJIS !== 'undefined' && driverProfile?.truckType) ? (TRUCK_EMOJIS[driverProfile.truckType] || '🚛') : '🚛';
+  const truckHtml = _uPhoto
+    ? `<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:3px solid #10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.35),0 3px 12px rgba(0,0,0,.75);"><img src="${_uPhoto}" style="width:100%;height:100%;object-fit:cover;display:block;"></div>`
+    : `<div style="width:34px;height:34px;border-radius:50%;background:#0f172a;border:3px solid #10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.35),0 3px 12px rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;font-size:17px;">${_uEmoji}</div>`;
+  const truckIcon = L.divIcon({ className: '', html: truckHtml, iconAnchor: [17, 17] });
+  hosMinimapTruck = L.marker([lat, lon], { icon: truckIcon }).addTo(hosMinimapInst);
+
+  // Marcador destino — círculo verde más grande para destacarlo
   if (typeof destination !== 'undefined' && destination?.lat) {
     const destIcon = L.divIcon({
       className: '',
-      html: '<div style="width:12px;height:12px;border-radius:50%;background:#ef4444;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>',
-      iconAnchor: [6, 6]
+      html: _greenDotHtml(26),
+      iconAnchor: [13, 13]
     });
     L.marker([destination.lat, destination.lon], { icon: destIcon }).addTo(hosMinimapInst);
   }
@@ -14304,12 +14314,11 @@ function loadMiniMapTruckStops(lat, lon) {
       data.elements.slice(0, 20).forEach(node => {
         const isTruck = node.tags?.amenity === 'truck_stop' || node.tags?.hgv === 'yes';
         const isRest  = node.tags?.highway === 'rest_area' || node.tags?.amenity === 'rest_area';
-        const emoji   = isTruck ? '🚛' : isRest ? '😴' : '⛽';
-        const bg      = isTruck ? '#3b82f6' : isRest ? '#8b5cf6' : '#f59e0b';
+        // Círculo verde uniforme — mismo estilo que los marcadores de ruta
         const poiIcon = L.divIcon({
           className: '',
-          html: `<div style="width:22px;height:22px;border-radius:6px;background:${bg};border:2px solid rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.55);line-height:1;">${emoji}</div>`,
-          iconAnchor: [11, 11]
+          html: `<div style="width:18px;height:18px;border-radius:50%;background:#10b981;border:2px solid rgba(255,255,255,0.85);box-shadow:0 0 0 2.5px rgba(16,185,129,0.25),0 2px 8px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;"><div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.88);"></div></div>`,
+          iconAnchor: [9, 9]
         });
         L.marker([node.lat, node.lon], { icon: poiIcon })
           .bindTooltip(node.tags?.name || (isTruck ? 'Truck Stop' : isRest ? 'Rest Area' : 'Diesel'), {
@@ -14336,16 +14345,13 @@ function loadMiniMapInterstates(lat, lon) {
         const ref = (way.tags?.ref || '').trim();
         if (!ref || seen.has(ref) || !way.center) return;
         seen.add(ref);
-        // Limpiar referencia: "I-40" → "40", "US-60" → "60"
         const num = ref.replace(/^(I-|US-|SR-|SH-|HWY\s*)/i,'').split(';')[0].trim();
         const isIntl = /^I-/i.test(ref) || /^\d/.test(ref);
-        const bg = isIntl ? '#003087' : '#2d6a00';
-        const shieldHtml = `<div style="display:inline-flex;flex-direction:column;align-items:center;background:${bg};border:2px solid #fff;border-radius:5px 5px 4px 4px;padding:1px 5px 3px;box-shadow:0 2px 8px rgba(0,0,0,.65);min-width:24px;text-align:center;font-family:sans-serif;">
-          <span style="font-size:6px;color:#fff;font-weight:900;letter-spacing:.4px;line-height:1.2;">${isIntl?'INTER':'HWY'}</span>
-          <span style="font-size:12px;color:#fff;font-weight:900;line-height:1;">${num}</span>
-          ${isIntl?'<span style="font-size:6px;color:#fff;font-weight:900;letter-spacing:.4px;line-height:1.2;">STATE</span>':''}
+        const shieldHtml = `<div style="display:inline-flex;align-items:center;gap:3px;background:rgba(10,16,30,0.82);border:1.5px solid rgba(16,185,129,0.55);border-radius:6px;padding:2px 6px;box-shadow:0 2px 8px rgba(0,0,0,.65);font-family:sans-serif;">
+          <span style="font-size:10px;color:#10b981;font-weight:900;line-height:1;">${isIntl?'I':'HWY'}</span>
+          <span style="font-size:11px;color:#f1f5f9;font-weight:900;line-height:1;">${num}</span>
         </div>`;
-        const icon = L.divIcon({ className: '', html: shieldHtml, iconAnchor: [16, 20] });
+        const icon = L.divIcon({ className: '', html: shieldHtml, iconAnchor: [20, 14] });
         L.marker([way.center.lat, way.center.lon], { icon, zIndexOffset: -100 }).addTo(hosMinimapInst);
       });
     })
