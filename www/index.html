@@ -7938,17 +7938,17 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- ③ TARJETAS ESTADÍSTICAS — tamaño fijo -->
   <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;padding:0 14px 10px;">
-    <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:12px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
-      <div id="dashHorasHoy" style="font-size:17px;font-weight:900;color:#f1f5f9;">0h 0m</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;">Horas hoy</div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:14px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+      <div id="dashArrival" style="font-size:20px;font-weight:900;color:#f1f5f9;">--:--</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:4px;font-weight:600;">Llegada</div>
     </div>
-    <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:12px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
-      <div id="dashDescanso" style="font-size:17px;font-weight:900;color:#f1f5f9;">30m</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;">Descanso req.</div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:14px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+      <div id="dashWeekHours" style="font-size:20px;font-weight:900;color:#f1f5f9;">70h</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:4px;font-weight:600;">Ciclo 70h</div>
     </div>
-    <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:12px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
-      <div id="dashRiesgo" style="font-size:17px;font-weight:900;color:#f1f5f9;">0</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;">Riesgo</div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:14px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+      <div id="dashMilesLeft" style="font-size:20px;font-weight:900;color:#f1f5f9;">--</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:4px;font-weight:600;">Mi restantes</div>
     </div>
   </div>
 
@@ -13943,6 +13943,11 @@ function fmStartTracking() {
       document.getElementById('mrUnit').textContent = lang === 'es' ? 'mi restantes' : 'mi remaining';
       document.getElementById('mrLabel').textContent = lang === 'es' ? 'AL DESTINO' : 'TO DESTINATION';
     }
+    // Actualizar millas restantes en el dashboard HOS
+    const _dashMi = document.getElementById('dashMilesLeft');
+    if (_dashMi && destination) {
+      _dashMi.textContent = remaining < 10 ? remaining.toFixed(1) : Math.round(remaining).toLocaleString();
+    }
 
     const driveMax = Math.min(11, Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 70));
     const driveLeft = Math.max(0, driveMax - elapsed);
@@ -14284,29 +14289,36 @@ function initHosMinimap() {
   // Dibujar ruta existente
   if (typeof roadGeometry !== 'undefined' && roadGeometry?.length) {
     _drawHostRoute(roadGeometry);
-    // Si es línea recta (fallback ≤ 2 puntos), hacer fetch ligero al minimap
+    // Si es línea recta (fallback ≤ 2 puntos), intentar ruta real por carretera
     if (roadGeometry.length <= 2 &&
         typeof origin !== 'undefined' && origin?.lat &&
         typeof destination !== 'undefined' && destination?.lat) {
 
-      // Llamada OSRM simplificada: sin alternatives, sin steps, con timeout 8s
-      const _ctrl = new AbortController();
-      const _t = setTimeout(() => _ctrl.abort(), 8000);
       const _coords = `${origin.lon},${origin.lat};${destination.lon},${destination.lat}`;
-      fetch(
-        `https://router.project-osrm.org/route/v1/driving/${_coords}?overview=simplified&geometries=geojson&steps=false&alternatives=false`,
-        { signal: _ctrl.signal }
-      )
-        .then(r => { clearTimeout(_t); return r.ok ? r.json() : Promise.reject(); })
-        .then(data => {
-          if (!hosMinimapInst) return;
-          if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates?.length > 2) {
-            const coords = data.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]);
-            roadGeometry = coords;
-            _drawHostRoute(coords);
-          }
-        })
-        .catch(() => clearTimeout(_t));
+      const _qs     = '?overview=simplified&geometries=geojson&steps=false&alternatives=false';
+      const _servers = [
+        `https://router.project-osrm.org/route/v1/driving/${_coords}${_qs}`,
+        `https://routing.openstreetmap.de/routed-car/route/v1/driving/${_coords}${_qs}`
+      ];
+
+      // Lanzar ambos servidores en paralelo — usar el que responda primero con ruta válida
+      Promise.any(_servers.map(url => {
+        const ctrl = new AbortController();
+        setTimeout(() => ctrl.abort(), 9000);
+        return fetch(url, { signal: ctrl.signal })
+          .then(r => r.ok ? r.json() : Promise.reject('http'))
+          .then(data => {
+            if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates?.length > 2)
+              return data.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]);
+            throw new Error('no route');
+          });
+      }))
+      .then(coords => {
+        if (!hosMinimapInst) return;
+        roadGeometry = coords;
+        _drawHostRoute(coords);
+      })
+      .catch(() => {}); // Ambos fallaron, se queda la línea recta
     }
   }
 
@@ -14457,22 +14469,28 @@ function updateHosDashboard(driveLeft, driveMax) {
   const m = totalMins % 60;
   timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
 
-  // Riesgo
-  const riesgoEl = document.getElementById('dashRiesgo');
-  if (riesgoEl) { riesgoEl.textContent = isCrit ? 2 : isWarn ? 1 : 0; riesgoEl.style.color = '#f1f5f9'; }
+  // Hora estimada de llegada
+  const arrEl = document.getElementById('dashArrival');
+  if (arrEl) {
+    if (typeof arrivalTime !== 'undefined' && arrivalTime) {
+      const ah = arrivalTime.getHours(), am = arrivalTime.getMinutes();
+      const ampm = ah >= 12 ? 'PM' : 'AM', h12 = ah % 12 || 12;
+      arrEl.textContent = `${h12}:${String(am).padStart(2,'0')} ${ampm}`;
+    } else { arrEl.textContent = '--:--'; }
+  }
 
-  // Horas hoy (tiempo ya conducido)
-  const elapsed = driveMax - driveLeft;
-  const eh = Math.floor(elapsed); const em = Math.round((elapsed - eh) * 60);
-  const horasEl = document.getElementById('dashHorasHoy');
-  if (horasEl) { horasEl.textContent = eh > 0 ? `${eh}h ${em}m` : `${em}m`; horasEl.style.color = '#f1f5f9'; }
-
-  // Descanso requerido
-  const descansoEl = document.getElementById('dashDescanso');
-  if (descansoEl) {
-    const needBreak = (typeof b30DriveSecs !== 'undefined' && b30DriveSecs > 0 && !(typeof b30Complete !== 'undefined' && b30Complete));
-    descansoEl.textContent = needBreak ? '30m' : '✓';
-    descansoEl.style.color = '#f1f5f9';
+  // Horas restantes del ciclo 70h
+  const weekEl = document.getElementById('dashWeekHours');
+  if (weekEl) {
+    const fm70 = document.getElementById('fm70Left');
+    if (fm70 && fm70.textContent && fm70.textContent !== '--') {
+      weekEl.textContent = fm70.textContent;
+    } else {
+      const cycMax = parseFloat(document.getElementById('hoursInput')?.value) || 70;
+      const cycLeft = Math.max(0, cycMax - (driveMax - driveLeft));
+      const ch = Math.floor(cycLeft), cm = Math.round((cycLeft - ch) * 60);
+      weekEl.textContent = ch > 0 ? `${ch}h ${cm}m` : `${cm}m`;
+    }
   }
 }
 
