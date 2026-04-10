@@ -258,7 +258,7 @@
      MOBILE REDESIGN — Main Form
   ══════════════════════════════════════════ */
   .form-section-label {
-    font-size: 14px; font-weight: 800; letter-spacing: 1px;
+    font-size: 17px; font-weight: 800; letter-spacing: 1px;
     text-transform: uppercase; color: var(--muted);
     margin: 16px 0 8px; display: flex; align-items: center; gap: 6px;
   }
@@ -296,7 +296,7 @@
   }
   .stop-row-mobile input {
     background: transparent; border: none; padding: 10px 0;
-    font-size: 17px; box-shadow: none; border-radius: 0;
+    font-size: 20px; box-shadow: none; border-radius: 0;
     min-height: 50px;
     transition: font-size .2s ease, min-height .2s ease;
   }
@@ -315,7 +315,7 @@
     font-size: 30px;
   }
   .stop-row-mobile .stop-gps-label {
-    flex: 1; font-size: 17px; color: var(--text); padding: 10px 0;
+    flex: 1; font-size: 20px; color: var(--text); padding: 10px 0;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .stop-row-mobile .stop-refresh-btn {
@@ -338,7 +338,7 @@
   }
   .param-box:focus-within { border-color: var(--accent); }
   .param-box label {
-    font-size: 14px; font-weight: 800; color: var(--muted);
+    font-size: 17px; font-weight: 800; color: var(--muted);
     text-transform: uppercase; letter-spacing: .8px;
     margin: 0; display: flex; align-items: center; gap: 4px;
   }
@@ -353,7 +353,7 @@
     font-size: 14px; color-scheme: light; color: var(--text);
   }
   .departure-input {
-    font-size: 15px !important;
+    font-size: 19px !important;
     font-weight: 700 !important;
     color: var(--text) !important;
     background: var(--surface2) !important;
@@ -937,8 +937,67 @@
     50%    { transform:rotate(8deg); }
   }
 
-  
-  /* ── WEATHER WIDGET ──────────────────────── */
+  /* ── POLICE ALERT ──────────────────────── */
+  @keyframes policeFlash {
+    0%,100%{ background:rgba(30,0,0,0.96); }
+    50%    { background:rgba(80,10,10,0.98); }
+  }
+  @keyframes badgeWiggle {
+    0%,100%{ transform:rotate(-6deg) scale(1); }
+    25%    { transform:rotate(6deg) scale(1.1); }
+    50%    { transform:rotate(-4deg) scale(1.05); }
+    75%    { transform:rotate(4deg) scale(1.08); }
+  }
+  @keyframes ticketSlide {
+    0%  { transform:translateY(30px); opacity:0; }
+    100%{ transform:translateY(0);    opacity:1; }
+  }
+  #policeAlert {
+    position: fixed;
+    top: calc(70px + env(safe-area-inset-top, 0px));
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    z-index: 9400;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+    background: none;
+    opacity: 0;
+    transition: opacity .3s, transform .3s;
+  }
+  #policeAlert.show {
+    display: flex;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .pa-officer-3d {
+    perspective: 300px;
+    width: 80px; height: 80px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .pa-officer-3d .pa-shadow-ring {
+    position: absolute; bottom: -4px;
+    width: 54px; height: 12px;
+    background: radial-gradient(ellipse, rgba(0,0,0,.45) 0%, transparent 75%);
+    border-radius: 50%; filter: blur(3px);
+  }
+  .pa-officer-3d .pa-emoji {
+    font-size: 54px; line-height: 1;
+    display: block;
+    transform: perspective(200px) rotateX(10deg) scale(1);
+    filter:
+      drop-shadow(0px 8px 0px rgba(0,0,0,.5))
+      drop-shadow(0px 3px 3px rgba(0,0,0,.35));
+    animation: officer3dPop 0.55s ease-in-out infinite alternate;
+  }
+  @keyframes officer3dPop {
+    0%   { transform: perspective(200px) rotateX(10deg) scale(1)    translateY(0px);  }
+    100% { transform: perspective(200px) rotateX(6deg)  scale(1.1)  translateY(-4px); }
+  }
+
+
   /* Weather widget — compact card top-left of fullscreen map */
   #weatherWidget {
     position: fixed;
@@ -2011,7 +2070,7 @@
     line-height: 1;
   }
   .rest-alarm-dismiss {
-    margin-top: 28px; padding: 18px 48px;
+    margin-top: 20px; padding: 18px 48px;
     border-radius: 16px; border: none;
     background: #3b82f6; color: #fff;
     font-family: "DM Sans", sans-serif;
@@ -2019,6 +2078,90 @@
     min-width: 260px;
     box-shadow: 0 4px 20px rgba(59,130,246,0.5);
   }
+  /* Pregunta de notificación */
+  .rest-notif-ask {
+    margin-top: 16px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 16px 18px;
+    width: 100%; max-width: 320px;
+    display: none;
+    flex-direction: column; align-items: center; gap: 12px;
+  }
+  .rest-notif-ask.active { display: flex; }
+  .rest-notif-ask-q {
+    font-size: 15px; font-weight: 700;
+    color: #f1f5f9; text-align: center; line-height: 1.45;
+  }
+  .rest-notif-ask-btns {
+    display: flex; gap: 10px; width: 100%;
+  }
+  .rest-notif-yes {
+    flex: 1; padding: 11px 8px;
+    border-radius: 12px; border: none;
+    background: #3b82f6; color: #fff;
+    font-size: 14px; font-weight: 800; cursor: pointer;
+    box-shadow: 0 2px 10px rgba(59,130,246,0.45);
+  }
+  .rest-notif-no {
+    flex: 1; padding: 11px 8px;
+    border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.65);
+    font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  /* Panel de notificaciones dentro del overlay de descanso */
+  .rest-notif-panel {
+    margin-top: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 12px 16px;
+    width: 100%; max-width: 320px;
+    display: none;
+  }
+  .rest-notif-panel.active { display: block; }
+  .rest-notif-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .rest-notif-label {
+    font-size: 13px; font-weight: 700;
+    color: rgba(255,255,255,0.8); letter-spacing: .3px;
+  }
+  .rest-notif-toggle {
+    background: none; border: none; cursor: pointer;
+    font-size: 22px; padding: 0; line-height: 1;
+  }
+  .rest-notif-pills {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .rest-notif-pill {
+    background: rgba(59,130,246,0.18);
+    border: 1px solid rgba(59,130,246,0.35);
+    border-radius: 20px; padding: 4px 10px;
+    font-size: 11px; font-weight: 700; color: #93c5fd;
+    white-space: nowrap;
+  }
+  .rest-notif-pill.done { color: #6ee7b7; border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.12); }
+  .rest-notif-pill.fired { opacity: .45; text-decoration: line-through; }
+  /* Botón descanso manual en plan tab */
+  .btn-manual-rest {
+    margin-top: 8px; padding: 12px 20px;
+    border-radius: 12px; border: 1.5px solid #f59e0b;
+    background: rgba(245,158,11,0.10); color: #fbbf24;
+    font-size: 14px; font-weight: 800; cursor: pointer;
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    touch-action: manipulation;
+  }
+  .btn-manual-rest:active { background: rgba(245,158,11,0.22); }
+  /* Badge de descanso activo (visible en tab-bar) */
+  #restActiveBadge {
+    display: none; position: absolute; top: 2px; right: calc(50% - 20px);
+    background: #f59e0b; color: #000; border-radius: 50%;
+    width: 8px; height: 8px; font-size: 0;
+  }
+  #restActiveBadge.show { display: block; }
 
   /* Auto-follow toggle button */
   #fmFollowBtn {
@@ -2091,7 +2234,45 @@
     align-items: center;
     gap: 8px;
     pointer-events: all;
+    transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .3s;
   }
+  #mapRightControls.panel-hidden {
+    transform: translateY(-50%) translateX(calc(10px + env(safe-area-inset-right,0px) + 60px));
+    opacity: 0;
+    pointer-events: none;
+  }
+  #mapRightPanelBtn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 651;
+    width: 16px;
+    height: 64px;
+    background: rgba(59,130,246,0.32);
+    border: 1px solid rgba(59,130,246,0.45);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    color: rgba(255,255,255,.9);
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: right .35s cubic-bezier(.4,0,.2,1), background .15s;
+    padding: 0;
+    line-height: 1;
+  }
+  #mapRightPanelBtn.open {
+    right: calc(10px + env(safe-area-inset-right,0px) + 44px + 6px);
+    background: rgba(59,130,246,0.5);
+  }
+  #mapRightPanelBtn:active { opacity: .65; }
   #mapRightControls button {
     width: 44px; height: 44px;
     border-radius: 12px; border: 2px solid transparent;
@@ -2157,10 +2338,10 @@
   }
   #mapLeftPanelBtn:active { opacity: .65; }
   #mapLeftControls button {
-    width: 44px; height: 44px;
-    border-radius: 12px; border: 2px solid transparent;
+    width: 60px; height: 60px;
+    border-radius: 16px; border: 2px solid transparent;
     background: rgba(15,23,42,0.88); backdrop-filter: blur(10px);
-    color: #fff; font-size: 20px; cursor: pointer;
+    color: #fff; font-size: 26px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 2px 12px rgba(0,0,0,0.45);
     touch-action: manipulation; -webkit-tap-highlight-color: transparent;
@@ -2168,7 +2349,7 @@
   }
   /* Compass button taller to fit icon + label */
   #mapLeftControls #compassBtn {
-    height: 52px;
+    height: 70px;
     flex-direction: column;
     gap: 1px;
     font-size: 17px;
@@ -2402,15 +2583,12 @@
   bottom: calc(var(--stack-base) + 0px) !important;
 }
 
-/* SOS ahora está dentro de mapRightControls — sin posicionamiento fijo */
+/* SOS siempre visible dentro de mapRightControls */
 #mapRightControls #sosFab{
   position: relative !important;
   bottom: auto !important; right: auto !important;
   top: auto !important; left: auto !important;
   transform: none !important;
-  display: none;
-}
-#mapRightControls #sosFab.visible{
   display: flex !important;
 }
 #weatherWidget{
@@ -2448,12 +2626,12 @@
   margin: 0 auto !important;
 }
 
-/* Lower the speed limit window/sign a bit */
+/* Speed sign positioned below weather widget */
 #mapSpeedSign{
-  top: calc(96px + env(safe-area-inset-top, 0px)) !important;
+  top: calc(90px + env(safe-area-inset-top, 0px)) !important;
 }
 #speedLimitWidget{
-  top: calc(var(--header-pt) + 28px) !important;
+  top: calc(var(--header-pt) + 4px) !important;
 }
 
 /* Keep stack above other floating buttons if present */
@@ -2476,9 +2654,9 @@
     top: calc(228px + env(safe-area-inset-top,0px)) !important;
   }
 
-  /* Move speed sign down a bit more */
+  /* Speed sign below weather widget (weather is now top-right) */
   #mapSpeedSign{
-    top: calc(120px + env(safe-area-inset-top,0px)) !important;
+    top: calc(90px + env(safe-area-inset-top,0px)) !important;
   }
 
 
@@ -2504,9 +2682,9 @@ body.map-active #sosFab{
 
 body.map-active #weatherWidget{
   position: fixed !important;
-  top:    calc(var(--sl-y) + 44px + var(--sl-gap)) !important;
-  left:   var(--sl-x) !important;
-  right:  auto !important;
+  top:    calc(var(--sl-y) + 8px) !important;
+  right:  calc(env(safe-area-inset-right, 0px) + 12px) !important;
+  left:   auto !important;
   bottom: auto !important;
   z-index: 20009 !important;
   width: auto !important;
@@ -3173,9 +3351,9 @@ body.dark #fullMap .leaflet-tile-pane {
   .stop-remove:active { background: rgba(239,68,68,.25); }
   .add-stop-btn {
     display: flex; align-items: center; gap: 6px;
-    padding: 7px 12px; border-radius: 10px;
+    padding: 10px 12px; border-radius: 10px;
     background: rgba(59,130,246,.08); border: 1.5px dashed rgba(59,130,246,.3);
-    color: #3b82f6; font-size: 12px; font-weight: 700;
+    color: #3b82f6; font-size: 16px; font-weight: 700;
     cursor: pointer; touch-action: manipulation;
     margin-bottom: 10px; width: 100%;
     justify-content: center;
@@ -3215,7 +3393,7 @@ body.dark #fullMap .leaflet-tile-pane {
     width: 100%; display: flex; align-items: center; gap: 8px;
     padding: 11px 14px; background: none; border: none; cursor: pointer;
     color: var(--text); font-family: 'DM Sans', sans-serif;
-    font-size: 13px; font-weight: 700; text-align: left;
+    font-size: 17px; font-weight: 700; text-align: left;
     touch-action: manipulation;
   }
   .truck-opts-toggle:active { background: var(--surface2); }
@@ -4554,33 +4732,34 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   #fmHud.compact .fm-hide{ display:none !important; }
 
   #fmHud.compact .fm-stats-row{
-    display:flex !important;
-    gap: 10px !important;
-    justify-content: space-between !important;
+    display:grid !important;
+    grid-template-columns: 1fr 1fr 1fr 1fr !important;
+    gap: 5px !important;
     margin: 0 !important;
   }
 
   #fmHud.compact .fm-stat{
-    width: 76px !important;
-    height: 76px !important;
-    border-radius: 999px !important;
-    padding: 10px !important;
-    background: rgba(10,16,30,0.92) !important;
-    border: 1px solid rgba(255,255,255,0.10) !important;
-    box-shadow: 0 6px 22px rgba(0,0,0,0.55) !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    padding: 6px 8px !important;
+    background: #d1d5db !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
     display:flex !important;
     flex-direction:column !important;
     align-items:center !important;
     justify-content:center !important;
     text-align:center !important;
     transform: translateZ(0);
-    transition: transform .16s cubic-bezier(.34,1.56,.64,1), filter .16s;
+    transition: filter .16s;
     touch-action: manipulation;
     user-select:none;
     cursor:pointer;
   }
   #fmHud.compact .fm-stat:active{
-    transform: scale(1.22);
     filter: brightness(1.08);
   }
   #fmHud.compact .fm-stat.fm-pop{
@@ -4588,15 +4767,22 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   }
   @keyframes fmPop{
     0%{transform:scale(1)}
-    60%{transform:scale(1.25)}
+    60%{transform:scale(1.04)}
     100%{transform:scale(1)}
   }
   #fmHud.compact .fm-stat > div:first-child{
-    font-size: 9px !important;
-    margin-bottom: 4px !important;
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    color: #6b7280 !important;
+    margin-bottom: 2px !important;
+    text-transform: uppercase !important;
+    letter-spacing: .3px !important;
   }
   #fmHud.compact .fm-stat > div:last-child{
-    font-size: 18px !important;
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    color: #111827 !important;
+    line-height: 1.2 !important;
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -5450,7 +5636,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <div id="planAvatarImg"></div>
             <div id="planAvatarName"></div>
           </div>
-          <div style="font-size:16px;font-weight:800;color:var(--text);letter-spacing:.3px">🗺️ Plan de Ruta</div>
+          <div style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:.3px">🗺️ Plan de Ruta</div>
           <button class="hist-trigger-btn" onclick="openRouteHistory()">
             🕐 <span id="histCount"></span>
           </button>
@@ -5572,6 +5758,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
         <div class="schedule" id="scheduleList"></div>
         <button class="btn btn-red" id="resetBtn" onclick="resetForm()" style="margin-top:10px">🔄 Nueva Ruta</button>
+        <button class="btn-manual-rest" id="manualRestBtn" onclick="startManualRest10h()" style="display:none">
+          😴 Iniciar descanso de 10 horas
+        </button>
       </div>
 
 
@@ -5756,34 +5945,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             </div>
           </div>
 
-          <div class="profile-selects">
-            <div class="profile-select-wrap">
-              <div class="profile-select-label">📍 State</div>
-              <select class="profile-select" id="profileStateSelect" onchange="saveDriverProfile()">
-                <option value="">-- State --</option>
-                <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
-                <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
-                <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
-                <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
-                <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
-                <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
-                <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
-                <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
-                <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
-                <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
-                <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
-                <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
-                <option>Wisconsin</option><option>Wyoming</option><option>Puerto Rico</option>
-              </select>
-              <span class="profile-select-arrow">▾</span>
-            </div>
-            <div class="profile-select-wrap">
-              <div class="profile-select-label">🪪 CDL Number</div>
-              <input class="profile-select" id="profileCdlInput" placeholder="CDL # (opcional)" maxlength="20"
-                style="font-family:inherit;font-size:13px;color:var(--text);background:transparent;border:none;outline:none;width:100%;padding:0"
-                oninput="saveDriverProfile()">
-            </div>
-          </div>
+          <input type="hidden" id="profileStateSelect" value="">
+          <input type="hidden" id="profileCdlInput" value="">
 
           <div class="profile-mode-badge interstate" id="profileModeBadge">
             <div class="profile-mode-dot"></div>
@@ -5923,18 +6086,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <button class="sett-toggle" id="weatherToggle"></button>
           </div>
 
-          <!-- Trailer height input (siempre visible) -->
-          <div id="trailerHeightRow" class="sett-row" style="cursor:default;display:flex;background:var(--surface2)">
-            <div class="sett-icon" style="background:#fef3c7">📐</div>
-            <div class="sett-label" style="font-size:14px">Trailer Height</div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <input type="number" id="trailerHeightInput" min="8" max="18" step="0.1" value="13.6"
-                style="width:70px;padding:6px 8px;font-size:15px;font-weight:700;text-align:center;
-                       border-radius:8px;border:1.5px solid var(--border);background:var(--bg);
-                       color:var(--text);font-family:'DM Sans',sans-serif" />
-              <span style="font-size:12px;color:var(--muted);font-weight:700">ft</span>
-            </div>
-          </div>
+          <input type="hidden" id="trailerHeightInput" value="13.6">
 
           <!-- ─── INCIDENT REPORTS (inside same Safety group) ─── -->
           <div style="padding:12px 16px 6px;border-top:1px solid var(--border)">
@@ -7375,8 +7527,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 ">
   <!-- MAP fills entire screen -->
   <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
-  <!-- Highway mask: covers bottom 50% when speed > 40mph -->
-  <div id="mapHighwayMask" style="display:none;position:absolute;left:0;right:0;bottom:0;height:50%;background:#0b173a;z-index:2;pointer-events:none"></div>
 
     <div class="local-radius-info" id="localRadiusInfo" style="display:none">📍 Local Mode — 100 mi radius</div>
     <div id="routeAlertPill" onclick="switchTab('community')">🚨 Alert on your route — tap</div>
@@ -7389,14 +7539,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- MAP SPEED LIMIT SIGN (display only — no buttons inside) -->
   <div id="mapSpeedSign">
-    <!-- Reloj encima del letrero -->
-    <div id="mapSpeedClock" style="
-      background:rgba(10,16,30,0.88);backdrop-filter:blur(8px);
-      border-radius:8px;padding:4px 10px;margin-bottom:5px;
-      text-align:center;font-size:14px;font-weight:800;
-      color:#f1f5f9;letter-spacing:0.5px;pointer-events:none;
-      box-shadow:0 2px 10px rgba(0,0,0,.45);white-space:nowrap;
-    ">--:--</div>
     <div class="mss-sign" id="mssSign">
       <div class="mss-top">SPEED&#10;LIMIT</div>
       <div class="mss-num" id="mssNum">65</div>
@@ -7557,11 +7699,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       margin-top:2px;
     ">
 
-      <!-- Clock pill -->
+      <!-- Clock pill (oculto) -->
       <div style="
         background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
         border-radius:10px;padding:6px 12px;
-        display:flex;flex-direction:column;align-items:center;
+        display:none;flex-direction:column;align-items:center;
         box-shadow:0 2px 10px rgba(0,0,0,0.3);
       ">
         <div style="display:flex;align-items:center;gap:5px">
@@ -7662,53 +7804,32 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- 4 stat bubbles: LLEGADA · MANEJO-ring · RESTANTE · 70 HRS -->
-    <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr 1fr;gap:4px;margin-bottom:12px;align-items:center">
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden">
-        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
-          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/>
-          <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#06b6d4" stroke-width="5"
-                  stroke-linecap="round" stroke-dasharray="0 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
-        </svg>
-        <div style="position:relative">
-          <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmEtaLbl">LLEGADA</div>
-          <div style="font-size:15px;font-weight:900;color:#06b6d4;line-height:1" id="fmEta">--</div>
-        </div>
+    <!-- 4 stat cards: LLEGADA · MANEJO · RESTANTE · 70 HRS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:12px">
+      <div style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #06b6d4;text-align:center">
+        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fmEtaLbl">LLEGADA</div>
+        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fmEta">--</div>
       </div>
-      <div id="hudManejoCell" style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden;transition:transform .4s cubic-bezier(.34,1.56,.64,1),background .4s,box-shadow .4s,border-color .4s;transform-origin:center">
-        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
-          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/>
-          <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#10b981" stroke-width="5"
-                  stroke-linecap="round" stroke-dasharray="0 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
-        </svg>
-        <div style="position:relative">
-          <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmDriveLbl">MANEJO</div>
-          <div style="font-size:15px;font-weight:900;color:#10b981;line-height:1" id="fmDriveLeft">11h</div>
-        </div>
+      <div id="hudManejoCell" style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #10b981;text-align:center">
+        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fmDriveLbl">MANEJO</div>
+        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fmDriveLeft">11h</div>
       </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden">
-        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
-          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/>
-          <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#3b82f6" stroke-width="5"
-                  stroke-linecap="round" stroke-dasharray="226 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
-        </svg>
-        <div style="position:relative">
-          <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fmRemLbl">RESTANTE</div>
-          <div style="font-size:15px;font-weight:900;color:#3b82f6;line-height:1" id="fmRem">--</div>
-        </div>
+      <div style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #3b82f6;text-align:center">
+        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fmRemLbl">RESTANTE</div>
+        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fmRem">--</div>
       </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 4px;text-align:center;position:relative;overflow:hidden">
-        <svg viewBox="0 0 80 80" style="position:absolute;top:0;left:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none" aria-hidden="true">
-          <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/>
-          <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#8b5cf6" stroke-width="5"
-                  stroke-linecap="round" stroke-dasharray="226 226" style="transition:stroke-dasharray .6s ease,stroke .4s"/>
-        </svg>
-        <div style="position:relative">
-          <div style="font-size:8px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px" id="fm70Lbl">70 HRS</div>
-          <div style="font-size:15px;font-weight:900;color:#8b5cf6;line-height:1" id="fm70Left">70h</div>
-        </div>
+      <div style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #8b5cf6;text-align:center">
+        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fm70Lbl">70 HRS</div>
+        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fm70Left">70h</div>
       </div>
     </div>
+    <!-- SVG arcs ocultos — mantienen referencias para el JS de animación -->
+    <svg style="display:none" aria-hidden="true">
+      <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+      <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+      <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+      <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+    </svg>
 
     <!-- Route from → to -->
     <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:12px">
@@ -7767,7 +7888,115 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 </div>
 
+<!-- ══════════════════════════════════════
+     HOS DASHBOARD SCREEN
+     Muestra info HOS cuando inicia el rastreo
+══════════════════════════════════════ -->
+<div id="hosDashScreen" style="display:none;position:fixed;inset:0;z-index:25000;background:#0a101e;flex-direction:column;font-family:'DM Sans',sans-serif;">
+
+  <!-- ① HEADER: tarjeta única con volver + perfil + mapa -->
+  <div style="flex:0 0 auto;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 12px;background:#0a101e;">
+    <div style="display:flex;align-items:center;gap:12px;background:rgba(14,26,48,0.98);border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,0.7),0 1px 0 rgba(255,255,255,0.05) inset;">
+      <!-- Botón volver -->
+      <button onclick="showFullMapFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:22px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
+
+      <!-- Foto + nombre -->
+      <div id="dashProfilePhoto" style="width:72px;height:72px;border-radius:50%;flex-shrink:0;background:#1e293b;border:3px solid #10b981;box-shadow:0 0 0 4px rgba(16,185,129,0.22),0 4px 16px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;"></div>
+      <div style="flex:1;min-width:0;">
+        <div id="dashProfileName" style="font-size:22px;font-weight:900;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;">Driver</div>
+        <div style="font-size:13px;margin-top:4px;display:flex;align-items:center;gap:5px;">
+          <span style="color:rgba(255,255,255,0.35);">Estado</span>
+          <span style="color:rgba(255,255,255,0.18);">|</span>
+          <span id="dashStatusLabel" style="color:#10b981;font-weight:800;">Conduciendo</span>
+        </div>
+      </div>
+
+      <!-- Botón mapa -->
+      <button onclick="showFullMapFromDash()" style="background:rgba(16,185,129,0.13);border:1.5px solid rgba(16,185,129,0.35);border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">🗺️</button>
+    </div>
+  </div>
+
+  <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
+  <div style="flex:0 0 auto;display:flex;justify-content:center;padding:4px 0 8px;">
+    <div id="dashRingWrap" style="position:relative;width:260px;height:260px;filter:drop-shadow(0 0 32px rgba(30,64,175,0.55));transition:filter 0.4s ease;">
+      <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
+        <circle cx="130" cy="130" r="116" fill="none" stroke="rgba(16,185,129,0.14)" stroke-width="14" id="dashRingTrack"/>
+        <circle cx="130" cy="130" r="116" fill="none"
+                stroke="#10b981" stroke-width="14"
+                stroke-linecap="round"
+                stroke-dasharray="729 729"
+                id="dashRingArc"
+                transform="rotate(-90 130 130)"
+                style="transition:stroke-dasharray 0.8s ease,stroke 0.4s ease;"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="dashHosTime" style="font-size:48px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-2px;">11h 0m</div>
+        <div style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.5);text-align:center;margin-top:10px;max-width:130px;line-height:1.5;">Tiempo de conducción restante</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ TARJETAS ESTADÍSTICAS — tamaño fijo -->
+  <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;padding:0 14px 10px;">
+    <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:12px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
+      <div id="dashHorasHoy" style="font-size:17px;font-weight:900;color:#f1f5f9;">0h 0m</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;">Horas hoy</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:12px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
+      <div id="dashDescanso" style="font-size:17px;font-weight:900;color:#f1f5f9;">30m</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;">Descanso req.</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:12px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
+      <div id="dashRiesgo" style="font-size:17px;font-weight:900;color:#f1f5f9;">0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:3px;font-weight:600;">Riesgo</div>
+    </div>
+  </div>
+
+  <!-- ④ PESTAÑAS — barra entre estadísticas y mapa -->
+  <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:0 14px 10px;">
+    <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
+    <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
+    <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">Espera</button>
+    <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Off Duty</button>
+  </div>
+
+  <!-- ⑤ MINI MAPA — ocupa el resto de la pantalla -->
+  <div id="hosMiniMap" style="flex:1;min-height:0;background:#0f1c2e;border-top:1px solid rgba(255,255,255,0.07);">
+  </div>
+
+</div>
+
 <style>
+/* ── HOS Dashboard ───────────────────────── */
+.dash-tab {
+  padding:11px 4px;border-radius:10px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.07);
+  color:rgba(255,255,255,0.6);
+  font-size:12px;font-weight:700;cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .2s,color .2s,border-color .2s;
+}
+.dash-tab-active {
+  background:#10b981!important;
+  color:#fff!important;
+  border-color:#10b981!important;
+}
+/* Tooltip del mini mapa */
+.hosMapTooltip {
+  background:rgba(10,16,30,0.95)!important;
+  border:1px solid rgba(255,255,255,0.12)!important;
+  color:#f1f5f9!important;
+  font-family:'DM Sans',sans-serif!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  border-radius:8px!important;
+  padding:4px 8px!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.5)!important;
+  white-space:nowrap!important;
+}
+.hosMapTooltip::before { border-top-color:rgba(10,16,30,0.95)!important; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
 @keyframes truckBubblePulse { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 4px rgba(16,185,129,.0)} 50%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 8px rgba(16,185,129,.35)} }
 @keyframes glowGreen { 0%,100%{box-shadow:0 0 0 3px rgba(59,130,246,.9),0 0 0 9px rgba(59,130,246,.35),0 0 0 18px rgba(59,130,246,.12),0 6px 24px rgba(0,0,0,.7)} 50%{box-shadow:0 0 0 3px rgba(59,130,246,1),0 0 0 13px rgba(59,130,246,.45),0 0 0 26px rgba(59,130,246,.18),0 6px 24px rgba(0,0,0,.7)} }
@@ -8180,6 +8409,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <!-- State border welcome banner -->
 <div id="stateBanner">
   <span class="sb-flag">🏁</span>
+  <div class="sb-greeting" id="stateBannerGreeting" style="font-size:14px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:.3px;margin-bottom:2px"></div>
   <div class="sb-welcome">Bienvenido a</div>
   <div class="sb-name" id="stateBannerName">—</div>
 </div>
@@ -8540,6 +8770,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <button class="alert-dismiss" onclick="dismissFatigueAlert()">✅ I'M AWAKE — DISMISS</button>
 </div>
 
+<!-- ── POLICE ALERT floating figure (top of map) ────────── -->
+<div id="policeAlert" onclick="dismissPoliceAlert()">
+  <div class="pa-officer-3d">
+    <span class="pa-emoji">👮</span>
+    <div class="pa-shadow-ring"></div>
+  </div>
+</div>
+
 <!-- ── WEATHER WIDGET ───────────────────────────────────── -->
 <!-- ── BRIDGE WIDGET ────────────────────────────────────── -->
 <div id="bridgeInput">
@@ -8688,10 +8926,33 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div class="rest-alarm-emoji" id="restAlarmEmoji">😴</div>
   <div class="rest-alarm-title" id="restAlarmTitle">¡HORA DE DESCANSAR!</div>
   <div class="rest-alarm-sub" id="restAlarmSub">Has manejado 8 horas. DOT requiere descanso de 10 horas.</div>
-  <div class="rest-alarm-timer" id="restAlarmTimer">10:00</div>
+  <div class="rest-alarm-timer" id="restAlarmTimer">10:00:00</div>
   <button class="rest-alarm-dismiss" onclick="dismissRestAlarm()">
     😴 INICIAR DESCANSO
   </button>
+
+  <!-- Pregunta: ¿quieres notificación cuando terminen las 10h? -->
+  <div class="rest-notif-ask" id="restNotifAsk">
+    <div class="rest-notif-ask-q">¿Quieres que te avisemos<br>cuando puedas volver a manejar?</div>
+    <div class="rest-notif-ask-btns">
+      <button class="rest-notif-yes" onclick="acceptRestNotifications()">🔔 Sí, avísame</button>
+      <button class="rest-notif-no"  onclick="declineRestNotifications()">🔕 No, gracias</button>
+    </div>
+  </div>
+
+  <!-- Panel de alarmas confirmadas (se muestra si acepta) -->
+  <div class="rest-notif-panel" id="restNotifPanel">
+    <div class="rest-notif-header">
+      <span class="rest-notif-label">🔔 Alarmas programadas</span>
+      <button class="rest-notif-toggle" id="restNotifToggleBtn" onclick="toggleRestNotifications()" title="Cancelar notificaciones">✕</button>
+    </div>
+    <div class="rest-notif-pills" id="restNotifPills">
+      <span class="rest-notif-pill" id="rnPill1h">–1h ⏰</span>
+      <span class="rest-notif-pill" id="rnPill30m">–30min ⏰</span>
+      <span class="rest-notif-pill" id="rnPill10m">–10min ⏰</span>
+      <span class="rest-notif-pill done" id="rnPillDone">¡A manejar! ✅</span>
+    </div>
+  </div>
 </div>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -8700,14 +8961,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <!-- Firebase SDK (Realtime Database for cross-device chat) -->
 <script type="module">
   import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect }
+  import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect, remove, get, orderByChild, endAt }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  /* ─── FIREBASE CONFIG ───────────────────────────────────────
-     Replace the values below with your own Firebase project.
-     Create one free at https://console.firebase.google.com
-     Enable "Realtime Database" and set rules to allow read/write.
-  ─────────────────────────────────────────────────────────── */
+  /* ─── FIREBASE CONFIG ─────────────────────────────────────── */
   const firebaseConfig = {
     apiKey: "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
     authDomain: "hos-tracker-chat.firebaseapp.com",
@@ -8717,6 +8974,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     messagingSenderId: "390077980024",
     appId: "1:390077980024:web:65d312be4c52809de43c8d"
   };
+
+  const MSG_TTL = 60 * 60 * 1000; // 1 hour in ms
 
   let firebaseReady = false;
   let db, messagesRef, presenceRef, connectedRef;
@@ -8731,6 +8990,30 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     console.warn('[Chat] Firebase init failed – running in local-only mode.', e.message);
   }
 
+  // Delete messages older than 1 hour for a given channel
+  async function cleanupChannel(channelId) {
+    if (!firebaseReady) return;
+    try {
+      const cutoff = Date.now() - MSG_TTL;
+      const chRef = ref(db, `chat/channels/${channelId}/messages`);
+      const oldQ = query(chRef, orderByChild('clientTs'), endAt(cutoff));
+      const snap = await get(oldQ);
+      const removes = [];
+      snap.forEach(child => removes.push(remove(child.ref)));
+      if (removes.length) await Promise.all(removes);
+    } catch(e) {
+      console.warn('[Chat] Cleanup failed for', channelId, e.message);
+    }
+  }
+
+  // Run cleanup every 10 minutes for all channels
+  const CHANNEL_IDS = ['general','northeast','southeast','midwest','southwest','northwest','canada','hazmat'];
+  function scheduleCleanup() {
+    CHANNEL_IDS.forEach(id => cleanupChannel(id));
+    setTimeout(scheduleCleanup, 10 * 60 * 1000);
+  }
+  if (firebaseReady) setTimeout(scheduleCleanup, 5000); // first run 5s after load
+
   // Expose to global scope so non-module code can use these
   window._chatFirebase = {
     ready: () => firebaseReady,
@@ -8741,12 +9024,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       await push(chRef, { ...msgData, ts: serverTimestamp() });
       return true;
     },
-    // Listen to a specific channel (returns unsubscribe fn)
+    // Listen to a specific channel — only messages from last hour
     listenChannel: (channelId, cb) => {
       if (!firebaseReady) return () => {};
       const chRef = ref(db, `chat/channels/${channelId}/messages`);
       const recentQ = query(chRef, limitToLast(80));
-      const unsub = onChildAdded(recentQ, snap => cb(snap.val(), snap.key));
+      const cutoff = Date.now() - MSG_TTL;
+      const unsub = onChildAdded(recentQ, snap => {
+        const msg = snap.val();
+        const msgTs = msg.ts || msg.clientTs || 0;
+        if (msgTs && msgTs < cutoff) return; // skip messages older than 1 hour
+        cb(msg, snap.key);
+      });
       return unsub;
     },
     // Legacy compat
@@ -8757,8 +9046,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     },
     listenMessages: (cb) => {
       if (!firebaseReady) return;
+      const cutoff = Date.now() - MSG_TTL;
       const recentQ = query(ref(db, 'chat/channels/general/messages'), limitToLast(80));
-      onChildAdded(recentQ, snap => cb(snap.val(), snap.key));
+      onChildAdded(recentQ, snap => {
+        const msg = snap.val();
+        const msgTs = msg.ts || msg.clientTs || 0;
+        if (msgTs && msgTs < cutoff) return;
+        cb(msg, snap.key);
+      });
     },
     trackPresence: (userId, displayName) => {
       if (!firebaseReady) return;
@@ -9696,6 +9991,10 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
     hudCell.classList.toggle('warn',     isWarn && !isCritical);
     hudCell.classList.toggle('critical', isCritical);
   }
+  // Actualizar también el dashboard HOS si está visible
+  if (document.getElementById('hosDashScreen')?.style.display !== 'none') {
+    updateHosDashboard(hoursLeft, maxHours);
+  }
 }
 
 function bindDragEvents(w, onDown, onMove, onUp) {
@@ -9759,11 +10058,18 @@ function initDriveHoursDrag() {
 }
 
 function updateSpeedometer(mph) {
-  // ── Map shrink when > 40 mph (mask bottom 50%) ───────────
-  const hwMask = document.getElementById('mapHighwayMask');
-  if (hwMask) {
-    const isHighway = mph > 40;
-    hwMask.style.display = isHighway ? 'block' : 'none';
+  // ── Highway mode: change route color when speed > 40 mph ─────────
+  const isHighway = mph > 40;
+  if (fmLayer || fmGlowLayer || fmCasingLayer) {
+    if (isHighway) {
+      fmLayer      && fmLayer.setStyle({ color: '#f472b6', weight: 6, opacity: 0.97 });
+      fmGlowLayer  && fmGlowLayer.setStyle({ color: '#f472b6', weight: 24, opacity: 0.13 });
+      fmCasingLayer&& fmCasingLayer.setStyle({ color: '#831843', weight: 10, opacity: 0.65 });
+    } else {
+      fmLayer      && fmLayer.setStyle({ color: '#10b981', weight: 5, opacity: 0.97 });
+      fmGlowLayer  && fmGlowLayer.setStyle({ color: '#10b981', weight: 22, opacity: 0.11 });
+      fmCasingLayer&& fmCasingLayer.setStyle({ color: '#064e3b', weight: 9,  opacity: 0.60 });
+    }
   }
 
   // Update the inline speed sign (below speed limit sign)
@@ -9787,6 +10093,21 @@ function updateSpeedometer(mph) {
   // Over-limit based on state truck speed limit (if available)
   const spw = document.getElementById('speedometerWidget');
   if (spw) spw.classList.toggle('over-limit', !!over);
+
+  // Actualizar anillo HOS del dashboard en tiempo real
+  if (dashSpeedOver !== !!over) {
+    dashSpeedOver = !!over;
+    const dashArc   = document.getElementById('dashRingArc');
+    const dashTrack = document.getElementById('dashRingTrack');
+    const dashWrap  = document.getElementById('dashRingWrap');
+    if (dashArc) {
+      dashArc.style.stroke = dashSpeedOver ? '#ef4444' : '#10b981';
+      if (dashTrack) dashTrack.setAttribute('stroke', dashSpeedOver ? 'rgba(239,68,68,0.14)' : 'rgba(16,185,129,0.14)');
+      if (dashWrap)  dashWrap.style.filter  = dashSpeedOver
+        ? 'drop-shadow(0 0 36px rgba(239,68,68,0.65))'
+        : 'drop-shadow(0 0 32px rgba(30,64,175,0.55))';
+    }
+  }
 
   // Drive-hours widget: scale up when driving, scale down when stopped
   const dhwSpd = document.getElementById('driveHoursWidget');
@@ -9874,6 +10195,8 @@ let hosRestCountdown = null;
 let hosRestSecondsLeft = 0;
 let hosRestActive = false;
 let hosRestEndAlarmFired = false;
+let hosRestNotifEnabled = true;   // notificaciones ON por defecto
+let hosRestEndTime = null;        // timestamp cuando termina el descanso actual
 
 // Called when a route is calculated — schedules alarms for each rest segment
 function scheduleRestAlarms(scheduleData, departureTime) {
@@ -9902,6 +10225,11 @@ function scheduleRestAlarms(scheduleData, departureTime) {
           showToast('warning', '⏰', '15 min para descansar',
             `En 15 min deberás detenerte a descansar (${seg.type === 'break30' ? '30 min' : '10 horas'})`, 8000);
           vibrate([100, 50, 100]);
+          // Show manual rest button only for mandatory 10-hour rest
+          if (seg.type === 'rest') {
+            const btn = document.getElementById('manualRestBtn');
+            if (btn) btn.style.display = '';
+          }
         }, warn15);
         hosRestTimers.push(tw);
       }
@@ -9926,6 +10254,7 @@ function triggerRestStartAlarm(seg) {
   const isReset = seg.type === 'reset';
   const totalSecs = isShort ? 30 * 60 : isReset ? 34 * 3600 : 10 * 3600;
   hosRestSecondsLeft = totalSecs;
+  hosRestEndTime = Date.now() + totalSecs * 1000;
 
   const overlay = document.getElementById('restAlarmOverlay');
   document.getElementById('restAlarmEmoji').textContent = isReset ? '🔄' : '😴';
@@ -9936,9 +10265,21 @@ function triggerRestStartAlarm(seg) {
     ? 'Reset de 34 horas para recuperar ciclo'
     : 'Descanso obligatorio de 10 horas (DOT HOS)';
 
+  // Show manual rest button in plan tab only for 10-hour mandatory rest
+  if (!isShort && !isReset) {
+    const btn = document.getElementById('manualRestBtn');
+    if (btn) btn.style.display = '';
+  }
+
   overlay.classList.add('show');
   playAlertSound();
   vibrate([500,200,500,200,500,500,500]);
+
+  // Mostrar pregunta de notificación solo en descanso de 10h o reset
+  const askPanel  = document.getElementById('restNotifAsk');
+  const notifPanel = document.getElementById('restNotifPanel');
+  if (askPanel)  askPanel.classList.toggle('active', !isShort);
+  if (notifPanel) notifPanel.classList.remove('active'); // ocultar hasta que acepte
 
   // Start countdown
   if (hosRestCountdown) clearInterval(hosRestCountdown);
@@ -9946,6 +10287,7 @@ function triggerRestStartAlarm(seg) {
   hosRestCountdown = setInterval(() => {
     hosRestSecondsLeft--;
     updateRestTimer(hosRestSecondsLeft);
+    _updateRestNotifPills();
     if (hosRestSecondsLeft <= 0) {
       clearInterval(hosRestCountdown);
       hosRestCountdown = null;
@@ -9957,9 +10299,10 @@ function triggerRestEndAlarm(seg) {
   if (hosRestEndAlarmFired) return;
   hosRestEndAlarmFired = true;
   hosRestActive = false;
+  hosRestEndTime = null;
 
-  // Dismiss the rest overlay if showing
   document.getElementById('restAlarmOverlay').classList.remove('show');
+  document.getElementById('manualRestBtn').style.display = 'none'; // hide after rest completes
 
   const isShort = seg.type === 'break30';
   const isReset = seg.type === 'reset';
@@ -9974,23 +10317,197 @@ function triggerRestEndAlarm(seg) {
   );
   playAlertSound();
   vibrate([200, 100, 200]);
+
+  // Notificación push de fin de descanso
+  if (!isShort) {
+    _sendRestPushNotification(
+      isReset ? '🔄 ¡Ciclo renovado! — HOS Tracker' : '✅ ¡Ya puedes manejar! — HOS Tracker',
+      isReset ? 'Tus 34 horas se completaron. Ciclo de 70h reiniciado.' : 'Tus 10 horas de descanso se completaron. ¡Buen viaje!',
+      'rest-done'
+    );
+  }
 }
 
 function updateRestTimer(secs) {
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60);
   const s = secs % 60;
-  let txt = '';
-  if (h > 0) txt = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  else txt = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  document.getElementById('restAlarmTimer').textContent = txt;
+  document.getElementById('restAlarmTimer').textContent =
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
 function dismissRestAlarm() {
   document.getElementById('restAlarmOverlay').classList.remove('show');
   hosRestActive = false;
   if (hosRestCountdown) { clearInterval(hosRestCountdown); hosRestCountdown = null; }
+  // Las notificaciones siguen activas en background (no se cancelan al cerrar el overlay)
 }
+
+/* ── Descanso manual de 10 horas ── */
+function startManualRest10h() {
+  const seg = { type: 'rest', start: new Date(), end: new Date(Date.now() + 10 * 3600000) };
+  triggerRestStartAlarm(seg);
+  // Ocultar el botón mientras el descanso está activo
+  document.getElementById('manualRestBtn').style.display = 'none';
+}
+
+/* ── Programar notificaciones push para el descanso ── */
+function _scheduleRestNotifications(endTime, isReset) {
+  if (!hosRestNotifEnabled) return;
+  if (Notification.permission !== 'granted') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') _scheduleRestNotifications(endTime, isReset);
+    });
+    return;
+  }
+
+  const label = isReset ? '34 horas' : '10 horas';
+  const alerts = [
+    { tag: 'rest-1h',   delayMs: endTime - Date.now() - 3600000,
+      title: `⏰ Falta 1 hora — HOS Tracker`,
+      body:  `En 1 hora se completan tus ${label} de descanso. Prepárate.` },
+    { tag: 'rest-30min', delayMs: endTime - Date.now() - 1800000,
+      title: `⏰ Faltan 30 minutos — HOS Tracker`,
+      body:  `Casi listo. En 30 min podrás volver al volante.` },
+    { tag: 'rest-10min', delayMs: endTime - Date.now() - 600000,
+      title: `⏰ Faltan 10 minutos — HOS Tracker`,
+      body:  `¡10 min para poder manejar! Prepara el camión.` },
+  ];
+
+  const localIds = { 'rest-1h': 3001, 'rest-30min': 3002, 'rest-10min': 3003, 'rest-done': 3004 };
+  alerts.forEach(a => {
+    if (a.delayMs <= 0) return;
+    // Timer en la app (funciona con la app abierta o en background)
+    const t = setTimeout(() => _sendRestPushNotification(a.title, a.body, a.tag), a.delayMs);
+    hosRestTimers.push(t);
+    // Service Worker (background, puede morir si el SO cierra la app)
+    if (window._swReg && window._swReg.active) {
+      window._swReg.active.postMessage({
+        type: 'SCHEDULE_NOTIFICATION', delay: a.delayMs,
+        title: a.title, body: a.body, tag: a.tag, icon: './icon-192.png'
+      });
+    }
+    // Local Notifications nativas (persisten aunque la app esté completamente cerrada)
+    if (window.scheduleLocalHOSAlert) {
+      window.scheduleLocalHOSAlert(a.delayMs, a.title, a.body, localIds[a.tag] || 3000);
+    }
+  });
+
+  // Guardar en localStorage para sobrevivir recargas
+  localStorage.setItem('hos_rest_notifs', JSON.stringify({
+    endTime, isReset,
+    scheduled: alerts.filter(a => a.delayMs > 0).map(a => ({
+      tag: a.tag, fireAt: Date.now() + a.delayMs, title: a.title, body: a.body
+    }))
+  }));
+
+  _updateRestNotifPills();
+}
+
+function _sendRestPushNotification(title, body, tag) {
+  const reg = window._swReg;
+  if (reg && typeof reg.showNotification === 'function') {
+    reg.showNotification(title, {
+      body, icon: './icon-192.png', badge: './icon-192.png', tag,
+      vibrate: [300, 100, 300, 100, 300],
+      requireInteraction: tag === 'rest-done',
+      data: { url: '/' }
+    });
+  } else if (Notification.permission === 'granted') {
+    new Notification(title, { body, icon: './icon-192.png', tag });
+  }
+  // Marcar pill como disparada
+  const pillMap = { 'rest-1h':'rnPill1h','rest-30min':'rnPill30m','rest-10min':'rnPill10m','rest-done':'rnPillDone' };
+  const pill = document.getElementById(pillMap[tag]);
+  if (pill) pill.classList.add('fired');
+}
+
+function _updateRestNotifPills() {
+  if (!hosRestEndTime) return;
+  const remaining = hosRestSecondsLeft;
+  const p1h   = document.getElementById('rnPill1h');
+  const p30m  = document.getElementById('rnPill30m');
+  const p10m  = document.getElementById('rnPill10m');
+  const hLeft = Math.floor(remaining / 3600);
+  const mLeft = Math.floor((remaining % 3600) / 60);
+  if (p1h)  p1h.textContent  = remaining > 3600  ? `–1h (a las ${_fmtAlarmTime(hosRestEndTime - 3600000)}) ⏰`  : (p1h.classList.add('fired'), p1h.textContent);
+  if (p30m) p30m.textContent = remaining > 1800  ? `–30min (${_fmtAlarmTime(hosRestEndTime - 1800000)}) ⏰` : (p30m.classList.add('fired'), p30m.textContent);
+  if (p10m) p10m.textContent = remaining > 600   ? `–10min (${_fmtAlarmTime(hosRestEndTime - 600000)}) ⏰`  : (p10m.classList.add('fired'), p10m.textContent);
+}
+
+function _fmtAlarmTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function acceptRestNotifications() {
+  // Ocultar pregunta
+  const ask = document.getElementById('restNotifAsk');
+  if (ask) ask.classList.remove('active');
+
+  const proceed = () => {
+    hosRestNotifEnabled = true;
+    _scheduleRestNotifications(hosRestEndTime, false);
+    // Mostrar panel de alarmas confirmadas
+    const panel = document.getElementById('restNotifPanel');
+    if (panel) panel.classList.add('active');
+    _updateRestNotifPills();
+    showToast('success','🔔','Alarmas activadas','Te avisaremos antes de que terminen las 10 horas',3000);
+  };
+
+  if (Notification.permission === 'granted') {
+    proceed();
+  } else if (Notification.permission === 'default') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') proceed();
+      else showToast('warning','🔕','Permiso denegado','Activa las notificaciones en la configuración del teléfono',4000);
+    });
+  } else {
+    showToast('warning','🔕','Notificaciones bloqueadas','Activa las notificaciones en la configuración del teléfono para recibir alarmas',5000);
+  }
+}
+
+function declineRestNotifications() {
+  const ask = document.getElementById('restNotifAsk');
+  if (ask) ask.classList.remove('active');
+  hosRestNotifEnabled = false;
+}
+
+function toggleRestNotifications() {
+  // Desde el panel de alarmas confirmadas: cancelar notificaciones
+  hosRestNotifEnabled = false;
+  if (window._swReg && window._swReg.active) {
+    window._swReg.active.postMessage({ type: 'CANCEL_REST_NOTIFICATIONS' });
+  }
+  // Cancelar notificaciones locales nativas (persisten con app cerrada)
+  if (window.cancelLocalHOSAlert) {
+    [3001, 3002, 3003, 3004].forEach(id => window.cancelLocalHOSAlert(id));
+  }
+  localStorage.removeItem('hos_rest_notifs');
+  const panel = document.getElementById('restNotifPanel');
+  if (panel) panel.classList.remove('active');
+  // Volver a mostrar la pregunta por si quiere reactivar
+  const ask = document.getElementById('restNotifAsk');
+  if (ask && hosRestEndTime) ask.classList.add('active');
+  showToast('info','🔕','Alarmas canceladas','No recibirás notificaciones de descanso',3000);
+}
+
+/* ── Al iniciar la app, restaurar notificaciones pendientes desde localStorage ── */
+(function _restoreRestNotifications() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('hos_rest_notifs') || 'null');
+    if (!saved || !saved.endTime) return;
+    const now = Date.now();
+    if (saved.endTime <= now) { localStorage.removeItem('hos_rest_notifs'); return; }
+    // Hay un descanso activo — reprogramar las notificaciones que falten
+    (saved.scheduled || []).forEach(n => {
+      const delay = n.fireAt - now;
+      if (delay <= 0) return;
+      const t = setTimeout(() => _sendRestPushNotification(n.title, n.body, n.tag), delay);
+      hosRestTimers.push(t);
+    });
+  } catch(e) {}
+})();
 
 /* ════════════════════════════════════════════════════════════
    🚦  SPEED LIMITS BY STATE (US)
@@ -10017,9 +10534,11 @@ const STATE_SPEED_LIMITS = {
 };
 
 let currentStateCode   = '';
-let speedLimitActive   = localStorage.getItem('hos_speedlimit') !== 'false';
-let speedLimitExceeded = false;
-let speedToastTimer    = null;
+let speedLimitActive     = localStorage.getItem('hos_speedlimit') !== 'false';
+let speedLimitExceeded   = false;
+let speedToastTimer      = null;
+let policeAlertCooldown  = false;
+let policeAlertTimer     = null;
 let lastStateCheck     = 0;
 let lastRoadSpeedCheck = 0;
 let lastBorderWarnState = '';
@@ -10040,11 +10559,15 @@ function toggleSpeedLimit(btn) {
 function showStateBanner(name) {
   const el = document.getElementById('stateBanner');
   const nm = document.getElementById('stateBannerName');
+  const gr = document.getElementById('stateBannerGreeting');
   if (!el || !nm) return;
+  const userName = (typeof currentUser !== 'undefined' && currentUser?.name) ||
+                   (typeof driverProfile !== 'undefined' && driverProfile?.name) || '';
+  if (gr) gr.textContent = userName ? `¡Hola, ${userName}!` : '';
   nm.textContent = name;
   el.classList.add('show');
   if (stateBannerTimer) clearTimeout(stateBannerTimer);
-  stateBannerTimer = setTimeout(() => el.classList.remove('show'), 5000);
+  stateBannerTimer = setTimeout(() => el.classList.remove('show'), 6000);
   vibrate([150, 60, 150, 60, 300]);
 }
 
@@ -10086,8 +10609,15 @@ async function checkStateBorderAhead(lat, lon, heading) {
     const code = stateMap[stateRaw] || stateRaw.slice(0,2).toUpperCase();
     if (code && code !== currentStateCode && code !== lastBorderWarnState) {
       lastBorderWarnState = code;
-      showToast('info', '🚧', `En 5 millas: ${stateRaw || code}`,
-        lang === 'es' ? `Entrando al estado de ${stateRaw || code}` : `Entering ${stateRaw || code}`, 8000);
+      const _uName = (typeof currentUser !== 'undefined' && currentUser?.name) ||
+                     (typeof driverProfile !== 'undefined' && driverProfile?.name) || '';
+      const _stName = stateRaw || code;
+      showToast('info', '🚧',
+        `En 5 millas: ${_stName}`,
+        _uName
+          ? `${_uName}, en 5 millas entrarás a ${_stName}`
+          : `Entrando al estado de ${_stName}`,
+        8000);
     }
   } catch(e) {}
 }
@@ -10261,6 +10791,30 @@ function hideMapSpeedSign() {
   document.getElementById('mapSpeedSign')?.classList.remove('visible');
 }
 
+function showPoliceAlert(gpsSpeed, limit) {
+  if (policeAlertCooldown) return;
+  policeAlertCooldown = true;
+  const el = document.getElementById('policeAlert');
+  document.getElementById('paSpeedTxt').textContent  = `${Math.round(gpsSpeed)} mph`;
+  document.getElementById('paLimitTxt').textContent  = `Límite: ${limit} mph`;
+  el.classList.add('show');
+  vibrate([300,100,300,100,600]);
+  // Auto-dismiss after 8 seconds
+  if (policeAlertTimer) clearTimeout(policeAlertTimer);
+  policeAlertTimer = setTimeout(() => dismissPoliceAlert(false), 8000);
+}
+function dismissPoliceAlert(resetCooldown = true) {
+  document.getElementById('policeAlert').classList.remove('show');
+  if (policeAlertTimer) { clearTimeout(policeAlertTimer); policeAlertTimer = null; }
+  // Cooldown: don't re-show for 90 seconds after dismiss
+  if (resetCooldown) {
+    setTimeout(() => { policeAlertCooldown = false; }, 90000);
+  } else {
+    // Auto-dismissed — shorter cooldown (30s) so it can show again sooner
+    setTimeout(() => { policeAlertCooldown = false; }, 30000);
+  }
+}
+
 function checkSpeedLimit(gpsSpeed) {
   if (!speedLimitActive || !currentTruckSpeedLimit) return;
   const limit   = currentTruckSpeedLimit;
@@ -10269,12 +10823,20 @@ function checkSpeedLimit(gpsSpeed) {
   const toast   = document.getElementById('speedToast');
   const overLimit = gpsSpeed > limit + 5;
 
+  // Police alert: > 5 mph over the limit
+  if (gpsSpeed > limit + 5) showPoliceAlert(gpsSpeed, limit);
+
   if (sign)    sign.classList.toggle('over-limit', overLimit);
   if (mssSign) mssSign.classList.toggle('warn', overLimit);
 
   if (overLimit) {
     if (!speedLimitExceeded) {
       speedLimitExceeded = true;
+      // Rebuild truck marker immediately to show red border
+      if (fmGpsMarker) {
+        const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
+        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [28, 28], iconSize: [56, 56] }));
+      }
       toast.classList.add('show');
       toast.textContent = `🚨 ${gpsSpeed} mph — Límite: ${limit} mph`;
       vibrate([200,100,200]);
@@ -10286,7 +10848,14 @@ function checkSpeedLimit(gpsSpeed) {
   } else {
     sign?.classList.remove('over-limit');
     mssSign?.classList.remove('warn');
-    speedLimitExceeded = false;
+    if (speedLimitExceeded) {
+      speedLimitExceeded = false;
+      // Rebuild truck marker to restore blue border
+      if (fmGpsMarker) {
+        const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
+        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [28, 28], iconSize: [56, 56] }));
+      }
+    }
   }
 }
 
@@ -10856,8 +11425,8 @@ function applySpeedometerPos() {
   // Default position: left stack, below miles remaining widget
   const safeTop  = (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sl-y')) || 0);
   const defaultX = 12 + (window.safeAreaLeft || 0);
-  // 44(sos) + 8(gap) + 52(weather) + 8(gap) + 56(miles) + 8(gap) = 176
-  const defaultY = 12 + (window.safeAreaTop || 0) + 176;
+  // 52(weather) + 8(gap) + 56(miles) + 8(gap) = 124 — SOS ahora está en panel derecho
+  const defaultY = 12 + (window.safeAreaTop || 0) + 100;
 
   if (speedometerPos && typeof speedometerPos.x === 'number' && typeof speedometerPos.y === 'number') {
     w.style.cssText += ';position:fixed !important;left:' + speedometerPos.x + 'px !important;top:' + speedometerPos.y + 'px !important;right:auto !important;bottom:auto !important;transform:none !important';
@@ -12150,7 +12719,35 @@ async function shareRoute() {
    ============================================================ */
 let fmMapInst    = null;
 let fmMarkers    = [];
+let fmStateBoundaryLayer = null;
+
+async function loadStateBoundaries() {
+  if (fmStateBoundaryLayer || !fmMapInst) return;
+  try {
+    let data;
+    const cached = sessionStorage.getItem('hos_state_boundaries');
+    if (cached) {
+      data = JSON.parse(cached);
+    } else {
+      const res = await fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json');
+      data = await res.json();
+      try { sessionStorage.setItem('hos_state_boundaries', JSON.stringify(data)); } catch {}
+    }
+    fmStateBoundaryLayer = L.geoJSON(data, {
+      style: {
+        color: '#a78bfa',
+        weight: 1.8,
+        opacity: 0.6,
+        fill: false
+      },
+      interactive: false
+    }).addTo(fmMapInst);
+    fmStateBoundaryLayer.bringToBack();
+  } catch(e) { console.warn('State boundaries failed to load:', e); }
+}
 let fmLayer      = null;
+let fmGlowLayer  = null;  // route glow polyline
+let fmCasingLayer= null;  // route casing polyline
 let fmGpsMarker  = null;  // the animated truck
 let fmAccMarker  = null;  // accuracy circle
 let fmWatchId    = null;
@@ -12169,16 +12766,19 @@ let fmLastGeocode = 0;
 // Auto-follow & zoom
 let fmFollowing     = true;   // whether map auto-follows truck
 let fmUserDragged   = false;  // user manually moved map
+let fmUserRotated   = false;  // user manually rotated map (pauses auto-bearing)
+let fmUserZoomed    = false;  // user manually pinched zoom (pauses auto-zoom)
 let fmCurrentZoom   = 15;     // zoom level when following
 let fmLastHeading   = null;   // last GPS heading for truck rotation
 let fmPrevLat       = null;   // for calculating heading when GPS doesn't provide it
 let fmPrevLon       = null;
+let fmLastStablePos = null;   // last accepted position (jitter filter)
 
 // POI layers
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
 const fmPoiGroups = {};  // LayerGroup per type for batch rendering
 // truck/rest/scale start OFF so first tap loads them on demand
-const fmPoiActive = { scale: false, truck: false, rest: false, reports: true, restrict: true, parking: false };
+const fmPoiActive = { scale: true, truck: true, rest: false, reports: true, restrict: true, parking: false };
 let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false };
 
 // Community reports (stored in localStorage, shared within session)
@@ -12242,12 +12842,15 @@ function openFullMapScreen() {
       fadeAnimation: true,
       rotate: true,          // leaflet-rotate plugin
       bearing: 0,
-      touchRotate: false,    // disable touch-rotate gesture (GPS drives it)
+      touchRotate: true,     // allow manual two-finger rotation
       rotateControl: false
     }).setView([39.5, -98.35], 4);
 
     const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
     fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
+
+    // Load US state boundary lines (always visible)
+    loadStateBoundaries();
 
     // Detect when user drags map — pause auto-follow (resume after 8s)
     fmMapInst.on('dragstart', () => {
@@ -12267,6 +12870,24 @@ function openFullMapScreen() {
       if (fb) fb.classList.remove('active');
       _scheduleAutoResumeFollow();
     });
+    // Save user's manual zoom so auto-follow doesn't override it
+    fmMapInst.on('zoomend', () => {
+      if (window._fmProgrammaticMove) return;
+      fmUserZoomed = true;
+      fmCurrentZoom = fmMapInst.getZoom();
+    });
+
+    // Detect when user manually rotates — pause auto-bearing for 20s
+    // Use _fmProgrammaticBearing to skip GPS-triggered rotatestart events
+    fmMapInst.on('rotatestart', () => {
+      if (window._fmProgrammaticBearing) return; // GPS rotation — ignore
+      fmUserRotated = true;
+      if (_autoResumeRotationTimer) clearTimeout(_autoResumeRotationTimer);
+    });
+    fmMapInst.on('rotateend', () => {
+      if (window._fmProgrammaticBearing) return;
+      _scheduleAutoResumeRotation();
+    });
 
     // Center button — re-enable follow and center on last GPS fix
     const centerBtn = document.getElementById('btnCenter');
@@ -12276,6 +12897,9 @@ function openFullMapScreen() {
         if (!window.lastFixFm) return;
         fmFollowing = true;
         fmUserDragged = false;
+        fmUserRotated = false;
+        fmUserZoomed = false;
+        if (_autoResumeRotationTimer) { clearTimeout(_autoResumeRotationTimer); _autoResumeRotationTimer = null; }
         const fb = document.getElementById('fmFollowBtn');
         if (fb) fb.classList.add('active');
         const lf = window.lastFixFm;
@@ -12330,9 +12954,11 @@ function fmRedrawRoute(coords) {
   fmLastStepsHash = showInterstateShields ? '' : 'disabled'; // only re-add if shields on
 
   // ── Glow exterior (muy grueso, muy transparente)
-  const glow   = L.polyline(routeCoords,{ color:'#10b981', weight:22, opacity:0.11, interactive:false }).addTo(fmMapInst);
+  fmGlowLayer   = L.polyline(routeCoords,{ color:'#10b981', weight:22, opacity:0.11, interactive:false }).addTo(fmMapInst);
+  const glow    = fmGlowLayer;
   // ── Casing oscuro (borde de la ruta)
-  const casing = L.polyline(routeCoords,{ color:'#064e3b', weight:9,  opacity:0.60, interactive:false }).addTo(fmMapInst);
+  fmCasingLayer = L.polyline(routeCoords,{ color:'#064e3b', weight:9,  opacity:0.60, interactive:false }).addTo(fmMapInst);
+  const casing  = fmCasingLayer;
   // ── Ruta principal brillante
   fmLayer = L.polyline(routeCoords,{ color:'#10b981', weight:5, opacity:0.97 }).addTo(fmMapInst);
 
@@ -12392,42 +13018,66 @@ const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 let fmTruckEl = null;  // the inner div element for rotation
 
 function buildTruckIconHTML(heading, isMoving) {
-  const user = typeof currentUser !== 'undefined' ? currentUser : null;
   const overLimit = typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded;
 
-  // Glow color: red if over limit, green if moving, gray if stopped
+  // Glow: siempre azul (parado=suave, movimiento=brillante), rojo si sobrepasa límite
   let glowAnim = 'none';
-  let borderColor = '#6b7280';
-  if (isMoving) {
-    if (overLimit) {
-      glowAnim = 'glowRed 1.2s ease-in-out infinite';
-      borderColor = '#ef4444';
+  let borderColor = '#3b82f6'; // siempre azul
+  let extraShadow = '0 0 0 3px rgba(59,130,246,0.20), 0 0 10px rgba(59,130,246,0.12)'; // brillo suave parado
+  if (isMoving && overLimit) {
+    glowAnim = 'glowRed 1.2s ease-in-out infinite';
+    borderColor = '#ef4444';
+    extraShadow = '';
+  } else if (isMoving) {
+    glowAnim = 'glowGreen 1.6s ease-in-out infinite';
+    extraShadow = '';
+  }
+
+  // Obtener foto del usuario de todas las fuentes posibles
+  const user = typeof currentUser !== 'undefined' ? currentUser : null;
+  const photoData =
+    (user && user.photoData) ||
+    (typeof truckUploadData !== 'undefined' && typeof truckIconMode !== 'undefined' && truckIconMode && truckIconMode.startsWith('upload:') ? truckUploadData : null) ||
+    (typeof driverProfile !== 'undefined' && driverProfile && driverProfile.photo ? driverProfile.photo : null) ||
+    localStorage.getItem('hos_profile_photo') ||
+    null;
+
+  let inner;
+  if (photoData) {
+    inner = `<img src="${photoData}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;display:block">`;
+  } else {
+    const name = (user && user.name) ||
+      (typeof driverProfile !== 'undefined' && driverProfile && driverProfile.name) || '';
+    if (name) {
+      const initials = name.trim().split(/\s+/).map(w => w[0] && w[0].toUpperCase()).filter(Boolean).slice(0,2).join('');
+      inner = `<span style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.5px">${initials||'?'}</span>`;
     } else {
-      glowAnim = 'glowGreen 1.6s ease-in-out infinite';
-      borderColor = '#3b82f6';
+      inner = `<span style="font-size:24px;line-height:50px">🚛</span>`;
     }
   }
 
-  // Photo or avatar inside circle
-  let inner = '';
-  if (user && user.photoData) {
-    inner = `<img src="${user.photoData}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;display:block" />`;
-  } else if (user && user.avatar) {
-    inner = `<span style="font-size:26px;line-height:50px">${user.avatar}</span>`;
-  } else {
-    inner = `<span style="font-size:24px;line-height:50px">🚛</span>`;
-  }
-
   return `
-    <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
-         style="display:flex;align-items:center;justify-content:center;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none">
+      <!-- Arrow outside truckWrapper: rotates with map bearing → always points direction of travel -->
       <div style="
-        width:50px;height:50px;border-radius:50%;
-        border:3px solid ${borderColor};
-        overflow:hidden;display:flex;align-items:center;justify-content:center;
-        background:rgba(15,23,42,.95);
-        animation:${glowAnim};
-      ">${inner}</div>
+        width:0;height:0;
+        border-left:9px solid transparent;
+        border-right:9px solid transparent;
+        border-bottom:16px solid ${borderColor};
+        filter:drop-shadow(0 2px 6px rgba(0,0,0,.55));
+        flex-shrink:0;
+      "></div>
+      <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
+           style="display:flex;align-items:center;justify-content:center;">
+        <div style="
+          width:50px;height:50px;border-radius:50%;
+          border:3px solid ${borderColor};
+          overflow:hidden;display:flex;align-items:center;justify-content:center;
+          background:rgba(15,23,42,.95);
+          animation:${glowAnim};
+          box-shadow:${extraShadow};
+        ">${inner}</div>
+      </div>
     </div>`;
 }
 
@@ -12481,7 +13131,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   if (!truckFrom) truckFrom = { lat, lon, heading: heading ?? 0 };
 
   const html = buildTruckIconHTML(heading, isMoving);
-  const icon = L.divIcon({ className: '', html, iconAnchor: [28, 28], iconSize: [56, 56] });
+  const icon = L.divIcon({ className: '', html, iconAnchor: [28, 44], iconSize: [56, 72] });
   if (!fmGpsMarker) {
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
@@ -12717,19 +13367,12 @@ function reopenMap() {
 }
 
 
-let fmHeadingUpMode = true; // heading-up on by default while tracking
+const fmHeadingUpMode = true; // always heading-up — locked
 
 function toggleHeadingUp() {
-  fmHeadingUpMode = !fmHeadingUpMode;
-  _updateCompassBtn();
-  // If switching to north-up, immediately reset bearing
-  if (!fmHeadingUpMode && fmMapInst && typeof fmMapInst.setBearing === 'function') {
-    fmMapInst.setBearing(0);
-  }
-  showToast('info', fmHeadingUpMode ? '🧭' : '🔼',
-    fmHeadingUpMode ? 'Vista: Dirección de viaje' : 'Vista: Norte arriba',
-    fmHeadingUpMode ? 'El mapa gira con la dirección del camión' : 'El mapa apunta al norte siempre',
-    2500);
+  // Heading-up is permanently locked; just remind the user
+  showToast('info', '🧭', 'Vista: Dirección de viaje',
+    'El mapa siempre apunta en la dirección de viaje', 2000);
 }
 function _updateCompassBtn() {
   const btn = document.getElementById('compassBtn');
@@ -12759,27 +13402,22 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
     if (offsetFrac !== undefined) {
       offsetPx = size.y * offsetFrac;
     } else {
-      // Measure the visible HUD height (it's 0 when hidden via translateY(100%))
+      // Place truck just above the HUD circles
       const hudEl = document.getElementById('fmHud');
-      const hudH  = (hudEl && hudEl.style.transform !== 'translateY(100%)')
-                    ? (hudEl.offsetHeight || 0) : 0;
-      // Place truck at 65% from top of visible area = shows ~65% road ahead
-      // offsetPx = target_truck_screen_y - screen_center_y
-      // target_truck_screen_y = center of screen
-      offsetPx = 0;
+      const hudH  = (hudEl && hudEl.offsetHeight) ? hudEl.offsetHeight : 130;
+      const truckTargetY = size.y - hudH - 20;  // 20px buffer above HUD
+      offsetPx = truckTargetY - size.y / 2;
+      offsetPx = Math.max(40, Math.min(offsetPx, size.y * 0.42)); // clamp
     }
-    // pixels to offset the map center (negative = center south of truck = truck above center)
-
-    // Bearing in radians (0 = north, 90 = east …)
-    const bear = (fmHeadingUpMode && heading != null && heading >= 0) ? heading : 0;
-    const rad  = bear * Math.PI / 180;
 
     // Project truck position to Mercator pixel space at current zoom
     const truckPx = fmMapInst.project([lat, lon], zoom);
 
-    // Shift the center AHEAD (in the heading direction):
-    //   Px.x += offsetPx * sin(bearing)   → east component
-    //   Px.y -= offsetPx * cos(bearing)   → north component (Y flipped in pixels)
+    // In heading-up mode the map is rotated by setBearing so the heading
+    // direction is always "up" on screen. We only need a pure-Y shift (north)
+    // to put the truck in the lower portion — the visual rotation handles the rest.
+    const bear = (fmHeadingUpMode && heading != null && heading >= 0) ? heading : 0;
+    const rad  = bear * Math.PI / 180;
     const centerPx = L.point(
       truckPx.x + offsetPx * Math.sin(rad),
       truckPx.y - offsetPx * Math.cos(rad)
@@ -13004,6 +13642,12 @@ function _scheduleAutoResumeFollow() {
   }, 8000); // reanuda seguimiento 8s después de que el usuario deja de tocar el mapa
 }
 
+// ── Auto-resume bearing after user manually rotates ───────────────────────
+let _autoResumeRotationTimer = null;
+function _scheduleAutoResumeRotation() {
+  // No auto-snap — user rotation stays until they tap the center/follow button
+}
+
 // ── Báscula (Weigh Station) — notificar 5 millas antes ────────────────────
 const _weighNotified = new Set();
 function checkWeighStations(lat, lon) {
@@ -13126,6 +13770,8 @@ function fmStartTracking() {
   const initCycleHours = Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 70);
   const initDriveMax = Math.min(11, initCycleHours);
   updateDriveHoursWidget(initDriveMax, initDriveMax);
+  // Mostrar dashboard HOS en lugar del mapa completo
+  showHosDashboard();
   // Show speed sign immediately — will update with real state on first GPS fix
   if (speedLimitActive) {
     const initSign = document.getElementById('mapSpeedSign');
@@ -13195,33 +13841,49 @@ function fmStartTracking() {
     fmPrevLat = snapLat; fmPrevLon = snapLon;
     fmLastHeading = heading;
 
+    // ── GPS jitter filter: ignore tiny position changes when stationary ────
+    if (!isMoving && fmLastStablePos) {
+      const dLat = (snapLat - fmLastStablePos.lat) * Math.PI / 180;
+      const dLon = (snapLon - fmLastStablePos.lon) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(fmLastStablePos.lat * Math.PI/180) * Math.cos(snapLat * Math.PI/180) * Math.sin(dLon/2)**2;
+      const distM = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      if (distM < 10) return; // menos de 10m parado — ignorar actualización
+    }
+    fmLastStablePos = { lat: snapLat, lon: snapLon };
+
     // ── Speed limit check (must run before truck marker so color is correct) ──
     checkSpeedLimit(gpsSpeed);
 
     // ── Update truck marker at snapped on-road position ─────
     fmUpdateTruckMarker(snapLat, snapLon, heading, isMoving);
+    // Actualizar mini mapa del dashboard si está visible
+    updateHosDashMinimap(snapLat, snapLon);
 
     // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
-      if (isMoving) {
-        fmCurrentZoom = gpsSpeed > 50 ? 13 : gpsSpeed > 25 ? 14 : 15;
-      } else {
-        fmCurrentZoom = 16;
+      if (!fmUserZoomed) {
+        if (isMoving) {
+          fmCurrentZoom = gpsSpeed > 40 ? 9 : gpsSpeed > 25 ? 13 : 15;
+        } else {
+          fmCurrentZoom = 16;
+        }
       }
       window._fmProgrammaticMove = true;
-      // Rotate BEFORE pan so the bearing event fires while flag is set
-      if (typeof fmMapInst.setBearing === 'function') {
+      // Rotate BEFORE pan — flag as programmatic so rotatestart doesn't
+      // set fmUserRotated and block future GPS-driven rotations
+      if (!fmUserRotated && typeof fmMapInst.setBearing === 'function') {
+        window._fmProgrammaticBearing = true;
         if (fmHeadingUpMode && heading != null && heading >= 0) {
           fmMapInst.setBearing(heading);
         } else if (!fmHeadingUpMode) {
           fmMapInst.setBearing(0);
         }
+        setTimeout(() => { window._fmProgrammaticBearing = false; }, 300);
       }
       const followCenter = calcFollowCenter(snapLat, snapLon, heading);
-      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.8, noMoveStart: true });
-      // Keep flag true until animation fully settles (longer than GPS poll interval)
+      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.5, noMoveStart: true });
       if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
-      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
+      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 800);
     }
 
     
@@ -13438,18 +14100,21 @@ function fmStartTracking() {
       if (moving) { fmPrevLat = snap.lat; fmPrevLon = snap.lon; }
       fmLastHeading = finalHdg;
       fmUpdateTruckMarker(snap.lat, snap.lon, finalHdg, moving);
-      if (fmFollowing && fmMapInst) {
+      // Skip if watchPosition already triggered a setView recently (avoid flicker)
+      if (fmFollowing && fmMapInst && !window._fmProgrammaticMove) {
         window._fmProgrammaticMove = true;
-        if (typeof fmMapInst.setBearing === 'function') {
+        if (!fmUserRotated && typeof fmMapInst.setBearing === 'function') {
+          window._fmProgrammaticBearing = true;
           if (fmHeadingUpMode && finalHdg != null && finalHdg >= 0) fmMapInst.setBearing(finalHdg);
           else if (!fmHeadingUpMode) fmMapInst.setBearing(0);
+          setTimeout(() => { window._fmProgrammaticBearing = false; }, 300);
         }
         const ctr = moving
           ? calcFollowCenter(snap.lat, snap.lon, finalHdg)
           : [snap.lat, snap.lon];
-        fmMapInst.setView(ctr, fmCurrentZoom, { animate: true, duration: 0.6, noMoveStart: true });
+        fmMapInst.setView(ctr, fmCurrentZoom, { animate: false, noMoveStart: true });
         if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
-        window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
+        window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1000);
       }
       fmCurrentSpeed = rawSpd != null && rawSpd >= 0 ? Math.round(rawSpd * 2.237) : 0;
       fmVehicleMoving = moving;
@@ -13475,10 +14140,8 @@ function fmStopTracking() {
   // Stop smooth animation
   if (truckAnimFrame) { cancelAnimationFrame(truckAnimFrame); truckAnimFrame = null; }
   truckFrom = null; truckTo = null;
-  // Reset map to north-up when stopped
-  if (fmMapInst && typeof fmMapInst.setBearing === 'function') {
-    fmMapInst.setBearing(0);
-  }
+  // Keep last heading when stopped (do NOT reset to north)
+  // The bearing will update again once the truck starts moving
   hideSpeedometer();
   hideDriveHoursWidget();
   // Hide miles remaining widget
@@ -13506,6 +14169,348 @@ function fmStopTracking() {
   document.getElementById('fmLiveDot').style.boxShadow = 'none';
   document.getElementById('fmLiveDot').style.animation = 'none';
   if (fmAccMarker) { try { fmMapInst.removeLayer(fmAccMarker); } catch {} fmAccMarker = null; }
+  hideHosDashboard();
+}
+
+/* ════════════════════════════════════════════════════════════
+   📊  HOS DASHBOARD — pantalla de estado al iniciar rastreo
+════════════════════════════════════════════════════════════ */
+let hosMinimapInst    = null;  // instancia Leaflet del mini mapa
+let hosMinimapTruck   = null;  // marcador del camión en mini mapa
+let hosMinimapRoute   = null;  // polyline de ruta en mini mapa
+let hosMinimapGlow    = null;  // polyline glow de ruta en mini mapa
+let dashSpeedOver     = false; // true cuando el camión supera el límite de velocidad
+let _dashCurrentStatus = 'driving';
+
+function showHosDashboard() {
+  const screen = document.getElementById('hosDashScreen');
+  if (!screen) return;
+  screen.style.display = 'flex';
+
+  // Ocultar widgets flotantes que tienen z-index mayor al dashboard
+  ['milesRemainingWidget','driveHoursWidget','speedometerWidget',
+   'fuelWidget','speedLimitWidget','mapSpeedSign','incidentPanel',
+   'breakTimerOverlay','breakViolationBanner'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.setProperty('display','none','important');
+  });
+
+  // Llenar datos del perfil
+  const name  = (typeof driverProfile !== 'undefined' && driverProfile?.name) || 'Driver';
+  const photo = (typeof driverProfile !== 'undefined' && driverProfile?.photo) || null;
+  const emoji = (typeof TRUCK_EMOJIS !== 'undefined' && driverProfile?.truckType)
+                ? (TRUCK_EMOJIS[driverProfile.truckType] || '🚛') : '🚛';
+
+  const nameEl  = document.getElementById('dashProfileName');
+  const photoEl = document.getElementById('dashProfilePhoto');
+  if (nameEl)  nameEl.textContent = name;
+  if (photoEl) {
+    if (photo) {
+      photoEl.innerHTML = `<img src="${photo}" alt="foto" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`;
+    } else {
+      photoEl.textContent = emoji;
+    }
+  }
+
+  // Estado inicial: Conduciendo
+  setDashStatus('driving');
+
+  // Iniciar mini mapa después de un tick para que el div sea visible
+  setTimeout(initHosMinimap, 120);
+}
+
+function hideHosDashboard() {
+  const screen = document.getElementById('hosDashScreen');
+  if (screen) screen.style.display = 'none';
+  // Restaurar widgets flotantes que fueron ocultados
+  ['milesRemainingWidget','driveHoursWidget','speedometerWidget',
+   'fuelWidget','speedLimitWidget','mapSpeedSign','incidentPanel',
+   'breakTimerOverlay','breakViolationBanner'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.removeProperty('display');
+  });
+  // Destruir mini mapa para liberar recursos
+  if (hosMinimapInst) {
+    try { hosMinimapInst.remove(); } catch(e) {}
+    hosMinimapInst  = null;
+    hosMinimapTruck = null;
+    hosMinimapRoute = null;
+    hosMinimapGlow  = null;
+  }
+}
+
+function initHosMinimap() {
+  const el = document.getElementById('hosMiniMap');
+  if (!el || hosMinimapInst) return;
+
+  const lat = (typeof origin !== 'undefined' && origin?.lat) ? origin.lat : 39.5;
+  const lon = (typeof origin !== 'undefined' && origin?.lon) ? origin.lon : -98.35;
+
+  hosMinimapInst = L.map(el, {
+    zoomControl: false,
+    attributionControl: false,
+    dragging: true,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    tap: true
+  }).setView([lat, lon], 10);
+
+  // Tiles oscuros (igual al mapa principal)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19, subdomains: 'abcd'
+  }).addTo(hosMinimapInst);
+
+  // Helper: crea el HTML de un marcador círculo verde con punto blanco interior
+  function _greenDotHtml(size) {
+    const s = size || 22;
+    const inner = Math.round(s * 0.32);
+    return `<div style="width:${s}px;height:${s}px;border-radius:50%;background:#10b981;border:2.5px solid rgba(255,255,255,0.88);box-shadow:0 0 0 3px rgba(16,185,129,0.28),0 3px 10px rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;"><div style="width:${inner}px;height:${inner}px;border-radius:50%;background:rgba(255,255,255,0.9);"></div></div>`;
+  }
+
+  // Vista fija en la posición del camión — zoom 10 para ver carreteras y señales
+  hosMinimapInst.setView([lat, lon], 10);
+
+  // Función interna para dibujar (o redibujar) la ruta en el mini-mapa
+  function _drawHostRoute(coords) {
+    if (!hosMinimapInst) return;
+    if (hosMinimapGlow)  { hosMinimapInst.removeLayer(hosMinimapGlow);  hosMinimapGlow  = null; }
+    if (hosMinimapRoute) { hosMinimapInst.removeLayer(hosMinimapRoute); hosMinimapRoute = null; }
+    hosMinimapGlow  = L.polyline(coords, { color: '#10b981', weight: 14, opacity: 0.13 }).addTo(hosMinimapInst);
+    hosMinimapRoute = L.polyline(coords, { color: '#10b981', weight: 4,  opacity: 0.95 }).addTo(hosMinimapInst);
+  }
+
+  // Dibujar ruta existente
+  if (typeof roadGeometry !== 'undefined' && roadGeometry?.length) {
+    _drawHostRoute(roadGeometry);
+    // Si es una línea recta (fallback de solo 2 puntos), intentar obtener ruta real por carreteras
+    if (roadGeometry.length <= 2 &&
+        typeof origin !== 'undefined' && origin?.lat &&
+        typeof destination !== 'undefined' && destination?.lat) {
+      fetchRoadRoute(origin, destination).then(result => {
+        if (result.source !== 'Fallback' && result.coords.length > 2) {
+          roadGeometry = result.coords;
+          _drawHostRoute(result.coords);
+        }
+      }).catch(() => {});
+    }
+  }
+
+  // Marcador origen — círculo verde grande
+  const originIcon = L.divIcon({
+    className: '',
+    html: _greenDotHtml(22),
+    iconAnchor: [11, 11]
+  });
+  L.marker([lat, lon], { icon: originIcon }).addTo(hosMinimapInst);
+
+  // Marcador del camión (posición actual): foto o emoji sobre anillo verde
+  const _uPhoto = (typeof driverProfile !== 'undefined' && driverProfile?.photo) || null;
+  const _uEmoji = (typeof TRUCK_EMOJIS !== 'undefined' && driverProfile?.truckType) ? (TRUCK_EMOJIS[driverProfile.truckType] || '🚛') : '🚛';
+  const truckHtml = _uPhoto
+    ? `<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:3px solid #10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.35),0 3px 12px rgba(0,0,0,.75);"><img src="${_uPhoto}" style="width:100%;height:100%;object-fit:cover;display:block;"></div>`
+    : `<div style="width:34px;height:34px;border-radius:50%;background:#0f172a;border:3px solid #10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.35),0 3px 12px rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;font-size:17px;">${_uEmoji}</div>`;
+  const truckIcon = L.divIcon({ className: '', html: truckHtml, iconAnchor: [17, 17] });
+  hosMinimapTruck = L.marker([lat, lon], { icon: truckIcon }).addTo(hosMinimapInst);
+
+  // Marcador destino — círculo verde más grande para destacarlo
+  if (typeof destination !== 'undefined' && destination?.lat) {
+    const destIcon = L.divIcon({
+      className: '',
+      html: _greenDotHtml(26),
+      iconAnchor: [13, 13]
+    });
+    L.marker([destination.lat, destination.lon], { icon: destIcon }).addTo(hosMinimapInst);
+  }
+
+  // invalidateSize para que el mapa se renderice correctamente
+  setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 250);
+  setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 600);
+
+  // Cargar iconos de truck stops e interstates
+  loadMiniMapTruckStops(lat, lon);
+  loadMiniMapInterstates(lat, lon);
+
+  // Tap en mini mapa → ir al mapa completo
+  el.addEventListener('click', showFullMapFromDash);
+}
+
+function loadMiniMapTruckStops(lat, lon) {
+  if (!hosMinimapInst) return;
+  // Radio ~1 grado (~111 km) para mostrar paradas a lo largo de la ruta
+  const r = 0.8;
+  const bbox = `${lat - r},${lon - r},${lat + r},${lon + r}`;
+  const query = `[out:json][timeout:10];(node["amenity"="fuel"]["hgv"="yes"](${bbox});node["amenity"="truck_stop"](${bbox});node["highway"="rest_area"](${bbox});node["amenity"="rest_area"](${bbox}););out 25;`;
+
+  fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      if (!hosMinimapInst || !data?.elements?.length) return;
+      data.elements.slice(0, 20).forEach(node => {
+        const isTruck = node.tags?.amenity === 'truck_stop' || node.tags?.hgv === 'yes';
+        const isRest  = node.tags?.highway === 'rest_area' || node.tags?.amenity === 'rest_area';
+        // Círculo verde uniforme — mismo estilo que los marcadores de ruta
+        const poiIcon = L.divIcon({
+          className: '',
+          html: `<div style="width:18px;height:18px;border-radius:50%;background:#10b981;border:2px solid rgba(255,255,255,0.85);box-shadow:0 0 0 2.5px rgba(16,185,129,0.25),0 2px 8px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;"><div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.88);"></div></div>`,
+          iconAnchor: [9, 9]
+        });
+        L.marker([node.lat, node.lon], { icon: poiIcon })
+          .bindTooltip(node.tags?.name || (isTruck ? 'Truck Stop' : isRest ? 'Rest Area' : 'Diesel'), {
+            permanent: false, direction: 'top', className: 'hosMapTooltip'
+          })
+          .addTo(hosMinimapInst);
+      });
+    })
+    .catch(() => {});
+}
+
+function loadMiniMapInterstates(lat, lon) {
+  if (!hosMinimapInst) return;
+  const r = 0.9;
+  const bbox = `${lat - r},${lon - r},${lat + r},${lon + r}`;
+  // Buscar autopistas con referencia (I-40, I-10, etc.)
+  const query = `[out:json][timeout:10];way["highway"~"motorway|trunk"]["ref"](${bbox});out tags center 30;`;
+  fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      if (!hosMinimapInst || !data?.elements?.length) return;
+      const seen = new Set();
+      data.elements.forEach(way => {
+        const ref = (way.tags?.ref || '').trim();
+        if (!ref || seen.has(ref) || !way.center) return;
+        seen.add(ref);
+        const num = ref.replace(/^(I-|US-|SR-|SH-|HWY\s*)/i,'').split(';')[0].trim();
+        const isIntl = /^I-/i.test(ref) || /^\d/.test(ref);
+        const shieldHtml = `<div style="display:inline-flex;align-items:center;gap:3px;background:rgba(10,16,30,0.82);border:1.5px solid rgba(16,185,129,0.55);border-radius:6px;padding:2px 6px;box-shadow:0 2px 8px rgba(0,0,0,.65);font-family:sans-serif;">
+          <span style="font-size:10px;color:#10b981;font-weight:900;line-height:1;">${isIntl?'I':'HWY'}</span>
+          <span style="font-size:11px;color:#f1f5f9;font-weight:900;line-height:1;">${num}</span>
+        </div>`;
+        const icon = L.divIcon({ className: '', html: shieldHtml, iconAnchor: [20, 14] });
+        L.marker([way.center.lat, way.center.lon], { icon, zIndexOffset: -100 }).addTo(hosMinimapInst);
+      });
+    })
+    .catch(() => {});
+}
+
+function updateHosDashMinimap(lat, lon) {
+  if (!hosMinimapInst || !hosMinimapTruck) return;
+  hosMinimapTruck.setLatLng([lat, lon]);
+}
+
+function updateHosDashboard(driveLeft, driveMax) {
+  const arc    = document.getElementById('dashRingArc');
+  const track  = document.getElementById('dashRingTrack');
+  const timeEl = document.getElementById('dashHosTime');
+  const wrap   = document.getElementById('dashRingWrap');
+  if (!arc || !timeEl) return;
+
+  const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
+  const circumference = 729; // 2π×116 ≈ 729
+  arc.setAttribute('stroke-dasharray', `${(pct * circumference).toFixed(1)} ${circumference}`);
+
+  // Prioridad de color: velocidad excedida > HOS crítico > advertencia > normal
+  const isCrit = driveLeft < 2;
+  const isWarn = driveLeft < 4 && driveLeft >= 2;
+
+  let color, shadow, trackOpacity;
+  if (dashSpeedOver) {
+    color        = '#ef4444';
+    shadow       = 'drop-shadow(0 0 36px rgba(239,68,68,0.65))';
+    trackOpacity = 'rgba(239,68,68,0.14)';
+  } else if (isCrit) {
+    color        = '#ef4444';
+    shadow       = 'drop-shadow(0 0 32px rgba(239,68,68,0.5))';
+    trackOpacity = 'rgba(239,68,68,0.14)';
+  } else if (isWarn) {
+    color        = '#f59e0b';
+    shadow       = 'drop-shadow(0 0 32px rgba(245,158,11,0.5))';
+    trackOpacity = 'rgba(245,158,11,0.14)';
+  } else {
+    color        = '#10b981';
+    shadow       = 'drop-shadow(0 0 32px rgba(30,64,175,0.55))';
+    trackOpacity = 'rgba(16,185,129,0.14)';
+  }
+
+  arc.style.stroke = color;
+  if (track) track.setAttribute('stroke', trackOpacity);
+  if (wrap)  wrap.style.filter = shadow;
+  timeEl.style.color = '#ffffff'; // siempre blanco
+
+  // Texto de tiempo restante
+  const totalMins = Math.round(driveLeft * 60);
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+
+  // Riesgo
+  const riesgoEl = document.getElementById('dashRiesgo');
+  if (riesgoEl) { riesgoEl.textContent = isCrit ? 2 : isWarn ? 1 : 0; riesgoEl.style.color = '#f1f5f9'; }
+
+  // Horas hoy (tiempo ya conducido)
+  const elapsed = driveMax - driveLeft;
+  const eh = Math.floor(elapsed); const em = Math.round((elapsed - eh) * 60);
+  const horasEl = document.getElementById('dashHorasHoy');
+  if (horasEl) { horasEl.textContent = eh > 0 ? `${eh}h ${em}m` : `${em}m`; horasEl.style.color = '#f1f5f9'; }
+
+  // Descanso requerido
+  const descansoEl = document.getElementById('dashDescanso');
+  if (descansoEl) {
+    const needBreak = (typeof b30DriveSecs !== 'undefined' && b30DriveSecs > 0 && !(typeof b30Complete !== 'undefined' && b30Complete));
+    descansoEl.textContent = needBreak ? '30m' : '✓';
+    descansoEl.style.color = '#f1f5f9';
+  }
+}
+
+function showFullMapFromDash() {
+  // Ocultar dashboard, dejar fullMapScreen visible (sigue activo detrás)
+  const screen = document.getElementById('hosDashScreen');
+  if (screen) screen.style.display = 'none';
+  // Invalidar tamaño del mapa principal para que se redibuje correctamente
+  setTimeout(() => { if (typeof fmMapInst !== 'undefined' && fmMapInst) fmMapInst.invalidateSize(); }, 150);
+}
+
+// Botón "Volver al Dashboard" que aparece en el mapa completo durante rastreo
+function showDashFromMap() {
+  showHosDashboard();
+}
+
+function setDashStatus(status) {
+  _dashCurrentStatus = status;
+  const tabs = {
+    driving: document.getElementById('dashTabDriving'),
+    rest:    document.getElementById('dashTabRest'),
+    wait:    document.getElementById('dashTabWait'),
+    off:     document.getElementById('dashTabOff')
+  };
+  const labels = {
+    driving: 'Conduciendo',
+    rest:    'Descansando',
+    wait:    'En espera',
+    off:     'Off Duty'
+  };
+  const colors = {
+    driving: '#10b981',
+    rest:    '#3b82f6',
+    wait:    '#f59e0b',
+    off:     '#6b7280'
+  };
+  Object.keys(tabs).forEach(k => {
+    if (!tabs[k]) return;
+    if (k === status) {
+      tabs[k].classList.add('dash-tab-active');
+      tabs[k].style.background = colors[k];
+      tabs[k].style.borderColor = colors[k];
+    } else {
+      tabs[k].classList.remove('dash-tab-active');
+      tabs[k].style.background = '';
+      tabs[k].style.borderColor = '';
+    }
+  });
+  const statusEl = document.getElementById('dashStatusLabel');
+  if (statusEl) {
+    statusEl.textContent = labels[status] || status;
+    statusEl.style.color  = colors[status] || '#10b981';
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -16015,6 +17020,14 @@ function toggleSideTabMenu() {
     document.getElementById('commQuickOverlay')?.classList.remove('show');
   }
 }
+let _rightPanelAutoHideTimer = null;
+function toggleMapRightPanel() { /* panel is always visible — button removed */ }
+function _autoHideRightPanelOnOpen() {
+  const ctrl = document.getElementById('mapRightControls');
+  if (!ctrl) return;
+  ctrl.classList.remove('panel-hidden');
+}
+
 let _leftPanelAutoHideTimer = null;
 function toggleMapLeftPanel(forceHide) {
   const ctrl = document.getElementById('mapLeftControls');
@@ -16775,7 +17788,14 @@ calculateRoute = async function() {
       : (isNetwork ? 'No internet connection. Check your network and try again.' : 'Error calculating route. Check your origin and destination.');
     showError(msg);
   } finally {
-    if (calcBtn2) { calcBtn2.textContent = t('btnCalc'); calcBtn2.disabled = false; }
+    if (calcBtn2) {
+      calcBtn2.textContent = t('btnCalc');
+      calcBtn2.disabled = false;
+      // Mantener oculto si los resultados ya están visibles (ruta calculada)
+      if (document.getElementById('resultsCard')?.style.display === 'block') {
+        calcBtn2.style.display = 'none';
+      }
+    }
   }
 };
 
@@ -18419,6 +19439,89 @@ init();
   };
 })();
 
+/* ══════════════════════════════════════════════════════════════
+   BACKGROUND NOTIFICATIONS — @capacitor/local-notifications
+   Persiste aunque la app esté completamente cerrada
+══════════════════════════════════════════════════════════════ */
+(async function initLocalNotifications() {
+  try {
+    const { LocalNotifications } = await import('https://esm.sh/@capacitor/local-notifications@8');
+
+    // Solicitar permiso
+    const { display } = await LocalNotifications.requestPermissions();
+    if (display !== 'granted') return;
+
+    window._localNotif = LocalNotifications;
+
+    // ── Noticias DOT: notificar items no vistos ─────────────────
+    const seenNews = JSON.parse(localStorage.getItem('hos_seen_news') || '[]');
+    const newItems = (typeof _dotNewsData !== 'undefined' ? _dotNewsData : [])
+      .map((item, i) => ({ ...item, id: i }))
+      .filter(item => !seenNews.includes(item.id));
+
+    const newsNotifs = newItems.slice(0, 3).map((item, i) => ({
+      id:    2000 + item.id,
+      title: `🚛 ${item.tag} — HOS Tracker`,
+      body:  item.title,
+      schedule: { at: new Date(Date.now() + (i + 1) * 30 * 60 * 1000) }, // cada 30 min
+      smallIcon:  'ic_stat_icon_config_sample',
+      channelId:  'hos_news'
+    }));
+
+    // ── Recordatorio diario a las 8:00 AM ──────────────────────
+    const tomorrow8am = new Date();
+    tomorrow8am.setDate(tomorrow8am.getDate() + 1);
+    tomorrow8am.setHours(8, 0, 0, 0);
+    const dailyNotif = {
+      id:    9000,
+      title: '🚛 HOS Tracker — Noticias DOT',
+      body:  'Revisa las últimas alertas y regulaciones del día.',
+      schedule: { at: tomorrow8am, repeats: true, every: 'day' },
+      smallIcon:  'ic_stat_icon_config_sample',
+      channelId:  'hos_news'
+    };
+
+    // ── Cancelar notifs de noticias anteriores y reprogramar ───
+    const toCancel = newItems.slice(0, 3).map(item => ({ id: 2000 + item.id }));
+    if (toCancel.length) await LocalNotifications.cancel({ notifications: toCancel }).catch(() => {});
+
+    const allNotifs = [...newsNotifs, dailyNotif];
+    if (allNotifs.length) {
+      await LocalNotifications.schedule({ notifications: allNotifs });
+      // Marcar items como "notificados"
+      const nowSeen = [...seenNews, ...newItems.map(i => i.id)];
+      localStorage.setItem('hos_seen_news', JSON.stringify(nowSeen));
+    }
+
+    // ── Exponer función para alertas HOS nativas ────────────────
+    window.scheduleLocalHOSAlert = async function(delayMs, title, body, id) {
+      if (!window._localNotif) return;
+      await window._localNotif.cancel({ notifications: [{ id }] }).catch(() => {});
+      await window._localNotif.schedule({ notifications: [{
+        id,
+        title,
+        body,
+        schedule: { at: new Date(Date.now() + delayMs) },
+        smallIcon: 'ic_stat_icon_config_sample',
+        channelId: 'hos_alerts'
+      }]});
+    };
+
+    window.cancelLocalHOSAlert = async function(id) {
+      if (!window._localNotif) return;
+      await window._localNotif.cancel({ notifications: [{ id }] }).catch(() => {});
+    };
+
+    // Abrir la app en la pestaña correcta al tocar la notificación
+    LocalNotifications.addListener('localNotificationActionPerformed', () => {
+      switchTab && switchTab('community');
+    });
+
+  } catch(e) {
+    console.warn('[HOS] Local notifications not available:', e.message || e);
+  }
+})();
+
 /* ── Mobile enhancements ──────────────────────────────────── */
 // Prevent double-tap zoom on buttons
 document.querySelectorAll('button, .btn, .sett-row, .s-item, .tab-btn').forEach(el => {
@@ -19058,8 +20161,12 @@ FIREBASE_CONFIG = {
       const loading = document.getElementById('chatLoading');
       if (loading) loading.remove();
 
+      const oneHourAgo = Date.now() - 3600000;
       const msgs = [];
-      snap.forEach(child => msgs.push({ id: child.key, ...child.val() }));
+      snap.forEach(child => {
+        const m = child.val();
+        if ((m.ts || 0) >= oneHourAgo) msgs.push({ id: child.key, ...m });
+      });
 
       // Re-render only if there are new messages
       const latestId = msgs.length ? msgs[msgs.length - 1].id : null;
@@ -19120,21 +20227,22 @@ FIREBASE_CONFIG = {
     const text  = input.value.trim();
     if (!text) return;
 
-    if (!currentUser) {
-      showToast('info','🔒',
-        lang==='es'?'Inicia sesión':'Login required',
-        lang==='es'?'Debes tener un perfil para chatear.':'You need a profile to chat.', 3000);
-      return;
-    }
+    // Use currentUser if available, otherwise fall back to driver profile
+    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
+    let senderId   = (currentUser && currentUser.id)        || localStorage.getItem('chat_uid') || ('u_' + Math.random().toString(36).slice(2,10));
+    let senderName = (currentUser && currentUser.name)      || dp.name || 'Driver';
+    let senderTruck= (currentUser && currentUser.truckType) || dp.truckType || '18wheeler';
+    // Persist uid for consistency
+    if (!localStorage.getItem('chat_uid')) localStorage.setItem('chat_uid', senderId);
 
     document.getElementById('panelSendBtn').disabled = true;
     input.value = '';
     input.style.height = 'auto';
 
     window._chatPush(window._chatRef(chatChannel), {
-      userId:    currentUser.id,
-      name:      currentUser.name || 'Driver',
-      truckType: currentUser.truckType || '18wheeler',
+      userId:    senderId,
+      name:      senderName,
+      truckType: senderTruck,
       text:      text,
       ts:        window._chatServerTimestamp()
     }).then(() => {
@@ -20735,25 +21843,47 @@ async function sendScanEmail() {
     if (msg.userId === myUserId) return; // no notificar mensajes propios
     // Ignorar mensajes viejos (anteriores a que se abrió la app)
     const msgTime = msg.ts || msg.clientTs || 0;
-    if (msgTime < _chatStartTime - 5000) return;
-
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (msgTime && msgTime < _chatStartTime - 5000) return;
 
     const chInfo = CHANNELS.find(c => c.id === channelId) || { name: channelId, icon: '🔔' };
     const title  = `${chInfo.icon} ${chInfo.name}`;
     const body   = `${msg.name || 'Driver'}: ${msg.text}`;
-    const icon   = '/icon-192.png';
+    const icon   = './HOS_Tracker_Version1.png';
     const tag    = 'chat-' + channelId;
+    const notifOpts = { body, icon, tag, vibrate: [200, 100, 200], badge: './HOS_Tracker_Version1.png', data: { url: './' }, requireInteraction: false };
 
-    // Usar SW registrado si está disponible
-    const swReg = window._swReg;
-    if (swReg && swReg.active) {
-      swReg.showNotification(title, { body, icon, tag, vibrate: [200, 100, 200], data: { url: '/' } });
-    } else if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body, tag, icon });
-    } else if (Notification.permission === 'granted') {
-      new Notification(title, { body, icon, tag });
+    // Request permission if not yet decided
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') _fireNotif(title, notifOpts);
+      });
+      return;
     }
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    _fireNotif(title, notifOpts);
+  }
+
+  function _fireNotif(title, opts) {
+    // Priority 1: ServiceWorkerRegistration.showNotification — works in background on mobile
+    const swReg = window._swReg;
+    if (swReg) {
+      const active = swReg.active || swReg.waiting || swReg.installing;
+      if (active) {
+        // Post message to SW so it shows a persistent notification
+        active.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body: opts.body, tag: opts.tag, icon: opts.icon });
+        return;
+      }
+      // If reg exists but no active worker yet, try showNotification directly
+      swReg.showNotification(title, opts).catch(() => {});
+      return;
+    }
+    // Priority 2: controller postMessage
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body: opts.body, tag: opts.tag, icon: opts.icon });
+      return;
+    }
+    // Priority 3: fallback in-tab notification
+    try { new Notification(title, opts); } catch(e) {}
   }
 
   // ── Helpers ──────────────────────────────────────────────────
@@ -20924,8 +22054,11 @@ async function sendScanEmail() {
 
   function loadLocalMessages(channelId) {
     const msgs = JSON.parse(localStorage.getItem('chat_ch_' + channelId) || '[]');
-    const cutoff = Date.now() - 86400000;
-    msgs.filter(m => (m.clientTs||0) > cutoff).slice(-80).forEach(m => appendRoomMessage(m, m.localKey));
+    const cutoff = Date.now() - 3600000; // 1 hour
+    // Also prune and save back — remove expired messages from storage
+    const recent = msgs.filter(m => (m.clientTs||0) > cutoff);
+    if (recent.length < msgs.length) localStorage.setItem('chat_ch_' + channelId, JSON.stringify(recent));
+    recent.slice(-80).forEach(m => appendRoomMessage(m, m.localKey));
   }
 
   function saveLocalMsg(channelId, msg) {
