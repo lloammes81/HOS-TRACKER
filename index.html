@@ -11939,49 +11939,51 @@ async function fetchOsrmStepsOnly(orig, dest){
   }catch{ return []; }
 }
 async function fetchRoadRoute(orig, dest) {
-  // Usa OSRM driving con timeout generoso (20s)
-  {
-    const coords = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
-    const osrmBase = 'https://router.project-osrm.org/route/v1';
+  const coords = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
+  const qs = '?overview=full&geometries=geojson&steps=true&alternatives=true';
+  const servers = [
+    `https://router.project-osrm.org/route/v1/driving/${coords}${qs}`,
+    `https://routing.openstreetmap.de/routed-car/route/v1/driving/${coords}${qs}`
+  ];
 
-    try {
-      const url = `${osrmBase}/driving/${coords}?overview=full&geometries=geojson&steps=true&alternatives=true`;
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 20000);
-      const r = await fetch(url, { signal: ctrl.signal });
-      clearTimeout(t);
-      if (r.ok) {
-        const data = await r.json();
-        if (data.code === 'Ok' && data.routes?.length) {
-          const routes = data.routes;
-          let best = routes[0];
-          if (routes.length > 1) {
-            const shortest = routes[0].distance;
-            const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
-              rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
-            if (highway) best = highway;
-          }
-          const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-          const miles = Math.round((best.distance || 0) / 1609.344);
-          const steps = best.legs?.[0]?.steps || [];
-          console.log(`✅ Route: OSRM-driving | ${miles} mi | ${routeCoords.length} pts`);
-          return { coords: routeCoords, miles, steps, source: 'OSRM-driving' };
-        }
-      }
-    } catch (e) {
-      console.warn('OSRM driving failed:', e.message);
-    }
-
-    // Fallback: línea recta
-    console.warn('⚠️ OSRM falló — usando línea recta');
-    const straight = haversine(orig.lat, orig.lon, dest.lat, dest.lon);
-    return {
-      coords: [[orig.lat, orig.lon], [dest.lat, dest.lon]],
-      miles: Math.round(straight * 1.35),
-      steps: [],
-      source: 'Fallback'
-    };
+  function _tryServer(url) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 20000);
+    return fetch(url, { signal: ctrl.signal })
+      .then(r => { clearTimeout(t); return r.ok ? r.json() : Promise.reject('http-' + r.status); })
+      .then(data => {
+        if (data.code === 'Ok' && data.routes?.length) return data;
+        throw new Error('no-route');
+      });
   }
+
+  try {
+    const data = await Promise.any(servers.map(url => _tryServer(url).catch(e => { console.warn('OSRM server failed:', e?.message || e); throw e; })));
+    const routes = data.routes;
+    let best = routes[0];
+    if (routes.length > 1) {
+      const shortest = routes[0].distance;
+      const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
+        rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
+      if (highway) best = highway;
+    }
+    const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
+    const miles = Math.round((best.distance || 0) / 1609.344);
+    const steps = best.legs?.[0]?.steps || [];
+    console.log(`✅ Route: OSRM-driving | ${miles} mi | ${routeCoords.length} pts`);
+    return { coords: routeCoords, miles, steps, source: 'OSRM-driving' };
+  } catch (e) {
+    console.warn('⚠️ Todos los servidores OSRM fallaron — usando línea recta');
+  }
+
+  // Fallback: línea recta
+  const straight = haversine(orig.lat, orig.lon, dest.lat, dest.lon);
+  return {
+    coords: [[orig.lat, orig.lon], [dest.lat, dest.lon]],
+    miles: Math.round(straight * 1.35),
+    steps: [],
+    source: 'Fallback'
+  };
 }
 // ── Road-name markers (labels) ──────────────────────────────
 function extractRoadLabel(step){
