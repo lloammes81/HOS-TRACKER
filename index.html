@@ -14163,6 +14163,7 @@ function fmStopTracking() {
 let hosMinimapInst    = null;  // instancia Leaflet del mini mapa
 let hosMinimapTruck   = null;  // marcador del camión en mini mapa
 let hosMinimapRoute   = null;  // polyline de ruta en mini mapa
+let hosMinimapGlow    = null;  // polyline glow de ruta en mini mapa
 let _dashCurrentStatus = 'driving';
 
 function showHosDashboard() {
@@ -14218,6 +14219,7 @@ function hideHosDashboard() {
     hosMinimapInst  = null;
     hosMinimapTruck = null;
     hosMinimapRoute = null;
+    hosMinimapGlow  = null;
   }
 }
 
@@ -14249,22 +14251,32 @@ function initHosMinimap() {
     return `<div style="width:${s}px;height:${s}px;border-radius:50%;background:#10b981;border:2.5px solid rgba(255,255,255,0.88);box-shadow:0 0 0 3px rgba(16,185,129,0.28),0 3px 10px rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;"><div style="width:${inner}px;height:${inner}px;border-radius:50%;background:rgba(255,255,255,0.9);"></div></div>`;
   }
 
-  // Dibujar ruta si existe
+  // Vista fija en la posición del camión — zoom 10 para ver carreteras y señales
+  hosMinimapInst.setView([lat, lon], 10);
+
+  // Función interna para dibujar (o redibujar) la ruta en el mini-mapa
+  function _drawHostRoute(coords) {
+    if (!hosMinimapInst) return;
+    if (hosMinimapGlow)  { hosMinimapInst.removeLayer(hosMinimapGlow);  hosMinimapGlow  = null; }
+    if (hosMinimapRoute) { hosMinimapInst.removeLayer(hosMinimapRoute); hosMinimapRoute = null; }
+    hosMinimapGlow  = L.polyline(coords, { color: '#10b981', weight: 14, opacity: 0.13 }).addTo(hosMinimapInst);
+    hosMinimapRoute = L.polyline(coords, { color: '#10b981', weight: 4,  opacity: 0.95 }).addTo(hosMinimapInst);
+  }
+
+  // Dibujar ruta existente
   if (typeof roadGeometry !== 'undefined' && roadGeometry?.length) {
-    // Capa glow (brillo difuso bajo la línea principal)
-    L.polyline(roadGeometry, { color: '#10b981', weight: 14, opacity: 0.13 }).addTo(hosMinimapInst);
-    // Capa principal
-    hosMinimapRoute = L.polyline(roadGeometry, {
-      color: '#10b981', weight: 4, opacity: 0.95
-    }).addTo(hosMinimapInst);
-    // Ajustar vista: intentar mostrar la ruta completa pero sin alejarse más de zoom 8
-    // (por debajo de zoom 8 las carreteras dejan de ser visibles)
-    hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [28, 28], maxZoom: 11 });
-    setTimeout(() => {
-      if (hosMinimapInst && hosMinimapInst.getZoom() < 8) {
-        hosMinimapInst.setView([lat, lon], 8, { animate: false });
-      }
-    }, 60);
+    _drawHostRoute(roadGeometry);
+    // Si es una línea recta (fallback de solo 2 puntos), intentar obtener ruta real por carreteras
+    if (roadGeometry.length <= 2 &&
+        typeof origin !== 'undefined' && origin?.lat &&
+        typeof destination !== 'undefined' && destination?.lat) {
+      fetchRoadRoute(origin, destination).then(result => {
+        if (result.source !== 'Fallback' && result.coords.length > 2) {
+          roadGeometry = result.coords;
+          _drawHostRoute(result.coords);
+        }
+      }).catch(() => {});
+    }
   }
 
   // Marcador origen — círculo verde grande
