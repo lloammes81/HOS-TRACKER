@@ -8007,6 +8007,85 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
 
+/* ── Dashboard Speed Panel (mini-map overlay) ─────────── */
+#dashSpeedPanel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+#dashSpeedLimitSign {
+  background: #fff;
+  border: 3px solid #111;
+  border-radius: 6px;
+  padding: 5px 10px 7px;
+  text-align: center;
+  min-width: 56px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.65), inset 0 0 0 2px rgba(0,0,0,0.06);
+}
+.dsp-top {
+  font-size: 8px;
+  font-weight: 900;
+  color: #000;
+  letter-spacing: 0.6px;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+.dsp-num {
+  font-size: 30px;
+  font-weight: 900;
+  color: #000;
+  line-height: 1;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: -1px;
+}
+.dsp-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: #000;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+#dashSpeedoWrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  background: rgba(8,14,28,0.92);
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.13);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#dashSpeedoWrap svg { position: absolute; inset: 0; }
+#dashSpeedNum {
+  font-size: 20px;
+  font-weight: 900;
+  color: #10b981;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  transition: color .4s ease;
+}
+#dashSpeedUnit {
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 1.2px;
+  position: relative;
+  z-index: 1;
+  margin-top: 1px;
+}
+#dashSpeedLimitSign.over { border-color: #dc2626; background: #fef2f2; }
+#dashSpeedLimitSign.over .dsp-num { color: #dc2626; }
+
 /* ── DOT Violation Sheet ──────────────────────────────── */
 #violationOverlay{display:none;position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,.75);align-items:flex-end;justify-content:center}
 #violationOverlay.active{display:flex;animation:tcFadeIn .2s ease}
@@ -10095,6 +10174,25 @@ function updateSpeedometer(mph) {
   // Over-limit based on state truck speed limit (if available)
   const spw = document.getElementById('speedometerWidget');
   if (spw) spw.classList.toggle('over-limit', !!over);
+
+  // Actualizar panel de velocidad del dashboard (mini mapa overlay)
+  const _dashNumEl  = document.getElementById('dashSpeedNum');
+  const _dashArcEl  = document.getElementById('dashSpeedoArc');
+  const _dashLimEl  = document.getElementById('dashLimitNum');
+  const _dashLimSign = document.getElementById('dashSpeedLimitSign');
+  if (_dashNumEl) {
+    _dashNumEl.textContent = Math.round(mph);
+    _dashNumEl.style.color = over ? '#ef4444' : mph > 3 ? '#10b981' : 'rgba(255,255,255,0.45)';
+  }
+  if (_dashArcEl) {
+    const _pct = Math.min(1, mph / 100);
+    _dashArcEl.setAttribute('stroke-dasharray', `${(_pct * 161).toFixed(1)} 188`);
+    _dashArcEl.style.stroke = mph > 75 ? '#ef4444' : mph > 55 ? '#f59e0b' : (mph > 3 ? '#10b981' : '#374151');
+  }
+  if (_dashLimEl && typeof currentTruckSpeedLimit !== 'undefined' && currentTruckSpeedLimit) {
+    _dashLimEl.textContent = currentTruckSpeedLimit;
+  }
+  if (_dashLimSign) _dashLimSign.classList.toggle('over', !!over);
 
   // Actualizar anillo HOS del dashboard en tiempo real
   if (dashSpeedOver !== !!over) {
@@ -14358,6 +14456,36 @@ function initHosMinimap() {
   // Cargar iconos de truck stops e interstates
   loadMiniMapTruckStops(lat, lon);
   loadMiniMapInterstates(lat, lon);
+
+  // Señales de carreteras interestatales y nombres de ruta en el mini mapa
+  if (typeof navSteps !== 'undefined' && Array.isArray(navSteps) && navSteps.length) {
+    addInterstateMarkers(hosMinimapInst, navSteps, false);
+    addRoadNameMarkers(hosMinimapInst, navSteps, false);
+  }
+
+  // Panel de Speed Limit + Velocímetro superpuesto al mini mapa
+  if (!el.querySelector('#dashSpeedPanel')) {
+    const _limitVal = (typeof currentTruckSpeedLimit !== 'undefined' && currentTruckSpeedLimit) ? currentTruckSpeedLimit : '--';
+    const _panel = document.createElement('div');
+    _panel.id = 'dashSpeedPanel';
+    _panel.innerHTML = `
+      <div id="dashSpeedLimitSign">
+        <div class="dsp-top">SPEED<br>LIMIT</div>
+        <div class="dsp-num" id="dashLimitNum">${_limitVal}</div>
+        <div class="dsp-label">TRUCKS</div>
+      </div>
+      <div id="dashSpeedoWrap">
+        <svg viewBox="0 0 72 72" width="72" height="72">
+          <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
+          <circle cx="36" cy="36" r="30" fill="none" stroke="#10b981" stroke-width="5"
+                  stroke-linecap="round" stroke-dasharray="0 188" id="dashSpeedoArc"
+                  transform="rotate(-220 36 36)" style="transition:stroke-dasharray .5s ease,stroke .4s ease"/>
+        </svg>
+        <div id="dashSpeedNum">${typeof fmCurrentSpeed !== 'undefined' ? Math.round(fmCurrentSpeed) : 0}</div>
+        <div id="dashSpeedUnit">MPH</div>
+      </div>`;
+    el.appendChild(_panel);
+  }
 
   // Tap en mini mapa → ir al mapa completo
   el.addEventListener('click', showFullMapFromDash);
