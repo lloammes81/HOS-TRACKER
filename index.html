@@ -14282,16 +14282,29 @@ function initHosMinimap() {
   // Dibujar ruta existente
   if (typeof roadGeometry !== 'undefined' && roadGeometry?.length) {
     _drawHostRoute(roadGeometry);
-    // Si es una línea recta (fallback de solo 2 puntos), intentar obtener ruta real por carreteras
+    // Si es línea recta (fallback ≤ 2 puntos), hacer fetch ligero al minimap
     if (roadGeometry.length <= 2 &&
         typeof origin !== 'undefined' && origin?.lat &&
         typeof destination !== 'undefined' && destination?.lat) {
-      fetchRoadRoute(origin, destination).then(result => {
-        if (result.source !== 'Fallback' && result.coords.length > 2) {
-          roadGeometry = result.coords;
-          _drawHostRoute(result.coords);
-        }
-      }).catch(() => {});
+
+      // Llamada OSRM simplificada: sin alternatives, sin steps, con timeout 8s
+      const _ctrl = new AbortController();
+      const _t = setTimeout(() => _ctrl.abort(), 8000);
+      const _coords = `${origin.lon},${origin.lat};${destination.lon},${destination.lat}`;
+      fetch(
+        `https://router.project-osrm.org/route/v1/driving/${_coords}?overview=simplified&geometries=geojson&steps=false&alternatives=false`,
+        { signal: _ctrl.signal }
+      )
+        .then(r => { clearTimeout(_t); return r.ok ? r.json() : Promise.reject(); })
+        .then(data => {
+          if (!hosMinimapInst) return;
+          if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates?.length > 2) {
+            const coords = data.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]);
+            roadGeometry = coords;
+            _drawHostRoute(coords);
+          }
+        })
+        .catch(() => clearTimeout(_t));
     }
   }
 
