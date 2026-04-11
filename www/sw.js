@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rutas-dot-v62';
+const CACHE_NAME = 'rutas-dot-v63';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
@@ -14,12 +14,13 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Network-first for HTML — always get the latest version
+  // Always network for HTML — never serve stale
   if (event.request.mode === 'navigate' ||
       event.request.url.endsWith('/index.html') ||
       event.request.url.endsWith('/')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request, { cache: 'no-store' })
+        .catch(() => caches.match(event.request))
     );
     return;
   }
