@@ -8042,6 +8042,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 }
 .dash-side-tab:hover { width:42px;height:112px;background:linear-gradient(160deg,#fb923c,#f97316);box-shadow:-4px 0 22px rgba(249,115,22,.7); }
 .dash-side-tab:active { width:28px;box-shadow:-2px 0 8px rgba(249,115,22,.3); }
+.dash-side-tab-badge {
+  position:absolute;top:5px;left:5px;
+  background:#ef4444;color:#fff;
+  font-size:9px;font-weight:900;border-radius:999px;
+  padding:1px 4px;min-width:14px;text-align:center;
+  display:none;
+}
 
 /* Tooltip del mini mapa */
 .hosMapTooltip {
@@ -14682,41 +14689,43 @@ function initHosMinimap() {
     el.appendChild(_styleBtn);
   }
 
-  // Menú lateral (mismo que mapa principal) dentro del mini mapa
-  if (!el.querySelector('#dashSideMenuToggle')) {
+  // Menú lateral (igual que mapa principal) centrado en la pantalla del dashboard
+  if (!document.getElementById('dashSideMenuToggle')) {
+    const _dashScreen = document.getElementById('hosDashScreen');
+
     const _sideToggle = document.createElement('button');
     _sideToggle.id = 'dashSideMenuToggle';
     _sideToggle.setAttribute('aria-label', 'Abrir menú lateral');
     _sideToggle.textContent = '‹';
-    _sideToggle.onclick = (e) => { e.stopPropagation(); toggleDashSideMenu(); };
+    _sideToggle.onclick = () => toggleDashSideMenu();
 
     const _sideStack = document.createElement('div');
     _sideStack.id = 'dashSideTabStack';
     _sideStack.innerHTML = `
       <button class="dash-side-tab" aria-label="DOT"
-        onclick="event.stopPropagation();closeDashSideMenu();showFullMapFromDash();setTimeout(openDotPanel,150)">
+        onclick="closeDashSideMenu();showFullMapFromDash();setTimeout(openDotPanel,150)">
         <span class="side-tab-icon">📋</span>
         <span class="side-tab-label">DOT</span>
       </button>
       <button class="dash-side-tab" aria-label="Comunidad"
-        onclick="event.stopPropagation();closeDashSideMenu();showFullMapFromDash();setTimeout(toggleCommQuickPanel,150)">
+        onclick="closeDashSideMenu();showFullMapFromDash();setTimeout(toggleCommQuickPanel,150)">
+        <span class="dash-side-tab-badge" id="dashSideTabBadge"></span>
         <span class="side-tab-icon">👥</span>
         <span class="side-tab-label">Comunidad</span>
       </button>
       <button class="dash-side-tab" aria-label="Live Chat"
-        onclick="event.stopPropagation();closeDashSideMenu();showFullMapFromDash();setTimeout(()=>openChatChannel('general'),150)">
+        onclick="closeDashSideMenu();showFullMapFromDash();setTimeout(()=>openChatChannel('general'),150)">
         <span class="side-tab-icon">💬</span>
         <span class="side-tab-label">Live Chat</span>
       </button>`;
 
-    el.appendChild(_sideToggle);
-    el.appendChild(_sideStack);
+    _dashScreen.appendChild(_sideToggle);
+    _dashScreen.appendChild(_sideStack);
   }
 
-  // Tap en mini mapa → ir al mapa completo (solo si no es el botón de estilos ni el menú lateral)
+  // Tap en mini mapa → ir al mapa completo (solo si no es el botón de estilos)
   el.addEventListener('click', (e) => {
-    if (!e.target.closest('#hosMinimapStyleBtn') && !e.target.closest('#hosMinimapStylePanel')
-        && !e.target.closest('#dashSideMenuToggle') && !e.target.closest('#dashSideTabStack')) {
+    if (!e.target.closest('#hosMinimapStyleBtn') && !e.target.closest('#hosMinimapStylePanel')) {
       showFullMapFromDash();
     }
   });
@@ -22992,14 +23001,15 @@ function closeDotNewsDetail() {
   document.getElementById('dotNewsDetail').style.display = 'none';
 }
 
-/* Sync side-tab badge with legacy cqtBadge */
+/* Sync side-tab badge with legacy cqtBadge (main map + HOS dashboard) */
 (function() {
   const legacy = document.getElementById('cqtBadge');
   const side   = document.getElementById('sideTabBadge');
-  if (!legacy || !side) return;
+  if (!legacy) return;
   const obs = new MutationObserver(() => {
-    side.textContent = legacy.textContent;
-    side.style.display = legacy.style.display;
+    if (side) { side.textContent = legacy.textContent; side.style.display = legacy.style.display; }
+    const dash = document.getElementById('dashSideTabBadge');
+    if (dash) { dash.textContent = legacy.textContent; dash.style.display = legacy.style.display; }
   });
   obs.observe(legacy, { attributes: true, childList: true, subtree: true });
 })();
