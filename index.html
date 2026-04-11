@@ -10186,22 +10186,8 @@ function updateSpeedometer(mph) {
   const over = (currentTruckSpeedLimit != null) && (mph > (currentTruckSpeedLimit + 0.5));
   if (mySpeedSign) mySpeedSign.classList.toggle('warn', !!over);
 
-  if (!speedoVisible) return;
-  const num = document.getElementById('speedoNum');
-  const ring = document.getElementById('speedoRing');
-  const arc = document.getElementById('speedoArc');
-  const label = document.getElementById('speedoLabel');
-  const statusBadge = document.getElementById('speedoStatus');
-
-  num.textContent = Math.round(mph);
-  const moving = mph > 3;
-
-
-  // Over-limit based on state truck speed limit (if available)
-  const spw = document.getElementById('speedometerWidget');
-  if (spw) spw.classList.toggle('over-limit', !!over);
-
   // Actualizar panel de velocidad del dashboard (mini mapa overlay)
+  // NOTA: debe ir ANTES del return por speedoVisible para que siempre se actualice
   const _dashNumEl  = document.getElementById('dashSpeedNum');
   const _dashArcEl  = document.getElementById('dashSpeedoArc');
   const _dashLimEl  = document.getElementById('dashLimitNum');
@@ -10216,6 +10202,21 @@ function updateSpeedometer(mph) {
   if (_dashLimSign) _dashLimSign.classList.toggle('over', !!over);
   const _dashSpdoEl = document.getElementById('dashSpeedoWrap');
   if (_dashSpdoEl) _dashSpdoEl.classList.toggle('over', !!over);
+
+  if (!speedoVisible) return;
+  const num = document.getElementById('speedoNum');
+  const ring = document.getElementById('speedoRing');
+  const arc = document.getElementById('speedoArc');
+  const label = document.getElementById('speedoLabel');
+  const statusBadge = document.getElementById('speedoStatus');
+
+  num.textContent = Math.round(mph);
+  const moving = mph > 3;
+
+
+  // Over-limit based on state truck speed limit (if available)
+  const spw = document.getElementById('speedometerWidget');
+  if (spw) spw.classList.toggle('over-limit', !!over);
 
   // Actualizar anillo HOS del dashboard en tiempo real
   if (dashSpeedOver !== !!over) {
@@ -10868,6 +10869,9 @@ async function fetchRoadSpeedLimit(lat, lon) {
           if (mssSign) { mssSign.classList.remove('new'); void mssSign.offsetWidth; mssSign.classList.add('new'); }
           document.getElementById('mapSpeedSign')?.classList.add('visible');
           document.getElementById('speedLimitWidget')?.classList.add('visible');
+          // Sync minimap dashboard speed limit panel immediately
+          const _dl = document.getElementById('dashLimitNum');
+          if (_dl) _dl.textContent = mph;
         }
         return;
       }
@@ -10900,6 +10904,10 @@ function updateMapSpeedSign(truckMph, carMph, code, stateName) {
   } else {
     diff.textContent = `Trucks & cars: ${truckMph} ${unit}`;
   }
+
+  // Sync minimap dashboard speed limit panel immediately
+  const _dashLimEl = document.getElementById('dashLimitNum');
+  if (_dashLimEl) _dashLimEl.textContent = truckMph;
 
   sign.classList.add('visible');
   // Trigger pop animation
