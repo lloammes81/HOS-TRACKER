@@ -11206,6 +11206,13 @@ function changeMapStyle(styleKey) {
     L.tileLayer(styleUrl, styleOpts).addTo(miniMap);
   }
 
+  // Update dashboard minimap (hosMinimapInst)
+  if (hosMinimapInst) {
+    if (hosMinimapTileLayer) { try { hosMinimapInst.removeLayer(hosMinimapTileLayer); } catch {} }
+    hosMinimapTileLayer = L.tileLayer(styleUrl, styleOpts).addTo(hosMinimapInst);
+    hosMinimapTileLayer.bringToBack();
+  }
+
   // Apply satellite class for CSS filter differentiation
   const isSat = (styleKey === 'satellite');
   const fullMapEl = document.getElementById('fullMap');
@@ -11213,8 +11220,8 @@ function changeMapStyle(styleKey) {
   if (fullMapEl) fullMapEl.classList.toggle('satellite-style', isSat);
   if (miniMapEl) miniMapEl.classList.toggle('satellite-style', isSat);
 
-  // Update button highlights
-  document.querySelectorAll('.map-style-btn').forEach(btn => {
+  // Update button highlights (full map panel + dashboard minimap panel)
+  document.querySelectorAll('.map-style-btn, .hos-style-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.style === styleKey);
   });
 
@@ -14377,8 +14384,17 @@ let hosMinimapInst    = null;  // instancia Leaflet del mini mapa
 let hosMinimapTruck   = null;  // marcador del camión en mini mapa
 let hosMinimapRoute   = null;  // polyline de ruta en mini mapa
 let hosMinimapGlow    = null;  // polyline glow de ruta en mini mapa
+let hosMinimapTileLayer = null; // tile layer actual del mini mapa
 let dashSpeedOver     = false; // true cuando el camión supera el límite de velocidad
 let _dashCurrentStatus = 'driving';
+
+// Centra el mini-mapa con el icono del camión en la zona inferior (≈25% desde abajo)
+function _hosMinimapFollow(lat, lon) {
+  if (!hosMinimapInst) return;
+  hosMinimapInst.setView([lat, lon], hosMinimapInst.getZoom(), { animate: false });
+  const sz = hosMinimapInst.getSize();
+  hosMinimapInst.panBy([0, -Math.round(sz.y * 0.28)], { animate: false });
+}
 
 function showHosDashboard() {
   const screen = document.getElementById('hosDashScreen');
@@ -14453,10 +14469,9 @@ function initHosMinimap() {
     tap: true
   }).setView([lat, lon], 7);
 
-  // Tiles oscuros (igual al mapa principal)
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19, subdomains: 'abcd'
-  }).addTo(hosMinimapInst);
+  // Tiles usando el estilo activo del mapa principal
+  const _miniStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.dark;
+  hosMinimapTileLayer = L.tileLayer(_miniStyleConf.url, _miniStyleConf.options || { maxZoom: 19 }).addTo(hosMinimapInst);
 
   // Helper: crea el HTML de un marcador círculo verde con punto blanco interior
   function _greenDotHtml(size) {
@@ -14465,8 +14480,8 @@ function initHosMinimap() {
     return `<div style="width:${s}px;height:${s}px;border-radius:50%;background:#10b981;border:2.5px solid rgba(255,255,255,0.88);box-shadow:0 0 0 3px rgba(16,185,129,0.28),0 3px 10px rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;"><div style="width:${inner}px;height:${inner}px;border-radius:50%;background:rgba(255,255,255,0.9);"></div></div>`;
   }
 
-  // Vista fija en la posición del camión — zoom 10 para ver carreteras y señales
-  hosMinimapInst.setView([lat, lon], 7);
+  // Posicionar el camión en la zona inferior del mapa (≈25% desde abajo)
+  setTimeout(() => _hosMinimapFollow(lat, lon), 80);
 
   // Función interna para dibujar (o redibujar) la ruta en el mini-mapa
   function _drawHostRoute(coords) {
@@ -14572,8 +14587,46 @@ function initHosMinimap() {
     el.appendChild(_panel);
   }
 
-  // Tap en mini mapa → ir al mapa completo
-  el.addEventListener('click', showFullMapFromDash);
+  // Botón de estilos de mapa en el mini-mapa
+  if (!el.querySelector('#hosMinimapStyleBtn')) {
+    const _styleBtn = document.createElement('button');
+    _styleBtn.id = 'hosMinimapStyleBtn';
+    _styleBtn.innerHTML = '🗺️';
+    _styleBtn.style.cssText = 'position:absolute;bottom:12px;left:12px;z-index:1001;width:36px;height:36px;border-radius:10px;background:rgba(8,14,28,0.88);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,0.55);-webkit-tap-highlight-color:transparent;padding:0;';
+
+    const _stylePanel = document.createElement('div');
+    _stylePanel.id = 'hosMinimapStylePanel';
+    _stylePanel.style.cssText = 'position:absolute;bottom:56px;left:8px;z-index:1002;background:rgba(10,18,35,0.96);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;transform:translateY(8px);box-shadow:0 6px 24px rgba(0,0,0,.6);min-width:196px;';
+
+    Object.entries(MAP_STYLES).forEach(([key, s]) => {
+      const btn = document.createElement('button');
+      btn.className = 'hos-style-btn' + (key === currentMapStyle ? ' active' : '');
+      btn.dataset.style = key;
+      btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.12);border-radius:11px;padding:7px 10px;cursor:pointer;color:#fff;font-family:\'DM Sans\',sans-serif;min-width:58px;-webkit-tap-highlight-color:transparent;';
+      if (key === currentMapStyle) { btn.style.background = 'rgba(16,185,129,.18)'; btn.style.borderColor = '#10b981'; }
+      btn.innerHTML = `<span style="font-size:20px">${s.emoji}</span><span style="font-size:9px;font-weight:700;letter-spacing:.3px;opacity:.85">${s.label}</span>`;
+      btn.onclick = (e) => { e.stopPropagation(); changeMapStyle(key); _stylePanel.style.opacity='0'; _stylePanel.style.pointerEvents='none'; _stylePanel.style.transform='translateY(8px)'; };
+      _stylePanel.appendChild(btn);
+    });
+
+    _styleBtn.onclick = (e) => {
+      e.stopPropagation();
+      const open = _stylePanel.style.opacity === '1';
+      _stylePanel.style.opacity = open ? '0' : '1';
+      _stylePanel.style.pointerEvents = open ? 'none' : 'all';
+      _stylePanel.style.transform = open ? 'translateY(8px)' : 'translateY(0)';
+    };
+
+    el.appendChild(_stylePanel);
+    el.appendChild(_styleBtn);
+  }
+
+  // Tap en mini mapa → ir al mapa completo (solo si no es el botón de estilos)
+  el.addEventListener('click', (e) => {
+    if (!e.target.closest('#hosMinimapStyleBtn') && !e.target.closest('#hosMinimapStylePanel')) {
+      showFullMapFromDash();
+    }
+  });
 }
 
 function loadMiniMapTruckStops(lat, lon) {
@@ -14637,6 +14690,7 @@ function loadMiniMapInterstates(lat, lon) {
 function updateHosDashMinimap(lat, lon) {
   if (!hosMinimapInst || !hosMinimapTruck) return;
   hosMinimapTruck.setLatLng([lat, lon]);
+  _hosMinimapFollow(lat, lon);
 }
 
 function updateHosDashboard(driveLeft, driveMax) {
