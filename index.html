@@ -7918,9 +7918,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
   <div style="flex:0 0 auto;display:flex;justify-content:center;padding:4px 0 8px;">
-    <!-- Anillo exterior decorativo con sombras -->
-    <div style="border-radius:50%;padding:10px;background:rgba(16,185,129,0.03);box-shadow:0 0 0 1.5px rgba(16,185,129,0.38),0 0 0 7px rgba(16,185,129,0.1),0 0 55px rgba(16,185,129,0.18),0 12px 60px rgba(0,0,0,0.65);">
-    <div id="dashRingWrap" style="position:relative;width:260px;height:260px;filter:drop-shadow(0 0 32px rgba(30,64,175,0.55));transition:filter 0.4s ease;">
+    <!-- Profundidad: placa oscura de la que emerge el anillo -->
+    <div style="border-radius:50%;padding:12px;background:radial-gradient(ellipse at 50% 48%,rgba(15,23,42,0.75) 30%,rgba(8,12,24,0.92) 68%,rgba(5,8,18,0.98) 100%);box-shadow:inset 0 -14px 44px rgba(0,0,0,0.95),0 0 0 1px rgba(16,185,129,0.07),0 44px 100px rgba(0,0,0,0.92),0 0 90px rgba(16,185,129,0.06);">
+    <div id="dashRingWrap" style="position:relative;width:260px;height:260px;filter:drop-shadow(0 0 22px rgba(16,185,129,0.65)) drop-shadow(0 0 52px rgba(16,185,129,0.28));transition:filter 0.4s ease;">
       <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
         <circle cx="130" cy="130" r="116" fill="none" stroke="rgba(16,185,129,0.14)" stroke-width="14" id="dashRingTrack"/>
         <circle cx="130" cy="130" r="116" fill="none"
@@ -12030,6 +12030,47 @@ function addInterstateMarkers(map, steps, isFull){
 }
 
 
+// ── Valhalla polyline6 decoder ───────────────────────────────
+function _decodePolyline6(encoded) {
+  const pts = []; let idx = 0, lat = 0, lng = 0;
+  while (idx < encoded.length) {
+    let b, shift = 0, result = 0;
+    do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+    shift = 0; result = 0;
+    do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+    pts.push([lat / 1e6, lng / 1e6]);
+  }
+  return pts;
+}
+async function _fetchValhallaRoute(orig, dest) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  const res = await fetch('https://valhalla1.openstreetmap.de/route', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal: ctrl.signal,
+    body: JSON.stringify({
+      locations: [
+        { lon: orig.lon, lat: orig.lat, type: 'break' },
+        { lon: dest.lon, lat: dest.lat, type: 'break' }
+      ],
+      costing: 'truck',
+      directions_options: { units: 'miles' },
+      shape_format: 'polyline6'
+    })
+  });
+  clearTimeout(t);
+  const data = await res.json();
+  const leg = data?.trip?.legs?.[0];
+  if (!leg?.shape) throw new Error('no-shape');
+  const coords = _decodePolyline6(leg.shape);
+  const miles = Math.round(leg.summary?.length || 0);
+  console.log(`✅ Route: Valhalla-truck | ${miles} mi | ${coords.length} pts`);
+  return { coords, miles, steps: [], source: 'Valhalla' };
+}
+
 // ── Route cache helpers ──────────────────────────────────────
 function _routeCacheKey(orig, dest) {
   const r = v => Math.round(v * 1000) / 1000; // round to 3 decimals (~111m precision)
@@ -12108,17 +12149,26 @@ async function fetchRoadRoute(orig, dest) {
     console.warn('⚠️ Primer intento OSRM fallido — reintentando en 2s...');
   }
 
-  // Retry once after 2s before falling back to straight line
+  // Retry OSRM once after 2s
   await new Promise(res => setTimeout(res, 2000));
   try {
     const result = await _tryFetch();
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
-    console.warn('⚠️ Todos los servidores OSRM fallaron — usando línea recta');
+    console.warn('⚠️ OSRM falló en reintento — probando Valhalla...');
   }
 
-  // Fallback: línea recta
+  // Fallback 2: Valhalla (motor completamente distinto a OSRM)
+  try {
+    const result = await _fetchValhallaRoute(orig, dest);
+    _routeCacheSet(orig, dest, result);
+    return result;
+  } catch (e) {
+    console.warn('⚠️ Valhalla también falló — usando línea recta');
+  }
+
+  // Fallback final: línea recta
   const straight = haversine(orig.lat, orig.lon, dest.lat, dest.lon);
   return {
     coords: [[orig.lat, orig.lon], [dest.lat, dest.lon]],
