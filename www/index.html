@@ -14522,28 +14522,55 @@ function initHosMinimap() {
 
 function loadMiniMapTruckStops(lat, lon) {
   if (!hosMinimapInst) return;
-  // Radio ~1 grado (~111 km) para mostrar paradas a lo largo de la ruta
-  const r = 0.8;
-  const bbox = `${lat - r},${lon - r},${lat + r},${lon + r}`;
-  const query = `[out:json][timeout:10];(node["amenity"="fuel"]["hgv"="yes"](${bbox});node["amenity"="truck_stop"](${bbox});node["highway"="rest_area"](${bbox});node["amenity"="rest_area"](${bbox}););out 25;`;
 
-  fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
+  // Bbox más amplio: cubre más área visible al zoom 7
+  const r = 1.5;
+  const bbox = `${lat - r},${lon - r},${lat + r},${lon + r}`;
+
+  // Busca truck stops, paradas con diesel para HGV y rest areas
+  const query = `[out:json][timeout:15];(
+    node["amenity"="truck_stop"](${bbox});
+    node["amenity"="fuel"]["hgv"="yes"](${bbox});
+    node["amenity"="fuel"]["name"~"Flying J|Pilot|Love|TA |Petro|Casey|Kwik Trip|Travel Center",i](${bbox});
+    node["highway"="rest_area"](${bbox});
+    node["amenity"="rest_area"](${bbox});
+    node["highway"="services"](${bbox});
+  );out 40;`;
+
+  fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    body: 'data=' + encodeURIComponent(query)
+  })
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(data => {
       if (!hosMinimapInst || !data?.elements?.length) return;
-      data.elements.slice(0, 20).forEach(node => {
-        const isTruck = node.tags?.amenity === 'truck_stop' || node.tags?.hgv === 'yes';
-        const isRest  = node.tags?.highway === 'rest_area' || node.tags?.amenity === 'rest_area';
-        // Círculo verde uniforme — mismo estilo que los marcadores de ruta
+      const seen = new Set();
+      data.elements.forEach(node => {
+        if (!node.lat || !node.lon) return;
+        const key = `${Math.round(node.lat*100)}_${Math.round(node.lon*100)}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+
+        const isTruck = node.tags?.amenity === 'truck_stop'
+                     || node.tags?.hgv === 'yes'
+                     || /Flying J|Pilot|Love|TA |Petro|Travel Center/i.test(node.tags?.name || '');
+        const isRest  = node.tags?.highway === 'rest_area'
+                     || node.tags?.amenity === 'rest_area'
+                     || node.tags?.highway === 'services';
+        const name = node.tags?.name || (isTruck ? 'Truck Stop' : 'Rest Area');
+
+        // Icono grande y visible: naranja para truck stop, azul para rest area
+        const bg    = isTruck ? '#f59e0b' : '#3b82f6';
+        const emoji = isTruck ? '⛽' : '🅿';
         const poiIcon = L.divIcon({
           className: '',
-          html: `<div style="width:18px;height:18px;border-radius:50%;background:#10b981;border:2px solid rgba(255,255,255,0.85);box-shadow:0 0 0 2.5px rgba(16,185,129,0.25),0 2px 8px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;"><div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.88);"></div></div>`,
-          iconAnchor: [9, 9]
+          html: `<div style="width:30px;height:30px;border-radius:8px;background:${bg};border:2.5px solid rgba(255,255,255,0.95);box-shadow:0 3px 10px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:15px;">${emoji}</div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
         });
-        L.marker([node.lat, node.lon], { icon: poiIcon })
-          .bindTooltip(node.tags?.name || (isTruck ? 'Truck Stop' : isRest ? 'Rest Area' : 'Diesel'), {
-            permanent: false, direction: 'top', className: 'hosMapTooltip'
-          })
+
+        L.marker([node.lat, node.lon], { icon: poiIcon, zIndexOffset: 200 })
+          .bindTooltip(name, { permanent: false, direction: 'top', className: 'hosMapTooltip' })
           .addTo(hosMinimapInst);
       });
     })
