@@ -7921,14 +7921,38 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <!-- Profundidad: placa oscura de la que emerge el anillo -->
     <div id="dashRingWrap" style="position:relative;width:260px;height:260px;filter:drop-shadow(0 0 28px rgba(30,64,175,0.8)) drop-shadow(0 0 65px rgba(30,64,175,0.45));transition:filter 0.5s ease;">
       <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
-        <circle cx="130" cy="130" r="116" fill="none" stroke="rgba(16,185,129,0.14)" stroke-width="14" id="dashRingTrack"/>
-        <circle cx="130" cy="130" r="116" fill="none"
-                stroke="#10b981" stroke-width="14"
+        <defs>
+          <!-- Relleno interior oscuro con viñeta azul-navy -->
+          <radialGradient id="dashInnerGrad" cx="50%" cy="45%" r="55%">
+            <stop offset="0%"   stop-color="#0f2040"/>
+            <stop offset="100%" stop-color="#06101e"/>
+          </radialGradient>
+          <!-- Gradiente del arco: amarillo-lima arriba → verde oscuro abajo -->
+          <linearGradient id="dashArcGrad" x1="130" y1="22" x2="130" y2="238" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stop-color="#c8ff28"/>
+            <stop offset="20%"  stop-color="#4ade80"/>
+            <stop offset="65%"  stop-color="#16a34a"/>
+            <stop offset="100%" stop-color="#093d18"/>
+          </linearGradient>
+          <!-- Resplandor suave sobre el arco -->
+          <filter id="dashArcGlow" x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Círculo interior oscuro -->
+        <circle cx="130" cy="130" r="94" fill="url(#dashInnerGrad)"/>
+        <!-- Pista de fondo (consumida) -->
+        <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(16,185,129,0.08)" stroke-width="24" id="dashRingTrack"/>
+        <!-- Arco de tiempo restante con gradiente luminoso -->
+        <circle cx="130" cy="130" r="108" fill="none"
+                stroke="url(#dashArcGrad)" stroke-width="24"
                 stroke-linecap="round"
-                stroke-dasharray="729 729"
+                stroke-dasharray="679 679"
                 id="dashRingArc"
                 transform="rotate(-90 130 130)"
-                style="transition:stroke-dasharray 1s ease,stroke 0.5s ease;"/>
+                filter="url(#dashArcGlow)"
+                style="transition:stroke-dasharray 1s ease;"/>
       </svg>
       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div id="dashHosTime" style="font-size:40px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-2px;">11h 0m</div>
@@ -10199,8 +10223,8 @@ function updateSpeedometer(mph) {
     const dashTrack = document.getElementById('dashRingTrack');
     const dashWrap  = document.getElementById('dashRingWrap');
     if (dashArc) {
-      dashArc.style.stroke = '#10b981'; // arco siempre verde
-      if (dashTrack) dashTrack.setAttribute('stroke', 'rgba(16,185,129,0.18)');
+      // Arco usa gradiente SVG permanente; solo cambia la sombra exterior
+      if (dashTrack) dashTrack.setAttribute('stroke', 'rgba(16,185,129,0.08)');
       if (dashWrap)  dashWrap.style.filter  = dashSpeedOver
         ? 'drop-shadow(0 0 40px rgba(239,68,68,0.95)) drop-shadow(0 0 85px rgba(239,68,68,0.6))'
         : 'drop-shadow(0 0 32px rgba(30,64,175,0.9)) drop-shadow(0 0 72px rgba(30,64,175,0.55))';
@@ -14726,7 +14750,7 @@ function updateHosDashboard(driveLeft, driveMax) {
   if (!arc || !timeEl) return;
 
   const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
-  const circumference = 729; // 2π×116 ≈ 729
+  const circumference = 679; // 2π×108 ≈ 679
   arc.setAttribute('stroke-dasharray', `${(pct * circumference).toFixed(1)} ${circumference}`);
 
   // El arco siempre verde; solo la sombra cambia según velocidad / tiempo restante
@@ -14748,9 +14772,8 @@ function updateHosDashboard(driveLeft, driveMax) {
     shadow = 'drop-shadow(0 0 32px rgba(30,64,175,0.9)) drop-shadow(0 0 72px rgba(30,64,175,0.55))';
   }
 
-  // Arco y track siempre verdes
-  arc.style.stroke = '#10b981';
-  if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.18)');
+  // El gradiente del arco siempre verde (definido en SVG); solo la sombra exterior cambia
+  if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.08)');
   if (wrap)  wrap.style.filter = shadow;
   timeEl.style.color = '#ffffff'; // siempre blanco
 
