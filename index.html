@@ -8055,39 +8055,39 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   text-transform: uppercase;
 }
 #dashSpeedoWrap {
-  position: relative;
-  width: 58px;
-  height: 58px;
-  background: rgba(8,14,28,0.92);
-  border-radius: 50%;
-  border: 1.5px solid rgba(255,255,255,0.13);
-  box-shadow: 0 4px 18px rgba(0,0,0,0.65);
+  background: #fff;
+  border: 2.5px solid #111;
+  border-radius: 5px;
+  padding: 3px 7px 5px;
+  text-align: center;
+  min-width: 42px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.65), inset 0 0 0 2px rgba(0,0,0,0.06);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
-#dashSpeedoWrap svg { position: absolute; inset: 0; }
 #dashSpeedNum {
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 900;
-  color: #10b981;
+  color: #000;
   line-height: 1;
-  position: relative;
-  z-index: 1;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: -1px;
   transition: color .4s ease;
 }
 #dashSpeedUnit {
-  font-size: 8px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.45);
-  letter-spacing: 1.2px;
-  position: relative;
-  z-index: 1;
+  font-size: 7px;
+  font-weight: 800;
+  color: #000;
+  letter-spacing: 0.5px;
   margin-top: 1px;
+  text-transform: uppercase;
 }
 #dashSpeedLimitSign.over { border-color: #dc2626; background: #fef2f2; }
 #dashSpeedLimitSign.over .dsp-num { color: #dc2626; }
+#dashSpeedoWrap.over { border-color: #dc2626; background: #fef2f2; }
+#dashSpeedoWrap.over #dashSpeedNum { color: #dc2626; }
 
 /* ── DOT Violation Sheet ──────────────────────────────── */
 #violationOverlay{display:none;position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,.75);align-items:flex-end;justify-content:center}
@@ -10185,17 +10185,14 @@ function updateSpeedometer(mph) {
   const _dashLimSign = document.getElementById('dashSpeedLimitSign');
   if (_dashNumEl) {
     _dashNumEl.textContent = Math.round(mph);
-    _dashNumEl.style.color = over ? '#ef4444' : mph > 3 ? '#10b981' : 'rgba(255,255,255,0.45)';
-  }
-  if (_dashArcEl) {
-    const _pct = Math.min(1, mph / 100);
-    _dashArcEl.setAttribute('stroke-dasharray', `${(_pct * 161).toFixed(1)} 188`);
-    _dashArcEl.style.stroke = mph > 75 ? '#ef4444' : mph > 55 ? '#f59e0b' : (mph > 3 ? '#10b981' : '#374151');
+    _dashNumEl.style.color = '';  // controlled by .over CSS class
   }
   if (_dashLimEl && typeof currentTruckSpeedLimit !== 'undefined' && currentTruckSpeedLimit) {
     _dashLimEl.textContent = currentTruckSpeedLimit;
   }
   if (_dashLimSign) _dashLimSign.classList.toggle('over', !!over);
+  const _dashSpdoEl = document.getElementById('dashSpeedoWrap');
+  if (_dashSpdoEl) _dashSpdoEl.classList.toggle('over', !!over);
 
   // Actualizar anillo HOS del dashboard en tiempo real
   if (dashSpeedOver !== !!over) {
@@ -14554,7 +14551,6 @@ function initHosMinimap() {
   // Señales de carreteras interestatales y nombres de ruta en el mini mapa
   if (typeof navSteps !== 'undefined' && Array.isArray(navSteps) && navSteps.length) {
     addInterstateMarkers(hosMinimapInst, navSteps, false);
-    addRoadNameMarkers(hosMinimapInst, navSteps, false);
   }
 
   // Panel de Speed Limit + Velocímetro superpuesto al mini mapa
@@ -14569,14 +14565,9 @@ function initHosMinimap() {
         <div class="dsp-label">TRUCKS</div>
       </div>
       <div id="dashSpeedoWrap">
-        <svg viewBox="0 0 72 72" width="72" height="72">
-          <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
-          <circle cx="36" cy="36" r="30" fill="none" stroke="#10b981" stroke-width="5"
-                  stroke-linecap="round" stroke-dasharray="0 188" id="dashSpeedoArc"
-                  transform="rotate(-220 36 36)" style="transition:stroke-dasharray .5s ease,stroke .4s ease"/>
-        </svg>
-        <div id="dashSpeedNum">${typeof fmCurrentSpeed !== 'undefined' ? Math.round(fmCurrentSpeed) : 0}</div>
-        <div id="dashSpeedUnit">MPH</div>
+        <div class="dsp-top">YOUR<br>SPEED</div>
+        <div class="dsp-num" id="dashSpeedNum">${typeof fmCurrentSpeed !== 'undefined' ? Math.round(fmCurrentSpeed) : 0}</div>
+        <div class="dsp-label" id="dashSpeedUnit">MPH</div>
       </div>`;
     el.appendChild(_panel);
   }
