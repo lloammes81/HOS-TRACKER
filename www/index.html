@@ -855,7 +855,7 @@
   /* State border welcome banner */
   #stateBanner {
     position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.8);
-    z-index:9999; background:rgba(10,16,35,0.96); border:2px solid #10b981;
+    z-index:30000; background:rgba(10,16,35,0.96); border:2px solid #10b981;
     border-radius:22px; padding:30px 44px; text-align:center;
     opacity:0; pointer-events:none; transition:all 0.4s cubic-bezier(.16,1,.3,1);
     box-shadow:0 8px 48px rgba(0,0,0,0.75);
@@ -867,7 +867,7 @@
 
   .safety-toast {
     position: fixed; top: calc(14px + env(safe-area-inset-top,0px));
-    left: 14px; right: 14px; z-index: 9000;
+    left: 14px; right: 14px; z-index: 30000;
     border-radius: 16px; padding: 14px 16px;
     display: flex; align-items: flex-start; gap: 12px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.35);
@@ -7918,25 +7918,41 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
   <div style="flex:0 0 auto;display:flex;justify-content:center;padding:4px 0 8px;">
-    <!-- Profundidad: placa oscura de la que emerge el anillo -->
-    <div style="border-radius:50%;padding:12px;background:radial-gradient(ellipse at 50% 48%,rgba(15,23,42,0.75) 30%,rgba(8,12,24,0.92) 68%,rgba(5,8,18,0.98) 100%);box-shadow:inset 0 -14px 44px rgba(0,0,0,0.95),0 0 0 1px rgba(16,185,129,0.07),0 44px 100px rgba(0,0,0,0.92),0 0 90px rgba(16,185,129,0.06);">
-    <div id="dashRingWrap" style="position:relative;width:260px;height:260px;filter:drop-shadow(0 0 22px rgba(16,185,129,0.65)) drop-shadow(0 0 52px rgba(16,185,129,0.28));transition:filter 0.4s ease;">
+    <!-- Anillo HOS -->
+    <div id="dashRingWrap" style="position:relative;width:260px;height:260px;filter:drop-shadow(0 0 28px rgba(30,64,175,0.8)) drop-shadow(0 0 65px rgba(30,64,175,0.45));transition:filter 0.5s ease;">
       <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
-        <circle cx="130" cy="130" r="116" fill="none" stroke="rgba(16,185,129,0.14)" stroke-width="14" id="dashRingTrack"/>
-        <circle cx="130" cy="130" r="116" fill="none"
-                stroke="#10b981" stroke-width="14"
+        <defs>
+          <radialGradient id="dashInnerGrad" cx="50%" cy="45%" r="55%">
+            <stop offset="0%"   stop-color="#0f2040"/>
+            <stop offset="100%" stop-color="#06101e"/>
+          </radialGradient>
+          <linearGradient id="dashArcGrad" x1="130" y1="22" x2="130" y2="238" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stop-color="#c8ff28"/>
+            <stop offset="20%"  stop-color="#4ade80"/>
+            <stop offset="65%"  stop-color="#16a34a"/>
+            <stop offset="100%" stop-color="#093d18"/>
+          </linearGradient>
+          <filter id="dashArcGlow" x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <circle cx="130" cy="130" r="94" fill="url(#dashInnerGrad)"/>
+        <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(16,185,129,0.08)" stroke-width="24" id="dashRingTrack"/>
+        <circle cx="130" cy="130" r="108" fill="none"
+                stroke="url(#dashArcGrad)" stroke-width="24"
                 stroke-linecap="round"
-                stroke-dasharray="729 729"
+                stroke-dasharray="679 679"
                 id="dashRingArc"
                 transform="rotate(-90 130 130)"
-                style="transition:stroke-dasharray 0.8s ease,stroke 0.4s ease;"/>
+                filter="url(#dashArcGlow)"
+                style="transition:stroke-dasharray 1s ease;"/>
       </svg>
       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="dashHosTime" style="font-size:48px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-2px;">11h 0m</div>
-        <div style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.5);text-align:center;margin-top:10px;max-width:130px;line-height:1.5;">Tiempo de conducción restante</div>
+        <div id="dashHosTime" style="font-size:40px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-2px;">11h 0m</div>
+        <div style="font-size:13px;font-weight:600;color:#ffffff;text-align:center;margin-top:8px;max-width:140px;line-height:1.4;">Tiempo de conducción restante</div>
       </div>
     </div>
-    </div><!-- /anillo exterior -->
   </div>
 
   <!-- ③ TARJETAS ESTADÍSTICAS — tamaño fijo -->
@@ -10106,11 +10122,10 @@ function updateSpeedometer(mph) {
     const dashTrack = document.getElementById('dashRingTrack');
     const dashWrap  = document.getElementById('dashRingWrap');
     if (dashArc) {
-      dashArc.style.stroke = dashSpeedOver ? '#ef4444' : '#10b981';
-      if (dashTrack) dashTrack.setAttribute('stroke', dashSpeedOver ? 'rgba(239,68,68,0.14)' : 'rgba(16,185,129,0.14)');
+      if (dashTrack) dashTrack.setAttribute('stroke', 'rgba(16,185,129,0.08)');
       if (dashWrap)  dashWrap.style.filter  = dashSpeedOver
-        ? 'drop-shadow(0 0 36px rgba(239,68,68,0.65))'
-        : 'drop-shadow(0 0 32px rgba(30,64,175,0.55))';
+        ? 'drop-shadow(0 0 40px rgba(239,68,68,0.95)) drop-shadow(0 0 85px rgba(239,68,68,0.6))'
+        : 'drop-shadow(0 0 32px rgba(30,64,175,0.9)) drop-shadow(0 0 72px rgba(30,64,175,0.55))';
     }
   }
 
@@ -14619,34 +14634,25 @@ function updateHosDashboard(driveLeft, driveMax) {
   if (!arc || !timeEl) return;
 
   const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
-  const circumference = 729; // 2π×116 ≈ 729
+  const circumference = 679; // 2π×108 ≈ 679
   arc.setAttribute('stroke-dasharray', `${(pct * circumference).toFixed(1)} ${circumference}`);
 
-  // Prioridad de color: velocidad excedida > HOS crítico > advertencia > normal
+  // El arco siempre verde (gradiente SVG); solo la sombra cambia
   const isCrit = driveLeft < 2;
   const isWarn = driveLeft < 4 && driveLeft >= 2;
 
-  let color, shadow, trackOpacity;
+  let shadow;
   if (dashSpeedOver) {
-    color        = '#ef4444';
-    shadow       = 'drop-shadow(0 0 36px rgba(239,68,68,0.65))';
-    trackOpacity = 'rgba(239,68,68,0.14)';
+    shadow = 'drop-shadow(0 0 40px rgba(239,68,68,0.95)) drop-shadow(0 0 85px rgba(239,68,68,0.6))';
   } else if (isCrit) {
-    color        = '#ef4444';
-    shadow       = 'drop-shadow(0 0 32px rgba(239,68,68,0.5))';
-    trackOpacity = 'rgba(239,68,68,0.14)';
+    shadow = 'drop-shadow(0 0 38px rgba(239,68,68,0.85)) drop-shadow(0 0 75px rgba(239,68,68,0.5))';
   } else if (isWarn) {
-    color        = '#f59e0b';
-    shadow       = 'drop-shadow(0 0 32px rgba(245,158,11,0.5))';
-    trackOpacity = 'rgba(245,158,11,0.14)';
+    shadow = 'drop-shadow(0 0 35px rgba(245,158,11,0.85)) drop-shadow(0 0 70px rgba(245,158,11,0.5))';
   } else {
-    color        = '#10b981';
-    shadow       = 'drop-shadow(0 0 32px rgba(30,64,175,0.55))';
-    trackOpacity = 'rgba(16,185,129,0.14)';
+    shadow = 'drop-shadow(0 0 32px rgba(30,64,175,0.9)) drop-shadow(0 0 72px rgba(30,64,175,0.55))';
   }
 
-  arc.style.stroke = color;
-  if (track) track.setAttribute('stroke', trackOpacity);
+  if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.08)');
   if (wrap)  wrap.style.filter = shadow;
   timeEl.style.color = '#ffffff'; // siempre blanco
 
