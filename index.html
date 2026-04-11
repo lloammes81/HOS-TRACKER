@@ -10201,8 +10201,8 @@ function updateSpeedometer(mph) {
     const dashTrack = document.getElementById('dashRingTrack');
     const dashWrap  = document.getElementById('dashRingWrap');
     if (dashArc) {
-      dashArc.style.stroke = dashSpeedOver ? '#ef4444' : '#10b981';
-      if (dashTrack) dashTrack.setAttribute('stroke', dashSpeedOver ? 'rgba(239,68,68,0.18)' : 'rgba(16,185,129,0.18)');
+      dashArc.style.stroke = '#10b981'; // arco siempre verde
+      if (dashTrack) dashTrack.setAttribute('stroke', 'rgba(16,185,129,0.18)');
       if (dashWrap)  dashWrap.style.filter  = dashSpeedOver
         ? 'drop-shadow(0 0 40px rgba(239,68,68,0.95)) drop-shadow(0 0 85px rgba(239,68,68,0.6))'
         : 'drop-shadow(0 0 32px rgba(30,64,175,0.9)) drop-shadow(0 0 72px rgba(30,64,175,0.55))';
@@ -14731,31 +14731,28 @@ function updateHosDashboard(driveLeft, driveMax) {
   const circumference = 729; // 2π×116 ≈ 729
   arc.setAttribute('stroke-dasharray', `${(pct * circumference).toFixed(1)} ${circumference}`);
 
-  // Prioridad de color: velocidad excedida > HOS crítico > advertencia > normal
+  // El arco siempre verde; solo la sombra cambia según velocidad / tiempo restante
   const isCrit = driveLeft < 2;
   const isWarn = driveLeft < 4 && driveLeft >= 2;
 
-  let color, shadow, trackOpacity;
+  let shadow;
   if (dashSpeedOver) {
-    color        = '#ef4444';
-    shadow       = 'drop-shadow(0 0 40px rgba(239,68,68,0.95)) drop-shadow(0 0 85px rgba(239,68,68,0.6))';
-    trackOpacity = 'rgba(239,68,68,0.18)';
+    // Sombra roja: velocidad excedida
+    shadow = 'drop-shadow(0 0 40px rgba(239,68,68,0.95)) drop-shadow(0 0 85px rgba(239,68,68,0.6))';
   } else if (isCrit) {
-    color        = '#ef4444';
-    shadow       = 'drop-shadow(0 0 38px rgba(239,68,68,0.85)) drop-shadow(0 0 75px rgba(239,68,68,0.5))';
-    trackOpacity = 'rgba(239,68,68,0.18)';
+    // Sombra roja intensa: menos de 2h restantes
+    shadow = 'drop-shadow(0 0 38px rgba(239,68,68,0.85)) drop-shadow(0 0 75px rgba(239,68,68,0.5))';
   } else if (isWarn) {
-    color        = '#f59e0b';
-    shadow       = 'drop-shadow(0 0 35px rgba(245,158,11,0.8)) drop-shadow(0 0 70px rgba(245,158,11,0.45))';
-    trackOpacity = 'rgba(245,158,11,0.18)';
+    // Sombra ámbar: entre 2h y 4h restantes
+    shadow = 'drop-shadow(0 0 35px rgba(245,158,11,0.85)) drop-shadow(0 0 70px rgba(245,158,11,0.5))';
   } else {
-    color        = '#10b981';
-    shadow       = 'drop-shadow(0 0 32px rgba(30,64,175,0.9)) drop-shadow(0 0 72px rgba(30,64,175,0.55))';
-    trackOpacity = 'rgba(16,185,129,0.18)';
+    // Sombra azul: conducción normal
+    shadow = 'drop-shadow(0 0 32px rgba(30,64,175,0.9)) drop-shadow(0 0 72px rgba(30,64,175,0.55))';
   }
 
-  arc.style.stroke = color;
-  if (track) track.setAttribute('stroke', trackOpacity);
+  // Arco y track siempre verdes
+  arc.style.stroke = '#10b981';
+  if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.18)');
   if (wrap)  wrap.style.filter = shadow;
   timeEl.style.color = '#ffffff'; // siempre blanco
 
