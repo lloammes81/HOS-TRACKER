@@ -14766,7 +14766,7 @@ function initHosMinimap() {
     const _panel = document.createElement('div');
     _panel.id = 'dashSpeedPanel';
     _panel.innerHTML = `
-      <div id="dashSpeedLimitSign" title="Toca para cambiar el límite" onclick="_openDashSpeedLimitEditor()">
+      <div id="dashSpeedLimitSign" title="Toca para cambiar el límite" onclick="event.stopPropagation();_openDashSpeedLimitEditor()">
         <div class="dsp-top">SPEED<br>LIMIT</div>
         <div class="dsp-num" id="dashLimitNum">${_limitVal}</div>
         <div class="dsp-label">TRUCKS</div>
@@ -14847,9 +14847,12 @@ function initHosMinimap() {
     _dashScreen.appendChild(_sideStack);
   }
 
-  // Tap en mini mapa → ir al mapa completo (solo si no es el botón de estilos)
+  // Tap en mini mapa → ir al mapa completo (solo si no es el botón de estilos, panel de velocidad ni barra de ciudad)
   el.addEventListener('click', (e) => {
-    if (!e.target.closest('#hosMinimapStyleBtn') && !e.target.closest('#hosMinimapStylePanel')) {
+    if (!e.target.closest('#hosMinimapStyleBtn') &&
+        !e.target.closest('#hosMinimapStylePanel') &&
+        !e.target.closest('#dashSpeedPanel') &&
+        !e.target.closest('#hosCityBar')) {
       showFullMapFromDash();
     }
   });
@@ -14943,7 +14946,10 @@ function loadMiniMapInterstates(lat, lon) {
 function updateHosDashMinimap(lat, lon) {
   if (!hosMinimapInst || !hosMinimapTruck) return;
   hosMinimapTruck.setLatLng([lat, lon]);
-  _hosMinimapFollow(lat, lon);
+  // Solo seguir al camión si no hay ruta cargada; si hay ruta, mantener la vista fitBounds
+  if (!(typeof roadGeometry !== 'undefined' && roadGeometry?.length > 2)) {
+    _hosMinimapFollow(lat, lon);
+  }
   _updateHosCityBar(lat, lon);
 }
 
