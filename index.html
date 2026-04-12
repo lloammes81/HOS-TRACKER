@@ -14548,8 +14548,10 @@ function initHosMinimap() {
     return `<div style="width:${s}px;height:${s}px;border-radius:50%;background:#10b981;border:2.5px solid rgba(255,255,255,0.88);box-shadow:0 0 0 3px rgba(16,185,129,0.28),0 3px 10px rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;"><div style="width:${inner}px;height:${inner}px;border-radius:50%;background:rgba(255,255,255,0.9);"></div></div>`;
   }
 
-  // Posicionar el camión en la zona inferior del mapa (≈25% desde abajo)
-  setTimeout(() => _hosMinimapFollow(lat, lon), 80);
+  // Posicionar el camión en la zona inferior del mapa solo si no hay ruta completa
+  if (!(typeof roadGeometry !== 'undefined' && roadGeometry?.length > 2)) {
+    setTimeout(() => _hosMinimapFollow(lat, lon), 80);
+  }
 
   // Función interna para dibujar (o redibujar) la ruta en el mini-mapa
   function _drawHostRoute(coords) {
@@ -14558,6 +14560,7 @@ function initHosMinimap() {
     if (hosMinimapRoute) { hosMinimapInst.removeLayer(hosMinimapRoute); hosMinimapRoute = null; }
     hosMinimapGlow  = L.polyline(coords, { color: '#10b981', weight: 14, opacity: 0.13 }).addTo(hosMinimapInst);
     hosMinimapRoute = L.polyline(coords, { color: '#10b981', weight: 4,  opacity: 0.95 }).addTo(hosMinimapInst);
+    hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [30, 30], animate: false });
   }
 
   // Dibujar ruta existente
@@ -14569,7 +14572,7 @@ function initHosMinimap() {
         typeof destination !== 'undefined' && destination?.lat) {
 
       const _coords = `${origin.lon},${origin.lat};${destination.lon},${destination.lat}`;
-      const _qs     = '?overview=simplified&geometries=geojson&steps=false&alternatives=false';
+      const _qs     = '?overview=full&geometries=geojson&steps=false&alternatives=false';
       const _servers = [
         `https://router.project-osrm.org/route/v1/driving/${_coords}${_qs}`,
         `https://routing.openstreetmap.de/routed-car/route/v1/driving/${_coords}${_qs}`
@@ -14625,7 +14628,13 @@ function initHosMinimap() {
 
   // invalidateSize para que el mapa se renderice correctamente
   setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 250);
-  setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 600);
+  setTimeout(() => {
+    if (hosMinimapInst) {
+      hosMinimapInst.invalidateSize();
+      // Re-ajustar vista a la ruta completa después del render final
+      if (hosMinimapRoute) hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [30, 30], animate: false });
+    }
+  }, 600);
 
   // Cargar iconos de truck stops e interstates
   loadMiniMapTruckStops(lat, lon);
