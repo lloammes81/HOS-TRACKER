@@ -8085,6 +8085,56 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   pointer-events: none;
 }
 #dashSpeedLimitSign {
+  pointer-events: auto;
+  cursor: pointer;
+}
+/* City / State bar at top of HOS minimap */
+#hosCityBar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 1001;
+  background: linear-gradient(180deg, rgba(8,14,28,0.88) 0%, rgba(8,14,28,0) 100%);
+  padding: 8px 12px 22px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'DM Sans', sans-serif;
+}
+#hosCityBar .hcb-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(16,185,129,0.7);
+}
+#hosCityBar .hcb-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+/* Speed limit custom editor sheet */
+#dashSpeedSheet {
+  display: none;
+  position: fixed; inset: 0; z-index: 60000;
+  background: rgba(0,0,0,0.6);
+  align-items: flex-end;
+  justify-content: center;
+}
+#dashSpeedSheet.open { display: flex; }
+#dashSpeedSheetInner {
+  background: #0f172a;
+  border-radius: 24px 24px 0 0;
+  width: 100%; max-width: 480px;
+  padding: 24px 20px 40px;
+  box-shadow: 0 -8px 48px rgba(0,0,0,0.6);
+  font-family: 'DM Sans', sans-serif;
+}
+#dashSpeedLimitSign {
   background: #fff;
   border: 2.5px solid #111;
   border-radius: 5px;
@@ -8550,6 +8600,44 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <!-- ══════════════════════════════════════════════════════════
      SAFETY OVERLAYS
 ══════════════════════════════════════════════════════════ -->
+
+<!-- Speed limit custom editor (HOS minimap) -->
+<div id="dashSpeedSheet">
+  <div id="dashSpeedSheetInner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div>
+        <div style="font-size:17px;font-weight:800;color:#f1f5f9">Límite de velocidad</div>
+        <div style="font-size:12px;color:#64748b;margin-top:2px">Personaliza el límite para esta ruta</div>
+      </div>
+      <button onclick="document.getElementById('dashSpeedSheet').classList.remove('open')"
+        style="width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.08);color:#94a3b8;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div style="background:#fff;border:2.5px solid #111;border-radius:6px;padding:6px 14px;text-align:center;min-width:64px">
+        <div style="font-size:8px;font-weight:900;color:#000;letter-spacing:.6px;text-transform:uppercase">SPEED<br>LIMIT</div>
+        <div id="dashSheetPreview" style="font-size:32px;font-weight:900;color:#000;line-height:1;font-family:'DM Sans',sans-serif">--</div>
+        <div style="font-size:8px;font-weight:800;color:#000;letter-spacing:.5px;text-transform:uppercase">TRUCKS</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">Ingresa el límite en MPH:</div>
+        <input id="dashSpeedInput" type="number" min="25" max="85" step="5"
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:#f1f5f9;font-size:22px;font-weight:800;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;box-sizing:border-box"
+          oninput="document.getElementById('dashSheetPreview').textContent=this.value||'--'">
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button onclick="_dashSetSpeedPreset(55)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">55</button>
+          <button onclick="_dashSetSpeedPreset(60)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">60</button>
+          <button onclick="_dashSetSpeedPreset(65)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">65</button>
+          <button onclick="_dashSetSpeedPreset(70)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">70</button>
+          <button onclick="_dashSetSpeedPreset(75)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">75</button>
+        </div>
+      </div>
+    </div>
+    <button onclick="_dashSaveSpeedLimit()"
+      style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.2px">
+      Guardar límite
+    </button>
+  </div>
+</div>
 
 <!-- Toast notification (shared) -->
 <!-- State border welcome banner -->
@@ -10821,10 +10909,8 @@ async function detectStateAndUpdateLimit(lat, lon) {
         // --- Map speed sign ---
         updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
       }
-      // Welcome banner when entering a new state (not on first load)
-      if (prevCode) {
-        showStateBanner(stateRaw || code);
-      }
+      // Welcome banner when entering a new state
+      showStateBanner(stateRaw || code);
     } else if (code && code === currentStateCode) {
       // Same state — ensure sign stays visible if it was somehow hidden
       const sign = document.getElementById('mapSpeedSign');
@@ -14645,13 +14731,23 @@ function initHosMinimap() {
     addInterstateMarkers(hosMinimapInst, navSteps, false);
   }
 
+  // Barra de ciudad / estado en la parte superior del mini mapa
+  if (!el.querySelector('#hosCityBar')) {
+    const _cityBar = document.createElement('div');
+    _cityBar.id = 'hosCityBar';
+    _cityBar.innerHTML = `<div class="hcb-dot"></div><div class="hcb-text" id="hosCityText">Detectando ubicación…</div>`;
+    el.appendChild(_cityBar);
+  }
+
   // Panel de Speed Limit + Velocímetro superpuesto al mini mapa
   if (!el.querySelector('#dashSpeedPanel')) {
+    const _savedLimit = localStorage.getItem('hos_custom_speed_limit');
+    if (_savedLimit && !currentTruckSpeedLimit) currentTruckSpeedLimit = parseInt(_savedLimit, 10) || null;
     const _limitVal = (typeof currentTruckSpeedLimit !== 'undefined' && currentTruckSpeedLimit) ? currentTruckSpeedLimit : '--';
     const _panel = document.createElement('div');
     _panel.id = 'dashSpeedPanel';
     _panel.innerHTML = `
-      <div id="dashSpeedLimitSign">
+      <div id="dashSpeedLimitSign" title="Toca para cambiar el límite" onclick="_openDashSpeedLimitEditor()">
         <div class="dsp-top">SPEED<br>LIMIT</div>
         <div class="dsp-num" id="dashLimitNum">${_limitVal}</div>
         <div class="dsp-label">TRUCKS</div>
@@ -14829,6 +14925,57 @@ function updateHosDashMinimap(lat, lon) {
   if (!hosMinimapInst || !hosMinimapTruck) return;
   hosMinimapTruck.setLatLng([lat, lon]);
   _hosMinimapFollow(lat, lon);
+  _updateHosCityBar(lat, lon);
+}
+
+let _hosCityBarLast = 0;
+async function _updateHosCityBar(lat, lon) {
+  const now = Date.now();
+  if (now - _hosCityBarLast < 30000) return; // throttle: 30s
+  _hosCityBarLast = now;
+  const bar = document.getElementById('hosCityBar');
+  const txt = document.getElementById('hosCityText');
+  if (!bar || !txt) return;
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 7000);
+    const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`, { signal: ctrl.signal });
+    const d = await r.json();
+    const p = d.features?.[0]?.properties || {};
+    const city  = p.city || p.town || p.village || p.county || '';
+    const state = p.state || '';
+    if (city || state) txt.textContent = [city, state].filter(Boolean).join(', ');
+  } catch(e) {}
+}
+
+function _openDashSpeedLimitEditor() {
+  const sheet = document.getElementById('dashSpeedSheet');
+  const input = document.getElementById('dashSpeedInput');
+  const preview = document.getElementById('dashSheetPreview');
+  if (!sheet) return;
+  const cur = (typeof currentTruckSpeedLimit !== 'undefined' && currentTruckSpeedLimit) ? currentTruckSpeedLimit : '';
+  if (input) { input.value = cur; }
+  if (preview) preview.textContent = cur || '--';
+  sheet.classList.add('open');
+}
+
+function _dashSetSpeedPreset(val) {
+  const input = document.getElementById('dashSpeedInput');
+  const preview = document.getElementById('dashSheetPreview');
+  if (input) input.value = val;
+  if (preview) preview.textContent = val;
+}
+
+function _dashSaveSpeedLimit() {
+  const input = document.getElementById('dashSpeedInput');
+  const val = parseInt(input?.value, 10);
+  if (!val || val < 25 || val > 85) return;
+  currentTruckSpeedLimit = val;
+  localStorage.setItem('hos_custom_speed_limit', val);
+  const el = document.getElementById('dashLimitNum');
+  if (el) el.textContent = val;
+  document.getElementById('dashSpeedSheet').classList.remove('open');
+  showToast('info', '✅', 'Límite guardado', `Velocidad máxima ajustada a ${val} mph para esta ruta`, 4000);
 }
 
 function updateHosDashboard(driveLeft, driveMax) {
