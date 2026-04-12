@@ -2,9 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -7920,9 +7917,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
-  <div style="flex:0 0 auto;display:flex;justify-content:center;padding:2px 0 4px;">
-    <!-- Anillo HOS -->
-    <div id="dashRingWrap" style="position:relative;width:230px;height:230px;">
+  <div style="flex:0 0 auto;display:flex;justify-content:center;padding:4px 0 8px;">
+    <!-- Profundidad: placa oscura de la que emerge el anillo -->
+    <div id="dashRingWrap" style="position:relative;width:210px;height:210px;">
       <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;overflow:visible;">
         <defs>
           <radialGradient id="dashInnerGrad" cx="50%" cy="45%" r="55%">
@@ -7935,25 +7932,22 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <stop offset="65%"  stop-color="#16a34a"/>
             <stop offset="100%" stop-color="#093d18"/>
           </linearGradient>
-          <!-- Resplandor del arco -->
           <filter id="dashArcGlow" x="-25%" y="-25%" width="150%" height="150%">
             <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
             <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
-          <!-- Resplandor circular de estado (azul/ámbar/rojo) -->
           <filter id="dashGlowFilter" x="-60%" y="-60%" width="220%" height="220%">
             <feGaussianBlur stdDeviation="20"/>
           </filter>
         </defs>
-        <!-- Resplandor circular — color cambia por JS según estado -->
         <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none"
-                stroke="#1e40af" stroke-width="42"
+                stroke="#1e40af" stroke-width="56"
                 filter="url(#dashGlowFilter)" opacity="0.85"
                 style="transition:stroke 0.5s ease;"/>
         <circle cx="130" cy="130" r="94" fill="url(#dashInnerGrad)"/>
-        <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(16,185,129,0.08)" stroke-width="18" id="dashRingTrack"/>
+        <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(16,185,129,0.08)" stroke-width="24" id="dashRingTrack"/>
         <circle cx="130" cy="130" r="108" fill="none"
-                stroke="url(#dashArcGrad)" stroke-width="18"
+                stroke="url(#dashArcGrad)" stroke-width="24"
                 stroke-linecap="round"
                 stroke-dasharray="679 679"
                 id="dashRingArc"
@@ -7962,8 +7956,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
                 style="transition:stroke-dasharray 1s ease;"/>
       </svg>
       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="dashHosTime" style="font-size:40px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-2px;">11h 0m</div>
-        <div style="font-size:13px;font-weight:600;color:#ffffff;text-align:center;margin-top:8px;max-width:140px;line-height:1.4;">Tiempo de conducción restante</div>
+        <div id="dashHosTime" style="font-size:33px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-2px;">11h 0m</div>
+        <div style="font-size:11px;font-weight:600;color:#ffffff;text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
       </div>
     </div>
   </div>
@@ -7992,8 +7986,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Off Duty</button>
   </div>
 
-  <!-- ⑤ MINI MAPA — altura fija reducida -->
-  <div id="hosMiniMap" style="flex:0 0 120px;min-height:0;background:#0f1c2e;border-top:1px solid rgba(255,255,255,0.07);">
+  <!-- ⑤ MINI MAPA — ocupa el resto de la pantalla -->
+  <div id="hosMiniMap" style="flex:1;min-height:0;background:#0f1c2e;border-top:1px solid rgba(255,255,255,0.07);">
   </div>
 
 </div>
@@ -8017,6 +8011,45 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   border-color:#10b981!important;
   box-shadow:0 4px 16px rgba(16,185,129,0.45),0 2px 6px rgba(0,0,0,0.35)!important;
 }
+/* ── Menú lateral del HOS Dashboard ─────────────────────── */
+#dashSideMenuToggle {
+  position:absolute;right:0;top:50%;transform:translateY(-50%);
+  z-index:25010;width:16px;height:64px;
+  background:rgba(249,115,22,.32);border:1px solid rgba(249,115,22,.45);
+  border-right:none;border-radius:8px 0 0 8px;
+  color:rgba(255,255,255,.85);font-size:13px;font-weight:900;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:right .28s cubic-bezier(.4,0,.2,1),background .15s;
+  padding:0;line-height:1;touch-action:manipulation;
+}
+#dashSideMenuToggle.open { right:34px;background:rgba(249,115,22,.5); }
+#dashSideTabStack {
+  position:absolute;right:0;top:50%;
+  transform:translateY(-50%) translateX(100%);
+  z-index:25009;display:flex;flex-direction:column;gap:3px;
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+#dashSideTabStack.open { transform:translateY(-50%) translateX(0); }
+.dash-side-tab {
+  position:relative;background:linear-gradient(160deg,#f97316,#ea580c);
+  color:#fff;border:none;border-radius:10px 0 0 10px;
+  width:34px;height:100px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:5px;cursor:pointer;
+  box-shadow:-3px 0 16px rgba(249,115,22,.45);
+  transition:width .2s,height .2s,background .2s,box-shadow .2s;
+  touch-action:manipulation;padding:0;
+}
+.dash-side-tab:hover { width:42px;height:112px;background:linear-gradient(160deg,#fb923c,#f97316);box-shadow:-4px 0 22px rgba(249,115,22,.7); }
+.dash-side-tab:active { width:28px;box-shadow:-2px 0 8px rgba(249,115,22,.3); }
+.dash-side-tab-badge {
+  position:absolute;top:5px;left:5px;
+  background:#ef4444;color:#fff;
+  font-size:9px;font-weight:900;border-radius:999px;
+  padding:1px 4px;min-width:14px;text-align:center;
+  display:none;
+}
+
 /* Tooltip del mini mapa */
 .hosMapTooltip {
   background:rgba(10,16,30,0.95)!important;
@@ -8038,6 +8071,142 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 @keyframes liveblink { 0%,100%{opacity:1} 50%{opacity:.3} }
 @keyframes reportPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
 @keyframes truckGlow { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
+
+/* ── Dashboard Speed Panel (mini-map overlay) ─────────── */
+#dashSpeedPanel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+#dashSpeedLimitSign {
+  pointer-events: auto;
+  cursor: pointer;
+}
+/* City / State bar at top of HOS minimap */
+#hosCityBar {
+  position: absolute;
+  top: 10px; left: 50%; transform: translateX(-50%);
+  z-index: 1001;
+  background: rgba(8,14,28,0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 5px 14px 5px 10px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+  max-width: calc(100% - 120px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+#hosCityBar .hcb-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(16,185,129,0.8);
+}
+#hosCityBar .hcb-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  letter-spacing: 0.2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+/* Speed limit custom editor sheet */
+#dashSpeedSheet {
+  display: none;
+  position: fixed; inset: 0; z-index: 60000;
+  background: rgba(0,0,0,0.6);
+  align-items: flex-end;
+  justify-content: center;
+}
+#dashSpeedSheet.open { display: flex; }
+#dashSpeedSheetInner {
+  background: #0f172a;
+  border-radius: 24px 24px 0 0;
+  width: 100%; max-width: 480px;
+  padding: 24px 20px 40px;
+  box-shadow: 0 -8px 48px rgba(0,0,0,0.6);
+  font-family: 'DM Sans', sans-serif;
+}
+#dashSpeedLimitSign {
+  background: #fff;
+  border: 2.5px solid #111;
+  border-radius: 5px;
+  padding: 3px 7px 5px;
+  text-align: center;
+  min-width: 42px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.65), inset 0 0 0 2px rgba(0,0,0,0.06);
+}
+.dsp-top {
+  font-size: 7px;
+  font-weight: 900;
+  color: #000;
+  letter-spacing: 0.6px;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+.dsp-num {
+  font-size: 22px;
+  font-weight: 900;
+  color: #000;
+  line-height: 1;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: -1px;
+}
+.dsp-label {
+  font-size: 7px;
+  font-weight: 800;
+  color: #000;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+#dashSpeedoWrap {
+  background: #fff;
+  border: 2.5px solid #111;
+  border-radius: 5px;
+  padding: 3px 7px 5px;
+  text-align: center;
+  min-width: 42px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.65), inset 0 0 0 2px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#dashSpeedNum {
+  font-size: 22px;
+  font-weight: 900;
+  color: #000;
+  line-height: 1;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: -1px;
+  transition: color .4s ease;
+}
+#dashSpeedUnit {
+  font-size: 7px;
+  font-weight: 800;
+  color: #000;
+  letter-spacing: 0.5px;
+  margin-top: 1px;
+  text-transform: uppercase;
+}
+#dashSpeedLimitSign.over { border-color: #dc2626; background: #fef2f2; }
+#dashSpeedLimitSign.over .dsp-num { color: #dc2626; }
+#dashSpeedoWrap.over { border-color: #dc2626; background: #fef2f2; }
+#dashSpeedoWrap.over #dashSpeedNum { color: #dc2626; }
 
 /* ── DOT Violation Sheet ──────────────────────────────── */
 #violationOverlay{display:none;position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,.75);align-items:flex-end;justify-content:center}
@@ -8438,6 +8607,44 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <!-- ══════════════════════════════════════════════════════════
      SAFETY OVERLAYS
 ══════════════════════════════════════════════════════════ -->
+
+<!-- Speed limit custom editor (HOS minimap) -->
+<div id="dashSpeedSheet">
+  <div id="dashSpeedSheetInner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div>
+        <div style="font-size:17px;font-weight:800;color:#f1f5f9">Límite de velocidad</div>
+        <div style="font-size:12px;color:#64748b;margin-top:2px">Personaliza el límite para esta ruta</div>
+      </div>
+      <button onclick="document.getElementById('dashSpeedSheet').classList.remove('open')"
+        style="width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.08);color:#94a3b8;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div style="background:#fff;border:2.5px solid #111;border-radius:6px;padding:6px 14px;text-align:center;min-width:64px">
+        <div style="font-size:8px;font-weight:900;color:#000;letter-spacing:.6px;text-transform:uppercase">SPEED<br>LIMIT</div>
+        <div id="dashSheetPreview" style="font-size:32px;font-weight:900;color:#000;line-height:1;font-family:'DM Sans',sans-serif">--</div>
+        <div style="font-size:8px;font-weight:800;color:#000;letter-spacing:.5px;text-transform:uppercase">TRUCKS</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">Ingresa el límite en MPH:</div>
+        <input id="dashSpeedInput" type="number" min="25" max="85" step="5"
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:#f1f5f9;font-size:22px;font-weight:800;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;box-sizing:border-box"
+          oninput="document.getElementById('dashSheetPreview').textContent=this.value||'--'">
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button onclick="_dashSetSpeedPreset(55)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">55</button>
+          <button onclick="_dashSetSpeedPreset(60)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">60</button>
+          <button onclick="_dashSetSpeedPreset(65)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">65</button>
+          <button onclick="_dashSetSpeedPreset(70)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">70</button>
+          <button onclick="_dashSetSpeedPreset(75)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">75</button>
+        </div>
+      </div>
+    </div>
+    <button onclick="_dashSaveSpeedLimit()"
+      style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.2px">
+      Guardar límite
+    </button>
+  </div>
+</div>
 
 <!-- Toast notification (shared) -->
 <!-- State border welcome banner -->
@@ -10113,6 +10320,23 @@ function updateSpeedometer(mph) {
   const over = (currentTruckSpeedLimit != null) && (mph > (currentTruckSpeedLimit + 0.5));
   if (mySpeedSign) mySpeedSign.classList.toggle('warn', !!over);
 
+  // Actualizar panel de velocidad del dashboard (mini mapa overlay)
+  // NOTA: debe ir ANTES del return por speedoVisible para que siempre se actualice
+  const _dashNumEl  = document.getElementById('dashSpeedNum');
+  const _dashArcEl  = document.getElementById('dashSpeedoArc');
+  const _dashLimEl  = document.getElementById('dashLimitNum');
+  const _dashLimSign = document.getElementById('dashSpeedLimitSign');
+  if (_dashNumEl) {
+    _dashNumEl.textContent = Math.round(mph);
+    _dashNumEl.style.color = '';  // controlled by .over CSS class
+  }
+  if (_dashLimEl && typeof currentTruckSpeedLimit !== 'undefined' && currentTruckSpeedLimit) {
+    _dashLimEl.textContent = currentTruckSpeedLimit;
+  }
+  if (_dashLimSign) _dashLimSign.classList.toggle('over', !!over);
+  const _dashSpdoEl = document.getElementById('dashSpeedoWrap');
+  if (_dashSpdoEl) _dashSpdoEl.classList.toggle('over', !!over);
+
   if (!speedoVisible) return;
   const num = document.getElementById('speedoNum');
   const ring = document.getElementById('speedoRing');
@@ -10692,10 +10916,8 @@ async function detectStateAndUpdateLimit(lat, lon) {
         // --- Map speed sign ---
         updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
       }
-      // Welcome banner when entering a new state (not on first load)
-      if (prevCode) {
-        showStateBanner(stateRaw || code);
-      }
+      // Welcome banner when entering a new state
+      showStateBanner(stateRaw || code);
     } else if (code && code === currentStateCode) {
       // Same state — ensure sign stays visible if it was somehow hidden
       const sign = document.getElementById('mapSpeedSign');
@@ -10779,6 +11001,9 @@ async function fetchRoadSpeedLimit(lat, lon) {
           if (mssSign) { mssSign.classList.remove('new'); void mssSign.offsetWidth; mssSign.classList.add('new'); }
           document.getElementById('mapSpeedSign')?.classList.add('visible');
           document.getElementById('speedLimitWidget')?.classList.add('visible');
+          // Sync minimap dashboard speed limit panel immediately
+          const _dl = document.getElementById('dashLimitNum');
+          if (_dl) _dl.textContent = mph;
         }
         return;
       }
@@ -10811,6 +11036,10 @@ function updateMapSpeedSign(truckMph, carMph, code, stateName) {
   } else {
     diff.textContent = `Trucks & cars: ${truckMph} ${unit}`;
   }
+
+  // Sync minimap dashboard speed limit panel immediately
+  const _dashLimEl = document.getElementById('dashLimitNum');
+  if (_dashLimEl) _dashLimEl.textContent = truckMph;
 
   sign.classList.add('visible');
   // Trigger pop animation
@@ -11145,11 +11374,6 @@ function changeMapStyle(styleKey) {
     hosMinimapTileLayer.bringToBack();
   }
 
-  // Update style buttons inside hosMinimapInst panel
-  document.querySelectorAll('.hos-style-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.style === styleKey);
-  });
-
   // Apply satellite class for CSS filter differentiation
   const isSat = (styleKey === 'satellite');
   const fullMapEl = document.getElementById('fullMap');
@@ -11157,8 +11381,8 @@ function changeMapStyle(styleKey) {
   if (fullMapEl) fullMapEl.classList.toggle('satellite-style', isSat);
   if (miniMapEl) miniMapEl.classList.toggle('satellite-style', isSat);
 
-  // Update button highlights
-  document.querySelectorAll('.map-style-btn').forEach(btn => {
+  // Update button highlights (full map panel + dashboard minimap panel)
+  document.querySelectorAll('.map-style-btn, .hos-style-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.style === styleKey);
   });
 
@@ -14084,7 +14308,9 @@ function fmStartTracking() {
       _dashMi.textContent = remaining < 10 ? remaining.toFixed(1) : Math.round(remaining).toLocaleString();
     }
 
-    const driveMax = Math.min(11, Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 70));
+    const _dailyMax  = Math.max(0, parseFloat(document.getElementById('dailyHoursInput')?.value || 11));
+    const _weeklyMax = Math.max(0, parseFloat(document.getElementById('hoursInput')?.value || 70));
+    const driveMax  = Math.min(_dailyMax, _weeklyMax);
     const driveLeft = Math.max(0, driveMax - elapsed);
     const driveEl = document.getElementById('fmDriveLeft');
     driveEl.textContent = fmtH(driveLeft);
@@ -14366,6 +14592,14 @@ function showHosDashboard() {
   // Estado inicial: Conduciendo
   setDashStatus('driving');
 
+  // Actualizar el círculo grande inmediatamente con las horas actuales
+  const _dashDailyHrs  = parseFloat(document.getElementById('dailyHoursInput')?.value || 11);
+  const _dashWeeklyHrs = parseFloat(document.getElementById('hoursInput')?.value || 70);
+  const _dashDriveMax  = Math.min(_dashDailyHrs, _dashWeeklyHrs);
+  const _dashElapsed   = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
+  const _dashDriveLeft = Math.max(0, _dashDriveMax - _dashElapsed);
+  updateHosDashboard(_dashDriveLeft, _dashDriveMax);
+
   // Iniciar mini mapa después de un tick para que el div sea visible
   setTimeout(initHosMinimap, 120);
 }
@@ -14417,8 +14651,10 @@ function initHosMinimap() {
     return `<div style="width:${s}px;height:${s}px;border-radius:50%;background:#10b981;border:2.5px solid rgba(255,255,255,0.88);box-shadow:0 0 0 3px rgba(16,185,129,0.28),0 3px 10px rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;"><div style="width:${inner}px;height:${inner}px;border-radius:50%;background:rgba(255,255,255,0.9);"></div></div>`;
   }
 
-  // Posicionar el camión en la zona inferior del mapa (≈25% desde abajo)
-  setTimeout(() => _hosMinimapFollow(lat, lon), 80);
+  // Posicionar el camión en la zona inferior del mapa solo si no hay ruta completa
+  if (!(typeof roadGeometry !== 'undefined' && roadGeometry?.length > 2)) {
+    setTimeout(() => _hosMinimapFollow(lat, lon), 80);
+  }
 
   // Función interna para dibujar (o redibujar) la ruta en el mini-mapa
   function _drawHostRoute(coords) {
@@ -14427,6 +14663,7 @@ function initHosMinimap() {
     if (hosMinimapRoute) { hosMinimapInst.removeLayer(hosMinimapRoute); hosMinimapRoute = null; }
     hosMinimapGlow  = L.polyline(coords, { color: '#10b981', weight: 14, opacity: 0.13 }).addTo(hosMinimapInst);
     hosMinimapRoute = L.polyline(coords, { color: '#10b981', weight: 4,  opacity: 0.95 }).addTo(hosMinimapInst);
+    hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [30, 30], animate: false });
   }
 
   // Dibujar ruta existente
@@ -14438,7 +14675,7 @@ function initHosMinimap() {
         typeof destination !== 'undefined' && destination?.lat) {
 
       const _coords = `${origin.lon},${origin.lat};${destination.lon},${destination.lat}`;
-      const _qs     = '?overview=simplified&geometries=geojson&steps=false&alternatives=false';
+      const _qs     = '?overview=full&geometries=geojson&steps=false&alternatives=false';
       const _servers = [
         `https://router.project-osrm.org/route/v1/driving/${_coords}${_qs}`,
         `https://routing.openstreetmap.de/routed-car/route/v1/driving/${_coords}${_qs}`
@@ -14494,15 +14731,52 @@ function initHosMinimap() {
 
   // invalidateSize para que el mapa se renderice correctamente
   setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 250);
-  setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 600);
+  setTimeout(() => {
+    if (hosMinimapInst) {
+      hosMinimapInst.invalidateSize();
+      // Re-ajustar vista a la ruta completa después del render final
+      if (hosMinimapRoute) hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [30, 30], animate: false });
+    }
+  }, 600);
 
   // Cargar iconos de truck stops e interstates
   loadMiniMapTruckStops(lat, lon);
   loadMiniMapInterstates(lat, lon);
 
-  // Escudos de interestatales sobre la ruta (igual que el mapa grande)
+  // Señales de carreteras interestatales y nombres de ruta en el mini mapa
   if (typeof navSteps !== 'undefined' && Array.isArray(navSteps) && navSteps.length) {
     addInterstateMarkers(hosMinimapInst, navSteps, false);
+  }
+
+  // Barra de ciudad / estado en la parte superior del mini mapa (centrada)
+  if (!el.querySelector('#hosCityBar')) {
+    const _cityBar = document.createElement('div');
+    _cityBar.id = 'hosCityBar';
+    _cityBar.innerHTML = `<div class="hcb-dot"></div><div class="hcb-text" id="hosCityText">Detectando ubicación…</div>`;
+    el.appendChild(_cityBar);
+    // Disparar geocodificación inmediata con las coordenadas de origen
+    setTimeout(() => _updateHosCityBar(lat, lon, true), 1200);
+  }
+
+  // Panel de Speed Limit + Velocímetro superpuesto al mini mapa
+  if (!el.querySelector('#dashSpeedPanel')) {
+    const _savedLimit = localStorage.getItem('hos_custom_speed_limit');
+    if (_savedLimit && !currentTruckSpeedLimit) currentTruckSpeedLimit = parseInt(_savedLimit, 10) || null;
+    const _limitVal = (typeof currentTruckSpeedLimit !== 'undefined' && currentTruckSpeedLimit) ? currentTruckSpeedLimit : '--';
+    const _panel = document.createElement('div');
+    _panel.id = 'dashSpeedPanel';
+    _panel.innerHTML = `
+      <div id="dashSpeedLimitSign" title="Toca para cambiar el límite" onclick="_openDashSpeedLimitEditor()">
+        <div class="dsp-top">SPEED<br>LIMIT</div>
+        <div class="dsp-num" id="dashLimitNum">${_limitVal}</div>
+        <div class="dsp-label">TRUCKS</div>
+      </div>
+      <div id="dashSpeedoWrap">
+        <div class="dsp-top">YOUR<br>SPEED</div>
+        <div class="dsp-num" id="dashSpeedNum">${typeof fmCurrentSpeed !== 'undefined' ? Math.round(fmCurrentSpeed) : 0}</div>
+        <div class="dsp-label" id="dashSpeedUnit">MPH</div>
+      </div>`;
+    el.appendChild(_panel);
   }
 
   // Botón de estilos de mapa en el mini-mapa
@@ -14521,7 +14795,7 @@ function initHosMinimap() {
       btn.className = 'hos-style-btn' + (key === currentMapStyle ? ' active' : '');
       btn.dataset.style = key;
       btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.12);border-radius:11px;padding:7px 10px;cursor:pointer;color:#fff;font-family:\'DM Sans\',sans-serif;min-width:58px;-webkit-tap-highlight-color:transparent;';
-      if (key === currentMapStyle) btn.style.background = 'rgba(16,185,129,.18)'; btn.style.borderColor = '#10b981';
+      if (key === currentMapStyle) { btn.style.background = 'rgba(16,185,129,.18)'; btn.style.borderColor = '#10b981'; }
       btn.innerHTML = `<span style="font-size:20px">${s.emoji}</span><span style="font-size:9px;font-weight:700;letter-spacing:.3px;opacity:.85">${s.label}</span>`;
       btn.onclick = (e) => { e.stopPropagation(); changeMapStyle(key); _stylePanel.style.opacity='0'; _stylePanel.style.pointerEvents='none'; _stylePanel.style.transform='translateY(8px)'; };
       _stylePanel.appendChild(btn);
@@ -14537,6 +14811,40 @@ function initHosMinimap() {
 
     el.appendChild(_stylePanel);
     el.appendChild(_styleBtn);
+  }
+
+  // Menú lateral (igual que mapa principal) centrado en la pantalla del dashboard
+  if (!document.getElementById('dashSideMenuToggle')) {
+    const _dashScreen = document.getElementById('hosDashScreen');
+
+    const _sideToggle = document.createElement('button');
+    _sideToggle.id = 'dashSideMenuToggle';
+    _sideToggle.setAttribute('aria-label', 'Abrir menú lateral');
+    _sideToggle.textContent = '‹';
+    _sideToggle.onclick = () => toggleDashSideMenu();
+
+    const _sideStack = document.createElement('div');
+    _sideStack.id = 'dashSideTabStack';
+    _sideStack.innerHTML = `
+      <button class="dash-side-tab" aria-label="DOT"
+        onclick="closeDashSideMenu();showFullMapFromDash();setTimeout(openDotPanel,150)">
+        <span class="side-tab-icon">📋</span>
+        <span class="side-tab-label">DOT</span>
+      </button>
+      <button class="dash-side-tab" aria-label="Comunidad"
+        onclick="closeDashSideMenu();showFullMapFromDash();setTimeout(toggleCommQuickPanel,150)">
+        <span class="dash-side-tab-badge" id="dashSideTabBadge"></span>
+        <span class="side-tab-icon">👥</span>
+        <span class="side-tab-label">Comunidad</span>
+      </button>
+      <button class="dash-side-tab" aria-label="Live Chat"
+        onclick="closeDashSideMenu();showFullMapFromDash();setTimeout(()=>openChatChannel('general'),150)">
+        <span class="side-tab-icon">💬</span>
+        <span class="side-tab-label">Live Chat</span>
+      </button>`;
+
+    _dashScreen.appendChild(_sideToggle);
+    _dashScreen.appendChild(_sideStack);
   }
 
   // Tap en mini mapa → ir al mapa completo (solo si no es el botón de estilos)
@@ -14636,6 +14944,56 @@ function updateHosDashMinimap(lat, lon) {
   if (!hosMinimapInst || !hosMinimapTruck) return;
   hosMinimapTruck.setLatLng([lat, lon]);
   _hosMinimapFollow(lat, lon);
+  _updateHosCityBar(lat, lon);
+}
+
+let _hosCityBarLast = 0;
+async function _updateHosCityBar(lat, lon, force) {
+  const now = Date.now();
+  if (!force && now - _hosCityBarLast < 30000) return; // throttle: 30s
+  _hosCityBarLast = now;
+  const txt = document.getElementById('hosCityText');
+  if (!txt) return;
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 7000);
+    const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`, { signal: ctrl.signal });
+    const d = await r.json();
+    const p = d.features?.[0]?.properties || {};
+    const city  = p.city || p.town || p.village || p.county || '';
+    const state = p.state || '';
+    if (city || state) txt.textContent = [city, state].filter(Boolean).join(', ');
+  } catch(e) {}
+}
+
+function _openDashSpeedLimitEditor() {
+  const sheet = document.getElementById('dashSpeedSheet');
+  const input = document.getElementById('dashSpeedInput');
+  const preview = document.getElementById('dashSheetPreview');
+  if (!sheet) return;
+  const cur = (typeof currentTruckSpeedLimit !== 'undefined' && currentTruckSpeedLimit) ? currentTruckSpeedLimit : '';
+  if (input) { input.value = cur; }
+  if (preview) preview.textContent = cur || '--';
+  sheet.classList.add('open');
+}
+
+function _dashSetSpeedPreset(val) {
+  const input = document.getElementById('dashSpeedInput');
+  const preview = document.getElementById('dashSheetPreview');
+  if (input) input.value = val;
+  if (preview) preview.textContent = val;
+}
+
+function _dashSaveSpeedLimit() {
+  const input = document.getElementById('dashSpeedInput');
+  const val = parseInt(input?.value, 10);
+  if (!val || val < 25 || val > 85) return;
+  currentTruckSpeedLimit = val;
+  localStorage.setItem('hos_custom_speed_limit', val);
+  const el = document.getElementById('dashLimitNum');
+  if (el) el.textContent = val;
+  document.getElementById('dashSpeedSheet').classList.remove('open');
+  showToast('info', '✅', 'Límite guardado', `Velocidad máxima ajustada a ${val} mph para esta ruta`, 4000);
 }
 
 function updateHosDashboard(driveLeft, driveMax) {
@@ -14649,18 +15007,18 @@ function updateHosDashboard(driveLeft, driveMax) {
   const circumference = 679; // 2π×108 ≈ 679
   arc.setAttribute('stroke-dasharray', `${(pct * circumference).toFixed(1)} ${circumference}`);
 
-  // El arco usa gradiente SVG; el resplandor circular cambia de color
+  // El arco siempre verde; solo la sombra cambia según velocidad / tiempo restante
   const isCrit = driveLeft < 2;
   const isWarn = driveLeft < 4 && driveLeft >= 2;
 
   const glow = document.getElementById('dashGlowCircle');
   let glowColor;
   if (dashSpeedOver || isCrit) {
-    glowColor = '#ef4444'; // rojo: velocidad excedida o tiempo crítico
+    glowColor = '#ef4444';
   } else if (isWarn) {
-    glowColor = '#f59e0b'; // ámbar: 2-4h restantes
+    glowColor = '#f59e0b';
   } else {
-    glowColor = '#1e40af'; // azul: conducción normal
+    glowColor = '#1e40af';
   }
 
   if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.08)');
@@ -17291,6 +17649,22 @@ function _autoHideLeftPanelOnOpen() {
   btn.textContent = '‹';
   if (_leftPanelAutoHideTimer) clearTimeout(_leftPanelAutoHideTimer);
   _leftPanelAutoHideTimer = setTimeout(() => toggleMapLeftPanel(true), 3500);
+}
+
+function toggleDashSideMenu() {
+  const stack  = document.getElementById('dashSideTabStack');
+  const toggle = document.getElementById('dashSideMenuToggle');
+  if (!stack) return;
+  const isOpen = stack.classList.toggle('open');
+  toggle.classList.toggle('open', isOpen);
+  toggle.textContent = isOpen ? '›' : '‹';
+}
+function closeDashSideMenu() {
+  const stack  = document.getElementById('dashSideTabStack');
+  const toggle = document.getElementById('dashSideMenuToggle');
+  stack?.classList.remove('open');
+  toggle?.classList.remove('open');
+  if (toggle) toggle.textContent = '‹';
 }
 
 function closeSideTabMenu() {
@@ -22801,14 +23175,15 @@ function closeDotNewsDetail() {
   document.getElementById('dotNewsDetail').style.display = 'none';
 }
 
-/* Sync side-tab badge with legacy cqtBadge */
+/* Sync side-tab badge with legacy cqtBadge (main map + HOS dashboard) */
 (function() {
   const legacy = document.getElementById('cqtBadge');
   const side   = document.getElementById('sideTabBadge');
-  if (!legacy || !side) return;
+  if (!legacy) return;
   const obs = new MutationObserver(() => {
-    side.textContent = legacy.textContent;
-    side.style.display = legacy.style.display;
+    if (side) { side.textContent = legacy.textContent; side.style.display = legacy.style.display; }
+    const dash = document.getElementById('dashSideTabBadge');
+    if (dash) { dash.textContent = legacy.textContent; dash.style.display = legacy.style.display; }
   });
   obs.observe(legacy, { attributes: true, childList: true, subtree: true });
 })();
