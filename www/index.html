@@ -573,10 +573,14 @@
   .poi-badge.truck { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
   .poi-badge.rest  { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
   .poi-badge.restrict { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+  .poi-badge.weigh { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+  .poi-badge.checkpoint { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
   .poi-badge.off   { opacity: .4; }
   body.dark .poi-badge.truck { background: #1e3a5f; color: #93c5fd; border-color: #1d4ed8; }
   body.dark .poi-badge.rest  { background: #2e1a4a; color: #c4b5fd; border-color: #6d28d9; }
   body.dark .poi-badge.restrict { background: #4c0519; color: #fda4af; border-color: #be123c; }
+  body.dark .poi-badge.weigh { background: #3d2a00; color: #fbbf24; border-color: #b45309; }
+  body.dark .poi-badge.checkpoint { background: #052e16; color: #4ade80; border-color: #15803d; }
   .poi-badge .poi-cnt {
     background: currentColor; color: #fff;
     border-radius: 999px; padding: 1px 6px;
@@ -5600,6 +5604,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="poi-badge restrict poi-loading" id="miniBadgeRestrict" onclick="toggleMiniPOI('restrict')">
             🚫 Restricciones <span class="poi-cnt" id="miniRestrictCnt">…</span>
           </div>
+          <div class="poi-badge weigh poi-loading" id="miniBadgeWeigh" onclick="toggleMiniPOI('weigh')">
+            ⚖️ Básculas <span class="poi-cnt" id="miniWeighCnt">…</span>
+          </div>
+          <div class="poi-badge checkpoint poi-loading" id="miniBadgeCheckpoint" onclick="toggleMiniPOI('checkpoint')">
+            🔍 Checkpoints <span class="poi-cnt" id="miniCheckpointCnt">…</span>
+          </div>
           <div class="poi-badge" style="background:#dbeafe;border-color:#93c5fd;color:#1d4ed8" id="miniBadgeParking" onclick="toggleMiniPOI('parking')">
             🅿️ Parking <span class="poi-cnt" id="miniParkingCnt">…</span>
           </div>
@@ -9402,8 +9412,8 @@ let miniLayer = null, fullLayer = null;
 let miniMarkersList = [], fullMarkersList = [];
 
 // Mini-map POI state
-let miniPoiMarkers = { truck: [], rest: [], restrict: [] };
-let miniPoiActive  = { truck: true, rest: true, restrict: true };
+let miniPoiMarkers = { truck: [], rest: [], restrict: [], weigh: [], checkpoint: [] };
+let miniPoiActive  = { truck: true, rest: true, restrict: true, weigh: true, checkpoint: true };
 
 let watchId = null;
 let tripStart = null;
@@ -12583,6 +12593,29 @@ const MINI_POI_QUERIES = {
       relation["highway"="rest_area"](around:${r},${lat},${lon});
     );
     out center;`,
+
+  weigh: (lat, lon, r) => `
+    [out:json][timeout:25];
+    (
+      node["amenity"="weigh_station"](around:${r},${lat},${lon});
+      node["highway"="weigh_station"](around:${r},${lat},${lon});
+      node["man_made"="weigh_scale"](around:${r},${lat},${lon});
+      way["amenity"="weigh_station"](around:${r},${lat},${lon});
+      way["highway"="weigh_station"](around:${r},${lat},${lon});
+    );
+    out center;`,
+
+  checkpoint: (lat, lon, r) => `
+    [out:json][timeout:25];
+    (
+      node["border_control"](around:${r},${lat},${lon});
+      node["amenity"="checkpoint"](around:${r},${lat},${lon});
+      node["highway"="checkpoint"](around:${r},${lat},${lon});
+      node["name"~"inspection station|port of entry|DOT checkpoint|weigh.in.motion|check point|check station",i](around:${r},${lat},${lon});
+      way["border_control"](around:${r},${lat},${lon});
+      way["amenity"="checkpoint"](around:${r},${lat},${lon});
+    );
+    out center;`,
 };
 
 // Check if a point is within ~12 miles of any route segment
@@ -12602,7 +12635,7 @@ async function loadMiniMapPOIs() {
   document.getElementById('miniPoiLegend').style.display = 'flex';
 
   // Clear old markers
-  ['truck','rest'].forEach(type => {
+  ['truck','rest','weigh','checkpoint'].forEach(type => {
     miniPoiMarkers[type].forEach(m => { try { miniMap.removeLayer(m); } catch {} });
     miniPoiMarkers[type] = [];
   });
@@ -12633,11 +12666,25 @@ async function loadMiniMapPOIs() {
       labelEs: 'Truck Stop',
     },
     rest: {
-      emoji: '🅿️',
+      emoji: '😴',
       color: '#6d28d9',
       bg: '#7c3aed',
       label: 'Rest Area',
       labelEs: 'Área de Descanso',
+    },
+    weigh: {
+      emoji: '⚖️',
+      color: '#b45309',
+      bg: '#d97706',
+      label: 'Weigh Station',
+      labelEs: 'Báscula',
+    },
+    checkpoint: {
+      emoji: '🔍',
+      color: '#15803d',
+      bg: '#16a34a',
+      label: 'Checkpoint',
+      labelEs: 'Punto de Inspección',
     },
   };
 
@@ -12681,7 +12728,10 @@ async function loadMiniMapPOIs() {
           const typeIcon = type === 'truck' && brand?.logoUrl
             ? `<img src="${brand.logoUrl}" style="width:22px;height:22px;object-fit:contain;border-radius:3px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:15px">${brand.logo}</span>`
             : type === 'truck' ? (brand ? brand.logo : '🚛')
-            : type === 'rest' ? '😴' : '⚖️';
+            : type === 'rest' ? '😴'
+            : type === 'weigh' ? '⚖️'
+            : type === 'checkpoint' ? '🔍'
+            : cfg.emoji;
 
           // Build clean round marker with name label below
           const iconHtml = `
@@ -12747,37 +12797,51 @@ async function loadMiniMapPOIs() {
     miniPoiMarkers[type] = allMarkers;
 
     // Update badge
-    const badgeId = type === 'truck' ? 'miniBadgeTruck' : 'miniBadgeRest';
-    const cntId   = type === 'truck' ? 'miniTruckCnt'  : 'miniRestCnt';
-    const badge   = document.getElementById(badgeId);
-    const cnt     = document.getElementById(cntId);
+    const BADGE_MAP = {
+      truck:      ['miniBadgeTruck',      'miniTruckCnt'],
+      rest:       ['miniBadgeRest',       'miniRestCnt'],
+      weigh:      ['miniBadgeWeigh',      'miniWeighCnt'],
+      checkpoint: ['miniBadgeCheckpoint', 'miniCheckpointCnt'],
+    };
+    const [badgeId, cntId] = BADGE_MAP[type] || [];
+    const badge   = badgeId ? document.getElementById(badgeId) : null;
+    const cnt     = cntId   ? document.getElementById(cntId)   : null;
     if (badge) badge.classList.remove('poi-loading');
     if (cnt)   cnt.textContent = allMarkers.length || '0';
   };
 
-  // Load both types in parallel
-  await Promise.all([loadType('truck'), loadType('rest')]);
+  // Load all four types in parallel
+  await Promise.all([loadType('truck'), loadType('rest'), loadType('weigh'), loadType('checkpoint')]);
 }
 
 function toggleMiniPOI(type) {
   miniPoiActive[type] = !miniPoiActive[type];
-  const badgeId = type === 'truck' ? 'miniBadgeTruck' : type === 'rest' ? 'miniBadgeRest' : 'miniBadgeRestrict';
-  document.getElementById(badgeId)?.classList.toggle('off', !miniPoiActive[type]);
-  miniPoiMarkers[type].forEach(m => {
+  const TOGGLE_BADGE = {
+    truck:      'miniBadgeTruck',
+    rest:       'miniBadgeRest',
+    restrict:   'miniBadgeRestrict',
+    weigh:      'miniBadgeWeigh',
+    checkpoint: 'miniBadgeCheckpoint',
+  };
+  const badgeId = TOGGLE_BADGE[type] || null;
+  if (badgeId) document.getElementById(badgeId)?.classList.toggle('off', !miniPoiActive[type]);
+  miniPoiMarkers[type]?.forEach(m => {
     if (miniPoiActive[type]) { try { m.addTo(miniMap); } catch {} }
     else { try { miniMap.removeLayer(m); } catch {} }
   });
 }
 
 function resetMiniBadges() {
-  ['miniBadgeTruck','miniBadgeRest','miniBadgeRestrict'].forEach(id => {
+  ['miniBadgeTruck','miniBadgeRest','miniBadgeRestrict','miniBadgeWeigh','miniBadgeCheckpoint'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.classList.add('poi-loading'); el.classList.remove('off'); }
   });
-  document.getElementById('miniTruckCnt').textContent    = '…';
-  document.getElementById('miniRestCnt').textContent     = '…';
-  document.getElementById('miniRestrictCnt').textContent = '…';
-  miniPoiActive = { truck: true, rest: true, restrict: true };
+  document.getElementById('miniTruckCnt').textContent      = '…';
+  document.getElementById('miniRestCnt').textContent       = '…';
+  document.getElementById('miniRestrictCnt').textContent   = '…';
+  document.getElementById('miniWeighCnt').textContent      = '…';
+  document.getElementById('miniCheckpointCnt').textContent = '…';
+  miniPoiActive = { truck: true, rest: true, restrict: true, weigh: true, checkpoint: true };
 }
 
 async function calculateRoute() {
@@ -14020,6 +14084,78 @@ function checkWeighStations(lat, lon) {
   }
 }
 
+/* ── 5-mile mini-map POI alerts (weigh stations & checkpoints) ── */
+const _miniAlertNotified = new Set();
+
+function checkMiniRouteAlerts(lat, lon) {
+  if (!destination || !roadGeometry) return;
+  const distToDest = haversine(lat, lon, destination.lat, destination.lon);
+
+  const ALERT_CFGS = [
+    {
+      type: 'weigh',
+      titleEn: '⚖️ WEIGH STATION AHEAD',
+      titleEs: '⚖️ BÁSCULA EN RUTA',
+      bodyEn:  (mi) => `Weigh station ${mi} mi ahead. Prepare documents & slow down.`,
+      bodyEs:  (mi) => `Báscula a ${mi} millas. Prepara documentos y reduce velocidad.`,
+      vibrate: [300, 100, 300, 100, 300],
+      notifId: 7001,
+    },
+    {
+      type: 'checkpoint',
+      titleEn: '🔍 CHECKPOINT AHEAD',
+      titleEs: '🔍 CHECKPOINT EN RUTA',
+      bodyEn:  (mi) => `DOT checkpoint ${mi} mi ahead. Have documents ready.`,
+      bodyEs:  (mi) => `Punto de inspección a ${mi} millas. Ten los documentos listos.`,
+      vibrate: [200, 100, 200, 100, 200],
+      notifId: 7002,
+    },
+  ];
+
+  for (const cfg of ALERT_CFGS) {
+    const markers = miniPoiMarkers[cfg.type];
+    if (!markers?.length) continue;
+
+    for (const marker of markers) {
+      const ll  = marker.getLatLng();
+      const key = `${cfg.type}_${ll.lat.toFixed(4)}_${ll.lng.toFixed(4)}`;
+      if (_miniAlertNotified.has(key)) continue;
+
+      const distToPoint = haversine(lat, lon, ll.lat, ll.lng);
+      if (distToPoint > 5.5 || distToPoint < 0.2) continue; // fuera del rango de aviso
+
+      // Confirmar que está ADELANTE (más cerca al destino que nosotros)
+      const pointToDest = haversine(ll.lat, ll.lng, destination.lat, destination.lon);
+      if (pointToDest >= distToDest) continue; // está detrás
+
+      _miniAlertNotified.add(key);
+      const mi = distToPoint.toFixed(1);
+      const isEs = lang === 'es';
+
+      // Toast visual en pantalla
+      showToast(
+        'warning',
+        cfg.type === 'weigh' ? '⚖️' : '🔍',
+        isEs ? cfg.titleEs : cfg.titleEn,
+        isEs ? cfg.bodyEs(mi) : cfg.bodyEn(mi),
+        18000
+      );
+      vibrate(cfg.vibrate);
+
+      // Notificación nativa / push
+      const notifTitle = isEs ? cfg.titleEs : cfg.titleEn;
+      const notifBody  = isEs ? cfg.bodyEs(mi) : cfg.bodyEn(mi);
+      if (window.scheduleLocalHOSAlert) {
+        window.scheduleLocalHOSAlert(500, notifTitle, notifBody, cfg.notifId).catch(() => {});
+      } else if (window.sendHOSAlert) {
+        window.sendHOSAlert(notifBody);
+      }
+
+      break; // una alerta por tipo por ciclo GPS
+    }
+  }
+}
+
 // Abort flag — kept for compatibility with minimizeMap
 let fmTrackAbort = false;
 
@@ -14100,7 +14236,8 @@ function fmStartTracking() {
   lastStateCheck = 0;
   lastFuelCheck  = 0;
   lastRoadSpeedCheck = 0;
-  _weighNotified.clear(); // reinicia báscula alertas para nuevo viaje
+  _weighNotified.clear();      // reinicia báscula alertas para nuevo viaje
+  _miniAlertNotified.clear();  // reinicia alertas de mapa mini para nuevo viaje
   b30Reset();             // reinicia sistema de pausa 30 min
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
@@ -14230,6 +14367,8 @@ function fmStartTracking() {
     updateNavInstruction(lat, lon);
     // ── Weigh station warning ─────────────────────────────
     if (isMoving) checkWeighStations(lat, lon);
+    // ── Mini-map 5-mile alerts (básculas + checkpoints) ──
+    if (isMoving) checkMiniRouteAlerts(lat, lon);
     // ── 30-min break rule check ────────────────────────────
     b30Check(isMoving);
 // ── HUD stats ────────────────────────────────────────────
@@ -16963,8 +17102,8 @@ function resetForm() {
   if (_cb) { _cb.style.display = ''; _cb.disabled = false; _cb.textContent = ''; }
   if (_cb) { _cb.innerHTML = '<span style="font-size:22px">🚛</span> Calcular Ruta'; }
   // Clear mini-map POI markers
-  ['truck','rest','restrict'].forEach(type => {
-    miniPoiMarkers[type].forEach(m => { try { if(miniMap) miniMap.removeLayer(m); } catch {} });
+  ['truck','rest','restrict','weigh','checkpoint'].forEach(type => {
+    miniPoiMarkers[type]?.forEach(m => { try { if(miniMap) miniMap.removeLayer(m); } catch {} });
     miniPoiMarkers[type] = [];
   });
   document.getElementById('miniPoiLegend').style.display = 'none';
