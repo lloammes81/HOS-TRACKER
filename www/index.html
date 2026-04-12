@@ -5425,28 +5425,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <span class="cqt-badge" id="cqtBadge"></span>
   </button>
 
-  <!-- Toggle arrow — siempre visible en el borde derecho -->
-  <button id="sideMenuToggle" onclick="toggleSideTabMenu()" aria-label="Abrir menú lateral">‹</button>
-
-  <!-- SIDE TAB BUTTONS (3 stacked vertical tabs) -->
-  <div id="sideTabStack">
-    <!-- Btn 1: DOT News -->
-    <button class="side-tab-btn" onclick="closeSideTabMenu();openDotPanel()" aria-label="DOT">
-      <span class="side-tab-icon">📋</span>
-      <span class="side-tab-label">DOT</span>
-    </button>
-    <!-- Btn 2: Comunidad -->
-    <button class="side-tab-btn" onclick="closeSideTabMenu();toggleCommQuickPanel()" aria-label="Comunidad">
-      <span class="side-tab-badge" id="sideTabBadge"></span>
-      <span class="side-tab-icon">👥</span>
-      <span class="side-tab-label">Comunidad</span>
-    </button>
-    <!-- Btn 3: Live Chat (conversaciones entre choferes) -->
-    <button class="side-tab-btn" onclick="closeSideTabMenu();openChatChannel('general')" aria-label="Live Chat">
-      <span class="side-tab-icon">💬</span>
-      <span class="side-tab-label">Live Chat</span>
-    </button>
-  </div>
 
   <!-- COMMUNITY QUICK PANEL (slides from right) -->
   <div id="commQuickPanel">
@@ -8010,6 +7988,44 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   color:#fff!important;
   border-color:#10b981!important;
   box-shadow:0 4px 16px rgba(16,185,129,0.45),0 2px 6px rgba(0,0,0,0.35)!important;
+}
+/* ── Menú lateral del HOS Dashboard ─────────────────────── */
+#dashSideMenuToggle {
+  position:absolute;right:0;top:50%;transform:translateY(-50%);
+  z-index:25010;width:16px;height:64px;
+  background:rgba(249,115,22,.32);border:1px solid rgba(249,115,22,.45);
+  border-right:none;border-radius:8px 0 0 8px;
+  color:rgba(255,255,255,.85);font-size:13px;font-weight:900;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:right .28s cubic-bezier(.4,0,.2,1),background .15s;
+  padding:0;line-height:1;touch-action:manipulation;
+}
+#dashSideMenuToggle.open { right:34px;background:rgba(249,115,22,.5); }
+#dashSideTabStack {
+  position:absolute;right:0;top:50%;
+  transform:translateY(-50%) translateX(100%);
+  z-index:25009;display:flex;flex-direction:column;gap:3px;
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+#dashSideTabStack.open { transform:translateY(-50%) translateX(0); }
+.dash-side-tab {
+  position:relative;background:linear-gradient(160deg,#f97316,#ea580c);
+  color:#fff;border:none;border-radius:10px 0 0 10px;
+  width:34px;height:100px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:5px;cursor:pointer;
+  box-shadow:-3px 0 16px rgba(249,115,22,.45);
+  transition:width .2s,height .2s,background .2s,box-shadow .2s;
+  touch-action:manipulation;padding:0;
+}
+.dash-side-tab:hover { width:42px;height:112px;background:linear-gradient(160deg,#fb923c,#f97316);box-shadow:-4px 0 22px rgba(249,115,22,.7); }
+.dash-side-tab:active { width:28px;box-shadow:-2px 0 8px rgba(249,115,22,.3); }
+.dash-side-tab-badge {
+  position:absolute;top:5px;left:5px;
+  background:#ef4444;color:#fff;
+  font-size:9px;font-weight:900;border-radius:999px;
+  padding:1px 4px;min-width:14px;text-align:center;
+  display:none;
 }
 
 /* Tooltip del mini mapa */
@@ -14773,6 +14789,40 @@ function initHosMinimap() {
 
     el.appendChild(_stylePanel);
     el.appendChild(_styleBtn);
+  }
+
+  // Menú lateral (DOT, Comunidad, Live Chat) en la pantalla del dashboard
+  if (!document.getElementById('dashSideMenuToggle')) {
+    const _dashScreen = document.getElementById('hosDashScreen');
+
+    const _sideToggle = document.createElement('button');
+    _sideToggle.id = 'dashSideMenuToggle';
+    _sideToggle.setAttribute('aria-label', 'Abrir menú lateral');
+    _sideToggle.textContent = '‹';
+    _sideToggle.onclick = () => toggleDashSideMenu();
+
+    const _sideStack = document.createElement('div');
+    _sideStack.id = 'dashSideTabStack';
+    _sideStack.innerHTML = `
+      <button class="dash-side-tab" aria-label="DOT"
+        onclick="closeDashSideMenu();openDotPanel()">
+        <span class="side-tab-icon">📋</span>
+        <span class="side-tab-label">DOT</span>
+      </button>
+      <button class="dash-side-tab" aria-label="Comunidad"
+        onclick="closeDashSideMenu();toggleCommQuickPanel()">
+        <span class="dash-side-tab-badge" id="dashSideTabBadge"></span>
+        <span class="side-tab-icon">👥</span>
+        <span class="side-tab-label">Comunidad</span>
+      </button>
+      <button class="dash-side-tab" aria-label="Live Chat"
+        onclick="closeDashSideMenu();openChatChannel('general')">
+        <span class="side-tab-icon">💬</span>
+        <span class="side-tab-label">Live Chat</span>
+      </button>`;
+
+    _dashScreen.appendChild(_sideToggle);
+    _dashScreen.appendChild(_sideStack);
   }
 
   // Tap en mini mapa → ir al mapa completo (solo si no es el botón de estilos, panel de velocidad ni barra de ciudad)
