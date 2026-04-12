@@ -8091,28 +8091,35 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 /* City / State bar at top of HOS minimap */
 #hosCityBar {
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 10px; left: 50%; transform: translateX(-50%);
   z-index: 1001;
-  background: linear-gradient(180deg, rgba(8,14,28,0.88) 0%, rgba(8,14,28,0) 100%);
-  padding: 8px 12px 22px;
+  background: rgba(8,14,28,0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 5px 14px 5px 10px;
   pointer-events: none;
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  gap: 6px;
   font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+  max-width: calc(100% - 120px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
 }
 #hosCityBar .hcb-dot {
-  width: 7px; height: 7px; border-radius: 50%;
+  width: 8px; height: 8px; border-radius: 50%;
   background: #10b981;
   flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(16,185,129,0.7);
+  box-shadow: 0 0 8px rgba(16,185,129,0.8);
 }
 #hosCityBar .hcb-text {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.95);
   letter-spacing: 0.2px;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-shadow: 0 1px 4px rgba(0,0,0,0.8);
@@ -14731,12 +14738,14 @@ function initHosMinimap() {
     addInterstateMarkers(hosMinimapInst, navSteps, false);
   }
 
-  // Barra de ciudad / estado en la parte superior del mini mapa
+  // Barra de ciudad / estado en la parte superior del mini mapa (centrada)
   if (!el.querySelector('#hosCityBar')) {
     const _cityBar = document.createElement('div');
     _cityBar.id = 'hosCityBar';
     _cityBar.innerHTML = `<div class="hcb-dot"></div><div class="hcb-text" id="hosCityText">Detectando ubicación…</div>`;
     el.appendChild(_cityBar);
+    // Disparar geocodificación inmediata con las coordenadas de origen
+    setTimeout(() => _updateHosCityBar(lat, lon, true), 1200);
   }
 
   // Panel de Speed Limit + Velocímetro superpuesto al mini mapa
@@ -14929,13 +14938,12 @@ function updateHosDashMinimap(lat, lon) {
 }
 
 let _hosCityBarLast = 0;
-async function _updateHosCityBar(lat, lon) {
+async function _updateHosCityBar(lat, lon, force) {
   const now = Date.now();
-  if (now - _hosCityBarLast < 30000) return; // throttle: 30s
+  if (!force && now - _hosCityBarLast < 30000) return; // throttle: 30s
   _hosCityBarLast = now;
-  const bar = document.getElementById('hosCityBar');
   const txt = document.getElementById('hosCityText');
-  if (!bar || !txt) return;
+  if (!txt) return;
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 7000);
