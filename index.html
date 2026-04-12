@@ -14308,7 +14308,9 @@ function fmStartTracking() {
       _dashMi.textContent = remaining < 10 ? remaining.toFixed(1) : Math.round(remaining).toLocaleString();
     }
 
-    const driveMax = Math.min(11, Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 70));
+    const _dailyMax  = Math.max(0, parseFloat(document.getElementById('dailyHoursInput')?.value || 11));
+    const _weeklyMax = Math.max(0, parseFloat(document.getElementById('hoursInput')?.value || 70));
+    const driveMax  = Math.min(_dailyMax, _weeklyMax);
     const driveLeft = Math.max(0, driveMax - elapsed);
     const driveEl = document.getElementById('fmDriveLeft');
     driveEl.textContent = fmtH(driveLeft);
@@ -14589,6 +14591,14 @@ function showHosDashboard() {
 
   // Estado inicial: Conduciendo
   setDashStatus('driving');
+
+  // Actualizar el círculo grande inmediatamente con las horas actuales
+  const _dashDailyHrs  = parseFloat(document.getElementById('dailyHoursInput')?.value || 11);
+  const _dashWeeklyHrs = parseFloat(document.getElementById('hoursInput')?.value || 70);
+  const _dashDriveMax  = Math.min(_dashDailyHrs, _dashWeeklyHrs);
+  const _dashElapsed   = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
+  const _dashDriveLeft = Math.max(0, _dashDriveMax - _dashElapsed);
+  updateHosDashboard(_dashDriveLeft, _dashDriveMax);
 
   // Iniciar mini mapa después de un tick para que el div sea visible
   setTimeout(initHosMinimap, 120);
