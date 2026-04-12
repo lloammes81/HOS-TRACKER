@@ -7999,6 +7999,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   border-color:#10b981!important;
   box-shadow:0 4px 16px rgba(16,185,129,0.45),0 2px 6px rgba(0,0,0,0.35)!important;
 }
+@keyframes break-warn-blink {
+  0%,100% { background:rgba(239,68,68,.18); border-color:#ef4444; color:#fca5a5; box-shadow:0 0 0 0 rgba(239,68,68,0); }
+  50%     { background:rgba(239,68,68,.42); border-color:#ef4444; color:#fff;    box-shadow:0 0 16px 5px rgba(239,68,68,.5); }
+}
+.dash-tab-break-warn {
+  animation: break-warn-blink 0.75s ease-in-out infinite !important;
+  border-color: #ef4444 !important;
+}
 /* ── Menú lateral del HOS Dashboard ─────────────────────── */
 #dashSideMenuToggle {
   position:absolute;right:0;top:50%;transform:translateY(-50%);
@@ -13911,6 +13919,11 @@ function b30UpdateTimer() {
       10000);
     vibrate([200,80,200]);
 
+    // Volver a Conduciendo automáticamente y limpiar parpadeo
+    setDashStatus('driving');
+    _autoStopSecs = 0;
+    document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
+
     // Ocultar overlay después de 8 segundos
     setTimeout(() => {
       const ov = document.getElementById('breakTimerOverlay');
@@ -14049,6 +14062,58 @@ function _scheduleAutoResumeFollow() {
 let _autoResumeRotationTimer = null;
 function _scheduleAutoResumeRotation() {
   // No auto-snap — user rotation stays until they tap the center/follow button
+}
+
+/* ══════════════════════════════════════════════════════════════
+   🚦 AUTO STATUS — Conduciendo / Descanso automático
+   Reglas:
+   • Vehículo en movimiento              → Conduciendo (siempre)
+   • Detenido > 3 min + pausa de 30 requerida → Descanso automático
+   • Pausa requerida + sigue manejando   → botón Descanso parpadea rojo
+   • Pausa completada                    → vuelve a Conduciendo
+══════════════════════════════════════════════════════════════ */
+let _autoStopSecs   = 0;     // segundos detenido consecutivo (para auto-estado)
+let _autoStopLastTs = null;  // timestamp último fix para calcular delta
+const _AUTO_STOP_THRESHOLD = 180; // 3 minutos en segundos
+
+function autoUpdateDashStatus(isMoving) {
+  const now   = Date.now();
+  const delta = _autoStopLastTs ? Math.min((now - _autoStopLastTs) / 1000, 30) : 0;
+  _autoStopLastTs = now;
+
+  const restBtn = document.getElementById('dashTabRest');
+
+  // ¿Le corresponde la pausa obligatoria de 30 min?
+  const breakDue = !b30Complete && (b30Warned30m || (typeof b30DriveSecs !== 'undefined' && b30DriveSecs >= B30_DRIVE_LIMIT - 120));
+
+  if (isMoving) {
+    _autoStopSecs = 0;
+
+    // Siempre → Conduciendo cuando hay movimiento
+    if (_dashCurrentStatus !== 'driving') {
+      setDashStatus('driving');
+    }
+
+    // Parpadeo rojo en "Descanso" si la pausa ya es requerida
+    if (restBtn) {
+      if (breakDue) {
+        restBtn.classList.add('dash-tab-break-warn');
+      } else {
+        restBtn.classList.remove('dash-tab-break-warn');
+      }
+    }
+  } else {
+    // Vehículo detenido
+    _autoStopSecs += delta;
+
+    // Quitar parpadeo (está parado, la advertencia ya no aplica)
+    if (restBtn) restBtn.classList.remove('dash-tab-break-warn');
+
+    // Auto-Descanso: parado > 3 min Y pausa debida Y venía de Conduciendo
+    if (_autoStopSecs >= _AUTO_STOP_THRESHOLD && breakDue && _dashCurrentStatus === 'driving') {
+      setDashStatus('rest');
+    }
+  }
 }
 
 // ── Báscula (Weigh Station) — notificar 5 millas antes ────────────────────
@@ -14238,6 +14303,9 @@ function fmStartTracking() {
   lastRoadSpeedCheck = 0;
   _weighNotified.clear();      // reinicia báscula alertas para nuevo viaje
   _miniAlertNotified.clear();  // reinicia alertas de mapa mini para nuevo viaje
+  _autoStopSecs   = 0;         // reinicia contador de parada para auto-estado
+  _autoStopLastTs = null;
+  document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
   b30Reset();             // reinicia sistema de pausa 30 min
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
@@ -14365,6 +14433,8 @@ function fmStartTracking() {
     
     // ── NEXT TURN / EXIT (local) ───────────────────────────
     updateNavInstruction(lat, lon);
+    // ── Auto status buttons (Conduciendo / Descanso) ─────
+    autoUpdateDashStatus(isMoving);
     // ── Weigh station warning ─────────────────────────────
     if (isMoving) checkWeighStations(lat, lon);
     // ── Mini-map 5-mile alerts (básculas + checkpoints) ──
@@ -14615,6 +14685,10 @@ function fmStopTracking() {
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
   b30Reset(); // limpiar sistema de pausa al detener rastreo
+  _autoStopSecs   = 0;
+  _autoStopLastTs = null;
+  document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
+  setDashStatus('driving'); // volver a estado inicial
   // Release Wake Lock
   if (fmWakeLock) { fmWakeLock.release().catch(() => {}); fmWakeLock = null; }
   // Restart warm-cache watcher now that tracking is stopped
