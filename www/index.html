@@ -19477,6 +19477,25 @@ function closeNearbyPoiSheet() {
   document.getElementById('nearbyPoiOverlay').classList.remove('open');
 }
 
+function _addTruckStopToRoute(name, lat, lon) {
+  closeNearbyPoiSheet();
+  destination = { name, lat, lon };
+  const destIn = document.getElementById('destInput');
+  if (destIn) { destIn.value = name; }
+  const destSugg = document.getElementById('destSugg');
+  if (destSugg) destSugg.style.display = 'none';
+  // Switch to the plan tab so the user sees the route planner
+  switchTab('plan');
+  if (origin) {
+    // Small delay to let the tab render before calculating
+    setTimeout(() => calculateRoute(), 300);
+  } else {
+    showToast('info', '📍',
+      'Selecciona tu origen primero',
+      `Destino: ${name} — ahora elige desde dónde saldrás`, 5000);
+  }
+}
+
 async function searchNearbyPOI(type) {
   const overlay  = document.getElementById('nearbyPoiOverlay');
   const iconEl   = document.getElementById('nearbyPoiIcon');
@@ -19626,20 +19645,24 @@ out center qt;`;
 
       const card = document.createElement('div');
       card.className = 'poi-card';
-      card.onclick = () => window.open(mapsUrl, '_blank');
+      if (isTruck) {
+        card.onclick = () => _addTruckStopToRoute(name, elLat, elLon);
+      } else {
+        card.onclick = () => window.open(mapsUrl, '_blank');
+      }
       card.innerHTML = `
         <div class="poi-card-icon">${icon}</div>
         <div class="poi-card-info">
           <div class="poi-card-name">${name}</div>
           <div class="poi-card-meta">${meta}</div>
         </div>
-        <div class="poi-card-dist">${distMi} mi<div style="font-size:10px;color:var(--muted)">${distKm} km</div></div>`;
+        <div class="poi-card-dist">${distMi} mi<div style="font-size:10px;color:var(--muted)">${distKm} km</div>${isTruck ? '<div style="font-size:10px;color:#10b981;font-weight:700;margin-top:2px">➕ A la ruta</div>' : ''}</div>`;
       list.appendChild(card);
     });
 
     showToast('success', poiIcon,
       `${els.length} ${isTruck ? 'truck stops' : isScale ? 'weigh stations' : 'parqueos'}`,
-      'Toca uno para navegar', 3500);
+      isTruck ? 'Toca uno para agregar a tu ruta' : 'Toca uno para navegar', 3500);
 
   } catch(e) {
     list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">⚠️ Error de conexión. Verifica tu internet.</div>';
