@@ -15396,12 +15396,19 @@ const POI_ICONS = {
   mechanics:   { emoji:'🔧', color:'#7c3aed', label:'Truck Mechanic' },
   parts:       { emoji:'⚙️', color:'#3b82f6', label:'Parts & Dealers' },
   restaurants: { emoji:'🍽️', color:'#10b981', label:'Restaurant' },
+  restaurant:  { emoji:'🍔', color:'#f97316', label:'Restaurante' },
   tires:       { emoji:'🔄', color:'#8b5cf6', label:'Tire Shop' },
   truckwash:   { emoji:'🚿', color:'#0ea5e9', label:'Truck Wash' },
   towing:      { emoji:'🏗️', color:'#ea580c', label:'Towing / Grúa' },
   dotphysical: { emoji:'🩺', color:'#10b981', label:'DOT Physical' },
   chromeshop:  { emoji:'✨', color:'#8b5cf6', label:'Chrome Shop' },
   reefer:      { emoji:'❄️', color:'#0ea5e9', label:'Reefer Repair' },
+  diesel:      { emoji:'⛽', color:'#f59e0b', label:'Diésel Barato' },
+  hospital:    { emoji:'🏥', color:'#ef4444', label:'Hospital / Urgent Care' },
+  catscale:    { emoji:'⚖️', color:'#10b981', label:'CAT Scale' },
+  def:         { emoji:'🛢️', color:'#06b6d4', label:'DEF Station' },
+  motel:       { emoji:'🏨', color:'#8b5cf6', label:'Motel / Hotel' },
+  propane:     { emoji:'🔥', color:'#ea580c', label:'Propano / CNG' },
 };
 
 // Overpass queries — use node (faster than nwr) where POIs are typically points
@@ -15524,6 +15531,76 @@ const OVERPASS_QUERIES = {
       node["shop"="car_repair"]["name"~"reefer|refriger",i](around:${r},${lat},${lon});
     );
     out center;`,
+
+  diesel: (lat, lon, r) => `
+    [out:json][timeout:25];
+    (
+      node["amenity"="fuel"]["fuel:diesel"="yes"](around:${r},${lat},${lon});
+      node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+      node["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${r},${lat},${lon});
+      node["brand"~"Pilot Flying J|Love's Travel|Travel Centers of America|Petro Stopping|Flying J|TA Travel",i](around:${r},${lat},${lon});
+    );
+    out center qt;`,
+
+  hospital: (lat, lon, r) => `
+    [out:json][timeout:20];
+    (
+      node["amenity"="hospital"](around:${r},${lat},${lon});
+      node["amenity"="clinic"](around:${r},${lat},${lon});
+      node["amenity"="urgent_care"](around:${r},${lat},${lon});
+      way["amenity"="hospital"](around:${r},${lat},${lon});
+      way["amenity"="urgent_care"](around:${r},${lat},${lon});
+    );
+    out center qt;`,
+
+  restaurant: (lat, lon, r) => `
+    [out:json][timeout:20];
+    (
+      node["amenity"="restaurant"](around:${r},${lat},${lon});
+      node["amenity"="fast_food"](around:${r},${lat},${lon});
+      node["amenity"="cafe"](around:${r},${lat},${lon});
+    );
+    out center qt;`,
+
+  catscale: (lat, lon, r) => `
+    [out:json][timeout:25];
+    (
+      node["name"~"CAT Scale|CAT Weigh",i](around:${r},${lat},${lon});
+      node["amenity"="truck_stop"]["name"~"Pilot|Flying J|Love's|TA Travel|Petro|Sapp Bros|Kwik Trip",i](around:${r},${lat},${lon});
+      node["amenity"="fuel"]["hgv"="yes"]["name"~"Pilot|Flying J|Love's|TA|Petro",i](around:${r},${lat},${lon});
+      way["amenity"="truck_stop"](around:${r},${lat},${lon});
+    );
+    out center qt;`,
+
+  def: (lat, lon, r) => `
+    [out:json][timeout:20];
+    (
+      node["amenity"="fuel"]["fuel:adblue"="yes"](around:${r},${lat},${lon});
+      node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
+      node["name"~"DEF|AdBlue|diesel exhaust fluid",i](around:${r},${lat},${lon});
+      node["brand"~"Pilot Flying J|Love's Travel|Travel Centers of America|TA Travel|Petro Stopping",i](around:${r},${lat},${lon});
+    );
+    out center qt;`,
+
+  motel: (lat, lon, r) => `
+    [out:json][timeout:20];
+    (
+      node["tourism"="motel"](around:${r},${lat},${lon});
+      node["tourism"="hotel"](around:${r},${lat},${lon});
+      way["tourism"="motel"](around:${r},${lat},${lon});
+      way["tourism"="hotel"](around:${r},${lat},${lon});
+    );
+    out center qt;`,
+
+  propane: (lat, lon, r) => `
+    [out:json][timeout:20];
+    (
+      node["amenity"="fuel"]["fuel:lpg"="yes"](around:${r},${lat},${lon});
+      node["amenity"="fuel"]["fuel:cng"="yes"](around:${r},${lat},${lon});
+      node["amenity"="fuel"]["fuel:propane"="yes"](around:${r},${lat},${lon});
+      node["name"~"propane|CNG|LPG|natural gas station",i](around:${r},${lat},${lon});
+    );
+    out center qt;`,
 };
 
 // ── Overpass fetch with mirror fallbacks ─────────────────────
