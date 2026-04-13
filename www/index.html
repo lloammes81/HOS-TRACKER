@@ -7971,7 +7971,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
     <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
     <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">Espera</button>
-    <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Off Duty</button>
+    <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Sleeper</button>
   </div>
 
   <!-- ⑤ MINI MAPA — ocupa el resto de la pantalla -->
@@ -8006,6 +8006,22 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 .dash-tab-break-warn {
   animation: break-warn-blink 0.75s ease-in-out infinite !important;
   border-color: #ef4444 !important;
+}
+@keyframes wait-green-blink {
+  0%,100% { background:rgba(16,185,129,.2);  border-color:#10b981; color:#6ee7b7; box-shadow:0 0 0 0 rgba(16,185,129,0); }
+  50%     { background:rgba(16,185,129,.48); border-color:#10b981; color:#fff;    box-shadow:0 0 18px 6px rgba(16,185,129,.5); }
+}
+.dash-tab-wait-pulse {
+  animation: wait-green-blink 0.9s ease-in-out infinite !important;
+  border-color: #10b981 !important;
+}
+@keyframes sleeper-blink {
+  0%,100% { background:rgba(99,102,241,.2);  border-color:#6366f1; color:#a5b4fc; box-shadow:0 0 0 0 rgba(99,102,241,0); }
+  50%     { background:rgba(99,102,241,.48); border-color:#6366f1; color:#fff;    box-shadow:0 0 18px 6px rgba(99,102,241,.55); }
+}
+.dash-tab-sleeper-pulse {
+  animation: sleeper-blink 1.1s ease-in-out infinite !important;
+  border-color: #6366f1 !important;
 }
 /* ── Menú lateral del HOS Dashboard ─────────────────────── */
 #dashSideMenuToggle {
@@ -14071,53 +14087,76 @@ function _scheduleAutoResumeRotation() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   🚦 AUTO STATUS — Conduciendo / Descanso automático
+   🚦 AUTO STATUS — Conduciendo / Descanso / Espera / Sleeper
    Reglas:
    • Vehículo en movimiento              → Conduciendo (siempre)
-   • Detenido > 3 min + pausa de 30 requerida → Descanso automático
-   • Pausa requerida + sigue manejando   → botón Descanso parpadea rojo
-   • Pausa completada                    → vuelve a Conduciendo
+   • Pausa de 30 min requerida + sigue manejando → Descanso parpadea ROJO
+   • Parado > 3 min + pausa debida       → Descanso automático
+   • Parado > 5 min + sin pausa pendiente → Espera parpadea VERDE
+   • Parado > 30 min                     → Sleeper parpadea ÍNDIGO
 ══════════════════════════════════════════════════════════════ */
-let _autoStopSecs   = 0;     // segundos detenido consecutivo (para auto-estado)
-let _autoStopLastTs = null;  // timestamp último fix para calcular delta
-const _AUTO_STOP_THRESHOLD = 180; // 3 minutos en segundos
+let _autoStopSecs   = 0;     // segundos detenido consecutivo
+let _autoStopLastTs = null;  // timestamp último GPS fix
+const _AUTO_STOP_THRESHOLD  = 180;   // 3 min → auto-Descanso si pausa debida
+const _AUTO_WAIT_THRESHOLD  = 300;   // 5 min → Espera parpadea verde
+const _AUTO_SLEEP_THRESHOLD = 1800;  // 30 min → Sleeper parpadea índigo
+
+function _clearAllAutoBlinkClasses() {
+  document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
+  document.getElementById('dashTabWait')?.classList.remove('dash-tab-wait-pulse');
+  document.getElementById('dashTabOff')?.classList.remove('dash-tab-sleeper-pulse');
+}
 
 function autoUpdateDashStatus(isMoving) {
   const now   = Date.now();
   const delta = _autoStopLastTs ? Math.min((now - _autoStopLastTs) / 1000, 30) : 0;
   _autoStopLastTs = now;
 
-  const restBtn = document.getElementById('dashTabRest');
+  const restBtn    = document.getElementById('dashTabRest');
+  const waitBtn    = document.getElementById('dashTabWait');
+  const sleeperBtn = document.getElementById('dashTabOff');
 
   // ¿Le corresponde la pausa obligatoria de 30 min?
-  const breakDue = !b30Complete && (b30Warned30m || (typeof b30DriveSecs !== 'undefined' && b30DriveSecs >= B30_DRIVE_LIMIT - 120));
+  const breakDue = !b30Complete &&
+    (b30Warned30m || (typeof b30DriveSecs !== 'undefined' && b30DriveSecs >= B30_DRIVE_LIMIT - 120));
 
   if (isMoving) {
     _autoStopSecs = 0;
+    _clearAllAutoBlinkClasses();
 
     // Siempre → Conduciendo cuando hay movimiento
-    if (_dashCurrentStatus !== 'driving') {
-      setDashStatus('driving');
-    }
+    if (_dashCurrentStatus !== 'driving') setDashStatus('driving');
 
-    // Parpadeo rojo en "Descanso" si la pausa ya es requerida
-    if (restBtn) {
-      if (breakDue) {
-        restBtn.classList.add('dash-tab-break-warn');
-      } else {
-        restBtn.classList.remove('dash-tab-break-warn');
-      }
-    }
+    // Parpadeo rojo en Descanso si la pausa ya es obligatoria
+    if (restBtn && breakDue) restBtn.classList.add('dash-tab-break-warn');
+
   } else {
-    // Vehículo detenido
+    // Vehículo detenido — acumular tiempo
     _autoStopSecs += delta;
 
-    // Quitar parpadeo (está parado, la advertencia ya no aplica)
-    if (restBtn) restBtn.classList.remove('dash-tab-break-warn');
+    // Quitar parpadeo rojo (no aplica estando parado)
+    restBtn?.classList.remove('dash-tab-break-warn');
 
-    // Auto-Descanso: parado > 3 min Y pausa debida Y venía de Conduciendo
+    // ── 3 min + pausa debida → Descanso ──────────────────────
     if (_autoStopSecs >= _AUTO_STOP_THRESHOLD && breakDue && _dashCurrentStatus === 'driving') {
       setDashStatus('rest');
+    }
+
+    // ── 5 min + SIN pausa pendiente → Espera parpadea verde ──
+    const noBreakPending = b30Complete || !breakDue;
+    if (_autoStopSecs >= _AUTO_WAIT_THRESHOLD && noBreakPending) {
+      if (waitBtn) waitBtn.classList.add('dash-tab-wait-pulse');
+      if (_dashCurrentStatus === 'driving') setDashStatus('wait');
+    } else {
+      waitBtn?.classList.remove('dash-tab-wait-pulse');
+    }
+
+    // ── 30 min parado → Sleeper parpadea índigo ───────────────
+    if (_autoStopSecs >= _AUTO_SLEEP_THRESHOLD) {
+      if (sleeperBtn) sleeperBtn.classList.add('dash-tab-sleeper-pulse');
+      if (_dashCurrentStatus !== 'off') setDashStatus('off');
+    } else {
+      sleeperBtn?.classList.remove('dash-tab-sleeper-pulse');
     }
   }
 }
@@ -14311,7 +14350,7 @@ function fmStartTracking() {
   _miniAlertNotified.clear();  // reinicia alertas de mapa mini para nuevo viaje
   _autoStopSecs   = 0;         // reinicia contador de parada para auto-estado
   _autoStopLastTs = null;
-  document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
+  _clearAllAutoBlinkClasses();
   _hosWarn1hFired  = false;    // reinicia alertas de horas de manejo
   _hosWarn30mFired = false;
   b30Reset();             // reinicia sistema de pausa 30 min
@@ -14712,7 +14751,7 @@ function fmStopTracking() {
   b30Reset(); // limpiar sistema de pausa al detener rastreo
   _autoStopSecs   = 0;
   _autoStopLastTs = null;
-  document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
+  _clearAllAutoBlinkClasses();
   setDashStatus('driving'); // volver a estado inicial
   // Release Wake Lock
   if (fmWakeLock) { fmWakeLock.release().catch(() => {}); fmWakeLock = null; }
@@ -15306,13 +15345,13 @@ function setDashStatus(status) {
     driving: 'Conduciendo',
     rest:    'Descansando',
     wait:    'En espera',
-    off:     'Off Duty'
+    off:     'Sleeper'
   };
   const colors = {
     driving: '#10b981',
     rest:    '#3b82f6',
     wait:    '#f59e0b',
-    off:     '#6b7280'
+    off:     '#6366f1'
   };
   Object.keys(tabs).forEach(k => {
     if (!tabs[k]) return;
