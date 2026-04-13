@@ -10164,9 +10164,9 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
     usedEl.textContent = `${String(eH).padStart(2,'0')}:${String(Math.max(0,eM)).padStart(2,'0')}`;
   }
 
-  // Severity state
-  const isWarn     = hoursLeft < 4 && hoursLeft >= 2;
-  const isCritical = hoursLeft < 2;
+  // Severity state — crítico (rojo) desde 1 hora, advertencia (ámbar) 2h-1h
+  const isWarn     = hoursLeft <= 2 && hoursLeft > 1;
+  const isCritical = hoursLeft <= 1;
   ring.className  = 'dh-ring' + (isCritical ? ' critical' : isWarn ? ' warn' : '');
   hrs.className   = 'dh-hrs'  + (isCritical ? ' critical' : isWarn ? ' warn' : '');
 
@@ -13913,11 +13913,17 @@ function b30UpdateTimer() {
     const inner = overlay.querySelector('div');
     if (inner) { inner.style.borderColor = '#10b981'; inner.style.animation = 'none'; }
 
-    showToast('success','✅',
-      '¡PAUSA COMPLETADA!',
-      'Descansaste 30 minutos. Puedes continuar manejando.',
-      10000);
-    vibrate([200,80,200]);
+    const _b30Title = lang === 'es' ? '✅ ¡PAUSA DE 30 MIN COMPLETADA!' : '✅ 30-MIN BREAK COMPLETE!';
+    const _b30Body  = lang === 'es'
+      ? '¡Excelente! Tomaste tu descanso obligatorio de 30 minutos. Ya puedes continuar manejando.'
+      : 'Great job! You completed your mandatory 30-minute break. You may continue driving.';
+    showToast('success', '✅', _b30Title, _b30Body, 12000);
+    vibrate([200, 80, 200, 80, 200]);
+    if (window.scheduleLocalHOSAlert) {
+      window.scheduleLocalHOSAlert(500, _b30Title, _b30Body, 7010).catch(() => {});
+    } else if (window.sendHOSAlert) {
+      window.sendHOSAlert(_b30Body);
+    }
 
     // Volver a Conduciendo automáticamente y limpiar parpadeo
     setDashStatus('driving');
@@ -14306,6 +14312,8 @@ function fmStartTracking() {
   _autoStopSecs   = 0;         // reinicia contador de parada para auto-estado
   _autoStopLastTs = null;
   document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
+  _hosWarn1hFired  = false;    // reinicia alertas de horas de manejo
+  _hosWarn30mFired = false;
   b30Reset();             // reinicia sistema de pausa 30 min
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
@@ -14530,22 +14538,39 @@ function fmStartTracking() {
         if (typeof sendHOSAlert === 'function') sendHOSAlert('⚠️ ' + (lang==='es' ? '¡MENOS DE 2 HORAS! ' : 'LESS THAN 2 HRS! ') + msg2h);
         if (typeof saveHOSStateForSW === 'function') saveHOSStateForSW(driveLeft, null);
       }
-      const warnKey1h = 'hos_drive_warn_1h_' + today;
-      if (driveLeft <= 1.0 && driveLeft > 0.25 && !localStorage.getItem(warnKey1h)) {
-        localStorage.setItem(warnKey1h, '1');
-        const msg1h = lang==='es' ? `¡Solo ${fmtH(driveLeft)}! Detente a descansar pronto.` : `Only ${fmtH(driveLeft)} left! Stop and rest soon.`;
-        showToast('danger','🚨', lang==='es' ? '¡1 HORA DE MANEJO!' : '🚨 1 HR OF DRIVING LEFT!', msg1h, 20000);
-        if (typeof sendHOSAlert === 'function') sendHOSAlert('🚨 ' + (lang==='es' ? '¡1 HORA DE MANEJO! ' : '1 HR LEFT! ') + msg1h);
+      // ── ⏰ 1 HORA ANTES del límite — círculo ya en ROJO ──────────
+      if (driveLeft <= 1.0 && driveLeft > 0.5 && !_hosWarn1hFired) {
+        _hosWarn1hFired = true;
+        const title1h = lang==='es' ? '⏰ ¡SE TE ACABAN LAS HORAS!' : '⏰ 1 HOUR LEFT!';
+        const msg1h   = lang==='es'
+          ? `Se te están venciendo las horas de manejo. Te queda solo ${fmtH(driveLeft)} — empieza a buscar dónde estacionarte.`
+          : `Your driving hours are running out. Only ${fmtH(driveLeft)} left — start looking for parking now.`;
+        showToast('danger', '⏰', title1h, msg1h, 0);
+        vibrate([300, 100, 300, 100, 300, 100, 300]);
+        flashDanger(3000);
+        if (window.scheduleLocalHOSAlert) {
+          window.scheduleLocalHOSAlert(800, title1h, msg1h, 7011).catch(() => {});
+        } else if (typeof sendHOSAlert === 'function') {
+          sendHOSAlert('⏰ ' + msg1h);
+        }
         if (typeof saveHOSStateForSW === 'function') saveHOSStateForSW(driveLeft, null);
       }
-      const warnKey30m = 'hos_drive_warn_30m_' + today;
-      if (driveLeft <= 0.5 && driveLeft > 0 && !localStorage.getItem(warnKey30m)) {
-        localStorage.setItem(warnKey30m, '1');
-        const msg30m = lang==='es' ? '¡Debes detenerte a descansar! DOT requiere 10 hrs de descanso.' : 'You must stop NOW! DOT requires 10 hrs of rest.';
-        showToast('danger','🛑', lang==='es' ? '¡30 MINUTOS!' : '🛑 30 MINUTES LEFT!', msg30m, 0);
-        if (typeof sendHOSAlert === 'function') sendHOSAlert('🛑 ' + (lang==='es' ? '¡30 MINUTOS! ' : '30 MIN LEFT! ') + msg30m);
+      // ── 🛑 30 MINUTOS — urgente, buscar estacionamiento ──────────
+      if (driveLeft <= 0.5 && driveLeft > 0 && !_hosWarn30mFired) {
+        _hosWarn30mFired = true;
+        const title30m = lang==='es' ? '🛑 ¡SOLO 30 MINUTOS!' : '🛑 ONLY 30 MINUTES LEFT!';
+        const msg30m   = lang==='es'
+          ? '¡Solo te quedan 30 minutos de manejo! Busca urgente un lugar para estacionarte. DOT requiere 10 horas de descanso obligatorio.'
+          : 'Only 30 minutes of driving left! Find parking IMMEDIATELY. DOT requires 10 hrs of mandatory rest.';
+        showToast('danger', '🛑', title30m, msg30m, 0);
+        vibrate([500, 150, 500, 150, 500, 150, 500, 150, 500]);
+        flashDanger(5000);
+        if (window.scheduleLocalHOSAlert) {
+          window.scheduleLocalHOSAlert(800, title30m, msg30m, 7012).catch(() => {});
+        } else if (typeof sendHOSAlert === 'function') {
+          sendHOSAlert('🛑 ' + msg30m);
+        }
         if (typeof saveHOSStateForSW === 'function') saveHOSStateForSW(driveLeft, null);
-        if (navigator.vibrate) navigator.vibrate([400,100,400,100,400]);
       }
     } catch(e) {}
 // ✅ Daily driving-hours notice (shows only what you can still drive today)
@@ -14741,6 +14766,9 @@ let hosMinimapGlow    = null;  // polyline glow de ruta en mini mapa
 let hosMinimapTileLayer = null; // tile layer actual del mini mapa
 let dashSpeedOver     = false; // true cuando el camión supera el límite de velocidad
 let _dashCurrentStatus = 'driving';
+// Flags de sesión para alertas de horas de manejo (se reinician al iniciar viaje)
+let _hosWarn1hFired  = false;
+let _hosWarn30mFired = false;
 
 // Centra el mini-mapa con el icono del camión en la zona inferior (≈25% desde abajo)
 function _hosMinimapFollow(lat, lon) {
