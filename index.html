@@ -13726,7 +13726,18 @@ function handleMapSearch(val) {
 }
 
 function closeFullMapScreen() {
-  minimizeMap();
+  // Ocultar el mapa grande
+  document.getElementById('fullMapScreen').style.display = 'none';
+  document.getElementById('fmHud').style.transform = 'translateY(100%)';
+  document.getElementById('poiLegend').classList.remove('visible');
+  document.getElementById('fmFollowBtn').classList.remove('visible');
+  document.body.classList.remove('map-active');
+
+  if (fmIsTracking) {
+    // Hay rastreo activo → volver al HOS Dashboard
+    showHosDashboard();
+  }
+  // Si no hay rastreo, la pantalla de planeación de ruta queda visible detrás
 }
 
 function minimizeMap() {
@@ -14792,7 +14803,15 @@ function fmStopTracking() {
   document.getElementById('fmLiveDot').style.boxShadow = 'none';
   document.getElementById('fmLiveDot').style.animation = 'none';
   if (fmAccMarker) { try { fmMapInst.removeLayer(fmAccMarker); } catch {} fmAccMarker = null; }
+  // Volver a pantalla de planeación (ocultar mapa grande)
+  document.getElementById('fullMapScreen').style.display = 'none';
+  document.body.classList.remove('map-active');
   hideHosDashboard();
+  // hideHosDashboard() restaura display de los overlays; re-ocultarlos
+  ['breakTimerOverlay','breakViolationBanner'].forEach(id => {
+    const ov = document.getElementById(id);
+    if (ov) ov.style.display = 'none';
+  });
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -15105,15 +15124,8 @@ function initHosMinimap() {
     _dashScreen.appendChild(_sideStack);
   }
 
-  // Tap en mini mapa → ir al mapa completo (solo si no es el botón de estilos, panel de velocidad ni barra de ciudad)
-  el.addEventListener('click', (e) => {
-    if (!e.target.closest('#hosMinimapStyleBtn') &&
-        !e.target.closest('#hosMinimapStylePanel') &&
-        !e.target.closest('#dashSpeedPanel') &&
-        !e.target.closest('#hosCityBar')) {
-      showFullMapFromDash();
-    }
-  });
+  // El mini mapa del dashboard NO abre el mapa grande al tocarlo.
+  // Para ir al mapa completo, usar el botón 🗺️ del dashboard.
 }
 
 function loadMiniMapTruckStops(lat, lon) {
