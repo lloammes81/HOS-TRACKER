@@ -12285,8 +12285,7 @@ async function fetchRoadRoute(orig, dest) {
   const servers = [
     `https://router.project-osrm.org/route/v1/driving/${coords}${qs}`,
     `https://routing.openstreetmap.de/routed-car/route/v1/driving/${coords}${qs}`,
-    `https://routing.openstreetmap.de/routed-hgv/route/v1/driving/${coords}${qs}`,
-    `https://osrm.rogue-labs.net/route/v1/driving/${coords}${qs}`
+    `https://routing.openstreetmap.de/routed-hgv/route/v1/driving/${coords}${qs}`
   ];
 
   function _tryServer(url) {
@@ -12317,7 +12316,7 @@ async function fetchRoadRoute(orig, dest) {
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
-    console.warn('⚠️ Primer intento OSRM fallido — probando Valhalla...');
+    console.warn('⚠️ Primer intento OSRM fallido:', e?.message || e);
   }
 
   // Fallback 1: Valhalla (motor completamente distinto a OSRM)
@@ -12326,7 +12325,7 @@ async function fetchRoadRoute(orig, dest) {
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
-    console.warn('⚠️ Valhalla falló — reintentando OSRM en 4s...');
+    console.warn('⚠️ Valhalla falló:', e?.message || e);
   }
 
   // Retry OSRM after 4s (servers may have recovered)
@@ -12336,7 +12335,7 @@ async function fetchRoadRoute(orig, dest) {
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
-    console.warn('⚠️ Todos los servidores fallaron — usando línea recta');
+    console.warn('⚠️ Todos los servidores fallaron:', e?.message || e);
   }
 
   // Fallback final: línea recta
