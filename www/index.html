@@ -12223,7 +12223,7 @@ function _decodePolyline6(encoded) {
 }
 async function _fetchValhallaRoute(orig, dest) {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 12000);
+  const t = setTimeout(() => ctrl.abort(), 8000);
   const res = await fetch('https://valhalla1.openstreetmap.de/route', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -12286,7 +12286,7 @@ async function fetchRoadRoute(orig, dest) {
 
   async function _tryOsrm() {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 12000);
+    const t = setTimeout(() => ctrl.abort(), 8000);
     try {
       const r = await fetch(osrmUrl, { signal: ctrl.signal });
       clearTimeout(t);
@@ -12335,8 +12335,8 @@ async function fetchRoadRoute(orig, dest) {
     try { showToast('warning','🛰️','Servidores sin respuesta', `Error: ${_lastErr} — reintentando…`, 4000); } catch {}
   }
 
-  // Reintento tras 2s
-  await new Promise(res => setTimeout(res, 2000));
+  // Reintento tras 1s
+  await new Promise(res => setTimeout(res, 1000));
   try {
     const result = await Promise.any([
       _tryOsrm(),
@@ -12873,6 +12873,92 @@ function resetMiniBadges() {
   miniPoiActive = { truck: true, rest: true, restrict: true, weigh: true, checkpoint: true };
 }
 
+// ── Apply a route result to all UI elements ─────────────────
+// isInitialLoad=true  → first render (saves drive, shows map, loads POIs)
+// isInitialLoad=false → background update (updates existing map, adjusts saved drive)
+function _applyRouteResult(road, depart, hours, speed, isInitialLoad) {
+  roadGeometry  = road.coords;
+  routeSource   = road.source;
+  routeDistance = road.miles;
+  navSteps      = Array.isArray(road.steps) ? road.steps : [];
+  navStepIdx    = 0;
+
+  schedule    = calculateSchedule(depart, routeDistance, speed, hours);
+  arrivalTime = schedule.at(-1)?.end || depart;
+  totalTime   = schedule.reduce((a,s) => a + (s.type==='drive'||s.type==='rest'||s.type==='reset'||s.type==='break30' ? s.hours : 0), 0);
+
+  scheduleRestAlarms(schedule, depart);
+
+  if (isInitialLoad) {
+    const drive = {
+      id: Date.now(),
+      origin: origin.name, destination: destination.name,
+      distance: routeDistance,
+      value: (routeDistance * 0.73).toFixed(2),
+      date: new Date().toISOString()
+    };
+    savedDrives.push(drive);
+    localStorage.setItem('hos_drives', JSON.stringify(savedDrives));
+  } else {
+    // Update last saved drive with accurate road distance
+    const last = savedDrives[savedDrives.length - 1];
+    if (last && last.origin === origin.name && last.destination === destination.name) {
+      last.distance = routeDistance;
+      last.value    = (routeDistance * 0.73).toFixed(2);
+      localStorage.setItem('hos_drives', JSON.stringify(savedDrives));
+    }
+  }
+
+  renderResults(hours, speed, depart);
+
+  if (isInitialLoad) {
+    document.getElementById('miniMapCard').style.display = 'block';
+    if (!miniMap) miniMap = initMap('miniMap');
+    setTimeout(() => {
+      miniMap.invalidateSize();
+      const mRef = { list: miniMarkersList };
+      const lRef = { layer: miniLayer };
+      drawRoute(miniMap, roadGeometry, mRef, lRef);
+      miniMarkersList = mRef.list;
+      miniLayer = lRef.layer;
+      resetMiniBadges();
+      loadMiniMapPOIs();
+      loadMiniMapRestrictions();
+    }, 100);
+  } else {
+    // Re-draw route on existing map with updated geometry
+    if (miniMap) {
+      setTimeout(() => {
+        const mRef = { list: miniMarkersList };
+        const lRef = { layer: miniLayer };
+        drawRoute(miniMap, roadGeometry, mRef, lRef);
+        miniMarkersList = mRef.list;
+        miniLayer = lRef.layer;
+      }, 50);
+    }
+  }
+
+  if (road.source === 'Fallback') {
+    const _reason = road.fallbackReason || '';
+    const isFetching = _reason.includes('buscando') || _reason.includes('fetching');
+    if (isFetching) {
+      document.getElementById('routeSourceTxt').innerHTML =
+        `⏳ <span style="color:#9ca3af">${lang === 'es' ? 'Buscando ruta por carretera…' : 'Fetching road route…'}</span>`;
+    } else {
+      const _label = _reason ? ` (${_reason})` : '';
+      document.getElementById('routeSourceTxt').innerHTML =
+        `⚠️ <span style="color:#f59e0b;font-weight:800">Ruta aérea — servidores no disponibles${_label}</span>
+         <button onclick="retryRoute()" style="margin-left:8px;padding:3px 10px;background:#f59e0b;border:none;border-radius:8px;color:#000;font-size:11px;font-weight:800;cursor:pointer">🔄 Reintentar</button>`;
+    }
+  } else {
+    document.getElementById('routeSourceTxt').textContent =
+      `🛣️ ${t('sourceRoad')}: ${t('sourceOsrm')} (${routeSource})`;
+  }
+
+  renderDrives();
+  renderSummary();
+}
+
 async function calculateRoute() {
   hideError();
   if (!origin || !destination) { showError(t('errSel')); return; }
@@ -12895,70 +12981,43 @@ async function calculateRoute() {
   }
 
   const calcBtn = document.getElementById('calcBtn');
-  calcBtn.textContent = '⏳ Calculating...';
   calcBtn.disabled = true;
 
   const depart = new Date(document.getElementById('departureInput').value || new Date());
-  const road = await fetchRoadRoute(origin, destination);
-  roadGeometry = road.coords;
-  routeSource = road.source;
-  routeDistance = road.miles;
-  navSteps = Array.isArray(road.steps) ? road.steps : [];
-  navStepIdx = 0;
 
-  schedule = calculateSchedule(depart, routeDistance, speed, hours);
-  arrivalTime = schedule.at(-1)?.end || depart;
-  totalTime = schedule.reduce((a,s) => a + (s.type==='drive'||s.type==='rest'||s.type==='reset'||s.type==='break30' ? s.hours : 0), 0);
-
-  // Schedule HOS rest alarms
-  scheduleRestAlarms(schedule, depart);
-
-  const drive = {
-    id: Date.now(),
-    origin: origin.name, destination: destination.name,
-    distance: routeDistance,
-    value: (routeDistance * 0.73).toFixed(2),
-    date: new Date().toISOString()
+  // ── Paso 1: mostrar ruta aérea INSTANTÁNEAMENTE como placeholder ──
+  // El usuario ve la ruta y los resultados de inmediato sin esperar la red.
+  const aerialMiles = Math.round(haversine(origin.lat, origin.lon, destination.lat, destination.lon) * 1.35);
+  const aerialRoute = {
+    coords: [[origin.lat, origin.lon], [destination.lat, destination.lon]],
+    miles:  aerialMiles,
+    steps:  [],
+    source: 'Fallback',
+    fallbackReason: lang === 'es' ? 'buscando ruta por carretera…' : 'fetching road route…'
   };
-  savedDrives.push(drive);
-  localStorage.setItem('hos_drives', JSON.stringify(savedDrives));
-
-  renderResults(hours, speed, depart);
-
-  document.getElementById('miniMapCard').style.display = 'block';
-  if (!miniMap) miniMap = initMap('miniMap');
-  setTimeout(() => {
-    miniMap.invalidateSize();
-    const mRef = { list: miniMarkersList };
-    const lRef = { layer: miniLayer };
-    drawRoute(miniMap, roadGeometry, mRef, lRef);
-    miniMarkersList = mRef.list;
-    miniLayer = lRef.layer;
-    resetMiniBadges();
-    // Load POIs along route (async, non-blocking)
-    loadMiniMapPOIs();
-    loadMiniMapRestrictions();
-  }, 100);
-
-  if (routeSource === 'Fallback') {
-    const _reason = road.fallbackReason ? ` (${road.fallbackReason})` : '';
-    document.getElementById('routeSourceTxt').innerHTML =
-      `⚠️ <span style="color:#f59e0b;font-weight:800">Ruta aérea — servidores no disponibles${_reason}</span>
-       <button onclick="retryRoute()" style="margin-left:8px;padding:3px 10px;background:#f59e0b;border:none;border-radius:8px;color:#000;font-size:11px;font-weight:800;cursor:pointer">🔄 Reintentar</button>`;
-    showToast('warning', '⚠️', 'Ruta aérea' + _reason,
-      'Verifica tu conexión a internet y toca Reintentar.', 10000);
-  } else {
-    document.getElementById('routeSourceTxt').textContent =
-      `🛣️ ${t('sourceRoad')}: ${t('sourceOsrm')} (${routeSource})`;
-  }
-
-  calcBtn.textContent = t('btnCalc');
-  calcBtn.disabled = false;
-
-  renderDrives();
-  renderSummary();
-
+  _applyRouteResult(aerialRoute, depart, hours, speed, true);
+  calcBtn.textContent = lang === 'es' ? '🔄 Calculando ruta…' : '🔄 Fetching route…';
   setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 150);
+
+  // ── Paso 2: buscar ruta por carretera en segundo plano; actualizar cuando llegue ──
+  try {
+    const road = await fetchRoadRoute(origin, destination);
+    if (road.source !== 'Fallback') {
+      // Ruta por carretera obtenida — actualizar mapa y resultados silenciosamente
+      _applyRouteResult(road, depart, hours, speed, false);
+    } else {
+      // Servidores no disponibles — mostrar mensaje final con botón de reintento
+      const _reason = road.fallbackReason ? ` (${road.fallbackReason})` : '';
+      document.getElementById('routeSourceTxt').innerHTML =
+        `⚠️ <span style="color:#f59e0b;font-weight:800">Ruta aérea — servidores no disponibles${_reason}</span>
+         <button onclick="retryRoute()" style="margin-left:8px;padding:3px 10px;background:#f59e0b;border:none;border-radius:8px;color:#000;font-size:11px;font-weight:800;cursor:pointer">🔄 Reintentar</button>`;
+      showToast('warning', '⚠️', 'Ruta aérea' + _reason,
+        'Verifica tu conexión a internet y toca Reintentar.', 10000);
+    }
+  } finally {
+    calcBtn.textContent = t('btnCalc');
+    calcBtn.disabled = false;
+  }
 }
 
 async function retryRoute() {
