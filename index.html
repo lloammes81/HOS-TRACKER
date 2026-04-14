@@ -12344,13 +12344,25 @@ async function fetchRoadRoute(orig, dest) {
     return { coords: routeCoords, miles, steps, source: 'OSRM-driving' };
   }
 
+  const _errLabel = e => {
+    if (!e) return 'desconocido';
+    const m = e?.message || String(e);
+    if (m.includes('abort') || m.includes('AbortError')) return 'timeout';
+    if (m.includes('fetch') || m.includes('network') || m.includes('Network')) return 'sin red';
+    if (m.includes('AggregateError') || m === '[object AggregateError]') return 'todos timeout';
+    return m.slice(0, 60);
+  };
+
   // First attempt
+  let _lastErr = '';
   try {
     const result = await _tryFetch();
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
-    console.warn('⚠️ Primer intento OSRM fallido:', e?.message || e);
+    _lastErr = _errLabel(e);
+    console.warn('⚠️ OSRM intento 1 fallido:', _lastErr);
+    try { showToast('warning','🛰️','OSRM sin respuesta', `Error: ${_lastErr} — probando Valhalla…`, 5000); } catch {}
   }
 
   // Fallback 1: Valhalla (motor completamente distinto a OSRM)
@@ -12359,7 +12371,9 @@ async function fetchRoadRoute(orig, dest) {
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
-    console.warn('⚠️ Valhalla falló:', e?.message || e);
+    _lastErr = _errLabel(e);
+    console.warn('⚠️ Valhalla falló:', _lastErr);
+    try { showToast('warning','🛰️','Valhalla sin respuesta', `Error: ${_lastErr} — reintentando OSRM…`, 5000); } catch {}
   }
 
   // Retry OSRM after 4s (servers may have recovered)
@@ -12369,7 +12383,8 @@ async function fetchRoadRoute(orig, dest) {
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
-    console.warn('⚠️ Todos los servidores fallaron:', e?.message || e);
+    _lastErr = _errLabel(e);
+    console.warn('⚠️ Todos los servidores fallaron:', _lastErr);
   }
 
   // Fallback final: línea recta
@@ -12378,7 +12393,8 @@ async function fetchRoadRoute(orig, dest) {
     coords: [[orig.lat, orig.lon], [dest.lat, dest.lon]],
     miles: Math.round(straight * 1.35),
     steps: [],
-    source: 'Fallback'
+    source: 'Fallback',
+    fallbackReason: _lastErr
   };
 }
 // ── Road-name markers (labels) ──────────────────────────────
@@ -12963,11 +12979,12 @@ async function calculateRoute() {
   }, 100);
 
   if (routeSource === 'Fallback') {
+    const _reason = road.fallbackReason ? ` (${road.fallbackReason})` : '';
     document.getElementById('routeSourceTxt').innerHTML =
-      `⚠️ <span style="color:#f59e0b;font-weight:800">Ruta aérea (servidores no disponibles)</span>
+      `⚠️ <span style="color:#f59e0b;font-weight:800">Ruta aérea — servidores no disponibles${_reason}</span>
        <button onclick="retryRoute()" style="margin-left:8px;padding:3px 10px;background:#f59e0b;border:none;border-radius:8px;color:#000;font-size:11px;font-weight:800;cursor:pointer">🔄 Reintentar</button>`;
-    showToast('warning', '⚠️', 'Ruta aérea (línea recta)',
-      'Los servidores de rutas están lentos. Toca Reintentar en el mapa.', 8000);
+    showToast('warning', '⚠️', 'Ruta aérea' + _reason,
+      'Verifica tu conexión a internet y toca Reintentar.', 10000);
   } else {
     document.getElementById('routeSourceTxt').textContent =
       `🛣️ ${t('sourceRoad')}: ${t('sourceOsrm')} (${routeSource})`;
@@ -18904,9 +18921,12 @@ calculateRoute = async function() {
     }, 100);
 
     if (routeSource === 'Fallback') {
+      const _reason2 = road.fallbackReason ? ` (${road.fallbackReason})` : '';
       document.getElementById('routeSourceTxt').innerHTML =
-        `⚠️ <span style="color:#f59e0b;font-weight:800">Ruta aérea (servidores no disponibles)</span>
+        `⚠️ <span style="color:#f59e0b;font-weight:800">Ruta aérea — servidores no disponibles${_reason2}</span>
          <button onclick="retryRoute()" style="margin-left:8px;padding:3px 10px;background:#f59e0b;border:none;border-radius:8px;color:#000;font-size:11px;font-weight:800;cursor:pointer">🔄 Reintentar</button>`;
+      showToast('warning', '⚠️', 'Ruta aérea' + _reason2,
+        'Verifica tu conexión a internet y toca Reintentar.', 10000);
     } else {
       document.getElementById('routeSourceTxt').textContent =
         `🛣️ ${t('sourceRoad')}: ${t('sourceOsrm')} (${routeSource})`;
