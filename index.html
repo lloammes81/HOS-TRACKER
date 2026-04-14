@@ -12256,30 +12256,36 @@ function _decodePolyline6(encoded) {
   return pts;
 }
 async function _fetchValhallaRoute(orig, dest) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 8000);
-  const res = await fetch('https://valhalla1.openstreetmap.de/route', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    signal: ctrl.signal,
-    body: JSON.stringify({
-      locations: [
-        { lon: orig.lon, lat: orig.lat, type: 'break' },
-        { lon: dest.lon, lat: dest.lat, type: 'break' }
-      ],
-      costing: 'truck',
-      directions_options: { units: 'miles' },
-      shape_format: 'polyline6'
-    })
+  // Intenta los 4 servidores Valhalla en paralelo — el primero en responder gana
+  const _valhallaServers = [
+    'https://valhalla1.openstreetmap.de/route',
+    'https://valhalla2.openstreetmap.de/route',
+    'https://valhalla3.openstreetmap.de/route',
+    'https://valhalla4.openstreetmap.de/route',
+  ];
+  const _body = JSON.stringify({
+    locations: [
+      { lon: orig.lon, lat: orig.lat, type: 'break' },
+      { lon: dest.lon, lat: dest.lat, type: 'break' }
+    ],
+    costing: 'truck',
+    directions_options: { units: 'miles' },
+    shape_format: 'polyline6'
   });
-  clearTimeout(t);
-  const data = await res.json();
-  const leg = data?.trip?.legs?.[0];
-  if (!leg?.shape) throw new Error('no-shape');
-  const coords = _decodePolyline6(leg.shape);
-  const miles = Math.round(leg.summary?.length || 0);
-  console.log(`✅ Route: Valhalla-truck | ${miles} mi | ${coords.length} pts`);
-  return { coords, miles, steps: [], source: 'Valhalla' };
+  return Promise.any(_valhallaServers.map(url => {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 8000);
+    return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal, body: _body })
+      .then(r => r.json())
+      .then(data => {
+        const leg = data?.trip?.legs?.[0];
+        if (!leg?.shape) throw new Error('no-shape');
+        const coords = _decodePolyline6(leg.shape);
+        const miles = Math.round(leg.summary?.length || 0);
+        console.log(`✅ Route: Valhalla-truck (${url.replace('https://','')}) | ${miles} mi | ${coords.length} pts`);
+        return { coords, miles, steps: [], source: 'Valhalla' };
+      });
+  }));
 }
 
 // ── Route cache helpers ──────────────────────────────────────
