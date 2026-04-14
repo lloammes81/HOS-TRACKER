@@ -12281,40 +12281,35 @@ async function fetchRoadRoute(orig, dest) {
 
   const coords = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
   const qs = '?overview=full&geometries=geojson&steps=true&alternatives=true';
-  const servers = [
-    `https://router.project-osrm.org/route/v1/driving/${coords}${qs}`,
-    `https://routing.openstreetmap.de/routed-car/route/v1/driving/${coords}${qs}`,
-    `https://routing.openstreetmap.de/routed-hgv/route/v1/driving/${coords}${qs}`
-  ];
+  // routing.openstreetmap.de fue desactivado; solo se usa el servidor oficial de OSRM
+  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}${qs}`;
 
-  function _tryServer(url) {
+  async function _tryOsrm() {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 10000);
-    return fetch(url, { signal: ctrl.signal })
-      .then(r => { clearTimeout(t); return r.ok ? r.json() : Promise.reject('http-' + r.status); })
-      .then(data => {
-        if (data.code === 'Ok' && data.routes?.length) return data;
-        throw new Error('no-route');
-      });
-  }
-
-  async function _tryFetch() {
-    const data = await Promise.any(servers.map(url =>
-      _tryServer(url).catch(e => { console.warn('OSRM server failed:', e?.message || e); throw e; })
-    ));
-    const routes = data.routes;
-    let best = routes[0];
-    if (routes.length > 1) {
-      const shortest = routes[0].distance;
-      const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
-        rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
-      if (highway) best = highway;
+    const t = setTimeout(() => ctrl.abort(), 12000);
+    try {
+      const r = await fetch(osrmUrl, { signal: ctrl.signal });
+      clearTimeout(t);
+      if (!r.ok) throw new Error('http-' + r.status);
+      const data = await r.json();
+      if (data.code !== 'Ok' || !data.routes?.length) throw new Error('no-route');
+      const routes = data.routes;
+      let best = routes[0];
+      if (routes.length > 1) {
+        const shortest = routes[0].distance;
+        const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
+          rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
+        if (highway) best = highway;
+      }
+      const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
+      const miles = Math.round((best.distance || 0) / 1609.344);
+      const steps = best.legs?.[0]?.steps || [];
+      console.log(`✅ Route: OSRM-driving | ${miles} mi | ${routeCoords.length} pts`);
+      return { coords: routeCoords, miles, steps, source: 'OSRM-driving' };
+    } catch (e) {
+      clearTimeout(t);
+      throw e;
     }
-    const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-    const miles = Math.round((best.distance || 0) / 1609.344);
-    const steps = best.legs?.[0]?.steps || [];
-    console.log(`✅ Route: OSRM-driving | ${miles} mi | ${routeCoords.length} pts`);
-    return { coords: routeCoords, miles, steps, source: 'OSRM-driving' };
   }
 
   const _errLabel = e => {
@@ -12325,38 +12320,33 @@ async function fetchRoadRoute(orig, dest) {
     return m.slice(0, 60);
   };
 
-  // First attempt
+  // Primer intento: OSRM y Valhalla en paralelo — gana el que responda primero
   let _lastErr = '';
   try {
-    const result = await _tryFetch();
+    const result = await Promise.any([
+      _tryOsrm(),
+      _fetchValhallaRoute(orig, dest)
+    ]);
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
     _lastErr = _errLabel(e);
-    console.warn('⚠️ Primer intento OSRM fallido:', _lastErr);
-    try { showToast('warning','🛰️','OSRM sin respuesta', `Error: ${_lastErr} — reintentando…`, 4000); } catch {}
+    console.warn('⚠️ Primer intento fallido (OSRM + Valhalla):', _lastErr);
+    try { showToast('warning','🛰️','Servidores sin respuesta', `Error: ${_lastErr} — reintentando…`, 4000); } catch {}
   }
 
-  // Retry OSRM once after 2s
+  // Reintento tras 2s
   await new Promise(res => setTimeout(res, 2000));
   try {
-    const result = await _tryFetch();
+    const result = await Promise.any([
+      _tryOsrm(),
+      _fetchValhallaRoute(orig, dest)
+    ]);
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
     _lastErr = _errLabel(e);
-    console.warn('⚠️ OSRM falló en reintento — probando Valhalla:', _lastErr);
-    try { showToast('warning','🛰️','OSRM no disponible', `Error: ${_lastErr} — probando Valhalla…`, 4000); } catch {}
-  }
-
-  // Fallback: Valhalla
-  try {
-    const result = await _fetchValhallaRoute(orig, dest);
-    _routeCacheSet(orig, dest, result);
-    return result;
-  } catch (e) {
-    _lastErr = _errLabel(e);
-    console.warn('⚠️ Valhalla también falló:', _lastErr);
+    console.warn('⚠️ Reintento fallido — usando ruta aérea:', _lastErr);
   }
 
   // Fallback final: línea recta
@@ -14986,8 +14976,7 @@ function initHosMinimap() {
       const _coords = `${origin.lon},${origin.lat};${destination.lon},${destination.lat}`;
       const _qs     = '?overview=full&geometries=geojson&steps=false&alternatives=false';
       const _servers = [
-        `https://router.project-osrm.org/route/v1/driving/${_coords}${_qs}`,
-        `https://routing.openstreetmap.de/routed-car/route/v1/driving/${_coords}${_qs}`
+        `https://router.project-osrm.org/route/v1/driving/${_coords}${_qs}`
       ];
 
       // Lanzar ambos servidores en paralelo — usar el que responda primero con ruta válida
@@ -18410,8 +18399,7 @@ async function fetchAlternativeRoutes(orig, dest) {
     const coordStr = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
     // Race both servers — use whichever replies first with a valid route
     const altServers = [
-      `https://router.project-osrm.org/route/v1/${profile}/${coordStr}${qs}`,
-      `https://routing.openstreetmap.de/routed-car/route/v1/${profile}/${coordStr}${qs}`
+      `https://router.project-osrm.org/route/v1/${profile}/${coordStr}${qs}`
     ];
     function _tryAltServer(url) {
       const ctrl = new AbortController();
