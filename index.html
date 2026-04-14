@@ -12257,7 +12257,7 @@ function _decodePolyline6(encoded) {
 }
 async function _fetchValhallaRoute(orig, dest) {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 28000);
+  const t = setTimeout(() => ctrl.abort(), 12000);
   const res = await fetch('https://valhalla1.openstreetmap.de/route', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -12314,8 +12314,7 @@ async function fetchRoadRoute(orig, dest) {
   if (cached) return cached;
 
   const coords = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
-  // No alternatives — faster request, smaller response
-  const qs = '?overview=full&geometries=geojson&steps=true';
+  const qs = '?overview=full&geometries=geojson&steps=true&alternatives=true';
   const servers = [
     `https://router.project-osrm.org/route/v1/driving/${coords}${qs}`,
     `https://routing.openstreetmap.de/routed-car/route/v1/driving/${coords}${qs}`,
@@ -12324,7 +12323,7 @@ async function fetchRoadRoute(orig, dest) {
 
   function _tryServer(url) {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 25000); // 25s — mobile networks can be slow
+    const t = setTimeout(() => ctrl.abort(), 10000);
     return fetch(url, { signal: ctrl.signal })
       .then(r => { clearTimeout(t); return r.ok ? r.json() : Promise.reject('http-' + r.status); })
       .then(data => {
@@ -12337,9 +12336,17 @@ async function fetchRoadRoute(orig, dest) {
     const data = await Promise.any(servers.map(url =>
       _tryServer(url).catch(e => { console.warn('OSRM server failed:', e?.message || e); throw e; })
     ));
-    const routeCoords = (data.routes[0].geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-    const miles = Math.round((data.routes[0].distance || 0) / 1609.344);
-    const steps = data.routes[0].legs?.[0]?.steps || [];
+    const routes = data.routes;
+    let best = routes[0];
+    if (routes.length > 1) {
+      const shortest = routes[0].distance;
+      const highway = routes.find(rt => rt.distance <= shortest * 1.20 &&
+        rt.legs?.[0]?.steps?.some(s => /motorway|trunk|primary/i.test(s.name || s.ref || '')));
+      if (highway) best = highway;
+    }
+    const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
+    const miles = Math.round((best.distance || 0) / 1609.344);
+    const steps = best.legs?.[0]?.steps || [];
     console.log(`✅ Route: OSRM-driving | ${miles} mi | ${routeCoords.length} pts`);
     return { coords: routeCoords, miles, steps, source: 'OSRM-driving' };
   }
@@ -12349,7 +12356,6 @@ async function fetchRoadRoute(orig, dest) {
     const m = e?.message || String(e);
     if (m.includes('abort') || m.includes('AbortError')) return 'timeout';
     if (m.includes('fetch') || m.includes('network') || m.includes('Network')) return 'sin red';
-    if (m.includes('AggregateError') || m === '[object AggregateError]') return 'todos timeout';
     return m.slice(0, 60);
   };
 
@@ -12361,30 +12367,30 @@ async function fetchRoadRoute(orig, dest) {
     return result;
   } catch (e) {
     _lastErr = _errLabel(e);
-    console.warn('⚠️ OSRM intento 1 fallido:', _lastErr);
-    try { showToast('warning','🛰️','OSRM sin respuesta', `Error: ${_lastErr} — probando Valhalla…`, 5000); } catch {}
+    console.warn('⚠️ Primer intento OSRM fallido:', _lastErr);
+    try { showToast('warning','🛰️','OSRM sin respuesta', `Error: ${_lastErr} — reintentando…`, 4000); } catch {}
   }
 
-  // Fallback 1: Valhalla (motor completamente distinto a OSRM)
-  try {
-    const result = await _fetchValhallaRoute(orig, dest);
-    _routeCacheSet(orig, dest, result);
-    return result;
-  } catch (e) {
-    _lastErr = _errLabel(e);
-    console.warn('⚠️ Valhalla falló:', _lastErr);
-    try { showToast('warning','🛰️','Valhalla sin respuesta', `Error: ${_lastErr} — reintentando OSRM…`, 5000); } catch {}
-  }
-
-  // Retry OSRM after 4s (servers may have recovered)
-  await new Promise(res => setTimeout(res, 4000));
+  // Retry OSRM once after 2s
+  await new Promise(res => setTimeout(res, 2000));
   try {
     const result = await _tryFetch();
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
     _lastErr = _errLabel(e);
-    console.warn('⚠️ Todos los servidores fallaron:', _lastErr);
+    console.warn('⚠️ OSRM falló en reintento — probando Valhalla:', _lastErr);
+    try { showToast('warning','🛰️','OSRM no disponible', `Error: ${_lastErr} — probando Valhalla…`, 4000); } catch {}
+  }
+
+  // Fallback: Valhalla
+  try {
+    const result = await _fetchValhallaRoute(orig, dest);
+    _routeCacheSet(orig, dest, result);
+    return result;
+  } catch (e) {
+    _lastErr = _errLabel(e);
+    console.warn('⚠️ Valhalla también falló:', _lastErr);
   }
 
   // Fallback final: línea recta
