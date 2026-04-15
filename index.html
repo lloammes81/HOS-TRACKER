@@ -12976,6 +12976,13 @@ function _applyRouteResult(road, depart, hours, speed, isInitialLoad) {
         miniLayer = lRef.layer;
       }, 50);
     }
+    // Also update the full map if it's currently open
+    if (fmMapInst && typeof fmRedrawRoute === 'function') {
+      const fmScreen = document.getElementById('fullMapScreen');
+      if (fmScreen && fmScreen.style.display !== 'none' && fmScreen.style.display !== '') {
+        setTimeout(() => fmRedrawRoute(), 100);
+      }
+    }
   }
 
   if (road.source === 'Fallback') {
