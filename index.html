@@ -1044,6 +1044,43 @@
   .wx-danger { color: #ef4444 !important; animation: blink 1s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
 
+  /* ── WEATHER SCREEN EFFECTS ────────────────────────────────── */
+  #wxEffectsOverlay { position:fixed; inset:0; z-index:25500; pointer-events:none; overflow:hidden; display:none; }
+  @keyframes wxRainDrop {
+    0%   { transform:translateY(-30px) scaleY(1); opacity:.9; }
+    100% { transform:translateY(105vh) scaleY(1.2); opacity:.2; }
+  }
+  @keyframes wxSnowDrift {
+    0%   { transform:translateY(-30px) translateX(0) rotate(0deg); opacity:1; }
+    50%  { transform:translateY(50vh) translateX(20px) rotate(180deg); opacity:.8; }
+    100% { transform:translateY(108vh) translateX(-10px) rotate(360deg); opacity:.3; }
+  }
+  @keyframes wxWindStreak {
+    0%   { transform:translateX(-200px); opacity:0; }
+    10%  { opacity:.7; }
+    90%  { opacity:.5; }
+    100% { transform:translateX(115vw); opacity:0; }
+  }
+  @keyframes wxLightningFlash {
+    0%,89%,93%,97%,100% { opacity:0; }
+    90%,94% { opacity:1; }
+    91%,95% { opacity:.3; }
+  }
+  @keyframes wxTornadoSpin {
+    0%   { transform:rotate(0deg) scale(1); }
+    50%  { transform:rotate(180deg) scale(1.3); }
+    100% { transform:rotate(360deg) scale(1); }
+  }
+  #wxEffectsOverlay .wx-fx-banner {
+    position:absolute; bottom:28%; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,.88); backdrop-filter:blur(10px);
+    border-radius:18px; padding:13px 22px;
+    display:flex; align-items:center; gap:12px;
+    white-space:nowrap; border:1.5px solid rgba(255,255,255,.15);
+    box-shadow:0 8px 32px rgba(0,0,0,.6);
+    animation:fadeIn .4s ease;
+  }
+
   /* ── BRIDGE DETECTOR ─────────────────────── */
   #bridgeInput {
     position: fixed;
@@ -8765,6 +8802,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div id="dotStateNotifRules" style="display:flex;flex-direction:column;gap:3px;"></div>
 </div>
 
+<!-- ══ WEATHER SCREEN EFFECTS OVERLAY ══ -->
+<div id="wxEffectsOverlay">
+  <div id="wxEffectsCanvas"></div>
+  <div class="wx-fx-banner" id="wxFxBanner" style="display:none">
+    <span id="wxFxIcon" style="font-size:32px;line-height:1;"></span>
+    <div>
+      <div id="wxFxTitle" style="font-size:15px;font-weight:900;color:#fff;"></div>
+      <div id="wxFxMsg"   style="font-size:12px;color:rgba(255,255,255,.8);margin-top:2px;max-width:260px;white-space:normal;line-height:1.3;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ VIOLATION NOTIFICATION SHEET ══ -->
 <div id="violationOverlay">
   <div id="violationSheet">
@@ -9941,20 +9990,129 @@ function updateWeatherWidget(wx) {
       `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Consider pulling over.`, 45000);
     flashDanger(3000);
     vibrate([300,100,300,100,300]);
-    // Also show full-screen
     showFullscreenAlert('danger', '⛈️', '¡CLIMA PELIGROSO!',
       `${wx.desc} — ${wx.temp}°F, vientos ${wx.wind}mph. Considera detenerte.`, '', 15000);
+    showWeatherEffect(wx.code, wx.wind);
   } else if (isWarning) {
     showToast('warning','🌧️','Weather Alert',
       `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Drive with caution.`, 8000);
+    showWeatherEffect(wx.code, wx.wind);
   }
   // Wind warning independent
   if (wx.wind >= 40 && !isDanger) {
     showToast('warning','💨','High Wind Warning',
       `${wx.wind}mph winds — Risk of rollover for high-profile trucks!`, 8000);
+    showWeatherEffect(wx.code, wx.wind);
   }
   document.getElementById('weatherStatusTxt').textContent =
     `${WX_ICONS[wx.code]||'🌡️'} ${wx.temp}°F · ${wx.desc}`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🌧️  WEATHER SCREEN EFFECT — rain/snow/thunder/wind/tornado
+════════════════════════════════════════════════════════════ */
+let _wxFxTimer = null;
+
+function showWeatherEffect(wxCode, windSpeed) {
+  const overlay = document.getElementById('wxEffectsOverlay');
+  const canvas  = document.getElementById('wxEffectsCanvas');
+  const banner  = document.getElementById('wxFxBanner');
+  if (!overlay || !canvas) return;
+
+  // Classify weather type
+  let type = null, icon = '', title = '', msg = '', duration = 9000, borderColor = 'rgba(255,255,255,.15)';
+  const isThunder = [95,96,99].includes(wxCode);
+  const isSnow    = [71,73,75,77,85,86].includes(wxCode);
+  const isIce     = [56,57,66,67].includes(wxCode);
+  const isRain    = [51,53,55,61,63,65,80,81,82].includes(wxCode);
+  const isWind    = windSpeed >= 40;
+
+  if (isThunder)      { type='thunder'; icon='⛈️'; title='TORMENTA ELÉCTRICA'; msg='Lluvia intensa y rayos. Considera estacionarte.'; borderColor='rgba(255,220,0,.4)'; duration=12000; }
+  else if (isSnow)    { type='snow';    icon='❄️'; title='NEVADA';             msg='Condiciones nevosas — reduce velocidad.'; borderColor='rgba(150,230,255,.4)'; duration=10000; }
+  else if (isIce)     { type='ice';     icon='🌧️❄️'; title='LLUVIA CONGELANTE'; msg='Superficies heladas — peligro extremo.'; borderColor='rgba(100,200,255,.4)'; duration=10000; }
+  else if (isRain)    { type='rain';    icon='🌧️'; title='LLUVIA';             msg='Visibilidad reducida — maneja con precaución.'; borderColor='rgba(100,160,255,.3)'; duration=8000; }
+  else if (isWind)    { type='wind';    icon='💨'; title='VIENTOS FUERTES';    msg=`Vientos ${windSpeed}mph — riesgo de volcadura.`; borderColor='rgba(200,220,255,.3)'; duration=8000; }
+
+  if (!type) return;
+
+  // Clear old
+  canvas.innerHTML = '';
+  if (_wxFxTimer) clearTimeout(_wxFxTimer);
+  overlay.style.display = 'block';
+
+  // ── Rain / Ice / Thunder particles ──
+  if (type === 'rain' || type === 'ice' || type === 'thunder') {
+    const count = type === 'thunder' ? 65 : 40;
+    const col   = type === 'ice' ? 'rgba(140,220,255,0.7)' : 'rgba(100,170,255,0.65)';
+    for (let i = 0; i < count; i++) {
+      const d = document.createElement('div');
+      const w = 1.5 + Math.random();
+      const h = 14 + Math.random() * 20;
+      const spd = (0.45 + Math.random() * 0.65).toFixed(2);
+      const delay = (Math.random() * 1.8).toFixed(2);
+      d.style.cssText = `position:absolute;left:${(Math.random()*102-1).toFixed(1)}%;top:-30px;`+
+        `width:${w.toFixed(1)}px;height:${h}px;background:${col};border-radius:2px;`+
+        `animation:wxRainDrop ${spd}s linear ${delay}s infinite;`;
+      canvas.appendChild(d);
+    }
+    // Lightning overlay
+    if (type === 'thunder') {
+      const fl = document.createElement('div');
+      fl.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,180,0.18);animation:wxLightningFlash 3s ease-in-out 0.5s infinite;';
+      canvas.appendChild(fl);
+      const fl2 = document.createElement('div');
+      fl2.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,200,0.12);animation:wxLightningFlash 3s ease-in-out 1.4s infinite;';
+      canvas.appendChild(fl2);
+    }
+  }
+
+  // ── Snow particles ──
+  if (type === 'snow') {
+    const flakes = ['❄','❅','❆','✦','·'];
+    for (let i = 0; i < 35; i++) {
+      const s = document.createElement('div');
+      const sz = 10 + Math.random() * 16;
+      const spd = (2.5 + Math.random() * 3).toFixed(2);
+      const delay = (Math.random() * 3).toFixed(2);
+      s.textContent = flakes[Math.floor(Math.random()*flakes.length)];
+      s.style.cssText = `position:absolute;left:${(Math.random()*102).toFixed(1)}%;top:-30px;`+
+        `font-size:${sz.toFixed(0)}px;color:rgba(220,240,255,0.85);`+
+        `animation:wxSnowDrift ${spd}s linear ${delay}s infinite;`;
+      canvas.appendChild(s);
+    }
+  }
+
+  // ── Wind streaks ──
+  if (type === 'wind') {
+    for (let i = 0; i < 18; i++) {
+      const w = document.createElement('div');
+      const len = 60 + Math.random() * 140;
+      const spd = (0.7 + Math.random() * 1.1).toFixed(2);
+      const delay = (Math.random() * 2).toFixed(2);
+      const top = (Math.random() * 100).toFixed(1);
+      w.style.cssText = `position:absolute;left:-200px;top:${top}%;`+
+        `width:${len.toFixed(0)}px;height:${(1+Math.random()*1.5).toFixed(1)}px;`+
+        `background:linear-gradient(90deg,transparent,rgba(200,220,255,0.6),transparent);`+
+        `animation:wxWindStreak ${spd}s linear ${delay}s infinite;`;
+      canvas.appendChild(w);
+    }
+  }
+
+  // ── Banner ──
+  if (banner) {
+    document.getElementById('wxFxIcon').textContent  = icon;
+    document.getElementById('wxFxTitle').textContent = title;
+    document.getElementById('wxFxMsg').textContent   = msg;
+    banner.style.borderColor = borderColor;
+    banner.style.display = 'flex';
+  }
+
+  // Auto-hide
+  _wxFxTimer = setTimeout(() => {
+    overlay.style.display = 'none';
+    canvas.innerHTML = '';
+    if (banner) banner.style.display = 'none';
+  }, duration);
 }
 
 async function startWeatherMonitor() {
