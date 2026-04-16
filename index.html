@@ -5592,16 +5592,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div style="text-align:center;font-size:5.5px;font-weight:800;
         color:rgba(255,255,255,.7);letter-spacing:.7px;text-transform:uppercase;
         padding-bottom:3px;" id="calMonthName">ABRIL / APR</div>
-      <!-- Mini calendar grid -->
-      <div style="background:rgba(0,0,0,.35);padding:3px 4px 4px;">
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);
-          font-size:5px;font-weight:800;color:#10b981;
-          text-align:center;margin-bottom:2px;letter-spacing:.1px;">
-          <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
-        </div>
-        <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);
-          font-size:5px;text-align:center;gap:1px;color:rgba(255,255,255,.75);"></div>
-      </div>
     </div>
   </div>
 <script>
@@ -5624,18 +5614,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     document.getElementById('calDayName').textContent=dES[dow]+' / '+dEN[dow];
     document.getElementById('calDayNum').textContent=d;
     document.getElementById('calMonthName').textContent=mES[m]+' / '+mEN[m];
-    var fd=new Date(y,m,1).getDay();
-    var dim=new Date(y,m+1,0).getDate();
-    var html='';
-    for(var i=0;i<fd;i++)html+='<span></span>';
-    for(var dd=1;dd<=dim;dd++){
-      var isT=dd===d,isSu=(fd+dd-1)%7===0;
-      var col=isT?'#10b981':(isSu?'#f87171':'rgba(255,255,255,.8)');
-      var bg=isT?'rgba(16,185,129,.25)':'transparent';
-      var fw=isT?'900':'400';
-      html+='<span style="color:'+col+';background:'+bg+';font-weight:'+fw+';border-radius:2px;padding:1px 0">'+dd+'</span>';
-    }
-    document.getElementById('calGrid').innerHTML=html;
   }catch(e){}
 })();
 </script>
