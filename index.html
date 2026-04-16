@@ -8387,6 +8387,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 .hos-num-btn:active{background:rgba(59,130,246,.3)}
 .hos-num-val{flex:1;text-align:center;font-size:36px;font-weight:900;color:#f1f5f9;display:flex;align-items:center;justify-content:center;gap:5px;height:58px}
 .hos-num-unit{font-size:12px;font-weight:700;color:#475569;text-transform:uppercase}
+.hos-num-val{cursor:pointer}
+.hos-numpad-overlay{display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.65);align-items:flex-end;justify-content:center}
+.hos-numpad-overlay.active{display:flex}
+.hos-numpad{background:#0f172a;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));width:100%;max-width:420px;border-top:1px solid rgba(255,255,255,.1)}
+.hos-numpad-display{text-align:center;font-size:44px;font-weight:900;color:#f1f5f9;padding:10px 14px;margin-bottom:14px;background:rgba(255,255,255,.05);border-radius:14px;border:1.5px solid rgba(59,130,246,.3);letter-spacing:2px;min-height:68px;display:flex;align-items:center;justify-content:center;gap:6px}
+.hos-numpad-unit{font-size:13px;font-weight:700;color:#475569;text-transform:uppercase}
+.hos-numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.hos-numpad-key{height:60px;border-radius:14px;border:none;background:rgba(255,255,255,.08);color:#f1f5f9;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .1s}
+.hos-numpad-key:active{background:rgba(255,255,255,.22)}
+.hos-numpad-key.hos-key-zero{grid-column:1/3}
+.hos-numpad-key.hos-key-del{background:rgba(239,68,68,.12);color:#f87171}
+.hos-numpad-confirm{width:100%;height:54px;border-radius:14px;border:none;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;letter-spacing:.3px}
 .hos-popup-limit{display:inline-block;background:rgba(59,130,246,.15);color:#60a5fa;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;margin-left:4px}
 .hos-weekly-bar{margin:14px 0 20px;background:rgba(255,255,255,.06);border-radius:8px;height:6px;overflow:hidden}
 .hos-weekly-bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#8b5cf6,#3b82f6);transition:width .4s}
@@ -8995,10 +9007,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
     <div class="hos-num-stepper">
       <button class="hos-num-btn" onclick="_hosAdj(1,-0.5)" type="button">−</button>
-      <div class="hos-num-val"><span id="hosStep1Display">11</span><span class="hos-num-unit">hrs</span></div>
+      <div class="hos-num-val" onclick="_hosNumpadOpen(1)"><span id="hosStep1Display">11</span><span class="hos-num-unit">hrs</span></div>
       <button class="hos-num-btn" onclick="_hosAdj(1,+0.5)" type="button">+</button>
     </div>
-    <input type="number" id="hosStep1Input" value="11" min="0.5" max="11" step="0.5" style="display:none" />
+    <input type="hidden" id="hosStep1Input" value="11" />
     <div class="hos-popup-error" id="hosStep1Error">Ingresa un valor entre 0.5 y 11 horas</div>
     <button class="hos-popup-btn" onclick="_hosStep1Submit()">Continuar →</button>
   </div>
@@ -9024,10 +9036,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
     <div class="hos-num-stepper" style="margin-top:14px">
       <button class="hos-num-btn" onclick="_hosAdj(2,-1)" type="button">−</button>
-      <div class="hos-num-val"><span id="hosStep2Display">70</span><span class="hos-num-unit">hrs</span></div>
+      <div class="hos-num-val" onclick="_hosNumpadOpen(2)"><span id="hosStep2Display">70</span><span class="hos-num-unit">hrs</span></div>
       <button class="hos-num-btn" onclick="_hosAdj(2,+1)" type="button">+</button>
     </div>
-    <input type="number" id="hosStep2Input" value="70" min="1" max="70" step="1" style="display:none" />
+    <input type="hidden" id="hosStep2Input" value="70" />
 
     <!-- Cálculo en tiempo real -->
     <div id="hosCalcResult" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin:12px 0 8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -9045,6 +9057,27 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
     <div class="hos-popup-error" id="hosStep2Error">Ingresa un valor entre 1 y 70 horas</div>
     <button class="hos-popup-btn" onclick="_hosStep2Submit()">Continuar →</button>
+  </div>
+</div>
+
+<!-- ══ HOS NUMPAD ══ -->
+<div class="hos-numpad-overlay" id="hosNumpad" onclick="if(event.target===this)_hosNumpadClose()">
+  <div class="hos-numpad">
+    <div class="hos-numpad-display"><span id="hosNumpadDisplay">11</span><span class="hos-numpad-unit">hrs</span></div>
+    <div class="hos-numpad-grid">
+      <button class="hos-numpad-key" onclick="_hosNumpadKey('1')" type="button">1</button>
+      <button class="hos-numpad-key" onclick="_hosNumpadKey('2')" type="button">2</button>
+      <button class="hos-numpad-key" onclick="_hosNumpadKey('3')" type="button">3</button>
+      <button class="hos-numpad-key" onclick="_hosNumpadKey('4')" type="button">4</button>
+      <button class="hos-numpad-key" onclick="_hosNumpadKey('5')" type="button">5</button>
+      <button class="hos-numpad-key" onclick="_hosNumpadKey('6')" type="button">6</button>
+      <button class="hos-numpad-key" onclick="_hosNumpadKey('7')" type="button">7</button>
+      <button class="hos-numpad-key" onclick="_hosNumpadKey('8')" type="button">8</button>
+      <button class="hos-numpad-key" onclick="_hosNumpadKey('9')" type="button">9</button>
+      <button class="hos-numpad-key hos-key-zero" onclick="_hosNumpadKey('0')" type="button">0</button>
+      <button class="hos-numpad-key hos-key-del" onclick="_hosNumpadKey('del')" type="button">⌫</button>
+    </div>
+    <button class="hos-numpad-confirm" onclick="_hosNumpadConfirm()" type="button">Listo ✓</button>
   </div>
 </div>
 
@@ -24293,6 +24326,43 @@ window._hosAutoRecalc = false;
     document.getElementById('hoursInput').value = val;
     document.getElementById('hosPopup2').classList.remove('active');
     _hosOpenPopup3();
+  };
+
+  // ── Numpad personalizado ──────────────────────────────
+  let _hosNumpadStep = 0, _hosNumpadVal = '';
+  window._hosNumpadOpen = function(step) {
+    _hosNumpadStep = step;
+    const inp = document.getElementById(step === 1 ? 'hosStep1Input' : 'hosStep2Input');
+    _hosNumpadVal = inp.value + '';
+    document.getElementById('hosNumpadDisplay').textContent = _hosNumpadVal;
+    document.getElementById('hosNumpad').classList.add('active');
+  };
+  window._hosNumpadKey = function(key) {
+    if (key === 'del') {
+      _hosNumpadVal = _hosNumpadVal.length > 1 ? _hosNumpadVal.slice(0, -1) : '0';
+    } else {
+      _hosNumpadVal = (_hosNumpadVal === '0') ? key : _hosNumpadVal + key;
+    }
+    document.getElementById('hosNumpadDisplay').textContent = _hosNumpadVal;
+  };
+  window._hosNumpadConfirm = function() {
+    let val = parseFloat(_hosNumpadVal);
+    if (_hosNumpadStep === 1) {
+      val = Math.max(0.5, Math.min(11, isNaN(val) ? 11 : val));
+      document.getElementById('hosStep1Input').value = val;
+      const d = document.getElementById('hosStep1Display');
+      if (d) d.textContent = val % 1 === 0 ? val : val.toFixed(1);
+    } else {
+      val = Math.max(1, Math.min(70, isNaN(val) ? 70 : Math.round(val)));
+      document.getElementById('hosStep2Input').value = val;
+      const d = document.getElementById('hosStep2Display');
+      if (d) d.textContent = val;
+      _hosUpdateWeeklyBar(val);
+    }
+    document.getElementById('hosNumpad').classList.remove('active');
+  };
+  window._hosNumpadClose = function() {
+    document.getElementById('hosNumpad').classList.remove('active');
   };
 
   // ── Stepper numérico +/− ──────────────────────────────
