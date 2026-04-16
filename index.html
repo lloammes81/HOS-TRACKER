@@ -5633,7 +5633,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="hint" id="routeSourceTxt"></div>
         <div class="mapbox" id="miniMap"></div>
         <!-- POI legend under mini-map -->
-        <div class="poi-legend-bar" id="miniPoiLegend" style="display:none">
+        <div class="poi-legend-bar" id="miniPoiLegend" style="display:none!important">
           <div class="poi-badge truck poi-loading" id="miniBadgeTruck" onclick="toggleMiniPOI('truck')">
             🚛 Truck Stops <span class="poi-cnt" id="miniTruckCnt">…</span>
           </div>
@@ -9502,7 +9502,7 @@ let miniMarkersList = [], fullMarkersList = [];
 
 // Mini-map POI state
 let miniPoiMarkers = { truck: [], rest: [], restrict: [], weigh: [], checkpoint: [] };
-let miniPoiActive  = { truck: true, rest: true, restrict: true, weigh: true, checkpoint: true };
+let miniPoiActive  = { truck: true, rest: true, restrict: true, weigh: true, checkpoint: true, parking: true };
 
 let watchId = null;
 let tripStart = null;
@@ -12733,7 +12733,7 @@ async function loadMiniMapPOIs() {
   if (!miniMap || !origin || !destination || !roadGeometry) return;
 
   // Show legend with loading state
-  document.getElementById('miniPoiLegend').style.display = 'flex';
+  // poi legend bar hidden — all POIs always active
 
   // Clear old markers
   ['truck','rest','weigh','checkpoint'].forEach(type => {
@@ -12916,7 +12916,7 @@ async function loadMiniMapPOIs() {
 }
 
 function toggleMiniPOI(type) {
-  miniPoiActive[type] = !miniPoiActive[type];
+  miniPoiActive[type] = true; // always active — no toggling
   const TOGGLE_BADGE = {
     truck:      'miniBadgeTruck',
     rest:       'miniBadgeRest',
@@ -12942,7 +12942,7 @@ function resetMiniBadges() {
   document.getElementById('miniRestrictCnt').textContent   = '…';
   document.getElementById('miniWeighCnt').textContent      = '…';
   document.getElementById('miniCheckpointCnt').textContent = '…';
-  miniPoiActive = { truck: true, rest: true, restrict: true, weigh: true, checkpoint: true };
+  miniPoiActive = { truck: true, rest: true, restrict: true, weigh: true, checkpoint: true, parking: true };
 }
 
 // ── Apply a route result to all UI elements ─────────────────
