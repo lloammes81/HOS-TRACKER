@@ -8054,8 +8054,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- ③ TARJETAS ESTADÍSTICAS — tamaño fijo -->
   <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;padding:0 14px 10px;">
-    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:14px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
-      <div id="dashArrival" style="font-size:26px;font-weight:900;color:#f1f5f9;">--:--</div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:10px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+      <div id="dashArrivalDay" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.6px;min-height:13px;"></div>
+      <div id="dashArrival" style="font-size:24px;font-weight:900;color:#f1f5f9;line-height:1.15;">--:--</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:4px;font-weight:600;">Llegada</div>
     </div>
     <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:14px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
@@ -14527,6 +14528,7 @@ function _scheduleAutoResumeRotation() {
 ══════════════════════════════════════════════════════════════ */
 let _autoStopSecs   = 0;     // segundos detenido consecutivo
 let _autoStopLastTs = null;  // timestamp último GPS fix
+let _wasMovingPrev  = false; // para detectar transición movimiento → parada
 const _AUTO_STOP_THRESHOLD  = 180;   // 3 min → auto-Descanso si pausa debida
 const _AUTO_WAIT_THRESHOLD  = 300;   // 5 min → Espera parpadea verde
 const _AUTO_SLEEP_THRESHOLD = 1800;  // 30 min → Sleeper parpadea índigo
@@ -14572,9 +14574,9 @@ function autoUpdateDashStatus(isMoving) {
       setDashStatus('rest');
     }
 
-    // ── 5 min + SIN pausa pendiente → Espera parpadea verde ──
+    // ── SIN pausa pendiente → Espera inmediata al detenerse ──
     const noBreakPending = b30Complete || !breakDue;
-    if (_autoStopSecs >= _AUTO_WAIT_THRESHOLD && noBreakPending) {
+    if (noBreakPending) {
       if (waitBtn) waitBtn.classList.add('dash-tab-wait-pulse');
       if (_dashCurrentStatus === 'driving') setDashStatus('wait');
     } else {
@@ -14982,6 +14984,16 @@ function fmStartTracking() {
     driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
     // Update circular widget on the map
     updateDriveHoursWidget(driveLeft, driveMax);
+
+    // ── Recalcular hora de llegada al detenerse ───────────────────────────
+    if (!isMoving && _wasMovingPrev && destination && remaining > 0) {
+      try {
+        const _depart2 = new Date();
+        const _sched2  = calculateSchedule(_depart2, remaining, avgSpeed, driveLeft, _dailyMax);
+        arrivalTime    = _sched2.at(-1)?.end || _depart2;
+      } catch(e) {}
+    }
+    _wasMovingPrev = isMoving;
     
     // Blink drive-hours widget when approaching the daily limit
     const dhw = document.getElementById('driveHoursWidget');
@@ -15741,13 +15753,33 @@ function updateHosDashboard(driveLeft, driveMax) {
   timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
 
   // Hora estimada de llegada
-  const arrEl = document.getElementById('dashArrival');
+  const arrEl  = document.getElementById('dashArrival');
+  const dayEl  = document.getElementById('dashArrivalDay');
   if (arrEl) {
     if (typeof arrivalTime !== 'undefined' && arrivalTime) {
       const ah = arrivalTime.getHours(), am = arrivalTime.getMinutes();
       const ampm = ah >= 12 ? 'PM' : 'AM', h12 = ah % 12 || 12;
       arrEl.textContent = `${h12}:${String(am).padStart(2,'0')} ${ampm}`;
-    } else { arrEl.textContent = '--:--'; }
+      if (dayEl) {
+        const now      = new Date();
+        const arrStr   = arrivalTime.toDateString();
+        const todayStr = now.toDateString();
+        const tomorStr = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toDateString();
+        const isEs     = typeof lang !== 'undefined' && lang === 'es';
+        if (arrStr === todayStr) {
+          dayEl.textContent = isEs ? 'HOY' : 'TODAY';
+        } else if (arrStr === tomorStr) {
+          dayEl.textContent = isEs ? 'MAÑANA' : 'TOMORROW';
+        } else {
+          const daysEs = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+          const daysEn = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+          dayEl.textContent = (isEs ? daysEs : daysEn)[arrivalTime.getDay()];
+        }
+      }
+    } else {
+      arrEl.textContent = '--:--';
+      if (dayEl) dayEl.textContent = '';
+    }
   }
 
   // Horas restantes del ciclo 70h
