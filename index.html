@@ -25375,13 +25375,24 @@ window._hosAutoRecalc = false;
   async function joinFleet(code){
     const c = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
     if (c.length < 4){ flToast('Código inválido'); return; }
+    console.log('[FleetLink] Intentando unirse a flota:', c, 'como', MY_ID);
     state.fleetId = c;
     localStorage.setItem('fleet_link_fleet', c);
     state.plate = plateInput.value.trim();
     state.phone = phoneInput.value.trim();
     localStorage.setItem('fleet_link_plate', state.plate);
     localStorage.setItem('fleet_link_phone', state.phone);
-    await registerPresence();
+    try {
+      await registerPresence();
+      console.log('[FleetLink] ✅ Registrado en Firebase correctamente');
+    } catch(e){
+      console.error('[FleetLink] ❌ Error al registrar:', e);
+      state.fleetId = null;
+      localStorage.removeItem('fleet_link_fleet');
+      renderStatus();
+      alert('❌ No se pudo conectar a la flota.\n\nDetalle: ' + (e.message || e) + '\n\nPosibles causas:\n• Código incorrecto\n• Las reglas de Firebase no permiten escribir en /fleets\n• Sin conexión a internet');
+      return;
+    }
     startLocationSharing();
     listenNotifications();
     renderStatus();
@@ -25391,8 +25402,13 @@ window._hosAutoRecalc = false;
   async function registerPresence(){
     if (!state.fleetId) return;
     const base = `fleets/${state.fleetId}/drivers/${MY_ID}`;
-    await set(ref(db, base), getDriverInfo());
-    onDisconnect(ref(db, base)).update({ online:false, lastSeen: serverTimestamp() });
+    const info = getDriverInfo();
+    console.log('[FleetLink] Escribiendo en:', base, info);
+    await Promise.race([
+      set(ref(db, base), info),
+      new Promise((_,rej) => setTimeout(()=>rej(new Error('Timeout escribiendo en Firebase (10s)')), 10000))
+    ]);
+    try { onDisconnect(ref(db, base)).update({ online:false, lastSeen: serverTimestamp() }); } catch(e){}
   }
 
   async function saveInfo(){
