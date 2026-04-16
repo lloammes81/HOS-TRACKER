@@ -8741,6 +8741,30 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <button class="toast-close" onclick="hideToast()">×</button>
 </div>
 
+<!-- ══ DOT STATE REGULATIONS NOTIFICATION ══ -->
+<div id="dotStateNotif" style="
+  position:fixed; top:calc(80px + env(safe-area-inset-top,0px));
+  left:14px; right:14px; z-index:30002;
+  background:linear-gradient(135deg,#0a1628 0%,#0d2040 100%);
+  border:1.5px solid #2563eb; border-radius:16px;
+  padding:13px 15px 12px; box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 0 1px rgba(37,99,235,.2);
+  transform:translateY(-250px); opacity:0;
+  transition:transform .4s cubic-bezier(.16,1,.3,1),opacity .4s;
+  pointer-events:all; max-width:520px; margin:0 auto;
+">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;gap:9px;">
+      <span style="font-size:24px;line-height:1;">🏛️</span>
+      <div>
+        <div style="font-size:10px;font-weight:900;color:#60a5fa;letter-spacing:.8px;text-transform:uppercase;">DOT Regulaciones del Estado</div>
+        <div id="dotStateNotifName" style="font-size:17px;font-weight:800;color:#fff;line-height:1.2;"></div>
+      </div>
+    </div>
+    <button onclick="hideDOTStateNotif()" style="background:rgba(255,255,255,.1);border:none;border-radius:50%;width:30px;height:30px;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;">×</button>
+  </div>
+  <div id="dotStateNotifRules" style="display:flex;flex-direction:column;gap:3px;"></div>
+</div>
+
 <!-- ══ VIOLATION NOTIFICATION SHEET ══ -->
 <div id="violationOverlay">
   <div id="violationSheet">
@@ -10866,6 +10890,82 @@ const STATE_SPEED_LIMITS = {
   ON:{truck:100,car:110}, BC:{truck:90,car:110}, AB:{truck:100,car:110}, QC:{truck:100,car:100},
 };
 
+/* ════════════ STATE DOT REGULATIONS DATABASE ════════════ */
+const STATE_DOT_REGS = {
+  AL:{rules:['🚛 Trucks: 70 MPH interstate','⚖️ Peso máx: 80,000 lbs','📋 Permiso para cargas sobredimensionadas']},
+  AK:{rules:['🚛 Trucks: 65 MPH','⚖️ Restricciones de peso por temporada','❄️ Precaución: clima extremo y hielo']},
+  AZ:{rules:['🚛 Trucks: 75 MPH','⚖️ Peso máx: 80,000 lbs','☀️ Calor extremo — verifica neumáticos y frenos']},
+  AR:{rules:['🚛 Trucks: 65 MPH','⚖️ Restricciones en carreteras secundarias','📋 Permiso AR para oversize/overweight']},
+  CA:{rules:['🚛 Trucks: 55 MPH (todas las carreteras)','🌿 CARB: motor debe cumplir emisiones CA','📋 Permiso CA requerido >80,000 lbs','⚠️ Sin doble trailer en I-5 Norte de CA']},
+  CO:{rules:['🚛 Trucks: 65 MPH','⛰️ Cadenas requeridas en pasos de montaña en invierno','📋 Permiso para vehículos sobredimensionados']},
+  CT:{rules:['🚛 Trucks: 65 MPH','⚖️ Peso máx: 80,000 lbs','📋 CT DOT requiere registro previo de rutas']},
+  DE:{rules:['🚛 Trucks: 55 MPH','⚖️ Restricciones en puentes — verifica ruta','📋 DE DOT inspección activa en I-95']},
+  FL:{rules:['🚛 Trucks: 70 MPH interstate','⚖️ Peso máx: 80,000 lbs','🌀 Alertas de huracán — verifica FDOT antes de salir']},
+  GA:{rules:['🚛 Trucks: 70 MPH','📋 GA Motor Carrier Compliance activo','⚖️ Peso máx: 80,000 lbs']},
+  HI:{rules:['🚛 Trucks: 60 MPH','⚖️ Restricciones especiales de peso por isla','📋 Permisos de importación requeridos']},
+  ID:{rules:['🚛 Trucks: 70 MPH','❄️ Cadenas requeridas en montañas — precaución','⚖️ Peso máx: 80,000 lbs']},
+  IL:{rules:['🚛 Trucks: 65 MPH','⚖️ Peso máx: 80,000 lbs','📋 Illinois Truck Travel Permit para cargas especiales']},
+  IN:{rules:['🚛 Trucks: 65 MPH','⚖️ Restricciones de peso en primavera (spring thaw)','📋 Indiana INDOT Permit requerido para oversize']},
+  IA:{rules:['🚛 Trucks: 65 MPH','❄️ Carreteras restringidas en invierno','⚖️ Peso máx: 80,000 lbs']},
+  KS:{rules:['🚛 Trucks: 70 MPH','🌪️ Precaución: tornados en temporada (abr-jun)','⚖️ Peso máx: 80,000 lbs']},
+  KY:{rules:['🚛 Trucks: 65 MPH','⚖️ Restricciones de peso en rutas secundarias','📋 KY Weight Distance Tax requerido']},
+  LA:{rules:['🚛 Trucks: 65 MPH','⚖️ Restricciones en puentes y carreteras costeras','🌧️ Precaución: inundaciones frecuentes']},
+  ME:{rules:['🚛 Trucks: 65 MPH','❄️ Restricciones de peso en temporada de deshielo','⚖️ Peso máx: 80,000 lbs']},
+  MD:{rules:['🚛 Trucks: 65 MPH','⚖️ Restricciones en Chesapeake Bay Bridge','📋 MD Weigh Station — cumplimiento obligatorio']},
+  MA:{rules:['🚛 Trucks: 65 MPH','⚖️ Restricciones en puentes históricos','📋 MA DOT inspección activa en rutas principales']},
+  MI:{rules:['🚛 Trucks: 65 MPH','❄️ Restricciones invernales de peso (spring thaw)','⚖️ Hasta 84,000 lbs en algunas rutas con permiso']},
+  MN:{rules:['🚛 Trucks: 70 MPH','❄️ Carreteras de temporada — restricciones de peso','📋 MN Oversize/Overweight Permit requerido']},
+  MS:{rules:['🚛 Trucks: 70 MPH','⚖️ Peso máx: 80,000 lbs','🌀 Alertas de clima severo en temporada']},
+  MO:{rules:['🚛 Trucks: 70 MPH','⚖️ Peso máx: 80,000 lbs','📋 MO Commercial Vehicle Enforcement activo en I-70']},
+  MT:{rules:['🚛 Trucks: 65 MPH','❄️ Clima extremo en montañas — precaución','⚖️ Peso máx: 80,000 lbs']},
+  NE:{rules:['🚛 Trucks: 75 MPH','⚖️ Peso máx: 80,000 lbs','🌪️ Precaución: temporada de tornados (abr-jun)']},
+  NV:{rules:['🚛 Trucks: 70 MPH','☀️ Calor extremo — verifica sistema de enfriamiento','⚖️ Peso máx: 80,000 lbs']},
+  NH:{rules:['🚛 Trucks: 65 MPH','❄️ Restricciones de peso en primavera','⚖️ Peso máx: 80,000 lbs']},
+  NJ:{rules:['🚛 Trucks: 65 MPH','⚖️ Restricciones en NJ Turnpike y Garden State Pkwy','📋 NJ Commercial Vehicle Enforcement activo']},
+  NM:{rules:['🚛 Trucks: 65 MPH','⚖️ Peso máx: 80,000 lbs','📋 New Mexico Weight Distance Tax (WDT) requerido']},
+  NY:{rules:['🚛 Trucks: 55 MPH','⚖️ Restricciones en puentes de NYC','📋 NY HUT (Highway Use Tax) obligatorio','⚠️ Rutas restringidas en NYC — verifica mapa']},
+  NC:{rules:['🚛 Trucks: 70 MPH','⚖️ Peso máx: 80,000 lbs','📋 NC DOT inspección activa en I-95 e I-85']},
+  ND:{rules:['🚛 Trucks: 75 MPH','❄️ Carreteras extremadamente frías en invierno','⚖️ Restricciones de peso en primavera']},
+  OH:{rules:['🚛 Trucks: 65 MPH','⚖️ Peso máx: 80,000 lbs','📋 Ohio Turnpike — tarifas y básculas activas']},
+  OK:{rules:['🚛 Trucks: 70 MPH','⚖️ Peso máx: 80,000 lbs','🌪️ Precaución: tornado alley — monitorea alertas']},
+  OR:{rules:['🚛 Trucks: 55 MPH','🌧️ Condiciones mojadas frecuentes — precaución','📋 OR Weight-Mile Tax (WMT) requerido para todos los trucks']},
+  PA:{rules:['🚛 Trucks: 65 MPH','⛰️ Precaución: montañas Apalaches — frenos calientes','📋 PA Turnpike — peajes y básculas activas']},
+  RI:{rules:['🚛 Trucks: 55 MPH','⚖️ Restricciones en puentes y rutas históricas','📋 RI Commercial Vehicle Enforcement activo']},
+  SC:{rules:['🚛 Trucks: 70 MPH','⚖️ Peso máx: 80,000 lbs','📋 SC DOT activo en I-95 — inspecciones frecuentes']},
+  SD:{rules:['🚛 Trucks: 70 MPH','❄️ Condiciones invernales severas — visibilidad cero posible','⚖️ Peso máx: 80,000 lbs']},
+  TN:{rules:['🚛 Trucks: 70 MPH','⚖️ Peso máx: 80,000 lbs','📋 TN Commercial Vehicle Enforcement activo en I-40']},
+  TX:{rules:['🚛 Trucks: 70 MPH (80 en tramos nocturnos designados)','⚖️ Peso máx: 80,000 lbs estándar','☀️ Calor extremo en verano — verifica neumáticos','📋 TX Permit para cargas sobredimensionadas']},
+  UT:{rules:['🚛 Trucks: 65 MPH','⛰️ Rutas de montaña — cadenas en invierno','⚖️ Peso máx: 80,000 lbs']},
+  VT:{rules:['🚛 Trucks: 65 MPH','❄️ Restricciones invernales de peso (spring thaw)','⚖️ Peso máx: 80,000 lbs']},
+  VA:{rules:['🚛 Trucks: 70 MPH','⚖️ Peso máx: 80,000 lbs','📋 VA Commercial Vehicle Enforcement activo en I-81']},
+  WA:{rules:['🚛 Trucks: 60 MPH','🌧️ Condiciones mojadas — precaución en puentes','⛰️ Cadenas requeridas en pasos de montaña en invierno','⚖️ Peso máx: 80,000 lbs']},
+  WV:{rules:['🚛 Trucks: 65 MPH','⛰️ Rutas montañosas — precaución severa en frenos','⚖️ Restricciones en puentes y carreteras secundarias']},
+  WI:{rules:['🚛 Trucks: 65 MPH','❄️ Restricciones invernales de peso','⚖️ Peso máx: 80,000 lbs (algunas rutas permiten más con permiso)']},
+  WY:{rules:['🚛 Trucks: 75 MPH','❄️ I-80 cierra frecuentemente — vientos extremos y nieve','⚖️ Peso máx: 80,000 lbs']},
+  MX:{rules:['🚛 Límite: 80 km/h camiones','📋 Carta porte y pedimento requeridos','⚠️ SCT inspección en garitas — documentos listos','🛣️ Casetas frecuentes — lleva efectivo o TAG']},
+};
+
+let _dotStateNotifTimer = null;
+function showDOTStateNotif(code, name) {
+  const regs = STATE_DOT_REGS[code];
+  if (!regs) return;
+  const el = document.getElementById('dotStateNotif');
+  if (!el) return;
+  document.getElementById('dotStateNotifName').textContent = name;
+  document.getElementById('dotStateNotifRules').innerHTML = regs.rules.map(r =>
+    `<div style="font-size:12.5px;color:rgba(255,255,255,.88);padding:3px 0 3px 2px;border-bottom:1px solid rgba(255,255,255,.07);line-height:1.35">${r}</div>`
+  ).join('');
+  el.style.transform = 'translateY(0)';
+  el.style.opacity = '1';
+  if (_dotStateNotifTimer) clearTimeout(_dotStateNotifTimer);
+  _dotStateNotifTimer = setTimeout(hideDOTStateNotif, 22000);
+  vibrate([80, 40, 80]);
+}
+function hideDOTStateNotif() {
+  const el = document.getElementById('dotStateNotif');
+  if (el) { el.style.transform = 'translateY(-250px)'; el.style.opacity = '0'; }
+}
+
 let currentStateCode   = '';
 let speedLimitActive     = localStorage.getItem('hos_speedlimit') !== 'false';
 let speedLimitExceeded   = false;
@@ -10993,8 +11093,9 @@ async function detectStateAndUpdateLimit(lat, lon) {
         // --- Map speed sign ---
         updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
       }
-      // Welcome banner when entering a new state
+      // Welcome banner + DOT regulations when entering a new state
       showStateBanner(stateRaw || code);
+      setTimeout(() => showDOTStateNotif(code, stateRaw || code), 3500);
     } else if (code && code === currentStateCode) {
       // Same state — ensure sign stays visible if it was somehow hidden
       const sign = document.getElementById('mapSpeedSign');
