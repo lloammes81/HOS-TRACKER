@@ -15722,19 +15722,12 @@ function updateHosDashboard(driveLeft, driveMax) {
   const circumference = 679; // 2π×108 ≈ 679
   arc.setAttribute('stroke-dasharray', `${(pct * circumference).toFixed(1)} ${circumference}`);
 
-  // El arco siempre verde; solo la sombra cambia según velocidad / tiempo restante
+  // Sombra roja SOLO cuando excede el límite de velocidad
   const isCrit = driveLeft < 2;
   const isWarn = driveLeft < 4 && driveLeft >= 2;
 
   const glow = document.getElementById('dashGlowCircle');
-  let glowColor;
-  if (dashSpeedOver || isCrit) {
-    glowColor = '#ef4444';
-  } else if (isWarn) {
-    glowColor = '#f59e0b';
-  } else {
-    glowColor = '#1e40af';
-  }
+  const glowColor = dashSpeedOver ? '#ef4444' : '#1e40af';
 
   if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.08)');
   if (glow)  glow.setAttribute('stroke', glowColor);
