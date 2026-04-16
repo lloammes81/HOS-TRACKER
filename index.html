@@ -10269,9 +10269,9 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
     usedEl.textContent = `${String(eH).padStart(2,'0')}:${String(Math.max(0,eM)).padStart(2,'0')}`;
   }
 
-  // Severity state — crítico (rojo) desde 1 hora, advertencia (ámbar) 2h-1h
-  const isWarn     = hoursLeft <= 2 && hoursLeft > 1;
-  const isCritical = hoursLeft <= 1;
+  // Severity state — crítico (rojo) desde 30min, advertencia (ámbar) 1h-30min
+  const isWarn     = hoursLeft <= 1.0 && hoursLeft > 0.5;
+  const isCritical = hoursLeft <= 0.5;
   ring.className  = 'dh-ring' + (isCritical ? ' critical' : isWarn ? ' warn' : '');
   hrs.className   = 'dh-hrs'  + (isCritical ? ' critical' : isWarn ? ' warn' : '');
 
@@ -14625,6 +14625,7 @@ function fmStartTracking() {
   _clearAllAutoBlinkClasses();
   _hosWarn1hFired  = false;    // reinicia alertas de horas de manejo
   _hosWarn30mFired = false;
+  _hosWarnExpiredFired = false;
   b30Reset();             // reinicia sistema de pausa 30 min
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
@@ -14852,10 +14853,10 @@ function fmStartTracking() {
       // ── ⏰ 1 HORA ANTES del límite — círculo ya en ROJO ──────────
       if (driveLeft <= 1.0 && driveLeft > 0.5 && !_hosWarn1hFired) {
         _hosWarn1hFired = true;
-        const title1h = lang==='es' ? '⏰ ¡SE TE ACABAN LAS HORAS!' : '⏰ 1 HOUR LEFT!';
+        const title1h = lang==='es' ? '⚠️ 1 HORA DE MANEJO' : '⚠️ 1 HOUR LEFT!';
         const msg1h   = lang==='es'
-          ? `Se te están venciendo las horas de manejo. Te queda solo ${fmtH(driveLeft)} — empieza a buscar dónde estacionarte.`
-          : `Your driving hours are running out. Only ${fmtH(driveLeft)} left — start looking for parking now.`;
+          ? `Solo te queda 1 hora de manejo. Los números del círculo están en amarillo. Busca dónde estacionarte AHORA.`
+          : `Only 1 hour of driving left. The timer is now yellow. Start looking for parking NOW.`;
         showToast('danger', '⏰', title1h, msg1h, 0);
         vibrate([300, 100, 300, 100, 300, 100, 300]);
         flashDanger(3000);
@@ -14869,10 +14870,10 @@ function fmStartTracking() {
       // ── 🛑 30 MINUTOS — urgente, buscar estacionamiento ──────────
       if (driveLeft <= 0.5 && driveLeft > 0 && !_hosWarn30mFired) {
         _hosWarn30mFired = true;
-        const title30m = lang==='es' ? '🛑 ¡SOLO 30 MINUTOS!' : '🛑 ONLY 30 MINUTES LEFT!';
+        const title30m = lang==='es' ? '🔴 ¡30 MINUTOS — PARA YA!' : '🔴 30 MIN — STOP NOW!';
         const msg30m   = lang==='es'
-          ? '¡Solo te quedan 30 minutos de manejo! Busca urgente un lugar para estacionarte. DOT requiere 10 horas de descanso obligatorio.'
-          : 'Only 30 minutes of driving left! Find parking IMMEDIATELY. DOT requires 10 hrs of mandatory rest.';
+          ? '⛔ Si continúas manejando corres el riesgo de violación HOS. Los números del círculo están en rojo. Estacionate INMEDIATAMENTE.'
+          : '⛔ Continuing to drive risks an HOS violation. Timer is now red. Find parking IMMEDIATELY.';
         showToast('danger', '🛑', title30m, msg30m, 0);
         vibrate([500, 150, 500, 150, 500, 150, 500, 150, 500]);
         flashDanger(5000);
@@ -14882,6 +14883,25 @@ function fmStartTracking() {
           sendHOSAlert('🛑 ' + msg30m);
         }
         if (typeof saveHOSStateForSW === 'function') saveHOSStateForSW(driveLeft, null);
+      }
+      // ── 🚨 TIEMPO VENCIDO — multas DOT ─────────────────────────────────
+      if (driveLeft <= 0 && !_hosWarnExpiredFired) {
+        _hosWarnExpiredFired = true;
+        const titleExp = lang==='es' ? '🚨 ¡HORAS DE MANEJO VENCIDAS!' : '🚨 DRIVING HOURS EXPIRED!';
+        const msgExp   = lang==='es'
+          ? '¡Has superado el límite de 11 hrs! Continuar manejando puede resultar en: Multa DOT hasta $16,000 · Vehículo fuera de servicio (Out of Service) · Registro en tu DAC Report.'
+          : 'You exceeded the 11-hr driving limit! Continuing may result in: DOT fine up to $16,000 · Vehicle placed Out of Service · Mark on your DAC Report.';
+        showToast('danger', '🚨', titleExp, msgExp, 0);
+        vibrate([800, 200, 800, 200, 800, 200, 800]);
+        flashDanger(8000);
+        if (typeof showFullscreenAlert === 'function') {
+          showFullscreenAlert('danger', '🚨', titleExp,
+            lang==='es' ? 'Multa: hasta $16,000 · Out of Service · DAC Report' : 'Fine: up to $16,000 · Out of Service · DAC Report',
+            '', 0);
+        }
+        if (window.scheduleLocalHOSAlert) {
+          window.scheduleLocalHOSAlert(800, titleExp, msgExp, 7013).catch(() => {});
+        }
       }
     } catch(e) {}
 // ✅ Daily driving-hours notice (shows only what you can still drive today)
@@ -15088,6 +15108,7 @@ let _dashCurrentStatus = 'driving';
 // Flags de sesión para alertas de horas de manejo (se reinician al iniciar viaje)
 let _hosWarn1hFired  = false;
 let _hosWarn30mFired = false;
+let _hosWarnExpiredFired = false;
 
 // Centra el mini-mapa con el icono del camión en la zona inferior (≈25% desde abajo)
 function _hosMinimapFollow(lat, lon) {
@@ -15559,7 +15580,8 @@ function updateHosDashboard(driveLeft, driveMax) {
 
   if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.08)');
   if (glow)  glow.setAttribute('stroke', glowColor);
-  timeEl.style.color = '#ffffff'; // siempre blanco
+  // Numbers change color based on time (not the ring)
+  timeEl.style.color = driveLeft <= 0.5 ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#ffffff';
 
   // Texto de tiempo restante
   const totalMins = Math.round(driveLeft * 60);
