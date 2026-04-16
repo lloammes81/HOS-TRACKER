@@ -8382,6 +8382,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 .hos-popup-error{display:none;color:#ef4444;font-size:11px;margin-bottom:12px;text-align:center;font-weight:600}
 .hos-popup-btn{width:100%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.4px;transition:transform .15s,opacity .15s}
 .hos-popup-btn:active{transform:scale(.96);opacity:.9}
+.hos-num-stepper{display:flex;align-items:center;border:1.5px solid rgba(59,130,246,.35);border-radius:14px;overflow:hidden;margin-bottom:8px;background:rgba(255,255,255,.04)}
+.hos-num-btn{width:56px;height:58px;background:rgba(59,130,246,.1);border:none;color:#3b82f6;font-size:30px;font-weight:300;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.hos-num-btn:active{background:rgba(59,130,246,.3)}
+.hos-num-val{flex:1;text-align:center;font-size:36px;font-weight:900;color:#f1f5f9;display:flex;align-items:center;justify-content:center;gap:5px;height:58px}
+.hos-num-unit{font-size:12px;font-weight:700;color:#475569;text-transform:uppercase}
 .hos-popup-limit{display:inline-block;background:rgba(59,130,246,.15);color:#60a5fa;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;margin-left:4px}
 .hos-weekly-bar{margin:14px 0 20px;background:rgba(255,255,255,.06);border-radius:8px;height:6px;overflow:hidden}
 .hos-weekly-bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#8b5cf6,#3b82f6);transition:width .4s}
@@ -8988,11 +8993,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div class="hos-popup-sub">
       Regulación DOT: máximo <span class="hos-popup-dot">11 horas</span> de conducción por día.
     </div>
-    <div class="hos-popup-input-wrap">
-      <input class="hos-popup-input" id="hosStep1Input" type="number" min="0.5" max="11" step="0.5" value="11"
-        onkeydown="if(event.key==='Enter') _hosStep1Submit()" />
-      <span class="hos-popup-unit">hrs</span>
+    <div class="hos-num-stepper">
+      <button class="hos-num-btn" onclick="_hosAdj(1,-0.5)" type="button">−</button>
+      <div class="hos-num-val"><span id="hosStep1Display">11</span><span class="hos-num-unit">hrs</span></div>
+      <button class="hos-num-btn" onclick="_hosAdj(1,+0.5)" type="button">+</button>
     </div>
+    <input type="number" id="hosStep1Input" value="11" min="0.5" max="11" step="0.5" style="display:none" />
     <div class="hos-popup-error" id="hosStep1Error">Ingresa un valor entre 0.5 y 11 horas</div>
     <button class="hos-popup-btn" onclick="_hosStep1Submit()">Continuar →</button>
   </div>
@@ -9016,12 +9022,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
     <div class="hos-weekly-bar"><div class="hos-weekly-bar-fill" id="hosWeeklyBarFill" style="width:100%"></div></div>
 
-    <div class="hos-popup-input-wrap" style="margin-top:14px">
-      <input class="hos-popup-input" id="hosStep2Input" type="number" min="1" max="70" step="1" value="70"
-        oninput="_hosUpdateWeeklyBar(this.value)"
-        onkeydown="if(event.key==='Enter') _hosStep2Submit()" />
-      <span class="hos-popup-unit">hrs</span>
+    <div class="hos-num-stepper" style="margin-top:14px">
+      <button class="hos-num-btn" onclick="_hosAdj(2,-1)" type="button">−</button>
+      <div class="hos-num-val"><span id="hosStep2Display">70</span><span class="hos-num-unit">hrs</span></div>
+      <button class="hos-num-btn" onclick="_hosAdj(2,+1)" type="button">+</button>
     </div>
+    <input type="number" id="hosStep2Input" value="70" min="1" max="70" step="1" style="display:none" />
 
     <!-- Cálculo en tiempo real -->
     <div id="hosCalcResult" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin:12px 0 8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -24198,7 +24204,9 @@ window._hosAutoRecalc = false;
     const inp     = document.getElementById('hosStep1Input');
     const err     = document.getElementById('hosStep1Error');
     if (err) err.style.display = 'none';
-    if (inp) { inp.value = '11'; setTimeout(() => inp.select(), 80); }
+    if (inp) inp.value = '11';
+    const d1 = document.getElementById('hosStep1Display');
+    if (d1) d1.textContent = '11';
     if (overlay) overlay.classList.add('active');
   }
 
@@ -24223,7 +24231,9 @@ window._hosAutoRecalc = false;
     const inp     = document.getElementById('hosStep2Input');
     const err     = document.getElementById('hosStep2Error');
     if (err) err.style.display = 'none';
-    if (inp) { inp.value = '70'; setTimeout(() => inp.select(), 80); }
+    if (inp) inp.value = '70';
+    const d2 = document.getElementById('hosStep2Display');
+    if (d2) d2.textContent = '70';
     _hosUpdateWeeklyBar(70);
     if (overlay) overlay.classList.add('active');
   }
@@ -24283,6 +24293,26 @@ window._hosAutoRecalc = false;
     document.getElementById('hoursInput').value = val;
     document.getElementById('hosPopup2').classList.remove('active');
     _hosOpenPopup3();
+  };
+
+  // ── Stepper numérico +/− ──────────────────────────────
+  window._hosAdj = function(step, delta) {
+    if (step === 1) {
+      const inp  = document.getElementById('hosStep1Input');
+      const disp = document.getElementById('hosStep1Display');
+      let val = Math.round((parseFloat(inp.value) + delta) * 10) / 10;
+      val = Math.max(0.5, Math.min(11, val));
+      inp.value = val;
+      disp.textContent = val % 1 === 0 ? val : val.toFixed(1);
+    } else {
+      const inp  = document.getElementById('hosStep2Input');
+      const disp = document.getElementById('hosStep2Display');
+      let val = Math.round(parseFloat(inp.value) + delta);
+      val = Math.max(1, Math.min(70, val));
+      inp.value = val;
+      disp.textContent = val;
+      _hosUpdateWeeklyBar(val);
+    }
   };
 
   // ── Popup 3: resumen y confirmación ───────────────────
