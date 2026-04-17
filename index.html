@@ -6018,6 +6018,19 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <span id="profileModeText">Interstate Mode — Full Map</span>
           </div>
         </div>
+
+        <!-- ── FLEET LINK ROW ── -->
+        <div class="sett-group" style="margin-top:10px">
+          <div class="sett-row" id="fleetLinkFab" style="cursor:pointer">
+            <div class="sett-icon" style="background:#dbeafe">🔗</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">Fleet Link</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="fleetLinkSubtxt">Conectar con el panel del dispatcher</div>
+            </div>
+            <span class="fl-badge" id="fleetLinkBadge">0</span>
+            <span class="sett-arrow">›</span>
+          </div>
+        </div>
       </div>
 
       <div class="sett-section">
@@ -25095,21 +25108,12 @@ window._hosAutoRecalc = false;
      además de recibir notificaciones en tiempo real.
      ══════════════════════════════════════════════════════════════ -->
 <style>
-  #fleetLinkFab{
-    position:fixed; right:14px; bottom:96px; z-index:9500;
-    width:52px; height:52px; border-radius:50%;
-    background:linear-gradient(135deg,#10b981,#059669);
-    color:white; border:0; font-size:22px;
-    box-shadow:0 6px 18px rgba(16,185,129,.45);
-    display:grid; place-items:center; cursor:pointer;
-  }
-  #fleetLinkFab .badge{
-    position:absolute; top:-4px; right:-4px;
+  #fleetLinkFab .fl-badge{
     background:#ef4444; color:#fff; font-size:10px; font-weight:800;
-    padding:2px 5px; border-radius:8px; border:2px solid #fff;
-    display:none;
+    padding:2px 5px; border-radius:8px; display:none;
   }
-  #fleetLinkFab.connected{ background:linear-gradient(135deg,#3b82f6,#1d4ed8); }
+  #fleetLinkFab.connected .sett-icon{ background:linear-gradient(135deg,#10b981,#059669) !important; color:#fff; }
+  #fleetLinkFab.connected #fleetLinkSubtxt{ color:#10b981; }
   #fleetLinkModal{
     position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:9999;
     display:none; align-items:center; justify-content:center; padding:14px;
@@ -25172,7 +25176,6 @@ window._hosAutoRecalc = false;
   @keyframes flPulse { 0%,100%{transform:translateX(-50%) scale(1);} 50%{transform:translateX(-50%) scale(1.05);} }
 </style>
 
-<button id="fleetLinkFab" title="Fleet Link">🔗<span class="badge" id="fleetLinkBadge">0</span></button>
 <div id="fleetLinkModal">
   <div class="fl-card">
     <h2>🔗 Fleet Link</h2>
