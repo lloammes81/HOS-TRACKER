@@ -25550,11 +25550,58 @@ window._hosAutoRecalc = false;
 
   // === Auto-reconectar si ya había una flota guardada ===
   if (state.fleetId){
-    registerPresence();
+    (async ()=>{
+      try {
+        await registerPresence();
+        console.log('[FleetLink] ✅ Auto-reconectado a flota', state.fleetId);
+      } catch(e){
+        console.error('[FleetLink] ❌ Auto-reconexión falló:', e);
+        alert('No se pudo reconectar a la flota ' + state.fleetId + '\n\nError: ' + e.message + '\n\nTe desconectaré para que puedas intentarlo de nuevo.');
+        state.fleetId = null;
+        localStorage.removeItem('fleet_link_fleet');
+        renderStatus();
+      }
+    })();
     startLocationSharing();
     listenNotifications();
     renderStatus();
   }
+
+  // === Botón de diagnóstico visible cuando ya estás conectado ===
+  const diagBtn = document.createElement('button');
+  diagBtn.className = 'fl-btn';
+  diagBtn.textContent = '🩺 Verificar mi registro';
+  diagBtn.style.marginTop = '8px';
+  diagBtn.style.width = '100%';
+  diagBtn.addEventListener('click', async ()=>{
+    if (!state.fleetId) return flToast('No estás conectado');
+    try {
+      const { get } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+      const snap = await get(ref(db, `fleets/${state.fleetId}/drivers/${MY_ID}`));
+      const loc  = await get(ref(db, `fleets/${state.fleetId}/locations/${MY_ID}`));
+      const info = snap.val();
+      const location = loc.val();
+      let msg = `🩺 Verificación de ${state.fleetId}\n━━━━━━━━━━━━━━━━\n`;
+      msg += `Mi ID: ${MY_ID}\n\n`;
+      if (info) {
+        msg += `✅ Estoy registrado en Firebase\n`;
+        msg += `Nombre: ${info.name || '(sin nombre)'}\n`;
+        msg += `Camión: ${info.truckType || '—'}\n`;
+        msg += `Placa: ${info.plate || '—'}\n\n`;
+      } else {
+        msg += `❌ NO estoy en Firebase (no se escribió)\n\n`;
+      }
+      if (location) {
+        msg += `📍 GPS compartido\nLat: ${location.lat?.toFixed(4)}\nLon: ${location.lon?.toFixed(4)}\nVelocidad: ${Math.round(location.speed||0)}\n`;
+      } else {
+        msg += `⚠️ GPS no está compartiendo (permite ubicación)\n`;
+      }
+      alert(msg);
+    } catch(e){
+      alert('Error verificando: ' + e.message);
+    }
+  });
+  document.getElementById('flConnected').appendChild(diagBtn);
 
   // Expose for debugging
   window._fleetLink = { state, joinFleet, leaveFleet };
