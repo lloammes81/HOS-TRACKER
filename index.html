@@ -4446,7 +4446,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 .eld-status-ring.scanning { animation:eldScan 1.5s ease-in-out infinite;border-color:#6366f1; }
 .eld-status-ring.connected { border-color:#10b981;background:rgba(16,185,129,.12); }
 @keyframes eldScan { 0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.4)} 50%{box-shadow:0 0 0 16px rgba(99,102,241,0)} }
-.eld-device-list { margin:14px 0;max-height:220px;overflow-y:auto; }
+.eld-device-list { margin:14px 0;max-height:240px;overflow-y:auto; }
+.eld-device-item {
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--surface2);border-radius:14px;margin-bottom:8px;
+  border:1.5px solid var(--border);cursor:pointer;transition:border-color .2s, background .2s;
+}
+.eld-device-item:active { border-color:#10b981;background:rgba(16,185,129,.08); }
 .eld-device-row {
   display:flex;align-items:center;gap:12px;padding:12px 14px;
   background:var(--surface2);border-radius:14px;margin-bottom:8px;
@@ -22115,12 +22121,14 @@ FIREBASE_CONFIG = {
       <button onclick="startEldDemo()" style="width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🎮 Activar Modo Simulación ELD</button>
     </div>
 
-    <!-- Android/Chrome BLE scan button -->
-    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">🔍 Buscar Dispositivos ELD (Bluetooth)</button>
+    <!-- BLE scan button -->
+    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">📶 Activar Bluetooth y Buscar ELD</button>
+    <button id="eldStopScanBtn" onclick="_eldStopScan()" style="display:none;width:100%;padding:10px;border-radius:12px;border:1.5px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:#ef4444;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">⏹ Detener búsqueda</button>
 
     <!-- Demo/simulation button always visible -->
     <button onclick="startEldDemo()" id="eldDemoBtn" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(99,102,241,.3);background:rgba(99,102,241,.08);color:#6366f1;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px">🎮 Modo Simulación (sin Bluetooth)</button>
 
+    <!-- Lista de dispositivos BLE detectados -->
     <div id="eldDeviceList" class="eld-device-list" style="display:none"></div>
     <div id="eldLiveData" style="display:none">
       <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px">📊 Datos en Vivo del ELD</div>
@@ -22647,8 +22655,19 @@ window.showSubscribeModal = function() {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  📡 ELD BLUETOOTH — Web Bluetooth API
+//  📡 ELD BLUETOOTH — Capacitor BLE (Bluetooth nativo del teléfono)
 // ─────────────────────────────────────────────────────────────────────────────
+// Carga el plugin BLE de Capacitor de forma asíncrona
+(async()=>{
+  try{
+    const { BleClient } = await import('https://esm.sh/@capacitor-community/bluetooth-le@8');
+    window.BluetoothLe = BleClient;
+    await BleClient.initialize({ androidNeverForLocation: true });
+    console.log('[ELD] Capacitor BLE listo');
+  }catch(e){
+    console.log('[ELD] Capacitor BLE no disponible, usará Web Bluetooth como fallback');
+  }
+})();
 // ── ELD BLE: service / characteristic UUIDs más comunes ──────────────────
 const _ELD_SVCS = [
   '0000ffe0-0000-1000-8000-00805f9b34fb',  // HM-10 BLE UART (más común)
@@ -22812,84 +22831,239 @@ function _eldOnDisconnect(){
   showToast('warn','🔌','ELD Desconectado','El dispositivo se desconectó',3000);
 }
 
-async function startEldScan(){
-  if(!navigator.bluetooth){
-    document.getElementById('eldNoBluetooth').style.display='block';
-    document.getElementById('eldScanBtn').style.display='none';
-    document.getElementById('eldDemoBtn').style.display='none';
+// ── Lista de dispositivos escaneados ──────────────────────────────────────
+let _eldScanResults = [];
+
+// ── Renderiza la lista de dispositivos encontrados ────────────────────────
+function _eldRenderDeviceList(){
+  const list = document.getElementById('eldDeviceList');
+  if(!list) return;
+  if(_eldScanResults.length === 0){
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px">Buscando dispositivos BLE...</div>';
+    list.style.display = 'block';
     return;
   }
-  const ring=document.getElementById('eldRing');
-  ring.className='eld-status-ring scanning';
-  document.getElementById('eldRingIcon').textContent='🔵';
-  document.getElementById('eldRingLabel').textContent='BUSCANDO...';
-  document.getElementById('eldScanBtn').textContent='⏳ Abriendo Bluetooth...';
-  document.getElementById('eldScanBtn').disabled=true;
-  document.getElementById('eldDemoBtn').style.display='none';
-  try{
-    // Muestra el picker nativo del teléfono con TODOS los dispositivos BLE cercanos
-    eldDevice=await navigator.bluetooth.requestDevice({
-      acceptAllDevices:true,
-      optionalServices:[..._ELD_SVCS,'battery_service','device_information']
-    });
+  list.style.display = 'block';
+  list.innerHTML = _eldScanResults.map(d=>`
+    <div class="eld-device-item" onclick="_eldConnect('${d.deviceId}','${(d.name||'').replace(/'/g,"\\'")}')">
+      <div style="font-size:20px">📡</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:800;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.name||'Dispositivo BLE'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:1px">${d.deviceId}</div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#10b981">Toca para<br>conectar</div>
+    </div>`).join('');
+}
 
-    document.getElementById('eldRingLabel').textContent='CONECTANDO...';
-    const server=await eldDevice.gatt.connect();
+async function startEldScan(){
+  const ring = document.getElementById('eldRing');
+  ring.className = 'eld-status-ring scanning';
+  document.getElementById('eldRingIcon').textContent = '🔵';
+  document.getElementById('eldRingLabel').textContent = 'BUSCANDO...';
+  document.getElementById('eldScanBtn').textContent = '⏳ Escaneando...';
+  document.getElementById('eldScanBtn').disabled = true;
+  document.getElementById('eldStopScanBtn').style.display = 'block';
+  document.getElementById('eldDemoBtn').style.display = 'none';
+  _eldScanResults = [];
 
-    // Intenta encontrar servicio y características compatibles
-    eldTxChar=null; eldRxChar=null;
-    for(const svcUUID of _ELD_SVCS){
-      try{
-        const svc=await server.getPrimaryService(svcUUID);
-        const chars=await svc.getCharacteristics();
-        for(const c of chars){
-          if((c.properties.notify||c.properties.indicate) && !eldRxChar){
-            await c.startNotifications();
-            c.addEventListener('characteristicvaluechanged',_eldOnData);
-            eldRxChar=c;
+  // ── Usa Capacitor BLE (Bluetooth nativo) si está disponible ──────────
+  const BLE = window.BluetoothLe;   // inyectado por el plugin Capacitor
+  if(BLE){
+    try{
+      // Pide permiso y activa Bluetooth si está apagado
+      const enabled = await BLE.isEnabled();
+      if(!enabled.value){
+        await BLE.enable();   // abre diálogo del sistema para activar BT
+      }
+      // Escanea y muestra lista en tiempo real
+      _eldRenderDeviceList();
+      await BLE.requestLEScan(
+        { services: [], allowDuplicates: false },
+        (result) => {
+          const id = result.device.deviceId;
+          const name = result.device.name || result.localName || '';
+          if(!_eldScanResults.find(d=>d.deviceId===id)){
+            _eldScanResults.push({ deviceId: id, name });
+            _eldRenderDeviceList();
           }
-          if((c.properties.write||c.properties.writeWithoutResponse) && !eldTxChar){
-            eldTxChar=c;
+        }
+      );
+      // El usuario toca el dispositivo en la lista → _eldConnect()
+    }catch(e){
+      _eldScanFallback(e);
+    }
+    return;
+  }
+
+  // ── Fallback: Web Bluetooth (Chrome Android) ──────────────────────────
+  if(!navigator.bluetooth){
+    document.getElementById('eldNoBluetooth').style.display = 'block';
+    document.getElementById('eldScanBtn').style.display = 'none';
+    document.getElementById('eldDemoBtn').style.display = 'none';
+    return;
+  }
+  try{
+    eldDevice = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [..._ELD_SVCS, 'battery_service', 'device_information']
+    });
+    await _eldConnectGatt(eldDevice.name || 'Dispositivo ELD', null);
+  }catch(e){
+    _eldScanFallback(e);
+  }
+}
+
+async function _eldStopScan(){
+  try{ if(window.BluetoothLe) await window.BluetoothLe.stopLEScan(); }catch(_){}
+  document.getElementById('eldStopScanBtn').style.display='none';
+  document.getElementById('eldScanBtn').textContent='📶 Activar Bluetooth y Buscar ELD';
+  document.getElementById('eldScanBtn').disabled=false;
+  document.getElementById('eldRing').className='eld-status-ring';
+  document.getElementById('eldRingIcon').textContent='📡';
+  document.getElementById('eldRingLabel').textContent='DESCONECTADO';
+}
+
+function _eldScanFallback(e){
+  const ring = document.getElementById('eldRing');
+  ring.className = 'eld-status-ring';
+  document.getElementById('eldRingIcon').textContent = '📡';
+  document.getElementById('eldRingLabel').textContent = 'DESCONECTADO';
+  document.getElementById('eldScanBtn').textContent = '📶 Activar Bluetooth y Buscar ELD';
+  document.getElementById('eldScanBtn').disabled = false;
+  document.getElementById('eldStopScanBtn').style.display = 'none';
+  document.getElementById('eldDemoBtn').style.display = 'block';
+  document.getElementById('eldDeviceList').style.display = 'none';
+  if(e && e.code !== 0) showToast('warn','⚠️','ELD Error', e.message||String(e), 4000);
+}
+
+// ── Conecta a un dispositivo seleccionado de la lista (Capacitor) ─────────
+async function _eldConnect(deviceId, name){
+  const BLE = window.BluetoothLe;
+  if(!BLE) return;
+  try{
+    await BLE.stopLEScan();
+  }catch(_){}
+
+  document.getElementById('eldDeviceList').style.display = 'none';
+  document.getElementById('eldRingLabel').textContent = 'CONECTANDO...';
+
+  try{
+    await BLE.connect({ deviceId, timeout: 10000 });
+
+    // Busca servicio y características compatibles
+    eldTxChar = null; eldRxChar = null;
+    for(const svc of _ELD_SVCS){
+      try{
+        const chars = await BLE.getCharacteristics({ deviceId, service: svc });
+        for(const c of (chars.characteristics||[])){
+          if((c.properties.notify || c.properties.indicate) && !eldRxChar){
+            await BLE.startNotifications({ deviceId, service: svc, characteristic: c.uuid },
+              (val) => _eldOnDataRaw(val.value));
+            eldRxChar = { service: svc, uuid: c.uuid };
+          }
+          if((c.properties.write || c.properties.writeWithoutResponse) && !eldTxChar){
+            eldTxChar = { deviceId, service: svc, uuid: c.uuid,
+                          writeWithoutResponse: !!c.properties.writeWithoutResponse };
           }
         }
         if(eldRxChar) break;
-      }catch(_){ /* servicio no disponible, prueba siguiente */ }
+      }catch(_){ /* prueba siguiente */ }
     }
 
-    // Detecta desconexión inesperada
-    eldDevice.addEventListener('gattserverdisconnected',_eldOnDisconnect);
+    // Detecta desconexión
+    BLE.addListener('onDisconnect', (r) => { if(r.deviceId===deviceId) _eldOnDisconnect(); });
 
-    ring.className='eld-status-ring connected';
-    document.getElementById('eldRingIcon').textContent='✅';
-    const devName=eldDevice.name||'Dispositivo ELD';
-    document.getElementById('eldRingLabel').textContent='CONECTADO';
-    document.getElementById('eldConnectedName').textContent=devName;
-    document.getElementById('eldScanBtn').style.display='none';
-    document.getElementById('eldLiveData').style.display='block';
-    document.getElementById('eldLogbook').style.display='block';
-    document.getElementById('eldArrowStatus').style.color='#6366f1';
+    eldDevice = { deviceId, name, gatt: { connected: true,
+      disconnect: () => BLE.disconnect({ deviceId }) } };
+    _eldConnectSuccess(name || deviceId);
 
-    if(eldTxChar && eldRxChar){
-      // Comunicación real: inicializa OBD2 y empieza polling
-      _eldRealMode=true;
-      await _eldInit();
-      _eldStartPolling();
-      showToast('info','📡','ELD Real Conectado',devName+' · Leyendo datos en vivo',3500);
-    } else {
-      // Dispositivo conectado pero sin protocolo reconocido → simulación
-      _eldRealMode=false;
-      startEldDataSimulation();
-      showToast('info','📡','ELD Conectado',devName+' · Protocolo desconocido, usando simulación',4000);
-    }
   }catch(e){
-    ring.className='eld-status-ring';
-    document.getElementById('eldRingIcon').textContent='📡';
-    document.getElementById('eldRingLabel').textContent='DESCONECTADO';
-    document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
-    document.getElementById('eldScanBtn').disabled=false;
-    document.getElementById('eldDemoBtn').style.display='block';
-    if(e.name!=='NotFoundError') showToast('warn','⚠️','ELD Error',e.message,4000);
+    _eldScanFallback(e);
   }
+}
+
+// ── Conecta vía GATT (Web Bluetooth fallback) ────────────────────────────
+async function _eldConnectGatt(devName, _unused){
+  try{
+    const server = await eldDevice.gatt.connect();
+    eldTxChar = null; eldRxChar = null;
+    for(const svcUUID of _ELD_SVCS){
+      try{
+        const svc = await server.getPrimaryService(svcUUID);
+        const chars = await svc.getCharacteristics();
+        for(const c of chars){
+          if((c.properties.notify||c.properties.indicate) && !eldRxChar){
+            await c.startNotifications();
+            c.addEventListener('characteristicvaluechanged', _eldOnData);
+            eldRxChar = c;
+          }
+          if((c.properties.write||c.properties.writeWithoutResponse) && !eldTxChar){
+            eldTxChar = c;
+          }
+        }
+        if(eldRxChar) break;
+      }catch(_){}
+    }
+    eldDevice.addEventListener('gattserverdisconnected', _eldOnDisconnect);
+    _eldConnectSuccess(devName);
+  }catch(e){
+    _eldScanFallback(e);
+  }
+}
+
+function _eldConnectSuccess(devName){
+  const ring = document.getElementById('eldRing');
+  ring.className = 'eld-status-ring connected';
+  document.getElementById('eldRingIcon').textContent = '✅';
+  document.getElementById('eldRingLabel').textContent = 'CONECTADO';
+  document.getElementById('eldConnectedName').textContent = devName;
+  document.getElementById('eldScanBtn').style.display = 'none';
+  document.getElementById('eldStopScanBtn').style.display = 'none';
+  document.getElementById('eldDeviceList').style.display = 'none';
+  document.getElementById('eldLiveData').style.display = 'block';
+  document.getElementById('eldLogbook').style.display = 'block';
+  document.getElementById('eldArrowStatus').style.color = '#6366f1';
+
+  if(eldTxChar && eldRxChar){
+    _eldRealMode = true;
+    _eldInit().then(_eldStartPolling);
+    showToast('info','📡','ELD Conectado', devName+' · Leyendo datos en vivo', 3500);
+  } else {
+    _eldRealMode = false;
+    startEldDataSimulation();
+    showToast('info','📡','ELD Conectado', devName+' · Protocolo no reconocido — usando simulación', 4000);
+  }
+}
+
+// ── Envía comando AT (Capacitor o Web Bluetooth) ──────────────────────────
+async function _eldSend(cmd){
+  if(!eldTxChar) return;
+  const bytes = new TextEncoder().encode(cmd+'\r');
+  try{
+    const BLE = window.BluetoothLe;
+    if(BLE && eldTxChar.deviceId){
+      const b64 = btoa(String.fromCharCode(...bytes));
+      if(eldTxChar.writeWithoutResponse)
+        await BLE.writeWithoutResponse({ ...eldTxChar, value: b64 });
+      else
+        await BLE.write({ ...eldTxChar, value: b64 });
+    } else {
+      if(eldTxChar.properties?.writeWithoutResponse) await eldTxChar.writeValueWithoutResponse(bytes);
+      else await eldTxChar.writeValue(bytes);
+    }
+  }catch(e){ console.warn('[ELD] write error',e); }
+}
+
+// ── Recibe datos Capacitor (base64) ───────────────────────────────────────
+function _eldOnDataRaw(b64){
+  try{
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length).map((_,i)=>bin.charCodeAt(i));
+    _eldBuf += new TextDecoder().decode(bytes);
+    const parts = _eldBuf.split('>');
+    _eldBuf = parts.pop();
+    parts.forEach(r => _parseEldResp(r.replace(/\s+/g,' ').trim()));
+  }catch(e){}
 }
 
 function startEldDataSimulation(){
