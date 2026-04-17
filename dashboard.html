@@ -19,6 +19,7 @@
     --line:#1f2a44; --text:#e6edf7; --muted:#8695b7;
     --brand:#10b981; --brand-2:#34d399; --accent:#3b82f6;
     --danger:#ef4444; --warn:#f59e0b; --ok:#22c55e;
+    --info:#8b5cf6; --orange:#f97316;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
@@ -71,15 +72,17 @@
 
   .field{margin-bottom:16px}
   .field label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:6px}
-  .field input,.field select{
+  .field input,.field select, .field textarea{
     width:100%;padding:13px 14px;background:#0c1430;
     border:1px solid var(--line);border-radius:10px;
     color:var(--text);font-size:15px;font-family:inherit;
     transition:border-color .2s,box-shadow .2s;
   }
-  .field input:focus,.field select:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+  .field input:focus,.field select:focus, .field textarea:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+  .field input[type="date"]{color-scheme:dark}
   .field input.code{text-align:center;letter-spacing:6px;font-family:"SF Mono",Consolas,monospace;text-transform:uppercase;font-weight:700;font-size:20px}
   .field select option{background:#0c1430}
+  .field textarea{min-height:80px;resize:vertical}
 
   .btn-primary{
     width:100%;padding:15px;margin-top:4px;
@@ -91,6 +94,7 @@
   .btn-primary:hover{box-shadow:0 8px 24px rgba(16,185,129,.35)}
   .btn-primary:active{transform:translateY(1px)}
   .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+  
   .btn-secondary{
     width:100%;padding:13px;margin-top:10px;
     background:#1b2542;color:var(--text);
@@ -99,12 +103,19 @@
     transition:background .15s;
   }
   .btn-secondary:hover{background:#223056}
+  
+  .btn-danger{
+    background:linear-gradient(135deg,var(--danger),#b91c1c);
+    color:white;border:0;
+  }
+  .btn-danger:hover{box-shadow:0 8px 24px rgba(239,68,68,.35)}
 
   .alert{padding:11px 13px;border-radius:9px;font-size:13px;margin-bottom:14px;display:none;line-height:1.5}
   .alert.show{display:block}
   .alert.err{background:#3b0a0a;border:1px solid #7f1d1d;color:#fca5a5}
   .alert.ok{background:#052e1a;border:1px solid #14532d;color:#86efac}
   .alert.info{background:#0c1d3d;border:1px solid #1d4ed8;color:#93c5fd}
+  .alert.warn{background:#422006;border:1px solid #92400e;color:#fcd34d}
 
   .plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
   .plan-card{background:#0c1430;border:1px solid var(--line);border-radius:9px;padding:11px;cursor:pointer;transition:border-color .15s}
@@ -149,6 +160,8 @@
   header .hbtn{background:#1b2542;color:var(--text);border:1px solid var(--line);padding:7px 12px;border-radius:8px;font-size:13px}
   header .hbtn:hover{background:#223056}
   header .hbtn.primary{background:linear-gradient(135deg,var(--brand),#059669);border:0;color:#06211a;font-weight:700}
+  header .hbtn.admin{background:linear-gradient(135deg,var(--info),#7c3aed);border:0;color:white}
+  header .hbtn.admin:hover{box-shadow:0 8px 24px rgba(139,92,246,.35)}
   #logoutBtn{background:#3b0a0a;color:#fca5a5;border:1px solid #7f1d1d;padding:7px 12px;border-radius:8px;font-size:13px}
   #logoutBtn:hover{background:#4c1111}
 
@@ -160,6 +173,7 @@
   .pill.ok{color:#86efac;border-color:#14532d;background:#052e1a}
   .pill.off{color:#fda4af;border-color:#7f1d1d;background:#2a0a10}
   .pill.drv{color:#93c5fd;border-color:#1d4ed8;background:#0c1d3d}
+  .pill.warn{color:#fcd34d;border-color:#92400e;background:#422006}
 
   .driver{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s}
   .driver:hover{background:#16213e}
@@ -218,18 +232,60 @@
   .event.start .ico{background:#052e1a;color:#86efac}
   .event .ts{color:var(--muted);font-size:11px;margin-top:2px}
 
+  /* ══════════════════════════════════════
+     MODALES
+  ══════════════════════════════════════ */
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px)}
   .modal.show{display:flex}
-  .modal-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;max-width:520px;width:92vw;text-align:center}
-  .modal-card h2{margin:0 0 8px 0}
+  .modal-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;max-width:520px;width:92vw;max-height:90vh;overflow-y:auto;text-align:left;position:relative}
+  .modal-card.wide{max-width:1000px}
+  .modal-card.huge{max-width:1200px}
+  .modal-card h2{margin:0 0 8px 0;text-align:center}
   .modal-card p{color:var(--muted);margin:0 0 18px 0;font-size:14px;line-height:1.5}
-  .pair-code{font-family:"SF Mono",Consolas,monospace;font-size:34px;letter-spacing:6px;font-weight:800;background:#0c1430;border:2px dashed var(--brand);padding:16px;border-radius:10px;color:var(--brand-2);margin:10px 0}
-  .qr-wrap{background:white;padding:14px;border-radius:10px;display:inline-block;margin:10px 0}
+  .modal-close{position:absolute;top:16px;right:16px;background:none;border:0;color:var(--muted);font-size:24px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .modal-close:hover{background:var(--line);color:var(--text)}
+  
+  .pair-code{font-family:"SF Mono",Consolas,monospace;font-size:34px;letter-spacing:6px;font-weight:800;background:#0c1430;border:2px dashed var(--brand);padding:16px;border-radius:10px;color:var(--brand-2);margin:10px 0;text-align:center}
+  .qr-wrap{background:white;padding:14px;border-radius:10px;display:inline-block;margin:10px auto;text-align:center}
   .pair-actions{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
   .pair-actions button{background:#1b2542;border:1px solid var(--line);color:var(--text);padding:9px 14px;border-radius:8px;font-size:13px;cursor:pointer}
   .pair-actions .primary{background:linear-gradient(135deg,var(--brand),#059669);border:0;color:#06211a;font-weight:700}
-  .tiny{font-size:11px;color:var(--muted);margin-top:8px}
+  .tiny{font-size:11px;color:var(--muted);margin-top:8px;text-align:center}
 
+  /* Admin Tabs */
+  .admin-tabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:20px}
+  .admin-tab{flex:1;padding:12px;text-align:center;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;font-weight:600;transition:all .2s}
+  .admin-tab.active{color:var(--brand-2);border-bottom-color:var(--brand-2)}
+  .admin-tab:hover{color:var(--text)}
+  
+  .admin-section{display:none}
+  .admin-section.active{display:block}
+  
+  /* Tablas Admin */
+  .admin-table{width:100%;border-collapse:collapse;font-size:13px}
+  .admin-table th{text-align:left;padding:10px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+  .admin-table td{padding:12px 10px;border-bottom:1px solid var(--line);color:var(--text)}
+  .admin-table tr:hover td{background:rgba(255,255,255,.02)}
+  .admin-table .actions{display:flex;gap:6px}
+  .admin-table .btn-tiny{padding:4px 10px;border-radius:6px;font-size:12px;border:1px solid var(--line);background:#1b2542;color:var(--text);cursor:pointer;transition:all .15s}
+  .admin-table .btn-tiny:hover{background:#223056}
+  .admin-table .btn-tiny.danger{border-color:var(--danger);color:var(--danger);background:#3b0a0a}
+  .admin-table .btn-tiny.danger:hover{background:#4c1111}
+  .admin-table .btn-tiny.warning{border-color:var(--warn);color:var(--warn);background:#422006}
+  
+  /* Forms Admin */
+  .admin-form{background:#0c1430;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:20px}
+  .admin-form h4{margin:0 0 16px 0;font-size:14px;color:var(--brand-2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--line);padding-bottom:8px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+  .form-row.col-2{grid-template-columns:1fr 1fr}
+  @media(max-width:900px){.form-row{grid-template-columns:1fr 1fr}}
+  @media(max-width:600px){.form-row{grid-template-columns:1fr}}
+  
+  .avatar-upload{width:80px;height:80px;border-radius:50%;background:#1d2a4d;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative}
+  .avatar-upload:hover{border-color:var(--brand)}
+  .avatar-upload img{width:100%;height:100%;object-fit:cover}
+  .avatar-upload .placeholder{color:var(--muted);font-size:24px}
+  
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0c1430;border:1px solid var(--line);border-radius:10px;padding:10px 16px;color:var(--text);font-size:13px;box-shadow:0 4px 24px rgba(0,0,0,.4);z-index:10000;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
 
@@ -243,9 +299,21 @@
   .truck-marker .name{position:absolute;top:54px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,.92);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;border:1px solid var(--line)}
   .truck-marker .speed-bubble{position:absolute;top:-4px;right:-4px;background:var(--accent);color:white;font-size:10px;font-weight:800;padding:2px 5px;border-radius:8px;border:2px solid white;min-width:16px;text-align:center}
   
-  /* Botón de reconectar flota */
   .hbtn.warning{background:#f59e0b;color:#000;border-color:#f59e0b;font-weight:700}
   .hbtn.warning:hover{background:#fbbf24}
+  
+  .role-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase}
+  .role-admin{background:#3b0a0a;color:#fca5a5;border:1px solid #7f1d1d}
+  .role-dispatcher{background:#0c1d3d;color:#93c5fd;border:1px solid #1d4ed8}
+  .role-viewer{background:#1b2542;color:var(--muted);border:1px solid var(--line)}
+  
+  .status-active{color:var(--ok)}
+  .status-inactive{color:var(--danger)}
+  
+  .expiry-warning{color:var(--warn);font-weight:600}
+  .expiry-danger{color:var(--danger);font-weight:600}
+  
+  .section-title{font-size:12px;color:var(--muted);margin:20px 0 10px 0;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
 </style>
 </head>
 <body>
@@ -371,6 +439,7 @@
     <div class="logo"><div class="truck">🚛</div><div>HOS Tracker — <span style="color:var(--brand-2)">Dispatcher</span></div></div>
     <div class="fleet">Empresa: <b id="companyLabel">—</b> · Flota: <b id="fleetLabel">—</b> · <span id="connStatus">🔴 desconectado</span></div>
     <div class="spacer"></div>
+    <button class="hbtn admin" id="btnAdmin">⚙️ Administración</button>
     <button class="hbtn" id="btnDiagnose">🩺 Diagnóstico</button>
     <button class="hbtn" id="btnExport">Exportar CSV</button>
     <button class="hbtn" id="btnBroadcast">📢 Aviso flota</button>
@@ -442,6 +511,7 @@
 <!-- PAIRING MODAL -->
 <div class="modal" id="pairModal">
   <div class="modal-card">
+    <button class="modal-close" onclick="closeModal('pairModal')">×</button>
     <h2>🔗 Emparejar un móvil</h2>
     <p>Comparte este código o QR con el conductor. En su app móvil debe entrar en <b>Menú → Fleet Link</b> e ingresar el código o escanear el QR.</p>
     <div style="font-size:12px;color:var(--muted)">ID de flota</div>
@@ -449,11 +519,528 @@
     <div class="qr-wrap"><canvas id="pairQR" width="220" height="220"></canvas></div>
     <div class="tiny">Enlace: <span id="pairLink" style="color:var(--brand-2)"></span></div>
     <div class="pair-actions">
-      <button id="btnCopyCode">📋 Copiar código</button>
-      <button id="btnCopyLink">🔗 Copiar enlace</button>
-      <button id="btnRegen">♻️ Nuevo código</button>
-      <button class="primary" id="btnClosePair">Listo</button>
+      <button onclick="copyCode()">📋 Copiar código</button>
+      <button onclick="copyLink()">🔗 Copiar enlace</button>
+      <button onclick="regenCode()">♻️ Nuevo código</button>
+      <button class="primary" onclick="closeModal('pairModal')">Listo</button>
     </div>
+  </div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="modal" id="adminModal">
+  <div class="modal-card wide">
+    <button class="modal-close" onclick="closeModal('adminModal')">×</button>
+    <h2>⚙️ Panel de Administración</h2>
+    <p style="text-align:center">Gestiona tu empresa, usuarios, conductores y equipos</p>
+    
+    <div class="admin-tabs">
+      <div class="admin-tab active" data-admin-tab="company" onclick="switchAdminTab('company')">🏢 Empresa</div>
+      <div class="admin-tab" data-admin-tab="users" onclick="switchAdminTab('users')">👥 Usuarios</div>
+      <div class="admin-tab" data-admin-tab="drivers" onclick="switchAdminTab('drivers')">🚛 Conductores</div>
+      <div class="admin-tab" data-admin-tab="equipment" onclick="switchAdminTab('equipment')">🚜 Equipos</div>
+    </div>
+    
+    <!-- Tab Empresa -->
+    <div class="admin-section active" id="admin-company">
+      <div class="admin-form">
+        <h4>Información Legal y de Contacto</h4>
+        <div class="form-row">
+          <div class="field">
+            <label>Nombre legal de la empresa *</label>
+            <input type="text" id="adminCompanyName" placeholder="Nombre registrado" />
+          </div>
+          <div class="field">
+            <label>Nombre comercial (DBA)</label>
+            <input type="text" id="adminCompanyDBA" placeholder="Si aplica" />
+          </div>
+          <div class="field">
+            <label>Tax ID (EIN) *</label>
+            <input type="text" id="adminCompanyTaxId" placeholder="XX-XXXXXXX" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="field">
+            <label>DOT Number *</label>
+            <input type="text" id="adminCompanyDOT" placeholder="Número DOT" />
+          </div>
+          <div class="field">
+            <label>MC Number</label>
+            <input type="text" id="adminCompanyMC" placeholder="MC-XXXXXX" />
+          </div>
+          <div class="field">
+            <label>Teléfono corporativo *</label>
+            <input type="tel" id="adminCompanyPhone" placeholder="+1 (555) 000-0000" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="field">
+            <label>Email corporativo *</label>
+            <input type="email" id="adminCompanyEmail" placeholder="admin@empresa.com" />
+          </div>
+          <div class="field">
+            <label>Persona de contacto principal</label>
+            <input type="text" id="adminCompanyContact" placeholder="Nombre del contacto" />
+          </div>
+          <div class="field">
+            <label>Teléfono de contacto</label>
+            <input type="tel" id="adminCompanyContactPhone" placeholder="Directo del contacto" />
+          </div>
+        </div>
+        
+        <div class="field">
+          <label>Dirección fiscal completa</label>
+          <textarea id="adminCompanyAddress" placeholder="Dirección registrada con DOT/FMCSA"></textarea>
+        </div>
+        
+        <div class="form-row col-2">
+          <div class="field">
+            <label>Plan actual</label>
+            <select id="adminCompanyPlan">
+              <option value="starter">🚀 Starter (hasta 5 conductores)</option>
+              <option value="pro">⭐ Pro (ilimitado)</option>
+              <option value="enterprise">🏢 Enterprise</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>ID de empresa</label>
+            <input type="text" id="adminCompanyId" readonly style="color:var(--muted)" />
+          </div>
+        </div>
+        <button class="btn-primary" onclick="saveCompanyInfo()" style="width:auto;padding:10px 24px;margin-top:10px">💾 Guardar cambios</button>
+      </div>
+      
+      <div class="admin-form">
+        <h4>Flotas Activas</h4>
+        <div id="adminFleetsList" style="margin-bottom:16px">
+          <div class="empty">Cargando flotas...</div>
+        </div>
+        <button class="btn-secondary" onclick="createNewFleet()" style="width:auto;display:inline-block;padding:8px 16px;font-size:13px">
+          ➕ Nueva Flota
+        </button>
+      </div>
+    </div>
+    
+    <!-- Tab Usuarios -->
+    <div class="admin-section" id="admin-users">
+      <div class="admin-form">
+        <h4>Agregar Nuevo Usuario</h4>
+        <div class="form-row">
+          <div class="field">
+            <label>Nombre completo *</label>
+            <input type="text" id="newUserName" placeholder="Juan Pérez" />
+          </div>
+          <div class="field">
+            <label>Email *</label>
+            <input type="email" id="newUserEmail" placeholder="usuario@empresa.com" />
+          </div>
+          <div class="field">
+            <label>Rol *</label>
+            <select id="newUserRole">
+              <option value="admin">👑 Administrador (acceso total)</option>
+              <option value="dispatcher">📡 Dispatcher (gestión de flotas)</option>
+              <option value="viewer">👁️ Viewer (solo lectura)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row col-2">
+          <div class="field">
+            <label>Contraseña temporal *</label>
+            <input type="text" id="newUserPass" value="TempPass123" />
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end">
+            <button class="btn-primary" onclick="addNewUser()" style="width:auto;padding:10px 24px">➕ Crear usuario</button>
+          </div>
+        </div>
+      </div>
+      
+      <h4 class="section-title">Usuarios Registrados</h4>
+      <div style="overflow-x:auto">
+        <table class="admin-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr><td colspan="5" style="text-align:center">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Tab Conductores -->
+    <div class="admin-section" id="admin-drivers">
+      <div class="admin-form">
+        <h4>Registrar Nuevo Conductor</h4>
+        <div class="form-row">
+          <div class="field">
+            <label>Nombre completo *</label>
+            <input type="text" id="newDriverName" placeholder="Nombre del conductor" />
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="newDriverEmail" placeholder="conductor@email.com" />
+          </div>
+          <div class="field">
+            <label>Teléfono celular *</label>
+            <input type="tel" id="newDriverPhone" placeholder="+1 (555) 000-0000" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="field">
+            <label>Número de CDL *</label>
+            <input type="text" id="newDriverCDL" placeholder="Licencia de conducir" />
+          </div>
+          <div class="field">
+            <label>Estado de emisión CDL</label>
+            <input type="text" id="newDriverCDLState" placeholder="Ej: TX, CA, FL" maxlength="2" />
+          </div>
+          <div class="field">
+            <label>Fecha expiración CDL *</label>
+            <input type="date" id="newDriverCDLExpiry" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="field">
+            <label>DOT Medical Card Number</label>
+            <input type="text" id="newDriverMedical" placeholder="Número de medical card" />
+          </div>
+          <div class="field">
+            <label>Fecha expiración Medical Card *</label>
+            <input type="date" id="newDriverMedicalExpiry" />
+          </div>
+          <div class="field">
+            <label>Tipo de licencia</label>
+            <select id="newDriverLicenseType">
+              <option value="CDL-A">CDL Clase A</option>
+              <option value="CDL-B">CDL Clase B</option>
+              <option value="CDL-C">CDL Clase C</option>
+              <option value="Non-CDL">No CDL</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="field">
+            <label>Dirección</label>
+            <input type="text" id="newDriverAddress" placeholder="Dirección del conductor" />
+          </div>
+          <div class="field">
+            <label>Fecha de nacimiento</label>
+            <input type="date" id="newDriverDOB" />
+          </div>
+          <div class="field">
+            <label>Fecha de contratación</label>
+            <input type="date" id="newDriverHireDate" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="field">
+            <label>Emergencia - Nombre contacto</label>
+            <input type="text" id="newDriverEmergencyName" placeholder="Contacto de emergencia" />
+          </div>
+          <div class="field">
+            <label>Emergencia - Teléfono</label>
+            <input type="tel" id="newDriverEmergencyPhone" placeholder="Teléfono emergencia" />
+          </div>
+          <div class="field">
+            <label>Relación</label>
+            <input type="text" id="newDriverEmergencyRelation" placeholder="Esposa, Padre, etc." />
+          </div>
+        </div>
+        
+        <div class="field">
+          <label>Notas adicionales</label>
+          <textarea id="newDriverNotes" placeholder="Restricciones médicas, historial, etc."></textarea>
+        </div>
+        
+        <button class="btn-primary" onclick="registerNewDriver()" style="width:auto;padding:10px 24px">🚛 Registrar conductor</button>
+      </div>
+      
+      <h4 class="section-title">Alertas de Vencimientos</h4>
+      <div id="expiryAlerts" style="margin-bottom:20px"></div>
+      
+      <h4 class="section-title">Conductores Registrados</h4>
+      <div style="overflow-x:auto">
+        <table class="admin-table" id="driversTable">
+          <thead>
+            <tr>
+              <th>Conductor</th>
+              <th>CDL/Expira</th>
+              <th>Medical/Expira</th>
+              <th>Contacto</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="driversTableBody">
+            <tr><td colspan="6" style="text-align:center">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Tab Equipos -->
+    <div class="admin-section" id="admin-equipment">
+      <div class="admin-form">
+        <h4>Registrar Nuevo Equipo (Camión/Tractor)</h4>
+        <div class="form-row">
+          <div class="field">
+            <label>Marca *</label>
+            <select id="newEquipMake">
+              <option value="">Seleccionar marca...</option>
+              <option value="Freightliner">Freightliner</option>
+              <option value="Peterbilt">Peterbilt</option>
+              <option value="Kenworth">Kenworth</option>
+              <option value="Volvo">Volvo</option>
+              <option value="Mack">Mack</option>
+              <option value="International">International</option>
+              <option value="Western Star">Western Star</option>
+              <option value="Ford">Ford</option>
+              <option value="Chevrolet">Chevrolet</option>
+              <option value="Dodge">Dodge</option>
+              <option value="Otro">Otro (especificar en modelo)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Modelo *</label>
+            <input type="text" id="newEquipModel" placeholder="Ej: Cascadia, 389, T680" />
+          </div>
+          <div class="field">
+            <label>Año</label>
+            <input type="number" id="newEquipYear" placeholder="2024" min="1980" max="2030" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="field">
+            <label>Número de Unidad *</label>
+            <input type="text" id="newEquipUnit" placeholder="Ej: UNIT-001, TRUCK-45" />
+          </div>
+          <div class="field">
+            <label>VIN *</label>
+            <input type="text" id="newEquipVIN" placeholder="Número de serie completo" maxlength="17" />
+          </div>
+          <div class="field">
+            <label>Placa *</label>
+            <input type="text" id="newEquipPlate" placeholder="ABC-1234" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="field">
+            <label>Estado de registro de la placa</label>
+            <input type="text" id="newEquipPlateState" placeholder="Ej: TX" maxlength="2" />
+          </div>
+          <div class="field">
+            <label>Fecha vencimiento placa *</label>
+            <input type="date" id="newEquipPlateExpiry" />
+          </div>
+          <div class="field">
+            <label>Fecha vencimiento Inspección Anual</label>
+            <input type="date" id="newEquipInspectionExpiry" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="field">
+            <label>Color</label>
+            <input type="text" id="newEquipColor" placeholder="Ej: Blanco, Azul" />
+          </div>
+          <div class="field">
+            <label>Tipo de combustible</label>
+            <select id="newEquipFuel">
+              <option value="diesel">Diesel</option>
+              <option value="gasolina">Gasolina</option>
+              <option value="electrico">Eléctrico</option>
+              <option value="hibrido">Híbrido</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Conductor asignado</label>
+            <select id="newEquipDriver">
+              <option value="">Sin asignar</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="field">
+          <label>Notas / Observaciones</label>
+          <textarea id="newEquipNotes" placeholder="Problemas mecánicos conocidos, modificaciones, etc."></textarea>
+        </div>
+        
+        <button class="btn-primary" onclick="registerNewEquipment()" style="width:auto;padding:10px 24px">🚜 Registrar equipo</button>
+      </div>
+      
+      <h4 class="section-title">Alertas de Vencimientos (Equipos)</h4>
+      <div id="equipmentExpiryAlerts" style="margin-bottom:20px"></div>
+      
+      <h4 class="section-title">Equipos Registrados</h4>
+      <div style="overflow-x:auto">
+        <table class="admin-table" id="equipmentTable">
+          <thead>
+            <tr>
+              <th>Unidad</th>
+              <th>Vehículo</th>
+              <th>Placa/Vence</th>
+              <th>Conductor</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="equipmentTableBody">
+            <tr><td colspan="6" style="text-align:center">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT DRIVER MODAL -->
+<div class="modal" id="editDriverModal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal('editDriverModal')">×</button>
+    <h2>✏️ Editar Conductor</h2>
+    <input type="hidden" id="editDriverId" />
+    <div class="form-row">
+      <div class="field">
+        <label>Nombre</label>
+        <input type="text" id="editDriverName" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="editDriverEmail" />
+      </div>
+      <div class="field">
+        <label>Teléfono</label>
+        <input type="tel" id="editDriverPhone" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>CDL Number</label>
+        <input type="text" id="editDriverCDL" />
+      </div>
+      <div class="field">
+        <label>Expiración CDL</label>
+        <input type="date" id="editDriverCDLExpiry" />
+      </div>
+      <div class="field">
+        <label>Medical Card Exp.</label>
+        <input type="date" id="editDriverMedicalExpiry" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Tipo Licencia</label>
+        <select id="editDriverLicenseType">
+          <option value="CDL-A">CDL Clase A</option>
+          <option value="CDL-B">CDL Clase B</option>
+          <option value="CDL-C">CDL Clase C</option>
+          <option value="Non-CDL">No CDL</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Dirección</label>
+        <input type="text" id="editDriverAddress" />
+      </div>
+      <div class="field">
+        <label>Estado</label>
+        <select id="editDriverStatus">
+          <option value="active">Activo</option>
+          <option value="inactive">Inactivo</option>
+          <option value="terminated">Despedido</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Notas</label>
+      <textarea id="editDriverNotes"></textarea>
+    </div>
+    <button class="btn-primary" onclick="updateDriver()" style="width:100%">💾 Guardar cambios</button>
+  </div>
+</div>
+
+<!-- EDIT EQUIPMENT MODAL -->
+<div class="modal" id="editEquipModal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal('editEquipModal')">×</button>
+    <h2>✏️ Editar Equipo</h2>
+    <input type="hidden" id="editEquipId" />
+    <div class="form-row">
+      <div class="field">
+        <label>Marca</label>
+        <select id="editEquipMake">
+          <option value="Freightliner">Freightliner</option>
+          <option value="Peterbilt">Peterbilt</option>
+          <option value="Kenworth">Kenworth</option>
+          <option value="Volvo">Volvo</option>
+          <option value="Mack">Mack</option>
+          <option value="International">International</option>
+          <option value="Western Star">Western Star</option>
+          <option value="Ford">Ford</option>
+          <option value="Chevrolet">Chevrolet</option>
+          <option value="Dodge">Dodge</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Modelo</label>
+        <input type="text" id="editEquipModel" />
+      </div>
+      <div class="field">
+        <label>Año</label>
+        <input type="number" id="editEquipYear" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Número Unidad</label>
+        <input type="text" id="editEquipUnit" />
+      </div>
+      <div class="field">
+        <label>Placa</label>
+        <input type="text" id="editEquipPlate" />
+      </div>
+      <div class="field">
+        <label>Vencimiento Placa</label>
+        <input type="date" id="editEquipPlateExpiry" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Conductor Asignado</label>
+        <select id="editEquipDriver"></select>
+      </div>
+      <div class="field">
+        <label>Estado</label>
+        <select id="editEquipStatus">
+          <option value="active">Activo</option>
+          <option value="maintenance">En mantenimiento</option>
+          <option value="retired">Retirado</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Vencimiento Inspección</label>
+        <input type="date" id="editEquipInspectionExpiry" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Notas</label>
+      <textarea id="editEquipNotes"></textarea>
+    </div>
+    <button class="btn-primary" onclick="updateEquipment()" style="width:100%">💾 Guardar cambios</button>
   </div>
 </div>
 
@@ -507,6 +1094,62 @@ function emailToId(email){
     .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 }
 
+// ── Exponer funciones globales para onclick ───────────────────
+window.selectPlan = (el, plan) => {
+  document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  window.selectedPlan = plan;
+};
+
+window.closeModal = (modalId) => {
+  document.getElementById(modalId).classList.remove('show');
+};
+
+window.switchAdminTab = (tabName) => {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.admin-tab[data-admin-tab="${tabName}"]`)?.classList.add('active');
+  document.getElementById(`admin-${tabName}`).classList.add('active');
+  
+  if(tabName === 'equipment') loadEquipment();
+  if(tabName === 'drivers') loadDrivers();
+  if(tabName === 'users') loadUsers();
+  if(tabName === 'company') loadAdminData();
+};
+
+window.copyCode = () => {
+  if(!window.FLEET_ID) return toast('No hay código para copiar');
+  navigator.clipboard.writeText(window.FLEET_ID); 
+  toast('Código copiado'); 
+};
+
+window.copyLink = () => { 
+  const link = document.getElementById('pairLink').textContent;
+  if(!link || link === '— — —') return toast('No hay enlace para copiar');
+  navigator.clipboard.writeText(link); 
+  toast('Enlace copiado'); 
+};
+
+window.regenCode = async () => {
+  if(!confirm('Generar nuevo código desconectará a los móviles actuales. ¿Continuar?')) return;
+  if(!window.COMPANY_ID) return toast('Sin sesión de empresa activa');
+  const newCode = makeFleetCode();
+  await set(ref(db, `companies/${window.COMPANY_ID}/fleets/${newCode}`), { createdAt: Date.now(), name: 'Flota principal' });
+  const s = getSession();
+  const saltF = randomSalt();
+  const meta = (await get(ref(db, `companies/${window.COMPANY_ID}/meta`))).val()||{};
+  await set(ref(db, `fleets/${newCode}/auth`), { salt:saltF, hash:'', company:meta.company||'', companyId:window.COMPANY_ID, email:s?.email||'', createdAt:Date.now() });
+  await set(ref(db, `fleets/${newCode}/meta`), { company:meta.company||'', companyId:window.COMPANY_ID, name:'Flota principal', createdAt:Date.now() });
+  window.FLEET_ID = newCode;
+  document.getElementById('fleetLabel').textContent = window.FLEET_ID;
+  const sUp = getSession(); if(sUp){ sUp.fleet=newCode; setSession(sUp); }
+  drivers.clear(); locations.clear(); trails.clear();
+  [...markers.keys()].forEach(clearMarker);
+  renderList();
+  listenFleet();
+  showPairModal();
+};
+
 // ── Sesión ────────────────────────────────────────────────────
 function setSession(data){ localStorage.setItem('hos_company_session', JSON.stringify(data)); }
 function getSession(){
@@ -515,9 +1158,10 @@ function getSession(){
 function clearSession(){ localStorage.removeItem('hos_company_session'); }
 
 // ── Estado global ─────────────────────────────────────────────
-let selectedPlan = 'starter';
-let FLEET_ID     = null;
-let COMPANY_ID   = null;
+window.selectedPlan = 'starter';
+window.FLEET_ID     = null;
+window.COMPANY_ID   = null;
+window.CURRENT_USER = null;
 const DISPATCH_ID = localStorage.getItem('dispatch_id') || ('disp_' + Math.random().toString(36).slice(2,10));
 localStorage.setItem('dispatch_id', DISPATCH_ID);
 
@@ -527,13 +1171,6 @@ function showErr(msg){ errBox.textContent=msg; errBox.classList.add('show'); set
 function clearErr(){ errBox.classList.remove('show'); }
 function setBusy(btn,msg){ btn._orig=btn.textContent; btn.disabled=true; btn.textContent=msg||'Procesando…'; }
 function resetBtn(btn){ btn.disabled=false; btn.textContent=btn._orig; }
-
-// Exponer para onclick en HTML dinámico
-window.selectPlan = (el, plan) => {
-  document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedPlan = plan;
-};
 
 // ── Tabs de login ─────────────────────────────────────────────
 document.querySelectorAll('.tab-login').forEach(t => t.addEventListener('click', ()=>{
@@ -552,49 +1189,37 @@ document.querySelectorAll('.tab-login').forEach(t => t.addEventListener('click',
     try {
       const snap = await get(ref(db, `companies/${session.companyId}/auth`));
       if(snap.exists()){
-        COMPANY_ID = session.companyId;
+        window.COMPANY_ID = session.companyId;
+        window.CURRENT_USER = { email: session.email, role: session.userRole || 'admin', name: session.company };
         
-        // Obtener la primera flota de la empresa (o crear una si no existe)
         const fleetsSnap = await get(ref(db, `companies/${session.companyId}/fleets`));
         if(fleetsSnap.exists() && fleetsSnap.val()){
-          FLEET_ID = Object.keys(fleetsSnap.val())[0];
-          console.log('[Session] Flota cargada:', FLEET_ID);
+          window.FLEET_ID = Object.keys(fleetsSnap.val())[0];
         } else {
-          // 🚨 NO HAY FLOTAS: Crear una automáticamente
-          console.warn('[Session] No hay flotas, creando una nueva...');
           const newFleetCode = makeFleetCode();
           const meta = (await get(ref(db, `companies/${session.companyId}/meta`))).val() || {};
-          
-          // Crear la flota en la empresa
           await set(ref(db, `companies/${session.companyId}/fleets/${newFleetCode}`), {
             createdAt: Date.now(), 
             name: 'Flota principal'
           });
-          
-          // Crear el auth de la flota
           const saltF = randomSalt();
           await set(ref(db, `fleets/${newFleetCode}/auth`), {
             salt: saltF,
             hash: '', 
             company: meta.company || '',
-            companyId: COMPANY_ID,
+            companyId: window.COMPANY_ID,
             email: session.email || '',
             createdAt: Date.now()
           });
-          
-          // Crear el meta de la flota
           await set(ref(db, `fleets/${newFleetCode}/meta`), {
             company: meta.company || '',
-            companyId: COMPANY_ID,
+            companyId: window.COMPANY_ID,
             name: 'Flota principal',
             createdAt: Date.now()
           });
-          
-          FLEET_ID = newFleetCode;
-          // Actualizar sesión
-          session.fleet = FLEET_ID;
+          window.FLEET_ID = newFleetCode;
+          session.fleet = window.FLEET_ID;
           setSession(session);
-          
           toast('🆕 Se creó automáticamente una nueva flota');
         }
         
@@ -604,7 +1229,6 @@ document.querySelectorAll('.tab-login').forEach(t => t.addEventListener('click',
       }
     } catch(e){ 
       console.warn('Session check failed', e); 
-      toast('Error al verificar sesión: ' + e.message);
     }
   }
 })();
@@ -625,12 +1249,63 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
     const companyId = emailToId(email);
     const snap = await Promise.race([
       get(ref(db, `companies/${companyId}/auth`)),
-      new Promise((_,rej) => setTimeout(()=>rej(new Error('Timeout — sin respuesta de Firebase')), 12000))
+      new Promise((_,rej) => setTimeout(()=>rej(new Error('Timeout')), 12000))
     ]);
 
     if(!snap.exists()){
+      // Verificar si es usuario secundario
+      const companiesSnap = await get(ref(db, 'companies'));
+      let foundUser = null;
+      let foundCompany = null;
+      
+      if(companiesSnap.exists()){
+        for(const [cid, company] of Object.entries(companiesSnap.val())){
+          if(company.users){
+            for(const [uid, udata] of Object.entries(company.users)){
+              if(udata.email?.toLowerCase() === email){
+                foundUser = { ...udata, id: uid };
+                foundCompany = cid;
+                break;
+              }
+            }
+          }
+          if(foundUser) break;
+        }
+      }
+      
+      if(!foundUser){
+        resetBtn(btn);
+        return showErr('No existe una empresa o usuario con ese email.');
+      }
+      
+      const userHash = await hashPassword(pass, foundUser.salt);
+      if(userHash !== foundUser.hash){
+        resetBtn(btn);
+        return showErr('Contraseña incorrecta');
+      }
+      
+      window.COMPANY_ID = foundCompany;
+      window.CURRENT_USER = { email: foundUser.email, role: foundUser.role, name: foundUser.name };
+      
+      const fleetsSnap = await get(ref(db, `companies/${foundCompany}/fleets`));
+      if(fleetsSnap.exists()){
+        window.FLEET_ID = Object.keys(fleetsSnap.val())[0];
+      }
+      
+      const sessionData = {
+        companyId: foundCompany, 
+        email,
+        company:  foundUser.company || '',
+        plan:     'starter',
+        fleet:    window.FLEET_ID,
+        token:    await sha256(userHash + '|' + Date.now()),
+        loginAt:  Date.now(),
+        userRole: foundUser.role
+      };
+      setSession(sessionData);
+      enterDashboard(sessionData);
       resetBtn(btn);
-      return showErr('No existe una empresa con ese email. Usa la pestaña "Registrar empresa".');
+      return;
     }
 
     const auth = snap.val();
@@ -644,14 +1319,12 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
     const metaSnap = await get(ref(db, `companies/${companyId}/meta`));
     const meta = metaSnap.val() || {};
 
-    // Obtener la primera flota o crear una si no existe
     const fleetsSnap = await get(ref(db, `companies/${companyId}/fleets`));
     let fleetKey = null;
     
     if(fleetsSnap.exists() && fleetsSnap.val()){
       fleetKey = Object.keys(fleetsSnap.val())[0];
     } else {
-      // Crear flota automáticamente
       fleetKey = makeFleetCode();
       await set(ref(db, `companies/${companyId}/fleets/${fleetKey}`), {
         createdAt: Date.now(), 
@@ -681,24 +1354,23 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
       plan:     meta.plan     || 'starter',
       fleet:    fleetKey,
       token:    await sha256(hash + '|' + Date.now()),
-      loginAt:  Date.now()
+      loginAt:  Date.now(),
+      userRole: 'admin'
     };
     setSession(sessionData);
-    COMPANY_ID = companyId;
-    FLEET_ID   = fleetKey;
+    window.COMPANY_ID = companyId;
+    window.FLEET_ID   = fleetKey;
+    window.CURRENT_USER = { email, role: 'admin', name: meta.company || auth.company };
     enterDashboard(sessionData);
 
   } catch(e) {
     resetBtn(btn);
     console.error('[Login]', e);
-    if(/permission/i.test(e.message||''))
-      showErr('❌ Firebase bloqueó el acceso. Verifica las reglas de seguridad.');
-    else
-      showErr('Error: ' + (e.message||e));
+    showErr('Error: ' + (e.message||e));
   }
 });
 
-// ── REGISTRO — Paso 1 ─────────────────────────────────────────
+// ── REGISTRO ─────────────────────────────────────────────────
 document.getElementById('btnStep1').addEventListener('click', ()=>{
   const company = document.getElementById('regCompany').value.trim();
   const email   = document.getElementById('regEmail').value.trim().toLowerCase();
@@ -715,7 +1387,6 @@ document.getElementById('btnBack1').addEventListener('click', ()=>{
   clearErr();
 });
 
-// ── REGISTRO — Paso 2 ─────────────────────────────────────────
 document.getElementById('btnStep2').addEventListener('click', async ()=>{
   const btn     = document.getElementById('btnStep2');
   const p1      = document.getElementById('regPass').value;
@@ -732,27 +1403,23 @@ document.getElementById('btnStep2').addEventListener('click', async ()=>{
 
   try {
     const companyId = emailToId(email);
-
-    const existing = await Promise.race([
-      get(ref(db, `companies/${companyId}/auth`)),
-      new Promise((_,rej) => setTimeout(()=>rej(new Error('Timeout')), 10000))
-    ]);
+    const existing = await get(ref(db, `companies/${companyId}/auth`));
     if(existing.exists()){
       resetBtn(btn);
-      return showErr('Ya existe una empresa con ese email. Usa la pestaña "Iniciar sesión".');
+      return showErr('Ya existe una empresa con ese email.');
     }
 
     const salt = randomSalt();
     const hash = await hashPassword(p1, salt);
     const firstFleetCode = makeFleetCode();
 
-    await Promise.race([
-      set(ref(db, `companies/${companyId}/auth`), { email, company, salt, hash, createdAt: Date.now() }),
-      new Promise((_,rej) => setTimeout(()=>rej(new Error('Timeout escribiendo auth')), 10000))
-    ]);
+    await set(ref(db, `companies/${companyId}/auth`), { 
+      email, company, salt, hash, createdAt: Date.now() 
+    });
 
     await set(ref(db, `companies/${companyId}/meta`), {
-      company, email, phone: phone||'', plan: selectedPlan, createdAt: Date.now(), status: 'active'
+      company, email, phone: phone||'', plan: window.selectedPlan, 
+      createdAt: Date.now(), status: 'active'
     });
 
     await set(ref(db, `companies/${companyId}/fleets/${firstFleetCode}`), {
@@ -760,9 +1427,8 @@ document.getElementById('btnStep2').addEventListener('click', async ()=>{
     });
 
     const saltF = randomSalt();
-    const hashF = await hashPassword(p1, saltF);
     await set(ref(db, `fleets/${firstFleetCode}/auth`), {
-      salt: saltF, hash: hashF, company, companyId, email, createdAt: Date.now()
+      salt: saltF, hash: '', company, companyId, email, createdAt: Date.now()
     });
     await set(ref(db, `fleets/${firstFleetCode}/meta`), {
       company, companyId, name: 'Flota principal', createdAt: Date.now()
@@ -770,14 +1436,16 @@ document.getElementById('btnStep2').addEventListener('click', async ()=>{
 
     const sessionData = {
       companyId, email, company,
-      plan:    selectedPlan,
+      plan:    window.selectedPlan,
       fleet:   firstFleetCode,
       token:   await sha256(hash+'|'+Date.now()),
-      loginAt: Date.now()
+      loginAt:  Date.now(),
+      userRole: 'admin'
     };
     setSession(sessionData);
-    COMPANY_ID = companyId;
-    FLEET_ID   = firstFleetCode;
+    window.COMPANY_ID = companyId;
+    window.FLEET_ID   = firstFleetCode;
+    window.CURRENT_USER = { email, role: 'admin', name: company };
 
     document.getElementById('regStep2').classList.add('hidden');
     document.getElementById('regStep3').classList.remove('hidden');
@@ -798,20 +1466,20 @@ document.getElementById('btnStep2').addEventListener('click', async ()=>{
 
   } catch(e) {
     resetBtn(btn);
-    console.error('[Register]', e);
-    if(/permission/i.test(e.message||''))
-      showErr('❌ Firebase bloqueó la escritura. Verifica las reglas de seguridad.');
-    else
-      showErr('Error al registrar: ' + (e.message||e));
+    showErr('Error al registrar: ' + (e.message||e));
   }
 });
 
 window._enterDashboardFromSession = () => {
   const s = getSession();
-  if(s){ COMPANY_ID=s.companyId; FLEET_ID=s.fleet; enterDashboard(s); }
+  if(s){ 
+    window.COMPANY_ID=s.companyId; 
+    window.FLEET_ID=s.fleet; 
+    window.CURRENT_USER = { email: s.email, role: s.userRole || 'admin', name: s.company };
+    enterDashboard(s); 
+  }
 };
 
-// ── Olvidé contraseña ─────────────────────────────────────────
 document.getElementById('linkForgot').addEventListener('click', ()=>{
   alert('Para recuperar tu contraseña, contacta al administrador del sistema.');
 });
@@ -823,21 +1491,25 @@ function enterDashboard(data){
   app.classList.remove('hidden');
   app.style.display = 'grid';
   document.getElementById('companyLabel').textContent = data.company || data.email || '—';
-  document.getElementById('fleetLabel').textContent   = FLEET_ID   || '—';
+  document.getElementById('fleetLabel').textContent   = window.FLEET_ID   || '—';
   
-  // Mostrar botón de reconectar si no hay flota
   const btnReconnect = document.getElementById('btnReconnect');
-  if(!FLEET_ID && btnReconnect){
+  if(!window.FLEET_ID && btnReconnect){
     btnReconnect.classList.remove('hidden');
   } else if(btnReconnect){
     btnReconnect.classList.add('hidden');
   }
   
+  if(data.userRole === 'viewer'){
+    document.getElementById('btnAdmin').style.display = 'none';
+    document.getElementById('btnBroadcast').style.display = 'none';
+  }
+  
   setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} }, 100);
   initDashboard();
+  loadAdminData();
 }
 
-// ── Logout ────────────────────────────────────────────────────
 document.getElementById('logoutBtn').addEventListener('click', ()=>{
   if(!confirm('¿Cerrar sesión?')) return;
   clearSession();
@@ -845,16 +1517,13 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
 });
 
 // ════════════════════════════════════════════════════
-// MAPA
+// MAPA Y ESTADO (igual que antes)
 // ════════════════════════════════════════════════════
 const map = L.map('map', { zoomControl:true }).setView([39.8283, -98.5795], 4);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap', maxZoom: 19
 }).addTo(map);
 
-// ════════════════════════════════════════════════════
-// ESTADO
-// ════════════════════════════════════════════════════
 const drivers   = new Map();
 const locations = new Map();
 const trails    = new Map();
@@ -864,9 +1533,6 @@ let selectedId = null;
 let showTrail  = false;
 let allEvents  = [];
 
-// ════════════════════════════════════════════════════
-// MARCADORES
-// ════════════════════════════════════════════════════
 function truckIcon(driver, loc){
   const emoji = driver.truckEmoji || '🚛';
   const online = driver.online;
@@ -905,26 +1571,20 @@ function clearMarker(userId){
   const p = polylines.get(userId); if(p){ map.removeLayer(p); polylines.delete(userId); }
 }
 
-// ════════════════════════════════════════════════════
-// LISTENERS FIREBASE
-// ════════════════════════════════════════════════════
 function listenFleet(){
-  if(!FLEET_ID) {
-    console.error('No se puede escuchar flota: FLEET_ID es null');
+  if(!window.FLEET_ID) {
     document.getElementById('connStatus').textContent = '🔴 sin flota';
     document.getElementById('btnReconnect')?.classList.remove('hidden');
     return;
   }
   
-  const fleetPath = `fleets/${FLEET_ID}`;
+  const fleetPath = `fleets/${window.FLEET_ID}`;
   document.getElementById('connStatus').textContent = '🟡 conectando…';
-  console.log('[Dispatcher] Escuchando', fleetPath);
 
   const dispRef = ref(db, `${fleetPath}/dispatchers/${DISPATCH_ID}`);
   set(dispRef, { online: true, lastSeen: serverTimestamp(), name: 'Dispatcher' }).catch(e=>{
-    console.error('[Dispatcher] No pudo escribir presencia:', e);
     document.getElementById('connStatus').textContent = '🔴 permisos bloqueados';
-    toast('❌ Firebase bloqueó la escritura. Verifica las reglas.');
+    toast('❌ Firebase bloqueó la escritura.');
   });
   onDisconnect(dispRef).update({ online: false, lastSeen: serverTimestamp() });
 
@@ -936,9 +1596,6 @@ function listenFleet(){
     renderList();
     if(selectedId && drivers.has(selectedId)) renderDetail();
     document.getElementById('connStatus').textContent = '🟢 conectado';
-  }, err=>{
-    console.error('[Dispatcher] Error:', err);
-    document.getElementById('connStatus').textContent = '🔴 ' + err.message;
   });
 
   onValue(ref(db, `${fleetPath}/locations`), (snap)=>{
@@ -963,25 +1620,10 @@ function listenFleet(){
     allEvents = Object.entries(val).map(([id,e])=>({id,...e})).sort((a,b)=>b.ts-a.ts);
     if(selectedId) renderEvents();
   });
-
-  onValue(query(ref(db, `${fleetPath}/notifications_sent`), orderByChild('ts'), limitToLast(30)), (snap)=>{
-    const val = snap.val() || {};
-    const arr = Object.values(val).sort((a,b)=>b.ts-a.ts);
-    const host = document.getElementById('notifLog');
-    if(!arr.length){ host.innerHTML=`<div class="empty">Historial de notificaciones enviadas aquí.</div>`; return; }
-    host.innerHTML = arr.map(n=>{
-      const d = drivers.get(n.to);
-      const name = d?.name || (n.to==='*'?'TODA LA FLOTA':n.to);
-      return `<div class="notif-item">
-        <div class="meta"><span>${escapeHtml(name)} · ${n.type}</span><span>${fmtTime(n.ts)}</span></div>
-        <div>${escapeHtml(n.text)}</div>
-      </div>`;
-    }).join('');
-  });
 }
 
 // ════════════════════════════════════════════════════
-// RENDER
+// RENDER (simplificado)
 // ════════════════════════════════════════════════════
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtTime(ts){
@@ -1001,8 +1643,7 @@ function renderList(){
       if(!q) return true;
       return (d.name||'').toLowerCase().includes(q)
           || (d.truckType||'').toLowerCase().includes(q)
-          || (d.plate||'').toLowerCase().includes(q)
-          || (d.state||'').toLowerCase().includes(q);
+          || (d.plate||'').toLowerCase().includes(q);
     })
     .sort((a,b)=>{
       const ao=a.d.online?0:1, bo=b.d.online?0:1;
@@ -1027,13 +1668,12 @@ function renderList(){
           <div class="meta">
             <span class="badge">${escapeHtml(d.truckType||'truck')}</span>
             ${d.plate?`<span>🔢 ${escapeHtml(d.plate)}</span>`:''}
-            ${d.state?`<span>📍 ${escapeHtml(d.state)}</span>`:''}
             <span>🕐 ${fmtTime(d.lastSeen)}</span>
           </div>
         </div>
         <div class="speed">${speed}<small> ${unit}</small></div>
       </div>`;
-  }).join('') || `<div class="empty">Aún no hay conductores emparejados.<br><br>Pulsa <b>🔗 Emparejar móvil</b> arriba a la derecha para ver el código de conexión.</div>`;
+  }).join('') || `<div class="empty">Aún no hay conductores emparejados.<br><br>Registra conductores en <b>⚙️ Administración → Conductores</b>.</div>`;
 
   document.getElementById('driverList').innerHTML = html;
   document.querySelectorAll('.driver').forEach(el=>{
@@ -1062,70 +1702,608 @@ function renderDetail(){
   c.style.display='block';
   const d = drivers.get(selectedId);
   const l = locations.get(selectedId) || {};
-  const photo = d.photo?`<img src="${d.photo}">`:`<span>${d.truckEmoji||'🚛'}</span>`;
-  const speed = l.speed ? Math.round(l.speed) : 0;
-  const unit  = d.speedUnit||'mph';
-
+  
   c.innerHTML = `
     <div class="detail-header">
-      <div class="avatar">${photo}<div class="dot ${d.online?'online':''}"></div></div>
+      <div class="avatar"><span>${d.truckEmoji||'🚛'}</span><div class="dot ${d.online?'online':''}"></div></div>
       <div><h3>${escapeHtml(d.name||'Sin nombre')}</h3><div class="sub">${d.online?'🟢 En línea':'⚫ Offline'} · ${fmtTime(d.lastSeen)}</div></div>
     </div>
     <div class="stats">
-      <div class="stat"><div class="k">Velocidad</div><div class="v">${speed} <small style="color:var(--muted);font-size:11px">${unit}</small></div></div>
+      <div class="stat"><div class="k">Velocidad</div><div class="v">${l.speed?Math.round(l.speed):0} <small>mph</small></div></div>
       <div class="stat"><div class="k">Rumbo</div><div class="v">${l.heading!=null?Math.round(l.heading)+'°':'—'}</div></div>
-      <div class="stat"><div class="k">Precisión GPS</div><div class="v">${l.accuracy?Math.round(l.accuracy)+' m':'—'}</div></div>
-      <div class="stat"><div class="k">Altitud</div><div class="v">${l.altitude!=null?Math.round(l.altitude)+' m':'—'}</div></div>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.4px">Vehículo</div>
-    <div class="dfield"><span class="lbl">Tipo</span><span>${escapeHtml(d.truckType||'—')}</span></div>
-    <div class="dfield"><span class="lbl">Placa / Unidad</span><span>${escapeHtml(d.plate||'—')}</span></div>
-    <div class="dfield"><span class="lbl">VIN</span><span>${escapeHtml(d.vin||'—')}</span></div>
-    <div class="dfield"><span class="lbl">Remolque</span><span>${escapeHtml(d.trailer||'—')}</span></div>
-    <div class="dfield"><span class="lbl">Tipo de ruta</span><span>${escapeHtml(d.jobType||'—')}</span></div>
-    <div style="font-size:12px;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.4px">Conductor</div>
     <div class="dfield"><span class="lbl">CDL</span><span>${escapeHtml(d.cdl||'—')}</span></div>
-    <div class="dfield"><span class="lbl">Estado</span><span>${escapeHtml(d.state||'—')}</span></div>
-    <div class="dfield"><span class="lbl">Email</span><span>${escapeHtml(d.email||'—')}</span></div>
+    <div class="dfield"><span class="lbl">Placa</span><span>${escapeHtml(d.plate||'—')}</span></div>
     <div class="dfield"><span class="lbl">Teléfono</span><span>${escapeHtml(d.phone||'—')}</span></div>
-    <div style="font-size:12px;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.4px">Ubicación</div>
-    <div class="dfield"><span class="lbl">Coordenadas</span><span>${l.lat?l.lat.toFixed(5)+', '+l.lon.toFixed(5):'—'}</span></div>
-    <div class="dfield"><span class="lbl">Actualizado</span><span>${fmtTime(l.ts)}</span></div>
-    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-      ${l.lat?`<a target="_blank" href="https://www.google.com/maps?q=${l.lat},${l.lon}" style="padding:8px 12px;background:#1b2542;border:1px solid var(--line);border-radius:8px;font-size:12px">📍 Google Maps</a>`:''}
-      <button onclick="window._focus('${selectedId}')" style="padding:8px 12px;background:#1b2542;color:var(--text);border:1px solid var(--line);border-radius:8px;font-size:12px;cursor:pointer">🎯 Centrar</button>
-      <button onclick="window._pingDriver('${selectedId}')" style="padding:8px 12px;background:linear-gradient(135deg,var(--brand),#059669);color:#06211a;border:0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🔔 Ping</button>
-    </div>
+    ${window.CURRENT_USER?.role !== 'viewer' ? `
+    <button onclick="editDriverFromDetail('${selectedId}')" style="width:100%;margin-top:12px;padding:8px;background:var(--info);color:white;border:0;border-radius:8px;cursor:pointer">✏️ Editar información</button>
+    ` : ''}
   `;
 }
 
-window._focus = (uid)=>{ const l=locations.get(uid); if(l) map.setView([l.lat,l.lon],15,{animate:true}); };
-window._pingDriver = (uid)=>{ sendNotification(uid,'urgent','📣 El dispatcher te está contactando. Llama a la central.'); toast('Ping enviado'); };
+window.editDriverFromDetail = (id) => {
+  editDriver(id);
+};
 
 function renderEvents(){
   const container = document.getElementById('eventsList');
   if(!selectedId){ container.innerHTML=`<div class="empty">Selecciona un conductor.</div>`; return; }
   const list = allEvents.filter(e=>e.userId===selectedId);
   if(!list.length){ container.innerHTML=`<div class="empty">Sin eventos recientes.</div>`; return; }
-  const icons = {sos:'🚨',speed:'⚠️',stop:'🅿️',start:'▶️',login:'🔑',fuel:'⛽',other:'📌'};
-  container.innerHTML = list.slice(0,50).map(e=>`
-    <div class="event ${e.type||'other'}">
-      <div class="ico">${icons[e.type]||'📌'}</div>
+  container.innerHTML = list.slice(0,20).map(e=>`
+    <div class="event">
+      <div class="ico">📌</div>
       <div style="flex:1">
         <div>${escapeHtml(e.text||e.type||'Evento')}</div>
-        <div class="ts">${new Date(e.ts).toLocaleString()}${e.lat?` · ${e.lat.toFixed(3)},${e.lon.toFixed(3)}`:''}</div>
+        <div class="ts">${new Date(e.ts).toLocaleString()}</div>
       </div>
     </div>`).join('');
 }
 
+function switchTab(name){
+  document.querySelectorAll('.rtab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  document.getElementById('tab-detail').classList.toggle('hidden', name!=='detail');
+  document.getElementById('tab-notify').classList.toggle('hidden', name!=='notify');
+  document.getElementById('tab-events').classList.toggle('hidden', name!=='events');
+}
+document.querySelectorAll('.rtab').forEach(t=>t.addEventListener('click', ()=>switchTab(t.dataset.tab)));
+
 // ════════════════════════════════════════════════════
-// NOTIFICACIONES
+// FUNCIONES ADMIN (EXPUESTAS GLOBALMENTE)
+// ════════════════════════════════════════════════════
+
+window.loadAdminData = async () => {
+  if(!window.COMPANY_ID) return;
+  
+  const metaSnap = await get(ref(db, `companies/${window.COMPANY_ID}/meta`));
+  if(metaSnap.exists()){
+    const meta = metaSnap.val();
+    document.getElementById('adminCompanyName').value = meta.company || '';
+    document.getElementById('adminCompanyDBA').value = meta.dba || '';
+    document.getElementById('adminCompanyTaxId').value = meta.taxId || '';
+    document.getElementById('adminCompanyDOT').value = meta.dotNumber || '';
+    document.getElementById('adminCompanyMC').value = meta.mcNumber || '';
+    document.getElementById('adminCompanyPhone').value = meta.phone || '';
+    document.getElementById('adminCompanyEmail').value = meta.email || '';
+    document.getElementById('adminCompanyContact').value = meta.contactPerson || '';
+    document.getElementById('adminCompanyContactPhone').value = meta.contactPhone || '';
+    document.getElementById('adminCompanyAddress').value = meta.address || '';
+    document.getElementById('adminCompanyPlan').value = meta.plan || 'starter';
+    document.getElementById('adminCompanyId').value = window.COMPANY_ID;
+  }
+  
+  const fleetsSnap = await get(ref(db, `companies/${window.COMPANY_ID}/fleets`));
+  const fleetsDiv = document.getElementById('adminFleetsList');
+  if(fleetsSnap.exists()){
+    const fleets = fleetsSnap.val();
+    fleetsDiv.innerHTML = Object.entries(fleets).map(([code, data]) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#0c1430;border:1px solid var(--line);border-radius:8px;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700">${data.name || 'Flota sin nombre'}</div>
+          <div style="font-size:12px;color:var(--muted);font-family:monospace">Código: ${code}</div>
+        </div>
+        <button class="btn-tiny" onclick="navigator.clipboard.writeText('${code}');toast('Código copiado')">📋 Copiar</button>
+      </div>
+    `).join('');
+  } else {
+    fleetsDiv.innerHTML = '<div class="empty">No hay flotas registradas</div>';
+  }
+};
+
+window.saveCompanyInfo = async () => {
+  if(!window.COMPANY_ID) return;
+  const data = {
+    company: document.getElementById('adminCompanyName').value,
+    dba: document.getElementById('adminCompanyDBA').value,
+    taxId: document.getElementById('adminCompanyTaxId').value,
+    dotNumber: document.getElementById('adminCompanyDOT').value,
+    mcNumber: document.getElementById('adminCompanyMC').value,
+    phone: document.getElementById('adminCompanyPhone').value,
+    email: document.getElementById('adminCompanyEmail').value,
+    contactPerson: document.getElementById('adminCompanyContact').value,
+    contactPhone: document.getElementById('adminCompanyContactPhone').value,
+    address: document.getElementById('adminCompanyAddress').value,
+    plan: document.getElementById('adminCompanyPlan').value,
+    updatedAt: Date.now()
+  };
+  
+  try {
+    await update(ref(db, `companies/${window.COMPANY_ID}/meta`), data);
+    document.getElementById('companyLabel').textContent = data.company;
+    toast('✅ Información de empresa actualizada');
+  } catch(e){
+    toast('❌ Error al guardar: ' + e.message);
+  }
+};
+
+window.createNewFleet = async () => {
+  const name = prompt('Nombre de la nueva flota:', 'Flota Secundaria');
+  if(!name) return;
+  const code = makeFleetCode();
+  await set(ref(db, `companies/${window.COMPANY_ID}/fleets/${code}`), {
+    name, createdAt: Date.now()
+  });
+  await set(ref(db, `fleets/${code}/meta`), {
+    company: document.getElementById('adminCompanyName').value,
+    companyId: window.COMPANY_ID,
+    name,
+    createdAt: Date.now()
+  });
+  toast(`✅ Flota "${name}" creada: ${code}`);
+  loadAdminData();
+};
+
+// USUARIOS
+window.loadUsers = async () => {
+  if(!window.COMPANY_ID) return;
+  const snap = await get(ref(db, `companies/${window.COMPANY_ID}/users`));
+  const tbody = document.getElementById('usersTableBody');
+  
+  if(!snap.exists()){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted)">No hay usuarios adicionales</td></tr>';
+    return;
+  }
+  
+  const users = snap.val();
+  tbody.innerHTML = Object.entries(users).map(([uid, u]) => `
+    <tr>
+      <td>${escapeHtml(u.name)}</td>
+      <td>${escapeHtml(u.email)}</td>
+      <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+      <td class="${u.active!==false ? 'status-active' : 'status-inactive'}">${u.active!==false ? 'Activo' : 'Inactivo'}</td>
+      <td class="actions">
+        ${window.CURRENT_USER?.role === 'admin' ? `
+          <button class="btn-tiny" onclick="toggleUser('${uid}', ${u.active===false})">${u.active===false ? 'Activar' : 'Desactivar'}</button>
+          <button class="btn-tiny danger" onclick="deleteUser('${uid}')">Eliminar</button>
+        ` : '<span style="color:var(--muted)">Solo lectura</span>'}
+      </td>
+    </tr>
+  `).join('');
+};
+
+window.addNewUser = async () => {
+  if(window.CURRENT_USER?.role !== 'admin'){
+    return toast('❌ Solo administradores pueden crear usuarios');
+  }
+  
+  const name = document.getElementById('newUserName').value.trim();
+  const email = document.getElementById('newUserEmail').value.trim().toLowerCase();
+  const role = document.getElementById('newUserRole').value;
+  const pass = document.getElementById('newUserPass').value;
+  
+  if(!name || !email || !pass) return toast('❌ Completa todos los campos');
+  
+  const salt = randomSalt();
+  const hash = await hashPassword(pass, salt);
+  const userId = emailToId(email);
+  
+  await set(ref(db, `companies/${window.COMPANY_ID}/users/${userId}`), {
+    name, email, role, salt, hash,
+    createdBy: window.CURRENT_USER.email,
+    createdAt: Date.now(),
+    active: true
+  });
+  
+  document.getElementById('newUserName').value = '';
+  document.getElementById('newUserEmail').value = '';
+  document.getElementById('newUserPass').value = 'TempPass123';
+  toast('✅ Usuario creado');
+  loadUsers();
+};
+
+window.toggleUser = async (uid, activate) => {
+  await update(ref(db, `companies/${window.COMPANY_ID}/users/${uid}`), {
+    active: activate,
+    updatedAt: Date.now()
+  });
+  toast(activate ? '✅ Usuario activado' : '✅ Usuario desactivado');
+  loadUsers();
+};
+
+window.deleteUser = async (uid) => {
+  if(!confirm('¿Eliminar permanentemente este usuario?')) return;
+  await remove(ref(db, `companies/${window.COMPANY_ID}/users/${uid}`));
+  toast('✅ Usuario eliminado');
+  loadUsers();
+};
+
+// CONDUCTORES
+function checkExpiry(dateStr, daysWarning = 30) {
+  if(!dateStr) return {status: 'none', text: 'No registrado'};
+  const expiry = new Date(dateStr);
+  const today = new Date();
+  const diffTime = expiry - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if(diffDays < 0) return {status: 'expired', text: `Vencido (${Math.abs(diffDays)} días)`, class: 'expiry-danger'};
+  if(diffDays <= daysWarning) return {status: 'warning', text: `Vence en ${diffDays} días`, class: 'expiry-warning'};
+  return {status: 'ok', text: `Vence: ${expiry.toLocaleDateString()}`, class: ''};
+}
+
+window.loadDrivers = async () => {
+  if(!window.COMPANY_ID) return;
+  
+  const [profilesSnap, activeSnap] = await Promise.all([
+    get(ref(db, `companies/${window.COMPANY_ID}/driver_profiles`)),
+    window.FLEET_ID ? get(ref(db, `fleets/${window.FLEET_ID}/drivers`)) : Promise.resolve({exists: () => false})
+  ]);
+  
+  const profiles = profilesSnap.exists() ? profilesSnap.val() : {};
+  const active = activeSnap.exists() ? activeSnap.val() : {};
+  
+  // Actualizar selector de equipos
+  const equipSelect = document.getElementById('newEquipDriver');
+  if(equipSelect){
+    equipSelect.innerHTML = '<option value="">Sin asignar</option>';
+    Object.entries(profiles).forEach(([id, p]) => {
+      equipSelect.innerHTML += `<option value="${id}">${p.name}</option>`;
+    });
+  }
+  
+  // Alertas de vencimiento
+  const alertsDiv = document.getElementById('expiryAlerts');
+  let alertsHtml = '';
+  
+  const tbody = document.getElementById('driversTableBody');
+  
+  if(Object.keys(profiles).length === 0){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">No hay conductores registrados</td></tr>';
+    alertsDiv.innerHTML = '';
+    return;
+  }
+  
+  tbody.innerHTML = Object.entries(profiles).map(([id, p]) => {
+    const cdlCheck = checkExpiry(p.cdlExpiry, 30);
+    const medCheck = checkExpiry(p.medicalExpiry, 30);
+    const isOnline = active[id]?.online || false;
+    
+    if(cdlCheck.status === 'expired' || cdlCheck.status === 'warning' || 
+       medCheck.status === 'expired' || medCheck.status === 'warning'){
+      alertsHtml += `
+        <div style="padding:10px;background:#0c1430;border:1px solid ${cdlCheck.status === 'expired' || medCheck.status === 'expired' ? 'var(--danger)' : 'var(--warn)'};border-radius:8px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:20px">⚠️</span>
+          <div>
+            <div style="font-weight:700">${escapeHtml(p.name)}</div>
+            <div style="font-size:12px">
+              ${cdlCheck.status !== 'ok' ? `CDL: <span class="${cdlCheck.class}">${cdlCheck.text}</span> | ` : ''}
+              ${medCheck.status !== 'ok' ? `Medical: <span class="${medCheck.class}">${medCheck.text}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    return `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:50%;background:#1d2a4d;display:grid;place-items:center;font-size:14px">👤</div>
+            <div>
+              <div style="font-weight:600">${escapeHtml(p.name)}</div>
+              <div style="font-size:11px;color:var(--muted)">${p.licenseType || 'CDL-A'}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div>${escapeHtml(p.cdl || '—')}</div>
+          <div style="font-size:11px;${cdlCheck.class}">${cdlCheck.text}</div>
+        </td>
+        <td>
+          <div>${escapeHtml(p.medicalCard || '—')}</div>
+          <div style="font-size:11px;${medCheck.class}">${medCheck.text}</div>
+        </td>
+        <td>
+          <div>${escapeHtml(p.phone || '—')}</div>
+          <div style="font-size:11px;color:var(--muted)">${escapeHtml(p.email || '')}</div>
+        </td>
+        <td class="${isOnline ? 'status-active' : 'status-inactive'}">
+          ${isOnline ? '🟢 En línea' : '⚪ Offline'}
+        </td>
+        <td class="actions">
+          <button class="btn-tiny" onclick="editDriver('${id}')">✏️ Editar</button>
+          <button class="btn-tiny danger" onclick="deleteDriver('${id}')">🗑️</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  
+  alertsDiv.innerHTML = alertsHtml || '<div style="padding:10px;color:var(--muted);text-align:center">No hay vencimientos próximos (30 días)</div>';
+};
+
+window.registerNewDriver = async () => {
+  const name = document.getElementById('newDriverName').value.trim();
+  const email = document.getElementById('newDriverEmail').value.trim();
+  const phone = document.getElementById('newDriverPhone').value.trim();
+  const cdl = document.getElementById('newDriverCDL').value.trim();
+  const cdlState = document.getElementById('newDriverCDLState').value.trim();
+  const cdlExpiry = document.getElementById('newDriverCDLExpiry').value;
+  const medical = document.getElementById('newDriverMedical').value.trim();
+  const medicalExpiry = document.getElementById('newDriverMedicalExpiry').value;
+  const licenseType = document.getElementById('newDriverLicenseType').value;
+  const address = document.getElementById('newDriverAddress').value.trim();
+  const dob = document.getElementById('newDriverDOB').value;
+  const hireDate = document.getElementById('newDriverHireDate').value;
+  const emergencyName = document.getElementById('newDriverEmergencyName').value.trim();
+  const emergencyPhone = document.getElementById('newDriverEmergencyPhone').value.trim();
+  const emergencyRelation = document.getElementById('newDriverEmergencyRelation').value.trim();
+  const notes = document.getElementById('newDriverNotes').value.trim();
+  
+  if(!name || !cdl || !cdlExpiry || !medicalExpiry){
+    return toast('❌ Completa los campos obligatorios marcados con *');
+  }
+  
+  const driverId = 'drv_' + Date.now();
+  
+  await set(ref(db, `companies/${window.COMPANY_ID}/driver_profiles/${driverId}`), {
+    name, email, phone, cdl, cdlState, cdlExpiry, medicalCard: medical, medicalExpiry,
+    licenseType, address, dob, hireDate,
+    emergencyContact: { name: emergencyName, phone: emergencyPhone, relation: emergencyRelation },
+    notes,
+    createdAt: Date.now()
+  });
+  
+  // Limpiar formulario
+  ['newDriverName','newDriverEmail','newDriverPhone','newDriverCDL','newDriverCDLState',
+   'newDriverCDLExpiry','newDriverMedical','newDriverMedicalExpiry','newDriverAddress',
+   'newDriverEmergencyName','newDriverEmergencyPhone','newDriverEmergencyRelation','newDriverNotes']
+  .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('newDriverLicenseType').value = 'CDL-A';
+  
+  toast('✅ Conductor registrado');
+  loadDrivers();
+};
+
+window.editDriver = async (driverId) => {
+  const snap = await get(ref(db, `companies/${window.COMPANY_ID}/driver_profiles/${driverId}`));
+  if(!snap.exists()) return toast('Conductor no encontrado');
+  
+  const p = snap.val();
+  document.getElementById('editDriverId').value = driverId;
+  document.getElementById('editDriverName').value = p.name || '';
+  document.getElementById('editDriverEmail').value = p.email || '';
+  document.getElementById('editDriverPhone').value = p.phone || '';
+  document.getElementById('editDriverCDL').value = p.cdl || '';
+  document.getElementById('editDriverCDLExpiry').value = p.cdlExpiry || '';
+  document.getElementById('editDriverMedicalExpiry').value = p.medicalExpiry || '';
+  document.getElementById('editDriverLicenseType').value = p.licenseType || 'CDL-A';
+  document.getElementById('editDriverAddress').value = p.address || '';
+  document.getElementById('editDriverStatus').value = p.status || 'active';
+  document.getElementById('editDriverNotes').value = p.notes || '';
+  
+  document.getElementById('editDriverModal').classList.add('show');
+};
+
+window.updateDriver = async () => {
+  const driverId = document.getElementById('editDriverId').value;
+  const data = {
+    name: document.getElementById('editDriverName').value,
+    email: document.getElementById('editDriverEmail').value,
+    phone: document.getElementById('editDriverPhone').value,
+    cdl: document.getElementById('editDriverCDL').value,
+    cdlExpiry: document.getElementById('editDriverCDLExpiry').value,
+    medicalExpiry: document.getElementById('editDriverMedicalExpiry').value,
+    licenseType: document.getElementById('editDriverLicenseType').value,
+    address: document.getElementById('editDriverAddress').value,
+    status: document.getElementById('editDriverStatus').value,
+    notes: document.getElementById('editDriverNotes').value,
+    updatedAt: Date.now()
+  };
+  
+  await update(ref(db, `companies/${window.COMPANY_ID}/driver_profiles/${driverId}`), data);
+  
+  if(window.FLEET_ID){
+    await update(ref(db, `fleets/${window.FLEET_ID}/drivers/${driverId}`), {
+      name: data.name,
+      cdl: data.cdl,
+      licenseType: data.licenseType
+    });
+  }
+  
+  closeModal('editDriverModal');
+  toast('✅ Conductor actualizado');
+  loadDrivers();
+  if(selectedId === driverId) renderDetail();
+};
+
+window.deleteDriver = async (driverId) => {
+  if(!confirm('¿Eliminar este conductor permanentemente?')) return;
+  await remove(ref(db, `companies/${window.COMPANY_ID}/driver_profiles/${driverId}`));
+  if(window.FLEET_ID){
+    await remove(ref(db, `fleets/${window.FLEET_ID}/drivers/${driverId}`));
+  }
+  toast('✅ Conductor eliminado');
+  loadDrivers();
+};
+
+// EQUIPOS
+window.loadEquipment = async () => {
+  if(!window.COMPANY_ID) return;
+  
+  const equipSnap = await get(ref(db, `companies/${window.COMPANY_ID}/equipment`));
+  const driversSnap = await get(ref(db, `companies/${window.COMPANY_ID}/driver_profiles`));
+  
+  const drivers = driversSnap.exists() ? driversSnap.val() : {};
+  
+  // Actualizar selectores
+  const updateSelect = (selId) => {
+    const sel = document.getElementById(selId);
+    if(!sel) return;
+    sel.innerHTML = '<option value="">Sin asignar</option>';
+    Object.entries(drivers).forEach(([id, d]) => {
+      sel.innerHTML += `<option value="${id}">${d.name}</option>`;
+    });
+  };
+  updateSelect('newEquipDriver');
+  updateSelect('editEquipDriver');
+  
+  // Alertas
+  const alertsDiv = document.getElementById('equipmentExpiryAlerts');
+  let alertsHtml = '';
+  
+  const tbody = document.getElementById('equipmentTableBody');
+  if(!equipSnap.exists()){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">No hay equipos registrados</td></tr>';
+    alertsDiv.innerHTML = '';
+    return;
+  }
+  
+  const equipment = equipSnap.val();
+  tbody.innerHTML = Object.entries(equipment).map(([id, eq]) => {
+    const plateCheck = checkExpiry(eq.plateExpiry, 30);
+    const inspectCheck = checkExpiry(eq.inspectionExpiry, 30);
+    const assignedDriver = eq.assignedDriver ? drivers[eq.assignedDriver]?.name || 'Desconocido' : 'Sin asignar';
+    
+    if(plateCheck.status === 'expired' || plateCheck.status === 'warning' ||
+       inspectCheck.status === 'expired' || inspectCheck.status === 'warning'){
+      alertsHtml += `
+        <div style="padding:10px;background:#0c1430;border:1px solid ${plateCheck.status === 'expired' || inspectCheck.status === 'expired' ? 'var(--danger)' : 'var(--warn)'};border-radius:8px;margin-bottom:8px">
+          <div style="font-weight:700">🚛 ${escapeHtml(eq.unitNumber || eq.plate)} - ${escapeHtml(eq.make)} ${escapeHtml(eq.model)}</div>
+          <div style="font-size:12px">
+            ${plateCheck.status !== 'ok' ? `Placa: <span class="${plateCheck.class}">${plateCheck.text}</span> | ` : ''}
+            ${inspectCheck.status !== 'ok' ? `Inspección: <span class="${inspectCheck.class}">${inspectCheck.text}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }
+    
+    return `
+      <tr>
+        <td><div style="font-weight:700">${escapeHtml(eq.unitNumber)}</div><div style="font-size:11px;color:var(--muted)">${eq.vin?.substring(0,8)}...</div></td>
+        <td>${escapeHtml(eq.year)} ${escapeHtml(eq.make)} ${escapeHtml(eq.model)}</td>
+        <td>
+          <div>${escapeHtml(eq.plate)} (${eq.plateState || '??'})</div>
+          <div style="font-size:11px;${plateCheck.class}">${plateCheck.text}</div>
+        </td>
+        <td>${escapeHtml(assignedDriver)}</td>
+        <td><span class="pill ${eq.status === 'active' ? 'ok' : eq.status === 'maintenance' ? 'warn' : 'off'}">${eq.status || 'active'}</span></td>
+        <td class="actions">
+          <button class="btn-tiny" onclick="editEquipment('${id}')">✏️</button>
+          <button class="btn-tiny danger" onclick="deleteEquipment('${id}')">🗑️</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  
+  alertsDiv.innerHTML = alertsHtml || '<div style="padding:10px;color:var(--muted);text-align:center">No hay vencimientos próximos (30 días)</div>';
+};
+
+window.registerNewEquipment = async () => {
+  const make = document.getElementById('newEquipMake').value;
+  const model = document.getElementById('newEquipModel').value.trim();
+  const year = document.getElementById('newEquipYear').value;
+  const unit = document.getElementById('newEquipUnit').value.trim();
+  const vin = document.getElementById('newEquipVIN').value.trim();
+  const plate = document.getElementById('newEquipPlate').value.trim();
+  const plateState = document.getElementById('newEquipPlateState').value.trim();
+  const plateExpiry = document.getElementById('newEquipPlateExpiry').value;
+  const inspectionExpiry = document.getElementById('newEquipInspectionExpiry').value;
+  const color = document.getElementById('newEquipColor').value.trim();
+  const fuel = document.getElementById('newEquipFuel').value;
+  const driverId = document.getElementById('newEquipDriver').value;
+  const notes = document.getElementById('newEquipNotes').value.trim();
+  
+  if(!make || !model || !unit || !vin || !plate || !plateExpiry){
+    return toast('❌ Completa los campos obligatorios marcados con *');
+  }
+  
+  const equipId = 'eq_' + Date.now();
+  
+  await set(ref(db, `companies/${window.COMPANY_ID}/equipment/${equipId}`), {
+    make, model, year, unitNumber: unit, vin, plate, plateState, plateExpiry,
+    inspectionExpiry, color, fuelType: fuel, assignedDriver: driverId || null,
+    notes, status: 'active', createdAt: Date.now()
+  });
+  
+  // Limpiar
+  ['newEquipMake','newEquipModel','newEquipYear','newEquipUnit','newEquipVIN',
+   'newEquipPlate','newEquipPlateState','newEquipPlateExpiry','newEquipInspectionExpiry',
+   'newEquipColor','newEquipNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('newEquipFuel').value = 'diesel';
+  document.getElementById('newEquipDriver').value = '';
+  
+  toast('✅ Equipo registrado');
+  loadEquipment();
+};
+
+window.editEquipment = async (equipId) => {
+  const snap = await get(ref(db, `companies/${window.COMPANY_ID}/equipment/${equipId}`));
+  if(!snap.exists()) return;
+  const eq = snap.val();
+  
+  document.getElementById('editEquipId').value = equipId;
+  document.getElementById('editEquipMake').value = eq.make || '';
+  document.getElementById('editEquipModel').value = eq.model || '';
+  document.getElementById('editEquipYear').value = eq.year || '';
+  document.getElementById('editEquipUnit').value = eq.unitNumber || '';
+  document.getElementById('editEquipPlate').value = eq.plate || '';
+  document.getElementById('editEquipPlateExpiry').value = eq.plateExpiry || '';
+  document.getElementById('editEquipInspectionExpiry').value = eq.inspectionExpiry || '';
+  document.getElementById('editEquipStatus').value = eq.status || 'active';
+  document.getElementById('editEquipNotes').value = eq.notes || '';
+  
+  // Cargar conductores en el select
+  const driversSnap = await get(ref(db, `companies/${window.COMPANY_ID}/driver_profiles`));
+  const sel = document.getElementById('editEquipDriver');
+  sel.innerHTML = '<option value="">Sin asignar</option>';
+  if(driversSnap.exists()){
+    Object.entries(driversSnap.val()).forEach(([id, d]) => {
+      const selected = id === eq.assignedDriver ? 'selected' : '';
+      sel.innerHTML += `<option value="${id}" ${selected}>${d.name}</option>`;
+    });
+  }
+  
+  document.getElementById('editEquipModal').classList.add('show');
+};
+
+window.updateEquipment = async () => {
+  const equipId = document.getElementById('editEquipId').value;
+  const data = {
+    make: document.getElementById('editEquipMake').value,
+    model: document.getElementById('editEquipModel').value,
+    year: document.getElementById('editEquipYear').value,
+    unitNumber: document.getElementById('editEquipUnit').value,
+    plate: document.getElementById('editEquipPlate').value,
+    plateExpiry: document.getElementById('editEquipPlateExpiry').value,
+    inspectionExpiry: document.getElementById('editEquipInspectionExpiry').value,
+    status: document.getElementById('editEquipStatus').value,
+    assignedDriver: document.getElementById('editEquipDriver').value || null,
+    notes: document.getElementById('editEquipNotes').value,
+    updatedAt: Date.now()
+  };
+  
+  await update(ref(db, `companies/${window.COMPANY_ID}/equipment/${equipId}`), data);
+  
+  // Actualizar también en la flota si existe
+  if(window.FLEET_ID && data.assignedDriver){
+    const driverSnap = await get(ref(db, `companies/${window.COMPANY_ID}/driver_profiles/${data.assignedDriver}`));
+    if(driverSnap.exists()){
+      await update(ref(db, `fleets/${window.FLEET_ID}/drivers/${data.assignedDriver}`), {
+        assignedTruck: data.unitNumber,
+        truckMake: data.make,
+        truckModel: data.model
+      });
+    }
+  }
+  
+  closeModal('editEquipModal');
+  toast('✅ Equipo actualizado');
+  loadEquipment();
+};
+
+window.deleteEquipment = async (equipId) => {
+  if(!confirm('¿Eliminar este equipo?')) return;
+  await remove(ref(db, `companies/${window.COMPANY_ID}/equipment/${equipId}`));
+  toast('✅ Equipo eliminado');
+  loadEquipment();
+};
+
+// ════════════════════════════════════════════════════
+// RESTO DE FUNCIONES (Notificaciones, etc)
 // ════════════════════════════════════════════════════
 async function sendNotification(userId, type, text){
-  if(!text||!text.trim()||!FLEET_ID) return;
+  if(!text||!text.trim()||!window.FLEET_ID) return;
   const data = { from:'dispatcher', type:type||'info', text:text.trim(), ts:Date.now(), read:false };
-  await push(ref(db, `fleets/${FLEET_ID}/notifications/${userId}`), data);
-  await push(ref(db, `fleets/${FLEET_ID}/notifications_sent`), { ...data, to: userId });
+  await push(ref(db, `fleets/${window.FLEET_ID}/notifications/${userId}`), data);
 }
 
 document.getElementById('sendNotifBtn').addEventListener('click', async ()=>{
@@ -1139,255 +2317,73 @@ document.getElementById('sendNotifBtn').addEventListener('click', async ()=>{
 });
 
 document.getElementById('btnBroadcast').addEventListener('click', async ()=>{
-  if(!FLEET_ID) return toast('No hay flota activa');
+  if(!window.FLEET_ID) return toast('No hay flota activa');
   const msg = prompt('Mensaje para TODOS los conductores:');
   if(!msg) return;
   const data = { from:'dispatcher', type:'info', text:msg.trim(), ts:Date.now(), read:false };
-  await push(ref(db, `fleets/${FLEET_ID}/broadcasts`), data);
-  const snap = await get(ref(db, `fleets/${FLEET_ID}/drivers`));
+  const snap = await get(ref(db, `fleets/${window.FLEET_ID}/drivers`));
   const ids = Object.keys(snap.val()||{});
-  await Promise.all(ids.map(uid=>push(ref(db, `fleets/${FLEET_ID}/notifications/${uid}`), data)));
-  await push(ref(db, `fleets/${FLEET_ID}/notifications_sent`), { ...data, to:'*' });
+  await Promise.all(ids.map(uid=>push(ref(db, `fleets/${window.FLEET_ID}/notifications/${uid}`), data)));
   toast(`📢 Enviado a ${ids.length} conductores`);
 });
 
-// ════════════════════════════════════════════════════
-// TABS DERECHO
-// ════════════════════════════════════════════════════
-function switchTab(name){
-  document.querySelectorAll('.rtab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
-  document.getElementById('tab-detail').classList.toggle('hidden', name!=='detail');
-  document.getElementById('tab-notify').classList.toggle('hidden', name!=='notify');
-  document.getElementById('tab-events').classList.toggle('hidden', name!=='events');
-}
-document.querySelectorAll('.rtab').forEach(t=>t.addEventListener('click', ()=>switchTab(t.dataset.tab)));
-
-// ════════════════════════════════════════════════════
-// PAIRING MODAL (CORREGIDO)
-// ════════════════════════════════════════════════════
-function showPairModal(){
-  // Validación con feedback visual
-  if(!FLEET_ID){
-    console.error('Error: FLEET_ID es null al intentar mostrar modal de emparejamiento');
-    toast('❌ No hay flota activa. Intenta recargar la página.');
+document.getElementById('btnAdmin').addEventListener('click', () => {
+  if(window.CURRENT_USER?.role === 'viewer'){
+    toast('❌ No tienes permisos');
     return;
   }
-  
-  document.getElementById('pairCode').textContent = FLEET_ID.match(/.{1,3}/g).join(' ');
-  
-  // Corregir URL: detectar el archivo actual correctamente
+  document.getElementById('adminModal').classList.add('show');
+  loadAdminData();
+});
+
+document.getElementById('btnDiagnose').addEventListener('click', async ()=>{
+  const lines = [`📋 Diagnóstico`, `Empresa: ${window.COMPANY_ID}`, `Flota: ${window.FLEET_ID}`, `Usuario: ${window.CURRENT_USER?.email} (${window.CURRENT_USER?.role})`];
+  alert(lines.join('\n'));
+});
+
+document.getElementById('btnExport').addEventListener('click', ()=>{
+  toast('Exportando... (función demo)');
+});
+
+document.getElementById('btnPair').addEventListener('click', () => {
+  if(!window.FLEET_ID) return toast('No hay flota activa');
+  document.getElementById('pairCode').textContent = window.FLEET_ID.match(/.{1,3}/g).join(' ');
   const currentPath = location.pathname;
-  let basePath;
-  
-  if(currentPath.includes('dashboard.html')){
-    basePath = currentPath.replace('dashboard.html','index.html');
-  } else if(currentPath.endsWith('/')){
-    basePath = currentPath + 'index.html';
-  } else {
-    // Fallback: asumir que estamos en la raíz o en una subcarpeta
-    const lastSlash = currentPath.lastIndexOf('/');
-    basePath = currentPath.substring(0, lastSlash + 1) + 'index.html';
-  }
-  
-  const link = `${location.origin}${basePath}?fleet=${FLEET_ID}`;
+  let basePath = currentPath.includes('dashboard.html') 
+    ? currentPath.replace('dashboard.html','index.html') 
+    : currentPath + 'index.html';
+  const link = `${location.origin}${basePath}?fleet=${window.FLEET_ID}`;
   document.getElementById('pairLink').textContent = link;
   
   const canvas = document.getElementById('pairQR');
   if(window.QRCode){
-    try {
-      QRCode.toCanvas(canvas, JSON.stringify({
-        app:'hos-tracker',
-        action:'join',
-        fleet:FLEET_ID,
-        link
-      }), { 
-        width:220, 
-        margin:1, 
-        color:{dark:'#0b1220',light:'#ffffff'} 
-      });
-    } catch(e) {
-      console.error('Error generando QR:', e);
-      canvas.getContext('2d').clearRect(0,0,220,220);
-      canvas.style.display = 'none';
-      toast('Error al generar el código QR');
-    }
-  } else {
-    console.error('Librería QRCode no cargada');
-    toast('Error: No se pudo cargar el generador de QR');
+    QRCode.toCanvas(canvas, JSON.stringify({app:'hos-tracker',fleet:window.FLEET_ID,link}), {width:220});
   }
-  
   document.getElementById('pairModal').classList.add('show');
-}
-
-// Debug: Agregar listener con log para verificar que el botón funciona
-document.getElementById('btnPair').addEventListener('click', () => {
-  console.log('Botón Emparejar clickeado. FLEET_ID:', FLEET_ID, 'COMPANY_ID:', COMPANY_ID);
-  showPairModal();
 });
 
-document.getElementById('btnClosePair').addEventListener('click', ()=>document.getElementById('pairModal').classList.remove('show'));
-document.getElementById('btnCopyCode').addEventListener('click', ()=>{ 
-  if(!FLEET_ID) return toast('No hay código para copiar');
-  navigator.clipboard.writeText(FLEET_ID); 
-  toast('Código copiado'); 
-});
-document.getElementById('btnCopyLink').addEventListener('click', ()=>{ 
-  const link = document.getElementById('pairLink').textContent;
-  if(!link || link === '— — —') return toast('No hay enlace para copiar');
-  navigator.clipboard.writeText(link); 
-  toast('Enlace copiado'); 
-});
-document.getElementById('btnRegen').addEventListener('click', async ()=>{
-  if(!confirm('Generar nuevo código desconectará a los móviles actuales. ¿Continuar?')) return;
-  if(!COMPANY_ID) return toast('Sin sesión de empresa activa');
-  const newCode = makeFleetCode();
-  // Registrar nueva flota bajo la empresa
-  await set(ref(db, `companies/${COMPANY_ID}/fleets/${newCode}`), { createdAt: Date.now(), name: 'Flota principal' });
-  const s = getSession();
-  const saltF = randomSalt();
-  const meta = (await get(ref(db, `companies/${COMPANY_ID}/meta`))).val()||{};
-  await set(ref(db, `fleets/${newCode}/auth`), { salt:saltF, hash:'', company:meta.company||'', companyId:COMPANY_ID, email:s?.email||'', createdAt:Date.now() });
-  await set(ref(db, `fleets/${newCode}/meta`), { company:meta.company||'', companyId:COMPANY_ID, name:'Flota principal', createdAt:Date.now() });
-  FLEET_ID = newCode;
-  document.getElementById('fleetLabel').textContent = FLEET_ID;
-  const sUp = getSession(); if(sUp){ sUp.fleet=newCode; setSession(sUp); }
-  drivers.clear(); locations.clear(); trails.clear();
-  [...markers.keys()].forEach(clearMarker);
-  renderList();
-  listenFleet();
-  showPairModal();
-});
-
-// Botón de reconectar flota
 document.getElementById('btnReconnect')?.addEventListener('click', async () => {
-  if(!COMPANY_ID) {
-    toast('No hay sesión de empresa activa');
-    return;
-  }
-  toast('🔄 Buscando flotas...');
-  try {
-    const fleetsSnap = await get(ref(db, `companies/${COMPANY_ID}/fleets`));
-    if(fleetsSnap.exists() && fleetsSnap.val()){
-      FLEET_ID = Object.keys(fleetsSnap.val())[0];
-      document.getElementById('fleetLabel').textContent = FLEET_ID;
-      document.getElementById('btnReconnect').classList.add('hidden');
-      listenFleet();
-      toast('✅ Flota reconectada: ' + FLEET_ID);
-    } else {
-      // Crear nueva flota si no existe ninguna
-      const newCode = makeFleetCode();
-      await set(ref(db, `companies/${COMPANY_ID}/fleets/${newCode}`), {
-        createdAt: Date.now(), 
-        name: 'Flota principal'
-      });
-      const meta = (await get(ref(db, `companies/${COMPANY_ID}/meta`))).val()||{};
-      const saltF = randomSalt();
-      await set(ref(db, `fleets/${newCode}/auth`), {
-        salt: saltF, hash:'', company:meta.company||'', companyId:COMPANY_ID, email:'', createdAt:Date.now()
-      });
-      await set(ref(db, `fleets/${newCode}/meta`), {
-        company:meta.company||'', companyId:COMPANY_ID, name:'Flota principal', createdAt:Date.now()
-      });
-      FLEET_ID = newCode;
-      document.getElementById('fleetLabel').textContent = FLEET_ID;
-      document.getElementById('btnReconnect').classList.add('hidden');
-      listenFleet();
-      toast('🆕 Nueva flota creada: ' + FLEET_ID);
-    }
-  } catch(e) {
-    console.error(e);
-    toast('❌ Error al reconectar: ' + e.message);
+  if(!window.COMPANY_ID) return;
+  const fleetsSnap = await get(ref(db, `companies/${window.COMPANY_ID}/fleets`));
+  if(fleetsSnap.exists()){
+    window.FLEET_ID = Object.keys(fleetsSnap.val())[0];
+    document.getElementById('fleetLabel').textContent = window.FLEET_ID;
+    document.getElementById('btnReconnect').classList.add('hidden');
+    listenFleet();
+    toast('✅ Reconectado');
   }
 });
 
-// ════════════════════════════════════════════════════
-// MAP ACTIONS
-// ════════════════════════════════════════════════════
-document.getElementById('btnFitAll').addEventListener('click', ()=>{
-  const pts = [...locations.values()].filter(l=>l&&l.lat).map(l=>[l.lat,l.lon]);
-  if(pts.length) map.fitBounds(L.latLngBounds(pts).pad(.2));
-  else toast('Aún no hay ubicaciones');
-});
-document.getElementById('btnTrail').addEventListener('click', ()=>{
-  showTrail = !showTrail;
-  if(!showTrail){ [...polylines.keys()].forEach(uid=>{ const p=polylines.get(uid); if(p){ map.removeLayer(p); polylines.delete(uid); } }); }
-  else { [...drivers.keys()].forEach(updateMarker); }
-  toast(showTrail?'Mostrando ruta del día':'Rutas ocultas');
-});
-document.getElementById('btnRefresh').addEventListener('click', ()=>location.reload());
-
-// ════════════════════════════════════════════════════
-// DIAGNÓSTICO
-// ════════════════════════════════════════════════════
-document.getElementById('btnDiagnose').addEventListener('click', async ()=>{
-  const lines = [];
-  lines.push(`📋 Diagnóstico de flota ${FLEET_ID}`);
-  lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  lines.push(`Dispatcher ID: ${DISPATCH_ID}`);
-  lines.push(`Empresa ID: ${COMPANY_ID}`);
-  lines.push(`Flota ID: ${FLEET_ID || 'NO ASIGNADA'}`);
-  lines.push('');
-  if(!FLEET_ID){ lines.push('❌ No hay flota activa'); alert(lines.join('\n')); return; }
-  try {
-    const snap = await get(ref(db, `fleets/${FLEET_ID}`));
-    const data = snap.val() || {};
-    lines.push(`✅ Flota: ${FLEET_ID}`);
-    lines.push(`👤 Conductores: ${data.drivers?Object.keys(data.drivers).length:0}`);
-    lines.push(`📍 Con GPS: ${data.locations?Object.keys(data.locations).length:0}`);
-    lines.push(`Conexión: ${document.getElementById('connStatus').textContent}`);
-  } catch(e){
-    lines.push(`❌ Error leyendo Firebase: ${e.message}`);
-  }
-  alert(lines.join('\n'));
-});
-
-// ════════════════════════════════════════════════════
-// EXPORT CSV
-// ════════════════════════════════════════════════════
-document.getElementById('btnExport').addEventListener('click', ()=>{
-  if(!FLEET_ID) return toast('No hay flota activa para exportar');
-  const rows = [['name','truckType','plate','state','cdl','online','lat','lon','speed','lastSeen']];
-  drivers.forEach((d,uid)=>{
-    const l = locations.get(uid)||{};
-    rows.push([d.name||'',d.truckType||'',d.plate||'',d.state||'',d.cdl||'',d.online?'1':'0',l.lat||'',l.lon||'',l.speed||'',d.lastSeen?new Date(d.lastSeen).toISOString():'']);
-  });
-  const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv],{type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href=url; a.download=`fleet_${FLEET_ID}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('CSV descargado');
-});
-
-// ════════════════════════════════════════════════════
-// BÚSQUEDA Y TOAST
-// ════════════════════════════════════════════════════
 document.getElementById('search').addEventListener('input', renderList);
 
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
-  clearTimeout(toast._t);
-  toast._t=setTimeout(()=>t.classList.remove('show'),2500);
+  setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-// ════════════════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════════════════
 function initDashboard(){
   listenFleet();
-  if(FLEET_ID){
-    const key='dispatch_shown_pair_'+FLEET_ID;
-    if(!localStorage.getItem(key)){
-      localStorage.setItem(key,'1');
-      setTimeout(showPairModal, 600);
-    }
-  } else {
-    console.warn('No hay FLEET_ID al inicializar dashboard');
-    document.getElementById('btnReconnect')?.classList.remove('hidden');
-  }
 }
 </script>
 </body>
