@@ -22649,10 +22649,36 @@ window.showSubscribeModal = function() {
 // ─────────────────────────────────────────────────────────────────────────────
 //  📡 ELD BLUETOOTH — Web Bluetooth API
 // ─────────────────────────────────────────────────────────────────────────────
-let eldDevice=null,eldChar=null,eldInterval=null;
+// ── ELD BLE: service / characteristic UUIDs más comunes ──────────────────
+const _ELD_SVCS = [
+  '0000ffe0-0000-1000-8000-00805f9b34fb',  // HM-10 BLE UART (más común)
+  '6e400001-b5a3-f393-e0a9-e50e24dcca9e',  // Nordic UART Service (NUS)
+  '0000fff0-0000-1000-8000-00805f9b34fb',  // ELM327 / OBD BLE genérico
+  '0000ff00-0000-1000-8000-00805f9b34fb',  // Veepeak / genérico
+  '0000ffd0-0000-1000-8000-00805f9b34fb',  // Otros adaptadores
+  'e7810a71-73ae-499d-8c15-faa9aef0c3f2',  // Vlink OBD
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455',  // Microchip BLE UART
+];
+// Características de notificación/lectura (RX ← dispositivo)
+const _ELD_RX = [
+  '0000ffe1-0000-1000-8000-00805f9b34fb',
+  '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
+  '0000fff1-0000-1000-8000-00805f9b34fb',
+  '49535343-1e4d-4bd9-ba61-23c647249616',
+];
+// Características de escritura (TX → dispositivo)
+const _ELD_TX = [
+  '0000ffe1-0000-1000-8000-00805f9b34fb',
+  '6e400002-b5a3-f393-e0a9-e50e24dcca9e',
+  '0000fff2-0000-1000-8000-00805f9b34fb',
+  '49535343-8841-43f4-a8d4-ecbe34729bb3',
+];
+
+let eldDevice=null, eldTxChar=null, eldRxChar=null, eldInterval=null;
+let _eldBuf='', _eldRealMode=false;
+
 function openEldSheet(){
   document.getElementById('eldSheet').classList.add('open');
-  // Detect iOS (no Web Bluetooth support)
   const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
   const hasWebBT = !!navigator.bluetooth;
   if(isIOS){
@@ -22660,21 +22686,18 @@ function openEldSheet(){
     document.getElementById('eldScanBtn').style.display='none';
     document.getElementById('eldDemoBtn').style.display='none';
   } else if(!hasWebBT){
-    document.getElementById('eldIosNotice').style.display='none';
+    document.getElementById('eldNoBluetooth').style.display='block';
     document.getElementById('eldScanBtn').style.display='none';
     document.getElementById('eldDemoBtn').style.display='none';
-    document.getElementById('eldNoBluetooth').style.display='block';
   }
 }
 function closeEldSheet(){document.getElementById('eldSheet').classList.remove('open');}
 
 function startEldDemo(){
-  // Simulate ELD connection without Bluetooth (iOS / no-BLE mode)
   const ring=document.getElementById('eldRing');
-  const icon=document.getElementById('eldRingIcon');
-  const lbl=document.getElementById('eldRingLabel');
   ring.className='eld-status-ring connected';
-  icon.textContent='🎮';lbl.textContent='SIMULACIÓN';
+  document.getElementById('eldRingIcon').textContent='🎮';
+  document.getElementById('eldRingLabel').textContent='SIMULACIÓN';
   document.getElementById('eldConnectedName').textContent='Modo Simulación — HOS Tracker';
   document.getElementById('eldIosNotice').style.display='none';
   document.getElementById('eldNoBluetooth').style.display='none';
@@ -22683,8 +22706,110 @@ function startEldDemo(){
   document.getElementById('eldLiveData').style.display='block';
   document.getElementById('eldLogbook').style.display='block';
   document.getElementById('eldArrowStatus').style.color='#f59e0b';
+  _eldRealMode=false;
   startEldDataSimulation();
   showToast('info','🎮','Modo Simulación ELD','Logbook y HOS activados',3000);
+}
+
+// ── Envía un comando AT al adaptador ELD ─────────────────────────────────
+async function _eldSend(cmd){
+  if(!eldTxChar) return;
+  const data=new TextEncoder().encode(cmd+'\r');
+  try{
+    if(eldTxChar.properties.writeWithoutResponse) await eldTxChar.writeValueWithoutResponse(data);
+    else await eldTxChar.writeValue(data);
+  }catch(e){ console.warn('[ELD] write error',e); }
+}
+
+// ── Recibe datos del adaptador y parsea respuestas OBD2 ──────────────────
+function _eldOnData(ev){
+  _eldBuf += new TextDecoder().decode(ev.target.value);
+  const parts = _eldBuf.split('>');
+  _eldBuf = parts.pop();
+  parts.forEach(r => _parseEldResp(r.replace(/\s+/g,' ').trim()));
+}
+
+function _parseEldResp(r){
+  if(!r || r==='?' || r.startsWith('AT')) return;
+  // Elimina espacios y convierte a array de bytes hex
+  const hex = r.replace(/\s/g,'');
+  // OBD2: 41 0C → RPM
+  if(r.startsWith('41 0C') || hex.startsWith('410C')){
+    const b = hex.startsWith('410C') ? [parseInt(hex.slice(4,6),16),parseInt(hex.slice(6,8),16)]
+                                      : r.split(' ').slice(2).map(x=>parseInt(x,16));
+    if(b.length>=2){ const rpm=((b[0]*256)+b[1])/4; _eldSet('eldRpm',Math.round(rpm)); }
+  }
+  // 41 0D → Velocidad km/h → mph
+  else if(r.startsWith('41 0D') || hex.startsWith('410D')){
+    const v = parseInt(hex.startsWith('410D')?hex.slice(4,6):r.split(' ')[2],16);
+    _eldSet('eldMph',Math.round(v*0.621));
+    // Sync speed to HOS tracker si está disponible
+    window.fmCurrentSpeed = Math.round(v*0.621);
+  }
+  // 41 2F → Fuel level %
+  else if(r.startsWith('41 2F') || hex.startsWith('412F')){
+    const v = parseInt(hex.startsWith('412F')?hex.slice(4,6):r.split(' ')[2],16);
+    const pct=Math.round(v*100/255);
+    _eldSet('eldFuel',pct+'%');
+    if(pct<20){
+      const b=document.getElementById('eldAlertBanner');
+      if(b){ b.style.display='flex'; document.getElementById('eldAlertText').textContent='⛽ Combustible bajo — '+pct+'% restante'; }
+    }
+  }
+  // 41 04 → Engine load %
+  else if(r.startsWith('41 04') || hex.startsWith('4104')){
+    const v = parseInt(hex.startsWith('4104')?hex.slice(4,6):r.split(' ')[2],16);
+    _eldSet('eldEngineHrs', (v*100/255).toFixed(0)+'% carga');
+  }
+  // 43 → DTCs (fault codes)
+  else if(r.startsWith('43')){
+    console.log('[ELD] DTCs:', r);
+  }
+}
+
+function _eldSet(id,val){
+  const el=document.getElementById(id);
+  if(el) el.textContent=val;
+}
+
+// ── Inicialización: envía secuencia AT estándar OBD2 ─────────────────────
+async function _eldInit(){
+  const cmds=['ATZ','ATE0','ATL0','ATS0','ATH0','ATSP0'];
+  for(const c of cmds){
+    await _eldSend(c);
+    await new Promise(r=>setTimeout(r,350));
+  }
+  showToast('info','📡','ELD listo','Comunicación OBD2 iniciada',2500);
+}
+
+// ── Polling cada 2 segundos: pide PIDs básicos ───────────────────────────
+function _eldStartPolling(){
+  const PIDS=['010C','010D','012F','0104'];  // RPM, Speed, Fuel, Load
+  let i=0;
+  eldInterval=setInterval(async()=>{
+    if(!eldTxChar||!eldDevice?.gatt?.connected){
+      clearInterval(eldInterval); _eldOnDisconnect(); return;
+    }
+    await _eldSend(PIDS[i%PIDS.length]);
+    i++;
+  },800);
+}
+
+function _eldOnDisconnect(){
+  clearInterval(eldInterval); eldInterval=null;
+  eldTxChar=null; eldRxChar=null; eldDevice=null; _eldRealMode=false;
+  const ring=document.getElementById('eldRing');
+  if(ring){ ring.className='eld-status-ring'; }
+  document.getElementById('eldRingIcon').textContent='📡';
+  document.getElementById('eldRingLabel').textContent='DESCONECTADO';
+  document.getElementById('eldScanBtn').style.display='block';
+  document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+  document.getElementById('eldScanBtn').disabled=false;
+  document.getElementById('eldDemoBtn').style.display='block';
+  document.getElementById('eldLiveData').style.display='none';
+  document.getElementById('eldLogbook').style.display='none';
+  document.getElementById('eldArrowStatus').style.color='';
+  showToast('warn','🔌','ELD Desconectado','El dispositivo se desconectó',3000);
 }
 
 async function startEldScan(){
@@ -22695,38 +22820,71 @@ async function startEldScan(){
     return;
   }
   const ring=document.getElementById('eldRing');
-  const icon=document.getElementById('eldRingIcon');
-  const lbl=document.getElementById('eldRingLabel');
   ring.className='eld-status-ring scanning';
-  icon.textContent='🔵';lbl.textContent='BUSCANDO...';
-  document.getElementById('eldScanBtn').textContent='⏳ Escaneando BLE...';
+  document.getElementById('eldRingIcon').textContent='🔵';
+  document.getElementById('eldRingLabel').textContent='BUSCANDO...';
+  document.getElementById('eldScanBtn').textContent='⏳ Abriendo Bluetooth...';
   document.getElementById('eldScanBtn').disabled=true;
   document.getElementById('eldDemoBtn').style.display='none';
   try{
-    // Request BLE device — browser shows native picker
+    // Muestra el picker nativo del teléfono con TODOS los dispositivos BLE cercanos
     eldDevice=await navigator.bluetooth.requestDevice({
       acceptAllDevices:true,
-      optionalServices:[
-        '0000ff00-0000-1000-8000-00805f9b34fb',
-        'battery_service',
-        '0000ffd0-0000-1000-8000-00805f9b34fb',
-        '0000ffe0-0000-1000-8000-00805f9b34fb'
-      ]
+      optionalServices:[..._ELD_SVCS,'battery_service','device_information']
     });
-    lbl.textContent='CONECTANDO...';
-    await eldDevice.gatt.connect();
+
+    document.getElementById('eldRingLabel').textContent='CONECTANDO...';
+    const server=await eldDevice.gatt.connect();
+
+    // Intenta encontrar servicio y características compatibles
+    eldTxChar=null; eldRxChar=null;
+    for(const svcUUID of _ELD_SVCS){
+      try{
+        const svc=await server.getPrimaryService(svcUUID);
+        const chars=await svc.getCharacteristics();
+        for(const c of chars){
+          if((c.properties.notify||c.properties.indicate) && !eldRxChar){
+            await c.startNotifications();
+            c.addEventListener('characteristicvaluechanged',_eldOnData);
+            eldRxChar=c;
+          }
+          if((c.properties.write||c.properties.writeWithoutResponse) && !eldTxChar){
+            eldTxChar=c;
+          }
+        }
+        if(eldRxChar) break;
+      }catch(_){ /* servicio no disponible, prueba siguiente */ }
+    }
+
+    // Detecta desconexión inesperada
+    eldDevice.addEventListener('gattserverdisconnected',_eldOnDisconnect);
+
     ring.className='eld-status-ring connected';
-    icon.textContent='✅';lbl.textContent='CONECTADO';
-    document.getElementById('eldConnectedName').textContent=eldDevice.name||'Dispositivo ELD';
+    document.getElementById('eldRingIcon').textContent='✅';
+    const devName=eldDevice.name||'Dispositivo ELD';
+    document.getElementById('eldRingLabel').textContent='CONECTADO';
+    document.getElementById('eldConnectedName').textContent=devName;
     document.getElementById('eldScanBtn').style.display='none';
     document.getElementById('eldLiveData').style.display='block';
     document.getElementById('eldLogbook').style.display='block';
     document.getElementById('eldArrowStatus').style.color='#6366f1';
-    startEldDataSimulation();
-    showToast('info','📡','ELD Conectado',eldDevice.name||'Dispositivo vinculado',3000);
+
+    if(eldTxChar && eldRxChar){
+      // Comunicación real: inicializa OBD2 y empieza polling
+      _eldRealMode=true;
+      await _eldInit();
+      _eldStartPolling();
+      showToast('info','📡','ELD Real Conectado',devName+' · Leyendo datos en vivo',3500);
+    } else {
+      // Dispositivo conectado pero sin protocolo reconocido → simulación
+      _eldRealMode=false;
+      startEldDataSimulation();
+      showToast('info','📡','ELD Conectado',devName+' · Protocolo desconocido, usando simulación',4000);
+    }
   }catch(e){
     ring.className='eld-status-ring';
-    icon.textContent='📡';lbl.textContent='DESCONECTADO';
+    document.getElementById('eldRingIcon').textContent='📡';
+    document.getElementById('eldRingLabel').textContent='DESCONECTADO';
     document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
     document.getElementById('eldScanBtn').disabled=false;
     document.getElementById('eldDemoBtn').style.display='block';
@@ -22848,15 +23006,15 @@ function startEldDataSimulation(){
 
 function disconnectEld(){
   if(eldInterval){clearInterval(eldInterval);eldInterval=null;}
-  if(eldDevice&&eldDevice.gatt&&eldDevice.gatt.connected) eldDevice.gatt.disconnect();
-  eldDevice=null;
+  if(eldDevice?.gatt?.connected) eldDevice.gatt.disconnect();
+  eldDevice=null; eldTxChar=null; eldRxChar=null; _eldRealMode=false; _eldBuf='';
   document.getElementById('eldLiveData').style.display='none';
   document.getElementById('eldLogbook').style.display='none';
+  document.getElementById('eldAlertBanner').style.display='none';
   document.getElementById('eldScanBtn').style.display='block';
   document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
   document.getElementById('eldScanBtn').disabled=false;
   document.getElementById('eldDemoBtn').style.display='block';
-  document.getElementById('eldAlertBanner').style.display='none';
   const ring=document.getElementById('eldRing');
   ring.className='eld-status-ring';
   document.getElementById('eldRingIcon').textContent='📡';
