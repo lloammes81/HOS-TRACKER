@@ -6042,12 +6042,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <div class="sett-value" id="langVal">English</div>
             <span class="sett-arrow">›</span>
           </div>
-          <div class="sett-row" id="countryRow">
-            <div class="sett-icon" style="background:#d1fae5">🌍</div>
-            <div class="sett-label" id="settCountryRow">Country Filter</div>
-            <div class="sett-value" id="countryVal">All</div>
-            <span class="sett-arrow">›</span>
-          </div>
         </div>
       </div>
 
@@ -6067,15 +6061,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
 
-      <div class="sett-section" id="countryPanel" style="display:none">
-        <div class="sett-section-title" id="settCountryRowTitle">Country Filter</div>
-        <div class="sett-group" style="margin:0 14px">
-          <div class="sett-row" style="cursor:default">
-            <div class="sett-icon" style="background:#d1fae5">🌍</div>
-            <select id="countrySelectSettings" style="flex:1;border:none;background:transparent;font-size:15px;color:var(--text);outline:none;cursor:pointer;padding:4px 0;font-family:'DM Sans',sans-serif"></select>
-          </div>
-        </div>
-      </div>
   <div class="sett-section">
     <div class="sett-section-title">🗺️ Map Display</div>
     <div class="sett-group">
@@ -6113,14 +6098,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="sett-section">
         <div class="sett-section-title" id="settSecHOS">HOS Rules</div>
         <div class="sett-group">
-          <div class="sett-row" style="cursor:default">
-            <div class="sett-icon" style="background:#fee2e2">🚦</div>
-            <div class="sett-label" id="settSpeedLimitRow">Default Speed Limit</div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <input type="number" id="defaultSpeedInput" min="20" max="85" value="60" style="width:64px;padding:5px 8px;font-size:14px;font-weight:700;text-align:center;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif" />
-              <span style="font-size:12px;color:var(--muted);font-weight:600">mph</span>
-            </div>
-          </div>
           <div class="sett-row">
             <div class="sett-icon" style="background:#fef3c7">☕</div>
             <div class="sett-label" id="settBreakRow">30-min Break Rule</div>
@@ -6288,22 +6265,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
 
-      <!-- FUEL FINDER SECTION -->
-      <div class="sett-section">
-        <div class="sett-section-title">⛽ Gasolina Barata en Ruta</div>
-        <div class="sett-group">
-          <div class="sett-row" style="cursor:default">
-            <div class="sett-icon" style="background:#d1fae5">🛣️</div>
-            <div style="flex:1">
-              <div class="sett-label" style="margin:0">Límite de Velocidad</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="speedLimitStatusTxt">Límite real de la vía actual</div>
-            </div>
-            <button class="sett-toggle on" id="speedLimitToggle" onclick="toggleSpeedLimit(this)"></button>
-          </div>
-        </div>
-      </div>
-
-      
   <div class="sett-section">
     <div class="sett-section-title" id="settSecSpeedWidget">Speed Widget</div>
     <div class="sett-group" style="padding:14px 14px 10px">
@@ -11194,9 +11155,7 @@ let stateBannerTimer    = null;
 function toggleSpeedLimit(btn) {
   speedLimitActive = !speedLimitActive;
   localStorage.setItem('hos_speedlimit', speedLimitActive);
-  btn.classList.toggle('on', speedLimitActive);
-  document.getElementById('speedLimitStatusTxt').textContent =
-    speedLimitActive ? 'Límite real de la vía actual' : 'Desactivado';
+  if (btn) btn.classList.toggle('on', speedLimitActive);
   if (!speedLimitActive) {
     document.getElementById('speedLimitWidget').classList.remove('visible');
   }
@@ -11647,7 +11606,6 @@ function initSosSettings() {
   if (sosContact.name)  document.getElementById('sosContactInput').value = sosContact.name;
   if (sosContact.phone) document.getElementById('sosPhoneInput').value  = sosContact.phone;
   document.getElementById('sosToggle').classList.toggle('on', sosBtnActive);
-  document.getElementById('speedLimitToggle').classList.toggle('on', speedLimitActive);
   document.getElementById('fuelToggle').classList.toggle('on', fuelActive);
 }
 
@@ -11706,7 +11664,6 @@ function init() {
   updateSettingsChecks();
   // Apply default speed
   document.getElementById('speedInput').value = defaultSpeed;
-  document.getElementById('defaultSpeedInput').value = defaultSpeed;
   const _si = document.getElementById('speedIndicatorVal');
   if (_si) _si.textContent = defaultSpeed + ' mph';
 
@@ -11885,6 +11842,7 @@ function openDeparturePicker() {
 function populateCountrySelects() {
   ['countrySelectMenu','countrySelectSettings'].forEach(id => {
     const sel = document.getElementById(id);
+    if (!sel) return;
     sel.innerHTML = '';
     COUNTRIES.forEach(c => {
       const opt = document.createElement('option');
@@ -11934,7 +11892,8 @@ function applyLang() {
   document.getElementById('drivesTabBtn').innerHTML = `${t('business')} <span id="drivesCount">${savedDrives.length}</span>`;
   document.getElementById('langVal').textContent = lang === 'en' ? 'English' : 'Español';
   const country = COUNTRIES.find(c => c.code === selectedCountry);
-  document.getElementById('countryVal').textContent = country ? (lang === 'es' ? country.es : country.en) : (lang === 'en' ? 'All' : 'Todos');
+  const _cVal = document.getElementById('countryVal');
+  if (_cVal) _cVal.textContent = country ? (lang === 'es' ? country.es : country.en) : (lang === 'en' ? 'All' : 'Todos');
   const swt = document.getElementById('settSecSpeedWidget');
   if (swt) swt.textContent = (lang==='es') ? 'Widget de Velocidad' : 'Speed Widget';
   const swTitle = document.getElementById('speedWidgetTitle');
@@ -17907,26 +17866,15 @@ function bindEvents() {
 
   document.getElementById('langRow').addEventListener('click', () => {
     document.getElementById('langPanel').style.display = document.getElementById('langPanel').style.display === 'none' ? 'block' : 'none';
-    document.getElementById('countryPanel').style.display = 'none';
   });
   document.getElementById('setLangEn').addEventListener('click', () => { lang = 'en'; localStorage.setItem('hos_lang', lang); applyLang(); updateSettingsChecks(); document.getElementById('langPanel').style.display = 'none'; });
   document.getElementById('setLangEs').addEventListener('click', () => { lang = 'es'; localStorage.setItem('hos_lang', lang); applyLang(); updateSettingsChecks(); document.getElementById('langPanel').style.display = 'none'; });
 
-  ['countrySelectMenu','countrySelectSettings'].forEach(id => {
-    document.getElementById(id).addEventListener('change', e => {
-      selectedCountry = e.target.value;
-      localStorage.setItem('hos_country', selectedCountry);
-      document.getElementById('countrySelectMenu').value = selectedCountry;
-      document.getElementById('countrySelectSettings').value = selectedCountry;
-      const c = COUNTRIES.find(x => x.code === selectedCountry);
-      document.getElementById('countryVal').textContent = c ? (lang==='es'?c.es:c.en) : (lang==='en'?'All':'Todos');
-      document.getElementById('countryPanel').style.display = 'none';
-    });
-  });
-
-  document.getElementById('countryRow').addEventListener('click', () => {
-    document.getElementById('countryPanel').style.display = document.getElementById('countryPanel').style.display === 'none' ? 'block' : 'none';
-    document.getElementById('langPanel').style.display = 'none';
+  const _cMenu = document.getElementById('countrySelectMenu');
+  if (_cMenu) _cMenu.addEventListener('change', e => {
+    selectedCountry = e.target.value;
+    localStorage.setItem('hos_country', selectedCountry);
+    _cMenu.value = selectedCountry;
   });
 
   document.getElementById('menuBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('menuPanel').classList.toggle('open'); });
@@ -17970,17 +17918,6 @@ function bindEvents() {
   });
   document.getElementById('fmStopBtn').addEventListener('click', fmStopTracking);
 
-  // Default speed limit setting
-  document.getElementById('defaultSpeedInput').addEventListener('change', e => {
-    const val = parseInt(e.target.value);
-    if (!isNaN(val) && val >= 20 && val <= 85) {
-      defaultSpeed = val;
-      localStorage.setItem('hos_speed', val);
-      document.getElementById('speedInput').value = val;
-      const ind = document.getElementById('speedIndicatorVal');
-      if (ind) ind.textContent = val + ' mph';
-    }
-  });
 
   // Safety feature toggles
   document.getElementById('fatigueToggle').addEventListener('click', e => { e.stopPropagation(); toggleFatigueDetector(); });
