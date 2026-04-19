@@ -2906,6 +2906,8 @@ function selectDriver(uid){
   c.dataset.editMode = '0';
   // Limpiar marcador de inicio previo
   if(window._routeStartMarker){ window._routeStartMarker.remove(); window._routeStartMarker = null; }
+  // Limpiar ruta activa dispatchada anterior
+  clearActiveDispatchedRoute();
 
   const prevSel = selectedId;
   selectedId = uid;
@@ -2925,8 +2927,94 @@ function selectDriver(uid){
   switchTab('detail');
   // Cargar ruta desde Firebase (historial del día)
   loadDriverRoute(uid);
+  // Mostrar ruta activa dispatchada si el conductor tiene una en curso
+  showActiveDispatchedRoute(uid);
   // Disparar geocoding (si aún no está)
   if(loc && loc.lat!=null) maybeGeocodeDriver(uid, loc.lat, loc.lon);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RUTA ACTIVA DISPATCHADA — ruta planificada (pickup → delivery)
+//  del conductor seleccionado. Se dibuja en color cyan distinto del
+//  trail GPS (naranja). Usa OSRM para obtener la geometría por
+//  carretera y cachea el resultado por routeId.
+// ══════════════════════════════════════════════════════════════════
+const DISPATCHED_ROUTE_SRC = 'dispatched-route';
+const _dispatchedRouteCache = new Map(); // routeId → lngLatPts
+window._dispatchedRouteMarkers = { pickup: null, delivery: null };
+
+function clearActiveDispatchedRoute(){
+  try {
+    if (mapLoaded) removeTrail(DISPATCHED_ROUTE_SRC);
+    if (window._dispatchedRouteMarkers.pickup){
+      window._dispatchedRouteMarkers.pickup.remove();
+      window._dispatchedRouteMarkers.pickup = null;
+    }
+    if (window._dispatchedRouteMarkers.delivery){
+      window._dispatchedRouteMarkers.delivery.remove();
+      window._dispatchedRouteMarkers.delivery = null;
+    }
+  } catch(e){ console.warn('clearActiveDispatchedRoute', e); }
+}
+window.clearSelectedRouteOnMap = clearActiveDispatchedRoute;
+
+function showActiveDispatchedRoute(uid){
+  if (!uid) return;
+  // Buscar ruta activa (aceptada o en-curso) del conductor
+  const active = (routeState.allRoutes || [])
+    .filter(r => r.driverId === uid && (r.status === 'accepted' || r.status === 'in-progress'))
+    .sort((a,b) => (b.acceptedAt || b.createdAt || 0) - (a.acceptedAt || a.createdAt || 0))[0];
+  if (!active || !active.pickup?.lat || !active.delivery?.lat) return;
+
+  const pLat = Number(active.pickup.lat), pLon = Number(active.pickup.lon);
+  const dLat = Number(active.delivery.lat), dLon = Number(active.delivery.lon);
+  if (!isFinite(pLat) || !isFinite(pLon) || !isFinite(dLat) || !isFinite(dLon)) return;
+
+  // Etiquetas de tooltip para marcadores
+  const pCity = [active.pickup.city, active.pickup.stateCode || active.pickup.state].filter(Boolean).join(', ') || 'Recogida';
+  const dCity = [active.delivery.city, active.delivery.stateCode || active.delivery.state].filter(Boolean).join(', ') || 'Descarga';
+
+  // Agregar marcadores pickup (verde) y delivery (rojo)
+  const addMarker = (lat, lon, color, label, emoji) => {
+    const el = document.createElement('div');
+    el.style.cssText = `width:26px;height:26px;border-radius:50%;background:${color};border:3px solid white;box-shadow:0 4px 12px rgba(0,0,0,.5);display:grid;place-items:center;font-size:13px;cursor:pointer`;
+    el.textContent = emoji;
+    el.title = label;
+    return new maplibregl.Marker({ element: el }).setLngLat([lon, lat]).addTo(map);
+  };
+  if (mapLoaded){
+    window._dispatchedRouteMarkers.pickup   = addMarker(pLat, pLon, '#10b981', `📦 ${pCity}`, '📦');
+    window._dispatchedRouteMarkers.delivery = addMarker(dLat, dLon, '#ef4444', `🏁 ${dCity}`, '🏁');
+  }
+
+  // Dibujar la línea: usar cache OSRM si está, si no obtenerla, si falla usar línea recta
+  const drawLine = (lngLatPts) => {
+    if (!mapLoaded) return;
+    addOrUpdateTrail(DISPATCHED_ROUTE_SRC, lngLatPts, '#22d3ee', 5, .85);
+    try{
+      const b = new maplibregl.LngLatBounds();
+      lngLatPts.forEach(p => b.extend(p));
+      map.fitBounds(b, { padding: 90, duration: 1100, maxZoom: 11 });
+    } catch(e){}
+  };
+
+  const cached = _dispatchedRouteCache.get(active.id);
+  if (cached && cached.length >= 2){
+    drawLine(cached);
+    return;
+  }
+  // Línea recta inmediata (feedback rápido)
+  drawLine([[pLon, pLat], [dLon, dLat]]);
+
+  // Fetch OSRM in background para trazo real por carreteras
+  const url = `https://router.project-osrm.org/route/v1/driving/${pLon},${pLat};${dLon},${dLat}?overview=full&geometries=geojson`;
+  fetch(url).then(r => r.json()).then(j => {
+    if (j.code !== 'Ok' || !j.routes?.[0]?.geometry?.coordinates) return;
+    const coords = j.routes[0].geometry.coordinates; // [[lon,lat], ...]
+    _dispatchedRouteCache.set(active.id, coords);
+    // Solo dibujar si este driver sigue seleccionado
+    if (selectedId === uid) drawLine(coords);
+  }).catch(err => console.warn('OSRM dispatched route', err));
 }
 
 function renderDetail(){
@@ -3021,9 +3109,56 @@ function renderDetail(){
 
     ${window.CURRENT_USER?.role !== 'viewer' ? `
     <button onclick="toggleDetailEdit('${selectedId}')" style="width:100%;margin-top:8px;padding:9px;background:var(--info);color:white;border:0;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">✏️ Editar información del conductor</button>
+    <button onclick="expelDriver('${selectedId}')" style="width:100%;margin-top:8px;padding:9px;background:linear-gradient(135deg,#3b0a0a,#4c1111);color:#fca5a5;border:1px solid #7f1d1d;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">🚪 Expulsar conductor de la flota</button>
     ` : ''}
   `;
 }
+
+// ── Expulsar al conductor de la flota ───────────────────
+window.expelDriver = async (uid) => {
+  if (!window.FLEET_ID || !uid) return;
+  const d = drivers.get(uid) || {};
+  const name = d.name || uid;
+  const msg = `¿Seguro que quieres expulsar a "${name}" de la flota?\n\n` +
+              `Se eliminarán sus datos en esta flota:\n` +
+              `• Registro de conductor\n• Ubicación GPS\n• Historial del día\n• Rutas pendientes\n\n` +
+              `El conductor recibirá una notificación y será desconectado automáticamente.`;
+  if (!confirm(msg)) return;
+  try {
+    // 1) Notificar al conductor (antes de borrar) — la app móvil cierra la sesión de flota
+    await push(ref(db, `fleets/${window.FLEET_ID}/notifications/${uid}`), {
+      type: 'kicked',
+      text: '🚪 Has sido retirado de la flota por el dispatcher.',
+      ts: Date.now(),
+      reason: 'expelled_by_dispatcher'
+    });
+    // Damos un instante para que la app lo reciba
+    await new Promise(r => setTimeout(r, 600));
+    // 2) Borrar todos los rastros del conductor en la flota
+    const paths = [
+      `fleets/${window.FLEET_ID}/drivers/${uid}`,
+      `fleets/${window.FLEET_ID}/locations/${uid}`,
+      `fleets/${window.FLEET_ID}/routes/${uid}`,
+      `fleets/${window.FLEET_ID}/notifications/${uid}`,
+      `fleets/${window.FLEET_ID}/history/${uid}`,
+      `fleets/${window.FLEET_ID}/events/${uid}`
+    ];
+    await Promise.all(paths.map(p =>
+      remove(ref(db, p)).catch(err => console.warn('expel remove', p, err))
+    ));
+    toast(`🚪 ${name} expulsado de la flota`);
+    // Limpiar selección si era el mismo conductor
+    if (selectedId === uid){
+      selectedId = null;
+      document.getElementById('emptyDetail').style.display = 'block';
+      document.getElementById('detailContent').style.display = 'none';
+      try { if (typeof clearSelectedRouteOnMap === 'function') clearSelectedRouteOnMap(); } catch(e){}
+    }
+  } catch (e) {
+    console.error('expelDriver', e);
+    toast('❌ Error al expulsar: ' + (e.message || e));
+  }
+};
 
 window.refitRoute = () => {
   if(!selectedRouteSrcId || !selectedId) return;
@@ -4317,7 +4452,9 @@ async function submitNewRoute(){
   try{
     const btn = document.getElementById('nrSubmit');
     btn.disabled = true; btn.textContent = '⏳ Enviando…';
-    const routeRef = await push(ref(db, `fleets/${window.FLEET_ID}/routes`), routeData);
+    // Rutas ahora son privadas: se guardan bajo el driverId
+    // Path: fleets/{FLEET_ID}/routes/{driverId}/{routeId}
+    const routeRef = await push(ref(db, `fleets/${window.FLEET_ID}/routes/${driverId}`), routeData);
     const routeId = routeRef.key;
     // También enviar notificación al conductor para que suene la campana
     await push(ref(db, `fleets/${window.FLEET_ID}/notifications/${driverId}`), {
@@ -4345,17 +4482,35 @@ async function submitNewRoute(){
   }
 }
 
-// ── Escuchar rutas en tiempo real ─────────────────────
+// ── Escuchar rutas en tiempo real (estructura anidada por driverId) ─────
 function listenRoutes(){
   if(!window.FLEET_ID) return;
   if(routeState.unsubscribeRoutes) routeState.unsubscribeRoutes();
-  const q = query(ref(db, `fleets/${window.FLEET_ID}/routes`), orderByChild('createdAt'), limitToLast(200));
-  routeState.unsubscribeRoutes = onValue(q, (snap) => {
-    const val = snap.val() || {};
-    routeState.allRoutes = Object.entries(val).map(([id, r]) => ({ id, ...r })).sort((a,b)=> b.createdAt - a.createdAt);
+  // Rutas están ahora anidadas: fleets/{FLEET_ID}/routes/{driverId}/{routeId}
+  // Escuchamos el árbol completo y aplanamos client-side.
+  const refRoutes = ref(db, `fleets/${window.FLEET_ID}/routes`);
+  routeState.unsubscribeRoutes = onValue(refRoutes, (snap) => {
+    const tree = snap.val() || {};
+    const flat = [];
+    Object.entries(tree).forEach(([driverId, routesMap]) => {
+      if (!routesMap || typeof routesMap !== 'object') return;
+      Object.entries(routesMap).forEach(([routeId, r]) => {
+        if (!r || typeof r !== 'object') return;
+        flat.push({ id: routeId, driverId: r.driverId || driverId, ...r });
+      });
+    });
+    flat.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+    routeState.allRoutes = flat.slice(0, 400); // cap ligero
     // Detectar cambios de status: si una ruta pasa a "completed", agregarla al ciclo semanal
     routeState.allRoutes.forEach(r => processRouteCompletion(r));
     renderRoutesList();
+    // Si hay un conductor seleccionado, refrescar su ruta activa en el mapa
+    if (selectedId){
+      try {
+        clearActiveDispatchedRoute();
+        showActiveDispatchedRoute(selectedId);
+      } catch(e){ console.warn('refresh dispatched route', e); }
+    }
   });
 }
 
@@ -4503,8 +4658,11 @@ window.openRouteDetail = (id) => {
 window.updateRouteStatus = async (routeId, newStatus) => {
   if(!window.FLEET_ID) return;
   if(newStatus === 'rejected' && !confirm('¿Cancelar esta ruta?')) return;
+  // Necesitamos el driverId para construir la ruta (estructura anidada)
+  const r = (routeState.allRoutes || []).find(x => x.id === routeId);
+  if (!r || !r.driverId){ toast('❌ Ruta no encontrada'); return; }
   try{
-    await update(ref(db, `fleets/${window.FLEET_ID}/routes/${routeId}`), {
+    await update(ref(db, `fleets/${window.FLEET_ID}/routes/${r.driverId}/${routeId}`), {
       status: newStatus,
       [newStatus==='completed'?'completedAt':'rejectedAt']: Date.now()
     });
