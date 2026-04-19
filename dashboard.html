@@ -149,7 +149,7 @@
   /* ══════════════════════════════════════
      DASHBOARD APP
   ══════════════════════════════════════ */
-  .app{display:grid;grid-template-columns:320px 1fr 360px;grid-template-rows:56px 1fr;height:100vh;overflow:hidden}
+  .app{display:grid;grid-template-columns:76px 320px 1fr 360px;grid-template-rows:56px 1fr;height:100vh;overflow:hidden}
   header{
     grid-column:1 / -1;display:flex;align-items:center;gap:14px;padding:0 16px;
     background:linear-gradient(90deg,#0c1327,#101a33);border-bottom:1px solid var(--line)
@@ -167,10 +167,86 @@
   #logoutBtn{background:#3b0a0a;color:#fca5a5;border:1px solid #7f1d1d;padding:7px 12px;border-radius:8px;font-size:13px}
   #logoutBtn:hover{background:#4c1111}
 
-  /* Dropdown Admin Menu */
-  .admin-menu-wrap{position:relative;display:inline-flex}
-  .admin-drop{position:absolute;top:calc(100% + 8px);right:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;min-width:200px;z-index:9000;box-shadow:0 12px 40px rgba(0,0,0,.6);overflow:hidden;display:none;animation:dropIn .15s ease}
+  /* ═══ SIDE NAV (vertical toolbar) ═══ */
+  .side-nav{
+    background:linear-gradient(180deg,#0a1224 0%,#0d1731 100%);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:stretch;
+    padding:10px 8px 14px;gap:4px;
+    overflow-y:auto;overflow-x:hidden;
+    box-shadow:inset -1px 0 0 rgba(255,255,255,.02);
+    position:relative;z-index:5;
+  }
+  .side-nav::-webkit-scrollbar{width:4px}
+  .side-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+  .side-nav .nav-btn{
+    position:relative;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;
+    padding:9px 4px;
+    border-radius:10px;
+    background:rgba(255,255,255,.02);
+    border:1px solid transparent;
+    color:var(--muted);
+    font-size:9.5px;font-weight:700;letter-spacing:.2px;
+    cursor:pointer;text-align:center;line-height:1.15;
+    transition:background .15s,color .15s,transform .12s,border-color .15s;
+    font-family:inherit;width:100%;
+  }
+  .side-nav .nav-btn:hover{
+    background:rgba(59,130,246,.08);
+    color:var(--text);
+    border-color:rgba(59,130,246,.25);
+  }
+  .side-nav .nav-btn:active{transform:scale(.96)}
+  .side-nav .nav-btn .nav-icon{font-size:19px;line-height:1;filter:grayscale(.15)}
+  .side-nav .nav-btn:hover .nav-icon{filter:none}
+  .side-nav .nav-btn.primary{
+    background:linear-gradient(135deg,var(--brand),#059669);
+    color:#06211a;border-color:transparent;
+  }
+  .side-nav .nav-btn.primary:hover{
+    background:linear-gradient(135deg,#34d399,#10b981);color:#042d22;
+  }
+  .side-nav .nav-btn.primary .nav-icon{filter:none}
+  .side-nav .nav-btn.admin{
+    background:linear-gradient(135deg,var(--info),#7c3aed);
+    color:#fff;border-color:transparent;
+  }
+  .side-nav .nav-btn.admin:hover{box-shadow:0 6px 18px rgba(124,58,237,.35)}
+  .side-nav .nav-btn.warning{
+    background:#f59e0b;color:#000;border-color:#f59e0b;
+  }
+  .side-nav .nav-btn.warning:hover{background:#fbbf24;border-color:#fbbf24;color:#000}
+  .side-nav .nav-btn.danger{
+    background:#3b0a0a;color:#fca5a5;border-color:#7f1d1d;
+  }
+  .side-nav .nav-btn.danger:hover{background:#4c1111;color:#fecaca}
+  .side-nav .nav-btn.active-tab{
+    background:rgba(16,185,129,.16);color:var(--brand-2);
+    border-color:rgba(16,185,129,.35);
+  }
+  .side-nav .nav-sep{
+    height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);
+    margin:6px 2px;flex-shrink:0;
+  }
+  .side-nav .nav-group-label{
+    font-size:8px;letter-spacing:1px;color:rgba(255,255,255,.3);
+    text-transform:uppercase;font-weight:800;
+    padding:6px 4px 2px;text-align:center;user-select:none;
+  }
+
+  /* Dropdown Admin Menu (posicionado por JS con fixed) */
+  .admin-menu-wrap{position:relative;display:flex}
+  .admin-drop{
+    position:fixed;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    min-width:220px;z-index:9000;
+    box-shadow:0 16px 50px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04);
+    overflow:hidden;display:none;animation:dropInRight .15s ease
+  }
   @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes dropInRight{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
   .admin-drop.open{display:block}
   .admin-drop-item{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:13px;color:var(--text);cursor:pointer;transition:background .12s;border:0;background:none;width:100%;text-align:left;font-family:inherit;font-weight:600}
   .admin-drop-item:hover{background:rgba(255,255,255,.05)}
@@ -200,11 +276,40 @@
   .speed{font-size:16px;font-weight:800;color:var(--brand-2)}
   .speed small{color:var(--muted);font-weight:500;font-size:10px}
 
-  main{position:relative;overflow:hidden}
-  #map{position:absolute;inset:0}
+  main{
+    position:relative;overflow:hidden;
+    padding:14px;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(16,185,129,.04) 0%, transparent 55%),
+      radial-gradient(ellipse at 70% 80%, rgba(59,130,246,.05) 0%, transparent 55%),
+      linear-gradient(160deg,#060a18 0%,#070d1f 100%);
+  }
+  main::before{
+    content:'';position:absolute;inset:0;
+    background-image:
+      repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0px,rgba(255,255,255,.014) 1px,transparent 1px,transparent 32px),
+      repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0px,rgba(255,255,255,.014) 1px,transparent 1px,transparent 32px);
+    pointer-events:none;z-index:0;
+  }
+  .map-wrap{
+    position:absolute;inset:14px;
+    border-radius:18px;overflow:hidden;
+    box-shadow:
+      0 28px 70px rgba(0,0,0,.7),
+      0 14px 30px rgba(0,0,0,.5),
+      0 0 0 1px rgba(255,255,255,.06),
+      0 0 80px rgba(16,185,129,.05);
+    z-index:1;
+  }
+  .map-wrap::after{
+    content:'';position:absolute;inset:0;border-radius:18px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+    pointer-events:none;z-index:901;
+  }
+  #map{position:absolute;inset:0;border-radius:18px;overflow:hidden}
   .map-overlay{position:absolute;top:12px;left:12px;z-index:900;display:flex;gap:8px}
-  .map-overlay .btn{background:rgba(15,23,42,.92);border:1px solid var(--line);color:var(--text);padding:7px 11px;border-radius:8px;font-size:12px;backdrop-filter:blur(6px);cursor:pointer}
-  .legend{position:absolute;bottom:12px;left:12px;background:rgba(15,23,42,.92);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted);z-index:900;backdrop-filter:blur(6px)}
+  .map-overlay .btn{background:rgba(15,23,42,.92);border:1px solid var(--line);color:var(--text);padding:7px 11px;border-radius:8px;font-size:12px;backdrop-filter:blur(6px);cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+  .legend{position:absolute;bottom:12px;left:12px;background:rgba(15,23,42,.92);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted);z-index:900;backdrop-filter:blur(6px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
   .legend .row{display:flex;align-items:center;gap:6px;margin:3px 0}
   .legend .dot{width:10px;height:10px;border-radius:50%}
 
@@ -341,7 +446,7 @@
   .popup-btn:hover{filter:brightness(1.1)}
 
   /* ── Switcher de estilo de mapa ── */
-  .map-style-switch{position:absolute;top:12px;right:56px;z-index:900;background:rgba(15,23,42,.92);border:1px solid var(--line);border-radius:10px;padding:4px;display:flex;gap:2px;backdrop-filter:blur(6px)}
+  .map-style-switch{position:absolute;top:12px;right:56px;z-index:900;background:rgba(15,23,42,.92);border:1px solid var(--line);border-radius:10px;padding:4px;display:flex;gap:2px;backdrop-filter:blur(6px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
   .map-style-switch button{background:transparent;border:0;color:var(--muted);padding:6px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
   .map-style-switch button.active{background:var(--brand);color:#06211a}
   .map-style-switch button:hover:not(.active){background:rgba(255,255,255,.06);color:var(--text)}
@@ -756,15 +861,41 @@
     <div class="logo"><div class="truck">🚛</div><div>HOS Tracker — <span style="color:var(--brand-2)">Dispatcher</span></div></div>
     <div class="fleet">Empresa: <b id="companyLabel">—</b> · Flota: <b id="fleetLabel">—</b> · <span id="connStatus">🔴 desconectado</span></div>
     <div class="spacer"></div>
-    <button class="hbtn" id="btnDiagnose">🩺 Diagnóstico</button>
-    <button class="hbtn primary" id="btnNewRoute">📋 Nueva ruta</button>
-    <button class="hbtn" id="btnRoutesList">🗂️ Rutas</button>
-    <button class="hbtn" id="btnExport">Exportar CSV</button>
-    <button class="hbtn" id="btnBroadcast">📢 Aviso flota</button>
     <button class="hbtn warning hidden" id="btnReconnect">🔄 Reconectar flota</button>
-    <button class="hbtn primary" id="btnPair">🔗 Emparejar móvil</button>
+    <button id="logoutBtn" title="Cerrar sesión">🚪 Salir</button>
+  </header>
+
+  <!-- ═══ SIDE NAV — acciones principales ═══ -->
+  <nav class="side-nav" id="sideNav" aria-label="Acciones">
+    <div class="nav-group-label">Rutas</div>
+    <button class="nav-btn primary" id="btnNewRoute" title="Crear nueva ruta / despacho">
+      <span class="nav-icon">📋</span><span>Nueva<br>ruta</span>
+    </button>
+    <button class="nav-btn" id="btnRoutesList" title="Rutas enviadas / en curso">
+      <span class="nav-icon">🗂️</span><span>Rutas</span>
+    </button>
+    <button class="nav-btn" id="btnExport" title="Exportar viajes a CSV">
+      <span class="nav-icon">📤</span><span>Exportar<br>CSV</span>
+    </button>
+
+    <div class="nav-sep"></div>
+    <div class="nav-group-label">Flota</div>
+    <button class="nav-btn primary" id="btnPair" title="Emparejar un móvil">
+      <span class="nav-icon">🔗</span><span>Emparejar<br>móvil</span>
+    </button>
+    <button class="nav-btn" id="btnBroadcast" title="Enviar aviso a toda la flota">
+      <span class="nav-icon">📢</span><span>Aviso<br>flota</span>
+    </button>
+    <button class="nav-btn" id="btnDiagnose" title="Diagnóstico de conexión">
+      <span class="nav-icon">🩺</span><span>Diag-<br>nóstico</span>
+    </button>
+
+    <div class="nav-sep"></div>
+    <div class="nav-group-label">Admin</div>
     <div class="admin-menu-wrap" id="adminMenuWrap">
-      <button class="hbtn admin" id="btnAdminMenu">⚙️ ▾</button>
+      <button class="nav-btn admin" id="btnAdminMenu" title="Administración">
+        <span class="nav-icon">⚙️</span><span>Admin ▸</span>
+      </button>
       <div class="admin-drop" id="adminDrop">
         <button class="admin-drop-item" onclick="openAdminSection('company')"><span class="icon">🏢</span>Empresa</button>
         <button class="admin-drop-item" onclick="openAdminSection('users')"><span class="icon">👥</span>Usuarios</button>
@@ -775,8 +906,7 @@
         <button class="admin-drop-item" onclick="openAdminSection('cycles')"><span class="icon">📊</span>Ciclos semanales</button>
       </div>
     </div>
-    <button id="logoutBtn" title="Cerrar sesión">🚪 Salir</button>
-  </header>
+  </nav>
 
   <aside class="left">
     <div class="sidebar-head">
@@ -791,21 +921,23 @@
   </aside>
 
   <main>
-    <div id="map"></div>
-    <div class="map-overlay">
-      <button class="btn" id="btnFitAll">📍 Ver toda la flota</button>
-      <button class="btn" id="btnTrail">🛣️ Ruta del día</button>
-      <button class="btn" id="btnRefresh">🔄</button>
-    </div>
-    <div class="map-style-switch" id="mapStyleSwitch">
-      <button data-style="streets" class="active" title="Calles">🗺️ Calles</button>
-      <button data-style="dark" title="Modo oscuro">🌙 Oscuro</button>
-      <button data-style="satellite" title="Satélite">🛰️ Satélite</button>
-    </div>
-    <div class="legend">
-      <div class="row"><span class="dot" style="background:#10b981"></span> En movimiento</div>
-      <div class="row"><span class="dot" style="background:#3b82f6"></span> Parado</div>
-      <div class="row"><span class="dot" style="background:#6b7280"></span> Offline</div>
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="map-overlay">
+        <button class="btn" id="btnFitAll">📍 Ver toda la flota</button>
+        <button class="btn" id="btnTrail">🛣️ Ruta del día</button>
+        <button class="btn" id="btnRefresh">🔄</button>
+      </div>
+      <div class="map-style-switch" id="mapStyleSwitch">
+        <button data-style="streets" class="active" title="Calles">🗺️ Calles</button>
+        <button data-style="dark" title="Modo oscuro">🌙 Oscuro</button>
+        <button data-style="satellite" title="Satélite">🛰️ Satélite</button>
+      </div>
+      <div class="legend">
+        <div class="row"><span class="dot" style="background:#10b981"></span> En movimiento</div>
+        <div class="row"><span class="dot" style="background:#3b82f6"></span> Parado</div>
+        <div class="row"><span class="dot" style="background:#6b7280"></span> Offline</div>
+      </div>
     </div>
   </main>
 
@@ -3714,10 +3846,33 @@ document.getElementById('btnAdminMenu').addEventListener('click', (e) => {
     toast('❌ No tienes permisos');
     return;
   }
-  document.getElementById('adminDrop').classList.toggle('open');
+  const drop = document.getElementById('adminDrop');
+  const btn  = document.getElementById('btnAdminMenu');
+  const isOpen = drop.classList.contains('open');
+  if (isOpen){
+    drop.classList.remove('open');
+    return;
+  }
+  // Posicionar el dropdown a la derecha del botón (fixed)
+  const rect = btn.getBoundingClientRect();
+  drop.style.top  = rect.top + 'px';
+  drop.style.left = (rect.right + 8) + 'px';
+  // Si el dropdown se saldría por abajo, alinearlo al borde inferior del botón
+  // (se re-ajusta tras el display:block)
+  drop.classList.add('open');
+  requestAnimationFrame(() => {
+    const dh = drop.offsetHeight;
+    const vh = window.innerHeight;
+    if (rect.top + dh + 12 > vh){
+      drop.style.top = Math.max(12, vh - dh - 12) + 'px';
+    }
+  });
 });
 
 document.addEventListener('click', () => {
+  document.getElementById('adminDrop').classList.remove('open');
+});
+window.addEventListener('resize', () => {
   document.getElementById('adminDrop').classList.remove('open');
 });
 

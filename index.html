@@ -3598,7 +3598,7 @@ body.dark #fullMap .leaflet-tile-pane {
   ════════════════════════════════════════════════════════════ */
   .hero-wrap {
     background: linear-gradient(160deg, #091525 0%, #0e2038 55%, #0a2015 100%);
-    margin: -16px -16px 14px;
+    margin: -16px -16px 8px;
     padding: 0;
     border-radius: 0 0 22px 22px;
     position: relative;
@@ -3625,11 +3625,11 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .hero-inner {
     position: relative; z-index: 1;
-    padding: calc(var(--header-pt) + 4px) 16px 14px;
+    padding: calc(var(--header-pt) + 2px) 16px 10px;
   }
   .hero-top-bar {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
   }
   .hero-brand { display: flex; align-items: center; gap: 9px; }
   .hero-brand-icon {
@@ -4109,7 +4109,7 @@ body.dark #fullMap .leaflet-tile-pane {
     width: 52px; height: 52px; border-radius: 50%;
     background: linear-gradient(135deg, #10b981, #059669);
     display: flex; align-items: center; justify-content: center;
-    font-size: 26px; margin-bottom: 12px;
+    font-size: 26px;
     box-shadow: 0 4px 14px rgba(16,185,129,.4);
     flex-shrink: 0;
   }
@@ -5717,15 +5717,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="hero-brand-sub">by fab-visual™</div>
         </div>
       </div>
-      <div class="hero-btns" style="align-items:center;gap:6px">
-        <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
-          <button class="hero-btn" id="themeToggle" title="Cambiar color">🌙</button>
-          <button class="hero-btn" id="langToggleBtn" title="Cambiar idioma" style="font-size:9px;font-weight:900;letter-spacing:.5px;">EN</button>
-          <button class="hero-bell" id="heroBellBtn" title="Rutas recibidas" aria-label="Rutas recibidas">
-            🔔
-            <span class="hero-bell-badge" id="heroBellBadge" style="display:none">0</span>
-          </button>
-        </div>
+      <div class="hero-btns" style="align-items:center;gap:6px;flex-direction:row">
+        <button class="hero-btn" id="themeToggle" title="Cambiar color">🌙</button>
+        <button class="hero-btn" id="langToggleBtn" title="Cambiar idioma" style="font-size:9px;font-weight:900;letter-spacing:.5px;">EN</button>
+        <button class="hero-bell" id="heroBellBtn" title="Rutas recibidas" aria-label="Rutas recibidas">
+          🔔
+          <span class="hero-bell-badge" id="heroBellBadge" style="display:none">0</span>
+        </button>
         <!-- hidden controls kept for JS compatibility -->
         <button id="gpsBtn" style="display:none"></button>
         <button id="menuBtn" style="display:none"></button>
@@ -6095,6 +6093,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="sett-section-title">👤 Driver Profile</div>
         <div class="profile-card">
           <div class="profile-top">
+            <!-- Fleet Link — ahora fijo en la esquina superior derecha del profile-card -->
+            <button id="fleetLinkFab" title="Fleet Link — Conectar con dispatcher">🔗<span class="badge" id="fleetLinkBadge">0</span></button>
             <div style="position:relative;display:inline-block" onclick="document.getElementById('profilePhotoInput').click()" title="Cambiar foto">
               <div class="profile-avatar" id="profileAvatar">🚛</div>
               <div style="position:absolute;bottom:0;right:0;background:#3b82f6;border:2px solid #0f2027;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer">📷</div>
@@ -20785,6 +20785,47 @@ function getOriginState() {
   return null;
 }
 
+// Helper expuesto: fija el destino del planificador desde fuera (p.ej. campana de rutas)
+// Devuelve true si el destino quedó puesto, false si hubo problema.
+window.setPlannerDestination = function(dest, opts){
+  try {
+    if (!dest || typeof dest !== 'object') return false;
+    if (!dest.name) return false;
+    destination = {
+      name: dest.name,
+      lat:  Number(dest.lat) || 0,
+      lon:  Number(dest.lon) || 0,
+      state: dest.state || ''
+    };
+    const input = document.getElementById('destInput');
+    if (input){
+      input.value = destination.name;
+      const sug = document.getElementById('destSugg');
+      if (sug) sug.style.display = 'none';
+    }
+    if (input && input.scrollIntoView){
+      setTimeout(() => input.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
+    }
+    // Calcular si ya hay origen GPS
+    if (opts && opts.calculate !== false){
+      setTimeout(() => {
+        try {
+          if (origin && typeof calculateRoute === 'function'){
+            calculateRoute();
+          } else if (typeof useGPS === 'function'){
+            useGPS();
+            setTimeout(() => { if (origin && typeof calculateRoute === 'function') calculateRoute(); }, 1800);
+          }
+        } catch(e){ console.warn('setPlannerDestination calc', e); }
+      }, 350);
+    }
+    return true;
+  } catch(e){
+    console.warn('setPlannerDestination', e);
+    return false;
+  }
+};
+
 function setDestinationWithLocalCheck(it) {
   const jobType = driverProfile?.jobType || 'interstate';
 
@@ -25264,21 +25305,26 @@ window._hosAutoRecalc = false;
      además de recibir notificaciones en tiempo real.
      ══════════════════════════════════════════════════════════════ -->
 <style>
+  /* FAB anterior convertido en botón inline dentro del profile-top */
   #fleetLinkFab{
-    position:fixed; right:14px; bottom:96px; z-index:9500;
-    width:52px; height:52px; border-radius:50%;
+    position:absolute; top:10px; right:10px; z-index:6;
+    width:40px; height:40px; border-radius:12px;
     background:linear-gradient(135deg,#10b981,#059669);
-    color:white; border:0; font-size:22px;
-    box-shadow:0 6px 18px rgba(16,185,129,.45);
+    color:white; border:0; font-size:17px;
+    box-shadow:0 4px 14px rgba(16,185,129,.45);
     display:grid; place-items:center; cursor:pointer;
+    transition: transform .15s, box-shadow .2s;
   }
+  #fleetLinkFab:active{ transform: scale(.94); }
   #fleetLinkFab .badge{
-    position:absolute; top:-4px; right:-4px;
+    position:absolute; top:-5px; right:-5px;
     background:#ef4444; color:#fff; font-size:10px; font-weight:800;
-    padding:2px 5px; border-radius:8px; border:2px solid #fff;
-    display:none;
+    padding:2px 5px; border-radius:8px; border:2px solid #0f2027;
+    display:none; line-height:1;
   }
   #fleetLinkFab.connected{ background:linear-gradient(135deg,#3b82f6,#1d4ed8); }
+  /* Asegurar que profile-top sea contenedor de posicionamiento */
+  .profile-card .profile-top { position: relative; padding-right: 56px; }
   #fleetLinkModal{
     position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:9999;
     display:none; align-items:center; justify-content:center; padding:14px;
@@ -25341,7 +25387,6 @@ window._hosAutoRecalc = false;
   @keyframes flPulse { 0%,100%{transform:translateX(-50%) scale(1);} 50%{transform:translateX(-50%) scale(1.05);} }
 </style>
 
-<button id="fleetLinkFab" title="Fleet Link">🔗<span class="badge" id="fleetLinkBadge">0</span></button>
 <div id="fleetLinkModal">
   <div class="fl-card">
     <h2>🔗 Fleet Link</h2>
@@ -25451,6 +25496,7 @@ window._hosAutoRecalc = false;
     shareLoc: localStorage.getItem('fleet_link_share_loc') !== '0',
     watchId: null,
     notifUnsub: null,
+    odHandle: null,    // referencia al onDisconnect actual (para poder cancelar al cambiar de flota)
     lastPing: null,
     unread: 0
   };
@@ -25562,25 +25608,96 @@ window._hosAutoRecalc = false;
     };
   }
 
+  // ── Limpieza completa de la flota anterior antes de cambiar ──
+  async function cleanupCurrentFleet(markOfflineIfPossible){
+    const oldFleet = state.fleetId;
+    if (!oldFleet) return;
+    // Parar GPS
+    try { stopLocationSharing(); } catch(e){}
+    // Parar listener de notificaciones
+    if (state.notifUnsub){ try { state.notifUnsub(); } catch(e){} state.notifUnsub = null; }
+    // Cancelar el onDisconnect previo (si lo teníamos guardado)
+    if (state.odHandle){
+      try { await state.odHandle.cancel(); } catch(e){ console.warn('od cancel', e); }
+      state.odHandle = null;
+    }
+    // Marcar al conductor como offline en la flota anterior (best-effort)
+    if (markOfflineIfPossible){
+      try {
+        await Promise.race([
+          update(ref(db, `fleets/${oldFleet}/drivers/${MY_ID}`), { online:false, lastSeen: serverTimestamp() }),
+          new Promise(res => setTimeout(res, 2500))
+        ]);
+      } catch(e){ /* ignorar */ }
+    }
+  }
+
+  // ── Verificar conectividad antes de escribir ───────────
+  async function waitForFirebaseConnection(timeoutMs){
+    return new Promise((resolve) => {
+      let done = false;
+      const t = setTimeout(() => { if (!done){ done = true; unsub(); resolve(false); } }, timeoutMs || 4000);
+      const unsub = onValue(ref(db, '.info/connected'), (snap) => {
+        if (snap.val() === true && !done){
+          done = true; clearTimeout(t); unsub(); resolve(true);
+        }
+      }, () => { /* error → deja que el timeout decida */ });
+    });
+  }
+
   async function joinFleet(code){
     const c = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
     if (c.length < 4){ flToast('Código inválido'); return; }
     console.log('[FleetLink] Intentando unirse a flota:', c, 'como', MY_ID);
+
+    // 1) Si ya había una flota previa, limpiamos todo primero
+    if (state.fleetId && state.fleetId !== c){
+      console.log('[FleetLink] Cambiando de flota, limpiando', state.fleetId);
+      await cleanupCurrentFleet(true);
+    } else if (state.fleetId === c){
+      // Reconexión a la misma flota — sólo resetear listeners
+      await cleanupCurrentFleet(false);
+    }
+
+    // 2) Esperar a que Firebase esté conectado (hasta 4s)
+    const online = await waitForFirebaseConnection(4000);
+    if (!online){
+      alert('❌ Sin conexión a internet o Firebase no responde.\n\nVerifica tu red y vuelve a intentar.');
+      return;
+    }
+
     state.fleetId = c;
     localStorage.setItem('fleet_link_fleet', c);
     state.plate = plateInput.value.trim();
     state.phone = phoneInput.value.trim();
     localStorage.setItem('fleet_link_plate', state.plate);
     localStorage.setItem('fleet_link_phone', state.phone);
+
     try {
       await registerPresence();
       console.log('[FleetLink] ✅ Registrado en Firebase correctamente');
     } catch(e){
       console.error('[FleetLink] ❌ Error al registrar:', e);
+      const msg = (e && e.message) || String(e);
+      // Detectar tipo de error para dar un mensaje útil
+      let detail = msg;
+      let hint   = '';
+      if (/permission[_\s-]?denied/i.test(msg)){
+        detail = 'Permiso denegado por Firebase';
+        hint   = '• Las reglas de Firebase no permiten escribir en /fleets/' + c + '/drivers\n• Pide al admin que actualice firebase-rules.json';
+      } else if (/timeout/i.test(msg)){
+        detail = 'Timeout escribiendo en Firebase';
+        hint   = '• Tu conexión es muy lenta o intermitente\n• Cierra y abre la app\n• Intenta con WiFi';
+      } else if (/network|offline/i.test(msg)){
+        detail = 'Sin conexión de red';
+        hint   = '• Revisa tu conexión WiFi o datos móviles';
+      } else {
+        hint = '• Código posiblemente incorrecto\n• Las reglas de Firebase pueden estar bloqueando\n• Problema de conexión';
+      }
       state.fleetId = null;
       localStorage.removeItem('fleet_link_fleet');
       renderStatus();
-      alert('❌ No se pudo conectar a la flota.\n\nDetalle: ' + (e.message || e) + '\n\nPosibles causas:\n• Código incorrecto\n• Las reglas de Firebase no permiten escribir en /fleets\n• Sin conexión a internet');
+      alert('❌ No se pudo conectar a la flota.\n\nDetalle: ' + detail + '\n\nPosibles causas:\n' + hint);
       return;
     }
     startLocationSharing();
@@ -25594,11 +25711,24 @@ window._hosAutoRecalc = false;
     const base = `fleets/${state.fleetId}/drivers/${MY_ID}`;
     const info = getDriverInfo();
     console.log('[FleetLink] Escribiendo en:', base, info);
-    await Promise.race([
-      set(ref(db, base), info),
-      new Promise((_,rej) => setTimeout(()=>rej(new Error('Timeout escribiendo en Firebase (10s)')), 10000))
-    ]);
-    try { onDisconnect(ref(db, base)).update({ online:false, lastSeen: serverTimestamp() }); } catch(e){}
+
+    // Timeout más corto (6s) — si Firebase no responde en ese tiempo hay algo raro
+    let timer;
+    const timeoutPromise = new Promise((_, rej) => {
+      timer = setTimeout(() => rej(new Error('Timeout escribiendo en Firebase (6s)')), 6000);
+    });
+    try{
+      await Promise.race([ set(ref(db, base), info), timeoutPromise ]);
+    } finally {
+      clearTimeout(timer);
+    }
+
+    // Guardar la referencia del onDisconnect para poder cancelarla si cambiamos de flota
+    try {
+      const od = onDisconnect(ref(db, base));
+      await od.update({ online:false, lastSeen: serverTimestamp() });
+      state.odHandle = od;
+    } catch(e){ console.warn('[FleetLink] onDisconnect', e); }
   }
 
   async function saveInfo(){
@@ -25614,11 +25744,7 @@ window._hosAutoRecalc = false;
   async function leaveFleet(){
     if (!state.fleetId) return;
     if (!confirm('¿Desconectarte de la flota? El dispatcher dejará de ver tu ubicación.')) return;
-    stopLocationSharing();
-    if (state.notifUnsub){ state.notifUnsub(); state.notifUnsub = null; }
-    try{
-      await update(ref(db, `fleets/${state.fleetId}/drivers/${MY_ID}`), { online:false, lastSeen: serverTimestamp() });
-    }catch(e){}
+    await cleanupCurrentFleet(true);
     state.fleetId = null;
     localStorage.removeItem('fleet_link_fleet');
     renderStatus();
@@ -26024,9 +26150,89 @@ window._hosAutoRecalc = false;
         status: newStatus,
         ...(stamps[newStatus]||{})
       });
+      // Al aceptar, auto-configurar destino = recogida y calcular ruta
+      if (newStatus === 'accepted'){
+        const r = bellState.routes.find(x => x.id === routeId);
+        if (r && r.pickup) applyPickupAsDestination(r);
+      }
+      // Al iniciar el viaje (carga recogida), cambiar destino = descarga
+      if (newStatus === 'in-progress'){
+        const r = bellState.routes.find(x => x.id === routeId);
+        if (r && r.delivery) applyDeliveryAsDestination(r);
+      }
     }catch(e){
       alert('No se pudo actualizar la ruta: ' + (e.message || e));
     }
+  }
+
+  // Toma la recogida de la ruta y la pone como destino en el planificador
+  function applyPickupAsDestination(r){
+    const p = r.pickup || {};
+    const name = buildPlaceName(p);
+    if (!name) return;
+    setAppDestination({
+      name,
+      lat: Number(p.lat) || 0,
+      lon: Number(p.lon) || 0,
+      state: p.stateCode || p.state || ''
+    });
+    toastOnMap('📍 Destino fijado: recogida — ' + name);
+  }
+  function applyDeliveryAsDestination(r){
+    const d = r.delivery || {};
+    const name = buildPlaceName(d);
+    if (!name) return;
+    setAppDestination({
+      name,
+      lat: Number(d.lat) || 0,
+      lon: Number(d.lon) || 0,
+      state: d.stateCode || d.state || ''
+    });
+    toastOnMap('🎯 Destino fijado: descarga — ' + name);
+  }
+
+  function buildPlaceName(loc){
+    if (!loc) return '';
+    // Preferir dirección completa; si no, ciudad, estado
+    if (loc.address && loc.address.trim()) return loc.address.trim();
+    const parts = [loc.city, loc.stateCode || loc.state, loc.country].filter(Boolean);
+    return parts.join(', ');
+  }
+
+  function setAppDestination(dest){
+    try {
+      // Cerrar modal primero para que el usuario vea el planificador
+      closeRoutesModal();
+      // Usar helper global expuesto por el planificador principal
+      if (typeof window.setPlannerDestination === 'function'){
+        const ok = window.setPlannerDestination(dest, { calculate: true });
+        if (ok) return;
+      }
+      // Fallback mínimo: sólo llenar el input
+      const input = document.getElementById('destInput');
+      if (input){
+        input.value = dest.name;
+        const sug = document.getElementById('destSugg');
+        if (sug) sug.style.display = 'none';
+      }
+    } catch(e){
+      console.warn('setAppDestination', e);
+    }
+  }
+
+  function toastOnMap(msg){
+    // Usa el toast del fleet-link si existe, fallback a uno mínimo
+    try {
+      const t = document.getElementById('fleetLinkToast');
+      if (t){
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(toastOnMap._t);
+        toastOnMap._t = setTimeout(() => t.classList.remove('show'), 3500);
+        return;
+      }
+    } catch(e){}
+    try { console.log('[routes]', msg); } catch(e){}
   }
 
   function showRouteOnMap(routeId){
