@@ -1122,6 +1122,7 @@
   #fullMapScreen.bridge-mode #driveHoursWidget,
   #fullMapScreen.bridge-mode #milesRemainingWidget,
   #fullMapScreen.bridge-mode #speedLimitWidget,
+  #fullMapScreen.bridge-mode #mapSpeedGroup,
   #fullMapScreen.bridge-mode #mapSpeedSign,
   #fullMapScreen.bridge-mode #sosFab,
   #fullMapScreen.bridge-mode #weatherWidget,
@@ -1480,17 +1481,26 @@
     text-shadow: 0 1px 3px rgba(0,0,0,.5);
   }
 
-  /* ── MAP SPEED LIMIT SIGN (always on map, not draggable) ── */
-  #mapSpeedSign {
+  /* ── MAP SPEED SIGN GROUP (sign + SOS below it) ── */
+  #mapSpeedGroup {
     position: absolute;
     top: calc(70px + env(safe-area-inset-top, 0px));
     right: calc(12px + env(safe-area-inset-right, 0px));
-    bottom: auto; left: auto;
     z-index: 650;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+  #mapSpeedGroup > * { pointer-events: all; }
+
+  /* ── MAP SPEED LIMIT SIGN (always on map, not draggable) ── */
+  #mapSpeedSign {
+    position: static;
     display: none;
     flex-direction: column;
     align-items: center;
-    pointer-events: none;
     filter: drop-shadow(0 3px 10px rgba(0,0,0,.5));
   }
   #mapSpeedSign.visible { display: flex; }
@@ -2617,8 +2627,7 @@
   --stack-size: 90px;
 }
 
-/* Right stack (portrait/mobile) — SOS + Weather from bottom-right */
-#sosFab,
+/* Right stack (portrait/mobile) — Weather from bottom-right */
 #weatherWidget{
   right: var(--stack-right) !important;
   left: auto !important;
@@ -2632,14 +2641,13 @@
   bottom: calc(var(--stack-base) + 0px) !important;
 }
 
-/* SOS siempre visible dentro de mapRightControls */
-#mapRightControls #sosFab{
+/* SOS dentro del grupo de señales de velocidad */
+#mapSpeedGroup #sosFab {
   position: relative !important;
   bottom: auto !important; right: auto !important;
   top: auto !important; left: auto !important;
   transform: none !important;
-  display: flex !important;
-  margin-top: 18px !important;
+  margin-top: 0 !important;
 }
 #weatherWidget{
   position: fixed !important;
@@ -2676,8 +2684,8 @@
   margin: 0 auto !important;
 }
 
-/* Speed sign positioned below weather widget */
-#mapSpeedSign{
+/* Speed sign group positioned top-right */
+#mapSpeedGroup{
   top: calc(90px + env(safe-area-inset-top, 0px)) !important;
 }
 #speedLimitWidget{
@@ -7739,21 +7747,26 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- NEXT TURN / EXIT INSTRUCTION -->
   <div id="navNext" class="nav-next" style="display:none">🧭</div>
 
-  <!-- MAP SPEED LIMIT SIGN (display only — no buttons inside) -->
-  <div id="mapSpeedSign">
-    <div class="mss-sign" id="mssSign">
-      <div class="mss-top">SPEED&#10;LIMIT</div>
-      <div class="mss-num" id="mssNum">65</div>
-      <div class="mss-truck-label">TRUCKS</div>
+  <!-- SPEED SIGN GROUP: sign + SOS button below it -->
+  <div id="mapSpeedGroup">
+    <!-- MAP SPEED LIMIT SIGN (display only — no buttons inside) -->
+    <div id="mapSpeedSign">
+      <div class="mss-sign" id="mssSign">
+        <div class="mss-top">SPEED&#10;LIMIT</div>
+        <div class="mss-num" id="mssNum">65</div>
+        <div class="mss-truck-label">TRUCKS</div>
+      </div>
+      <div class="mss-sign" id="mssMySpeed" style="border-top:none;border-top-left-radius:0;border-top-right-radius:0;margin-top:-1px">
+        <div class="mss-top">YOUR&#10;SPEED</div>
+        <div class="mss-num" id="mssMySpeedNum">0</div>
+        <div class="mss-truck-label">MPH</div>
+      </div>
+      <div class="mss-post"></div>
+      <div class="mss-state-badge" id="mssState">-- STATE</div>
+      <div class="mss-diff" id="mssDiff"></div>
     </div>
-    <div class="mss-sign" id="mssMySpeed" style="border-top:none;border-top-left-radius:0;border-top-right-radius:0;margin-top:-1px">
-      <div class="mss-top">YOUR&#10;SPEED</div>
-      <div class="mss-num" id="mssMySpeedNum">0</div>
-      <div class="mss-truck-label">MPH</div>
-    </div>
-    <div class="mss-post"></div>
-    <div class="mss-state-badge" id="mssState">-- STATE</div>
-    <div class="mss-diff" id="mssDiff"></div>
+    <!-- SOS button below speed signs -->
+    <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
   </div>
 
   <!-- COMMUNITY REPORT ALERT POPUP -->
@@ -7842,10 +7855,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- AUTO-FOLLOW button (bottom-left) -->
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
 
-  <!-- RIGHT SIDE CONTROL COLUMN: Community Reports + SOS -->
+  <!-- RIGHT SIDE CONTROL COLUMN: Community Reports -->
   <div id="mapRightControls">
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
-    <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
   </div>
 
   <!-- POI Filter chips (ocultos, se activan por JS) -->
@@ -9397,7 +9409,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <!-- ══════════════════════════════════════
      SOS FAB BUTTON (on map)
 ══════════════════════════════════════ -->
-<!-- sosFab is now inside the left top column -->
+<!-- sosFab is inside #mapSpeedGroup (below speed signs) -->
 <span id="fmSpeedVal" style="display:none">0</span>
 
 <!-- ══════════════════════════════════════
@@ -15053,7 +15065,7 @@ function fmStartTracking() {
     if (fmFollowing && fmMapInst) {
       if (!fmUserZoomed) {
         if (isMoving) {
-          fmCurrentZoom = gpsSpeed > 40 ? 9 : gpsSpeed > 25 ? 13 : 15;
+          fmCurrentZoom = gpsSpeed > 40 ? 9 : gpsSpeed > 25 ? 13 : gpsSpeed >= 20 ? 15 : 17;
         } else {
           fmCurrentZoom = 16;
         }
