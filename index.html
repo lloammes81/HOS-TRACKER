@@ -12499,7 +12499,15 @@ function getTruckIconHTML(sizePx=26) {
     const s = Math.max(18, sizePx + 8);
     return `<img alt="truck" src="${url}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))" />`;
   }
-  // SVG realistic truck (default)
+  // Use the truck-type-specific SVG matching the user's selected truck type
+  if (window._TRUCK_DATA) {
+    const _ttVal = (typeof driverProfile !== 'undefined' && driverProfile.truckType)
+      ? driverProfile.truckType
+      : (() => { try { return JSON.parse(localStorage.getItem('hos_driver_profile') || '{}').truckType || '18wheeler'; } catch(e){ return '18wheeler'; } })();
+    const _td = window._TRUCK_DATA.find(t => t.value === _ttVal) || window._TRUCK_DATA[0];
+    if (_td) return _td.svg;
+  }
+  // SVG realistic truck (fallback when _TRUCK_DATA not yet loaded)
   if (!truckIconMode || truckIconMode === 'svg:truck' || truckIconMode === 'emoji:🚛') {
     const sc = sizePx / 20; // scale factor (base design at 20px width)
     const w = Math.round(20 * sc), h = Math.round(52 * sc);
@@ -12573,13 +12581,20 @@ function getTruckIconHTML(sizePx=26) {
 
 function getTruckLeafletIcon() {
   const hasAvatar = _getUserAvatarHTML(24) !== null;
-  const size = hasAvatar ? 42 : 44;
-  const anchor = size / 2;
+  if (hasAvatar) {
+    return L.divIcon({
+      className: '',
+      html: `<div style="display:flex;align-items:center;justify-content:center">${getTruckIconHTML(24)}</div>`,
+      iconSize: [42, 42],
+      iconAnchor: [21, 21]
+    });
+  }
+  // Truck-type SVGs are landscape (~59×22 px at 0.65 scale); use a wider anchor
   return L.divIcon({
     className: '',
     html: `<div style="display:flex;align-items:center;justify-content:center">${getTruckIconHTML(24)}</div>`,
-    iconSize: [size, size],
-    iconAnchor: [anchor, anchor]
+    iconSize: [66, 26],
+    iconAnchor: [33, 13]
   });
 }
 
@@ -25538,6 +25553,7 @@ window._hosAutoRecalc = false;
     sel.dispatchEvent(new Event('change'));
     _syncTruckDisplay();
     closeTruckPicker();
+    if (typeof refreshTruckMarkers === 'function') refreshTruckMarkers();
   };
 
   window._syncTruckDisplay = function(){
