@@ -590,6 +590,43 @@
   .poi-loading { animation: poi-pulse 1s ease-in-out infinite; }
   @keyframes poi-pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
 
+  /* ── ROUTE STOPS STRIP (pesas & rest areas ahead) ──────── */
+  .route-stops-title {
+    font-size: 11px; font-weight: 700; opacity: .55;
+    margin: 10px 0 5px; display: flex; align-items: center; gap: 5px;
+  }
+  .route-stops-strip {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; margin: 0 -2px;
+  }
+  .route-stops-strip::-webkit-scrollbar { display: none; }
+  .route-stops-inner { display: flex; gap: 8px; padding: 2px 2px 6px; }
+  .route-stop-card {
+    flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+    border-radius: 12px; padding: 8px 10px; min-width: 82px;
+    cursor: pointer; transition: transform .15s, opacity .15s;
+    text-align: center;
+  }
+  .route-stop-card:active { transform: scale(.95); opacity: .8; }
+  .route-stop-card.weigh {
+    background: #fffbeb; border: 1.5px solid #fde68a; color: #92400e;
+  }
+  body.dark .route-stop-card.weigh {
+    background: #3d2a0055; border-color: #b4530966; color: #fbbf24;
+  }
+  .route-stop-card.rest {
+    background: #f5f3ff; border: 1.5px solid #ddd6fe; color: #5b21b6;
+  }
+  body.dark .route-stop-card.rest {
+    background: #2e1a4a55; border-color: #6d28d966; color: #c4b5fd;
+  }
+  .route-stop-icon { font-size: 20px; line-height: 1; margin-bottom: 3px; }
+  .route-stop-dist { font-size: 13px; font-weight: 900; margin-bottom: 2px; }
+  .route-stop-name {
+    font-size: 8px; font-weight: 700; opacity: .65;
+    max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
   /* ── NEARBY SEARCH ─────────────────────────────────────── */
   .nearby-chip {
     display: inline-flex; align-items: center; gap: 5px;
@@ -5878,6 +5915,20 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           </div>
           <div class="poi-badge" style="background:#dbeafe;border-color:#93c5fd;color:#1d4ed8" id="miniBadgeParking" onclick="toggleMiniPOI('parking')">
             🅿️ Parking <span class="poi-cnt" id="miniParkingCnt">…</span>
+          </div>
+        </div>
+
+        <!-- ⚖️😴 Upcoming weigh stations & rest areas along route -->
+        <div id="routeStopsSection" style="display:none">
+          <div class="route-stops-title">
+            <span>📍</span>
+            <span>Próximas en Mi Ruta</span>
+            <span id="routeStopsTotalLabel" style="margin-left:auto;font-size:10px;opacity:.4;font-weight:600"></span>
+          </div>
+          <div class="route-stops-strip">
+            <div class="route-stops-inner" id="routeStopsInner">
+              <!-- populated by buildRouteStopsList() -->
+            </div>
           </div>
         </div>
       </div>
@@ -13326,6 +13377,8 @@ async function loadMiniMapPOIs() {
 
           const marker = L.marker([elLat, elLon], { icon })
             .bindPopup(popupHtml, { maxWidth: 220 });
+          marker._poiName = name;
+          marker._poiType = type;
 
           if (miniPoiActive[type]) marker.addTo(miniMap);
           allMarkers.push(marker);
@@ -13351,6 +13404,58 @@ async function loadMiniMapPOIs() {
 
   // Load all four types in parallel
   await Promise.all([loadType('truck'), loadType('rest'), loadType('weigh'), loadType('checkpoint')]);
+  buildRouteStopsList();
+}
+
+/* ── Upcoming weigh stations & rest areas sorted by distance ahead ── */
+function buildRouteStopsList() {
+  const section = document.getElementById('routeStopsSection');
+  const inner   = document.getElementById('routeStopsInner');
+  const totalEl = document.getElementById('routeStopsTotalLabel');
+  if (!section || !inner) return;
+
+  const truckLat = window.lastFixFm?.lat ?? origin?.lat;
+  const truckLon = window.lastFixFm?.lon ?? origin?.lon;
+  if (!truckLat || !truckLon) return;
+
+  // Combine weigh + rest markers and calculate distance from current position
+  const stops = [];
+  ['weigh', 'rest'].forEach(type => {
+    (miniPoiMarkers[type] || []).forEach(m => {
+      const ll = m.getLatLng();
+      const dist = Math.round(haversine(truckLat, truckLon, ll.lat, ll.lng));
+      if (dist > 700) return; // skip very far stops
+      stops.push({
+        type,
+        dist,
+        lat: ll.lat,
+        lon: ll.lng,
+        name: m._poiName || (type === 'weigh' ? 'Weigh Station' : 'Rest Area'),
+      });
+    });
+  });
+
+  if (stops.length === 0) { section.style.display = 'none'; return; }
+  stops.sort((a, b) => a.dist - b.dist);
+
+  section.style.display = 'block';
+  if (totalEl) {
+    const w = stops.filter(s => s.type === 'weigh').length;
+    const r = stops.filter(s => s.type === 'rest').length;
+    totalEl.textContent = `⚖️ ${w}  😴 ${r}`;
+  }
+
+  inner.innerHTML = stops.slice(0, 25).map(s => {
+    const emoji    = s.type === 'weigh' ? '⚖️' : '😴';
+    const shortName = (s.name || '').split(',')[0].substring(0, 14) || (s.type === 'weigh' ? 'Báscula' : 'Rest Area');
+    const distLabel = s.dist < 1 ? '< 1 mi' : `${s.dist} mi`;
+    return `<div class="route-stop-card ${s.type}" title="${s.name}"
+      onclick="if(miniMap){miniMap.setView([${s.lat},${s.lon}],14);document.getElementById('miniMap').scrollIntoView({behavior:'smooth'});}">
+      <div class="route-stop-icon">${emoji}</div>
+      <div class="route-stop-dist">${distLabel}</div>
+      <div class="route-stop-name">${shortName}</div>
+    </div>`;
+  }).join('');
 }
 
 function toggleMiniPOI(type) {
@@ -13802,8 +13907,8 @@ let fmLastStablePos = null;   // last accepted position (jitter filter)
 // POI layers
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
 const fmPoiGroups = {};  // LayerGroup per type for batch rendering
-// truck/rest/scale start OFF so first tap loads them on demand
-const fmPoiActive = { scale: true, truck: true, rest: false, reports: true, restrict: true, parking: false };
+// scale/truck/rest all start ON — loaded automatically when route opens
+const fmPoiActive = { scale: true, truck: true, rest: true, reports: true, restrict: true, parking: false };
 let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false };
 
 // Community reports (stored in localStorage, shared within session)
@@ -13831,7 +13936,7 @@ function openFullMapScreen() {
   document.getElementById('fmStopBtn').style.display = 'none';
   document.getElementById('poiLegend').classList.add('visible');
   document.getElementById('fmFollowBtn').classList.add('visible');
-  // Sync chip visual state with fmPoiActive (truck/rest/scale start off)
+  // Sync chip visual state with fmPoiActive (all enabled by default)
   ['scale','truck','rest'].forEach(t => {
     const cid = t === 'scale' ? 'chipScale' : t === 'truck' ? 'chipTruck' : 'chipRest';
     const c = document.getElementById(cid);
@@ -15007,6 +15112,11 @@ function fmStartTracking() {
     const acc  = pos.coords.accuracy || 20;
     // save last GPS fix for center button
     window.lastFixFm = { lat, lon, acc, ts: Date.now() };
+    // Refresh upcoming stops list every ~2 miles of movement
+    if (!window._lastStopsLat || haversine(lat, lon, window._lastStopsLat, window._lastStopsLon) > 2) {
+      window._lastStopsLat = lat; window._lastStopsLon = lon;
+      if (typeof buildRouteStopsList === 'function') buildRouteStopsList();
+    }
 
     const rawSpeed = pos.coords.speed;
     const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
