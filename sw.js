@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rutas-dot-v82';
+const CACHE_NAME = 'rutas-dot-v83';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
