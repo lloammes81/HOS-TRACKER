@@ -295,11 +295,11 @@
   }
   .stop-row-mobile:focus-within { border-color: var(--accent); }
   .stop-row-mobile .stop-icon {
-    font-size: 26px; flex-shrink: 0; width: 34px; text-align: center;
+    font-size: 20px; flex-shrink: 0; width: 28px; text-align: center;
   }
   .stop-row-mobile input {
     background: transparent; border: none; padding: 10px 0;
-    font-size: 24px; box-shadow: none; border-radius: 0;
+    font-size: 18px; box-shadow: none; border-radius: 0;
     min-height: 54px;
     transition: font-size .2s ease, min-height .2s ease;
   }
@@ -318,7 +318,7 @@
     font-size: 30px;
   }
   .stop-row-mobile .stop-gps-label {
-    flex: 1; font-size: 24px; color: var(--text); padding: 10px 0;
+    flex: 1; font-size: 18px; color: var(--text); padding: 10px 0;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .stop-row-mobile .stop-refresh-btn {
@@ -592,6 +592,43 @@
   }
   .poi-loading { animation: poi-pulse 1s ease-in-out infinite; }
   @keyframes poi-pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+  /* ── ROUTE STOPS STRIP (pesas & rest areas ahead) ──────── */
+  .route-stops-title {
+    font-size: 11px; font-weight: 700; opacity: .55;
+    margin: 10px 0 5px; display: flex; align-items: center; gap: 5px;
+  }
+  .route-stops-strip {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; margin: 0 -2px;
+  }
+  .route-stops-strip::-webkit-scrollbar { display: none; }
+  .route-stops-inner { display: flex; gap: 8px; padding: 2px 2px 6px; }
+  .route-stop-card {
+    flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+    border-radius: 12px; padding: 8px 10px; min-width: 82px;
+    cursor: pointer; transition: transform .15s, opacity .15s;
+    text-align: center;
+  }
+  .route-stop-card:active { transform: scale(.95); opacity: .8; }
+  .route-stop-card.weigh {
+    background: #fffbeb; border: 1.5px solid #fde68a; color: #92400e;
+  }
+  body.dark .route-stop-card.weigh {
+    background: #3d2a0055; border-color: #b4530966; color: #fbbf24;
+  }
+  .route-stop-card.rest {
+    background: #f5f3ff; border: 1.5px solid #ddd6fe; color: #5b21b6;
+  }
+  body.dark .route-stop-card.rest {
+    background: #2e1a4a55; border-color: #6d28d966; color: #c4b5fd;
+  }
+  .route-stop-icon { font-size: 20px; line-height: 1; margin-bottom: 3px; }
+  .route-stop-dist { font-size: 13px; font-weight: 900; margin-bottom: 2px; }
+  .route-stop-name {
+    font-size: 8px; font-weight: 700; opacity: .65;
+    max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
 
   /* ── NEARBY SEARCH ─────────────────────────────────────── */
   .nearby-chip {
@@ -1125,6 +1162,7 @@
   #fullMapScreen.bridge-mode #driveHoursWidget,
   #fullMapScreen.bridge-mode #milesRemainingWidget,
   #fullMapScreen.bridge-mode #speedLimitWidget,
+  #fullMapScreen.bridge-mode #mapSpeedGroup,
   #fullMapScreen.bridge-mode #mapSpeedSign,
   #fullMapScreen.bridge-mode #sosFab,
   #fullMapScreen.bridge-mode #weatherWidget,
@@ -1483,17 +1521,26 @@
     text-shadow: 0 1px 3px rgba(0,0,0,.5);
   }
 
-  /* ── MAP SPEED LIMIT SIGN (always on map, not draggable) ── */
-  #mapSpeedSign {
+  /* ── MAP SPEED SIGN GROUP (sign + SOS below it) ── */
+  #mapSpeedGroup {
     position: absolute;
     top: calc(70px + env(safe-area-inset-top, 0px));
     right: calc(12px + env(safe-area-inset-right, 0px));
-    bottom: auto; left: auto;
     z-index: 650;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+  #mapSpeedGroup > * { pointer-events: all; }
+
+  /* ── MAP SPEED LIMIT SIGN (always on map, not draggable) ── */
+  #mapSpeedSign {
+    position: static;
     display: none;
     flex-direction: column;
     align-items: center;
-    pointer-events: none;
     filter: drop-shadow(0 3px 10px rgba(0,0,0,.5));
   }
   #mapSpeedSign.visible { display: flex; }
@@ -2620,8 +2667,7 @@
   --stack-size: 90px;
 }
 
-/* Right stack (portrait/mobile) — SOS + Weather from bottom-right */
-#sosFab,
+/* Right stack (portrait/mobile) — Weather from bottom-right */
 #weatherWidget{
   right: var(--stack-right) !important;
   left: auto !important;
@@ -2635,14 +2681,13 @@
   bottom: calc(var(--stack-base) + 0px) !important;
 }
 
-/* SOS siempre visible dentro de mapRightControls */
-#mapRightControls #sosFab{
+/* SOS dentro del grupo de señales de velocidad */
+#mapSpeedGroup #sosFab {
   position: relative !important;
   bottom: auto !important; right: auto !important;
   top: auto !important; left: auto !important;
   transform: none !important;
-  display: flex !important;
-  margin-top: 18px !important;
+  margin-top: 0 !important;
 }
 #weatherWidget{
   position: fixed !important;
@@ -2679,8 +2724,8 @@
   margin: 0 auto !important;
 }
 
-/* Speed sign positioned below weather widget */
-#mapSpeedSign{
+/* Speed sign group positioned top-right */
+#mapSpeedGroup{
   top: calc(90px + env(safe-area-inset-top, 0px)) !important;
 }
 #speedLimitWidget{
@@ -3601,7 +3646,7 @@ body.dark #fullMap .leaflet-tile-pane {
   ════════════════════════════════════════════════════════════ */
   .hero-wrap {
     background: linear-gradient(160deg, #091525 0%, #0e2038 55%, #0a2015 100%);
-    margin: -16px -16px 14px;
+    margin: -16px -16px 4px;
     padding: 0;
     border-radius: 0 0 22px 22px;
     position: relative;
@@ -3628,11 +3673,11 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .hero-inner {
     position: relative; z-index: 1;
-    padding: calc(var(--header-pt) + 4px) 16px 0;
+    padding: calc(var(--header-pt) + 2px) 8px 0;
   }
   .hero-top-bar {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 38px; padding-right: 90px;
+    margin-bottom: 20px; padding-right: 90px;
   }
   .hero-brand { display: flex; align-items: center; gap: 9px; }
   .hero-brand-icon {
@@ -3665,12 +3710,177 @@ body.dark #fullMap .leaflet-tile-pane {
     transition: background .15s;
   }
   .hero-btn:active { background: rgba(255,255,255,.18); }
+
+  /* ── Hero bell (route notifications) ───────────────── */
+  .hero-bell {
+    position: relative;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    color: rgba(255,255,255,.9);
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; touch-action: manipulation;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    transition: background .15s, transform .15s, box-shadow .25s;
+  }
+  .hero-bell:active { background: rgba(255,255,255,.18); transform: scale(.95); }
+  .hero-bell.ringing {
+    background: linear-gradient(135deg, rgba(239,68,68,.35), rgba(245,158,11,.25));
+    border-color: rgba(239,68,68,.55);
+    color: #fff;
+    box-shadow: 0 0 0 rgba(239,68,68,.6), 0 0 12px rgba(239,68,68,.55);
+    animation: bellRing 1.2s ease-in-out infinite;
+  }
+  @keyframes bellRing {
+    0%, 100% { transform: rotate(0deg) scale(1); box-shadow: 0 0 0 rgba(239,68,68,.55), 0 0 12px rgba(239,68,68,.55); }
+    10% { transform: rotate(-18deg) scale(1.08); }
+    20% { transform: rotate(14deg) scale(1.08); }
+    30% { transform: rotate(-10deg) scale(1.05); }
+    40% { transform: rotate(8deg) scale(1.05); box-shadow: 0 0 0 10px rgba(239,68,68,0), 0 0 16px rgba(245,158,11,.7); }
+    50% { transform: rotate(0deg) scale(1); }
+  }
+  .hero-bell-badge {
+    position: absolute;
+    top: -5px; right: -5px;
+    min-width: 17px; height: 17px;
+    padding: 0 4px;
+    background: linear-gradient(135deg,#ef4444,#b91c1c);
+    color: #fff;
+    font-size: 10px; font-weight: 900;
+    border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(239,68,68,.6);
+    border: 2px solid #0b1020;
+    pointer-events: none;
+  }
+
+  /* ── Routes modal (móvil) ───────────────────────────── */
+  .routes-modal {
+    position: fixed; inset: 0; z-index: 10050;
+    background: rgba(0,0,0,.65);
+    backdrop-filter: blur(4px);
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .routes-modal.show { display: flex; animation: rmFadeIn .2s ease; }
+  @keyframes rmFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  .routes-modal-card {
+    width: 100%; max-width: 560px;
+    max-height: 92vh;
+    background: linear-gradient(180deg, #0f172a, #0b1020);
+    border-top: 1px solid rgba(255,255,255,.12);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 40px rgba(0,0,0,.6);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    animation: rmSlideUp .25s ease;
+  }
+  @keyframes rmSlideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+  .routes-modal-head {
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, rgba(239,68,68,.15), rgba(59,130,246,.1));
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .routes-modal-title {
+    font-weight: 900; font-size: 16px; color: #fff;
+    flex: 1; line-height: 1.1;
+  }
+  .routes-modal-sub { font-size: 11px; color: #94a3b8; font-weight: 600; margin-top: 2px; }
+  .routes-modal-close {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    color: #fff; font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .routes-modal-body {
+    flex: 1; overflow-y: auto; padding: 12px;
+    background: #0b1020;
+  }
+  .routes-modal-empty {
+    text-align: center; padding: 40px 20px; color: #64748b;
+  }
+  .routes-modal-empty .ico { font-size: 42px; margin-bottom: 10px; }
+  .drv-route-card {
+    background: linear-gradient(135deg, rgba(59,130,246,.08), rgba(15,23,42,.8));
+    border: 1px solid rgba(59,130,246,.25);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .drv-route-card.accepted { border-color: rgba(34,197,94,.4); background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(15,23,42,.8)); }
+  .drv-route-card.rejected { border-color: rgba(239,68,68,.35); opacity: .6; }
+  .drv-route-card.completed { border-color: rgba(139,92,246,.4); }
+  .drv-route-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 11px; color: #94a3b8; font-weight: 700;
+  }
+  .drv-route-status {
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .6px;
+  }
+  .drv-route-status.pending { background: rgba(249,115,22,.18); color: #fb923c; }
+  .drv-route-status.accepted { background: rgba(34,197,94,.18); color: #86efac; }
+  .drv-route-status.in-progress { background: rgba(59,130,246,.18); color: #93c5fd; }
+  .drv-route-status.completed { background: rgba(139,92,246,.22); color: #c4b5fd; }
+  .drv-route-status.rejected { background: rgba(239,68,68,.18); color: #fca5a5; }
+  .drv-route-leg { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+  .drv-route-leg-ico { font-size: 18px; flex: 0 0 auto; }
+  .drv-route-leg-text { flex: 1; min-width: 0; }
+  .drv-route-leg-city { font-weight: 900; font-size: 13px; color: #fff; line-height: 1.15; }
+  .drv-route-leg-addr { font-size: 11px; color: #94a3b8; line-height: 1.35; margin-top: 2px; word-break: break-word; }
+  .drv-route-leg-time { font-size: 11px; color: #60a5fa; margin-top: 3px; font-weight: 700; }
+  .drv-route-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    margin: 10px 0;
+  }
+  .drv-route-stat {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 9px;
+    padding: 7px 6px;
+    text-align: center;
+  }
+  .drv-route-stat-val { font-size: 14px; font-weight: 900; color: #fff; line-height: 1.1; }
+  .drv-route-stat-lbl { font-size: 9px; color: #94a3b8; margin-top: 2px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+  .drv-route-notes {
+    background: rgba(245,158,11,.08);
+    border-left: 3px solid #f59e0b;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #fde68a;
+    border-radius: 6px;
+    margin: 8px 0;
+    line-height: 1.35;
+  }
+  .drv-route-actions {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .drv-route-btn {
+    flex: 1; min-width: 100px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 12px; font-weight: 900;
+    border: 0; cursor: pointer; touch-action: manipulation;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .drv-route-btn.accept { background: linear-gradient(135deg,#10b981,#059669); color: #fff; }
+  .drv-route-btn.reject { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.35); }
+  .drv-route-btn.start  { background: linear-gradient(135deg,#f59e0b,#d97706); color: #fff; }
+  .drv-route-btn.done   { background: linear-gradient(135deg,#8b5cf6,#6d28d9); color: #fff; }
+  .drv-route-btn.map    { background: rgba(59,130,246,.12); color: #93c5fd; border: 1px solid rgba(59,130,246,.35); }
+  .drv-route-btn:active { transform: scale(.97); }
+
   .hero-pill {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 4px 10px; border-radius: 999px;
     background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.18);
-    margin-bottom: 8px;
+    margin-bottom: 5px;
   }
   .hero-pill-dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -3686,14 +3896,14 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .hero-h1 {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 40px; letter-spacing: 1.5px; line-height: 1;
+    font-size: 34px; letter-spacing: 1.5px; line-height: 1;
     color: #fff; margin-bottom: 4px;
   }
   .hero-h1 em { color: #10b981; font-style: normal; }
   .hero-sub { display: none; }
-  .hero-kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; justify-items: center; margin-top: 14px; margin-bottom: -38px; }
+  .hero-kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; justify-items: center; margin-top: 10px; margin-bottom: -18px; }
   .hero-kpi {
-    width: 112px; height: 112px; border-radius: 50%;
+    width: 100px; height: 100px; border-radius: 50%;
     background: linear-gradient(135deg,
       rgba(195,210,222,.82) 0%, rgba(240,248,255,.58) 18%,
       rgba(148,165,180,.72) 50%, rgba(215,230,242,.52) 80%,
@@ -3704,14 +3914,14 @@ body.dark #fullMap .leaflet-tile-pane {
     flex-shrink: 0;
   }
   .hero-kpi-inner {
-    width: 90px; height: 90px; border-radius: 50%;
+    width: 80px; height: 80px; border-radius: 50%;
     background: radial-gradient(circle at 38% 34%, #172a3e, #091420);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     box-shadow: inset 0 3px 14px rgba(0,0,0,.9), inset 0 -1px 3px rgba(255,255,255,.04);
   }
   .hero-kpi-val {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 26px; letter-spacing: 1px; color: #10b981; line-height: 1;
+    font-size: 22px; letter-spacing: 1px; color: #10b981; line-height: 1;
   }
   .hero-kpi-lbl {
     font-size: 7px; font-weight: 800; text-transform: uppercase;
@@ -3956,7 +4166,7 @@ body.dark #fullMap .leaflet-tile-pane {
     width: 52px; height: 52px; border-radius: 50%;
     background: linear-gradient(135deg, #10b981, #059669);
     display: flex; align-items: center; justify-content: center;
-    font-size: 26px; margin-bottom: 12px;
+    font-size: 26px;
     box-shadow: 0 4px 14px rgba(16,185,129,.4);
     flex-shrink: 0;
   }
@@ -5586,7 +5796,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="hero-btns">
         <button class="hero-btn" id="themeToggle" title="Cambiar color">🌙</button>
         <button class="hero-btn" id="langToggleBtn" title="Cambiar idioma" style="font-size:9px;font-weight:900;letter-spacing:.5px;">EN</button>
-        <button class="hero-btn" id="notifBtn" title="Notificaciones" onclick="(function(b){b.style.transform='scale(0.88)';setTimeout(function(){b.style.transform=''},150)})(this)">🔔</button>
+        <button class="hero-btn" id="heroBellBtn" title="Notificaciones">🔔<span class="hero-bell-badge" id="heroBellBadge" style="display:none">0</span></button>
       </div>
     </div>
 
@@ -5685,6 +5895,20 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             🅿️ Parking <span class="poi-cnt" id="miniParkingCnt">…</span>
           </div>
         </div>
+
+        <!-- ⚖️😴 Upcoming weigh stations & rest areas along route -->
+        <div id="routeStopsSection" style="display:none">
+          <div class="route-stops-title">
+            <span>📍</span>
+            <span>Próximas en Mi Ruta</span>
+            <span id="routeStopsTotalLabel" style="margin-left:auto;font-size:10px;opacity:.4;font-weight:600"></span>
+          </div>
+          <div class="route-stops-strip">
+            <div class="route-stops-inner" id="routeStopsInner">
+              <!-- populated by buildRouteStopsList() -->
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- FORM -->
@@ -5718,7 +5942,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div style="position:relative;margin-bottom:8px">
             <div class="stop-row-mobile" id="stopRowDest">
               <span class="stop-icon">🏁</span>
-              <input id="destInput" placeholder="Destino — ciudad o dirección" autocomplete="off" oninput="handleDestInput(this.value)" style="flex:1;background:transparent;border:none;padding:2px 0;font-size:24px;box-shadow:none;min-height:54px;color:var(--text)" />
+              <input id="destInput" placeholder="Destino — ciudad o dirección" autocomplete="off" oninput="handleDestInput(this.value)" style="flex:1;background:transparent;border:none;padding:2px 0;font-size:18px;box-shadow:none;min-height:54px;color:var(--text)" />
             </div>
             <div class="suggestions" id="destSugg" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999"></div>
           </div>
@@ -5920,6 +6144,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="sett-section-title">👤 Driver Profile</div>
         <div class="profile-card">
           <div class="profile-top">
+            <!-- Fleet Link — ahora fijo en la esquina superior derecha del profile-card -->
+            <button id="fleetLinkFab" title="Fleet Link — Conectar con dispatcher">🔗<span class="badge" id="fleetLinkBadge">0</span></button>
             <div style="position:relative;display:inline-block" onclick="document.getElementById('profilePhotoInput').click()" title="Cambiar foto">
               <div class="profile-avatar" id="profileAvatar">🚛</div>
               <div style="position:absolute;bottom:0;right:0;background:#3b82f6;border:2px solid #0f2027;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer">📷</div>
@@ -6023,12 +6249,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <div class="sett-value" id="langVal">English</div>
             <span class="sett-arrow">›</span>
           </div>
-          <div class="sett-row" id="countryRow">
-            <div class="sett-icon" style="background:#d1fae5">🌍</div>
-            <div class="sett-label" id="settCountryRow">Country Filter</div>
-            <div class="sett-value" id="countryVal">All</div>
-            <span class="sett-arrow">›</span>
-          </div>
         </div>
       </div>
 
@@ -6048,15 +6268,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
 
-      <div class="sett-section" id="countryPanel" style="display:none">
-        <div class="sett-section-title" id="settCountryRowTitle">Country Filter</div>
-        <div class="sett-group" style="margin:0 14px">
-          <div class="sett-row" style="cursor:default">
-            <div class="sett-icon" style="background:#d1fae5">🌍</div>
-            <select id="countrySelectSettings" style="flex:1;border:none;background:transparent;font-size:15px;color:var(--text);outline:none;cursor:pointer;padding:4px 0;font-family:'DM Sans',sans-serif"></select>
-          </div>
-        </div>
-      </div>
   <div class="sett-section">
     <div class="sett-section-title">🗺️ Map Display</div>
     <div class="sett-group">
@@ -6094,14 +6305,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="sett-section">
         <div class="sett-section-title" id="settSecHOS">HOS Rules</div>
         <div class="sett-group">
-          <div class="sett-row" style="cursor:default">
-            <div class="sett-icon" style="background:#fee2e2">🚦</div>
-            <div class="sett-label" id="settSpeedLimitRow">Default Speed Limit</div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <input type="number" id="defaultSpeedInput" min="20" max="85" value="60" style="width:64px;padding:5px 8px;font-size:14px;font-weight:700;text-align:center;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif" />
-              <span style="font-size:12px;color:var(--muted);font-weight:600">mph</span>
-            </div>
-          </div>
           <div class="sett-row">
             <div class="sett-icon" style="background:#fef3c7">☕</div>
             <div class="sett-label" id="settBreakRow">30-min Break Rule</div>
@@ -6269,52 +6472,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
 
-      <!-- FUEL FINDER SECTION -->
-      <div class="sett-section">
-        <div class="sett-section-title">⛽ Gasolina Barata en Ruta</div>
-        <div class="sett-group">
-          <div class="sett-row" style="cursor:default">
-            <div class="sett-icon" style="background:#d1fae5">🛣️</div>
-            <div style="flex:1">
-              <div class="sett-label" style="margin:0">Límite de Velocidad</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="speedLimitStatusTxt">Límite real de la vía actual</div>
-            </div>
-            <button class="sett-toggle on" id="speedLimitToggle" onclick="toggleSpeedLimit(this)"></button>
-          </div>
-        </div>
-      </div>
-
-      
-  <div class="sett-section">
-    <div class="sett-section-title" id="settSecSpeedWidget">Speed Widget</div>
-    <div class="sett-group" style="padding:14px 14px 10px">
-      <div style="font-weight:900;font-size:14px;margin-bottom:6px" id="speedWidgetTitle">Speed Limit Widget</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px" id="speedWidgetDesc">
-        Drag the speed widget to place it. This is saved automatically.
-      </div>
-
-      <div id="speedWidgetStage" style="
-        position:relative;
-        height:190px;
-        border:1.5px dashed var(--border);
-        border-radius:14px;
-        background:var(--bg);
-        overflow:hidden;
-      ">
-        <div id="speedLimitWidget" class="visible">
-          <div class="sl-sign" id="slSign">
-            <div class="sl-num" id="slNum">65</div>
-          </div>
-          <div class="sl-state" id="slState">--</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:10px;margin-top:10px">
-        <button class="chip-btn" id="speedWidgetResetBtn" style="flex:1">Reset Position</button>
-        <button class="chip-btn" id="speedWidgetCenterBtn" style="flex:1">Center</button>
-      </div>
-    </div>
-  </div>
 
 
 
@@ -7619,21 +7776,26 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- NEXT TURN / EXIT INSTRUCTION -->
   <div id="navNext" class="nav-next" style="display:none">🧭</div>
 
-  <!-- MAP SPEED LIMIT SIGN (display only — no buttons inside) -->
-  <div id="mapSpeedSign">
-    <div class="mss-sign" id="mssSign">
-      <div class="mss-top">SPEED&#10;LIMIT</div>
-      <div class="mss-num" id="mssNum">65</div>
-      <div class="mss-truck-label">TRUCKS</div>
+  <!-- SPEED SIGN GROUP: sign + SOS button below it -->
+  <div id="mapSpeedGroup">
+    <!-- MAP SPEED LIMIT SIGN (display only — no buttons inside) -->
+    <div id="mapSpeedSign">
+      <div class="mss-sign" id="mssSign">
+        <div class="mss-top">SPEED&#10;LIMIT</div>
+        <div class="mss-num" id="mssNum">65</div>
+        <div class="mss-truck-label">TRUCKS</div>
+      </div>
+      <div class="mss-sign" id="mssMySpeed" style="border-top:none;border-top-left-radius:0;border-top-right-radius:0;margin-top:-1px">
+        <div class="mss-top">YOUR&#10;SPEED</div>
+        <div class="mss-num" id="mssMySpeedNum">0</div>
+        <div class="mss-truck-label">MPH</div>
+      </div>
+      <div class="mss-post"></div>
+      <div class="mss-state-badge" id="mssState">-- STATE</div>
+      <div class="mss-diff" id="mssDiff"></div>
     </div>
-    <div class="mss-sign" id="mssMySpeed" style="border-top:none;border-top-left-radius:0;border-top-right-radius:0;margin-top:-1px">
-      <div class="mss-top">YOUR&#10;SPEED</div>
-      <div class="mss-num" id="mssMySpeedNum">0</div>
-      <div class="mss-truck-label">MPH</div>
-    </div>
-    <div class="mss-post"></div>
-    <div class="mss-state-badge" id="mssState">-- STATE</div>
-    <div class="mss-diff" id="mssDiff"></div>
+    <!-- SOS button below speed signs -->
+    <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
   </div>
 
   <!-- COMMUNITY REPORT ALERT POPUP -->
@@ -7722,10 +7884,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- AUTO-FOLLOW button (bottom-left) -->
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
 
-  <!-- RIGHT SIDE CONTROL COLUMN: Community Reports + SOS -->
+  <!-- RIGHT SIDE CONTROL COLUMN: Community Reports -->
   <div id="mapRightControls">
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
-    <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
   </div>
 
   <!-- POI Filter chips (ocultos, se activan por JS) -->
@@ -9277,7 +9438,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <!-- ══════════════════════════════════════
      SOS FAB BUTTON (on map)
 ══════════════════════════════════════ -->
-<!-- sosFab is now inside the left top column -->
+<!-- sosFab is inside #mapSpeedGroup (below speed signs) -->
 <span id="fmSpeedVal" style="display:none">0</span>
 
 <!-- ══════════════════════════════════════
@@ -11628,7 +11789,7 @@ function initSosSettings() {
   if (sosContact.name)  document.getElementById('sosContactInput').value = sosContact.name;
   if (sosContact.phone) document.getElementById('sosPhoneInput').value  = sosContact.phone;
   document.getElementById('sosToggle').classList.toggle('on', sosBtnActive);
-  document.getElementById('speedLimitToggle').classList.toggle('on', speedLimitActive);
+  document.getElementById('speedLimitToggle')?.classList.toggle('on', speedLimitActive);
   document.getElementById('fuelToggle').classList.toggle('on', fuelActive);
 }
 
@@ -11687,7 +11848,6 @@ function init() {
   updateSettingsChecks();
   // Apply default speed
   document.getElementById('speedInput').value = defaultSpeed;
-  document.getElementById('defaultSpeedInput').value = defaultSpeed;
   const _si = document.getElementById('speedIndicatorVal');
   if (_si) _si.textContent = defaultSpeed + ' mph';
 
@@ -11864,16 +12024,15 @@ function openDeparturePicker() {
 }
 
 function populateCountrySelects() {
-  ['countrySelectMenu','countrySelectSettings'].forEach(id => {
-    const sel = document.getElementById(id);
-    sel.innerHTML = '';
-    COUNTRIES.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.code;
-      opt.textContent = lang === 'es' ? c.es : c.en;
-      if (c.code === selectedCountry) opt.selected = true;
-      sel.appendChild(opt);
-    });
+  const sel = document.getElementById('countrySelectMenu');
+  if (!sel) return;
+  sel.innerHTML = '';
+  COUNTRIES.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.code;
+    opt.textContent = lang === 'es' ? c.es : c.en;
+    if (c.code === selectedCountry) opt.selected = true;
+    sel.appendChild(opt);
   });
 }
 
@@ -11914,8 +12073,6 @@ function applyLang() {
   document.getElementById('darkBtn').textContent = '🌙 ' + t('dark');
   document.getElementById('drivesTabBtn').innerHTML = `${t('business')} <span id="drivesCount">${savedDrives.length}</span>`;
   document.getElementById('langVal').textContent = lang === 'en' ? 'English' : 'Español';
-  const country = COUNTRIES.find(c => c.code === selectedCountry);
-  document.getElementById('countryVal').textContent = country ? (lang === 'es' ? country.es : country.en) : (lang === 'en' ? 'All' : 'Todos');
   const swt = document.getElementById('settSecSpeedWidget');
   if (swt) swt.textContent = (lang==='es') ? 'Widget de Velocidad' : 'Speed Widget';
   const swTitle = document.getElementById('speedWidgetTitle');
@@ -12310,7 +12467,15 @@ function getTruckIconHTML(sizePx=26) {
     const s = Math.max(18, sizePx + 8);
     return `<img alt="truck" src="${url}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))" />`;
   }
-  // SVG realistic truck (default)
+  // Use the truck-type-specific SVG matching the user's selected truck type
+  if (window._TRUCK_DATA) {
+    const _ttVal = (typeof driverProfile !== 'undefined' && driverProfile.truckType)
+      ? driverProfile.truckType
+      : (() => { try { return JSON.parse(localStorage.getItem('hos_driver_profile') || '{}').truckType || '18wheeler'; } catch(e){ return '18wheeler'; } })();
+    const _td = window._TRUCK_DATA.find(t => t.value === _ttVal) || window._TRUCK_DATA[0];
+    if (_td) return _td.svg;
+  }
+  // SVG realistic truck (fallback when _TRUCK_DATA not yet loaded)
   if (!truckIconMode || truckIconMode === 'svg:truck' || truckIconMode === 'emoji:🚛') {
     const sc = sizePx / 20; // scale factor (base design at 20px width)
     const w = Math.round(20 * sc), h = Math.round(52 * sc);
@@ -12384,13 +12549,20 @@ function getTruckIconHTML(sizePx=26) {
 
 function getTruckLeafletIcon() {
   const hasAvatar = _getUserAvatarHTML(24) !== null;
-  const size = hasAvatar ? 42 : 44;
-  const anchor = size / 2;
+  if (hasAvatar) {
+    return L.divIcon({
+      className: '',
+      html: `<div style="display:flex;align-items:center;justify-content:center">${getTruckIconHTML(24)}</div>`,
+      iconSize: [42, 42],
+      iconAnchor: [21, 21]
+    });
+  }
+  // Truck-type SVGs are landscape (~59×22 px at 0.65 scale); use a wider anchor
   return L.divIcon({
     className: '',
     html: `<div style="display:flex;align-items:center;justify-content:center">${getTruckIconHTML(24)}</div>`,
-    iconSize: [size, size],
-    iconAnchor: [anchor, anchor]
+    iconSize: [66, 26],
+    iconAnchor: [33, 13]
   });
 }
 
@@ -13183,6 +13355,8 @@ async function loadMiniMapPOIs() {
 
           const marker = L.marker([elLat, elLon], { icon })
             .bindPopup(popupHtml, { maxWidth: 220 });
+          marker._poiName = name;
+          marker._poiType = type;
 
           if (miniPoiActive[type]) marker.addTo(miniMap);
           allMarkers.push(marker);
@@ -13208,6 +13382,58 @@ async function loadMiniMapPOIs() {
 
   // Load all four types in parallel
   await Promise.all([loadType('truck'), loadType('rest'), loadType('weigh'), loadType('checkpoint')]);
+  buildRouteStopsList();
+}
+
+/* ── Upcoming weigh stations & rest areas sorted by distance ahead ── */
+function buildRouteStopsList() {
+  const section = document.getElementById('routeStopsSection');
+  const inner   = document.getElementById('routeStopsInner');
+  const totalEl = document.getElementById('routeStopsTotalLabel');
+  if (!section || !inner) return;
+
+  const truckLat = window.lastFixFm?.lat ?? origin?.lat;
+  const truckLon = window.lastFixFm?.lon ?? origin?.lon;
+  if (!truckLat || !truckLon) return;
+
+  // Combine weigh + rest markers and calculate distance from current position
+  const stops = [];
+  ['weigh', 'rest'].forEach(type => {
+    (miniPoiMarkers[type] || []).forEach(m => {
+      const ll = m.getLatLng();
+      const dist = Math.round(haversine(truckLat, truckLon, ll.lat, ll.lng));
+      if (dist > 700) return; // skip very far stops
+      stops.push({
+        type,
+        dist,
+        lat: ll.lat,
+        lon: ll.lng,
+        name: m._poiName || (type === 'weigh' ? 'Weigh Station' : 'Rest Area'),
+      });
+    });
+  });
+
+  if (stops.length === 0) { section.style.display = 'none'; return; }
+  stops.sort((a, b) => a.dist - b.dist);
+
+  section.style.display = 'block';
+  if (totalEl) {
+    const w = stops.filter(s => s.type === 'weigh').length;
+    const r = stops.filter(s => s.type === 'rest').length;
+    totalEl.textContent = `⚖️ ${w}  😴 ${r}`;
+  }
+
+  inner.innerHTML = stops.slice(0, 25).map(s => {
+    const emoji    = s.type === 'weigh' ? '⚖️' : '😴';
+    const shortName = (s.name || '').split(',')[0].substring(0, 14) || (s.type === 'weigh' ? 'Báscula' : 'Rest Area');
+    const distLabel = s.dist < 1 ? '< 1 mi' : `${s.dist} mi`;
+    return `<div class="route-stop-card ${s.type}" title="${s.name}"
+      onclick="if(miniMap){miniMap.setView([${s.lat},${s.lon}],14);document.getElementById('miniMap').scrollIntoView({behavior:'smooth'});}">
+      <div class="route-stop-icon">${emoji}</div>
+      <div class="route-stop-dist">${distLabel}</div>
+      <div class="route-stop-name">${shortName}</div>
+    </div>`;
+  }).join('');
 }
 
 function toggleMiniPOI(type) {
@@ -13659,8 +13885,8 @@ let fmLastStablePos = null;   // last accepted position (jitter filter)
 // POI layers
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
 const fmPoiGroups = {};  // LayerGroup per type for batch rendering
-// truck/rest/scale start OFF so first tap loads them on demand
-const fmPoiActive = { scale: true, truck: true, rest: false, reports: true, restrict: true, parking: false };
+// scale/truck/rest all start ON — loaded automatically when route opens
+const fmPoiActive = { scale: true, truck: true, rest: true, reports: true, restrict: true, parking: false };
 let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false };
 
 // Community reports (stored in localStorage, shared within session)
@@ -13688,7 +13914,7 @@ function openFullMapScreen() {
   document.getElementById('fmStopBtn').style.display = 'none';
   document.getElementById('poiLegend').classList.add('visible');
   document.getElementById('fmFollowBtn').classList.add('visible');
-  // Sync chip visual state with fmPoiActive (truck/rest/scale start off)
+  // Sync chip visual state with fmPoiActive (all enabled by default)
   ['scale','truck','rest'].forEach(t => {
     const cid = t === 'scale' ? 'chipScale' : t === 'truck' ? 'chipTruck' : 'chipRest';
     const c = document.getElementById(cid);
@@ -14864,6 +15090,11 @@ function fmStartTracking() {
     const acc  = pos.coords.accuracy || 20;
     // save last GPS fix for center button
     window.lastFixFm = { lat, lon, acc, ts: Date.now() };
+    // Refresh upcoming stops list every ~2 miles of movement
+    if (!window._lastStopsLat || haversine(lat, lon, window._lastStopsLat, window._lastStopsLon) > 2) {
+      window._lastStopsLat = lat; window._lastStopsLon = lon;
+      if (typeof buildRouteStopsList === 'function') buildRouteStopsList();
+    }
 
     const rawSpeed = pos.coords.speed;
     const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
@@ -14922,7 +15153,7 @@ function fmStartTracking() {
     if (fmFollowing && fmMapInst) {
       if (!fmUserZoomed) {
         if (isMoving) {
-          fmCurrentZoom = gpsSpeed > 40 ? 9 : gpsSpeed > 25 ? 13 : 15;
+          fmCurrentZoom = gpsSpeed > 40 ? 9 : gpsSpeed > 25 ? 13 : gpsSpeed >= 20 ? 15 : 17;
         } else {
           fmCurrentZoom = 16;
         }
@@ -17888,26 +18119,13 @@ function bindEvents() {
 
   document.getElementById('langRow').addEventListener('click', () => {
     document.getElementById('langPanel').style.display = document.getElementById('langPanel').style.display === 'none' ? 'block' : 'none';
-    document.getElementById('countryPanel').style.display = 'none';
   });
   document.getElementById('setLangEn').addEventListener('click', () => { lang = 'en'; localStorage.setItem('hos_lang', lang); applyLang(); updateSettingsChecks(); document.getElementById('langPanel').style.display = 'none'; });
   document.getElementById('setLangEs').addEventListener('click', () => { lang = 'es'; localStorage.setItem('hos_lang', lang); applyLang(); updateSettingsChecks(); document.getElementById('langPanel').style.display = 'none'; });
 
-  ['countrySelectMenu','countrySelectSettings'].forEach(id => {
-    document.getElementById(id).addEventListener('change', e => {
-      selectedCountry = e.target.value;
-      localStorage.setItem('hos_country', selectedCountry);
-      document.getElementById('countrySelectMenu').value = selectedCountry;
-      document.getElementById('countrySelectSettings').value = selectedCountry;
-      const c = COUNTRIES.find(x => x.code === selectedCountry);
-      document.getElementById('countryVal').textContent = c ? (lang==='es'?c.es:c.en) : (lang==='en'?'All':'Todos');
-      document.getElementById('countryPanel').style.display = 'none';
-    });
-  });
-
-  document.getElementById('countryRow').addEventListener('click', () => {
-    document.getElementById('countryPanel').style.display = document.getElementById('countryPanel').style.display === 'none' ? 'block' : 'none';
-    document.getElementById('langPanel').style.display = 'none';
+  document.getElementById('countrySelectMenu')?.addEventListener('change', e => {
+    selectedCountry = e.target.value;
+    localStorage.setItem('hos_country', selectedCountry);
   });
 
   document.getElementById('menuBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('menuPanel').classList.toggle('open'); });
@@ -17951,17 +18169,6 @@ function bindEvents() {
   });
   document.getElementById('fmStopBtn').addEventListener('click', fmStopTracking);
 
-  // Default speed limit setting
-  document.getElementById('defaultSpeedInput').addEventListener('change', e => {
-    const val = parseInt(e.target.value);
-    if (!isNaN(val) && val >= 20 && val <= 85) {
-      defaultSpeed = val;
-      localStorage.setItem('hos_speed', val);
-      document.getElementById('speedInput').value = val;
-      const ind = document.getElementById('speedIndicatorVal');
-      if (ind) ind.textContent = val + ' mph';
-    }
-  });
 
   // Safety feature toggles
   document.getElementById('fatigueToggle').addEventListener('click', e => { e.stopPropagation(); toggleFatigueDetector(); });
@@ -20610,6 +20817,47 @@ function getOriginState() {
   return null;
 }
 
+// Helper expuesto: fija el destino del planificador desde fuera (p.ej. campana de rutas)
+// Devuelve true si el destino quedó puesto, false si hubo problema.
+window.setPlannerDestination = function(dest, opts){
+  try {
+    if (!dest || typeof dest !== 'object') return false;
+    if (!dest.name) return false;
+    destination = {
+      name: dest.name,
+      lat:  Number(dest.lat) || 0,
+      lon:  Number(dest.lon) || 0,
+      state: dest.state || ''
+    };
+    const input = document.getElementById('destInput');
+    if (input){
+      input.value = destination.name;
+      const sug = document.getElementById('destSugg');
+      if (sug) sug.style.display = 'none';
+    }
+    if (input && input.scrollIntoView){
+      setTimeout(() => input.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
+    }
+    // Calcular si ya hay origen GPS
+    if (opts && opts.calculate !== false){
+      setTimeout(() => {
+        try {
+          if (origin && typeof calculateRoute === 'function'){
+            calculateRoute();
+          } else if (typeof useGPS === 'function'){
+            useGPS();
+            setTimeout(() => { if (origin && typeof calculateRoute === 'function') calculateRoute(); }, 1800);
+          }
+        } catch(e){ console.warn('setPlannerDestination calc', e); }
+      }, 350);
+    }
+    return true;
+  } catch(e){
+    console.warn('setPlannerDestination', e);
+    return false;
+  }
+};
+
 function setDestinationWithLocalCheck(it) {
   const jobType = driverProfile?.jobType || 'interstate';
 
@@ -22162,8 +22410,17 @@ FIREBASE_CONFIG = {
     <!-- Android/Chrome BLE scan button -->
     <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">🔍 Buscar Dispositivos ELD (Bluetooth)</button>
 
+    <!-- Force scan button (bypass detection, always visible) -->
+    <button id="eldForceBtn" onclick="forceEldScan()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(16,185,129,.35);background:rgba(16,185,129,.10);color:#10b981;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🔵 Forzar escaneo Bluetooth (intentar siempre)</button>
+
     <!-- Demo/simulation button always visible -->
-    <button onclick="startEldDemo()" id="eldDemoBtn" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(99,102,241,.3);background:rgba(99,102,241,.08);color:#6366f1;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px">🎮 Modo Simulación (sin Bluetooth)</button>
+    <button onclick="startEldDemo()" id="eldDemoBtn" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(99,102,241,.3);background:rgba(99,102,241,.08);color:#6366f1;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">🎮 Modo Simulación (sin Bluetooth)</button>
+
+    <!-- Diagnostic panel (live environment detection) -->
+    <div id="eldDiag" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11px;line-height:1.55;color:var(--muted)">
+      <div style="font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:.3px">🔧 Diagnóstico de tu dispositivo</div>
+      <div id="eldDiagLines"></div>
+    </div>
 
     <div id="eldDeviceList" class="eld-device-list" style="display:none"></div>
     <div id="eldLiveData" style="display:none">
@@ -22694,21 +22951,159 @@ window.showSubscribeModal = function() {
 //  📡 ELD BLUETOOTH — Web Bluetooth API
 // ─────────────────────────────────────────────────────────────────────────────
 let eldDevice=null,eldChar=null,eldInterval=null;
+
+// ───────────────────────────────────────────────────────────
+// Detect Capacitor native shell — unlocks native BLE plugin
+// ───────────────────────────────────────────────────────────
+const IS_CAPACITOR = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+let BleClient = null; // lazy-loaded plugin reference
+
+async function loadNativeBlePlugin(){
+  if(BleClient) return BleClient;
+  if(!IS_CAPACITOR) return null;
+  try {
+    // Plugin registers as window.Capacitor.Plugins.BluetoothLe at runtime
+    const plugins = window.Capacitor?.Plugins;
+    if(plugins && plugins.BluetoothLe){
+      BleClient = plugins.BluetoothLe;
+      return BleClient;
+    }
+  } catch(e){ console.error('[ELD] Cannot load native BLE plugin:', e); }
+  return null;
+}
 function openEldSheet(){
-  document.getElementById('eldSheet').classList.add('open');
-  // Detect iOS (no Web Bluetooth support)
-  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  try {
+    document.getElementById('eldSheet').classList.add('open');
+  } catch(e){ console.error('[ELD] openEldSheet error', e); return; }
+
+  const ua = navigator.userAgent || '';
+  // Detect iOS (no Web Bluetooth support anywhere, even Chrome iOS uses WebKit)
+  const isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  // Detect in-app browsers (no BT permission)
+  const isInApp = /(FBAN|FBAV|Instagram|Line\/|TikTok|Twitter|WhatsApp|MicroMessenger)/i.test(ua);
+  // Web Bluetooth availability
   const hasWebBT = !!navigator.bluetooth;
+  // Secure context required for Web Bluetooth
+  const isSecure = window.isSecureContext;
+
+  // Reset all optional panels
+  const iosNotice = document.getElementById('eldIosNotice');
+  const scanBtn   = document.getElementById('eldScanBtn');
+  const demoBtn   = document.getElementById('eldDemoBtn');
+  const noBT      = document.getElementById('eldNoBluetooth');
+  if(iosNotice) iosNotice.style.display='none';
+  if(noBT)      noBT.style.display='none';
+  if(scanBtn){  scanBtn.style.display='block'; scanBtn.disabled=false; scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)'; }
+  if(demoBtn)   demoBtn.style.display='block';
+
+  // Case 1: iOS → BT imposible, mostrar aviso + demo
   if(isIOS){
-    document.getElementById('eldIosNotice').style.display='block';
-    document.getElementById('eldScanBtn').style.display='none';
-    document.getElementById('eldDemoBtn').style.display='none';
-  } else if(!hasWebBT){
-    document.getElementById('eldIosNotice').style.display='none';
-    document.getElementById('eldScanBtn').style.display='none';
-    document.getElementById('eldDemoBtn').style.display='none';
-    document.getElementById('eldNoBluetooth').style.display='block';
+    if(iosNotice) iosNotice.style.display='block';
+    if(scanBtn)   scanBtn.style.display='none';
+    if(demoBtn)   demoBtn.style.display='none'; // hay uno interno en iosNotice
+    return;
   }
+  // Case 2: in-app browser (Instagram/Facebook/TikTok) → BT bloqueado
+  if(isInApp){
+    if(noBT){
+      noBT.style.display='block';
+      noBT.innerHTML = `
+        <div style="font-size:36px;margin-bottom:8px">🔒</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Navegador in-app detectado</div>
+        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Abre esta página en <b>Chrome</b> o <b>Edge</b> (Android) para conectar Bluetooth.<br>Mientras tanto, usa el modo simulación.</div>
+        <button onclick="startEldDemo()" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">🎮 Activar Modo Simulación</button>`;
+    }
+    if(scanBtn) scanBtn.style.display='none';
+    if(demoBtn) demoBtn.style.display='none';
+    return;
+  }
+  // Case 3: no HTTPS (BT requiere contexto seguro)
+  if(!isSecure){
+    if(noBT){
+      noBT.style.display='block';
+      noBT.innerHTML = `
+        <div style="font-size:36px;margin-bottom:8px">🔐</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">HTTPS requerido</div>
+        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Web Bluetooth solo funciona en sitios seguros (HTTPS).<br>Accede a la versión HTTPS o usa el modo simulación.</div>
+        <button onclick="startEldDemo()" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">🎮 Activar Modo Simulación</button>`;
+    }
+    if(scanBtn) scanBtn.style.display='none';
+    if(demoBtn) demoBtn.style.display='none';
+    return;
+  }
+  // Case 4: API no disponible (Firefox, Safari desktop, etc.)
+  if(!hasWebBT){
+    if(noBT) noBT.style.display='block';
+    if(scanBtn) scanBtn.style.display='none';
+    // demoBtn se mantiene visible
+    return;
+  }
+  // Case 5: todo OK — Android Chrome/Edge con HTTPS
+  // scanBtn y demoBtn ya están visibles
+
+  // Render diagnostic panel at the end
+  renderEldDiagnostics();
+}
+
+// Render live environment diagnostic inside ELD sheet
+function renderEldDiagnostics(){
+  const diagEl = document.getElementById('eldDiagLines');
+  if(!diagEl) return;
+  const ua = navigator.userAgent || '';
+  const isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  const isAndroid = /Android/.test(ua);
+  const isChrome = /Chrome\//.test(ua) && !/Edg\//.test(ua) && !/OPR\//.test(ua);
+  const isEdge = /Edg\//.test(ua);
+  const isFirefox = /Firefox\//.test(ua);
+  const isSamsung = /SamsungBrowser/.test(ua);
+  const isInApp = /(FBAN|FBAV|Instagram|Line\/|TikTok|Twitter|WhatsApp|MicroMessenger)/i.test(ua);
+  const hasWebBT = !!navigator.bluetooth;
+  const isSecure = !!window.isSecureContext;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  const ok = v => v ? '<span style="color:#10b981">✓</span>' : '<span style="color:#ef4444">✗</span>';
+  let plat = isIOS ? 'iOS (Safari/WebKit)' : isAndroid ? 'Android' : 'Desktop/Otro';
+  let brw = isChrome ? 'Chrome' : isEdge ? 'Edge' : isFirefox ? 'Firefox' : isSamsung ? 'Samsung Internet' : isInApp ? 'Navegador in-app' : 'Otro';
+
+  // Capacitor native detection — if running inside the app, BT works natively
+  if(IS_CAPACITOR){
+    diagEl.innerHTML = `
+      <div>📱 Plataforma: <b style="color:var(--text)">${plat} (App nativa)</b></div>
+      <div>📦 Entorno: <b style="color:#10b981">Capacitor</b> — Bluetooth nativo disponible</div>
+      <div>✓ Sin restricciones de navegador</div>
+      <div>✓ Acceso completo al hardware BT</div>
+      <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);color:#10b981;font-weight:700">
+        ✅ Listo — pulsa "Buscar Dispositivos ELD" para parear el hardware
+      </div>`;
+    return;
+  }
+
+  diagEl.innerHTML = `
+    <div>📱 Plataforma: <b style="color:var(--text)">${plat}</b></div>
+    <div>🌐 Navegador: <b style="color:var(--text)">${brw}</b></div>
+    <div>${ok(isSecure)} HTTPS (contexto seguro): <b style="color:var(--text)">${isSecure?'sí':'NO — requerido'}</b></div>
+    <div>${ok(hasWebBT)} API Web Bluetooth: <b style="color:var(--text)">${hasWebBT?'disponible':'NO disponible'}</b></div>
+    <div>${ok(!isInApp)} Navegador estándar: <b style="color:var(--text)">${isInApp?'in-app (bloquea BT)':'sí'}</b></div>
+    <div>${ok(isStandalone)} App instalada (PWA): <b style="color:var(--text)">${isStandalone?'sí — permisos ampliados':'no'}</b></div>
+    <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);color:${(hasWebBT&&isSecure&&!isInApp)?'#10b981':'#f59e0b'};font-weight:700">
+      ${(hasWebBT&&isSecure&&!isInApp) ? '✅ Tu dispositivo soporta Bluetooth Web — pulsa "Buscar Dispositivos ELD"' : isIOS ? '⚠️ iOS web no soporta Bluetooth. Compila como app nativa (Capacitor) para usar BT en iPhone.' : '⚠️ Usa Chrome o Edge en Android, sobre HTTPS, para escaneo BLE.'}
+    </div>`;
+}
+
+// Force scan — bypass all detection and try navigator.bluetooth directly
+// Useful for edge browsers (Samsung Internet 23+, Opera, Yandex) that DO support BT
+async function forceEldScan(){
+  if(typeof navigator.bluetooth === 'undefined'){
+    const banner=document.getElementById('eldAlertBanner');
+    const bannerTxt=document.getElementById('eldAlertText');
+    if(banner && bannerTxt){
+      bannerTxt.textContent = 'Tu navegador no tiene Web Bluetooth. Abre esta página en Chrome o Edge (Android).';
+      banner.style.display = 'flex';
+    }
+    return;
+  }
+  // Delegate to normal scan — the user gesture is preserved from this click
+  return startEldScan();
 }
 function closeEldSheet(){document.getElementById('eldSheet').classList.remove('open');}
 
@@ -22731,23 +23126,145 @@ function startEldDemo(){
   showToast('info','🎮','Modo Simulación ELD','Logbook y HOS activados',3000);
 }
 
+// ─────────────────────────────────────────────────────────────
+// NATIVE BLE SCAN — uses @capacitor-community/bluetooth-le
+// Works on both Android & iOS when running as an installed app
+// ─────────────────────────────────────────────────────────────
+async function startEldScanNative(){
+  const ring=document.getElementById('eldRing');
+  const icon=document.getElementById('eldRingIcon');
+  const lbl=document.getElementById('eldRingLabel');
+  const scanBtn=document.getElementById('eldScanBtn');
+  const banner=document.getElementById('eldAlertBanner');
+  const bannerTxt=document.getElementById('eldAlertText');
+  const list=document.getElementById('eldDeviceList');
+  if(banner) banner.style.display='none';
+
+  const ble = await loadNativeBlePlugin();
+  if(!ble){
+    if(banner && bannerTxt){
+      bannerTxt.textContent = 'Plugin BluetoothLe no instalado. Ejecuta: npm i @capacitor-community/bluetooth-le && npx cap sync android';
+      banner.style.display='flex';
+    }
+    return;
+  }
+  ring.className='eld-status-ring scanning';
+  icon.textContent='🔵'; lbl.textContent='INICIANDO BT...';
+  scanBtn.textContent='⏳ Inicializando BLE...';
+  scanBtn.disabled=true;
+  try {
+    await ble.initialize({ androidNeverForLocation: true });
+    lbl.textContent='BUSCANDO...';
+    scanBtn.textContent='⏳ Escaneando...';
+    // Collect scan results into a list the user can tap
+    const found = new Map(); // deviceId -> {name, rssi}
+    if(list){ list.innerHTML=''; list.style.display='block'; }
+    await ble.requestLEScan({ allowDuplicates:false }, (result) => {
+      const id = result.device?.deviceId;
+      const name = result.device?.name || result.localName || '(sin nombre)';
+      if(!id || found.has(id)) return;
+      found.set(id, { name, id, rssi: result.rssi });
+      if(list){
+        const row = document.createElement('button');
+        row.style.cssText = 'display:flex;width:100%;justify-content:space-between;align-items:center;padding:10px 12px;margin-bottom:6px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:10px;color:var(--text);font-family:inherit;cursor:pointer;font-size:13px;font-weight:700';
+        row.innerHTML = `<span>📶 ${name}</span><span style="font-size:11px;color:var(--muted)">RSSI ${result.rssi??'?'}</span>`;
+        row.onclick = () => connectNativeBleDevice(id, name);
+        list.appendChild(row);
+      }
+    });
+    // Auto-stop scan after 10s
+    setTimeout(async () => {
+      try { await ble.stopLEScan(); } catch(e){}
+      if(found.size===0){
+        lbl.textContent='SIN RESULTADOS';
+        if(banner && bannerTxt){
+          bannerTxt.textContent = 'No se encontraron dispositivos BLE cercanos. Asegúrate de que el ELD esté encendido y pareable.';
+          banner.style.display='flex';
+        }
+      }
+      scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+      scanBtn.disabled=false;
+    }, 10000);
+  } catch(e){
+    console.error('[ELD native] scan error:', e);
+    ring.className='eld-status-ring';
+    icon.textContent='📡'; lbl.textContent='ERROR';
+    scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+    scanBtn.disabled=false;
+    let msg = e?.message || e?.errorMessage || String(e);
+    if(/location/i.test(msg)) msg = 'Activa el GPS del teléfono (requerido para escanear BLE en Android).';
+    else if(/denied|not granted/i.test(msg)) msg = 'Permiso de Bluetooth denegado. Ve a Ajustes → Apps → HOS Tracker → Permisos.';
+    else if(/not enabled|bluetooth.*off/i.test(msg)) msg = 'El Bluetooth del teléfono está apagado. Actívalo en los ajustes.';
+    if(banner && bannerTxt){ bannerTxt.textContent = msg; banner.style.display='flex'; }
+  }
+}
+
+async function connectNativeBleDevice(deviceId, name){
+  const ring=document.getElementById('eldRing');
+  const icon=document.getElementById('eldRingIcon');
+  const lbl=document.getElementById('eldRingLabel');
+  const list=document.getElementById('eldDeviceList');
+  const scanBtn=document.getElementById('eldScanBtn');
+  const demoBtn=document.getElementById('eldDemoBtn');
+  const ble = await loadNativeBlePlugin();
+  if(!ble) return;
+  try {
+    try { await ble.stopLEScan(); } catch(_){}
+    lbl.textContent='CONECTANDO...';
+    await ble.connect({ deviceId });
+    eldDevice = { name, deviceId, native:true };
+    ring.className='eld-status-ring connected';
+    icon.textContent='✅'; lbl.textContent='CONECTADO';
+    document.getElementById('eldConnectedName').textContent = name || 'Dispositivo ELD';
+    if(list) list.style.display='none';
+    if(scanBtn) scanBtn.style.display='none';
+    if(demoBtn) demoBtn.style.display='none';
+    document.getElementById('eldLiveData').style.display='block';
+    document.getElementById('eldLogbook').style.display='block';
+    document.getElementById('eldArrowStatus').style.color='#6366f1';
+    startEldDataSimulation();
+    try{ showToast('info','📡','ELD Conectado', name || 'Dispositivo vinculado', 3000); }catch(_){}
+  } catch(e){
+    console.error('[ELD native] connect error:', e);
+    const banner=document.getElementById('eldAlertBanner');
+    const bannerTxt=document.getElementById('eldAlertText');
+    if(banner && bannerTxt){
+      bannerTxt.textContent = 'Error al conectar: ' + (e?.message || e?.errorMessage || String(e));
+      banner.style.display='flex';
+    }
+  }
+}
+
 async function startEldScan(){
+  // ── Path A: Native Capacitor BLE (works on Android + iPhone as installed app) ──
+  if(IS_CAPACITOR){
+    return startEldScanNative();
+  }
+  // ── Path B: Web Bluetooth fallback (browser) ──
   if(!navigator.bluetooth){
-    document.getElementById('eldNoBluetooth').style.display='block';
-    document.getElementById('eldScanBtn').style.display='none';
-    document.getElementById('eldDemoBtn').style.display='none';
+    const noBT = document.getElementById('eldNoBluetooth');
+    if(noBT) noBT.style.display='block';
+    const sb = document.getElementById('eldScanBtn');
+    if(sb) sb.style.display='none';
     return;
   }
   const ring=document.getElementById('eldRing');
   const icon=document.getElementById('eldRingIcon');
   const lbl=document.getElementById('eldRingLabel');
+  const scanBtn=document.getElementById('eldScanBtn');
+  const demoBtn=document.getElementById('eldDemoBtn');
+  const banner=document.getElementById('eldAlertBanner');
+  const bannerTxt=document.getElementById('eldAlertText');
+
+  // Hide any previous alert
+  if(banner) banner.style.display='none';
+
   ring.className='eld-status-ring scanning';
   icon.textContent='🔵';lbl.textContent='BUSCANDO...';
-  document.getElementById('eldScanBtn').textContent='⏳ Escaneando BLE...';
-  document.getElementById('eldScanBtn').disabled=true;
-  document.getElementById('eldDemoBtn').style.display='none';
+  scanBtn.textContent='⏳ Escaneando BLE...';
+  scanBtn.disabled=true;
   try{
-    // Request BLE device — browser shows native picker
+    // Request BLE device — browser shows native picker (requires user gesture + HTTPS)
     eldDevice=await navigator.bluetooth.requestDevice({
       acceptAllDevices:true,
       optionalServices:[
@@ -22762,19 +23279,32 @@ async function startEldScan(){
     ring.className='eld-status-ring connected';
     icon.textContent='✅';lbl.textContent='CONECTADO';
     document.getElementById('eldConnectedName').textContent=eldDevice.name||'Dispositivo ELD';
-    document.getElementById('eldScanBtn').style.display='none';
+    scanBtn.style.display='none';
+    if(demoBtn) demoBtn.style.display='none';
     document.getElementById('eldLiveData').style.display='block';
     document.getElementById('eldLogbook').style.display='block';
     document.getElementById('eldArrowStatus').style.color='#6366f1';
     startEldDataSimulation();
-    showToast('info','📡','ELD Conectado',eldDevice.name||'Dispositivo vinculado',3000);
+    try{ showToast('info','📡','ELD Conectado',eldDevice.name||'Dispositivo vinculado',3000); }catch(_){}
   }catch(e){
+    console.error('[ELD] scan error:', e);
     ring.className='eld-status-ring';
     icon.textContent='📡';lbl.textContent='DESCONECTADO';
-    document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
-    document.getElementById('eldScanBtn').disabled=false;
-    document.getElementById('eldDemoBtn').style.display='block';
-    if(e.name!=='NotFoundError') showToast('warn','⚠️','ELD Error',e.message,4000);
+    scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+    scanBtn.disabled=false;
+    // Traducir el error a un mensaje claro en el banner
+    let msg = '';
+    if(e.name==='NotFoundError')         msg = 'No seleccionaste ningún dispositivo. Intenta de nuevo.';
+    else if(e.name==='SecurityError')    msg = 'Bluetooth bloqueado. Asegúrate de usar HTTPS y Chrome/Edge en Android.';
+    else if(e.name==='NotAllowedError')  msg = 'Permiso de Bluetooth denegado. Actívalo en ajustes del navegador.';
+    else if(e.name==='NotSupportedError')msg = 'Este dispositivo no soporta Web Bluetooth.';
+    else if(/user gesture/i.test(e.message||'')) msg = 'El clic debe venir del usuario. Pulsa el botón directamente.';
+    else                                  msg = 'Error BLE: ' + (e.message || e.name || 'desconocido');
+    if(banner && bannerTxt){
+      bannerTxt.textContent = msg;
+      banner.style.display = 'flex';
+    }
+    try{ showToast('warn','⚠️','ELD Error', msg, 5000); }catch(_){}
   }
 }
 
@@ -25026,6 +25556,7 @@ window._hosAutoRecalc = false;
     sel.dispatchEvent(new Event('change'));
     _syncTruckDisplay();
     closeTruckPicker();
+    if (typeof refreshTruckMarkers === 'function') refreshTruckMarkers();
   };
 
   window._syncTruckDisplay = function(){
@@ -25081,4 +25612,1082 @@ window._hosAutoRecalc = false;
 })();
 
 </script>
-}
+
+<!-- ══════════════════════════════════════════════════════════════
+     FLEET LINK — Conexión con el Dashboard de escritorio
+     Permite al conductor unirse a una flota (código/QR) y
+     transmitir ubicación + info de vehículo al dispatcher,
+     además de recibir notificaciones en tiempo real.
+     ══════════════════════════════════════════════════════════════ -->
+<style>
+  /* FAB anterior convertido en botón inline dentro del profile-top */
+  #fleetLinkFab{
+    position:absolute; top:10px; right:10px; z-index:6;
+    width:40px; height:40px; border-radius:12px;
+    background:linear-gradient(135deg,#10b981,#059669);
+    color:white; border:0; font-size:17px;
+    box-shadow:0 4px 14px rgba(16,185,129,.45);
+    display:grid; place-items:center; cursor:pointer;
+    transition: transform .15s, box-shadow .2s;
+  }
+  #fleetLinkFab:active{ transform: scale(.94); }
+  #fleetLinkFab .badge{
+    position:absolute; top:-5px; right:-5px;
+    background:#ef4444; color:#fff; font-size:10px; font-weight:800;
+    padding:2px 5px; border-radius:8px; border:2px solid #0f2027;
+    display:none; line-height:1;
+  }
+  #fleetLinkFab.connected{ background:linear-gradient(135deg,#3b82f6,#1d4ed8); }
+  /* Asegurar que profile-top sea contenedor de posicionamiento */
+  .profile-card .profile-top { position: relative; padding-right: 56px; }
+  #fleetLinkModal{
+    position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:9999;
+    display:none; align-items:center; justify-content:center; padding:14px;
+    backdrop-filter:blur(6px);
+  }
+  #fleetLinkModal.show{ display:flex; }
+  #fleetLinkModal .fl-card{
+    background:#fff; color:#0f172a; border-radius:16px; padding:20px;
+    width:100%; max-width:420px; max-height:90vh; overflow:auto;
+  }
+  body.dark #fleetLinkModal .fl-card{ background:#1a2236; color:#e6edf7; }
+  #fleetLinkModal h2{ margin:0 0 4px; font-size:18px; }
+  #fleetLinkModal .fl-sub{ color:#64748b; font-size:13px; margin-bottom:14px; }
+  body.dark #fleetLinkModal .fl-sub{ color:#8695b7; }
+  #fleetLinkModal .fl-input{
+    width:100%; padding:14px; font-size:20px; letter-spacing:4px; text-align:center;
+    border:2px dashed #10b981; border-radius:10px; text-transform:uppercase;
+    background:#f8fafc; color:#0f172a; font-family:monospace; font-weight:700;
+  }
+  body.dark #fleetLinkModal .fl-input{ background:#0f172a; color:#e6edf7; }
+  #fleetLinkModal .fl-row{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  #fleetLinkModal .fl-btn{
+    flex:1; min-width:110px; padding:11px 12px; border-radius:10px; border:1px solid #e2e8f0;
+    background:#f1f5f9; color:#0f172a; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  body.dark #fleetLinkModal .fl-btn{ background:#243047; color:#e6edf7; border-color:#334155; }
+  #fleetLinkModal .fl-btn.primary{ background:linear-gradient(135deg,#10b981,#059669); color:white; border:0; }
+  #fleetLinkModal .fl-status{
+    padding:10px 12px; border-radius:10px; font-size:13px; margin-top:10px;
+    background:#f0fdf4; color:#065f46; border:1px solid #86efac;
+  }
+  body.dark #fleetLinkModal .fl-status{ background:#052e1a; color:#86efac; border-color:#14532d; }
+  #fleetLinkModal .fl-status.off{ background:#fef2f2; color:#991b1b; border-color:#fca5a5; }
+  body.dark #fleetLinkModal .fl-status.off{ background:#2a0a10; color:#fca5a5; border-color:#7f1d1d; }
+  #fleetLinkModal .fl-field{ display:grid; gap:4px; margin-top:10px; }
+  #fleetLinkModal .fl-field label{ font-size:12px; color:#64748b; font-weight:600; }
+  body.dark #fleetLinkModal .fl-field label{ color:#8695b7; }
+  #fleetLinkModal .fl-field input{
+    padding:10px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px;
+    background:#fff; color:#0f172a;
+  }
+  body.dark #fleetLinkModal .fl-field input{ background:#0f172a; color:#e6edf7; border-color:#334155; }
+  #fleetLinkModal .fl-video{
+    width:100%; border-radius:10px; background:#000; margin-top:10px; display:none; aspect-ratio:1;
+  }
+  #fleetLinkModal .fl-toggle{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px; background:#f8fafc; border-radius:10px; margin-top:10px;
+  }
+  body.dark #fleetLinkModal .fl-toggle{ background:#0f172a; }
+  #fleetLinkToast{
+    position:fixed; top:74px; left:50%; transform:translateX(-50%);
+    background:#1d4ed8; color:white; padding:12px 18px; border-radius:12px;
+    box-shadow:0 6px 22px rgba(0,0,0,.35); z-index:10000; font-weight:700;
+    opacity:0; transition:opacity .3s, transform .3s; pointer-events:none;
+    max-width:90vw; text-align:center;
+  }
+  #fleetLinkToast.show{ opacity:1; transform:translateX(-50%) translateY(6px); }
+  #fleetLinkToast.urgent{ background:#dc2626; animation:flPulse .6s infinite; }
+  @keyframes flPulse { 0%,100%{transform:translateX(-50%) scale(1);} 50%{transform:translateX(-50%) scale(1.05);} }
+</style>
+
+<div id="fleetLinkModal">
+  <div class="fl-card">
+    <h2>🔗 Fleet Link</h2>
+    <div class="fl-sub">Conéctate al panel de escritorio de tu empresa para que el dispatcher pueda verte, enviarte mensajes y coordinar rutas.</div>
+    <div id="flNotConnected">
+      <div class="fl-field">
+        <label>Ingresa el código de 6 caracteres</label>
+        <input id="flFleetInput" class="fl-input" maxlength="6" autocomplete="off" placeholder="ABC123" />
+      </div>
+      <div class="fl-row">
+        <button class="fl-btn primary" id="flJoinBtn">Unirme a la flota</button>
+        <button class="fl-btn" id="flScanBtn">📷 Escanear QR</button>
+      </div>
+      <video class="fl-video" id="flVideo" playsinline muted></video>
+      <canvas id="flCanvas" style="display:none"></canvas>
+      <div class="fl-field">
+        <label>Placa / número de unidad</label>
+        <input id="flPlate" placeholder="Ej: TX-1234" />
+      </div>
+      <div class="fl-field">
+        <label>Teléfono (opcional)</label>
+        <input id="flPhone" placeholder="+1 555 555 5555" />
+      </div>
+    </div>
+    <div id="flConnected" style="display:none">
+      <div class="fl-status" id="flStatusBox">✅ Conectado a la flota <b id="flFleetNameShown">—</b></div>
+      <div class="fl-toggle">
+        <div>
+          <div style="font-weight:700">Compartir ubicación</div>
+          <div style="font-size:12px;color:#64748b">El dispatcher verá tu posición en tiempo real</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:46px;height:26px">
+          <input type="checkbox" id="flShareLoc" checked style="opacity:0;width:0;height:0">
+          <span id="flShareLocSlider" style="position:absolute;inset:0;background:#10b981;border-radius:26px;cursor:pointer;transition:.2s">
+            <span style="position:absolute;top:3px;left:23px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s"></span>
+          </span>
+        </label>
+      </div>
+      <div class="fl-field">
+        <label>Placa / número de unidad</label>
+        <input id="flPlate2" placeholder="Ej: TX-1234" />
+      </div>
+      <div class="fl-field">
+        <label>Teléfono</label>
+        <input id="flPhone2" placeholder="+1 555 555 5555" />
+      </div>
+      <div class="fl-row">
+        <button class="fl-btn primary" id="flSaveInfoBtn">💾 Guardar información</button>
+        <button class="fl-btn" id="flLeaveBtn">❌ Desconectar</button>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-top:10px;text-align:center" id="flLastPing">Última sincronización: —</div>
+    </div>
+    <div class="fl-row" style="margin-top:14px">
+      <button class="fl-btn" id="flCloseBtn">Cerrar</button>
+    </div>
+  </div>
+</div>
+<div id="fleetLinkToast"></div>
+
+<!-- ── MODAL DE RUTAS RECIBIDAS (MÓVIL) ──────────────── -->
+<div class="routes-modal" id="driverRoutesModal" role="dialog" aria-modal="true" aria-labelledby="drvRoutesTitle">
+  <div class="routes-modal-card">
+    <div class="routes-modal-head">
+      <div style="font-size:24px">📋</div>
+      <div style="flex:1;min-width:0">
+        <div class="routes-modal-title" id="drvRoutesTitle">Rutas recibidas</div>
+        <div class="routes-modal-sub" id="drvRoutesSub">Del despachador</div>
+      </div>
+      <button class="routes-modal-close" id="drvRoutesClose" aria-label="Cerrar">×</button>
+    </div>
+    <div class="routes-modal-body" id="drvRoutesBody">
+      <div class="routes-modal-empty">
+        <div class="ico">📭</div>
+        <div>Sin rutas por ahora</div>
+        <div style="font-size:11px;margin-top:6px">Cuando el despachador envíe una ruta aparecerá aquí</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getDatabase, ref, set, update, onValue, push, remove, onDisconnect, serverTimestamp, query, orderByChild, limitToLast
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
+    authDomain:        "hos-tracker-chat.firebaseapp.com",
+    databaseURL:       "https://hos-tracker-chat-default-rtdb.firebaseio.com",
+    projectId:         "hos-tracker-chat",
+    storageBucket:     "hos-tracker-chat.firebasestorage.app",
+    messagingSenderId: "390077980024",
+    appId:             "1:390077980024:web:65d312be4c52809de43c8d"
+  };
+  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  // User ID estable
+  let MY_ID = localStorage.getItem('fleet_link_uid');
+  if (!MY_ID) { MY_ID = 'drv_' + Math.random().toString(36).slice(2,12); localStorage.setItem('fleet_link_uid', MY_ID); }
+
+  const state = {
+    fleetId: localStorage.getItem('fleet_link_fleet') || null,
+    plate:   localStorage.getItem('fleet_link_plate') || '',
+    phone:   localStorage.getItem('fleet_link_phone') || '',
+    shareLoc: localStorage.getItem('fleet_link_share_loc') !== '0',
+    watchId: null,
+    notifUnsub: null,
+    odHandle: null,    // referencia al onDisconnect actual (para poder cancelar al cambiar de flota)
+    lastPing: null,
+    unread: 0
+  };
+
+  // Auto-join si viene ?fleet=XXX en la URL
+  const urlFleet = new URLSearchParams(location.search).get('fleet');
+  if (urlFleet && !state.fleetId) {
+    state.fleetId = urlFleet.toUpperCase();
+    localStorage.setItem('fleet_link_fleet', state.fleetId);
+  }
+
+  // === UI refs ===
+  const fab      = document.getElementById('fleetLinkFab');
+  const badge    = document.getElementById('fleetLinkBadge');
+  const modal    = document.getElementById('fleetLinkModal');
+  const notC     = document.getElementById('flNotConnected');
+  const yesC     = document.getElementById('flConnected');
+  const inputFleet = document.getElementById('flFleetInput');
+  const statusBox  = document.getElementById('flStatusBox');
+  const fleetShown = document.getElementById('flFleetNameShown');
+  const plateInput = document.getElementById('flPlate');
+  const phoneInput = document.getElementById('flPhone');
+  const plateInput2 = document.getElementById('flPlate2');
+  const phoneInput2 = document.getElementById('flPhone2');
+  const shareLoc    = document.getElementById('flShareLoc');
+  const shareLocSlider = document.getElementById('flShareLocSlider');
+  const video   = document.getElementById('flVideo');
+  const canvas  = document.getElementById('flCanvas');
+  const lastPingEl = document.getElementById('flLastPing');
+
+  // Inicializar valores
+  plateInput.value = state.plate; phoneInput.value = state.phone;
+  plateInput2.value = state.plate; phoneInput2.value = state.phone;
+  shareLoc.checked = state.shareLoc;
+  syncToggle();
+
+  function syncToggle(){
+    shareLocSlider.style.background = shareLoc.checked ? '#10b981' : '#9ca3af';
+    shareLocSlider.firstElementChild.style.left = shareLoc.checked ? '23px' : '3px';
+  }
+  shareLoc.addEventListener('change', ()=>{
+    state.shareLoc = shareLoc.checked;
+    localStorage.setItem('fleet_link_share_loc', state.shareLoc ? '1' : '0');
+    syncToggle();
+    if (state.shareLoc) startLocationSharing(); else stopLocationSharing();
+  });
+
+  function flToast(msg, urgent){
+    const t = document.getElementById('fleetLinkToast');
+    t.textContent = msg;
+    t.classList.toggle('urgent', !!urgent);
+    t.classList.add('show');
+    clearTimeout(flToast._t);
+    flToast._t = setTimeout(()=> t.classList.remove('show'), urgent ? 6000 : 3000);
+    // Vibration
+    if (urgent && navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
+    // Sonido corto
+    try{
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.frequency.value = urgent ? 880 : 660;
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.value = .12;
+      o.start(); setTimeout(()=>{ o.stop(); ctx.close(); }, urgent?500:220);
+    }catch(e){}
+  }
+
+  function openModal(){
+    renderStatus();
+    modal.classList.add('show');
+  }
+  function closeModal(){ modal.classList.remove('show'); stopScanner(); }
+
+  fab.addEventListener('click', openModal);
+  document.getElementById('flCloseBtn').addEventListener('click', closeModal);
+
+  function renderStatus(){
+    if (state.fleetId){
+      notC.style.display = 'none';
+      yesC.style.display = 'block';
+      fleetShown.textContent = state.fleetId;
+      fab.classList.add('connected');
+    } else {
+      notC.style.display = 'block';
+      yesC.style.display = 'none';
+      fab.classList.remove('connected');
+    }
+  }
+
+  function getDriverInfo(){
+    // Reúne datos del perfil existente de HOS Tracker
+    const dp = (typeof driverProfile !== 'undefined' && driverProfile) || {};
+    const TE = (typeof TRUCK_EMOJIS !== 'undefined') ? TRUCK_EMOJIS : {};
+    const user = (typeof currentUser !== 'undefined') ? currentUser : null;
+    return {
+      name:       dp.name || (user && user.name) || 'Driver',
+      photo:      dp.photo || null,
+      truckType:  dp.truckType || '18wheeler',
+      truckEmoji: TE[dp.truckType] || '🚛',
+      jobType:    dp.jobType || '',
+      state:      dp.state || '',
+      cdl:        dp.cdl || '',
+      plate:      state.plate || '',
+      phone:      state.phone || '',
+      email:      user?.email || '',
+      speedUnit:  localStorage.getItem('hos_speed_unit') || 'mph',
+      online:     true,
+      lastSeen:   serverTimestamp()
+    };
+  }
+
+  // ── Limpieza completa de la flota anterior antes de cambiar ──
+  async function cleanupCurrentFleet(markOfflineIfPossible){
+    const oldFleet = state.fleetId;
+    if (!oldFleet) return;
+    // Parar GPS
+    try { stopLocationSharing(); } catch(e){}
+    // Parar listener de notificaciones
+    if (state.notifUnsub){ try { state.notifUnsub(); } catch(e){} state.notifUnsub = null; }
+    // Cancelar el onDisconnect previo (si lo teníamos guardado)
+    if (state.odHandle){
+      try { await state.odHandle.cancel(); } catch(e){ console.warn('od cancel', e); }
+      state.odHandle = null;
+    }
+    // Marcar al conductor como offline en la flota anterior (best-effort)
+    if (markOfflineIfPossible){
+      try {
+        await Promise.race([
+          update(ref(db, `fleets/${oldFleet}/drivers/${MY_ID}`), { online:false, lastSeen: serverTimestamp() }),
+          new Promise(res => setTimeout(res, 2500))
+        ]);
+      } catch(e){ /* ignorar */ }
+    }
+  }
+
+  // ── Verificar conectividad antes de escribir ───────────
+  async function waitForFirebaseConnection(timeoutMs){
+    return new Promise((resolve) => {
+      let done = false;
+      const t = setTimeout(() => { if (!done){ done = true; unsub(); resolve(false); } }, timeoutMs || 4000);
+      const unsub = onValue(ref(db, '.info/connected'), (snap) => {
+        if (snap.val() === true && !done){
+          done = true; clearTimeout(t); unsub(); resolve(true);
+        }
+      }, () => { /* error → deja que el timeout decida */ });
+    });
+  }
+
+  async function joinFleet(code){
+    const c = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if (c.length < 4){ flToast('Código inválido'); return; }
+    console.log('[FleetLink] Intentando unirse a flota:', c, 'como', MY_ID);
+
+    // 1) Si ya había una flota previa, limpiamos todo primero
+    if (state.fleetId && state.fleetId !== c){
+      console.log('[FleetLink] Cambiando de flota, limpiando', state.fleetId);
+      await cleanupCurrentFleet(true);
+    } else if (state.fleetId === c){
+      // Reconexión a la misma flota — sólo resetear listeners
+      await cleanupCurrentFleet(false);
+    }
+
+    // 2) Esperar a que Firebase esté conectado (hasta 4s)
+    const online = await waitForFirebaseConnection(4000);
+    if (!online){
+      alert('❌ Sin conexión a internet o Firebase no responde.\n\nVerifica tu red y vuelve a intentar.');
+      return;
+    }
+
+    state.fleetId = c;
+    localStorage.setItem('fleet_link_fleet', c);
+    state.plate = plateInput.value.trim();
+    state.phone = phoneInput.value.trim();
+    localStorage.setItem('fleet_link_plate', state.plate);
+    localStorage.setItem('fleet_link_phone', state.phone);
+
+    try {
+      await registerPresence();
+      console.log('[FleetLink] ✅ Registrado en Firebase correctamente');
+    } catch(e){
+      console.error('[FleetLink] ❌ Error al registrar:', e);
+      const msg = (e && e.message) || String(e);
+      // Detectar tipo de error para dar un mensaje útil
+      let detail = msg;
+      let hint   = '';
+      if (/permission[_\s-]?denied/i.test(msg)){
+        detail = 'Permiso denegado por Firebase';
+        hint   = '• Las reglas de Firebase no permiten escribir en /fleets/' + c + '/drivers\n• Pide al admin que actualice firebase-rules.json';
+      } else if (/timeout/i.test(msg)){
+        detail = 'Timeout escribiendo en Firebase';
+        hint   = '• Tu conexión es muy lenta o intermitente\n• Cierra y abre la app\n• Intenta con WiFi';
+      } else if (/network|offline/i.test(msg)){
+        detail = 'Sin conexión de red';
+        hint   = '• Revisa tu conexión WiFi o datos móviles';
+      } else {
+        hint = '• Código posiblemente incorrecto\n• Las reglas de Firebase pueden estar bloqueando\n• Problema de conexión';
+      }
+      state.fleetId = null;
+      localStorage.removeItem('fleet_link_fleet');
+      renderStatus();
+      alert('❌ No se pudo conectar a la flota.\n\nDetalle: ' + detail + '\n\nPosibles causas:\n' + hint);
+      return;
+    }
+    startLocationSharing();
+    listenNotifications();
+    renderStatus();
+    flToast('✅ Conectado al dispatcher');
+  }
+
+  async function registerPresence(){
+    if (!state.fleetId) return;
+    const base = `fleets/${state.fleetId}/drivers/${MY_ID}`;
+    const info = getDriverInfo();
+    console.log('[FleetLink] Escribiendo en:', base, info);
+
+    // Timeout más corto (6s) — si Firebase no responde en ese tiempo hay algo raro
+    let timer;
+    const timeoutPromise = new Promise((_, rej) => {
+      timer = setTimeout(() => rej(new Error('Timeout escribiendo en Firebase (6s)')), 6000);
+    });
+    try{
+      await Promise.race([ set(ref(db, base), info), timeoutPromise ]);
+    } finally {
+      clearTimeout(timer);
+    }
+
+    // Guardar la referencia del onDisconnect para poder cancelarla si cambiamos de flota
+    try {
+      const od = onDisconnect(ref(db, base));
+      await od.update({ online:false, lastSeen: serverTimestamp() });
+      state.odHandle = od;
+    } catch(e){ console.warn('[FleetLink] onDisconnect', e); }
+  }
+
+  async function saveInfo(){
+    state.plate = plateInput2.value.trim();
+    state.phone = phoneInput2.value.trim();
+    localStorage.setItem('fleet_link_plate', state.plate);
+    localStorage.setItem('fleet_link_phone', state.phone);
+    await registerPresence();
+    flToast('💾 Información guardada');
+  }
+  document.getElementById('flSaveInfoBtn').addEventListener('click', saveInfo);
+
+  async function leaveFleet(){
+    if (!state.fleetId) return;
+    if (!confirm('¿Desconectarte de la flota? El dispatcher dejará de ver tu ubicación.')) return;
+    await cleanupCurrentFleet(true);
+    state.fleetId = null;
+    localStorage.removeItem('fleet_link_fleet');
+    renderStatus();
+    flToast('Desconectado');
+  }
+  document.getElementById('flLeaveBtn').addEventListener('click', leaveFleet);
+
+  document.getElementById('flJoinBtn').addEventListener('click', ()=> joinFleet(inputFleet.value));
+  inputFleet.addEventListener('keydown', e => { if (e.key==='Enter') joinFleet(inputFleet.value); });
+
+  // === LOCATION SHARING ===
+  function startLocationSharing(){
+    if (!state.fleetId || !state.shareLoc) return;
+    if (!navigator.geolocation) { flToast('GPS no disponible'); return; }
+    stopLocationSharing();
+    state.watchId = navigator.geolocation.watchPosition(
+      pos => {
+        const loc = {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+          speed: pos.coords.speed != null ? Math.max(0, pos.coords.speed*2.23694) : 0, // m/s → mph
+          heading: pos.coords.heading ?? null,
+          accuracy: pos.coords.accuracy ?? null,
+          altitude: pos.coords.altitude ?? null,
+          ts: Date.now()
+        };
+        set(ref(db, `fleets/${state.fleetId}/locations/${MY_ID}`), loc);
+        // HOS data — status + driving seconds accumulated today
+        const _hosStatus   = typeof _dashCurrentStatus !== 'undefined' ? _dashCurrentStatus : 'driving';
+        const _driveSecs   = typeof fmDriveSeconds     !== 'undefined' ? Math.round(fmDriveSeconds) : 0;
+        const _isTracking  = typeof fmIsTracking       !== 'undefined' ? fmIsTracking : false;
+        update(ref(db, `fleets/${state.fleetId}/drivers/${MY_ID}`), {
+          online: true, lastSeen: serverTimestamp(),
+          hosStatus: _hosStatus,
+          driveSecondsToday: _driveSecs,
+          tripActive: _isTracking
+        });
+        state.lastPing = Date.now();
+        if (lastPingEl) lastPingEl.textContent = 'Última sincronización: ' + new Date().toLocaleTimeString();
+        // Historial por día (incluye velocidad para calcular millas en dashboard)
+        const day = new Date().toISOString().slice(0,10);
+        push(ref(db, `fleets/${state.fleetId}/history/${MY_ID}/${day}`), loc).catch(()=>{});
+      },
+      err => { console.warn('[FleetLink] GPS error', err.message); },
+      { enableHighAccuracy:true, maximumAge:5000, timeout:20000 }
+    );
+  }
+  function stopLocationSharing(){
+    if (state.watchId != null){ navigator.geolocation.clearWatch(state.watchId); state.watchId = null; }
+  }
+
+  // === NOTIFICATIONS FROM DISPATCHER ===
+  function listenNotifications(){
+    if (!state.fleetId) return;
+    if (state.notifUnsub){ state.notifUnsub(); }
+    const q = query(ref(db, `fleets/${state.fleetId}/notifications/${MY_ID}`), orderByChild('ts'), limitToLast(20));
+    const seen = new Set(JSON.parse(sessionStorage.getItem('fleet_link_seen_notif') || '[]'));
+    let first = true;
+    state.notifUnsub = onValue(q, snap => {
+      const val = snap.val() || {};
+      const items = Object.entries(val).sort((a,b)=> a[1].ts - b[1].ts);
+      items.forEach(([id, n]) => {
+        if (seen.has(id)) return;
+        seen.add(id);
+        // ── Si el dispatcher expulsa al conductor, salir automáticamente ──
+        if (n && n.type === 'kicked'){
+          try {
+            flToast('🚪 ' + (n.text || 'Has sido retirado de la flota'), true);
+            if (window.Notification && Notification.permission === 'granted'){
+              new Notification('HOS Tracker', { body: n.text || 'Has sido retirado de la flota', icon: '/icon-192.png' });
+            }
+          } catch(e){}
+          // Limpiar flota local y cortar listeners
+          (async () => {
+            try { await cleanupCurrentFleet(false); } catch(e){}
+            state.fleetId = null;
+            localStorage.removeItem('fleet_link_fleet');
+            try { renderStatus(); } catch(e){}
+          })();
+          return;
+        }
+        if (!first){
+          const urgent = n.type === 'urgent';
+          flToast('📨 Dispatcher: ' + n.text, urgent);
+          state.unread++;
+          updateBadge();
+          // Browser Notification API
+          if (window.Notification && Notification.permission === 'granted'){
+            new Notification('HOS Tracker — Dispatcher', { body: n.text, icon: '/icon-192.png' });
+          }
+        }
+      });
+      first = false;
+      sessionStorage.setItem('fleet_link_seen_notif', JSON.stringify([...seen].slice(-80)));
+    });
+  }
+
+  function updateBadge(){
+    if (state.unread > 0){ badge.style.display = 'block'; badge.textContent = state.unread; }
+    else badge.style.display = 'none';
+  }
+  fab.addEventListener('click', ()=>{ state.unread = 0; updateBadge(); });
+
+  // Solicitar permiso de notificaciones la primera vez
+  if (window.Notification && Notification.permission === 'default'){
+    setTimeout(()=>{ try { Notification.requestPermission(); } catch(e){} }, 4000);
+  }
+
+  // === QR SCANNER (usa BarcodeDetector si está disponible; fallback a entrada manual) ===
+  let streamRef = null, scanInterval = null;
+  async function startScanner(){
+    try {
+      streamRef = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+      video.srcObject = streamRef;
+      video.style.display = 'block';
+      await video.play();
+      if ('BarcodeDetector' in window){
+        const detector = new BarcodeDetector({ formats: ['qr_code'] });
+        scanInterval = setInterval(async ()=>{
+          try{
+            const codes = await detector.detect(video);
+            if (codes.length){
+              const raw = codes[0].rawValue;
+              let code = raw;
+              try { const j = JSON.parse(raw); if (j.fleet) code = j.fleet; } catch(e){}
+              // Extraer de ?fleet= si es URL
+              const m = raw.match(/[?&]fleet=([A-Z0-9]+)/i); if (m) code = m[1];
+              stopScanner();
+              inputFleet.value = code;
+              joinFleet(code);
+            }
+          }catch(e){}
+        }, 400);
+      } else {
+        flToast('Tu navegador no soporta escaneo de QR — ingresa el código manualmente');
+      }
+    } catch(e){ flToast('No se pudo acceder a la cámara'); }
+  }
+  function stopScanner(){
+    if (scanInterval){ clearInterval(scanInterval); scanInterval = null; }
+    if (streamRef){ streamRef.getTracks().forEach(t=>t.stop()); streamRef = null; }
+    video.style.display = 'none';
+  }
+  document.getElementById('flScanBtn').addEventListener('click', startScanner);
+
+  // === Auto-reconectar si ya había una flota guardada ===
+  if (state.fleetId){
+    (async ()=>{
+      try {
+        await registerPresence();
+        console.log('[FleetLink] ✅ Auto-reconectado a flota', state.fleetId);
+      } catch(e){
+        console.error('[FleetLink] ❌ Auto-reconexión falló:', e);
+        alert('No se pudo reconectar a la flota ' + state.fleetId + '\n\nError: ' + e.message + '\n\nTe desconectaré para que puedas intentarlo de nuevo.');
+        state.fleetId = null;
+        localStorage.removeItem('fleet_link_fleet');
+        renderStatus();
+      }
+    })();
+    startLocationSharing();
+    listenNotifications();
+    renderStatus();
+  }
+
+  // === Botón de diagnóstico visible cuando ya estás conectado ===
+  const diagBtn = document.createElement('button');
+  diagBtn.className = 'fl-btn';
+  diagBtn.textContent = '🩺 Verificar mi registro';
+  diagBtn.style.marginTop = '8px';
+  diagBtn.style.width = '100%';
+  diagBtn.addEventListener('click', async ()=>{
+    if (!state.fleetId) return flToast('No estás conectado');
+    try {
+      const { get } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+      const snap = await get(ref(db, `fleets/${state.fleetId}/drivers/${MY_ID}`));
+      const loc  = await get(ref(db, `fleets/${state.fleetId}/locations/${MY_ID}`));
+      const info = snap.val();
+      const location = loc.val();
+      let msg = `🩺 Verificación de ${state.fleetId}\n━━━━━━━━━━━━━━━━\n`;
+      msg += `Mi ID: ${MY_ID}\n\n`;
+      if (info) {
+        msg += `✅ Estoy registrado en Firebase\n`;
+        msg += `Nombre: ${info.name || '(sin nombre)'}\n`;
+        msg += `Camión: ${info.truckType || '—'}\n`;
+        msg += `Placa: ${info.plate || '—'}\n\n`;
+      } else {
+        msg += `❌ NO estoy en Firebase (no se escribió)\n\n`;
+      }
+      if (location) {
+        msg += `📍 GPS compartido\nLat: ${location.lat?.toFixed(4)}\nLon: ${location.lon?.toFixed(4)}\nVelocidad: ${Math.round(location.speed||0)}\n`;
+      } else {
+        msg += `⚠️ GPS no está compartiendo (permite ubicación)\n`;
+      }
+      alert(msg);
+    } catch(e){
+      alert('Error verificando: ' + e.message);
+    }
+  });
+  document.getElementById('flConnected').appendChild(diagBtn);
+
+  // Expose for debugging
+  window._fleetLink = { state, joinFleet, leaveFleet };
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CAMPANA DE RUTAS — listener de rutas del despachador
+     + modal con lista, aceptar / rechazar / iniciar / ver mapa
+═══════════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getDatabase, ref, onValue, update, query, orderByChild, limitToLast
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
+    authDomain:        "hos-tracker-chat.firebaseapp.com",
+    databaseURL:       "https://hos-tracker-chat-default-rtdb.firebaseio.com",
+    projectId:         "hos-tracker-chat",
+    storageBucket:     "hos-tracker-chat.firebasestorage.app",
+    messagingSenderId: "390077980024",
+    appId:             "1:390077980024:web:65d312be4c52809de43c8d"
+  };
+  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  // ── User id estable (compartido con fleet-link) ────────
+  let MY_ID = localStorage.getItem('fleet_link_uid');
+  if (!MY_ID) { MY_ID = 'drv_' + Math.random().toString(36).slice(2,12); localStorage.setItem('fleet_link_uid', MY_ID); }
+
+  const bellBtn    = document.getElementById('heroBellBtn');
+  const bellBadge  = document.getElementById('heroBellBadge');
+  const routesModal= document.getElementById('driverRoutesModal');
+  const routesBody = document.getElementById('drvRoutesBody');
+  const routesSub  = document.getElementById('drvRoutesSub');
+  const routesClose= document.getElementById('drvRoutesClose');
+
+  const SEEN_KEY = 'driver_routes_seen';
+  const seenIds = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'));
+  function persistSeen(){
+    try { localStorage.setItem(SEEN_KEY, JSON.stringify([...seenIds].slice(-200))); } catch(e){}
+  }
+
+  const bellState = {
+    routes: [],          // array of { id, ...data } most recent first
+    unsub:  null,
+    fleetId:null,
+    firstLoad: true,
+    unreadCount: 0,
+    currentListenerFleet: null
+  };
+
+  // ── Sonido, vibración, push ────────────────────────────
+  let audioCtx = null;
+  function playBellSound(){
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioCtx.currentTime;
+      // Dos tonos: 880 Hz → 1320 Hz (ding-dong)
+      [[880, now, .18], [1320, now + .20, .18]].forEach(([freq, start, dur]) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine';
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.22, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(start); o.stop(start + dur + 0.02);
+      });
+    }catch(e){ /* no audio — silenciar */ }
+  }
+  function vibrate(){
+    if (navigator.vibrate) {
+      try { navigator.vibrate([220, 90, 220, 90, 400]); } catch(e){}
+    }
+  }
+  function showPush(title, body){
+    try{
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted'){
+        new Notification(title, { body, icon: '/icon-192.png', tag: 'hos-route' });
+      } else if (Notification.permission !== 'denied'){
+        Notification.requestPermission().then(p => {
+          if (p === 'granted') new Notification(title, { body, icon: '/icon-192.png', tag: 'hos-route' });
+        });
+      }
+    }catch(e){}
+  }
+
+  // Pedir permiso de notificaciones un poco más tarde (y sólo si no se decidió aún)
+  setTimeout(() => {
+    try {
+      if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    } catch(e){}
+  }, 5000);
+
+  // ── UI helpers ─────────────────────────────────────────
+  function escapeHtml(s){
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function fmtWhen(ts){
+    if (!ts) return '';
+    const d = new Date(ts);
+    const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    if (sameDay) return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    return d.toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+  function fmtMoney(n){ return '$' + (Number(n)||0).toFixed(2); }
+
+  function setBadge(n){
+    bellState.unreadCount = n;
+    if (n > 0){
+      bellBadge.textContent = n > 99 ? '99+' : n;
+      bellBadge.style.display = 'flex';
+      bellBtn.classList.add('ringing');
+    } else {
+      bellBadge.style.display = 'none';
+      bellBtn.classList.remove('ringing');
+    }
+  }
+
+  function renderRoutes(){
+    const list = bellState.routes;
+    if (!list.length){
+      routesBody.innerHTML = `
+        <div class="routes-modal-empty">
+          <div class="ico">📭</div>
+          <div>Sin rutas por ahora</div>
+          <div style="font-size:11px;margin-top:6px">Cuando el despachador envíe una ruta aparecerá aquí</div>
+        </div>`;
+      routesSub.textContent = 'Del despachador';
+      return;
+    }
+    routesSub.textContent = `${list.length} ruta${list.length===1?'':'s'} · ${bellState.fleetId || ''}`;
+    const labels = { pending:'Pendiente', accepted:'Aceptada', 'in-progress':'En curso', completed:'Completada', rejected:'Rechazada' };
+    const payTypeLbl = { percent:'%', per_mile:'$/mi', flat:'Plana' };
+    routesBody.innerHTML = list.map(r => {
+      const st = r.status || 'pending';
+      const p = r.pickup || {};
+      const d = r.delivery || {};
+      const notesHtml = r.notes
+        ? `<div class="drv-route-notes">📝 ${escapeHtml(r.notes)}</div>`
+        : '';
+      let actions = '';
+      if (st === 'pending'){
+        actions = `
+          <button class="drv-route-btn accept" data-act="accept" data-id="${r.id}">✅ Aceptar</button>
+          <button class="drv-route-btn reject" data-act="reject" data-id="${r.id}">❌ Rechazar</button>`;
+      } else if (st === 'accepted'){
+        actions = `
+          <button class="drv-route-btn start" data-act="start" data-id="${r.id}">🚚 Iniciar viaje</button>
+          <button class="drv-route-btn map" data-act="map" data-id="${r.id}">🗺️ Ver ruta</button>`;
+      } else if (st === 'in-progress'){
+        actions = `
+          <button class="drv-route-btn done" data-act="done" data-id="${r.id}">🎯 Marcar completada</button>
+          <button class="drv-route-btn map" data-act="map" data-id="${r.id}">🗺️ Ver ruta</button>`;
+      } else if (st === 'completed' || st === 'rejected'){
+        actions = `<button class="drv-route-btn map" data-act="map" data-id="${r.id}">🗺️ Ver en mapa</button>`;
+      }
+      const pickTime  = r.pickupTime   ? `<div class="drv-route-leg-time">🕐 ${escapeHtml(new Date(r.pickupTime).toLocaleString())}</div>` : '';
+      const dropTime  = r.deliveryTime ? `<div class="drv-route-leg-time" style="color:#fb923c">🕐 ${escapeHtml(new Date(r.deliveryTime).toLocaleString())}</div>` : '';
+      const pickRef   = r.pickupRef    ? `<div style="font-size:11px;color:#e2e8f0;margin-top:2px"><b>📞 ${escapeHtml(r.pickupRef)}</b></div>` : '';
+      const dropRef   = r.deliveryRef  ? `<div style="font-size:11px;color:#e2e8f0;margin-top:2px"><b>📞 ${escapeHtml(r.deliveryRef)}</b></div>` : '';
+      return `
+        <div class="drv-route-card ${st}">
+          <div class="drv-route-head">
+            <span>${escapeHtml(fmtWhen(r.createdAt))}</span>
+            <span class="drv-route-status ${st}">${labels[st]||st}</span>
+          </div>
+          <div class="drv-route-leg">
+            <div class="drv-route-leg-ico">📍</div>
+            <div class="drv-route-leg-text">
+              <div class="drv-route-leg-city">${escapeHtml((p.city||'—')+(p.stateCode||p.state?(', '+(p.stateCode||p.state)):''))}</div>
+              <div class="drv-route-leg-addr">${escapeHtml(p.address||'')}</div>
+              ${pickRef}${pickTime}
+            </div>
+          </div>
+          <div class="drv-route-leg">
+            <div class="drv-route-leg-ico">🎯</div>
+            <div class="drv-route-leg-text">
+              <div class="drv-route-leg-city" style="color:#fca5a5">${escapeHtml((d.city||'—')+(d.stateCode||d.state?(', '+(d.stateCode||d.state)):''))}</div>
+              <div class="drv-route-leg-addr">${escapeHtml(d.address||'')}</div>
+              ${dropRef}${dropTime}
+            </div>
+          </div>
+          <div class="drv-route-stats">
+            <div class="drv-route-stat">
+              <div class="drv-route-stat-val">${(Number(r.miles)||0).toFixed(1)} mi</div>
+              <div class="drv-route-stat-lbl">Distancia</div>
+            </div>
+            <div class="drv-route-stat">
+              <div class="drv-route-stat-val" style="color:#86efac">${fmtMoney(r.driverPay)}</div>
+              <div class="drv-route-stat-lbl">Mi pago</div>
+            </div>
+            <div class="drv-route-stat">
+              <div class="drv-route-stat-val" style="color:#93c5fd">${(r.payRate||0)}${r.payType==='percent'?'%':r.payType==='per_mile'?' $/mi':' USD'}</div>
+              <div class="drv-route-stat-lbl">${escapeHtml(payTypeLbl[r.payType]||'Pago')}</div>
+            </div>
+          </div>
+          ${notesHtml}
+          <div class="drv-route-actions">${actions}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Acciones: aceptar / rechazar / iniciar / completar / mapa ──
+  async function updateRouteStatus(routeId, newStatus){
+    if (!bellState.fleetId) return;
+    const stamps = {
+      accepted:    { acceptedAt: Date.now() },
+      rejected:    { rejectedAt: Date.now() },
+      'in-progress':{ startedAt: Date.now() },
+      completed:   { completedAt: Date.now() }
+    };
+    try{
+      await update(ref(db, `fleets/${bellState.fleetId}/routes/${MY_ID}/${routeId}`), {
+        status: newStatus,
+        ...(stamps[newStatus]||{})
+      });
+      // Al aceptar, auto-configurar destino = recogida y calcular ruta
+      if (newStatus === 'accepted'){
+        const r = bellState.routes.find(x => x.id === routeId);
+        if (r && r.pickup) applyPickupAsDestination(r);
+      }
+      // Al iniciar el viaje (carga recogida), cambiar destino = descarga
+      if (newStatus === 'in-progress'){
+        const r = bellState.routes.find(x => x.id === routeId);
+        if (r && r.delivery) applyDeliveryAsDestination(r);
+      }
+    }catch(e){
+      alert('No se pudo actualizar la ruta: ' + (e.message || e));
+    }
+  }
+
+  // Toma la recogida de la ruta y la pone como destino en el planificador
+  function applyPickupAsDestination(r){
+    const p = r.pickup || {};
+    const name = buildPlaceName(p);
+    if (!name) return;
+    setAppDestination({
+      name,
+      lat: Number(p.lat) || 0,
+      lon: Number(p.lon) || 0,
+      state: p.stateCode || p.state || ''
+    });
+    toastOnMap('📍 Destino fijado: recogida — ' + name);
+  }
+  function applyDeliveryAsDestination(r){
+    const d = r.delivery || {};
+    const name = buildPlaceName(d);
+    if (!name) return;
+    setAppDestination({
+      name,
+      lat: Number(d.lat) || 0,
+      lon: Number(d.lon) || 0,
+      state: d.stateCode || d.state || ''
+    });
+    toastOnMap('🎯 Destino fijado: descarga — ' + name);
+  }
+
+  function buildPlaceName(loc){
+    if (!loc) return '';
+    // Preferir dirección completa; si no, ciudad, estado
+    if (loc.address && loc.address.trim()) return loc.address.trim();
+    const parts = [loc.city, loc.stateCode || loc.state, loc.country].filter(Boolean);
+    return parts.join(', ');
+  }
+
+  function setAppDestination(dest){
+    try {
+      // Cerrar modal primero para que el usuario vea el planificador
+      closeRoutesModal();
+      // Usar helper global expuesto por el planificador principal
+      if (typeof window.setPlannerDestination === 'function'){
+        const ok = window.setPlannerDestination(dest, { calculate: true });
+        if (ok) return;
+      }
+      // Fallback mínimo: sólo llenar el input
+      const input = document.getElementById('destInput');
+      if (input){
+        input.value = dest.name;
+        const sug = document.getElementById('destSugg');
+        if (sug) sug.style.display = 'none';
+      }
+    } catch(e){
+      console.warn('setAppDestination', e);
+    }
+  }
+
+  function toastOnMap(msg){
+    // Usa el toast del fleet-link si existe, fallback a uno mínimo
+    try {
+      const t = document.getElementById('fleetLinkToast');
+      if (t){
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(toastOnMap._t);
+        toastOnMap._t = setTimeout(() => t.classList.remove('show'), 3500);
+        return;
+      }
+    } catch(e){}
+    try { console.log('[routes]', msg); } catch(e){}
+  }
+
+  function showRouteOnMap(routeId){
+    const r = bellState.routes.find(x => x.id === routeId);
+    if (!r || !r.pickup || !r.delivery) return alert('Coordenadas no disponibles');
+    const from = (r.pickup.lat != null && r.pickup.lon != null) ? `${r.pickup.lat},${r.pickup.lon}` : encodeURIComponent(r.pickup.address||'');
+    const to   = (r.delivery.lat != null && r.delivery.lon != null) ? `${r.delivery.lat},${r.delivery.lon}` : encodeURIComponent(r.delivery.address||'');
+    const url  = `https://www.google.com/maps/dir/?api=1&origin=${from}&destination=${to}&travelmode=driving`;
+    window.open(url, '_blank', 'noopener');
+  }
+
+  routesBody.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.drv-route-btn');
+    if (!btn) return;
+    const act = btn.dataset.act;
+    const id  = btn.dataset.id;
+    if (!id) return;
+    if (act === 'accept')  updateRouteStatus(id, 'accepted');
+    else if (act === 'reject'){
+      if (confirm('¿Rechazar esta ruta?')) updateRouteStatus(id, 'rejected');
+    }
+    else if (act === 'start') updateRouteStatus(id, 'in-progress');
+    else if (act === 'done')  updateRouteStatus(id, 'completed');
+    else if (act === 'map')   showRouteOnMap(id);
+  });
+
+  // ── Abrir / cerrar modal ───────────────────────────────
+  function openRoutesModal(){
+    // Al abrir, marcamos todas como vistas
+    bellState.routes.forEach(r => seenIds.add(r.id));
+    persistSeen();
+    setBadge(0);
+    routesModal.classList.add('show');
+    renderRoutes();
+  }
+  function closeRoutesModal(){ routesModal.classList.remove('show'); }
+
+  bellBtn.addEventListener('click', openRoutesModal);
+  routesClose.addEventListener('click', closeRoutesModal);
+  routesModal.addEventListener('click', (ev) => {
+    if (ev.target === routesModal) closeRoutesModal();
+  });
+
+  // ── Listener de rutas en Firebase ──────────────────────
+  function attachRoutesListener(fleetId){
+    if (!fleetId) return;
+    if (bellState.unsub && bellState.currentListenerFleet === fleetId) return;
+    if (bellState.unsub){ try { bellState.unsub(); } catch(e){} bellState.unsub = null; }
+    bellState.fleetId = fleetId;
+    bellState.currentListenerFleet = fleetId;
+    bellState.firstLoad = true;
+    // Solo leemos nuestras rutas: fleets/{FLEET_ID}/routes/{MY_ID}
+    const q = query(ref(db, `fleets/${fleetId}/routes/${MY_ID}`), orderByChild('createdAt'), limitToLast(50));
+    bellState.unsub = onValue(q, (snap) => {
+      const val = snap.val() || {};
+      const list = Object.entries(val)
+        .map(([id, r]) => ({ id, driverId: (r && r.driverId) || MY_ID, ...r }))
+        .sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+      // Detectar rutas nuevas (status=pending y nunca vistas)
+      const newIncoming = list.filter(r => r.status === 'pending' && !seenIds.has(r.id));
+      const newCount = newIncoming.length;
+      bellState.routes = list;
+      // Primera carga: marcar las existentes como ya-vistas (sin alertar)
+      if (bellState.firstLoad){
+        bellState.firstLoad = false;
+        // Pero si hay pendientes recientes que nunca se aceptaron, igual mostrar el badge
+        const stillUnseen = list.filter(r => r.status === 'pending' && !seenIds.has(r.id));
+        setBadge(stillUnseen.length);
+        if (routesModal.classList.contains('show')) renderRoutes();
+        return;
+      }
+      // Cambios posteriores
+      if (newCount > 0){
+        // Nuevas rutas: notificar
+        newIncoming.forEach(r => {
+          const p = r.pickup || {}, d = r.delivery || {};
+          const title = '📋 Nueva ruta asignada';
+          const body  = `${p.city||'Origen'} → ${d.city||'Destino'} · ${(Number(r.miles)||0).toFixed(0)} mi · ${fmtMoney(r.driverPay)}`;
+          showPush(title, body);
+        });
+        playBellSound();
+        vibrate();
+        setBadge(bellState.unreadCount + newCount);
+      } else {
+        // Actualización de status de rutas existentes — refrescar si modal abierto
+        if (routesModal.classList.contains('show')) renderRoutes();
+      }
+      if (routesModal.classList.contains('show')) renderRoutes();
+    }, (err) => {
+      console.warn('routes listener', err);
+    });
+  }
+
+  function detachRoutesListener(){
+    if (bellState.unsub){ try { bellState.unsub(); } catch(e){} bellState.unsub = null; }
+    bellState.routes = [];
+    bellState.fleetId = null;
+    bellState.currentListenerFleet = null;
+    bellState.firstLoad = true;
+    setBadge(0);
+  }
+
+  // ── Seguimiento de la flota activa (localStorage) ─────
+  function currentFleetId(){
+    return localStorage.getItem('fleet_link_fleet') || null;
+  }
+  function syncListener(){
+    const fleetId = currentFleetId();
+    if (fleetId) attachRoutesListener(fleetId);
+    else detachRoutesListener();
+  }
+  syncListener();
+  // Reaccionar a cambios desde otras pestañas o desde fleet-link
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'fleet_link_fleet') syncListener();
+  });
+  // Poll ligero como respaldo (cambios en misma pestaña que no disparan 'storage')
+  setInterval(() => {
+    const fleetId = currentFleetId();
+    if (fleetId !== bellState.currentListenerFleet) syncListener();
+  }, 4000);
+
+  // Expose for debug
+  window._driverRoutes = { bellState, openRoutesModal, closeRoutesModal };
+</script>
+
