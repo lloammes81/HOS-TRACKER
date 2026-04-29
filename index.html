@@ -3674,7 +3674,7 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .hero-top-bar {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 6px;
+    margin-bottom: 10px; padding-right: 82px;
   }
   .hero-brand { display: flex; align-items: center; gap: 9px; }
   .hero-brand-icon {
@@ -3901,20 +3901,32 @@ body.dark #fullMap .leaflet-tile-pane {
     font-size: 11px; color: rgba(255,255,255,.45);
     font-weight: 600; margin-bottom: 12px; letter-spacing: .2px;
   }
-  .hero-kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+  .hero-kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; justify-items: center; margin-top: 8px; }
   .hero-kpi {
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 11px; padding: 9px 8px;
-    text-align: center; backdrop-filter: blur(4px);
+    width: 90px; height: 90px; border-radius: 50%;
+    background: linear-gradient(135deg,
+      rgba(195,210,222,.82) 0%, rgba(240,248,255,.58) 18%,
+      rgba(148,165,180,.72) 50%, rgba(215,230,242,.52) 80%,
+      rgba(178,196,212,.80) 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 5px 22px rgba(0,0,0,.68), 0 0 0 1px rgba(255,255,255,.22),
+      inset 0 1px 4px rgba(255,255,255,.42), inset 0 -2px 6px rgba(0,0,0,.45);
+    flex-shrink: 0;
+  }
+  .hero-kpi-inner {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: radial-gradient(circle at 38% 34%, #172a3e, #091420);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: inset 0 3px 12px rgba(0,0,0,.88), inset 0 -1px 3px rgba(255,255,255,.04);
   }
   .hero-kpi-val {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 18px; letter-spacing: 1px; color: #10b981; line-height: 1;
+    font-size: 21px; letter-spacing: 1px; color: #10b981; line-height: 1;
   }
   .hero-kpi-lbl {
-    font-size: 7px; font-weight: 800; text-transform: uppercase;
-    letter-spacing: .8px; color: rgba(255,255,255,.35); margin-top: 2px;
+    font-size: 6px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .5px; color: rgba(255,255,255,.42); margin-top: 2px;
+    text-align: center; padding: 0 5px; line-height: 1.2;
   }
 
 
@@ -5762,125 +5774,87 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="hero-brand-sub">by fab-visual™</div>
         </div>
       </div>
-      <div class="hero-btns" style="position:absolute;top:148px;right:28px;z-index:4;display:flex;align-items:center;justify-content:center;gap:6px;flex-direction:row;width:110px">
-        <button class="hero-btn" id="themeToggle" title="Cambiar color" style="width:32px;height:32px;font-size:16px;border-radius:8px;padding:0">🌙</button>
-        <button class="hero-btn" id="langToggleBtn" title="Cambiar idioma" style="width:32px;height:32px;font-size:11px;font-weight:900;letter-spacing:.2px;border-radius:8px;padding:0;">EN</button>
-        <button class="hero-bell" id="heroBellBtn" title="Rutas recibidas" aria-label="Rutas recibidas" style="width:32px;height:32px;font-size:16px;border-radius:8px;padding:0">
-          🔔
-          <span class="hero-bell-badge" id="heroBellBadge" style="display:none">0</span>
-        </button>
-        <!-- hidden controls kept for JS compatibility -->
-        <button id="gpsBtn" style="display:none"></button>
-        <button id="menuBtn" style="display:none"></button>
-        <div id="menuPanel" style="display:none">
-          <select id="langSelect"><option value="en">English</option><option value="es">Español</option></select>
-          <button id="lightBtn" style="display:none"></button>
-          <button id="darkBtn" style="display:none"></button>
-          <select id="countrySelectMenu" style="display:none"></select>
-        </div>
+      <!-- hidden controls kept for JS compatibility -->
+      <button id="gpsBtn" style="display:none"></button>
+      <button id="menuBtn" style="display:none"></button>
+      <div id="menuPanel" style="display:none">
+        <select id="langSelect"><option value="en">English</option><option value="es">Español</option></select>
+        <button id="lightBtn" style="display:none"></button>
+        <button id="darkBtn" style="display:none"></button>
+        <select id="countrySelectMenu" style="display:none"></select>
       </div>
     </div>
 
-    <!-- HERO BODY -->
-    <div class="hero-pill">
-      <div class="hero-pill-dot"></div>
-      <span class="hero-pill-text">DOT Certified Planner</span>
+    <!-- PILL + ACTION BUTTONS ROW -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="hero-pill" style="margin-bottom:0">
+        <div class="hero-pill-dot"></div>
+        <span class="hero-pill-text">DOT Certified Planner</span>
+      </div>
+      <div class="hero-btns">
+        <button class="hero-btn" id="themeToggle" title="Cambiar color">🌙</button>
+        <button class="hero-btn" id="langToggleBtn" title="Cambiar idioma" style="font-size:9px;font-weight:900;letter-spacing:.5px;">EN</button>
+        <button class="hero-btn" id="heroBellBtn" title="Notificaciones">🔔<span class="hero-bell-badge" id="heroBellBadge" style="display:none">0</span></button>
+      </div>
     </div>
 
     <div class="hero-h1">Hours of <em>Service</em><br>Intelligence</div>
     <div class="hero-sub" id="subtitleTxt">DOT Hours of Service Planner</div>
 
-    <!-- KPI CARDS -->
+    <!-- KPI GAUGES -->
     <div class="hero-kpis">
       <div class="hero-kpi">
-        <div class="hero-kpi-val">11H</div>
-        <div class="hero-kpi-lbl">Drive Limit</div>
+        <div class="hero-kpi-inner">
+          <div class="hero-kpi-val">11H</div>
+          <div class="hero-kpi-lbl">Drive Limit</div>
+        </div>
       </div>
       <div class="hero-kpi">
-        <div class="hero-kpi-val">70H</div>
-        <div class="hero-kpi-lbl">8-Day Cycle</div>
+        <div class="hero-kpi-inner">
+          <div class="hero-kpi-val">70H</div>
+          <div class="hero-kpi-lbl">8-Day Cycle</div>
+        </div>
       </div>
       <div class="hero-kpi">
-        <div class="hero-kpi-val">DOT</div>
-        <div class="hero-kpi-lbl">Compliant</div>
+        <div class="hero-kpi-inner">
+          <div class="hero-kpi-val">DOT</div>
+          <div class="hero-kpi-lbl">Compliant</div>
+        </div>
       </div>
     </div>
 
   </div>
 
-  <!-- CALENDAR WIDGET — tamaño medio + sombra profunda detrás -->
+  <!-- CALENDAR WIDGET — compact, top-right -->
   <div id="heroCalendarWrap" style="
-    position:absolute; top:60px; right:28px;
-    z-index:3; width:68px;
-    filter: drop-shadow(0 14px 28px rgba(0,0,0,.80)) drop-shadow(0 6px 14px rgba(16,185,129,.25));
+    position:absolute; top:calc(var(--header-pt) + 2px); right:14px;
+    z-index:3; width:70px;
   ">
-    <!-- halo suave detrás del calendario -->
-    <div aria-hidden="true" style="
-      position:absolute; inset:-18px;
-      border-radius:26px;
-      background: radial-gradient(ellipse at center, rgba(16,185,129,.32) 0%, rgba(16,185,129,.10) 45%, transparent 72%);
-      filter: blur(14px);
-      z-index:-1;
-      pointer-events:none;
-    "></div>
     <div style="
-      position:relative;
       background:linear-gradient(180deg,#0f2d1e 0%,#071510 100%);
-      border-radius:7px; overflow:hidden;
-      box-shadow:
-        0 10px 24px rgba(0,0,0,.85),
-        0 4px 10px rgba(0,0,0,.6),
-        0 0 0 1px rgba(16,185,129,.45),
-        inset 0 1px 0 rgba(255,255,255,.08);
-      font-family:sans-serif; width:68px;
+      border-radius:10px; overflow:hidden;
+      box-shadow:0 6px 18px rgba(0,0,0,.65),0 0 0 1px rgba(16,185,129,.3);
+      font-family:sans-serif; width:70px; text-align:center;
     ">
-      <!-- Top bar: week / day-of-year -->
-      <div style="display:flex;justify-content:space-between;align-items:center;
-        background:linear-gradient(90deg,#c0390a,#e04a10);
-        padding:2px 3px;font-size:4.3px;font-weight:800;color:#fff;letter-spacing:.2px;">
-        <span id="calWeekLabel">SEM 15</span>
-        <span id="calDayOfYear" style="text-align:right;line-height:1.2">DIA 105<br>FALTAN 260</span>
-      </div>
-      <!-- Year -->
-      <div style="background:linear-gradient(90deg,#1565a8,#1a80cc);
-        text-align:center;padding:0;
-        font-size:8.5px;font-weight:900;color:#fff;letter-spacing:1.1px;
-        font-family:'Bebas Neue',sans-serif;" id="calYear">2026</div>
-      <!-- Day of week -->
-      <div style="text-align:center;padding:1px 0 0;
-        font-size:4.8px;font-weight:900;color:#10b981;letter-spacing:.3px;
-        text-transform:uppercase;" id="calDayName">MIÉRCOLES / WED</div>
-      <!-- Big date number -->
-      <div style="text-align:center;line-height:.9;
+      <div style="
         font-family:'Bebas Neue',sans-serif;
-        font-size:28px;font-weight:900;color:#fff;
-        padding:0 3px;text-shadow:1px 2px 6px rgba(0,0,0,.9);" id="calDayNum">15</div>
-      <!-- Month name -->
-      <div style="text-align:center;font-size:4.8px;font-weight:800;
-        color:rgba(255,255,255,.7);letter-spacing:.4px;text-transform:uppercase;
-        padding-bottom:3px;" id="calMonthName">ABRIL / APR</div>
+        font-size:42px;font-weight:900;color:#fff;
+        padding:6px 4px 0;line-height:1;
+        text-shadow:1px 2px 8px rgba(0,0,0,.85);" id="calDayNum">29</div>
+      <div style="
+        font-size:10px;font-weight:800;letter-spacing:1.8px;
+        text-transform:uppercase;color:#10b981;
+        padding-bottom:6px;" id="calMonthName">APR</div>
     </div>
   </div>
 <script>
 (function(){
   try {
     var now=new Date();
-    var y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),dow=now.getDay();
-    var dES=['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
-    var dEN=['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    var mES=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+    var m=now.getMonth(),d=now.getDate();
     var mEN=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-    var soy=new Date(y,0,1);
-    var wk=Math.ceil(((now-soy)/864e5+soy.getDay()+1)/7);
-    var doy=Math.round((now-new Date(y,0,0))/864e5);
-    var leap=((y%4===0&&y%100!==0)||y%400===0);
-    var faltan=(leap?366:365)-doy;
-    document.getElementById('calWeekLabel').textContent='SEM '+wk;
-    document.getElementById('calDayOfYear').innerHTML='DIA '+doy+'<br>FALTAN '+faltan;
-    document.getElementById('calYear').textContent=y;
-    document.getElementById('calDayName').textContent=dES[dow]+' / '+dEN[dow];
     document.getElementById('calDayNum').textContent=d;
-    document.getElementById('calMonthName').textContent=mES[m]+' / '+mEN[m];
+    document.getElementById('calMonthName').textContent=mEN[m];
   }catch(e){}
 })();
 </script>
