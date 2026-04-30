@@ -8276,6 +8276,33 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
+  <!-- PRÓXIMA PARADA — visible solo cuando el vehículo está en movimiento -->
+  <div id="nextStopCard">
+    <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.72);margin-bottom:8px;">🚛 Próxima Parada &amp; HOS</div>
+    <div style="display:flex;gap:14px;align-items:flex-start;">
+      <!-- Destino -->
+      <div style="flex:1;min-width:0;">
+        <div class="nsc-label">📍 Destino</div>
+        <div id="nscStopName" class="nsc-val">---</div>
+        <div id="nscStopTime" class="nsc-sub">--:--</div>
+      </div>
+      <div class="nsc-divider"></div>
+      <!-- Descanso 30 min -->
+      <div style="flex:1;min-width:0;">
+        <div class="nsc-label">⏱ Descanso 30 min en</div>
+        <div id="nscBreakIn" class="nsc-val">--</div>
+        <div id="nscBreakAt" class="nsc-sub">--:--</div>
+      </div>
+      <div class="nsc-divider"></div>
+      <!-- Ciclo -->
+      <div style="flex-shrink:0;text-align:right;">
+        <div class="nsc-label">📋 Ciclo 70h</div>
+        <div id="nscCycleLeft" class="nsc-val">--</div>
+        <div class="nsc-sub">restantes</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ④ PESTAÑAS — barra entre estadísticas y mapa -->
   <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:0 14px 10px;">
     <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
@@ -8304,6 +8331,33 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 <style>
 /* ── HOS Dashboard ───────────────────────── */
+
+/* Next-stop card — orange, above status buttons, visible only when moving */
+#nextStopCard {
+  display: none;
+  flex: 0 0 auto;
+  margin: 0 14px 10px;
+  background: linear-gradient(135deg, rgba(234,88,12,.97) 0%, rgba(180,60,8,.97) 100%);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: 0 6px 28px rgba(234,88,12,.5), 0 2px 8px rgba(0,0,0,.35);
+  border: 1px solid rgba(255,170,90,.3);
+}
+#nextStopCard .nsc-label {
+  font-size: 9px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .8px; color: rgba(255,255,255,.72); margin-bottom: 4px;
+}
+#nextStopCard .nsc-val {
+  font-size: 15px; font-weight: 900; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nextStopCard .nsc-sub {
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,.82); margin-top: 2px;
+}
+#nextStopCard .nsc-divider {
+  width: 1px; background: rgba(255,255,255,.22); align-self: stretch; flex-shrink: 0;
+}
+
 .dash-tab {
   padding:11px 4px;border-radius:10px;
   border:1px solid rgba(255,255,255,0.12);
@@ -14876,6 +14930,61 @@ function b30Check(isMoving) {
   }
 }
 
+// ── Próxima Parada card (visible solo cuando el vehículo se mueve) ────────
+function updateNextStopCard() {
+  const card = document.getElementById('nextStopCard');
+  if (!card) return;
+
+  if (!fmVehicleMoving) { card.style.display = 'none'; return; }
+
+  const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+  // ── Destino ──
+  const stopName = (typeof destination === 'object' && destination?.name || '').split(',')[0].trim() || '---';
+  let stopTimeStr = '--:--', stopDateStr = '';
+  if (arrivalTime instanceof Date) {
+    const h = arrivalTime.getHours(), m = arrivalTime.getMinutes();
+    const ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
+    stopTimeStr = `${h12}:${String(m).padStart(2,'0')} ${ap}`;
+    stopDateStr = `${days[arrivalTime.getDay()]} ${arrivalTime.getDate()}/${arrivalTime.getMonth()+1}`;
+  }
+  const nameEl = document.getElementById('nscStopName');
+  const timeEl = document.getElementById('nscStopTime');
+  if (nameEl) nameEl.textContent = stopName;
+  if (timeEl) timeEl.textContent = stopTimeStr + (stopDateStr ? ' · ' + stopDateStr : '');
+
+  // ── Break 30 min ──
+  const breakInEl = document.getElementById('nscBreakIn');
+  const breakAtEl = document.getElementById('nscBreakAt');
+  if (breakInEl && breakAtEl) {
+    if (b30Complete) {
+      breakInEl.textContent = 'Completado ✓';
+      breakAtEl.textContent = 'Pausa realizada';
+    } else {
+      const secsLeft = Math.max(0, B30_DRIVE_LIMIT - b30DriveSecs);
+      const bH = Math.floor(secsLeft / 3600), bM = Math.floor((secsLeft % 3600) / 60);
+      breakInEl.textContent = secsLeft === 0 ? '¡Ahora! 🛑' : bH > 0 ? `${bH}h ${bM}m` : `${bM} min`;
+      if (secsLeft > 0) {
+        const at = new Date(Date.now() + secsLeft * 1000);
+        const atH = at.getHours(), atM = at.getMinutes();
+        const atAp = atH >= 12 ? 'PM' : 'AM', atH12 = atH % 12 || 12;
+        breakAtEl.textContent = `a las ${atH12}:${String(atM).padStart(2,'0')} ${atAp} · ${days[at.getDay()]} ${at.getDate()}/${at.getMonth()+1}`;
+      } else {
+        breakAtEl.textContent = 'Para de inmediato';
+      }
+    }
+  }
+
+  // ── Ciclo 70h ──
+  const cycleEl = document.getElementById('nscCycleLeft');
+  if (cycleEl) {
+    const src = document.getElementById('dashWeekHours');
+    cycleEl.textContent = src ? src.textContent : '--';
+  }
+
+  card.style.display = 'block';
+}
+
 // ── Auto-resume follow after user stops touching the map ──────────────────
 let _autoResumeTimer = null;
 function _scheduleAutoResumeFollow() {
@@ -15292,6 +15401,8 @@ function fmStartTracking() {
     updateNavInstruction(lat, lon);
     // ── Auto status buttons (Conduciendo / Descanso) ─────
     autoUpdateDashStatus(isMoving);
+    // ── Próxima parada card ───────────────────────────────
+    updateNextStopCard();
     // ── Weigh station warning ─────────────────────────────
     if (isMoving) checkWeighStations(lat, lon);
     // ── Mini-map 5-mile alerts (básculas + checkpoints) ──
@@ -16172,6 +16283,7 @@ function updateHosDashboard(driveLeft, driveMax) {
       weekEl.textContent = ch > 0 ? `${ch}h ${cm}m` : `${cm}m`;
     }
   }
+  updateNextStopCard();
 }
 
 function showFullMapFromDash() {
