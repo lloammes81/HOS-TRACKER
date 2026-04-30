@@ -1805,7 +1805,7 @@
     background: #ef4444;
     color: #fff; font-size: 10px; font-weight: 900;
     font-family: "DM Sans", sans-serif;
-    display: none; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     box-shadow: 0 4px 16px rgba(239,68,68,.6);
     cursor: pointer; letter-spacing: .5px;
     animation: sosFabPulse 2s ease-in-out infinite;
@@ -8269,24 +8269,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- SOS button below ring -->
-  <div style="flex:0 0 auto;display:flex;justify-content:center;padding:0 0 10px;">
-    <button onclick="triggerSOS()" style="
-      background:#ef4444;
-      border:2.5px solid rgba(255,255,255,0.35);
-      border-radius:12px;
-      color:#fff;
-      font-size:13px;
-      font-weight:900;
-      letter-spacing:2px;
-      padding:10px 36px;
-      cursor:pointer;
-      animation:sosFabPulse 2s ease-in-out infinite;
-      box-shadow:0 4px 20px rgba(239,68,68,.55);
-      -webkit-tap-highlight-color:transparent;
-    ">🆘 SOS</button>
-  </div>
-
   <!-- ③ TARJETAS ESTADÍSTICAS — tamaño fijo -->
   <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;padding:0 14px 10px;">
     <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:10px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
@@ -11490,7 +11472,6 @@ async function checkStateBorderAhead(lat, lon, heading) {
 }
 
 async function detectStateAndUpdateLimit(lat, lon) {
-  if (!speedLimitActive) return;
   const now = Date.now();
   if (now - lastStateCheck < 20000) return; // check every 20s
   lastStateCheck = now;
@@ -11514,26 +11495,25 @@ async function detectStateAndUpdateLimit(lat, lon) {
     };
     const code = stateMap[stateRaw] || stateRaw.slice(0,2).toUpperCase();
     if (code && code !== currentStateCode) {
-      const prevCode = currentStateCode;
       currentStateCode = code;
       lastBorderWarnState = ''; // reset border warning for next state
-      const limits = STATE_SPEED_LIMITS[code];
-      if (limits) {
-        // --- Settings widget (draggable) ---
-        document.getElementById('slNum').textContent = limits.truck;
-        document.getElementById('slState').textContent = code;
-        document.getElementById('speedLimitWidget').classList.add('visible');
-
-        // --- Map speed sign ---
-        updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
+      // Update speed limit UI only if feature is active
+      if (speedLimitActive) {
+        const limits = STATE_SPEED_LIMITS[code];
+        if (limits) {
+          document.getElementById('slNum').textContent = limits.truck;
+          document.getElementById('slState').textContent = code;
+          document.getElementById('speedLimitWidget').classList.add('visible');
+          updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
+        }
       }
-      // Welcome banner + DOT regulations when entering a new state
+      // Welcome banner + DOT regs always fire regardless of speedLimitActive
       showStateBanner(stateRaw || code);
       setTimeout(() => showDOTStateNotif(code, stateRaw || code), 3500);
-    } else if (code && code === currentStateCode) {
+    } else if (code && code === currentStateCode && speedLimitActive) {
       // Same state — ensure sign stays visible if it was somehow hidden
       const sign = document.getElementById('mapSpeedSign');
-      if (sign && !sign.classList.contains('visible') && speedLimitActive) {
+      if (sign && !sign.classList.contains('visible')) {
         const limits = STATE_SPEED_LIMITS[code];
         if (limits) updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
       }
