@@ -2543,34 +2543,47 @@
     right: calc(14px + env(safe-area-inset-right,0px));
     top: calc(110px + env(safe-area-inset-top,0px));
     z-index: 9999;
-    background:rgba(10,16,30,.88);
+    background:rgba(10,16,30,.93);
     color:#fff;
-    padding:12px 14px;
-    border-radius:14px;
-    font-weight:900;
-    font-size:16px;
-    line-height:1.25;
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,.12);
-    box-shadow:0 6px 22px rgba(0,0,0,.35);
+    border-radius:16px;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.13);
+    box-shadow:0 6px 28px rgba(0,0,0,.5);
     pointer-events:none;
+    display:flex;
+    align-items:stretch;
+    overflow:hidden;
+    padding:0;
   }
-.nav-next.blink{
-  animation: navBlink .9s ease-in-out infinite;
-}
-@keyframes navBlink{
-  0%,100%{ opacity:1; transform:scale(1); }
-  50%{ opacity:.35; transform:scale(1.03); }
-}
-
-  .nav-next .sub{
-    display:block;
+  .nav-arrow-panel{
+    min-width:70px; width:70px;
+    display:flex; align-items:center; justify-content:center;
+    background:#10b981;
+    font-size:34px;
+    border-radius:16px 0 0 16px;
+    flex-shrink:0;
+    transition:background .3s;
+  }
+  .nav-arrow-panel.urgent{ background:#f59e0b; animation:navArrowPulse .55s ease-in-out infinite; }
+  .nav-arrow-panel.arriving{ background:#3b82f6; }
+  @keyframes navArrowPulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity:.55; }
+  }
+  .nav-body{
+    flex:1; padding:10px 14px 10px 12px; min-width:0;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .nav-dist{
+    font-size:22px; font-weight:900; color:#fff; line-height:1;
+  }
+  .nav-inst{
+    font-size:13px; font-weight:700; color:rgba(255,255,255,.82);
     margin-top:4px;
-    font-size:14px;
-    font-weight:700;
-    color:rgba(255,255,255,.75);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
+
 
 /* ── Interstate shields along route ───────────────────────── */
 .interstate-shield{
@@ -2784,11 +2797,8 @@ body #mapSpeedGroup #sosFab {
   font-size: 30px !important;
 }
 
-/* Reduce route instruction banner a bit more */
+/* Nav-next positioning tweak for smaller screens */
 #navNext, .nav-next{
-  font-size: 13px !important;
-  padding: 10px 12px !important;
-  border-radius: 12px !important;
   left: 12px !important;
   right: 12px !important;
   top: calc(96px + env(safe-area-inset-top,0px)) !important;
@@ -13098,74 +13108,126 @@ function osrmStepText(step){
   if (!step) return '';
   const man = step.maneuver || {};
   const name = (step.name || '').trim();
-  const mod = man.modifier ? man.modifier.replace('_',' ') : '';
+  const mod = man.modifier || '';
+  const modTxt = mod.replace(/_/g,' ');
   const type = man.type || '';
   const exits = man.exit || step.exits || '';
   const ref = step.ref || '';
-  // Build a human-ish instruction without relying on nonstandard fields
+  const es = lang === 'es';
   let txt = '';
-  if (type === 'arrive') txt = (lang==='es' ? 'Llegaste a tu destino' : 'Arrive at destination');
-  else if (type === 'roundabout') txt = (lang==='es' ? `Rotonda ${exits?(' (salida '+exits+')'):''}` : `Roundabout ${exits?('(exit '+exits+')'):''}`);
-  else if (type === 'take') txt = (lang==='es' ? 'Toma' : 'Take');
-  else if (type === 'turn') txt = (lang==='es' ? 'Gira' : 'Turn');
-  else if (type === 'continue') txt = (lang==='es' ? 'Continúa' : 'Continue');
-  else if (type === 'fork') txt = (lang==='es' ? 'Mantente' : 'Keep');
-  else if (type === 'merge') txt = (lang==='es' ? 'Incorpórate' : 'Merge');
-  else if (type === 'new name') txt = (lang==='es' ? 'Continúa por' : 'Continue on');
-  else if (type === 'on ramp') txt = (lang==='es' ? 'Toma la rampa' : 'Take the ramp');
-  else if (type === 'off ramp') txt = (lang==='es' ? 'Toma la salida' : 'Take the exit');
-  else txt = (lang==='es' ? 'Sigue' : 'Proceed');
+  if (type === 'arrive')     txt = es ? 'Llegaste a tu destino' : 'Arrive at destination';
+  else if (type === 'roundabout') txt = es ? `Rotonda${exits?' (salida '+exits+')':''}` : `Roundabout${exits?' (exit '+exits+')':''}`;
+  else if (type === 'turn'){
+    if (mod === 'left')        txt = es ? 'Gira a la izquierda' : 'Turn left';
+    else if (mod === 'right')  txt = es ? 'Gira a la derecha'   : 'Turn right';
+    else if (mod === 'sharp_left')  txt = es ? 'Gira bruscamente a la izquierda' : 'Sharp left';
+    else if (mod === 'sharp_right') txt = es ? 'Gira bruscamente a la derecha'   : 'Sharp right';
+    else if (mod === 'slight_left') txt = es ? 'Gira levemente a la izquierda'   : 'Slight left';
+    else if (mod === 'slight_right')txt = es ? 'Gira levemente a la derecha'     : 'Slight right';
+    else if (mod === 'uturn')  txt = es ? 'Vuelta en U' : 'Make a U-turn';
+    else txt = es ? `Gira ${modTxt}` : `Turn ${modTxt}`;
+  }
+  else if (type === 'continue')  txt = es ? 'Continúa recto' : 'Continue straight';
+  else if (type === 'fork')      txt = es ? `Mantente ${mod.includes('left') ? 'a la izquierda' : 'a la derecha'}` : `Keep ${mod.includes('left') ? 'left' : 'right'}`;
+  else if (type === 'merge')     txt = es ? `Incorpórate ${mod.includes('left') ? 'a la izquierda' : 'a la derecha'}` : `Merge ${mod.includes('left') ? 'left' : 'right'}`;
+  else if (type === 'new name')  txt = es ? 'Continúa por' : 'Continue on';
+  else if (type === 'on ramp')   txt = es ? 'Toma la rampa' : 'Take the ramp';
+  else if (type === 'off ramp')  txt = es ? 'Toma la salida' : 'Take the exit';
+  else txt = es ? 'Continúa recto' : 'Continue straight';
 
-  if (mod) txt += ` ${mod}`;
   if (ref) txt += ` ${ref}`;
   if (name && !txt.includes(name)) txt += ` · ${name}`;
   return txt.trim();
 }
+
+function osrmManeuverArrow(step){
+  if (!step) return '⬆️';
+  const type = step.maneuver?.type || '';
+  const mod  = step.maneuver?.modifier || '';
+  if (type === 'arrive')           return '📍';
+  if (type === 'roundabout')       return '🔄';
+  if (type === 'uturn' || mod === 'uturn') return '↩️';
+  if (mod === 'sharp_left')        return '↩️';
+  if (mod === 'sharp_right')       return '↪️';
+  if (mod === 'left')              return '⬅️';
+  if (mod === 'right')             return '➡️';
+  if (mod === 'slight_left')       return '↖️';
+  if (mod === 'slight_right')      return '↗️';
+  if (type === 'off ramp' || type === 'on ramp')
+    return mod.includes('left') ? '↖️' : '↗️';
+  if (type === 'fork')
+    return mod.includes('left') ? '↙️' : '↘️';
+  return '⬆️';
+}
+
+function _speakNav(text){
+  if (!window.speechSynthesis || !text) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = lang === 'es' ? 'es-MX' : 'en-US';
+  utt.volume = 1; utt.rate = 0.95;
+  window.speechSynthesis.speak(utt);
+}
+
 function updateNavInstruction(curLat, curLon){
   const box = document.getElementById('navNext');
   if (!box) return;
-  if (!navSteps || !navSteps.length) { box.style.display='none'; box.classList.remove('blink'); return; }
+  if (!navSteps || !navSteps.length){ box.style.display='none'; return; }
 
-  // advance step when close to its maneuver location
+  // Advance step when within ~160 ft of maneuver
   for (let i = navStepIdx; i < navSteps.length; i++){
-    const loc = navSteps[i]?.maneuver?.location; // [lon,lat]
+    const loc = navSteps[i]?.maneuver?.location;
     if (!loc) continue;
-    const dMi = haversine(curLat, curLon, loc[1], loc[0]);
-    if (dMi < 0.03) { // ~160ft
+    if (haversine(curLat, curLon, loc[1], loc[0]) < 0.03){
       navStepIdx = Math.min(i+1, navSteps.length-1);
+      window._navVoiceKey = null; // reset thresholds for new step
+      _speakNav(osrmStepText(navSteps[navStepIdx]));
     }
     break;
   }
 
   const step = navSteps[navStepIdx];
-  const loc = step?.maneuver?.location;
+  const loc  = step?.maneuver?.location;
+  if (!loc){ box.style.display='none'; return; }
 
-  // ✅ Show guidance ONLY when within 1 mile of the next maneuver
-  if (!loc) { box.style.display='none'; box.classList.remove('blink'); return; }
-  const dMi = haversine(curLat, curLon, loc[1], loc[0]);
-  if (dMi > 1.0) { box.style.display='none'; box.classList.remove('blink'); return; }
+  const dMi    = haversine(curLat, curLon, loc[1], loc[0]);
+  const instTxt = osrmStepText(step) || (lang==='es' ? 'Continúa recto' : 'Continue straight');
+  const arrow  = osrmManeuverArrow(step);
 
-  
-  // Blink when guidance is active (within 1 mile)
-  box.classList.add('blink');
-
-  // Also blink when arriving to destination (within 1 mile)
+  // Check arrival at destination
+  let isArriving = false;
   try{
-    if (typeof destination === 'object' && destination && typeof destination.lat === 'number') {
+    if (destination?.lat != null){
       const dDest = haversine(curLat, curLon, destination.lat, destination.lon);
-      if (dDest <= 1.0 && navStepIdx >= (navSteps.length-2)) {
-        box.style.display = 'block';
-        box.classList.add('blink');
-        const distTxt2 = milesToPretty(dDest);
-        box.innerHTML = `${lang==='es'?'📍 Llegando a tu destino':'📍 Arriving at your destination'}<span class="sub">${lang==='es'?'En':'In'} ${distTxt2}</span>`;
-        return;
-      }
+      if (dDest <= 0.5 && navStepIdx >= navSteps.length-2) isArriving = true;
     }
   }catch{}
-  box.style.display = 'block';
-  const distTxt = milesToPretty(dMi);
-  const line1 = osrmStepText(step) || (lang==='es'?'Calculando...':'Calculating...');
-  box.innerHTML = `${line1}<span class="sub">${lang==='es'?'En':'In'} ${distTxt}</span>`;
+
+  const isUrgent = !isArriving && dMi < 0.2;
+
+  // Voice announcements at 0.5 mi and 0.15 mi thresholds
+  if (!isArriving){
+    const vKey05 = `${navStepIdx}_05`;
+    const vKey015 = `${navStepIdx}_015`;
+    if (dMi <= 0.5 && dMi > 0.15 && window._navVoiceKey !== vKey05){
+      window._navVoiceKey = vKey05;
+      _speakNav(lang==='es' ? `En ${milesToPretty(dMi)}, ${instTxt}` : `In ${milesToPretty(dMi)}, ${instTxt}`);
+    } else if (dMi <= 0.15 && window._navVoiceKey !== vKey015){
+      window._navVoiceKey = vKey015;
+      _speakNav(instTxt);
+    }
+  }
+
+  const distTxt = isArriving ? (lang==='es' ? 'Llegando' : 'Arriving') : milesToPretty(dMi);
+  const panelClass = isArriving ? 'arriving' : isUrgent ? 'urgent' : '';
+
+  box.style.display = 'flex';
+  box.innerHTML = `
+    <div class="nav-arrow-panel${panelClass ? ' '+panelClass : ''}">${isArriving ? '📍' : arrow}</div>
+    <div class="nav-body">
+      <div class="nav-dist">${distTxt}</div>
+      <div class="nav-inst">${instTxt}</div>
+    </div>`;
 }
 function fmtTime(d) {
   const dt = new Date(d); let h = dt.getHours(); const m = dt.getMinutes();
@@ -15068,8 +15130,9 @@ function fmStartTracking() {
 
   document.getElementById('fmFrom').textContent = origin?.name?.split(',')[0] || '';
   navStepIdx = 0;
+  window._navVoiceKey = null;
   const navBox = document.getElementById('navNext');
-  if (navBox) navBox.style.display = navSteps.length ? 'block' : 'none';
+  if (navBox) navBox.style.display = navSteps.length ? 'flex' : 'none';
 
   if (fmMapInst) {
     fmRedrawRoute(roadGeometry);
