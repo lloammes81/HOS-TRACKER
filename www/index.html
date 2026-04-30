@@ -328,6 +328,50 @@
     display: flex; align-items: center; justify-content: center;
     touch-action: manipulation;
   }
+  /* Origin GPS — plain centered label */
+  .origin-label-row {
+    display: flex; flex-direction: column; align-items: flex-start;
+    margin-bottom: 8px;
+    padding: 4px 8px;
+  }
+  .origin-loc-title {
+    font-size: 19px; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--muted);
+    margin: 16px 0 8px; display: flex; align-items: center; gap: 6px;
+    width: 100%;
+  }
+  .origin-loc-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .origin-label-body {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+  }
+  .origin-label-row .origin-loc-text {
+    font-size: 20px; font-weight: 700; color: var(--text);
+    flex: 1; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .origin-label-row .stop-refresh-btn {
+    width: 32px; height: 32px; border-radius: 10px; border: none;
+    background: rgba(16,185,129,.1); color: #10b981;
+    font-size: 15px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
+  }
+  /* Header card separado del formulario */
+  .plan-header-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .plan-header-title {
+    font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: .3px;
+  }
   .trip-params-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
     margin-top: 4px;
@@ -378,23 +422,23 @@
 
   /* ── SALIDA label — army style ── */
   #lblTime {
-    font-size: 20px !important;
+    font-size: 13px !important;
     font-weight: 900 !important;
     color: #8ab000 !important;
     text-transform: uppercase !important;
-    letter-spacing: 3px !important;
-    margin-bottom: 10px !important;
+    letter-spacing: 1.5px !important;
+    margin-bottom: 6px !important;
     margin-top: 2px !important;
     display: flex !important;
     align-items: center !important;
-    gap: 8px !important;
-    border-left: 4px solid #8ab000 !important;
-    padding-left: 10px !important;
+    gap: 6px !important;
+    border-left: 3px solid #8ab000 !important;
+    padding-left: 8px !important;
     text-shadow: 0 0 12px rgba(138,176,0,.45), 0 1px 4px rgba(0,0,0,.7) !important;
     background: linear-gradient(90deg, rgba(138,176,0,.08) 0%, transparent 80%) !important;
     border-radius: 0 6px 6px 0 !important;
-    padding-top: 4px !important;
-    padding-bottom: 4px !important;
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
   }
   .btn-calc-mobile {
     width: 100%; padding: 18px;
@@ -440,6 +484,7 @@
   .results-kv {
     background: var(--surface2); border-radius: 12px;
     padding: 12px 14px; border: 1px solid var(--border);
+    box-shadow: var(--shadow);
   }
   .results-kv.full { grid-column: 1 / -1; }
   .results-k { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
@@ -631,7 +676,7 @@
     flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
     border-radius: 12px; padding: 8px 10px; min-width: 82px;
     cursor: pointer; transition: transform .15s, opacity .15s;
-    text-align: center;
+    text-align: center; box-shadow: var(--shadow);
   }
   .route-stop-card:active { transform: scale(.95); opacity: .8; }
   .route-stop-card.weigh {
@@ -777,6 +822,7 @@
     background:var(--surface);border:1px solid var(--border);
     border-radius:16px;padding:13px 14px;margin-bottom:10px;
     animation:commPop .3s cubic-bezier(.16,1,.3,1);
+    box-shadow: var(--shadow);
   }
   .fuel-station-icon {
     width:46px;height:46px;border-radius:14px;
@@ -5933,31 +5979,25 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
 
+      <!-- hidden elements kept for JS compatibility -->
+      <div id="planUserAvatar" style="display:none">
+        <div id="planAvatarImg"></div>
+        <div id="planAvatarName"></div>
+      </div>
+
       <!-- FORM -->
       <div class="route-inputs-card">
-        <div class="route-card-header">
-          <!-- hidden elements kept for JS compatibility -->
-          <div id="planUserAvatar" style="display:none">
-            <div id="planAvatarImg"></div>
-            <div id="planAvatarName"></div>
-          </div>
-          <div style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:.3px">🗺️ Plan de Ruta</div>
-          <button class="hist-trigger-btn" onclick="openRouteHistory()">
-            🕐 <span id="histCount"></span>
-          </button>
-        </div>
-
         <div class="info" id="infoTxt" style="display:none">💡 Type city name to search globally</div>
 
         <!-- STOPS BUILDER -->
         <div class="stops-container" id="stopsContainer">
           <!-- Origin (GPS) -->
-          <div class="stop-row-mobile" id="stopRowOrigin">
-            <span class="stop-icon">📍</span>
-            <div id="originLabel" style="flex:1;display:flex;align-items:center;gap:6px;">
-              <span id="originLabelText" class="stop-gps-label">📡 Obteniendo ubicación…</span>
+          <div class="origin-label-row" id="stopRowOrigin">
+            <div class="origin-loc-title">📍 Locación Actual</div>
+            <div class="origin-label-body">
+              <span id="originLabelText" class="origin-loc-text">📡 Obteniendo ubicación…</span>
+              <button class="stop-refresh-btn" onclick="useGPS()" title="Actualizar">🔄</button>
             </div>
-            <button class="stop-refresh-btn" onclick="useGPS()" title="Actualizar">🔄</button>
           </div>
 
           <!-- Destination -->
@@ -5979,10 +6019,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           Agregar Parada
         </button>
 
-        <div class="form-section-label">⚙️ Parámetros del viaje</div>
+        <div class="form-section-label">📅 Día y Hora de Salida</div>
         <div class="trip-params-grid">
           <div class="param-box full-width">
-            <label id="lblTime">🕐 Salida</label>
             <input type="datetime-local" id="departureInput" class="departure-input" />
           </div>
           <div class="param-box" style="display:none">
@@ -8228,6 +8267,24 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div style="font-size:11px;font-weight:600;color:#ffffff;text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
       </div>
     </div>
+  </div>
+
+  <!-- SOS button below ring -->
+  <div style="flex:0 0 auto;display:flex;justify-content:center;padding:0 0 10px;">
+    <button onclick="triggerSOS()" style="
+      background:#ef4444;
+      border:2.5px solid rgba(255,255,255,0.35);
+      border-radius:12px;
+      color:#fff;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:2px;
+      padding:10px 36px;
+      cursor:pointer;
+      animation:sosFabPulse 2s ease-in-out infinite;
+      box-shadow:0 4px 20px rgba(239,68,68,.55);
+      -webkit-tap-highlight-color:transparent;
+    ">🆘 SOS</button>
   </div>
 
   <!-- ③ TARJETAS ESTADÍSTICAS — tamaño fijo -->
