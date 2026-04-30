@@ -1119,37 +1119,32 @@
   }
 
 
-  /* Weather widget — compact card top-left of fullscreen map */
+  /* Weather widget — inside left controls column */
   #weatherWidget {
-    position: fixed;
-    top: calc(14px + env(safe-area-inset-top,0px));
-    left: calc(14px + env(safe-area-inset-left,0px));
-    z-index: 900;
-
-    background: rgba(15,23,42,0.87);
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border-radius: 10px; padding: 6px 10px;
-    border: 1px solid rgba(255,255,255,.1);
-    box-shadow: 0 3px 14px rgba(0,0,0,.4);
+    width: 60px;
+    background: rgba(15,23,42,0.88);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 2px solid transparent;
     color: #f1f5f9;
     display: none;
     cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.45);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    padding: 8px 4px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
     transition: transform .15s;
     pointer-events: all;
-    min-width: 80px;
-
-    /* prevent accidental full width */
-    width: auto !important;
-    max-width: 160px !important;
-    height: auto !important;
   }
-  #weatherWidget:active { transform: scale(.95); }
-  #weatherWidget.visible { display: block; animation: fadeIn .3s ease; }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-  .wx-row { display: flex; align-items: center; gap: 5px; }
-  .wx-icon { font-size: 18px; line-height: 1; }
-  .wx-temp { font-family:"Bebas Neue",sans-serif; font-size: 20px; line-height:1; }
-  .wx-desc { font-size: 9px; color: rgba(255,255,255,.55); font-weight:600; text-transform:uppercase; letter-spacing:.3px; margin-top:1px; }
+  #weatherWidget:active { transform: scale(.92); }
+  #weatherWidget.visible { display: flex; }
+  .wx-row { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .wx-icon { font-size: 22px; line-height: 1; }
+  .wx-temp { font-family:"Bebas Neue",sans-serif; font-size: 15px; font-weight:900; line-height:1; }
+  .wx-desc { font-size: 8px; color: rgba(255,255,255,.55); font-weight:600; text-transform:uppercase; letter-spacing:.3px; margin-top:1px; text-align:center; }
   .wx-danger { color: #ef4444 !important; animation: blink 1s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
 
@@ -2749,13 +2744,6 @@
   --stack-size: 90px;
 }
 
-/* Right stack (portrait/mobile) — Weather from bottom-right */
-#weatherWidget{
-  right: var(--stack-right) !important;
-  left: auto !important;
-  top: auto !important;
-  transform: none !important;
-}
 /* Drive hours widget stays bottom-left */
 #driveHoursWidget{
   left: calc(10px + env(safe-area-inset-left,0px)) !important;
@@ -2773,17 +2761,6 @@ body #mapSpeedGroup #sosFab {
   transform: none !important;
   margin-top: 4px !important;
   display: flex !important;
-}
-#weatherWidget{
-  position: fixed !important;
-  bottom: calc(var(--stack-base) + (var(--stack-size) + var(--stack-gap)) * 2) !important;
-  min-width: 120px !important;
-}
-
-/* Make widgets visually consistent */
-#weatherWidget{
-  border-radius: 16px !important;
-  padding: 10px 12px !important;
 }
 #driveHoursWidget .dh-ring{
   width: 90px !important;
@@ -7935,6 +7912,15 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
     <div class="map-ctrl-sep"></div>
     <button id="mapSearchBtn" onclick="toggleMapSearch()" title="Buscar destino" style="font-size:18px">🔍</button>
+    <div class="map-ctrl-sep"></div>
+    <!-- Weather widget — below zoom buttons -->
+    <div id="weatherWidget" onclick="showWeatherDetail()">
+      <div class="wx-row">
+        <div class="wx-icon" id="wxIcon">🌤️</div>
+        <div class="wx-temp" id="wxTemp">--°</div>
+      </div>
+      <div class="wx-desc" id="wxDesc">Clima</div>
+    </div>
   </div>
 
   <!-- BARRA DE BÚSQUEDA DEL MAPA -->
@@ -7995,15 +7981,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         -webkit-tap-highlight-color:transparent;
         touch-action:manipulation;
       ">‹</button>
-
-      <!-- Weather compact card -->
-      <div id="weatherWidget" onclick="showWeatherDetail()">
-        <div class="wx-row">
-          <div class="wx-icon" id="wxIcon">🌤️</div>
-          <div class="wx-temp" id="wxTemp">--°</div>
-        </div>
-        <div class="wx-desc" id="wxDesc">Clima</div>
-      </div>
 
       <!-- SOS ahora está en mapRightControls -->
 
