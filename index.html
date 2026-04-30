@@ -330,13 +330,22 @@
   }
   /* Origin GPS — plain centered label */
   .origin-label-row {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    margin-bottom: 8px; min-height: 44px;
+    display: flex; flex-direction: column; align-items: flex-start;
+    margin-bottom: 8px;
     padding: 4px 8px;
+  }
+  .origin-loc-title {
+    font-size: 11px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .8px;
+    margin-bottom: 2px;
+  }
+  .origin-label-body {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
   }
   .origin-label-row .origin-loc-text {
     font-size: 20px; font-weight: 700; color: var(--text);
-    text-align: center;
+    flex: 1; text-align: center;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .origin-label-row .stop-refresh-btn {
@@ -5966,17 +5975,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
 
-      <!-- HEADER CARD separada -->
-      <div class="plan-header-card">
-        <!-- hidden elements kept for JS compatibility -->
-        <div id="planUserAvatar" style="display:none">
-          <div id="planAvatarImg"></div>
-          <div id="planAvatarName"></div>
-        </div>
-        <div class="plan-header-title">🗺️ Historial de Ruta</div>
-        <button class="hist-trigger-btn" onclick="openRouteHistory()">
-          🕐 <span id="histCount"></span>
-        </button>
+      <!-- hidden elements kept for JS compatibility -->
+      <div id="planUserAvatar" style="display:none">
+        <div id="planAvatarImg"></div>
+        <div id="planAvatarName"></div>
       </div>
 
       <!-- FORM -->
@@ -5987,8 +5989,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="stops-container" id="stopsContainer">
           <!-- Origin (GPS) -->
           <div class="origin-label-row" id="stopRowOrigin">
-            <span id="originLabelText" class="origin-loc-text">📡 Obteniendo ubicación…</span>
-            <button class="stop-refresh-btn" onclick="useGPS()" title="Actualizar">🔄</button>
+            <span class="origin-loc-title">📍 Locación Actual</span>
+            <div class="origin-label-body">
+              <span id="originLabelText" class="origin-loc-text">📡 Obteniendo ubicación…</span>
+              <button class="stop-refresh-btn" onclick="useGPS()" title="Actualizar">🔄</button>
+            </div>
           </div>
 
           <!-- Destination -->
@@ -6010,10 +6015,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           Agregar Parada
         </button>
 
-        <div class="form-section-label">⚙️ Parámetros del viaje</div>
+        <div class="form-section-label">📅 Día y Hora de Salida</div>
         <div class="trip-params-grid">
           <div class="param-box full-width">
-            <label id="lblTime">🕐 Salida</label>
             <input type="datetime-local" id="departureInput" class="departure-input" />
           </div>
           <div class="param-box" style="display:none">
