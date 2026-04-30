@@ -328,6 +328,24 @@
     display: flex; align-items: center; justify-content: center;
     touch-action: manipulation;
   }
+  /* Origin GPS — plain centered label */
+  .origin-label-row {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 8px; min-height: 44px;
+    padding: 4px 8px;
+  }
+  .origin-label-row .origin-loc-text {
+    font-size: 16px; font-weight: 700; color: var(--text);
+    text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .origin-label-row .stop-refresh-btn {
+    width: 32px; height: 32px; border-radius: 10px; border: none;
+    background: rgba(16,185,129,.1); color: #10b981;
+    font-size: 15px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
+  }
   .trip-params-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
     margin-top: 4px;
@@ -5954,11 +5972,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <!-- STOPS BUILDER -->
         <div class="stops-container" id="stopsContainer">
           <!-- Origin (GPS) -->
-          <div class="stop-row-mobile" id="stopRowOrigin">
-            <span class="stop-icon">📍</span>
-            <div id="originLabel" style="flex:1;display:flex;align-items:center;gap:6px;">
-              <span id="originLabelText" class="stop-gps-label">📡 Obteniendo ubicación…</span>
-            </div>
+          <div class="origin-label-row" id="stopRowOrigin">
+            <span id="originLabelText" class="origin-loc-text">📡 Obteniendo ubicación…</span>
             <button class="stop-refresh-btn" onclick="useGPS()" title="Actualizar">🔄</button>
           </div>
 
