@@ -14028,6 +14028,17 @@ function openFullMapScreen() {
       rotateControl: false
     }).setView([39.5, -98.35], 4);
 
+    // Center on GPS as soon as map opens instead of USA overview
+    if (window.lastFixFm) {
+      fmMapInst.setView([window.lastFixFm.lat, window.lastFixFm.lon], 7, { animate: false });
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        if (!fmIsTracking) {
+          fmMapInst.setView([pos.coords.latitude, pos.coords.longitude], 7, { animate: true, duration: 1 });
+        }
+      }, () => {}, { timeout: 5000, enableHighAccuracy: true });
+    }
+
     const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
     fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
 
@@ -15068,19 +15079,11 @@ function fmStartTracking() {
 
     fmFollowing = true;
     document.getElementById('fmFollowBtn').classList.add('active');
-    fmCurrentZoom = 15;
+    // Use fitBounds zoom (set by fmRedrawRoute above) instead of forcing zoom 15
+    fmCurrentZoom = fmMapInst.getZoom();
     window._fmProgrammaticMove = true;
-    fmMapInst.setView([realLat, realLon], fmCurrentZoom, { animate: true, duration: 1.2 });
+    fmMapInst.setView(calcFollowCenter(realLat, realLon, fmLastHeading), fmCurrentZoom, { animate: true, duration: 1.2 });
     setTimeout(() => { window._fmProgrammaticMove = false; }, 1500);
-    // After map settles, apply ahead-offset so truck starts in lower third
-    setTimeout(() => {
-      if (fmFollowing && fmGpsMarker) {
-        window._fmProgrammaticMove = true;
-        const ll = fmGpsMarker.getLatLng();
-        fmMapInst.setView(calcFollowCenter(ll.lat, ll.lng, fmLastHeading), fmCurrentZoom, { animate: true, duration: 0.8 });
-        setTimeout(() => { window._fmProgrammaticMove = false; }, 1000);
-      }
-    }, 1600);
 
     setTimeout(() => loadAllPOIs(realLat, realLon), 600);
   }
@@ -15225,13 +15228,7 @@ function fmStartTracking() {
 
     // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
-      if (!fmUserZoomed) {
-        if (isMoving) {
-          fmCurrentZoom = gpsSpeed > 40 ? 9 : gpsSpeed > 25 ? 13 : gpsSpeed >= 20 ? 15 : 17;
-        } else {
-          fmCurrentZoom = 16;
-        }
-      }
+      // Zoom stays fixed at the fitBounds level — no auto-zoom by speed
       window._fmProgrammaticMove = true;
       // Rotate BEFORE pan — flag as programmatic so rotatestart doesn't
       // set fmUserRotated and block future GPS-driven rotations
