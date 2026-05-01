@@ -14833,8 +14833,14 @@ function b30Check(isMoving) {
   b30LastTs = now;
 
   if (isMoving) {
+    // Si retoma marcha después de un break completo → nuevo ciclo de 8h desde cero
+    if (b30Complete) {
+      b30Complete = false;
+      b30DriveSecs = 0;
+      b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
+    }
     // Si el driver retoma marcha en medio de una pausa incompleta, cancelar pausa
-    if (b30InBreak && !b30Complete && b30StopSecs < B30_BREAK_MIN) {
+    if (b30InBreak && b30StopSecs < B30_BREAK_MIN) {
       b30InBreak = false;
       b30BreakStart = null;
       b30StopSecs = 0;
@@ -14885,6 +14891,20 @@ function b30Check(isMoving) {
   } else {
     // Driver detenido
     b30StopSecs += delta;
+
+    // Pausa voluntaria: detenido 30+ min antes de las 8h → satisface el requisito
+    if (!b30Complete && b30StopSecs >= B30_BREAK_MIN) {
+      b30Complete = true;
+      b30DriveSecs = 0;
+      b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
+      b30ViolShown = false; b30InBreak = false; b30BreakStart = null;
+      _hosBreakStopName = null; _hosBreakStopFetching = false;
+      if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
+      const _ov = document.getElementById('breakTimerOverlay');
+      if (_ov) _ov.style.display = 'none';
+      const _viol = document.getElementById('breakViolationBanner');
+      if (_viol) _viol.style.display = 'none';
+    }
 
     // Si lleva suficiente tiempo manejando, mostrar temporizador de pausa
     const needsBreak = b30DriveSecs >= B30_DRIVE_LIMIT - 120 || b30Warned30m;
