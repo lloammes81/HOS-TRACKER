@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rutas-dot-v83';
+const CACHE_NAME = 'rutas-dot-v84';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
@@ -16,7 +16,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   // Network-only — never cache, always fetch fresh
   event.respondWith(
-    fetch(event.request, { cache: 'no-store' }).catch(() => {
+    fetch(event.request, { cache: 'reload' }).catch(() => {
       // Offline fallback only for navigation
       if (event.request.mode === 'navigate') {
         return caches.match('/index.html');

@@ -1,11 +1,11 @@
-const CACHE_NAME = 'rutas-dot-v83';
+const CACHE_NAME = 'rutas-dot-v84';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-  // Delete ALL old caches so stale index.html is never served
+  // Delete ALL caches — always serve fresh from network
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.map(key => caches.delete(key)))
@@ -14,19 +14,13 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Network-first for HTML — always get the latest version
-  if (event.request.mode === 'navigate' ||
-      event.request.url.endsWith('/index.html') ||
-      event.request.url.endsWith('/')) {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
-    );
-    return;
-  }
-  // Cache-first for everything else (images, fonts, etc.)
+  // Network-only — never cache, always fetch fresh
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    fetch(event.request, { cache: 'reload' }).catch(() => {
+      if (event.request.mode === 'navigate') {
+        return caches.match('/index.html');
+      }
+    })
   );
 });
 
