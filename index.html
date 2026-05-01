@@ -8214,7 +8214,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
-  <div style="flex:0 0 auto;display:flex;justify-content:center;padding:4px 0 8px;">
+  <div id="dashRingBg" style="flex:0 0 auto;display:flex;justify-content:center;padding:18px 0 14px;transition:background 0.7s ease;">
     <div style="position:relative;display:inline-block;">
     <!-- Profundidad: placa oscura de la que emerge el anillo -->
     <div id="dashRingWrap" style="position:relative;width:210px;height:210px;">
@@ -9869,6 +9869,16 @@ const MAP_STYLES = {
 };
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 let fmTileLayer = null;
+
+// Fondos del dashboard por estilo de mapa
+const DASH_BG_MAP = {
+  dark:      { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(30,64,175,.42) 0%,rgba(6,10,26,0) 72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(4,8,22,.95) 0%,transparent 100%)',      screen: '#080f1c' },
+  nav:       { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(8,145,178,.32) 0%,rgba(4,12,22,0) 72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(3,10,18,.95) 0%,transparent 100%)',     screen: '#060f18' },
+  light:     { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(37,99,235,.36)  0%,rgba(8,16,36,0) 72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(6,14,30,.95) 0%,transparent 100%)',    screen: '#0b1526' },
+  satellite: { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(21,128,61,.32)  0%,rgba(4,10,6,0)  72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(3,8,4,.95)   0%,transparent 100%)',    screen: '#060e08' },
+  topo:      { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(180,83,9,.30)   0%,rgba(14,7,2,0)  72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(12,6,2,.95)  0%,transparent 100%)',    screen: '#0d0a04' },
+  voyager:   { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(99,102,241,.32) 0%,rgba(6,6,18,0)  72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(5,5,16,.95)  0%,transparent 100%)',    screen: '#08091a' },
+};
 
 let origin = null, destination = null;
 let routeDistance = 0, schedule = [], arrivalTime = null, totalTime = 0;
@@ -12036,6 +12046,11 @@ function changeMapStyle(styleKey) {
   try {
     document.documentElement.style.setProperty('--road-name-color', isDark ? '#e5e7eb' : '#374151');
   } catch {}
+
+  // Update dashboard background if open
+  if (document.getElementById('hosDashScreen')?.style.display !== 'none') {
+    updateDashBackground();
+  }
 }
 
 function toggleMapStylePanel() {
@@ -15864,6 +15879,14 @@ function _hosMinimapFollow(lat, lon) {
   hosMinimapInst.panBy([0, -Math.round(sz.y * 0.28)], { animate: false });
 }
 
+function updateDashBackground() {
+  const theme = DASH_BG_MAP[currentMapStyle] || DASH_BG_MAP.dark;
+  const ring   = document.getElementById('dashRingBg');
+  const screen = document.getElementById('hosDashScreen');
+  if (ring)   ring.style.background = theme.ring;
+  if (screen) { screen.style.transition = 'background 0.7s ease'; screen.style.background = theme.screen; }
+}
+
 function showHosDashboard() {
   const screen = document.getElementById('hosDashScreen');
   if (!screen) return;
@@ -15893,6 +15916,8 @@ function showHosDashboard() {
       photoEl.textContent = emoji;
     }
   }
+
+  updateDashBackground();
 
   // Estado inicial: Conduciendo
   setDashStatus('driving');
