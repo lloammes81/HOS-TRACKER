@@ -12725,11 +12725,14 @@ let roadNameMarkersFull = [];
 
 
 function makeInterstateDivIcon(num){
-  const html = `<div class="interstate-shield">
+  const digits = String(num).length;
+  const w = digits >= 3 ? 48 : 36;
+  const numSize = digits >= 3 ? 13 : 18;
+  const html = `<div class="interstate-shield" style="width:${w}px">
       <div class="top">INTERSTATE</div>
-      <div class="num">${num}</div>
+      <div class="num" style="font-size:${numSize}px">${num}</div>
     </div>`;
-  return L.divIcon({ html, className:'', iconSize:[36,42], iconAnchor:[18,21] });
+  return L.divIcon({ html, className:'', iconSize:[w,42], iconAnchor:[Math.round(w/2),21] });
 }
 
 function makeUSRouteDivIcon(num){
