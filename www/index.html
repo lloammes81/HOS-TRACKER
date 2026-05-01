@@ -9868,12 +9868,12 @@ let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 let fmTileLayer = null;
 
 const DASH_BG_MAP = {
-  dark:      { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(30,64,175,.42) 0%,rgba(6,10,26,0) 72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(4,8,22,.95) 0%,transparent 100%)',      screen: '#080f1c' },
-  nav:       { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(8,145,178,.32) 0%,rgba(4,12,22,0) 72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(3,10,18,.95) 0%,transparent 100%)',     screen: '#060f18' },
-  light:     { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(37,99,235,.36)  0%,rgba(8,16,36,0) 72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(6,14,30,.95) 0%,transparent 100%)',    screen: '#0b1526' },
-  satellite: { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(21,128,61,.32)  0%,rgba(4,10,6,0)  72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(3,8,4,.95)   0%,transparent 100%)',    screen: '#060e08' },
-  topo:      { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(180,83,9,.30)   0%,rgba(14,7,2,0)  72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(12,6,2,.95)  0%,transparent 100%)',    screen: '#0d0a04' },
-  voyager:   { ring: 'radial-gradient(ellipse 92% 72% at 50% 52%,rgba(99,102,241,.32) 0%,rgba(6,6,18,0)  72%),radial-gradient(ellipse 130% 28% at 50% 100%,rgba(5,5,16,.95)  0%,transparent 100%)',    screen: '#08091a' },
+  dark:      { ring: 'radial-gradient(ellipse 80% 65% at 50% 42%,rgba(59,130,246,.60) 0%,transparent 68%),linear-gradient(175deg,#0e2050 0%,#091428 45%,#060c1c 100%)', screen: '#060c1c' },
+  nav:       { ring: 'radial-gradient(ellipse 80% 65% at 50% 42%,rgba(6,182,212,.50)  0%,transparent 68%),linear-gradient(175deg,#07303f 0%,#040d18 45%,#030a14 100%)', screen: '#030a14' },
+  light:     { ring: 'radial-gradient(ellipse 80% 65% at 50% 42%,rgba(37,99,235,.58)  0%,transparent 68%),linear-gradient(175deg,#102558 0%,#08112a 45%,#060c20 100%)', screen: '#060c20' },
+  satellite: { ring: 'radial-gradient(ellipse 80% 65% at 50% 42%,rgba(34,197,94,.45)  0%,transparent 68%),linear-gradient(175deg,#082c18 0%,#031008 45%,#020a05 100%)', screen: '#020a05' },
+  topo:      { ring: 'radial-gradient(ellipse 80% 65% at 50% 42%,rgba(245,158,11,.48) 0%,transparent 68%),linear-gradient(175deg,#3c1c06 0%,#180a02 45%,#100601 100%)', screen: '#100601' },
+  voyager:   { ring: 'radial-gradient(ellipse 80% 65% at 50% 42%,rgba(139,92,246,.52) 0%,transparent 68%),linear-gradient(175deg,#160d3c 0%,#08051a 45%,#050310 100%)', screen: '#050310' },
 };
 
 let origin = null, destination = null;
@@ -15874,8 +15874,10 @@ function updateDashBackground() {
   const theme = DASH_BG_MAP[currentMapStyle] || DASH_BG_MAP.dark;
   const ring   = document.getElementById('dashRingBg');
   const screen = document.getElementById('hosDashScreen');
-  if (ring)   ring.style.background = theme.ring;
+  const header = document.querySelector('#hosDashScreen > div:first-child');
+  if (ring)   { ring.style.background = theme.ring; ring.style.transition = 'background 0.7s ease'; }
   if (screen) { screen.style.transition = 'background 0.7s ease'; screen.style.background = theme.screen; }
+  if (header) { header.style.transition = 'background 0.7s ease'; header.style.background = theme.screen; }
 }
 
 function showHosDashboard() {
