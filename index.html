@@ -14711,6 +14711,13 @@ let b30StopSecs   = 0;      // segundos detenido consecutivo actual
 let b30LastTs     = null;   // timestamp del último GPS fix
 let b30Warned1h   = false;  // aviso 1 hora antes (7h conducidos)
 let b30Warned30m  = false;  // aviso 30 min antes (7.5h)
+
+// ── Próxima parada dinámica ──────────────────────────────────────────────
+let _hosBreakStopName    = null;   // ciudad para pausa 30 min
+let _hosBreakStopFetching = false;
+let _hosHoursStopName    = null;   // ciudad para fin de horas de manejo
+let _hosHoursStopFetching = false;
+let _hosCurrentDriveLeft = 11;    // horas de manejo restantes (actualizado en GPS loop)
 let b30Warned2m   = false;  // aviso 2 min antes (7h58m)
 let b30ViolShown  = false;  // banner de violación visible
 let b30InBreak    = false;  // pausa en progreso (detenido, contando)
@@ -14751,6 +14758,7 @@ function b30UpdateTimer() {
     b30Complete = true;
     b30DriveSecs = 0; b30StopSecs = 0;
     b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
+    _hosBreakStopName = null; _hosBreakStopFetching = false;
     b30ViolShown = false;
     if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
 
@@ -14892,6 +14900,32 @@ function b30Check(isMoving) {
   }
 }
 
+// ── Busca la ciudad ~X millas adelante en la ruta para mostrar como parada ──
+async function _fetchStopCityAhead(targetMiles, onResult) {
+  const targetM = targetMiles * 1609.34;
+  let accumulated = 0, stopLat = null, stopLon = null;
+  for (let i = navStepIdx; i < navSteps.length; i++) {
+    accumulated += (navSteps[i].distance || 0);
+    if (accumulated >= targetM) {
+      const loc = navSteps[i]?.maneuver?.location;
+      if (loc) { stopLon = loc[0]; stopLat = loc[1]; }
+      break;
+    }
+  }
+  if (stopLat == null && window.lastFixFm) { stopLat = window.lastFixFm.lat; stopLon = window.lastFixFm.lon; }
+  if (stopLat == null) { onResult(null); return; }
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 6000);
+    const r = await fetch(`https://photon.komoot.io/reverse?lat=${stopLat}&lon=${stopLon}`, { signal: ctrl.signal });
+    const d = await r.json();
+    const p = d.features?.[0]?.properties || {};
+    const city = p.city || p.town || p.village || p.county || '';
+    const state = p.state || '';
+    onResult(city ? city + (state ? ', ' + state : '') : null);
+  } catch { onResult(null); }
+}
+
 // ── Garmin-style nav card (reemplaza los 4 botones cuando el vehículo se mueve) ──
 function updateNextStopCard() {
   const card = document.getElementById('hosNavCard');
@@ -14904,35 +14938,79 @@ function updateNextStopCard() {
   if (!show) return;
 
   // ── Barra verde: próxima instrucción de navegación ──
-  const step = navSteps[navStepIdx];
-  const loc  = step?.maneuver?.location;
-  const lf   = window.lastFixFm;
-  const dist = (loc && lf) ? milesToPretty(haversine(lf.lat, lf.lon, loc[1], loc[0])) : '--';
+  const step  = navSteps[navStepIdx];
+  const loc   = step?.maneuver?.location;
+  const lf    = window.lastFixFm;
+  const dist  = (loc && lf) ? milesToPretty(haversine(lf.lat, lf.lon, loc[1], loc[0])) : '--';
   const arrow = osrmManeuverArrow(step);
   const road  = osrmStepText(step) || 'Continúa recto';
-
-  const distEl = document.getElementById('hncDist');
+  const distEl  = document.getElementById('hncDist');
   const arrowEl = document.getElementById('hncArrow');
   const roadEl  = document.getElementById('hncRoad');
   if (distEl)  distEl.textContent  = dist;
   if (arrowEl) arrowEl.textContent = arrow;
   if (roadEl)  roadEl.textContent  = road;
 
-  // ── Barra naranja: próxima parada (destino) ──
-  const stopEl = document.getElementById('hncStop');
-  if (stopEl) {
-    const stopName = (typeof destination === 'object' && destination?.name || '').split(',')[0].trim() || '---';
-    const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-    let stopStr = stopName;
-    if (arrivalTime instanceof Date) {
-      const h = arrivalTime.getHours(), m = arrivalTime.getMinutes();
-      const ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
-      const day = days[arrivalTime.getDay()];
-      const date = `${arrivalTime.getDate()}/${arrivalTime.getMonth()+1}`;
-      stopStr += ` · ${h12}:${String(m).padStart(2,'0')} ${ap}  ${day} ${date}`;
+  // ── Barra naranja: lógica dinámica de parada ──
+  const stopEl  = document.getElementById('hncStop');
+  if (!stopEl) return;
+
+  const breakDue  = !b30Complete && b30Warned30m;
+  const hoursLow  = _hosCurrentDriveLeft <= 2 && _hosCurrentDriveLeft > 0;
+  const hoursGone = _hosCurrentDriveLeft <= 0;
+
+  // ── CASO 1: Pausa 30 min requerida ──────────────────────────────────────
+  if (breakDue || (b30InBreak && !b30Complete)) {
+    // Pre-fetch ciudad si aún no la tenemos
+    if (!_hosBreakStopName && !_hosBreakStopFetching) {
+      _hosBreakStopFetching = true;
+      _fetchStopCityAhead(10, name => {
+        _hosBreakStopName = name || 'próxima ciudad';
+        _hosBreakStopFetching = false;
+      });
     }
-    stopEl.textContent = stopStr;
+    if (b30InBreak && !b30Complete) {
+      // Mostrando progreso de la pausa
+      const minsDone = Math.floor(b30StopSecs / 60);
+      const minsLeft = Math.max(0, 30 - minsDone);
+      stopEl.textContent = `⏱ En descanso — quedan ${minsLeft} min · continúa hacia ${(typeof destination === 'object' && destination?.name || '').split(',')[0] || 'destino'}`;
+    } else {
+      const city = _hosBreakStopName || 'próxima ciudad';
+      stopEl.textContent = `🛑 Para en ${city} — Descanso obligatorio 30 min`;
+    }
+    return;
   }
+
+  // ── CASO 2: Fin de horas de manejo ──────────────────────────────────────
+  if (hoursGone || hoursLow) {
+    if (!_hosHoursStopName && !_hosHoursStopFetching) {
+      _hosHoursStopFetching = true;
+      _fetchStopCityAhead(hoursGone ? 5 : 20, name => {
+        _hosHoursStopName = name || 'próxima ciudad';
+        _hosHoursStopFetching = false;
+      });
+    }
+    const city = _hosHoursStopName || 'próxima ciudad';
+    if (hoursGone) {
+      stopEl.textContent = `🛑 Para en ${city} — Horas de manejo agotadas`;
+    } else {
+      const h = Math.floor(_hosCurrentDriveLeft), m = Math.round((_hosCurrentDriveLeft - h) * 60);
+      stopEl.textContent = `⚠️ Para en ${city} — Quedan ${h > 0 ? h+'h ' : ''}${m}min de manejo`;
+    }
+    return;
+  }
+
+  // ── CASO 3: Normal — mostrar destino ────────────────────────────────────
+  _hosHoursStopName = null; // resetear ciudad de horas si ya no aplica
+  const stopName = (typeof destination === 'object' && destination?.name || '').split(',')[0].trim() || '---';
+  const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  let stopStr = stopName;
+  if (arrivalTime instanceof Date) {
+    const h = arrivalTime.getHours(), m = arrivalTime.getMinutes();
+    const ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
+    stopStr += ` · ${h12}:${String(m).padStart(2,'0')} ${ap}  ${days[arrivalTime.getDay()]} ${arrivalTime.getDate()}/${arrivalTime.getMonth()+1}`;
+  }
+  stopEl.textContent = stopStr;
 }
 
 // ── Auto-resume follow after user stops touching the map ──────────────────
@@ -15417,6 +15495,7 @@ function fmStartTracking() {
     const _weeklyMax = Math.max(0, parseFloat(document.getElementById('hoursInput')?.value || 70));
     const driveMax  = Math.min(_dailyMax, _weeklyMax);
     const driveLeft = Math.max(0, driveMax - elapsed);
+    _hosCurrentDriveLeft = driveLeft;
     const driveEl = document.getElementById('fmDriveLeft');
     driveEl.textContent = fmtH(driveLeft);
     driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
