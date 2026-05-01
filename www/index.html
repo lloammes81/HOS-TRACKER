@@ -2581,13 +2581,13 @@
 
 /* ── Interstate shields along route ───────────────────────── */
 .interstate-shield{
-  width:36px; height:42px;
+  height:34px;
   display:flex; flex-direction:column;
   align-items:center; justify-content:flex-end;
-  padding-bottom:4px;
+  padding-bottom:3px;
   position:relative;
   color:var(--interstate-text);
-  filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.6));
 }
 .interstate-shield::before{
   content:'';
@@ -2596,29 +2596,29 @@
     var(--interstate-top) 0%, var(--interstate-top) 28%,
     var(--interstate-bottom) 28%, var(--interstate-bottom) 100%);
   clip-path: polygon(50% 0%, 100% 12%, 100% 100%, 0% 100%, 0% 12%);
-  border-radius:3px;
+  border-radius:2px;
 }
 .interstate-shield::after{
   content:'';
-  position:absolute; inset:2px;
+  position:absolute; inset:1.5px;
   clip-path: polygon(50% 0%, 100% 12%, 100% 100%, 0% 100%, 0% 12%);
-  border:1.5px solid rgba(255,255,255,.9);
+  border:1px solid rgba(255,255,255,.9);
   border-radius:2px;
   pointer-events:none;
 }
 .interstate-shield .top{
-  position:absolute; top:3px; left:0; right:0;
+  position:absolute; top:2px; left:0; right:0;
   text-align:center; z-index:3;
-  font-size:6px; font-weight:900; letter-spacing:.6px;
+  font-size:5px; font-weight:900; letter-spacing:.5px;
   color:var(--interstate-text); text-transform:uppercase; line-height:1;
   text-shadow:0 1px 2px rgba(0,0,0,.5);
 }
 .interstate-shield .body{ display:none; }
 .interstate-shield .num{
   position:relative; z-index:3;
-  font-size:18px; font-weight:900; line-height:1;
-  color:var(--interstate-text); letter-spacing:1px;
-  text-shadow:0 1px 3px rgba(0,0,0,.7);
+  font-weight:900; line-height:1;
+  color:var(--interstate-text); letter-spacing:.5px;
+  text-shadow:0 1px 2px rgba(0,0,0,.7);
   font-family:'Arial Black','Arial',sans-serif;
   margin-bottom:1px;
 }
@@ -12723,13 +12723,13 @@ let roadNameMarkersFull = [];
 
 function makeInterstateDivIcon(num){
   const digits = String(num).length;
-  const w = digits >= 3 ? 48 : 36;
-  const numSize = digits >= 3 ? 13 : 18;
+  const w = digits >= 3 ? 40 : 28;
+  const numSize = digits >= 3 ? 11 : 15;
   const html = `<div class="interstate-shield" style="width:${w}px">
       <div class="top">INTERSTATE</div>
       <div class="num" style="font-size:${numSize}px">${num}</div>
     </div>`;
-  return L.divIcon({ html, className:'', iconSize:[w,42], iconAnchor:[Math.round(w/2),21] });
+  return L.divIcon({ html, className:'', iconSize:[w,34], iconAnchor:[Math.round(w/2),17] });
 }
 
 function makeUSRouteDivIcon(num){
