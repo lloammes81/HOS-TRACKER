@@ -8293,10 +8293,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- ④ PESTAÑAS — barra entre estadísticas y mapa -->
   <div id="dashTabsRow" style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:0 14px 10px;">
-    <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
-    <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
-    <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">Espera</button>
-    <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Sleeper</button>
+    <button id="dashTabDriving" class="dash-tab dash-tab-active">Conduciendo</button>
+    <button id="dashTabRest"    class="dash-tab">Descanso</button>
+    <button id="dashTabWait"    class="dash-tab">Espera</button>
+    <button id="dashTabOff"     class="dash-tab">Sleeper</button>
   </div>
 
   <!-- ⑤ MINI MAPA — ocupa el resto de la pantalla -->
@@ -8325,9 +8325,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   border:1px solid rgba(255,255,255,0.12);
   background:rgba(255,255,255,0.07);
   color:rgba(255,255,255,0.6);
-  font-size:12px;font-weight:700;cursor:pointer;
+  font-size:12px;font-weight:700;cursor:default;
   font-family:'DM Sans',sans-serif;
   -webkit-tap-highlight-color:transparent;
+  pointer-events:none;
   transition:background .2s,color .2s,border-color .2s,box-shadow .2s;
   box-shadow:0 4px 12px rgba(0,0,0,0.5),0 1px 3px rgba(0,0,0,0.3);
 }
@@ -8620,6 +8621,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 .hos-num-stepper{display:flex;align-items:center;border:1.5px solid rgba(59,130,246,.35);border-radius:14px;overflow:hidden;margin-bottom:8px;background:rgba(255,255,255,.04)}
 .hos-num-btn{width:56px;height:58px;background:rgba(59,130,246,.1);border:none;color:#3b82f6;font-size:30px;font-weight:300;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .hos-num-btn:active{background:rgba(59,130,246,.3)}
+.hos-num-btn:disabled{opacity:.22;cursor:not-allowed;pointer-events:none}
 .hos-num-val{flex:1;text-align:center;font-size:36px;font-weight:900;color:#f1f5f9;display:flex;align-items:center;justify-content:center;gap:5px;height:58px}
 .hos-num-unit{font-size:12px;font-weight:700;color:#475569;text-transform:uppercase}
 .hos-num-val{cursor:pointer}
@@ -9242,9 +9244,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       Regulación DOT: máximo <span class="hos-popup-dot">11 horas</span> de conducción por día.
     </div>
     <div class="hos-num-stepper">
-      <button class="hos-num-btn" onclick="_hosAdj(1,-0.5)" type="button">−</button>
+      <button class="hos-num-btn" id="hosStep1BtnMinus" onclick="_hosAdj(1,-0.5)" type="button">−</button>
       <div class="hos-num-val" onclick="_hosNumpadOpen(1)"><span id="hosStep1Display">11</span><span class="hos-num-unit">hrs</span></div>
-      <button class="hos-num-btn" onclick="_hosAdj(1,+0.5)" type="button">+</button>
+      <button class="hos-num-btn" id="hosStep1BtnPlus"  onclick="_hosAdj(1,+0.5)" type="button" disabled>+</button>
     </div>
     <input type="hidden" id="hosStep1Input" value="11" />
     <div class="hos-popup-error" id="hosStep1Error">Ingresa un valor entre 0.5 y 11 horas</div>
@@ -9271,9 +9273,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div class="hos-weekly-bar"><div class="hos-weekly-bar-fill" id="hosWeeklyBarFill" style="width:100%"></div></div>
 
     <div class="hos-num-stepper" style="margin-top:14px">
-      <button class="hos-num-btn" onclick="_hosAdj(2,-1)" type="button">−</button>
+      <button class="hos-num-btn" id="hosStep2BtnMinus" onclick="_hosAdj(2,-1)" type="button">−</button>
       <div class="hos-num-val" onclick="_hosNumpadOpen(2)"><span id="hosStep2Display">70</span><span class="hos-num-unit">hrs</span></div>
-      <button class="hos-num-btn" onclick="_hosAdj(2,+1)" type="button">+</button>
+      <button class="hos-num-btn" id="hosStep2BtnPlus"  onclick="_hosAdj(2,+1)" type="button" disabled>+</button>
     </div>
     <input type="hidden" id="hosStep2Input" value="70" />
 
@@ -25038,6 +25040,7 @@ window._hosAutoRecalc = false;
     if (inp) inp.value = '11';
     const d1 = document.getElementById('hosStep1Display');
     if (d1) d1.textContent = '11';
+    _hosUpdateStepperBtns(1, 11);
     if (overlay) overlay.classList.add('active');
   }
 
@@ -25066,6 +25069,7 @@ window._hosAutoRecalc = false;
     const d2 = document.getElementById('hosStep2Display');
     if (d2) d2.textContent = '70';
     _hosUpdateWeeklyBar(70);
+    _hosUpdateStepperBtns(2, 70);
     if (overlay) overlay.classList.add('active');
   }
 
@@ -25139,7 +25143,10 @@ window._hosAutoRecalc = false;
     if (key === 'del') {
       _hosNumpadVal = _hosNumpadVal.length > 1 ? _hosNumpadVal.slice(0, -1) : '0';
     } else {
-      _hosNumpadVal = (_hosNumpadVal === '0') ? key : _hosNumpadVal + key;
+      const next = (_hosNumpadVal === '0') ? key : _hosNumpadVal + key;
+      const maxV = _hosNumpadStep === 1 ? 11 : 70;
+      if (parseFloat(next) > maxV) return; // bloquear si supera el máximo
+      _hosNumpadVal = next;
     }
     document.getElementById('hosNumpadDisplay').textContent = _hosNumpadVal;
   };
@@ -25150,12 +25157,14 @@ window._hosAutoRecalc = false;
       document.getElementById('hosStep1Input').value = val;
       const d = document.getElementById('hosStep1Display');
       if (d) d.textContent = val % 1 === 0 ? val : val.toFixed(1);
+      _hosUpdateStepperBtns(1, val);
     } else {
       val = Math.max(1, Math.min(70, isNaN(val) ? 70 : Math.round(val)));
       document.getElementById('hosStep2Input').value = val;
       const d = document.getElementById('hosStep2Display');
       if (d) d.textContent = val;
       _hosUpdateWeeklyBar(val);
+      _hosUpdateStepperBtns(2, val);
     }
     document.getElementById('hosNumpad').classList.remove('active');
   };
@@ -25164,6 +25173,19 @@ window._hosAutoRecalc = false;
   };
 
   // ── Stepper numérico +/− ──────────────────────────────
+  function _hosUpdateStepperBtns(step, val) {
+    if (step === 1) {
+      const bm = document.getElementById('hosStep1BtnMinus');
+      const bp = document.getElementById('hosStep1BtnPlus');
+      if (bm) bm.disabled = val <= 0.5;
+      if (bp) bp.disabled = val >= 11;
+    } else {
+      const bm = document.getElementById('hosStep2BtnMinus');
+      const bp = document.getElementById('hosStep2BtnPlus');
+      if (bm) bm.disabled = val <= 1;
+      if (bp) bp.disabled = val >= 70;
+    }
+  }
   window._hosAdj = function(step, delta) {
     if (step === 1) {
       const inp  = document.getElementById('hosStep1Input');
@@ -25172,6 +25194,7 @@ window._hosAutoRecalc = false;
       val = Math.max(0.5, Math.min(11, val));
       inp.value = val;
       disp.textContent = val % 1 === 0 ? val : val.toFixed(1);
+      _hosUpdateStepperBtns(1, val);
     } else {
       const inp  = document.getElementById('hosStep2Input');
       const disp = document.getElementById('hosStep2Display');
@@ -25180,6 +25203,7 @@ window._hosAutoRecalc = false;
       inp.value = val;
       disp.textContent = val;
       _hosUpdateWeeklyBar(val);
+      _hosUpdateStepperBtns(2, val);
     }
   };
 
