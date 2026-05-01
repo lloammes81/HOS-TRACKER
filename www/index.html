@@ -8214,6 +8214,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
   <div style="flex:0 0 auto;display:flex;justify-content:center;padding:4px 0 8px;">
+    <div style="position:relative;display:inline-block;">
     <!-- Profundidad: placa oscura de la que emerge el anillo -->
     <div id="dashRingWrap" style="position:relative;width:210px;height:210px;">
       <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;overflow:visible;">
@@ -8256,6 +8257,37 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div style="font-size:11px;font-weight:600;color:#ffffff;text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
       </div>
     </div>
+    <!-- ── Círculo 14H: ventana diaria de turno ── -->
+    <div id="dash14hWrap" style="position:absolute;top:16px;right:-84px;display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,.38);letter-spacing:1px;text-transform:uppercase;">ON-SHIFT</div>
+      <div style="position:relative;width:74px;height:74px;">
+        <svg viewBox="0 0 90 90" width="74" height="74" style="display:block;">
+          <defs>
+            <linearGradient id="grad14h" x1="45" y1="9" x2="45" y2="81" gradientUnits="userSpaceOnUse">
+              <stop offset="0%"   stop-color="#c8ff28"/>
+              <stop offset="55%"  stop-color="#4ade80"/>
+              <stop offset="100%" stop-color="#16a34a"/>
+            </linearGradient>
+            <filter id="glow14h" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
+          <circle cx="45" cy="45" r="31" fill="#06101e"/>
+          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none"
+                  stroke="url(#grad14h)" stroke-width="9" stroke-linecap="round"
+                  stroke-dasharray="226 226" transform="rotate(-90 45 45)"
+                  filter="url(#glow14h)" style="transition:stroke-dasharray 1s ease;"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+          <div id="dash14hTime" style="font-size:13px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-0.5px;">14h</div>
+          <div style="font-size:6px;color:rgba(255,255,255,.32);margin-top:2px;letter-spacing:.2px;">restante</div>
+        </div>
+      </div>
+      <div id="dash14hLabel" style="font-size:7.5px;font-weight:700;color:rgba(255,255,255,.28);">de 14h</div>
+    </div>
+    </div><!-- /inline-block wrapper -->
   </div>
 
   <!-- ③ TARJETAS ESTADÍSTICAS — tamaño fijo -->
@@ -15810,6 +15842,8 @@ let hosMinimapGlow    = null;  // polyline glow de ruta en mini mapa
 let hosMinimapTileLayer = null; // tile layer actual del mini mapa
 let dashSpeedOver     = false; // true cuando el camión supera el límite de velocidad
 let _dashCurrentStatus = 'driving';
+let hosShiftStartTime = parseInt(localStorage.getItem('hos_shift_start') || '0') || null;
+let _dash14hInterval  = null;
 // Flags de sesión para alertas de horas de manejo (se reinician al iniciar viaje)
 let _hosWarn1hFired  = false;
 let _hosWarn30mFired = false;
@@ -15856,6 +15890,11 @@ function showHosDashboard() {
   // Estado inicial: Conduciendo
   setDashStatus('driving');
 
+  // Iniciar intervalo de actualización del círculo 14H (cada 30 segundos)
+  if (_dash14hInterval) clearInterval(_dash14hInterval);
+  _dash14hInterval = setInterval(update14hCircle, 30000);
+  update14hCircle();
+
   // Actualizar el círculo grande inmediatamente con las horas actuales
   const _dashDailyHrs  = parseFloat(document.getElementById('dailyHoursInput')?.value || 11);
   const _dashWeeklyHrs = parseFloat(document.getElementById('hoursInput')?.value || 70);
@@ -15869,6 +15908,7 @@ function showHosDashboard() {
 }
 
 function hideHosDashboard() {
+  if (_dash14hInterval) { clearInterval(_dash14hInterval); _dash14hInterval = null; }
   const screen = document.getElementById('hosDashScreen');
   if (screen) screen.style.display = 'none';
   // Restaurar widgets flotantes que fueron ocultados
@@ -16331,6 +16371,7 @@ function updateHosDashboard(driveLeft, driveMax) {
     }
   }
   updateNextStopCard();
+  update14hCircle();
 }
 
 function showFullMapFromDash() {
@@ -16346,8 +16387,48 @@ function showDashFromMap() {
   showHosDashboard();
 }
 
+function update14hCircle() {
+  const arc    = document.getElementById('dash14hArc');
+  const timeEl = document.getElementById('dash14hTime');
+  const label  = document.getElementById('dash14hLabel');
+  if (!arc || !timeEl) return;
+  const C = 226;
+  let remaining = 14;
+  if (hosShiftStartTime) {
+    const elapsedH = (Date.now() - hosShiftStartTime) / 3600000;
+    remaining = Math.max(0, 14 - elapsedH);
+  }
+  const pct = remaining / 14;
+  arc.setAttribute('stroke-dasharray', `${(pct * C).toFixed(1)} ${C}`);
+  if (remaining < 2) {
+    arc.setAttribute('stroke', '#ef4444');
+  } else if (remaining < 4) {
+    arc.setAttribute('stroke', '#f59e0b');
+  } else {
+    arc.setAttribute('stroke', 'url(#grad14h)');
+  }
+  const mins = Math.round(remaining * 60);
+  const h = Math.floor(mins / 60), m = mins % 60;
+  timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+  timeEl.style.color = remaining <= 0 ? '#ef4444' : remaining <= 1 ? '#f59e0b' : '#ffffff';
+  if (label) {
+    if (hosShiftStartTime) {
+      const used = 14 - remaining;
+      const uh = Math.floor(used), um = Math.round((used - uh) * 60);
+      label.textContent = `usadas: ${uh}h ${String(um).padStart(2,'0')}m`;
+    } else {
+      label.textContent = 'de 14h';
+    }
+  }
+}
+
 function setDashStatus(status) {
   _dashCurrentStatus = status;
+  if ((status === 'driving' || status === 'wait') && !hosShiftStartTime) {
+    hosShiftStartTime = Date.now();
+    localStorage.setItem('hos_shift_start', hosShiftStartTime);
+  }
+  update14hCircle();
   const tabs = {
     driving: document.getElementById('dashTabDriving'),
     rest:    document.getElementById('dashTabRest'),
