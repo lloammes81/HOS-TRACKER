@@ -8351,7 +8351,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <!-- Barra naranja: próxima parada / destino -->
     <div class="hnc-orange" style="background:#d4520a;display:flex;align-items:center;gap:10px;padding:11px 16px;">
       <span style="font-size:18px;flex-shrink:0;">📍</span>
-      <div id="hncStop" style="font-size:20px;font-weight:900;color:#fff;flex:1;white-space:normal;word-break:break-word;line-height:1.2;">---</div>
+      <div id="hncStop" style="font-size:20px;font-weight:900;color:#fff;flex:1;overflow:hidden;white-space:nowrap;line-height:1.2;">---</div>
     </div>
   </div>
 
@@ -8433,6 +8433,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   50%      { background:#ea6010; }
 }
 #hosNavCard .hnc-orange { animation: hnc-pulse 2s ease-in-out infinite; }
+@keyframes hnc-marquee {
+  0%,15%  { transform:translateX(0); }
+  75%,90% { transform:translateX(var(--hnc-scroll,0px)); }
+  100%    { transform:translateX(0); }
+}
+#hncStop.hnc-scrolling { animation: hnc-marquee 7s ease-in-out infinite; }
 /* ── Menú lateral del HOS Dashboard ─────────────────────── */
 #dashSideMenuToggle {
   position:absolute;right:0;top:50%;transform:translateY(-50%);
@@ -15208,6 +15214,15 @@ function updateNextStopCard() {
     stopStr += `  ${days[arrivalTime.getDay()]} ${arrivalTime.getDate()}/${arrivalTime.getMonth()+1}`;
   }
   stopEl.textContent = stopStr;
+  stopEl.classList.remove('hnc-scrolling');
+  stopEl.style.removeProperty('--hnc-scroll');
+  requestAnimationFrame(() => {
+    const overflow = stopEl.scrollWidth - stopEl.clientWidth;
+    if (overflow > 4) {
+      stopEl.style.setProperty('--hnc-scroll', `-${overflow}px`);
+      stopEl.classList.add('hnc-scrolling');
+    }
+  });
 }
 
 // ── Auto-resume follow after user stops touching the map ──────────────────
