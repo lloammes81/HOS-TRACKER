@@ -15198,14 +15198,9 @@ function updateNextStopCard() {
   _hosHoursStopName = null; // resetear ciudad de horas si ya no aplica
   const stopName = (typeof destination === 'object' && destination?.name || '').split(',')[0].trim() || '---';
   const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  let stopStr = stopName;
+  let stopStr = `Siguiente parada  ${stopName}`;
   if (arrivalTime instanceof Date) {
-    const h = arrivalTime.getHours(), m = arrivalTime.getMinutes();
-    const ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
-    const hrsLeft = Math.max(0, (arrivalTime - Date.now()) / 3600000);
-    const hh = Math.floor(hrsLeft), mm = Math.round((hrsLeft - hh) * 60);
-    const hrsStr = hh > 0 ? `${hh}h ${mm}m` : `${mm}m`;
-    stopStr += ` · ${h12}:${String(m).padStart(2,'0')} ${ap} ${days[arrivalTime.getDay()]} ${arrivalTime.getDate()}/${arrivalTime.getMonth()+1} — ${hrsStr}`;
+    stopStr += `  ${days[arrivalTime.getDay()]} ${arrivalTime.getDate()}/${arrivalTime.getMonth()+1}`;
   }
   stopEl.textContent = stopStr;
 }
