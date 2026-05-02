@@ -36,11 +36,11 @@
      DESIGN TOKENS
   ══════════════════════════════════════════ */
   :root {
-    --bg: #f0efe9;
+    --bg: #eaf0fb;
     --surface: #ffffff;
-    --surface2: #f8f8f5;
-    --text: #0d0d0d;
-    --muted: #6b7280;
+    --surface2: #f0f5fd;
+    --text: #0f172a;
+    --muted: #64748b;
     --accent: #10b981;
     --accent2: #059669;
     --road-name-color: #374151; /* road name labels (overlay) */
@@ -51,9 +51,9 @@
     --blue: #3b82f6;
     --purple: #8b5cf6;
     --amber: #f59e0b;
-    --border: #e2e0d8;
-    --shadow: 0 1px 8px rgba(0,0,0,0.07), 0 4px 20px rgba(0,0,0,0.05);
-    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+    --border: #d4e0f5;
+    --shadow: 0 2px 10px rgba(15,23,42,0.08), 0 4px 22px rgba(59,130,246,0.07);
+    --shadow-lg: 0 8px 40px rgba(15,23,42,0.14);
     --radius: 18px;
     --radius-sm: 12px;
     /* Safe area insets for notch / home bar */
@@ -2579,6 +2579,7 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
 
+
 /* ── Interstate shields along route ───────────────────────── */
 .interstate-shield{
   height:34px;
@@ -3704,30 +3705,35 @@ body.dark #fullMap .leaflet-tile-pane {
      🦸  HERO HEADER (compact version)
   ════════════════════════════════════════════════════════════ */
   .hero-wrap {
-    background: linear-gradient(160deg, #091525 0%, #0e2038 55%, #0a2015 100%);
+    background: linear-gradient(160deg, #dceafb 0%, #e4eefa 55%, #d8f0ec 100%);
     margin: -16px -16px 4px;
     padding: 0;
     border-radius: 0 0 22px 22px;
     position: relative;
     overflow: hidden;
+    border-bottom: 1px solid #c8d8f0;
+  }
+  body.dark .hero-wrap {
+    background: linear-gradient(160deg, #091525 0%, #0e2038 55%, #0a2015 100%);
+    border-bottom: none;
   }
   body.light .hero-wrap {
-    background: linear-gradient(160deg, #102a4a 0%, #163d6e 55%, #0b3321 100%);
+    background: linear-gradient(160deg, #dceafb 0%, #e4eefa 55%, #d8f0ec 100%);
   }
   .hero-wrap::before {
     content: '';
     position: absolute; inset: 0;
     background:
-      radial-gradient(ellipse at 85% 15%, rgba(16,185,129,.18) 0%, transparent 60%),
-      radial-gradient(ellipse at 5% 85%, rgba(59,130,246,.12) 0%, transparent 55%);
+      radial-gradient(ellipse at 85% 15%, rgba(16,185,129,.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 5% 85%, rgba(59,130,246,.10) 0%, transparent 55%);
     pointer-events: none;
   }
   .hero-wrap::after {
     content: '';
     position: absolute; inset: 0;
     background-image:
-      repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0px, rgba(255,255,255,.018) 1px, transparent 1px, transparent 28px),
-      repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0px, rgba(255,255,255,.018) 1px, transparent 1px, transparent 28px);
+      repeating-linear-gradient(0deg, rgba(59,130,246,.025) 0px, rgba(59,130,246,.025) 1px, transparent 1px, transparent 28px),
+      repeating-linear-gradient(90deg, rgba(59,130,246,.025) 0px, rgba(59,130,246,.025) 1px, transparent 1px, transparent 28px);
     pointer-events: none;
   }
   .hero-inner {
@@ -3750,41 +3756,59 @@ body.dark #fullMap .leaflet-tile-pane {
   .hero-brand-text { line-height: 1.1; }
   .hero-brand-name {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px; letter-spacing: 1.5px; color: #fff; line-height: 1;
+    font-size: 20px; letter-spacing: 1.5px; color: #0f172a; line-height: 1;
   }
+  body.dark .hero-brand-name { color: #fff; }
   .hero-brand-sub {
-    font-size: 8px; color: rgba(255,255,255,.45);
+    font-size: 8px; color: rgba(15,23,42,.45);
     font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
     margin-top: 1px;
   }
+  body.dark .hero-brand-sub { color: rgba(255,255,255,.45); }
   .hero-btns { display: flex; align-items: center; gap: 6px; }
   .hero-btn {
     width: 36px; height: 36px; border-radius: 10px;
-    background: rgba(255,255,255,.08);
-    border: 1px solid rgba(255,255,255,.12);
-    color: rgba(255,255,255,.85); font-size: 15px;
+    background: rgba(255,255,255,.65);
+    border: 1px solid rgba(15,23,42,.12);
+    color: rgba(15,23,42,.75); font-size: 15px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; touch-action: manipulation;
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     transition: background .15s;
+    box-shadow: 0 1px 4px rgba(15,23,42,.1);
   }
-  .hero-btn:active { background: rgba(255,255,255,.18); }
+  .hero-btn:active { background: rgba(255,255,255,.85); }
+  body.dark .hero-btn {
+    background: rgba(255,255,255,.08);
+    border-color: rgba(255,255,255,.12);
+    color: rgba(255,255,255,.85);
+    box-shadow: none;
+  }
+  body.dark .hero-btn:active { background: rgba(255,255,255,.18); }
 
   /* ── Hero bell (route notifications) ───────────────── */
   .hero-bell {
     position: relative;
     width: 36px; height: 36px;
     border-radius: 10px;
-    background: rgba(255,255,255,.08);
-    border: 1px solid rgba(255,255,255,.12);
-    color: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.65);
+    border: 1px solid rgba(15,23,42,.12);
+    color: rgba(15,23,42,.8);
     font-size: 16px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; touch-action: manipulation;
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     transition: background .15s, transform .15s, box-shadow .25s;
+    box-shadow: 0 1px 4px rgba(15,23,42,.1);
   }
-  .hero-bell:active { background: rgba(255,255,255,.18); transform: scale(.95); }
+  .hero-bell:active { background: rgba(255,255,255,.85); transform: scale(.95); }
+  body.dark .hero-bell {
+    background: rgba(255,255,255,.08);
+    border-color: rgba(255,255,255,.12);
+    color: rgba(255,255,255,.9);
+    box-shadow: none;
+  }
+  body.dark .hero-bell:active { background: rgba(255,255,255,.18); }
   .hero-bell.ringing {
     background: linear-gradient(135deg, rgba(239,68,68,.35), rgba(245,158,11,.25));
     border-color: rgba(239,68,68,.55);
@@ -3811,9 +3835,10 @@ body.dark #fullMap .leaflet-tile-pane {
     border-radius: 999px;
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 2px 6px rgba(239,68,68,.6);
-    border: 2px solid #0b1020;
+    border: 2px solid #e4eefa;
     pointer-events: none;
   }
+  body.dark .hero-bell-badge { border-color: #0b1020; }
 
   /* ── Routes modal (móvil) ───────────────────────────── */
   .routes-modal {
@@ -8310,11 +8335,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- GARMIN-STYLE NAV CARD — reemplaza los 4 botones cuando el vehículo se mueve -->
   <div id="hosNavCard" style="display:none;flex:0 0 auto;margin:0 14px 10px;border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.55);">
+    <!-- Barra verde: dirección -->
     <div style="background:#1c6b35;display:flex;align-items:center;gap:10px;padding:11px 16px;">
       <div id="hncDist" style="font-size:22px;font-weight:900;color:#fff;white-space:nowrap;min-width:56px;">-- mi</div>
       <div id="hncArrow" style="font-size:28px;flex-shrink:0;line-height:1;">⬆️</div>
       <div id="hncRoad" style="font-size:14px;font-weight:700;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">---</div>
     </div>
+    <!-- Barra naranja: próxima parada -->
     <div style="background:#d4520a;display:flex;align-items:center;gap:10px;padding:9px 16px;">
       <span style="font-size:15px;flex-shrink:0;">📍</span>
       <div id="hncStop" style="font-size:13px;font-weight:700;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">---</div>
@@ -9868,6 +9895,7 @@ const MAP_STYLES = {
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 let fmTileLayer = null;
 
+// Tono base del dashboard según estilo del mapa (sutil, el color real lo da el mapa de fondo)
 const DASH_BG_MAP = {
   dark:      'rgba(4,8,16,0.68)',
   nav:       'rgba(4,9,14,0.68)',
@@ -12044,6 +12072,7 @@ function changeMapStyle(styleKey) {
     document.documentElement.style.setProperty('--road-name-color', isDark ? '#e5e7eb' : '#374151');
   } catch {}
 
+  // Update dashboard background if open
   if (document.getElementById('hosDashScreen')?.style.display !== 'none') {
     updateDashBackground();
   }
@@ -13221,7 +13250,7 @@ function updateNavInstruction(curLat, curLon){
     if (!loc) continue;
     if (haversine(curLat, curLon, loc[1], loc[0]) < 0.03){
       navStepIdx = Math.min(i+1, navSteps.length-1);
-      window._navVoiceKey = null;
+      window._navVoiceKey = null; // reset thresholds for new step
       _speakNav(osrmStepText(navSteps[navStepIdx]));
     }
     break;
@@ -14761,11 +14790,11 @@ let b30Warned1h   = false;  // aviso 1 hora antes (7h conducidos)
 let b30Warned30m  = false;  // aviso 30 min antes (7.5h)
 
 // ── Próxima parada dinámica ──────────────────────────────────────────────
-let _hosBreakStopName    = null;
+let _hosBreakStopName    = null;   // ciudad para pausa 30 min
 let _hosBreakStopFetching = false;
-let _hosHoursStopName    = null;
+let _hosHoursStopName    = null;   // ciudad para fin de horas de manejo
 let _hosHoursStopFetching = false;
-let _hosCurrentDriveLeft = 11;
+let _hosCurrentDriveLeft = 11;    // horas de manejo restantes (actualizado en GPS loop)
 let b30Warned2m   = false;  // aviso 2 min antes (7h58m)
 let b30ViolShown  = false;  // banner de violación visible
 let b30InBreak    = false;  // pausa en progreso (detenido, contando)
@@ -14968,7 +14997,7 @@ function b30Check(isMoving) {
   }
 }
 
-// ── Busca la ciudad ~X millas adelante en la ruta ──
+// ── Busca la ciudad ~X millas adelante en la ruta para mostrar como parada ──
 async function _fetchStopCityAhead(targetMiles, onResult) {
   const targetM = targetMiles * 1609.34;
   let accumulated = 0, stopLat = null, stopLon = null;
@@ -15020,15 +15049,16 @@ function updateNextStopCard() {
   if (roadEl)  roadEl.textContent  = road;
 
   // ── Barra naranja: lógica dinámica de parada ──
-  const stopEl = document.getElementById('hncStop');
+  const stopEl  = document.getElementById('hncStop');
   if (!stopEl) return;
 
   const breakDue  = !b30Complete && b30Warned30m;
   const hoursLow  = _hosCurrentDriveLeft <= 2 && _hosCurrentDriveLeft > 0;
   const hoursGone = _hosCurrentDriveLeft <= 0;
 
-  // CASO 1: Pausa 30 min requerida
+  // ── CASO 1: Pausa 30 min requerida ──────────────────────────────────────
   if (breakDue || (b30InBreak && !b30Complete)) {
+    // Pre-fetch ciudad si aún no la tenemos
     if (!_hosBreakStopName && !_hosBreakStopFetching) {
       _hosBreakStopFetching = true;
       _fetchStopCityAhead(10, name => {
@@ -15037,15 +15067,18 @@ function updateNextStopCard() {
       });
     }
     if (b30InBreak && !b30Complete) {
-      const minsLeft = Math.max(0, 30 - Math.floor(b30StopSecs / 60));
+      // Mostrando progreso de la pausa
+      const minsDone = Math.floor(b30StopSecs / 60);
+      const minsLeft = Math.max(0, 30 - minsDone);
       stopEl.textContent = `⏱ En descanso — quedan ${minsLeft} min · continúa hacia ${(typeof destination === 'object' && destination?.name || '').split(',')[0] || 'destino'}`;
     } else {
-      stopEl.textContent = `🛑 Para en ${_hosBreakStopName || 'próxima ciudad'} — Descanso obligatorio 30 min`;
+      const city = _hosBreakStopName || 'próxima ciudad';
+      stopEl.textContent = `🛑 Para en ${city} — Descanso obligatorio 30 min`;
     }
     return;
   }
 
-  // CASO 2: Fin de horas de manejo
+  // ── CASO 2: Fin de horas de manejo ──────────────────────────────────────
   if (hoursGone || hoursLow) {
     if (!_hosHoursStopName && !_hosHoursStopFetching) {
       _hosHoursStopFetching = true;
@@ -15064,8 +15097,8 @@ function updateNextStopCard() {
     return;
   }
 
-  // CASO 3: Normal — mostrar destino
-  _hosHoursStopName = null;
+  // ── CASO 3: Normal — mostrar destino ────────────────────────────────────
+  _hosHoursStopName = null; // resetear ciudad de horas si ya no aplica
   const stopName = (typeof destination === 'object' && destination?.name || '').split(',')[0].trim() || '---';
   const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   let stopStr = stopName;
@@ -15875,12 +15908,14 @@ function updateDashBackground() {
   const tint = DASH_BG_MAP[currentMapStyle] || DASH_BG_MAP.dark;
   const ring   = document.getElementById('dashRingBg');
   const screen = document.getElementById('hosDashScreen');
+  // Sección del anillo: vidrio esmerilado — el mapa real se ve detrás difuminado
   if (ring) {
     ring.style.background          = tint;
     ring.style.backdropFilter      = 'blur(18px)';
     ring.style.webkitBackdropFilter= 'blur(18px)';
     ring.style.transition          = 'background 0.6s ease';
   }
+  // Pantalla completa: semitransparente para que el mapa sea la "sombra" de fondo
   if (screen) {
     screen.style.transition = 'background 0.6s ease';
     screen.style.background = 'rgba(6,10,18,0.82)';
@@ -16424,7 +16459,7 @@ function update14hCircle() {
   const timeEl = document.getElementById('dash14hTime');
   const label  = document.getElementById('dash14hLabel');
   if (!arc || !timeEl) return;
-  const C = 226;
+  const C = 226; // circunferencia 2π×36
   let remaining = 14;
   if (hosShiftStartTime) {
     const elapsedH = (Date.now() - hosShiftStartTime) / 3600000;
@@ -16456,6 +16491,7 @@ function update14hCircle() {
 
 function setDashStatus(status) {
   _dashCurrentStatus = status;
+  // Iniciar ventana de 14h al primer estado activo (no rest/off)
   if ((status === 'driving' || status === 'wait') && !hosShiftStartTime) {
     hosShiftStartTime = Date.now();
     localStorage.setItem('hos_shift_start', hosShiftStartTime);
