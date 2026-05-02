@@ -11164,6 +11164,14 @@ function triggerRestEndAlarm(seg) {
   document.getElementById('restAlarmOverlay').classList.remove('show');
   document.getElementById('manualRestBtn').style.display = 'none'; // hide after rest completes
 
+  // Resetear ventana de 14h tras descanso de 10h o reset de 34h
+  const isShort = seg.type === 'break30';
+  if (!isShort) {
+    hosShiftStartTime = null;
+    localStorage.removeItem('hos_shift_start');
+    update14hCircle();
+  }
+
   const isShort = seg.type === 'break30';
   const isReset = seg.type === 'reset';
 
@@ -15890,6 +15898,7 @@ let hosMinimapTileLayer = null; // tile layer actual del mini mapa
 let dashSpeedOver     = false; // true cuando el camión supera el límite de velocidad
 let _dashCurrentStatus = 'driving';
 let hosShiftStartTime = parseInt(localStorage.getItem('hos_shift_start') || '0') || null;
+let _offDutyStartMs   = parseInt(localStorage.getItem('hos_off_start') || '0') || null;
 let _dash14hInterval  = null;
 // Flags de sesión para alertas de horas de manejo (se reinician al iniciar viaje)
 let _hosWarn1hFired  = false;
@@ -16490,7 +16499,26 @@ function update14hCircle() {
 }
 
 function setDashStatus(status) {
+  const prev = _dashCurrentStatus;
   _dashCurrentStatus = status;
+
+  // Rastrear inicio de descanso manual (off/rest)
+  if ((status === 'off' || status === 'rest') && prev !== 'off' && prev !== 'rest') {
+    _offDutyStartMs = Date.now();
+    localStorage.setItem('hos_off_start', _offDutyStartMs);
+  }
+
+  // Al regresar a activo: si llevó ≥10h de descanso → resetear ventana 14h
+  if ((status === 'driving' || status === 'wait') && _offDutyStartMs) {
+    const offHours = (Date.now() - _offDutyStartMs) / 3600000;
+    if (offHours >= 10) {
+      hosShiftStartTime = null;
+      localStorage.removeItem('hos_shift_start');
+    }
+    _offDutyStartMs = null;
+    localStorage.removeItem('hos_off_start');
+  }
+
   // Iniciar ventana de 14h al primer estado activo (no rest/off)
   if ((status === 'driving' || status === 'wait') && !hosShiftStartTime) {
     hosShiftStartTime = Date.now();
