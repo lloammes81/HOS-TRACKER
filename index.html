@@ -11164,16 +11164,15 @@ function triggerRestEndAlarm(seg) {
   document.getElementById('restAlarmOverlay').classList.remove('show');
   document.getElementById('manualRestBtn').style.display = 'none'; // hide after rest completes
 
-  // Resetear ventana de 14h tras descanso de 10h o reset de 34h
   const isShort = seg.type === 'break30';
+  const isReset = seg.type === 'reset';
+
+  // Resetear ventana de 14h tras descanso de 10h o reset de 34h
   if (!isShort) {
     hosShiftStartTime = null;
     localStorage.removeItem('hos_shift_start');
     update14hCircle();
   }
-
-  const isShort = seg.type === 'break30';
-  const isReset = seg.type === 'reset';
 
   showFullscreenAlert(
     'warning',
