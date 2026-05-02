@@ -14877,6 +14877,8 @@ function b30UpdateTimer() {
     // Volver a Conduciendo automáticamente y limpiar parpadeo
     setDashStatus('driving');
     _autoStopSecs = 0;
+    _vehicleStopStartMs = null;
+    localStorage.removeItem('hos_stop_start');
     document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
 
     // Ocultar overlay después de 8 segundos
@@ -15167,6 +15169,8 @@ let _wasMovingPrev  = false; // para detectar transición movimiento → parada
 const _AUTO_STOP_THRESHOLD  = 180;   // 3 min → auto-Descanso si pausa debida
 const _AUTO_WAIT_THRESHOLD  = 300;   // 5 min → Espera parpadea verde
 const _AUTO_SLEEP_THRESHOLD = 1800;  // 30 min → Sleeper parpadea índigo
+const _AUTO_REST_RESET_HRS  = 10;    // 10 h parado → resetea ventana de 14h
+let _vehicleStopStartMs = null;      // timestamp del primer momento que el vehículo se detuvo
 
 function _clearAllAutoBlinkClasses() {
   document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
@@ -15188,6 +15192,25 @@ function autoUpdateDashStatus(isMoving) {
     (b30Warned30m || (typeof b30DriveSecs !== 'undefined' && b30DriveSecs >= B30_DRIVE_LIMIT - 120));
 
   if (isMoving) {
+    // ── Vehículo en movimiento ─────────────────────────────────
+    // Si había una parada registrada, verificar si completó ≥10h de descanso
+    if (_vehicleStopStartMs) {
+      const stopHrs = (now - _vehicleStopStartMs) / 3600000;
+      if (stopHrs >= _AUTO_REST_RESET_HRS && hosShiftStartTime) {
+        hosShiftStartTime = null;
+        localStorage.removeItem('hos_shift_start');
+        update14hCircle();
+        showToast('success', '🔄',
+          lang === 'es' ? '14h Reiniciadas' : '14h Clock Reset',
+          lang === 'es'
+            ? `Descansaste ${stopHrs.toFixed(1)}h · Ventana de 14h reiniciada`
+            : `Rested ${stopHrs.toFixed(1)}h · 14h window has been reset`,
+          6000);
+      }
+      _vehicleStopStartMs = null;
+      localStorage.removeItem('hos_stop_start');
+    }
+
     _autoStopSecs = 0;
     _clearAllAutoBlinkClasses();
 
@@ -15198,11 +15221,32 @@ function autoUpdateDashStatus(isMoving) {
     if (restBtn && breakDue) restBtn.classList.add('dash-tab-break-warn');
 
   } else {
-    // Vehículo detenido — acumular tiempo
+    // ── Vehículo detenido ─────────────────────────────────────
+    // Registrar el primer momento de parada
+    if (!_vehicleStopStartMs) {
+      _vehicleStopStartMs = now;
+      localStorage.setItem('hos_stop_start', _vehicleStopStartMs);
+    }
+
+    // Acumular tiempo detenido
     _autoStopSecs += delta;
 
     // Quitar parpadeo rojo (no aplica estando parado)
     restBtn?.classList.remove('dash-tab-break-warn');
+
+    // ── Verificar proactivamente si ya se cumplieron ≥10h de parada ──
+    const stopHrsNow = (now - _vehicleStopStartMs) / 3600000;
+    if (stopHrsNow >= _AUTO_REST_RESET_HRS && hosShiftStartTime) {
+      hosShiftStartTime = null;
+      localStorage.removeItem('hos_shift_start');
+      update14hCircle();
+      showToast('success', '🔄',
+        lang === 'es' ? '14h Reiniciadas' : '14h Clock Reset',
+        lang === 'es'
+          ? '10h de descanso completadas · Ventana de 14h reiniciada'
+          : '10h rest complete · 14h window has been reset',
+        6000);
+    }
 
     // ── 3 min + pausa debida → Descanso ──────────────────────
     if (_autoStopSecs >= _AUTO_STOP_THRESHOLD && breakDue && _dashCurrentStatus === 'driving') {
@@ -15410,6 +15454,8 @@ function fmStartTracking() {
   _miniAlertNotified.clear();  // reinicia alertas de mapa mini para nuevo viaje
   _autoStopSecs   = 0;         // reinicia contador de parada para auto-estado
   _autoStopLastTs = null;
+  _vehicleStopStartMs = null;
+  localStorage.removeItem('hos_stop_start');
   _clearAllAutoBlinkClasses();
   _hosWarn1hFired  = false;    // reinicia alertas de horas de manejo
   _hosWarn30mFired = false;
@@ -15843,6 +15889,8 @@ function fmStopTracking() {
   b30Reset(); // limpiar sistema de pausa al detener rastreo
   _autoStopSecs   = 0;
   _autoStopLastTs = null;
+  _vehicleStopStartMs = null;
+  localStorage.removeItem('hos_stop_start');
   _clearAllAutoBlinkClasses();
   setDashStatus('driving'); // volver a estado inicial
   // Release Wake Lock
@@ -15905,8 +15953,9 @@ let hosMinimapGlow    = null;  // polyline glow de ruta en mini mapa
 let hosMinimapTileLayer = null; // tile layer actual del mini mapa
 let dashSpeedOver     = false; // true cuando el camión supera el límite de velocidad
 let _dashCurrentStatus = 'driving';
-let hosShiftStartTime = parseInt(localStorage.getItem('hos_shift_start') || '0') || null;
-let _offDutyStartMs   = parseInt(localStorage.getItem('hos_off_start') || '0') || null;
+let hosShiftStartTime   = parseInt(localStorage.getItem('hos_shift_start') || '0') || null;
+let _offDutyStartMs     = parseInt(localStorage.getItem('hos_off_start')  || '0') || null;
+_vehicleStopStartMs     = parseInt(localStorage.getItem('hos_stop_start') || '0') || null;
 let _dash14hInterval  = null;
 // Flags de sesión para alertas de horas de manejo (se reinician al iniciar viaje)
 let _hosWarn1hFired  = false;
