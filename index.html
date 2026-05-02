@@ -6148,7 +6148,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="row between">
           <div class="logo">⛽ <span id="summaryTitleTxt">Fuel Finder</span></div>
           <!-- Avatar top right -->
-          <div id="fuelUserAvatar" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer" onclick="openProfilePanel()">
+          <div id="fuelUserAvatar" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer" onclick="openProfileModal()">
             <div id="fuelAvatarImg" style="
               width:42px;height:42px;border-radius:14px;
               background:linear-gradient(135deg,#10b981,#059669);
@@ -8350,10 +8350,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- ④ PESTAÑAS — barra entre estadísticas y mapa -->
   <div id="dashTabsRow" style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:0 14px 10px;">
-    <button id="dashTabDriving" class="dash-tab dash-tab-active">Conduciendo</button>
-    <button id="dashTabRest"    class="dash-tab">Descanso</button>
-    <button id="dashTabWait"    class="dash-tab">Espera</button>
-    <button id="dashTabOff"     class="dash-tab">Sleeper</button>
+    <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
+    <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
+    <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">Espera</button>
+    <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Sleeper</button>
   </div>
 
   <!-- ⑤ MINI MAPA — ocupa el resto de la pantalla -->
@@ -8382,10 +8382,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   border:1px solid rgba(255,255,255,0.12);
   background:rgba(255,255,255,0.07);
   color:rgba(255,255,255,0.6);
-  font-size:12px;font-weight:700;cursor:default;
+  font-size:12px;font-weight:700;cursor:pointer;
   font-family:'DM Sans',sans-serif;
   -webkit-tap-highlight-color:transparent;
-  pointer-events:none;
+  touch-action:manipulation;
   transition:background .2s,color .2s,border-color .2s,box-shadow .2s;
   box-shadow:0 4px 12px rgba(0,0,0,0.5),0 1px 3px rgba(0,0,0,0.3);
 }
