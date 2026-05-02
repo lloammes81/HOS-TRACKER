@@ -12084,9 +12084,6 @@ function changeMapStyle(styleKey) {
     btn.classList.toggle('active', btn.dataset.style === styleKey);
   });
 
-  // Update dark/light mode flag
-  isDark = styleKey === 'dark';
-
   // Make road labels match the selected basemap (less "chillón")
   try {
     document.documentElement.style.setProperty('--road-name-color', isDark ? '#e5e7eb' : '#374151');
@@ -14159,7 +14156,7 @@ function openFullMapScreen() {
       btn.className = 'map-style-btn' + (key === currentMapStyle ? ' active' : '');
       btn.dataset.style = key;
       btn.innerHTML = `<span class="msb-emoji">${s.emoji}</span><span class="msb-label">${s.label}</span>`;
-      btn.onclick = () => { changeMapStyle(key); };
+      btn.onclick = () => { changeMapStyle(key); stylePanel.classList.remove('visible'); };
       stylePanel.appendChild(btn);
     });
     // Close panel on outside tap
@@ -16171,36 +16168,58 @@ function initHosMinimap() {
   }
 
   // Botón de estilos de mapa en el mini-mapa
-  if (!el.querySelector('#hosMinimapStyleBtn')) {
+  if (!document.getElementById('hosMinimapStyleBtn')) {
     const _styleBtn = document.createElement('button');
     _styleBtn.id = 'hosMinimapStyleBtn';
     _styleBtn.innerHTML = '🗺️';
-    _styleBtn.style.cssText = 'position:absolute;top:222px;right:12px;z-index:9999;width:44px;height:44px;border-radius:50%;background:rgba(8,14,28,0.92);border:2px solid rgba(255,255,255,0.35);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.55);-webkit-tap-highlight-color:transparent;padding:0;';
+    // Positioned absolute inside hosMiniMap (just the button, not the panel)
+    _styleBtn.style.cssText = 'position:absolute;top:222px;right:12px;z-index:9999;width:44px;height:44px;border-radius:50%;background:rgba(8,14,28,0.92);border:2px solid rgba(255,255,255,0.35);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.55);-webkit-tap-highlight-color:transparent;padding:0;touch-action:manipulation;';
 
+    // Panel mounted on body (fixed) to escape Leaflet overflow:hidden
     const _stylePanel = document.createElement('div');
     _stylePanel.id = 'hosMinimapStylePanel';
-    _stylePanel.style.cssText = 'position:absolute;top:274px;right:8px;z-index:10000;background:rgba(10,18,35,0.96);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;transform:translateY(8px);box-shadow:0 6px 24px rgba(0,0,0,.6);min-width:196px;';
+    _stylePanel.style.cssText = 'position:fixed;z-index:99998;background:rgba(10,18,35,0.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;transform:translateY(10px) scale(0.95);box-shadow:0 8px 32px rgba(0,0,0,.7);min-width:210px;';
+
+    const closePanel = () => {
+      _stylePanel.style.opacity = '0';
+      _stylePanel.style.pointerEvents = 'none';
+      _stylePanel.style.transform = 'translateY(10px) scale(0.95)';
+    };
 
     Object.entries(MAP_STYLES).forEach(([key, s]) => {
       const btn = document.createElement('button');
       btn.className = 'hos-style-btn' + (key === currentMapStyle ? ' active' : '');
       btn.dataset.style = key;
-      btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.12);border-radius:11px;padding:7px 10px;cursor:pointer;color:#fff;font-family:\'DM Sans\',sans-serif;min-width:58px;-webkit-tap-highlight-color:transparent;';
+      btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.12);border-radius:11px;padding:8px 10px;cursor:pointer;color:#fff;font-family:\'DM Sans\',sans-serif;min-width:60px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;';
       if (key === currentMapStyle) { btn.style.background = 'rgba(16,185,129,.18)'; btn.style.borderColor = '#10b981'; }
       btn.innerHTML = `<span style="font-size:20px">${s.emoji}</span><span style="font-size:9px;font-weight:700;letter-spacing:.3px;opacity:.85">${s.label}</span>`;
-      btn.onclick = (e) => { e.stopPropagation(); changeMapStyle(key); _stylePanel.style.opacity='0'; _stylePanel.style.pointerEvents='none'; _stylePanel.style.transform='translateY(8px)'; };
+      btn.addEventListener('click', (e) => { e.stopPropagation(); changeMapStyle(key); closePanel(); });
       _stylePanel.appendChild(btn);
     });
 
-    _styleBtn.onclick = (e) => {
+    _styleBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const open = _stylePanel.style.opacity === '1';
-      _stylePanel.style.opacity = open ? '0' : '1';
-      _stylePanel.style.pointerEvents = open ? 'none' : 'all';
-      _stylePanel.style.transform = open ? 'translateY(8px)' : 'translateY(0)';
-    };
+      if (open) { closePanel(); return; }
+      // Position panel near the button
+      const r = _styleBtn.getBoundingClientRect();
+      _stylePanel.style.top  = (r.bottom + 8) + 'px';
+      _stylePanel.style.right = (window.innerWidth - r.right) + 'px';
+      _stylePanel.style.opacity = '1';
+      _stylePanel.style.pointerEvents = 'all';
+      _stylePanel.style.transform = 'translateY(0) scale(1)';
+    });
 
-    el.appendChild(_stylePanel);
+    // Disable Leaflet click propagation on the button
+    if (typeof L !== 'undefined') L.DomEvent.disableClickPropagation(_styleBtn);
+
+    // Close on outside tap
+    document.addEventListener('click', (e) => {
+      if (!_styleBtn.contains(e.target) && !_stylePanel.contains(e.target)) closePanel();
+    }, { passive: true });
+
+    // Panel lives on body to escape overflow:hidden on the Leaflet container
+    document.body.appendChild(_stylePanel);
     el.appendChild(_styleBtn);
   }
 
