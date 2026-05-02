@@ -8280,7 +8280,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </svg>
       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div id="dashHosTime" style="font-size:33px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-2px;">11h 0m</div>
-        <div style="font-size:11px;font-weight:600;color:#ffffff;text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
+        <div id="dashHosLabel" style="font-size:11px;font-weight:600;color:#ffffff;text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
       </div>
     </div>
     <!-- ── Círculo 14H: ventana diaria de turno ── -->
@@ -14846,6 +14846,9 @@ function b30UpdateTimer() {
   const overlay = document.getElementById('breakTimerOverlay');
   if (!countEl) return;
 
+  // Actualizar ring principal del dashboard con el countdown
+  updateDashRingBreak(remaining, elapsed);
+
   if (remaining <= 0 && !b30Complete) {
     // ¡Pausa completada!
     b30Complete = true;
@@ -14861,6 +14864,9 @@ function b30UpdateTimer() {
     if (lblEl) lblEl.textContent = '¡Pausa completada! Puedes continuar.';
     const inner = overlay.querySelector('div');
     if (inner) { inner.style.borderColor = '#10b981'; inner.style.animation = 'none'; }
+
+    // Restaurar el ring principal a horas de manejo
+    setTimeout(b30RestoreMainRing, 3000);
 
     const _b30Title = lang === 'es' ? '✅ ¡PAUSA DE 30 MIN COMPLETADA!' : '✅ 30-MIN BREAK COMPLETE!';
     const _b30Body  = lang === 'es'
@@ -14913,10 +14919,72 @@ function b30ShowBreakTimer() {
   if (viol) viol.style.display = 'none';
   b30ViolShown = false;
 
+  // Inicializar el ring principal en modo break (30:00 / 0%)
+  updateDashRingBreak(B30_BREAK_MIN, 0);
+
   // Iniciar tick cada segundo
   if (b30TickId) clearInterval(b30TickId);
   b30TickId = setInterval(b30UpdateTimer, 1000);
   b30UpdateTimer();
+}
+
+/* ── Break ring helpers: hijack the main HOS ring during a mandatory break ── */
+function updateDashRingBreak(remainingSecs, elapsedSecs) {
+  const arc    = document.getElementById('dashRingArc');
+  const track  = document.getElementById('dashRingTrack');
+  const timeEl = document.getElementById('dashHosTime');
+  const lblEl  = document.getElementById('dashHosLabel');
+  const glow   = document.getElementById('dashGlowCircle');
+  if (!arc || !timeEl) return;
+
+  const m   = Math.floor(remainingSecs / 60);
+  const s   = Math.floor(remainingSecs % 60);
+  const pct = Math.min(1, elapsedSecs / B30_BREAK_MIN);
+  const C   = 679;
+
+  const done   = remainingSecs <= 0;
+  const almost = remainingSecs <= 60;
+  const color  = done ? '#10b981' : almost ? '#34d399' : '#f59e0b';
+
+  arc.style.stroke  = color;
+  arc.style.filter  = 'none';
+  arc.setAttribute('stroke-dasharray', `${(pct * C).toFixed(1)} ${C}`);
+  if (track) track.setAttribute('stroke', 'rgba(245,158,11,0.12)');
+
+  timeEl.textContent = done
+    ? '✓ 30:00'
+    : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  timeEl.style.color = done ? '#10b981' : '#f59e0b';
+
+  if (lblEl) {
+    lblEl.textContent = done
+      ? (lang === 'es' ? '¡Pausa completada! Puedes continuar.' : 'Break complete! You may drive.')
+      : (lang === 'es' ? 'Pausa obligatoria en curso' : 'Mandatory break in progress');
+    lblEl.style.color = done ? '#10b981' : 'rgba(255,200,100,0.9)';
+  }
+  if (glow) glow.setAttribute('stroke', done ? '#10b981' : '#d97706');
+}
+
+function b30RestoreMainRing() {
+  const arc    = document.getElementById('dashRingArc');
+  const track  = document.getElementById('dashRingTrack');
+  const timeEl = document.getElementById('dashHosTime');
+  const lblEl  = document.getElementById('dashHosLabel');
+  const glow   = document.getElementById('dashGlowCircle');
+  if (!arc) return;
+  arc.style.stroke = '';
+  arc.style.filter = 'url(#dashArcGlow)';
+  arc.setAttribute('stroke', 'url(#dashArcGrad)');
+  if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.08)');
+  if (glow)  glow.setAttribute('stroke', '#1e40af');
+  if (timeEl) timeEl.style.color = '#ffffff';
+  if (lblEl) {
+    lblEl.style.color = '#ffffff';
+    lblEl.textContent = lang === 'es' ? 'Tiempo de conducción restante' : 'Driving time remaining';
+  }
+  if (typeof _dashDriveLeftCache !== 'undefined' && _dashDriveLeftCache != null) {
+    updateHosDashboard(_dashDriveLeftCache, _dashDriveMaxCache);
+  }
 }
 
 function b30Check(isMoving) {
@@ -14941,6 +15009,7 @@ function b30Check(isMoving) {
       b30StopSecs = 0;
       if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
       document.getElementById('breakTimerOverlay').style.display = 'none';
+      b30RestoreMainRing();
     }
     b30StopSecs = 0;
     if (!b30Complete) b30DriveSecs += delta;
@@ -15003,7 +15072,7 @@ function b30Check(isMoving) {
 
     // Si lleva suficiente tiempo manejando, mostrar temporizador de pausa
     const needsBreak = b30DriveSecs >= B30_DRIVE_LIMIT - 120 || b30Warned30m;
-    if (needsBreak && !b30InBreak && !b30Complete) {
+    if (needsBreak && !b30InBreak && !b30Complete && b30StopSecs >= 300) {
       b30ShowBreakTimer();
     }
     // Ocultar banner de violación mientras está parado
@@ -16453,7 +16522,14 @@ function _dashSaveSpeedLimit() {
   showToast('info', '✅', 'Límite guardado', `Velocidad máxima ajustada a ${val} mph para esta ruta`, 4000);
 }
 
+let _dashDriveLeftCache = null;
+let _dashDriveMaxCache  = null;
+
 function updateHosDashboard(driveLeft, driveMax) {
+  _dashDriveLeftCache = driveLeft;
+  _dashDriveMaxCache  = driveMax;
+  if (b30InBreak && !b30Complete) return;
+
   const arc    = document.getElementById('dashRingArc');
   const track  = document.getElementById('dashRingTrack');
   const timeEl = document.getElementById('dashHosTime');
