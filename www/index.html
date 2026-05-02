@@ -8347,16 +8347,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- GARMIN-STYLE NAV CARD — reemplaza los 4 botones cuando el vehículo se mueve -->
   <div id="hosNavCard" style="display:none;flex:0 0 auto;margin:0 14px 10px;border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.55);">
-    <!-- Barra verde: dirección -->
-    <div style="background:#1c6b35;display:flex;align-items:center;gap:10px;padding:11px 16px;">
-      <div id="hncDist" style="font-size:22px;font-weight:900;color:#fff;white-space:nowrap;min-width:56px;">-- mi</div>
-      <div id="hncArrow" style="font-size:28px;flex-shrink:0;line-height:1;">⬆️</div>
-      <div id="hncRoad" style="font-size:14px;font-weight:700;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">---</div>
-    </div>
-    <!-- Barra naranja: próxima parada -->
-    <div style="background:#d4520a;display:flex;align-items:center;gap:10px;padding:9px 16px;">
-      <span style="font-size:15px;flex-shrink:0;">📍</span>
-      <div id="hncStop" style="font-size:17px;font-weight:800;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">---</div>
+    <!-- Barra naranja: próxima parada / destino -->
+    <div style="background:#d4520a;display:flex;align-items:center;gap:10px;padding:11px 16px;">
+      <span style="font-size:18px;flex-shrink:0;">📍</span>
+      <div id="hncStop" style="font-size:20px;font-weight:900;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">---</div>
     </div>
   </div>
 
@@ -15206,7 +15200,10 @@ function updateNextStopCard() {
   if (arrivalTime instanceof Date) {
     const h = arrivalTime.getHours(), m = arrivalTime.getMinutes();
     const ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
-    stopStr += ` · ${h12}:${String(m).padStart(2,'0')} ${ap}  ${days[arrivalTime.getDay()]} ${arrivalTime.getDate()}/${arrivalTime.getMonth()+1}`;
+    const hrsLeft = Math.max(0, (arrivalTime - Date.now()) / 3600000);
+    const hh = Math.floor(hrsLeft), mm = Math.round((hrsLeft - hh) * 60);
+    const hrsStr = hh > 0 ? `${hh}h ${mm}m` : `${mm}m`;
+    stopStr += ` · ${h12}:${String(m).padStart(2,'0')} ${ap} ${days[arrivalTime.getDay()]} ${arrivalTime.getDate()}/${arrivalTime.getMonth()+1} — ${hrsStr}`;
   }
   stopEl.textContent = stopStr;
 }
