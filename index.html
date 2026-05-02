@@ -8348,10 +8348,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- GARMIN-STYLE NAV CARD — reemplaza los 4 botones cuando el vehículo se mueve -->
   <div id="hosNavCard" style="display:none;flex:0 0 auto;margin:0 14px 10px;border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.55);">
-    <!-- Barra naranja: próxima parada / destino -->
-    <div class="hnc-orange" style="background:#d4520a;display:flex;align-items:center;gap:10px;padding:11px 16px;">
-      <span style="font-size:18px;flex-shrink:0;">📍</span>
-      <div id="hncStop" style="font-size:20px;font-weight:900;color:#fff;flex:1;overflow:hidden;white-space:nowrap;line-height:1.2;">---</div>
+    <div class="hnc-orange" style="background:#d4520a;display:flex;flex-direction:column;padding:8px 16px 11px;">
+      <div style="font-size:9px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:2px;">Destino</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:18px;flex-shrink:0;">📍</span>
+        <div id="hncStop" style="font-size:20px;font-weight:900;color:#fff;flex:1;overflow:hidden;white-space:nowrap;line-height:1.2;">---</div>
+      </div>
     </div>
   </div>
 
@@ -15209,9 +15211,9 @@ function updateNextStopCard() {
   _hosHoursStopName = null; // resetear ciudad de horas si ya no aplica
   const stopName = (typeof destination === 'object' && destination?.name || '').split(',')[0].trim() || '---';
   const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  let stopStr = `Siguiente parada  ${stopName}`;
+  let stopStr = stopName;
   if (arrivalTime instanceof Date) {
-    stopStr += `  ${days[arrivalTime.getDay()]} ${arrivalTime.getDate()}/${arrivalTime.getMonth()+1}`;
+    stopStr += `  ·  ${days[arrivalTime.getDay()]} ${arrivalTime.getDate()}/${arrivalTime.getMonth()+1}`;
   }
   stopEl.textContent = stopStr;
   stopEl.classList.remove('hnc-scrolling');
