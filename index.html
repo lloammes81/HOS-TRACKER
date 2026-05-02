@@ -15537,8 +15537,7 @@ function fmStartTracking() {
   _miniAlertNotified.clear();  // reinicia alertas de mapa mini para nuevo viaje
   _autoStopSecs   = 0;         // reinicia contador de parada para auto-estado
   _autoStopLastTs = null;
-  _vehicleStopStartMs = null;
-  localStorage.removeItem('hos_stop_start');
+  // _vehicleStopStartMs persists — needed to detect 10h rest and reset 14h window
   _clearAllAutoBlinkClasses();
   _hosWarn1hFired  = false;    // reinicia alertas de horas de manejo
   _hosWarn30mFired = false;
@@ -15972,8 +15971,11 @@ function fmStopTracking() {
   b30Reset(); // limpiar sistema de pausa al detener rastreo
   _autoStopSecs   = 0;
   _autoStopLastTs = null;
-  _vehicleStopStartMs = null;
-  localStorage.removeItem('hos_stop_start');
+  // _vehicleStopStartMs preserved — vehicle is now parked; 10h rest timer must keep running
+  if (!_vehicleStopStartMs) {
+    _vehicleStopStartMs = Date.now();
+    localStorage.setItem('hos_stop_start', _vehicleStopStartMs);
+  }
   _clearAllAutoBlinkClasses();
   setDashStatus('driving'); // volver a estado inicial
   // Release Wake Lock
