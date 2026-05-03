@@ -8429,15 +8429,15 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
   <div id="dashRingBg" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:18px 0 10px;transition:background 0.7s ease;">
-    <div style="position:relative;display:inline-block;filter:drop-shadow(0 0 28px rgba(210,140,20,0.32)) drop-shadow(0 12px 48px rgba(0,0,0,0.70));">
+    <div style="position:relative;display:inline-block;filter:drop-shadow(0 0 14px rgba(210,140,20,0.16)) drop-shadow(0 4px 22px rgba(0,0,0,0.50));">
     <div id="dashRingWrap" style="position:relative;width:240px;height:240px;">
       <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
         <!-- Hidden for JS compatibility -->
         <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
-        <!-- Dark inner fill -->
-        <circle cx="130" cy="130" r="108" fill="#12162a"/>
+        <!-- Light inner fill -->
+        <circle cx="130" cy="130" r="108" fill="#f0f0f2"/>
         <!-- Track -->
-        <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="10" id="dashRingTrack"/>
+        <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(0,0,0,0.10)" stroke-width="10" id="dashRingTrack"/>
         <!-- Progress arc -->
         <circle cx="130" cy="130" r="108" fill="none"
                 stroke="#10b981" stroke-width="10"
@@ -8448,8 +8448,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
                 style="transition:stroke-dasharray 1s ease, stroke 0.4s ease;"/>
       </svg>
       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="dashHosTime" style="font-size:33px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-2px;">11h 0m</div>
-        <div id="dashHosLabel" style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.55);text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
+        <div id="dashHosTime" style="font-size:33px;font-weight:900;color:#1a1a1a;line-height:1;letter-spacing:-2px;">11h 0m</div>
+        <div id="dashHosLabel" style="font-size:11px;font-weight:600;color:rgba(0,0,0,0.50);text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
       </div>
     </div>
     <!-- ── Círculo ON-SHIFT ── -->
@@ -11189,13 +11189,9 @@ function updateSpeedometer(mph) {
   // Actualizar anillo HOS del dashboard en tiempo real
   if (dashSpeedOver !== !!over) {
     dashSpeedOver = !!over;
-    const dashArc   = document.getElementById('dashRingArc');
-    const dashTrack = document.getElementById('dashRingTrack');
-    const dashWrap  = document.getElementById('dashRingWrap');
-    if (dashArc) {
-      if (dashTrack) dashTrack.setAttribute('stroke', 'rgba(16,185,129,0.08)');
-      const dashGlow = document.getElementById('dashGlowCircle');
-      if (dashGlow) dashGlow.setAttribute('stroke', dashSpeedOver ? '#ef4444' : '#1e40af');
+    // Redraw arc immediately to show/clear red speed-over state
+    if (_dashDriveLeftCache != null) {
+      updateHosDashboard(_dashDriveLeftCache, _dashDriveMaxCache ?? _dashDriveLeftCache);
     }
   }
 
@@ -15204,12 +15200,10 @@ function b30RestoreMainRing() {
   if (!arc) return;
   arc.style.stroke = '';
   arc.style.filter = '';
-  arc.setAttribute('stroke', '#10b981');
-  if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.08)');
-  if (glow)  glow.setAttribute('stroke', '#1e40af');
-  if (timeEl) timeEl.style.color = '#ffffff';
+  if (track) track.setAttribute('stroke', 'rgba(0,0,0,0.10)');
+  if (timeEl) timeEl.style.color = '#1a1a1a';
   if (lblEl) {
-    lblEl.style.color = '#ffffff';
+    lblEl.style.color = 'rgba(0,0,0,0.50)';
     lblEl.textContent = lang === 'es' ? 'Tiempo de conducción restante' : 'Driving time remaining';
   }
   if (typeof _dashDriveLeftCache !== 'undefined' && _dashDriveLeftCache != null) {
@@ -16793,11 +16787,11 @@ function updateHosDashboard(driveLeft, driveMax) {
   const glow = document.getElementById('dashGlowCircle');
   const glowColor = dashSpeedOver ? '#ef4444' : '#1e40af';
 
-  if (track) track.setAttribute('stroke', 'rgba(255,255,255,0.10)');
-  // Arc and text color based on remaining time
-  const arcColor = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+  if (track) track.setAttribute('stroke', 'rgba(0,0,0,0.10)');
+  // Arc turns red when over speed limit OR when nearly out of drive time
+  const arcColor = (dashSpeedOver || driveLeft < 2) ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
   arc.setAttribute('stroke', arcColor);
-  timeEl.style.color = driveLeft <= 0.5 ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#ffffff';
+  timeEl.style.color = (dashSpeedOver || driveLeft <= 0.5) ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#1a1a1a';
 
   // Texto de tiempo restante
   const totalMins = Math.round(driveLeft * 60);
