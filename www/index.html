@@ -8439,9 +8439,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
-  <div id="dashRingBg" style="flex:0 0 auto;display:flex;justify-content:center;padding:18px 0 14px;transition:background 0.7s ease;">
-    <div style="position:relative;display:inline-block;">
-    <div id="dashRingWrap" style="position:relative;width:210px;height:210px;">
+  <div id="dashRingBg" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:18px 0 10px;transition:background 0.7s ease;">
+    <div style="position:relative;display:inline-block;filter:drop-shadow(0 0 28px rgba(210,140,20,0.32)) drop-shadow(0 12px 48px rgba(0,0,0,0.70));">
+    <div id="dashRingWrap" style="position:relative;width:240px;height:240px;">
       <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
         <!-- Hidden for JS compatibility -->
         <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
@@ -8483,6 +8483,16 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div id="dash14hLabel" style="font-size:7.5px;font-weight:700;color:rgba(255,255,255,.28);">de 14h</div>
     </div>
     </div><!-- /inline-block wrapper -->
+
+    <!-- Weather strip below ring -->
+    <div id="dashWeatherRow" style="display:none;align-items:center;justify-content:center;margin-top:12px;width:100%;">
+      <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:8px 22px;">
+        <span id="dashWxIcon" style="font-size:22px;">🌤️</span>
+        <span id="dashWxTemp" style="font-size:20px;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px;"></span>
+        <span id="dashWxDesc" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.55);"></span>
+        <span id="dashWxWind" style="font-size:11px;color:rgba(255,255,255,0.32);"></span>
+      </div>
+    </div>
   </div>
 
   <!-- ③ TARJETAS ESTADÍSTICAS — tamaño fijo -->
@@ -10495,6 +10505,24 @@ async function fetchWeather(lat, lon) {
   } catch { return null; }
 }
 
+function refreshDashWeather() {
+  const row = document.getElementById('dashWeatherRow');
+  if (!row) return;
+  const icon = document.getElementById('wxIcon');
+  const temp = document.getElementById('wxTemp');
+  const desc = document.getElementById('wxDesc');
+  const wind = document.getElementById('wxWind');
+  if (weatherActive && temp && temp.textContent && temp.textContent !== '--°') {
+    if (icon) document.getElementById('dashWxIcon').textContent = icon.textContent;
+    if (temp) document.getElementById('dashWxTemp').textContent = temp.textContent;
+    if (desc) document.getElementById('dashWxDesc').textContent = desc.textContent;
+    if (wind) document.getElementById('dashWxWind').textContent = wind.textContent || '';
+    row.style.display = 'flex';
+  } else {
+    row.style.display = 'none';
+  }
+}
+
 function updateWeatherWidget(wx) {
   if (!wx) return;
   const isDanger  = WX_DANGER_CODES.has(wx.code);
@@ -10504,6 +10532,7 @@ function updateWeatherWidget(wx) {
   document.getElementById('wxDesc').textContent = wx.desc;
   const wxWindEl = document.getElementById('wxWind');
   if (wxWindEl) wxWindEl.textContent = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
+  refreshDashWeather();
   // Color the temp red if danger
   document.getElementById('wxTemp').className = 'wx-temp' + (isDanger ? ' wx-danger' : '');
   document.getElementById('wxDesc').className = 'wx-desc' + (isDanger ? ' wx-danger' : '');
@@ -16330,6 +16359,9 @@ function showHosDashboard() {
   const _dashDriveLeft = Math.max(0, _dashDriveMax - _dashElapsed);
   updateHosDashboard(_dashDriveLeft, _dashDriveMax);
 
+  // Mostrar clima si está activo
+  refreshDashWeather();
+
   // Iniciar mini mapa después de un tick para que el div sea visible
   setTimeout(initHosMinimap, 120);
 }
@@ -16862,7 +16894,7 @@ function update14hCircle() {
   } else if (remaining < 4) {
     arc.setAttribute('stroke', '#f59e0b');
   } else {
-    arc.setAttribute('stroke', 'url(#grad14h)');
+    arc.setAttribute('stroke', '#10b981');
   }
   const mins = Math.round(remaining * 60);
   const h = Math.floor(mins / 60), m = mins % 60;
