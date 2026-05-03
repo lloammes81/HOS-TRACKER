@@ -2899,17 +2899,7 @@ body.map-active #sosFab{
   z-index: 20010 !important;
 }
 
-body.map-active #weatherWidget{
-  position: fixed !important;
-  top:    calc(var(--sl-y) + 8px) !important;
-  right:  calc(env(safe-area-inset-right, 0px) + 12px) !important;
-  left:   auto !important;
-  bottom: auto !important;
-  z-index: 20009 !important;
-  width: auto !important;
-  max-width: 150px !important;
-  min-width: 76px !important;
-}
+/* weatherWidget lives inside #mapLeftControls — no fixed override needed */
 
 body.map-active #milesRemainingWidget{
   position: fixed !important;
@@ -8095,6 +8085,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div id="mapLeftControls" class="panel-hidden">
     <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Estilo de mapa">🗺️</button>
     <button id="compassBtn"  onclick="toggleHeadingUp()"     title="Vista dirección de viaje (toca para Norte)" style="flex-direction:column;gap:1px;height:52px;background:rgba(16,185,129,0.3);border-color:rgba(16,185,129,0.6)"><span style="font-size:17px">🧭</span><span style="font-size:9px;font-weight:800;letter-spacing:.3px;line-height:1">RUTA</span></button>
+    <!-- Weather widget — below compass -->
+    <div id="weatherWidget" onclick="showWeatherDetail()">
+      <div class="wx-row">
+        <div class="wx-icon" id="wxIcon">🌤️</div>
+        <div class="wx-temp" id="wxTemp">--°</div>
+      </div>
+      <div class="wx-desc" id="wxDesc">Clima</div>
+    </div>
     <div class="map-ctrl-sep"></div>
     <button id="btnCenter"   title="Centralizar">🎯</button>
     <button id="btnMapColor" onclick="cycleMapColor()"       title="Color del mapa">🎨</button>
@@ -8103,15 +8101,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
     <div class="map-ctrl-sep"></div>
     <button id="mapSearchBtn" onclick="toggleMapSearch()" title="Buscar destino" style="font-size:18px">🔍</button>
-    <div class="map-ctrl-sep"></div>
-    <!-- Weather widget — below zoom buttons -->
-    <div id="weatherWidget" onclick="showWeatherDetail()">
-      <div class="wx-row">
-        <div class="wx-icon" id="wxIcon">🌤️</div>
-        <div class="wx-temp" id="wxTemp">--°</div>
-      </div>
-      <div class="wx-desc" id="wxDesc">Clima</div>
-    </div>
   </div>
 
   <!-- BARRA DE BÚSQUEDA DEL MAPA -->
