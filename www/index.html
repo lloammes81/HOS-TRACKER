@@ -8441,70 +8441,39 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
   <div id="dashRingBg" style="flex:0 0 auto;display:flex;justify-content:center;padding:18px 0 14px;transition:background 0.7s ease;">
     <div style="position:relative;display:inline-block;">
-    <!-- Profundidad: placa oscura de la que emerge el anillo -->
     <div id="dashRingWrap" style="position:relative;width:210px;height:210px;">
-      <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;overflow:visible;">
-        <defs>
-          <radialGradient id="dashInnerGrad" cx="50%" cy="45%" r="55%">
-            <stop offset="0%"   stop-color="#232b40"/>
-            <stop offset="100%" stop-color="#1b2135"/>
-          </radialGradient>
-          <linearGradient id="dashArcGrad" x1="130" y1="22" x2="130" y2="238" gradientUnits="userSpaceOnUse">
-            <stop offset="0%"   stop-color="#c8ff28"/>
-            <stop offset="20%"  stop-color="#4ade80"/>
-            <stop offset="65%"  stop-color="#16a34a"/>
-            <stop offset="100%" stop-color="#093d18"/>
-          </linearGradient>
-          <filter id="dashArcGlow" x="-25%" y="-25%" width="150%" height="150%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <filter id="dashGlowFilter" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="13"/>
-          </filter>
-        </defs>
-        <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none"
-                stroke="#1e40af" stroke-width="32"
-                filter="url(#dashGlowFilter)" opacity="0.85"
-                style="transition:stroke 0.5s ease;"/>
-        <circle cx="130" cy="130" r="94" fill="url(#dashInnerGrad)"/>
-        <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(16,185,129,0.08)" stroke-width="24" id="dashRingTrack"/>
+      <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
+        <!-- Hidden for JS compatibility -->
+        <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
+        <!-- Dark inner fill -->
+        <circle cx="130" cy="130" r="108" fill="#12162a"/>
+        <!-- Track -->
+        <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="10" id="dashRingTrack"/>
+        <!-- Progress arc -->
         <circle cx="130" cy="130" r="108" fill="none"
-                stroke="url(#dashArcGrad)" stroke-width="24"
+                stroke="#10b981" stroke-width="10"
                 stroke-linecap="round"
                 stroke-dasharray="679 679"
                 id="dashRingArc"
                 transform="rotate(-90 130 130)"
-                filter="url(#dashArcGlow)"
-                style="transition:stroke-dasharray 1s ease;"/>
+                style="transition:stroke-dasharray 1s ease, stroke 0.4s ease;"/>
       </svg>
       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div id="dashHosTime" style="font-size:33px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-2px;">11h 0m</div>
-        <div id="dashHosLabel" style="font-size:11px;font-weight:600;color:#ffffff;text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
+        <div id="dashHosLabel" style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.55);text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
       </div>
     </div>
-    <!-- ── Círculo 14H: ventana diaria de turno ── -->
+    <!-- ── Círculo ON-SHIFT ── -->
     <div id="dash14hWrap" style="position:absolute;top:16px;right:-84px;display:flex;flex-direction:column;align-items:center;gap:2px;">
       <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,.38);letter-spacing:1px;text-transform:uppercase;">ON-SHIFT</div>
       <div style="position:relative;width:74px;height:74px;">
         <svg viewBox="0 0 90 90" width="74" height="74" style="display:block;">
-          <defs>
-            <linearGradient id="grad14h" x1="45" y1="9" x2="45" y2="81" gradientUnits="userSpaceOnUse">
-              <stop offset="0%"   stop-color="#c8ff28"/>
-              <stop offset="55%"  stop-color="#4ade80"/>
-              <stop offset="100%" stop-color="#16a34a"/>
-            </linearGradient>
-            <filter id="glow14h" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
-              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
-          <circle cx="45" cy="45" r="31" fill="#1f2538"/>
+          <circle cx="45" cy="45" r="36" fill="#12162a"/>
+          <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
           <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none"
-                  stroke="url(#grad14h)" stroke-width="9" stroke-linecap="round"
+                  stroke="#10b981" stroke-width="6" stroke-linecap="round"
                   stroke-dasharray="226 226" transform="rotate(-90 45 45)"
-                  filter="url(#glow14h)" style="transition:stroke-dasharray 1s ease;"/>
+                  style="transition:stroke-dasharray 1s ease, stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
           <div id="dash14hTime" style="font-size:13px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-0.5px;">14h</div>
@@ -15216,8 +15185,8 @@ function b30RestoreMainRing() {
   const glow   = document.getElementById('dashGlowCircle');
   if (!arc) return;
   arc.style.stroke = '';
-  arc.style.filter = 'url(#dashArcGlow)';
-  arc.setAttribute('stroke', 'url(#dashArcGrad)');
+  arc.style.filter = '';
+  arc.setAttribute('stroke', '#10b981');
   if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.08)');
   if (glow)  glow.setAttribute('stroke', '#1e40af');
   if (timeEl) timeEl.style.color = '#ffffff';
@@ -16803,9 +16772,10 @@ function updateHosDashboard(driveLeft, driveMax) {
   const glow = document.getElementById('dashGlowCircle');
   const glowColor = dashSpeedOver ? '#ef4444' : '#1e40af';
 
-  if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.08)');
-  if (glow)  glow.setAttribute('stroke', glowColor);
-  // Numbers change color based on time (not the ring)
+  if (track) track.setAttribute('stroke', 'rgba(255,255,255,0.10)');
+  // Arc and text color based on remaining time
+  const arcColor = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+  arc.setAttribute('stroke', arcColor);
   timeEl.style.color = driveLeft <= 0.5 ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#ffffff';
 
   // Texto de tiempo restante
