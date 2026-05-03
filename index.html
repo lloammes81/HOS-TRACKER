@@ -5086,11 +5086,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 /* ── HUD MANEJO ring states ───────────────────────────── */
 #driveHoursWidget { display:none !important; }
 #profileFab { display:none !important; visibility:hidden !important; pointer-events:none !important; }
-#hudManejoCell { transition:transform .4s cubic-bezier(.34,1.56,.64,1),background .4s,box-shadow .4s,border-color .4s; transform-origin:center; }
-#hudManejoCell.driving { transform:scale(1.3); box-shadow:0 0 0 2px rgba(16,185,129,.25),0 0 18px rgba(16,185,129,.5); }
-#hudManejoCell.warn    { box-shadow:0 0 0 2px rgba(245,158,11,.25),0 0 14px rgba(245,158,11,.45); }
-#hudManejoCell.critical { box-shadow:0 0 0 2px rgba(239,68,68,.3),0 0 16px rgba(239,68,68,.55); animation:hudDhPulse 1.3s ease-in-out infinite; }
-@keyframes hudDhPulse { 0%,100%{box-shadow:0 0 0 2px rgba(239,68,68,.3),0 0 16px rgba(239,68,68,.55)} 50%{box-shadow:0 0 0 4px rgba(239,68,68,.15),0 0 28px rgba(239,68,68,.7)} }
+#hudManejoCell { transition:transform .4s cubic-bezier(.34,1.56,.64,1),filter .4s; transform-origin:center; }
+#hudManejoCell.driving { transform:scale(1.15); filter:drop-shadow(0 0 10px rgba(16,185,129,.6)); }
+#hudManejoCell.warn    { filter:drop-shadow(0 0 8px rgba(245,158,11,.55)); }
+#hudManejoCell.critical { filter:drop-shadow(0 0 10px rgba(239,68,68,.65)); animation:hudDhPulse 1.3s ease-in-out infinite; }
+@keyframes hudDhPulse { 0%,100%{filter:drop-shadow(0 0 8px rgba(239,68,68,.5))} 50%{filter:drop-shadow(0 0 18px rgba(239,68,68,.85))} }
 
 </style>
 
@@ -8136,32 +8136,66 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- 4 stat cards: LLEGADA · MANEJO · RESTANTE · 70 HRS -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:12px">
-      <div style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #06b6d4;text-align:center">
-        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fmEtaLbl">LLEGADA</div>
-        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fmEta">--</div>
+    <!-- 4 ELD-style stat circles -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:12px;justify-items:center;">
+
+      <!-- LLEGADA -->
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div style="position:relative;width:78px;height:78px;">
+          <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(6,182,212,.2)" stroke-width="5"/>
+            <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#06b6d4;line-height:1;" id="fmEtaLbl">LLEGADA</div>
+            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmEta">--</div>
+          </div>
+        </div>
       </div>
-      <div id="hudManejoCell" style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #10b981;text-align:center">
-        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fmDriveLbl">MANEJO</div>
-        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fmDriveLeft">11h</div>
+
+      <!-- MANEJO -->
+      <div id="hudManejoCell" style="display:flex;flex-direction:column;align-items:center;">
+        <div style="position:relative;width:78px;height:78px;">
+          <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(16,185,129,.2)" stroke-width="5"/>
+            <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#10b981;line-height:1;" id="fmDriveLbl">MANEJO</div>
+            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmDriveLeft">11h</div>
+          </div>
+        </div>
       </div>
-      <div style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #3b82f6;text-align:center">
-        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fmRemLbl">RESTANTE</div>
-        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fmRem">--</div>
+
+      <!-- RESTANTE -->
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div style="position:relative;width:78px;height:78px;">
+          <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(59,130,246,.2)" stroke-width="5"/>
+            <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#3b82f6;line-height:1;" id="fmRemLbl">RESTANTE</div>
+            <div style="font-size:11px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmRem">--</div>
+          </div>
+        </div>
       </div>
-      <div style="background:#d1d5db;border-radius:8px;padding:6px 8px;border-left:3px solid #8b5cf6;text-align:center">
-        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.3px;font-weight:700" id="fm70Lbl">70 HRS</div>
-        <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.2;margin-top:2px" id="fm70Left">70h</div>
+
+      <!-- 70 HRS -->
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div style="position:relative;width:78px;height:78px;">
+          <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(139,92,246,.2)" stroke-width="5"/>
+            <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#8b5cf6;line-height:1;" id="fm70Lbl">70 HRS</div>
+            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fm70Left">70h</div>
+          </div>
+        </div>
       </div>
+
     </div>
-    <!-- SVG arcs ocultos — mantienen referencias para el JS de animación -->
-    <svg style="display:none" aria-hidden="true">
-      <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
-      <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
-      <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
-      <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
-    </svg>
 
     <!-- Route from → to -->
     <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:12px">
