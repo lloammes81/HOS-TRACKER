@@ -17,6 +17,7 @@ self.addEventListener('fetch', event => {
   // Network-only — never cache, always fetch fresh
   event.respondWith(
     fetch(event.request, { cache: 'reload' }).catch(() => {
+      // Offline fallback only for navigation
       if (event.request.mode === 'navigate') {
         return caches.match('/index.html');
       }
