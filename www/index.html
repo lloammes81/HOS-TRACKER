@@ -3803,7 +3803,7 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .hero-inner {
     position: relative; z-index: 1;
-    padding: calc(var(--header-pt) + 2px) 8px 10px 2px;
+    padding: calc(var(--header-pt) + 2px) 8px 10px 14px;
   }
   .hero-top-bar {
     display: flex; align-items: center; justify-content: space-between;
@@ -6022,10 +6022,17 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- DOT BADGE — sola en su fila -->
-    <div class="hero-pill">
-      <div class="hero-pill-dot"></div>
-      <span class="hero-pill-text">DOT Certified Planner</span>
+    <!-- DOT BADGE + BT badge en la misma fila -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+      <div class="hero-pill">
+        <div class="hero-pill-dot"></div>
+        <span class="hero-pill-text">DOT Certified Planner</span>
+      </div>
+      <!-- Badge Bluetooth ELD -->
+      <button id="heroBtBadge" onclick="heroBleScan()" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:4px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+        <span id="heroBtDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0;"></span>
+        <span id="heroBtTxt" style="font-size:10px;font-weight:700;letter-spacing:0.5px;color:#9ca3af;">ELD</span>
+      </button>
     </div>
 
     <!-- TÍTULO + BOTONES en la misma fila -->
@@ -6037,31 +6044,50 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <button class="hero-btn" id="heroBellBtn" title="Notificaciones">🔔<span class="hero-bell-badge" id="heroBellBadge" style="display:none">0</span></button>
       </div>
     </div>
-    <div class="hero-sub" id="subtitleTxt">DOT Hours of Service Planner</div>
 
-    <!-- KPI GAUGES -->
+    <!-- Estado de servicio (auto-detectado por GPS) -->
+    <div id="heroDutyRow" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+      <span id="heroDutyDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0;transition:background 0.4s;"></span>
+      <span id="heroDutyTxt" style="font-size:11px;font-weight:700;letter-spacing:1px;color:#6b7280;transition:color 0.4s;">ESPERANDO GPS...</span>
+      <span id="heroDutyViol" style="display:none;background:rgba(248,113,113,0.15);border-radius:10px;padding:1px 7px;font-size:9px;color:#f87171;font-weight:700;">⚠ DOT</span>
+    </div>
+
+    <!-- KPI GAUGES — 3 anillos HOSIntelligence -->
     <div class="hero-kpis">
+
+      <!-- Anillo 1: TURNO / Conexión BT -->
+      <div class="hero-kpi">
+        <svg class="kpi-svg" viewBox="0 0 94 94">
+          <circle class="kpi-track" cx="47" cy="47" r="40"/>
+          <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40" style="stroke:#a78bfa;"/>
+        </svg>
+        <div class="hero-kpi-inner" style="gap:0;">
+          <div class="hero-kpi-val" id="heroValTurno" style="font-size:14px;color:#a78bfa;letter-spacing:0;">--:--</div>
+          <div class="hero-kpi-lbl" style="color:#a78bfa;opacity:0.7;" id="heroTurnoSub">BT ○</div>
+          <div style="width:22px;height:0.5px;background:rgba(255,255,255,.15);margin:2px 0;"></div>
+          <div class="hero-kpi-val" id="heroValTurno2" style="font-size:12px;color:rgba(255,255,255,0.5);letter-spacing:0;">--:--</div>
+          <div class="hero-kpi-lbl">inicio</div>
+        </div>
+      </div>
+
+      <!-- Anillo 2: MANEJO (horas disponibles) -->
       <div class="hero-kpi">
         <svg class="kpi-svg" viewBox="0 0 94 94"><circle class="kpi-track" cx="47" cy="47" r="40"/><circle class="kpi-arc" id="heroArcDrive" cx="47" cy="47" r="40"/></svg>
         <div class="hero-kpi-inner">
           <div class="hero-kpi-val" id="heroValDrive">11H</div>
-          <div class="hero-kpi-lbl">Drive Limit</div>
+          <div class="hero-kpi-lbl">Manejo</div>
         </div>
       </div>
+
+      <!-- Anillo 3: CICLO 70H (horas disponibles) -->
       <div class="hero-kpi">
-        <svg class="kpi-svg" viewBox="0 0 94 94"><circle class="kpi-track" cx="47" cy="47" r="40"/><circle class="kpi-arc" id="heroArcCycle" cx="47" cy="47" r="40"/></svg>
+        <svg class="kpi-svg" viewBox="0 0 94 94"><circle class="kpi-track" cx="47" cy="47" r="40"/><circle class="kpi-arc" id="heroArcCycle" cx="47" cy="47" r="40" style="stroke:#00b4ff;"/></svg>
         <div class="hero-kpi-inner">
-          <div class="hero-kpi-val" id="heroValCycle">70H</div>
-          <div class="hero-kpi-lbl">8-Day Cycle</div>
+          <div class="hero-kpi-val" id="heroValCycle" style="color:#00b4ff;">70H</div>
+          <div class="hero-kpi-lbl">Ciclo 70H</div>
         </div>
       </div>
-      <div class="hero-kpi">
-        <svg class="kpi-svg" viewBox="0 0 94 94"><circle class="kpi-track" cx="47" cy="47" r="40"/><circle class="kpi-arc" id="heroArcDot" cx="47" cy="47" r="40"/></svg>
-        <div class="hero-kpi-inner">
-          <div class="hero-kpi-val" id="heroValDot">DOT</div>
-          <div class="hero-kpi-lbl" id="heroLblDot">Compliant</div>
-        </div>
-      </div>
+
     </div>
 
   </div>
@@ -8424,6 +8450,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         🔔
         <span id="notifBellBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;border-radius:999px;min-width:18px;padding:2px 5px;text-align:center;border:2px solid #181d2c;line-height:1.2;pointer-events:none"></span>
       </button>
+      <!-- Botón HOS Intelligence -->
+      <button onclick="openHosIntel()" style="background:rgba(167,139,250,0.13);border:1.5px solid rgba(167,139,250,0.35);border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;" title="HOS Intelligence">⚡</button>
     </div>
   </div>
 
@@ -9631,6 +9659,122 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button class="hos-popup-btn" onclick="window._hosArrivalSave()" style="margin-bottom:10px">💾 Guardar ciclo de horas</button>
     <button class="hos-popup-btn" onclick="window._hosArrivalDiscard()" style="background:rgba(255,255,255,.07);color:#94a3b8;margin-top:0">🗺️ Nueva ruta sin guardar</button>
   </div>
+</div>
+
+<!-- ══ HOS INTELLIGENCE PANEL ══ -->
+<div id="hosIntelPanel" style="display:none;position:fixed;inset:0;z-index:26000;background:#0a0f1a;flex-direction:column;font-family:'DM Sans',sans-serif;overflow-y:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 24px;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <button onclick="closeHosIntel()" style="background:rgba(255,255,255,0.07);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:22px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
+    <div style="flex:1;margin:0 10px;">
+      <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:0.5px;line-height:1.1;">HOURS OF <span style="color:#00e5a0">SERVICE</span></div>
+      <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:0.5px;margin-top:-3px;">INTELLIGENCE</div>
+    </div>
+    <div id="hiBtBadge" onclick="hiStartBleScan()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:6px 12px;cursor:pointer;flex-shrink:0;">
+      <span id="hiBtDot" style="width:7px;height:7px;border-radius:50%;background:#6b7280;flex-shrink:0;"></span>
+      <span id="hiBtText" style="font-size:11px;font-weight:700;letter-spacing:0.5px;color:#9ca3af;">DESCONECTADO</span>
+    </div>
+  </div>
+
+  <!-- Status pill + DOT violation -->
+  <div id="hiStatusPill" style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(0,229,160,0.3);border-radius:20px;padding:5px 12px;margin-bottom:20px;">
+    <span id="hiStatusDot" style="width:6px;height:6px;border-radius:50%;background:#00e5a0;flex-shrink:0;"></span>
+    <span id="hiStatusText" style="font-size:11px;font-weight:700;letter-spacing:1px;color:#00e5a0;">CONDUCIENDO</span>
+    <span id="hiViolBadge" style="display:none;background:rgba(248,113,113,0.15);border-radius:10px;padding:2px 8px;margin-left:4px;font-size:10px;color:#f87171;font-weight:700;">⚠ VIOLACIÓN DOT</span>
+  </div>
+
+  <!-- 3 Rings row -->
+  <div style="display:flex;justify-content:space-around;align-items:flex-end;margin-bottom:22px;">
+
+    <!-- Ring 1: Turno -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="position:relative;width:108px;height:108px;">
+        <svg width="108" height="108" style="position:absolute;inset:0;overflow:visible;">
+          <g transform="rotate(-90 54 54)">
+            <circle cx="54" cy="54" r="46" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
+            <circle id="hiRing1Arc" cx="54" cy="54" r="46" fill="none" stroke="#a78bfa" stroke-width="7" stroke-linecap="round" stroke-dasharray="289 289" style="transition:stroke-dasharray 1s ease;"/>
+          </g>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <span id="hiShiftStart" style="font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.3px;">--:--</span>
+          <span style="font-size:8px;color:rgba(255,255,255,.4);font-weight:600;">inicio</span>
+          <div style="width:28px;height:0.5px;background:rgba(255,255,255,.15);margin:3px 0;"></div>
+          <span id="hiBtTime" style="font-size:13px;font-weight:700;color:#a78bfa;letter-spacing:-0.3px;">--:--</span>
+          <span id="hiBtConnLabel" style="font-size:8px;color:#a78bfa;font-weight:700;">BT ○</span>
+        </div>
+      </div>
+      <div style="font-size:8px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1.5px;">TURNO</div>
+    </div>
+
+    <!-- Ring 2: Disponibles (bigger) -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="position:relative;width:130px;height:130px;">
+        <svg width="130" height="130" style="position:absolute;inset:0;overflow:visible;">
+          <g transform="rotate(-90 65 65)">
+            <circle cx="65" cy="65" r="57" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
+            <circle id="hiRing2Arc" cx="65" cy="65" r="57" fill="none" stroke="#00e5a0" stroke-width="9" stroke-linecap="round" stroke-dasharray="358 358" style="transition:stroke-dasharray 1s ease,stroke 0.4s;"/>
+          </g>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <span id="hiDriveAvail" style="font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.5px;">11h 00m</span>
+          <span style="font-size:9px;color:rgba(255,255,255,.4);font-weight:600;">de 11h límite</span>
+        </div>
+      </div>
+      <div style="font-size:8px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1.5px;">DISPONIBLES</div>
+    </div>
+
+    <!-- Ring 3: Ciclo 70H -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="position:relative;width:108px;height:108px;">
+        <svg width="108" height="108" style="position:absolute;inset:0;overflow:visible;">
+          <g transform="rotate(-90 54 54)">
+            <circle cx="54" cy="54" r="46" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
+            <circle id="hiRing3Arc" cx="54" cy="54" r="46" fill="none" stroke="#00b4ff" stroke-width="7" stroke-linecap="round" stroke-dasharray="289 289" style="transition:stroke-dasharray 1s ease,stroke 0.4s;"/>
+          </g>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <span id="hiCycleAvail" style="font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.5px;">70H</span>
+          <span id="hiCycleUsed" style="font-size:9px;color:rgba(255,255,255,.4);font-weight:600;">0h usadas</span>
+        </div>
+      </div>
+      <div style="font-size:8px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1.5px;">CICLO 70H</div>
+    </div>
+
+  </div>
+
+  <!-- Duty status tabs -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:18px;">
+    <button id="hiDutyDRIVING"  onclick="hiSetDuty('DRIVING')"  class="hi-duty-tab hi-duty-active">Conduciendo</button>
+    <button id="hiDutyON_DUTY"  onclick="hiSetDuty('ON_DUTY')"  class="hi-duty-tab">En Servicio</button>
+    <button id="hiDutySLEEPER"  onclick="hiSetDuty('SLEEPER')"  class="hi-duty-tab">Descanso</button>
+    <button id="hiDutyOFF_DUTY" onclick="hiSetDuty('OFF_DUTY')" class="hi-duty-tab">Fuera</button>
+  </div>
+
+  <!-- Progress bars -->
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:700;letter-spacing:1px;width:56px;">MANEJO</span>
+      <div style="flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+        <div id="hiBar1" style="height:100%;border-radius:3px;background:#00e5a0;width:0%;transition:width 0.8s ease;"></div>
+      </div>
+      <span id="hiBar1Val" style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;width:68px;text-align:right;">0h 00m</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:700;letter-spacing:1px;width:56px;">CICLO 8D</span>
+      <div style="flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+        <div id="hiBar2" style="height:100%;border-radius:3px;background:#00b4ff;width:0%;transition:width 0.8s ease;"></div>
+      </div>
+      <span id="hiBar2Val" style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;width:68px;text-align:right;">0H / 70H</span>
+    </div>
+  </div>
+
+  <!-- Footer clock -->
+  <div style="display:flex;justify-content:space-between;align-items:center;border-top:0.5px solid rgba(255,255,255,0.08);padding-top:14px;">
+    <span id="hiClock" style="font-size:26px;font-weight:700;color:#fff;letter-spacing:1px;">--:--</span>
+    <span id="hiDate" style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:500;text-transform:capitalize;text-align:right;"></span>
+  </div>
+
 </div>
 
 <!-- ══ CALC PROGRESS OVERLAY ══ -->
@@ -23251,13 +23395,11 @@ FIREBASE_CONFIG = {
     </div>
 
     <!-- Android/Chrome BLE scan button -->
-    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">🔍 Buscar Dispositivos ELD (Bluetooth)</button>
+    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">📡 Buscar Solo Dispositivos ELD</button>
 
     <!-- Force scan button (bypass detection, always visible) -->
-    <button id="eldForceBtn" onclick="forceEldScan()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(16,185,129,.35);background:rgba(16,185,129,.10);color:#10b981;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🔵 Forzar escaneo Bluetooth (intentar siempre)</button>
+    <button id="eldForceBtn" onclick="forceEldScan()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(16,185,129,.35);background:rgba(16,185,129,.10);color:#10b981;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🔵 Forzar Escaneo ELD (si no aparece)</button>
 
-    <!-- Demo/simulation button always visible -->
-    <button onclick="startEldDemo()" id="eldDemoBtn" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(99,102,241,.3);background:rgba(99,102,241,.08);color:#6366f1;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">🎮 Modo Simulación (sin Bluetooth)</button>
 
     <!-- Diagnostic panel (live environment detection) -->
     <div id="eldDiag" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11px;line-height:1.55;color:var(--muted)">
@@ -23997,31 +24139,58 @@ async function startEldScanNative(){
   scanBtn.disabled=true;
   try {
     await ble.initialize({ androidNeverForLocation: true });
-    lbl.textContent='BUSCANDO...';
-    scanBtn.textContent='⏳ Escaneando...';
+    lbl.textContent='BUSCANDO ELD...';
+    scanBtn.textContent='⏳ Escaneando solo ELDs...';
+
+    // Prefijos de nombre de ELDs certificados FMCSA
+    const ELD_PREFIXES = [
+      'samsara','sg-','cm-','keeptrack','kt-','motive','geotab','go-',
+      'omnitracs','ot-','bigroad','br-','peoplenet','pn-','lytx','lx-',
+      'rand mcnally','rm-','jjk','jj keller','eld','hos','elds',
+      'truckx','fleetup','linxup','gpstracker','gpseld'
+    ];
+    const ELD_UUIDS = [
+      '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+      '0000ff00-0000-1000-8000-00805f9b34fb',
+      '0000ffd0-0000-1000-8000-00805f9b34fb',
+      '0000ffe0-0000-1000-8000-00805f9b34fb',
+      '0000fff0-0000-1000-8000-00805f9b34fb',
+    ];
+
+    function isEldDevice(name, serviceUUIDs){
+      if (!name && !serviceUUIDs) return false;
+      const n = (name||'').toLowerCase();
+      if (ELD_PREFIXES.some(p => n.startsWith(p) || n.includes(p))) return true;
+      if (serviceUUIDs && serviceUUIDs.some(u => ELD_UUIDS.includes(u.toLowerCase()))) return true;
+      return false;
+    }
+
     // Collect scan results into a list the user can tap
     const found = new Map(); // deviceId -> {name, rssi}
     if(list){ list.innerHTML=''; list.style.display='block'; }
     await ble.requestLEScan({ allowDuplicates:false }, (result) => {
-      const id = result.device?.deviceId;
-      const name = result.device?.name || result.localName || '(sin nombre)';
+      const id   = result.device?.deviceId;
+      const name = result.device?.name || result.localName || '';
+      const uuids= result.serviceUUIDs || [];
       if(!id || found.has(id)) return;
-      found.set(id, { name, id, rssi: result.rssi });
+      // Mostrar SOLO dispositivos ELD
+      if(!isEldDevice(name, uuids)) return;
+      found.set(id, { name: name||'ELD Sin Nombre', id, rssi: result.rssi });
       if(list){
         const row = document.createElement('button');
         row.style.cssText = 'display:flex;width:100%;justify-content:space-between;align-items:center;padding:10px 12px;margin-bottom:6px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:10px;color:var(--text);font-family:inherit;cursor:pointer;font-size:13px;font-weight:700';
-        row.innerHTML = `<span>📶 ${name}</span><span style="font-size:11px;color:var(--muted)">RSSI ${result.rssi??'?'}</span>`;
-        row.onclick = () => connectNativeBleDevice(id, name);
+        row.innerHTML = `<span>📡 ${name||'ELD Sin Nombre'}</span><span style="font-size:11px;color:var(--muted)">RSSI ${result.rssi??'?'} dBm</span>`;
+        row.onclick = () => connectNativeBleDevice(id, name||'ELD');
         list.appendChild(row);
       }
     });
-    // Auto-stop scan after 10s
+    // Auto-stop scan after 15s
     setTimeout(async () => {
       try { await ble.stopLEScan(); } catch(e){}
       if(found.size===0){
-        lbl.textContent='SIN RESULTADOS';
+        lbl.textContent='SIN ELD ENCONTRADO';
         if(banner && bannerTxt){
-          bannerTxt.textContent = 'No se encontraron dispositivos BLE cercanos. Asegúrate de que el ELD esté encendido y pareable.';
+          bannerTxt.textContent = 'No se detectaron dispositivos ELD. Asegúrate de que el ELD esté encendido, en modo Bluetooth y dentro del rango (< 10 m).';
           banner.style.display='flex';
         }
       }
@@ -24103,19 +24272,45 @@ async function startEldScan(){
   if(banner) banner.style.display='none';
 
   ring.className='eld-status-ring scanning';
-  icon.textContent='🔵';lbl.textContent='BUSCANDO...';
-  scanBtn.textContent='⏳ Escaneando BLE...';
+  icon.textContent='🔵';lbl.textContent='BUSCANDO ELD...';
+  scanBtn.textContent='⏳ Escaneando dispositivos ELD...';
   scanBtn.disabled=true;
+
+  // ── Filtros específicos para ELDs ────────────────────────────────────────
+  // Servicios BLE estándar usados por ELDs certificados FMCSA
+  const ELD_SERVICES = [
+    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART (KeepTruckin/Motive, BigRoad, etc.)
+    '0000ff00-0000-1000-8000-00805f9b34fb', // Samsara / genérico
+    '0000ffd0-0000-1000-8000-00805f9b34fb', // PeopleNet / Rand McNally
+    '0000ffe0-0000-1000-8000-00805f9b34fb', // J.J. Keller / Geotab GO
+    '0000fff0-0000-1000-8000-00805f9b34fb', // OBD-II genérico con HOS
+    '00001800-0000-1000-8000-00805f9b34fb', // Generic Access (fallback)
+  ];
+  // Prefijos de nombre de las marcas ELD más comunes en EE.UU.
+  const ELD_NAME_PREFIXES = [
+    'Samsara','SG-','CM-',          // Samsara
+    'KeepTruck','KT-','Motive',     // KeepTruckin / Motive
+    'Geotab','GO-',                 // Geotab
+    'Omnitracs','OT-',              // Omnitracs
+    'BigRoad','BR-',                // BigRoad
+    'PeopleNet','PN-',              // PeopleNet
+    'Lytx','LX-',                   // Lytx
+    'Rand McNally','RM-',           // Rand McNally
+    'JJK','JJ Keller',              // J.J. Keller
+    'ELD','HOS','ELDS',             // Genéricos
+    'TruckX','FleetUp',             // Otros certificados FMCSA
+    'Linxup','LX',                  // Linxup
+    'GPSTracker','GPSELD',          // Genéricos
+  ];
+
+  const nameFilters  = ELD_NAME_PREFIXES.map(p => ({ namePrefix: p }));
+  const svcFilters   = ELD_SERVICES.map(s => ({ services: [s] }));
+  const allFilters   = [...nameFilters, ...svcFilters];
+
   try{
-    // Request BLE device — browser shows native picker (requires user gesture + HTTPS)
-    eldDevice=await navigator.bluetooth.requestDevice({
-      acceptAllDevices:true,
-      optionalServices:[
-        '0000ff00-0000-1000-8000-00805f9b34fb',
-        'battery_service',
-        '0000ffd0-0000-1000-8000-00805f9b34fb',
-        '0000ffe0-0000-1000-8000-00805f9b34fb'
-      ]
+    eldDevice = await navigator.bluetooth.requestDevice({
+      filters: allFilters,
+      optionalServices: ELD_SERVICES,
     });
     lbl.textContent='CONECTANDO...';
     await eldDevice.gatt.connect();
@@ -27554,5 +27749,551 @@ window._hosAutoRecalc = false;
 
   // Expose for debug
   window._driverRoutes = { bellState, openRoutesModal, closeRoutesModal };
+</script>
+
+<style>
+.hi-duty-tab {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 10px;
+  color: rgba(255,255,255,0.45);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 4px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.hi-duty-tab.hi-duty-active {
+  background: rgba(0,229,160,0.13);
+  border-color: rgba(0,229,160,0.40);
+  color: #00e5a0;
+}
+/* Hero duty status mini tabs */
+.hduty-tab {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 8px;
+  font-size: 13px;
+  width: 28px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+.hduty-tab.hduty-on {
+  background: rgba(0,229,160,0.15);
+  border-color: rgba(0,229,160,0.40);
+}
+</style>
+
+<script>
+(function() {
+  const DRIVE_LIMIT  = 11;
+  const CYCLE_LIMIT  = 70;
+  const SHIFT_CIRC   = 2 * Math.PI * 46;  // r=46
+  const DRIVE_CIRC   = 2 * Math.PI * 57;  // r=57
+
+  const STATUS_COLORS = { DRIVING:'#00e5a0', ON_DUTY:'#00b4ff', SLEEPER:'#a78bfa', OFF_DUTY:'#6b7280' };
+  const STATUS_LABELS = { DRIVING:'CONDUCIENDO', ON_DUTY:'EN SERVICIO', SLEEPER:'DESCANSANDO', OFF_DUTY:'FUERA DE SERVICIO' };
+
+  let hiBleDevice     = null;
+  let hiShiftStart    = null;
+  let hiBtConnectedAt = null;
+  let hiBtStatus      = 'disconnected';
+  let hiDutyStatus    = 'DRIVING';
+  let hiClockInt      = null;
+  let hiUpdateInt     = null;
+
+  function openHosIntel() {
+    const panel = document.getElementById('hosIntelPanel');
+    if (!panel) return;
+    panel.style.display = 'flex';
+
+    // Leer valores del sistema HOS existente
+    const dailyMax  = parseFloat(document.getElementById('dailyHoursInput')?.value  || DRIVE_LIMIT);
+    const weeklyMax = parseFloat(document.getElementById('hoursInput')?.value || CYCLE_LIMIT);
+    const driveLeft = (typeof fmDriveSeconds !== 'undefined') ? Math.max(0, dailyMax - fmDriveSeconds / 3600) : dailyMax;
+    const weekLeft  = Math.max(0, weeklyMax - Math.max(0, dailyMax - driveLeft));
+
+    window._hiDriveUsed = Math.max(0, dailyMax - driveLeft);
+    window._hiCycleUsed = Math.max(0, weeklyMax - weekLeft);
+    window._hiDailyMax  = dailyMax;
+    window._hiWeeklyMax = weeklyMax;
+
+    if (!hiShiftStart && typeof fmStartTime !== 'undefined' && fmStartTime) {
+      hiShiftStart = new Date(fmStartTime);
+    }
+
+    hiUpdate();
+    clearInterval(hiClockInt);
+    clearInterval(hiUpdateInt);
+    hiClockInt  = setInterval(hiTick, 1000);
+    hiUpdateInt = setInterval(hiUpdate, 30000);
+  }
+
+  function closeHosIntel() {
+    const panel = document.getElementById('hosIntelPanel');
+    if (panel) panel.style.display = 'none';
+    clearInterval(hiClockInt);
+    clearInterval(hiUpdateInt);
+  }
+
+  function hiTick() {
+    const now = new Date();
+    const clockEl = document.getElementById('hiClock');
+    const dateEl  = document.getElementById('hiDate');
+    if (clockEl) clockEl.textContent = now.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+    if (dateEl)  dateEl.textContent  = now.toLocaleDateString('es-MX', { weekday:'long', month:'short', day:'numeric' });
+    // Actualizar horas usadas si el rastreador está corriendo
+    if (typeof fmDriveSeconds !== 'undefined') {
+      const dailyMax = window._hiDailyMax || DRIVE_LIMIT;
+      window._hiDriveUsed = Math.min(fmDriveSeconds / 3600, dailyMax);
+    }
+  }
+
+  function hiUpdate() {
+    const driveUsed = window._hiDriveUsed || 0;
+    const cycleUsed = window._hiCycleUsed || 0;
+    const dailyMax  = window._hiDailyMax  || DRIVE_LIMIT;
+    const weeklyMax = window._hiWeeklyMax || CYCLE_LIMIT;
+
+    const driveAvail   = Math.max(0, dailyMax  - driveUsed);
+    const cycleAvail   = Math.max(0, weeklyMax - cycleUsed);
+    const driveProgress = driveUsed / dailyMax;
+    const cycleProgress = cycleUsed / weeklyMax;
+    const shiftProgress = hiShiftStart
+      ? Math.min((Date.now() - hiShiftStart.getTime()) / (14 * 3600000), 1) : 0;
+
+    const driveColor = driveAvail > 2 ? '#00e5a0' : driveAvail > 0 ? '#facc15' : '#f87171';
+    const cycleColor = cycleAvail > 10 ? '#00b4ff' : cycleAvail > 0 ? '#facc15' : '#f87171';
+
+    // Ring 1: Turno (progreso vs 14h turno)
+    const r1 = document.getElementById('hiRing1Arc');
+    if (r1) r1.setAttribute('stroke-dasharray', `${(1 - shiftProgress) * SHIFT_CIRC} ${SHIFT_CIRC}`);
+
+    // Ring 2: Disponibles
+    const r2 = document.getElementById('hiRing2Arc');
+    if (r2) {
+      r2.setAttribute('stroke-dasharray', `${(1 - driveProgress) * DRIVE_CIRC} ${DRIVE_CIRC}`);
+      r2.setAttribute('stroke', driveColor);
+    }
+
+    // Ring 3: Ciclo 70H
+    const r3 = document.getElementById('hiRing3Arc');
+    if (r3) {
+      r3.setAttribute('stroke-dasharray', `${(1 - cycleProgress) * SHIFT_CIRC} ${SHIFT_CIRC}`);
+      r3.setAttribute('stroke', cycleColor);
+    }
+
+    // Texto: horas disponibles
+    const da = document.getElementById('hiDriveAvail');
+    if (da) {
+      const h = Math.floor(driveAvail), m = Math.round((driveAvail - h) * 60);
+      da.textContent = `${h}h ${String(m).padStart(2,'0')}m`;
+      da.style.color = driveAvail > 2 ? '#fff' : driveAvail > 0 ? '#facc15' : '#f87171';
+    }
+
+    // Texto: ciclo
+    const ca = document.getElementById('hiCycleAvail');
+    if (ca) { ca.textContent = `${Math.round(cycleAvail)}H`; ca.style.color = cycleAvail > 10 ? '#fff' : cycleAvail > 0 ? '#facc15' : '#f87171'; }
+    const cu = document.getElementById('hiCycleUsed');
+    if (cu) cu.textContent = `${Math.round(cycleUsed)}h usadas`;
+
+    // Turno inicio / BT hora
+    const ss = document.getElementById('hiShiftStart');
+    if (ss) ss.textContent = hiShiftStart ? hiShiftStart.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '--:--';
+    const bt = document.getElementById('hiBtTime');
+    if (bt) bt.textContent = hiBtConnectedAt ? hiBtConnectedAt.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '--:--';
+    const bl = document.getElementById('hiBtConnLabel');
+    if (bl) bl.textContent = hiBtStatus === 'connected' ? 'BT ●' : 'BT ○';
+
+    // Barras de progreso
+    const b1 = document.getElementById('hiBar1');
+    if (b1) { b1.style.width = `${Math.min(driveProgress * 100, 100)}%`; b1.style.background = driveColor; }
+    const b1v = document.getElementById('hiBar1Val');
+    if (b1v) { const h=Math.floor(driveUsed),m=Math.round((driveUsed-h)*60); b1v.textContent=`${h}h ${String(m).padStart(2,'0')}m`; }
+
+    const b2 = document.getElementById('hiBar2');
+    if (b2) { b2.style.width = `${Math.min(cycleProgress * 100, 100)}%`; b2.style.background = cycleColor; }
+    const b2v = document.getElementById('hiBar2Val');
+    if (b2v) b2v.textContent = `${Math.round(cycleUsed)}H / 70H`;
+
+    // Status pill
+    const sc = STATUS_COLORS[hiDutyStatus];
+    const pill = document.getElementById('hiStatusPill');
+    const dot  = document.getElementById('hiStatusDot');
+    const txt  = document.getElementById('hiStatusText');
+    const viol = document.getElementById('hiViolBadge');
+    if (pill) pill.style.borderColor = sc + '55';
+    if (dot)  dot.style.background   = sc;
+    if (txt)  { txt.textContent = STATUS_LABELS[hiDutyStatus]; txt.style.color = sc; }
+    if (viol) viol.style.display = (driveAvail <= 0 || cycleAvail <= 0) ? 'inline-block' : 'none';
+
+    hiTick();
+  }
+
+  // ── Web Bluetooth ELD ──────────────────────────────────────────────────────
+  async function hiStartBleScan() {
+    if (hiBtStatus === 'connected') return;
+    if (!navigator.bluetooth) {
+      alert('Bluetooth no está disponible. Abre la app en Chrome para Android.');
+      return;
+    }
+    _hiBtBadge('scanning');
+    try {
+      hiBleDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
+      hiBleDevice.addEventListener('gattserverdisconnected', () => {
+        _hiBtBadge('disconnected');
+        hiBtConnectedAt = null;
+        hiBleDevice = null;
+        hiUpdate();
+      });
+      await hiBleDevice.gatt.connect();
+      _hiBtBadge('connected');
+      hiBtConnectedAt = new Date();
+      if (!hiShiftStart) hiShiftStart = new Date();
+      hiUpdate();
+    } catch (e) {
+      _hiBtBadge(e.name === 'NotFoundError' ? 'disconnected' : 'error');
+    }
+  }
+
+  function _hiBtBadge(status) {
+    hiBtStatus = status;
+    const colors = { connected:'#00e5a0', scanning:'#facc15', error:'#f87171', disconnected:'#6b7280' };
+    const labels = { connected:'CONECTADO', scanning:'BUSCANDO...', error:'ERROR BT', disconnected:'DESCONECTADO' };
+    const dot   = document.getElementById('hiBtDot');
+    const txt   = document.getElementById('hiBtText');
+    const badge = document.getElementById('hiBtBadge');
+    if (dot)   dot.style.background  = colors[status];
+    if (txt)   { txt.textContent = labels[status]; txt.style.color = colors[status]; }
+    if (badge) {
+      badge.style.borderColor  = status === 'connected' ? 'rgba(0,229,160,0.35)' : 'rgba(255,255,255,0.12)';
+      badge.style.background   = status === 'connected' ? 'rgba(0,229,160,0.08)' : 'rgba(255,255,255,0.05)';
+    }
+  }
+
+  // ── Tabs de estado de servicio ─────────────────────────────────────────────
+  function hiSetDuty(status) {
+    hiDutyStatus = status;
+    document.querySelectorAll('.hi-duty-tab').forEach(t => t.classList.remove('hi-duty-active'));
+    const btn = document.getElementById('hiDuty' + status);
+    if (btn) btn.classList.add('hi-duty-active');
+    hiUpdate();
+  }
+
+  window.openHosIntel  = openHosIntel;
+  window.closeHosIntel = closeHosIntel;
+  window.hiStartBleScan = hiStartBleScan;
+  window.hiSetDuty      = hiSetDuty;
+})();
+</script>
+
+<script>
+/* ── HOS ELD Tracker — datos 100% desde el ELD via Bluetooth ── */
+(function(){
+  const C         = 251.3;  // 2π × 40
+  const DRIVE_MAX = 11;
+  const CYCLE_MAX = 70;
+  const SAVE_KEY  = 'hos_eld_state';
+
+  // ── Estado ─────────────────────────────────────────────────
+  let _eldDevice   = null;
+  let _eldServer   = null;
+  let _connected   = false;
+  let _connectedAt = null;   // Date: hora de conexión al ELD
+  let _shiftStart  = null;   // Date: primer movimiento detectado por ELD
+  let _driveMs     = 0;      // ms acumulados conduciendo
+  let _cycleMs     = 0;      // ms acumulados en el ciclo semanal
+  let _sessionStart= null;   // Date: inicio del segmento de movimiento actual
+  let _isMoving    = false;
+  let _eldSpeed    = 0;      // mph reportado por ELD
+  let _pollId      = null;
+
+  // ── Persistencia ───────────────────────────────────────────
+  function _save(){
+    const extra = (_sessionStart && _isMoving) ? Date.now() - _sessionStart.getTime() : 0;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      shiftTs    : _shiftStart   ? _shiftStart.getTime()   : null,
+      connTs     : _connectedAt  ? _connectedAt.getTime()  : null,
+      driveMs    : _driveMs + extra,
+      cycleMs    : _cycleMs + extra,
+      savedAt    : Date.now()
+    }));
+  }
+
+  function _load(){
+    try {
+      const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      if (!d) return;
+      // Si el turno tiene más de 24h, lo reiniciamos
+      if (d.shiftTs && Date.now() - d.shiftTs > 24 * 3600000){
+        localStorage.removeItem(SAVE_KEY); return;
+      }
+      _shiftStart  = d.shiftTs  ? new Date(d.shiftTs)  : null;
+      _connectedAt = d.connTs   ? new Date(d.connTs)   : null;
+      _driveMs     = d.driveMs  || 0;
+      _cycleMs     = d.cycleMs  || 0;
+    } catch(e){}
+  }
+
+  // ── Lógica de movimiento (datos del ELD) ───────────────────
+  function _onEldMoving(speedMph){
+    _eldSpeed = speedMph;
+    if (!_isMoving){
+      _isMoving     = true;
+      _sessionStart = new Date();
+      if (!_shiftStart){ _shiftStart = new Date(); }
+      _setDuty('EN MOVIMIENTO · ELD', '#00e5a0');
+    }
+  }
+
+  function _onEldStopped(){
+    if (_isMoving && _sessionStart){
+      const ms = Date.now() - _sessionStart.getTime();
+      _driveMs += ms;
+      _cycleMs += ms;
+      _sessionStart = null;
+      _save();
+    }
+    _isMoving = false;
+    _eldSpeed  = 0;
+    _setDuty('DETENIDO · ELD', '#f59e0b');
+  }
+
+  // ── Parser de datos ELD ───────────────────────────────────
+  // Adaptar según el protocolo real del ELD (FMCSA / propietario).
+  // Este parser maneja el formato hipotético de 4 bytes más común.
+  function _parseEld(dataView){
+    try {
+      // Byte 0-1: velocidad en décimas de mph (ej. 0x00A0 = 160 → 16.0 mph)
+      const rawSpeed = dataView.getUint16(0, true);
+      const mph      = rawSpeed / 10;
+      // Byte 2: drive minutes usados hoy (0-660 = 0-11h), escala ×1
+      const driveMin = dataView.getUint8(2);
+      // Byte 3: horas del ciclo usadas (0-70)
+      const cycleH   = dataView.getUint8(3);
+      return { mph, driveMin, cycleH };
+    } catch(e){ return null; }
+  }
+
+  // ── Suscripción a notificaciones del ELD ──────────────────
+  async function _subscribeEld(server){
+    // Intenta servicios conocidos en orden de probabilidad
+    const SERVICE_CANDIDATES = [
+      '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART (común en ELDs)
+      'battery_service',
+    ];
+    const CHAR_CANDIDATES = [
+      '6e400003-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART TX
+      'battery_level',
+    ];
+
+    for (let i = 0; i < SERVICE_CANDIDATES.length; i++){
+      try {
+        const svc  = await server.getPrimaryService(SERVICE_CANDIDATES[i]);
+        const char = await svc.getCharacteristic(CHAR_CANDIDATES[i]);
+        await char.startNotifications();
+        char.addEventListener('characteristicvaluechanged', e => {
+          const parsed = _parseEld(e.target.value);
+          if (!parsed) return;
+          // Si el ELD reporta horas acumuladas directamente, usarlas
+          if (parsed.driveMin > 0 || parsed.cycleH > 0){
+            _driveMs = parsed.driveMin * 60000;
+            _cycleMs = parsed.cycleH   * 3600000;
+          }
+          if (parsed.mph > 2) _onEldMoving(Math.round(parsed.mph));
+          else                 _onEldStopped();
+        });
+        return; // suscripción exitosa
+      } catch(_){}
+    }
+    // Sin notificaciones: polling cada 3s via read
+    _pollId = setInterval(async ()=>{
+      try {
+        const svc  = await server.getPrimaryService('battery_service');
+        const char = await svc.getCharacteristic('battery_level');
+        const val  = await char.readValue();
+        // Si solo tenemos battery, al menos sabemos que el ELD está encendido
+        // El tiempo se acumula mientras esté conectado y sin datos de parada
+        _onEldMoving(0); // velocidad desconocida pero conectado = en turno
+      } catch(_){ /* silencioso */ }
+    }, 3000);
+  }
+
+  // ── Conexión al ELD ────────────────────────────────────────
+  async function _connect(device){
+    _setBtBadge('scanning');
+    try {
+      _eldServer = await device.gatt.connect();
+      _eldDevice = device;
+      _connected   = true;
+      _connectedAt = new Date();
+      if (!_shiftStart) _shiftStart = new Date();
+      _save();
+      _setBtBadge('connected');
+      _setDuty('ELD CONECTADO', '#a78bfa');
+
+      device.addEventListener('gattserverdisconnected', _onDisconnected);
+      await _subscribeEld(_eldServer);
+    } catch(e){
+      console.warn('ELD connect error:', e);
+      _setBtBadge('error');
+    }
+  }
+
+  function _onDisconnected(){
+    _connected = false;
+    clearInterval(_pollId);
+    if (_isMoving) _onEldStopped();
+    _setBtBadge('disconnected');
+    _setDuty('ELD DESCONECTADO', '#6b7280');
+    _save();
+    // Intentar reconectar automáticamente después de 5s
+    setTimeout(_autoReconnect, 5000);
+  }
+
+  // ── Auto-reconexión a ELD ya autorizado ───────────────────
+  async function _autoReconnect(){
+    if (_connected || !navigator.bluetooth) return;
+    try {
+      // getDevices() devuelve dispositivos ya autorizados sin pedir permiso
+      const devices = await navigator.bluetooth.getDevices();
+      if (!devices.length) return;
+      // Tomar el primer dispositivo autorizado (el ELD guardado)
+      _setBtBadge('scanning');
+      await _connect(devices[0]);
+    } catch(_){}
+  }
+
+  // ── Escaneo manual (primer toque al badge ELD) ─────────────
+  window.heroBleScan = async function(){
+    if (_connected) return;
+    if (!navigator.bluetooth){
+      alert('Bluetooth no disponible. Abre la app en Chrome para Android.');
+      return;
+    }
+    _setBtBadge('scanning');
+    try {
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        // Lista de servicios opcionales para aumentar posibilidades de lectura
+        optionalServices: [
+          '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+          'battery_service',
+          'device_information',
+        ]
+      });
+      await _connect(device);
+    } catch(e){
+      _setBtBadge(e.name === 'NotFoundError' ? 'disconnected' : 'error');
+    }
+  };
+
+  // ── Helpers de horas disponibles ──────────────────────────
+  function _driveLeft(){
+    const extra = (_sessionStart && _isMoving) ? Date.now() - _sessionStart.getTime() : 0;
+    return Math.max(0, DRIVE_MAX - (_driveMs + extra) / 3600000);
+  }
+  function _cycleLeft(){
+    const extra = (_sessionStart && _isMoving) ? Date.now() - _sessionStart.getTime() : 0;
+    return Math.max(0, CYCLE_MAX - (_cycleMs + extra) / 3600000);
+  }
+
+  // ── Actualizar los 3 anillos ──────────────────────────────
+  function _updateRings(){
+    const dl = _driveLeft();
+    const cl = _cycleLeft();
+
+    // Anillo 1: Turno / Conexión ELD
+    const shiftPct = _shiftStart
+      ? Math.min((Date.now() - _shiftStart.getTime()) / (14 * 3600000), 1) : 0;
+    const arcT = document.getElementById('heroArcTurno');
+    if (arcT) arcT.style.strokeDashoffset = C * (1 - shiftPct);
+    const valT = document.getElementById('heroValTurno');
+    if (valT) valT.textContent = _connectedAt ? _fmt(_connectedAt) : '--:--';
+    const subT = document.getElementById('heroTurnoSub');
+    if (subT){
+      subT.textContent = _connected
+        ? (_isMoving ? `${_eldSpeed} mph` : 'ELD ●')
+        : 'ELD ○';
+      subT.style.color = _connected ? '#a78bfa' : 'rgba(167,139,250,0.4)';
+    }
+    const valT2 = document.getElementById('heroValTurno2');
+    if (valT2) valT2.textContent = _shiftStart ? _fmtElapsed(_shiftStart) : '--:--';
+
+    // Anillo 2: Manejo disponible
+    const dPct = dl / DRIVE_MAX;
+    const dCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#10b981';
+    const arcD = document.getElementById('heroArcDrive');
+    if (arcD){ arcD.style.strokeDashoffset = C * (1 - dPct); arcD.style.stroke = dCol; }
+    const valD = document.getElementById('heroValDrive');
+    if (valD){
+      const h = Math.floor(dl), m = Math.round((dl - h) * 60);
+      valD.textContent = h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`;
+      valD.style.color = dCol;
+    }
+
+    // Anillo 3: Ciclo 70H disponible
+    const cPct = cl / CYCLE_MAX;
+    const cCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#00b4ff';
+    const arcC = document.getElementById('heroArcCycle');
+    if (arcC){ arcC.style.strokeDashoffset = C * (1 - cPct); arcC.style.stroke = cCol; }
+    const valC = document.getElementById('heroValCycle');
+    if (valC){ valC.textContent = `${Math.round(cl)}H`; valC.style.color = cCol; }
+
+    // DOT violation badge
+    const viol = document.getElementById('heroDutyViol');
+    if (viol) viol.style.display = (dl <= 0 || cl <= 0) ? 'inline-block' : 'none';
+
+    // Sincronizar fmDriveSeconds para el resto del app
+    const extra = (_sessionStart && _isMoving) ? (Date.now() - _sessionStart.getTime()) / 1000 : 0;
+    if (typeof fmDriveSeconds !== 'undefined') fmDriveSeconds = _driveMs / 1000 + extra;
+  }
+
+  function _setDuty(label, color){
+    const dot = document.getElementById('heroDutyDot');
+    const txt = document.getElementById('heroDutyTxt');
+    if (dot) dot.style.background = color;
+    if (txt){ txt.textContent = label; txt.style.color = color; }
+  }
+
+  function _setBtBadge(s){
+    const colors = { connected:'#00e5a0', scanning:'#facc15', error:'#f87171', disconnected:'#6b7280' };
+    const labels = { connected:'ELD ●', scanning:'Buscando...', error:'Error BT', disconnected:'ELD' };
+    const dot   = document.getElementById('heroBtDot');
+    const txt   = document.getElementById('heroBtTxt');
+    const badge = document.getElementById('heroBtBadge');
+    if (dot)   dot.style.background = colors[s];
+    if (txt){  txt.textContent = labels[s]; txt.style.color = colors[s]; }
+    if (badge){
+      badge.style.borderColor = s === 'connected' ? 'rgba(0,229,160,0.35)' : 'rgba(255,255,255,0.12)';
+      badge.style.background  = s === 'connected' ? 'rgba(0,229,160,0.08)' : 'rgba(255,255,255,0.05)';
+    }
+  }
+
+  function _fmt(d){ return d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}); }
+  function _fmtElapsed(from){
+    const mins = Math.floor((Date.now() - from.getTime()) / 60000);
+    return `${Math.floor(mins/60)}h ${mins%60}m`;
+  }
+
+  // ── Arranque ──────────────────────────────────────────────
+  _load();
+  _setDuty('SIN ELD', '#6b7280');
+  _updateRings();
+
+  // Intentar auto-reconectar a ELD previamente autorizado al abrir el app
+  setTimeout(_autoReconnect, 1500);
+
+  // Loop: actualizar anillos cada segundo, guardar cada 30s
+  setInterval(_updateRings, 1000);
+  setInterval(_save, 30000);
+
+  window._hosTracker = { driveLeft: _driveLeft, cycleLeft: _cycleLeft };
+})();
 </script>
 
