@@ -3166,107 +3166,6 @@ body.dark #fullMap .leaflet-tile-pane {
   .tool-body { flex:1; overflow-y:auto; padding:18px 20px calc(24px + env(safe-area-inset-bottom,0px)); -webkit-overflow-scrolling:touch; }
 
   /* ════════════════════════════════════════════════════════════
-     💰  FREIGHT CALCULATOR
-  ════════════════════════════════════════════════════════════ */
-  .frt-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
-  .frt-field { display:flex; flex-direction:column; gap:5px; }
-  .frt-label { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); }
-  .frt-input {
-    padding: 12px 14px;
-    background: var(--surface2); border: 1.5px solid var(--border);
-    border-radius: 10px; color: var(--text);
-    font-family:'DM Sans',sans-serif; font-size:16px; font-weight:600;
-    outline:none; transition:border .15s;
-    -webkit-appearance:none;
-  }
-  .frt-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(16,185,129,.15); }
-  .frt-prefix-wrap { position:relative; }
-  .frt-prefix {
-    position:absolute; left:12px; top:50%; transform:translateY(-50%);
-    font-size:14px; color:var(--muted); font-weight:700; pointer-events:none;
-  }
-  .frt-prefix ~ .frt-input { padding-left:24px; }
-  .frt-result {
-    background: linear-gradient(135deg, rgba(16,185,129,.12), rgba(5,150,105,.08));
-    border: 1.5px solid rgba(16,185,129,.3);
-    border-radius: 16px; padding: 20px;
-    text-align:center; margin-bottom:14px;
-  }
-  .frt-result-label { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:rgba(16,185,129,.8); margin-bottom:6px; }
-  .frt-result-main { font-family:'Bebas Neue',sans-serif; font-size:52px; letter-spacing:2px; color:#10b981; line-height:1; }
-  .frt-result-sub { font-size:13px; color:var(--muted); margin-top:4px; font-weight:600; }
-  .frt-breakdown { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
-  .frt-break-card { background:var(--surface2); border:1px solid var(--border); border-radius:11px; padding:12px 8px; text-align:center; }
-  .frt-break-val { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--text); line-height:1; }
-  .frt-break-lbl { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); margin-top:3px; }
-  .frt-calc-btn {
-    width:100%; padding:15px; border-radius:13px; border:none;
-    background:linear-gradient(135deg,#10b981,#059669);
-    color:#fff; font-family:'DM Sans',sans-serif;
-    font-size:17px; font-weight:800; cursor:pointer; touch-action:manipulation;
-    box-shadow:0 4px 16px rgba(16,185,129,.35);
-    transition:transform .1s; margin-top:4px;
-  }
-  .frt-calc-btn:active { transform:scale(.97); }
-
-  /* ════════════════════════════════════════════════════════════
-     🔍  DOT NUMBER LOOKUP
-  ════════════════════════════════════════════════════════════ */
-  .dot-search-row { display:flex; gap:10px; margin-bottom:18px; }
-  .dot-search-input {
-    flex:1; padding:13px 14px;
-    background:var(--surface2); border:1.5px solid var(--border);
-    border-radius:12px; color:var(--text);
-    font-family:'DM Sans',sans-serif; font-size:16px;
-    outline:none; transition:border .15s;
-    -webkit-appearance:none;
-  }
-  .dot-search-input:focus { border-color:var(--accent); }
-  .dot-search-btn {
-    padding:13px 18px; border-radius:12px; border:none;
-    background:linear-gradient(135deg,#1d4ed8,#2563eb);
-    color:#fff; font-family:'DM Sans',sans-serif;
-    font-size:14px; font-weight:800; cursor:pointer; touch-action:manipulation;
-    white-space:nowrap;
-  }
-  .dot-search-btn:active { opacity:.8; }
-  .dot-result {
-    background:var(--surface2); border:1px solid var(--border);
-    border-radius:16px; overflow:hidden; margin-bottom:12px;
-    display:none;
-  }
-  .dot-result.visible { display:block; }
-  .dot-result-hdr {
-    background:linear-gradient(135deg,rgba(29,78,216,.15),rgba(37,99,235,.1));
-    border-bottom:1px solid var(--border);
-    padding:14px 16px;
-    display:flex; align-items:center; gap:10px;
-  }
-  .dot-badge {
-    background:linear-gradient(135deg,#1d4ed8,#2563eb);
-    color:#fff; font-size:10px; font-weight:900;
-    padding:4px 10px; border-radius:6px; letter-spacing:.5px;
-    flex-shrink:0;
-  }
-  .dot-company { font-size:15px; font-weight:800; color:var(--text); }
-  .dot-row { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid var(--border); }
-  .dot-row:last-child { border-bottom:none; }
-  .dot-key { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
-  .dot-val { font-size:15px; font-weight:700; color:var(--text); }
-  .dot-val.green { color:#10b981; }
-  .dot-val.red { color:#ef4444; }
-  .dot-val.yellow { color:#f59e0b; }
-  .dot-disclaimer {
-    background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.2);
-    border-radius:12px; padding:12px; font-size:13px; color:var(--muted); line-height:1.6;
-    margin-top:4px;
-  }
-  .dot-loading { text-align:center; padding:24px; color:var(--muted); font-size:15px; display:none; }
-  .dot-loading.visible { display:block; }
-  .dot-error { background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.2); border-radius:12px; padding:14px; font-size:15px; color:#ef4444; text-align:center; display:none; margin-bottom:10px; }
-  .dot-error.visible { display:block; }
-
-  /* ════════════════════════════════════════════════════════════
      🗺️  COMMUNITY REPORTS PANEL (mejorado)
   ════════════════════════════════════════════════════════════ */
   /* ── DRIVER CHAT PANEL (floating window) ── */
@@ -4917,73 +4816,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 }
 .eld-lb-stat-num { font-family:'Bebas Neue',sans-serif;font-size:20px;line-height:1; }
 .eld-lb-stat-lbl { font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px; }
-
-/* ══════════════════════════════════════════════════════════
-   🌡️  TEMP SENSOR SHEET
-══════════════════════════════════════════════════════════ */
-#tempSheet {
-  position:fixed;inset:0;z-index:3500;
-  background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
-  display:none;align-items:flex-end;
-}
-#tempSheet.open { display:flex; }
-.temp-panel {
-  width:100%;background:var(--surface);
-  border-radius:22px 22px 0 0;
-  padding:20px 18px calc(30px + env(safe-area-inset-bottom,0px));
-  font-family:'DM Sans',sans-serif;
-  animation:slideUp .35s cubic-bezier(.16,1,.3,1);
-}
-.temp-handle { width:36px;height:4px;background:rgba(255,255,255,.18);border-radius:999px;margin:0 auto 18px; }
-.temp-big-ring {
-  width:140px;height:140px;border-radius:50%;margin:0 auto 8px;
-  display:flex;align-items:center;justify-content:center;flex-direction:column;
-  position:relative;
-}
-.temp-big-ring svg { position:absolute;top:0;left:0; }
-.temp-big-val  { font-family:'Bebas Neue',sans-serif;font-size:42px;line-height:1;position:relative;z-index:1; }
-.temp-big-unit { font-size:13px;font-weight:700;position:relative;z-index:1;margin-top:-4px; }
-.temp-zones {
-  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0;
-}
-.temp-zone-card {
-  background:var(--surface2);border-radius:14px;padding:12px 8px;
-  text-align:center;border:2px solid var(--border);cursor:pointer;
-  transition:border-color .2s,background .2s;
-}
-.temp-zone-card.active { border-color:#06b6d4;background:rgba(6,182,212,.1); }
-.temp-zone-icon  { font-size:22px;margin-bottom:4px; }
-.temp-zone-name  { font-size:11px;font-weight:800;color:var(--text);letter-spacing:.3px; }
-.temp-zone-range { font-size:10px;color:var(--muted);margin-top:2px; }
-.temp-log {
-  background:var(--surface2);border-radius:14px;padding:12px;
-  max-height:160px;overflow-y:auto;margin-top:12px;
-}
-.temp-log-row {
-  display:flex;justify-content:space-between;align-items:center;
-  padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;
-}
-.temp-log-row:last-child { border-bottom:none; }
-.temp-log-time  { color:var(--muted);font-weight:600; }
-.temp-log-temp  { font-weight:900;color:#06b6d4; }
-.temp-log-alert { color:#ef4444;font-weight:700; }
-.temp-alarm-banner {
-  background:rgba(239,68,68,.15);border:1.5px solid rgba(239,68,68,.4);
-  border-radius:12px;padding:10px 14px;margin-bottom:12px;
-  display:none;align-items:center;gap:10px;
-}
-.temp-alarm-banner.show { display:flex; }
-.temp-set-row {
-  display:flex;align-items:center;gap:10px;background:var(--surface2);
-  border-radius:14px;padding:12px 14px;margin-top:10px;border:1px solid var(--border);
-}
-.temp-set-lbl  { flex:1;font-size:13px;font-weight:700;color:var(--text); }
-.temp-set-val  { font-size:15px;font-weight:900;color:#06b6d4;min-width:50px;text-align:center; }
-.temp-set-btn  {
-  width:32px;height:32px;border-radius:50%;border:none;
-  background:rgba(6,182,212,.15);color:#06b6d4;font-size:18px;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-}
 
 /* ══════════════════════════════════════════════════════════
    📄  DOCUMENT SCANNER SHEET
@@ -6911,28 +6743,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <!-- Header -->
       <div class="tools-page-header">
         <div class="tools-page-title">🛠️ Driver Tools</div>
-        <div class="tools-page-sub">Freight · DOT Lookup · HOS Reset</div>
+        <div class="tools-page-sub">HOS Reset</div>
       </div>
 
       <!-- Tool Buttons -->
-      <button class="tool-page-btn" onclick="openFreightCalc()" style="--tclr:#10b981;--tcbg:rgba(16,185,129,.1);--tcbdr:rgba(16,185,129,.3)">
-        <div class="tpb-icon" style="background:linear-gradient(135deg,#10b981,#059669)">💰</div>
-        <div class="tpb-info">
-          <div class="tpb-title">Freight Calculator</div>
-          <div class="tpb-sub">Estimate earnings, fuel cost &amp; net rate per mile</div>
-        </div>
-        <div class="tpb-arrow">›</div>
-      </button>
-
-      <button class="tool-page-btn" onclick="openDotLookup()" style="--tclr:#3b82f6;--tcbg:rgba(59,130,246,.1);--tcbdr:rgba(59,130,246,.3)">
-        <div class="tpb-icon" style="background:linear-gradient(135deg,#1d4ed8,#2563eb)">🔍</div>
-        <div class="tpb-info">
-          <div class="tpb-title">DOT Number Lookup</div>
-          <div class="tpb-sub">Search carrier info from FMCSA database</div>
-        </div>
-        <div class="tpb-arrow">›</div>
-      </button>
-
       <button class="tool-page-btn" onclick="openResetSheet()" style="--tclr:#ef4444;--tcbg:rgba(239,68,68,.1);--tcbdr:rgba(239,68,68,.3)">
         <div class="tpb-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626)">⏰</div>
         <div class="tpb-info">
@@ -6950,16 +6764,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="tpb-sub">Conectar dispositivo ELD vía Bluetooth y ver datos en vivo</div>
         </div>
         <div class="tpb-arrow" id="eldArrowStatus">›</div>
-      </button>
-
-      <!-- Temp Sensor Refrigerada -->
-      <button class="tool-page-btn" onclick="openTempSheet()" style="--tclr:#06b6d4;--tcbg:rgba(6,182,212,.1);--tcbdr:rgba(6,182,212,.3)">
-        <div class="tpb-icon" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">🌡️</div>
-        <div class="tpb-info">
-          <div class="tpb-title">Carga Refrigerada</div>
-          <div class="tpb-sub">Sensor de temperatura en tiempo real para trailers reefer</div>
-        </div>
-        <div class="tpb-arrow" id="tempArrowStatus">›</div>
       </button>
 
       <!-- Bridge & Weight Restrictions -->
@@ -7634,124 +7438,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════
-     💰  FREIGHT CALCULATOR
-══════════════════════════════════════════════════════════ -->
-<div id="freightOverlay" class="tool-overlay">
-  <div class="tool-sheet">
-    <div class="tool-hdr">
-      <div class="tool-hdr-left">
-        <div class="tool-hdr-icon" style="background:linear-gradient(135deg,#10b981,#059669)">💰</div>
-        <div>
-          <div class="tool-hdr-title">Freight Calculator</div>
-          <div class="tool-hdr-sub">Estimate your trip earnings</div>
-        </div>
-      </div>
-      <button class="tool-close" onclick="closeFreightCalc()">×</button>
-    </div>
-    <div class="tool-body">
-      <div class="frt-row">
-        <div class="frt-field">
-          <div class="frt-label">Miles / Distance</div>
-          <input class="frt-input" type="number" id="frtMiles" placeholder="0" min="1" oninput="calcFreight()" />
-        </div>
-        <div class="frt-field">
-          <div class="frt-label">Rate per Mile</div>
-          <div class="frt-prefix-wrap">
-            <span class="frt-prefix">$</span>
-            <input class="frt-input" type="number" id="frtRate" placeholder="2.50" step="0.01" min="0.01" oninput="calcFreight()" />
-          </div>
-        </div>
-      </div>
-      <div class="frt-row">
-        <div class="frt-field">
-          <div class="frt-label">Fuel Cost / Gallon</div>
-          <div class="frt-prefix-wrap">
-            <span class="frt-prefix">$</span>
-            <input class="frt-input" type="number" id="frtFuelPrice" placeholder="3.80" step="0.01" min="0.01" oninput="calcFreight()" />
-          </div>
-        </div>
-        <div class="frt-field">
-          <div class="frt-label">MPG (Truck)</div>
-          <input class="frt-input" type="number" id="frtMpg" placeholder="6.5" step="0.1" min="1" oninput="calcFreight()" />
-        </div>
-      </div>
-      <div class="frt-row" style="grid-template-columns:1fr">
-        <div class="frt-field">
-          <div class="frt-label">Other Expenses (tolls, etc.)</div>
-          <div class="frt-prefix-wrap">
-            <span class="frt-prefix">$</span>
-            <input class="frt-input" type="number" id="frtOther" placeholder="0" min="0" oninput="calcFreight()" />
-          </div>
-        </div>
-      </div>
-
-      <div class="frt-result">
-        <div class="frt-result-label">Estimated Net Earnings</div>
-        <div class="frt-result-main" id="frtNet">$0</div>
-        <div class="frt-result-sub" id="frtNetSub">Enter values above to calculate</div>
-      </div>
-
-      <div class="frt-breakdown">
-        <div class="frt-break-card">
-          <div class="frt-break-val" id="frtGross">$0</div>
-          <div class="frt-break-lbl">Gross Pay</div>
-        </div>
-        <div class="frt-break-card">
-          <div class="frt-break-val" id="frtFuelCost">$0</div>
-          <div class="frt-break-lbl">Fuel Cost</div>
-        </div>
-        <div class="frt-break-card">
-          <div class="frt-break-val" id="frtPerMile">$0</div>
-          <div class="frt-break-lbl">Net/Mile</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════
-     🔍  DOT NUMBER LOOKUP
-══════════════════════════════════════════════════════════ -->
-<div id="dotOverlay" class="tool-overlay">
-  <div class="tool-sheet">
-    <div class="tool-hdr">
-      <div class="tool-hdr-left">
-        <div class="tool-hdr-icon" style="background:linear-gradient(135deg,#1d4ed8,#2563eb)">🔍</div>
-        <div>
-          <div class="tool-hdr-title">DOT Lookup</div>
-          <div class="tool-hdr-sub">Search carrier by DOT or MC number</div>
-        </div>
-      </div>
-      <button class="tool-close" onclick="closeDotLookup()">×</button>
-    </div>
-    <div class="tool-body">
-      <div class="dot-search-row">
-        <input class="dot-search-input" type="number" id="dotInput" placeholder="Enter DOT number (e.g. 123456)" inputmode="numeric" />
-        <button class="dot-search-btn" onclick="searchDOT()">Search</button>
-      </div>
-      <div class="dot-error" id="dotError"></div>
-      <div class="dot-loading" id="dotLoading">🔍 Searching FMCSA database...</div>
-      <div class="dot-result" id="dotResult">
-        <div class="dot-result-hdr">
-          <div class="dot-badge">DOT</div>
-          <div class="dot-company" id="dotCompanyName">—</div>
-        </div>
-        <div class="dot-row"><span class="dot-key">DOT Number</span><span class="dot-val" id="dotNumber">—</span></div>
-        <div class="dot-row"><span class="dot-key">MC Number</span><span class="dot-val" id="dotMC">—</span></div>
-        <div class="dot-row"><span class="dot-key">Operating Status</span><span class="dot-val" id="dotStatus">—</span></div>
-        <div class="dot-row"><span class="dot-key">Safety Rating</span><span class="dot-val" id="dotSafety">—</span></div>
-        <div class="dot-row"><span class="dot-key">Power Units</span><span class="dot-val" id="dotUnits">—</span></div>
-        <div class="dot-row"><span class="dot-key">Drivers</span><span class="dot-val" id="dotDrivers">—</span></div>
-        <div class="dot-row"><span class="dot-key">State</span><span class="dot-val" id="dotState">—</span></div>
-        <div class="dot-row"><span class="dot-key">Phone</span><span class="dot-val" id="dotPhone">—</span></div>
-      </div>
-      <div class="dot-disclaimer">
-        ⚠️ Data sourced via FMCSA public registry. Always verify directly at <strong>safer.fmcsa.dot.gov</strong> for official compliance decisions.
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ══════════════════════════════════════════════════════════
      👥  COMMUNITY REPORTS PANEL (mejorado)
@@ -19499,150 +19185,6 @@ function calcAxleWeight() {
   document.getElementById('axleResults').innerHTML = html;
 }
 
-function openFreightCalc() {
-  // Auto-fill miles from current route if available
-  if (typeof totalDistanceMiles !== 'undefined' && totalDistanceMiles > 0) {
-    document.getElementById('frtMiles').value = Math.round(totalDistanceMiles);
-  }
-  document.getElementById('freightOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  calcFreight();
-}
-function closeFreightCalc() {
-  document.getElementById('freightOverlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function calcFreight() {
-  const miles     = parseFloat(document.getElementById('frtMiles').value) || 0;
-  const rate      = parseFloat(document.getElementById('frtRate').value)  || 0;
-  const fuelPrice = parseFloat(document.getElementById('frtFuelPrice').value) || 0;
-  const mpg       = parseFloat(document.getElementById('frtMpg').value)   || 6.5;
-  const other     = parseFloat(document.getElementById('frtOther').value) || 0;
-
-  const gross    = miles * rate;
-  const fuelCost = fuelPrice > 0 && mpg > 0 ? (miles / mpg) * fuelPrice : 0;
-  const net      = gross - fuelCost - other;
-  const perMile  = miles > 0 ? net / miles : 0;
-
-  const fmt = v => '$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-
-  document.getElementById('frtGross').textContent    = fmt(gross);
-  document.getElementById('frtFuelCost').textContent = fmt(fuelCost);
-  document.getElementById('frtNet').textContent      = (net < 0 ? '-' : '') + fmt(net);
-  document.getElementById('frtNet').style.color      = net < 0 ? '#ef4444' : '#10b981';
-  document.getElementById('frtPerMile').textContent  = (perMile < 0 ? '-$' : '$') + Math.abs(perMile).toFixed(3);
-
-  if (miles > 0 && rate > 0) {
-    document.getElementById('frtNetSub').textContent =
-      `${miles.toLocaleString()} miles · ${(miles/mpg).toFixed(0)} gallons fuel`;
-  }
-}
-
-/* ════════════════════════════════════════════════════════════
-   🔍  DOT NUMBER LOOKUP
-════════════════════════════════════════════════════════════ */
-function openDotLookup() {
-  document.getElementById('dotOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeDotLookup() {
-  document.getElementById('dotOverlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-async function searchDOT() {
-  const dotNum = document.getElementById('dotInput').value.trim();
-  if (!dotNum || isNaN(dotNum)) {
-    showDotError('Please enter a valid DOT number (numbers only)');
-    return;
-  }
-
-  document.getElementById('dotError').classList.remove('visible');
-  document.getElementById('dotResult').classList.remove('visible');
-  document.getElementById('dotLoading').classList.add('visible');
-
-  try {
-    // FMCSA public API - requires free API key in production
-    // Using CORS proxy approach with FMCSA SAFER data
-    const url = `https://mobile.fmcsa.dot.gov/qc/services/carriers/${dotNum}?webKey=demo`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-
-    if (res.ok) {
-      const data = await res.json();
-      const c = data.content || data.carrier || data;
-      displayDotResult(c, dotNum);
-    } else {
-      // Fallback: show SAFER link
-      throw new Error('API unavailable');
-    }
-  } catch (e) {
-    // Graceful fallback - show SAFER web link
-    document.getElementById('dotLoading').classList.remove('visible');
-    showDotError('');
-    // Show result with SAFER link
-    document.getElementById('dotCompanyName').textContent = 'DOT #' + dotNum;
-    document.getElementById('dotNumber').textContent = dotNum;
-    document.getElementById('dotMC').textContent = 'See SAFER';
-    document.getElementById('dotStatus').innerHTML = '<a href="https://safer.fmcsa.dot.gov/query.asp?searchtype=ANY&query_type=queryCarrierSnapshot&query_param=USDOT&query_string=' + dotNum + '" target="_blank" style="color:#3b82f6;text-decoration:underline">View on SAFER.fmcsa.dot.gov ↗</a>';
-    document.getElementById('dotSafety').textContent = 'Check SAFER';
-    document.getElementById('dotUnits').textContent = '—';
-    document.getElementById('dotDrivers').textContent = '—';
-    document.getElementById('dotState').textContent = '—';
-    document.getElementById('dotPhone').textContent = '—';
-    document.getElementById('dotResult').classList.add('visible');
-  }
-}
-
-function displayDotResult(c, dotNum) {
-  document.getElementById('dotLoading').classList.remove('visible');
-
-  const get = (obj, ...keys) => {
-    for (const k of keys) { if (obj && obj[k]) return obj[k]; }
-    return '—';
-  };
-
-  const name = get(c, 'legalName', 'legal_name', 'name', 'dbaName') || ('DOT #' + dotNum);
-  const status = get(c, 'operatingStatus', 'operating_status', 'carrierOperation');
-  const safety = get(c, 'safetyRating', 'safety_rating', 'ratingDate');
-  const units  = get(c, 'totalPowerUnits', 'power_units', 'truckCount');
-  const drivers = get(c, 'totalDrivers', 'drivers');
-  const state  = get(c, 'phyState', 'state', 'physicalState');
-  const phone  = get(c, 'telephone', 'phone');
-  const mc     = get(c, 'mcMxMffNum', 'mc_number', 'mcNumber');
-
-  document.getElementById('dotCompanyName').textContent = name;
-  document.getElementById('dotNumber').textContent = dotNum;
-  document.getElementById('dotMC').textContent = mc;
-
-  const statusEl = document.getElementById('dotStatus');
-  statusEl.textContent = status;
-  statusEl.className = 'dot-val ' + (
-    /active|authorized/i.test(status) ? 'green' :
-    /revoked|out of service/i.test(status) ? 'red' : 'yellow'
-  );
-
-  const safetyEl = document.getElementById('dotSafety');
-  safetyEl.textContent = safety;
-  safetyEl.className = 'dot-val ' + (
-    /satisfactory/i.test(safety) ? 'green' :
-    /unsatisfactory|conditional/i.test(safety) ? 'red' : ''
-  );
-
-  document.getElementById('dotUnits').textContent = units;
-  document.getElementById('dotDrivers').textContent = drivers;
-  document.getElementById('dotState').textContent = state;
-  document.getElementById('dotPhone').textContent = phone;
-  document.getElementById('dotResult').classList.add('visible');
-}
-
-function showDotError(msg) {
-  const el = document.getElementById('dotError');
-  el.textContent = msg || 'Could not retrieve data. Visit safer.fmcsa.dot.gov directly.';
-  el.classList.add('visible');
-  document.getElementById('dotLoading').classList.remove('visible');
-}
-
 /* ════════════════════════════════════════════════════════════
    👥  COMMUNITY REPORTS (MEJORADO)
 ════════════════════════════════════════════════════════════ */
@@ -20001,8 +19543,6 @@ function initCommBadge() {
 // Close overlays on backdrop tap
 document.addEventListener('click', e => {
   if (e.target.id === 'resetSheet')       closeResetSheet();
-  if (e.target.id === 'freightOverlay')   closeFreightCalc();
-  if (e.target.id === 'dotOverlay')       closeDotLookup();
   if (e.target.id === 'communityPanel')   closeCommunityPanel();
 });
 
@@ -23514,42 +23054,6 @@ FIREBASE_CONFIG = {
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════
-     🌡️  TEMPERATURA CARGA REFRIGERADA SHEET
-══════════════════════════════════════════════════════════ -->
-<div id="tempSheet" onclick="if(event.target===this)closeTempSheet()">
-  <div class="temp-panel">
-    <div class="temp-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div><div class="eld-title">🌡️ Carga Refrigerada</div><div class="eld-sub">Monitoreo de temperatura en tiempo real</div></div>
-      <button onclick="closeTempSheet()" style="background:rgba(255,255,255,.08);border:none;border-radius:50%;width:32px;height:32px;color:var(--muted);cursor:pointer;font-size:16px">✕</button>
-    </div>
-    <div id="tempAlarmBanner" class="temp-alarm-banner">
-      <span style="font-size:20px">🚨</span>
-      <div><div style="font-size:13px;font-weight:800;color:#ef4444" id="tempAlarmText">¡ALERTA DE TEMPERATURA!</div><div style="font-size:11px;color:rgba(239,68,68,.8)" id="tempAlarmSub"></div></div>
-    </div>
-    <div class="temp-big-ring">
-      <svg viewBox="0 0 140 140" width="140" height="140">
-        <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="8"/>
-        <circle id="tempArc" cx="70" cy="70" r="60" fill="none" stroke="#06b6d4" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 377" transform="rotate(-220 70 70)" style="transition:stroke-dasharray .8s ease,stroke .4s"/>
-      </svg>
-      <div class="temp-big-val" id="tempBigVal" style="color:#06b6d4">--°</div>
-      <div class="temp-big-unit" style="color:var(--muted)">FAHRENHEIT</div>
-    </div>
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px">🔲 Zona de Carga</div>
-    <div class="temp-zones">
-      <div class="temp-zone-card active" id="tzFrozen" onclick="setTempZone('frozen')"><div class="temp-zone-icon">🧊</div><div class="temp-zone-name">FROZEN</div><div class="temp-zone-range">-10° a 0°F</div></div>
-      <div class="temp-zone-card" id="tzFresh"  onclick="setTempZone('fresh')"><div class="temp-zone-icon">🥦</div><div class="temp-zone-name">FRESH</div><div class="temp-zone-range">33° a 41°F</div></div>
-      <div class="temp-zone-card" id="tzPharma" onclick="setTempZone('pharma')"><div class="temp-zone-icon">💊</div><div class="temp-zone-name">PHARMA</div><div class="temp-zone-range">35° a 46°F</div></div>
-    </div>
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:14px 0 8px">⚙️ Rangos de Alerta</div>
-    <div class="temp-set-row"><span style="font-size:18px">🔻</span><span class="temp-set-lbl">Mínimo</span><button class="temp-set-btn" onclick="adjustSetpoint('min',-1)">−</button><span class="temp-set-val" id="tempMinVal">-10°F</span><button class="temp-set-btn" onclick="adjustSetpoint('min',+1)">+</button></div>
-    <div class="temp-set-row" style="margin-top:8px"><span style="font-size:18px">🔺</span><span class="temp-set-lbl">Máximo</span><button class="temp-set-btn" onclick="adjustSetpoint('max',-1)">−</button><span class="temp-set-val" id="tempMaxVal">0°F</span><button class="temp-set-btn" onclick="adjustSetpoint('max',+1)">+</button></div>
-    <button onclick="connectTempSensor()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px;box-shadow:0 4px 14px rgba(6,182,212,.35)" id="tempConnectBtn">📡 Conectar Sensor Reefer</button>
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:14px 0 8px">📋 Registro de Temperatura</div>
-    <div class="temp-log" id="tempLog"><div style="text-align:center;color:var(--muted);padding:16px;font-size:12px">Sin datos — conecta el sensor</div></div>
-  </div>
-</div>
 
 <script>
 function updatePlanUI() {
@@ -23972,20 +23476,25 @@ function openEldSheet(){
   const isSecure = window.isSecureContext;
 
   // Reset all optional panels
-  const iosNotice = document.getElementById('eldIosNotice');
-  const scanBtn   = document.getElementById('eldScanBtn');
-  const demoBtn   = document.getElementById('eldDemoBtn');
-  const noBT      = document.getElementById('eldNoBluetooth');
-  if(iosNotice) iosNotice.style.display='none';
-  if(noBT)      noBT.style.display='none';
-  if(scanBtn){  scanBtn.style.display='block'; scanBtn.disabled=false; scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)'; }
-  if(demoBtn)   demoBtn.style.display='block';
+  const iosNotice  = document.getElementById('eldIosNotice');
+  const scanBtn    = document.getElementById('eldScanBtn');
+  const demoBtn    = document.getElementById('eldDemoBtn');
+  const noBT       = document.getElementById('eldNoBluetooth');
+  const forceBtn   = document.getElementById('eldForceBtn');
+  const alertBanner= document.getElementById('eldAlertBanner');
+  if(iosNotice)    iosNotice.style.display='none';
+  if(noBT)         noBT.style.display='none';
+  if(alertBanner)  alertBanner.style.display='none';
+  if(scanBtn){     scanBtn.style.display='block'; scanBtn.disabled=false; scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)'; }
+  if(demoBtn)      demoBtn.style.display='block';
+  if(forceBtn)     forceBtn.style.display='block';
 
-  // Case 1: iOS → BT imposible, mostrar aviso + demo
+  // Case 1: iOS → BT imposible, mostrar aviso + ocultar todo lo de scan
   if(isIOS){
-    if(iosNotice) iosNotice.style.display='block';
-    if(scanBtn)   scanBtn.style.display='none';
-    if(demoBtn)   demoBtn.style.display='none'; // hay uno interno en iosNotice
+    if(iosNotice)  iosNotice.style.display='block';
+    if(scanBtn)    scanBtn.style.display='none';
+    if(demoBtn)    demoBtn.style.display='none';
+    if(forceBtn)   forceBtn.style.display='none';
     return;
   }
   // Case 2: in-app browser (Instagram/Facebook/TikTok) → BT bloqueado
@@ -23998,8 +23507,9 @@ function openEldSheet(){
         <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Abre esta página en <b>Chrome</b> o <b>Edge</b> (Android) para conectar Bluetooth.<br>Mientras tanto, usa el modo simulación.</div>
         <button onclick="startEldDemo()" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">🎮 Activar Modo Simulación</button>`;
     }
-    if(scanBtn) scanBtn.style.display='none';
-    if(demoBtn) demoBtn.style.display='none';
+    if(scanBtn)  scanBtn.style.display='none';
+    if(demoBtn)  demoBtn.style.display='none';
+    if(forceBtn) forceBtn.style.display='none';
     return;
   }
   // Case 3: no HTTPS (BT requiere contexto seguro)
@@ -24012,8 +23522,9 @@ function openEldSheet(){
         <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Web Bluetooth solo funciona en sitios seguros (HTTPS).<br>Accede a la versión HTTPS o usa el modo simulación.</div>
         <button onclick="startEldDemo()" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">🎮 Activar Modo Simulación</button>`;
     }
-    if(scanBtn) scanBtn.style.display='none';
-    if(demoBtn) demoBtn.style.display='none';
+    if(scanBtn)  scanBtn.style.display='none';
+    if(demoBtn)  demoBtn.style.display='none';
+    if(forceBtn) forceBtn.style.display='none';
     return;
   }
   // Case 4: API no disponible (Firefox, Safari desktop, etc.)
@@ -24475,120 +23986,6 @@ function disconnectEld(){
   document.getElementById('eldRingLabel').textContent='DESCONECTADO';
   document.getElementById('eldArrowStatus').style.color='';
   showToast('info','🔌','ELD Desconectado','Dispositivo desvinculado',2500);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  🌡️ TEMPERATURA CARGA REFRIGERADA
-// ─────────────────────────────────────────────────────────────────────────────
-let tempZone='frozen',tempMin=-10,tempMax=0;
-let tempSensorInterval=null,tempCurrentF=null,tempLogData=[];
-const TEMP_ZONES={
-  frozen:{min:-10,max:0,label:'Frozen',icon:'🧊',color:'#06b6d4'},
-  fresh:{min:33,max:41,label:'Fresh',icon:'🥦',color:'#10b981'},
-  pharma:{min:35,max:46,label:'Pharma',icon:'💊',color:'#8b5cf6'}
-};
-
-function openTempSheet(){document.getElementById('tempSheet').classList.add('open');updateTempUI();}
-function closeTempSheet(){document.getElementById('tempSheet').classList.remove('open');}
-
-function setTempZone(zone){
-  tempZone=zone;
-  document.querySelectorAll('.temp-zone-card').forEach(c=>c.classList.remove('active'));
-  const id='tz'+zone.charAt(0).toUpperCase()+zone.slice(1);
-  document.getElementById(id).classList.add('active');
-  const z=TEMP_ZONES[zone];
-  tempMin=z.min;tempMax=z.max;
-  document.getElementById('tempMinVal').textContent=tempMin+'°F';
-  document.getElementById('tempMaxVal').textContent=tempMax+'°F';
-  document.getElementById('tempArc').style.stroke=z.color;
-  document.getElementById('tempBigVal').style.color=z.color;
-  updateTempUI();
-}
-
-function adjustSetpoint(which,delta){
-  if(which==='min'){tempMin+=delta;document.getElementById('tempMinVal').textContent=tempMin+'°F';}
-  else{tempMax+=delta;document.getElementById('tempMaxVal').textContent=tempMax+'°F';}
-  checkTempAlarm();
-}
-
-function connectTempSensor(){
-  const btn=document.getElementById('tempConnectBtn');
-  if(tempSensorInterval){
-    clearInterval(tempSensorInterval);tempSensorInterval=null;tempCurrentF=null;
-    btn.textContent='📡 Conectar Sensor Reefer';
-    btn.style.background='linear-gradient(135deg,#0891b2,#06b6d4)';
-    document.getElementById('tempArrowStatus').style.color='';
-    document.getElementById('tempBigVal').textContent='--°';
-    document.getElementById('tempAlarmBanner').classList.remove('show');
-    showToast('info','🌡️','Sensor desconectado','',2000);
-    return;
-  }
-  btn.textContent='⏳ Conectando...';btn.disabled=true;
-  setTimeout(()=>{
-    btn.textContent='🔴 Desconectar Sensor';
-    btn.style.background='linear-gradient(135deg,#dc2626,#ef4444)';
-    btn.disabled=false;
-    document.getElementById('tempArrowStatus').style.color='#06b6d4';
-    showToast('info','🌡️','Sensor conectado','Temperatura en vivo activa',3000);
-    const zone=TEMP_ZONES[tempZone];
-    tempCurrentF=(zone.min+zone.max)/2;
-    let tick=0;
-    tempSensorInterval=setInterval(()=>{
-      tempCurrentF+=(Math.random()-0.5)*0.6;
-      tick++;
-      if(tick%5===0){
-        const now=new Date();
-        const entry={
-          time:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
-          temp:tempCurrentF,
-          alert:tempCurrentF<tempMin||tempCurrentF>tempMax
-        };
-        tempLogData.unshift(entry);
-        if(tempLogData.length>50) tempLogData.pop();
-        renderTempLog();
-      }
-      updateTempUI();checkTempAlarm();
-    },1500);
-  },1500);
-}
-
-function checkTempAlarm(){
-  if(tempCurrentF===null) return;
-  const banner=document.getElementById('tempAlarmBanner');
-  const alarmTx=document.getElementById('tempAlarmText');
-  const alarmSb=document.getElementById('tempAlarmSub');
-  if(tempCurrentF<tempMin){
-    banner.classList.add('show');
-    alarmTx.textContent='🔻 Temperatura por DEBAJO del mínimo';
-    alarmSb.textContent=tempCurrentF.toFixed(1)+'°F (mínimo '+tempMin+'°F)';
-    document.getElementById('tempArc').style.stroke='#3b82f6';
-  } else if(tempCurrentF>tempMax){
-    banner.classList.add('show');
-    alarmTx.textContent='🔺 Temperatura por ENCIMA del máximo';
-    alarmSb.textContent=tempCurrentF.toFixed(1)+'°F (máximo '+tempMax+'°F)';
-    document.getElementById('tempArc').style.stroke='#ef4444';
-  } else {
-    banner.classList.remove('show');
-    document.getElementById('tempArc').style.stroke=TEMP_ZONES[tempZone].color;
-  }
-}
-
-function updateTempUI(){
-  if(tempCurrentF===null) return;
-  document.getElementById('tempBigVal').textContent=tempCurrentF.toFixed(1)+'°';
-  const zone=TEMP_ZONES[tempZone];
-  const rangeMin=zone.min-10,rangeMax=zone.max+10;
-  const pct=Math.max(0,Math.min(1,(tempCurrentF-rangeMin)/(rangeMax-rangeMin)));
-  const dash=pct*325;
-  document.getElementById('tempArc').setAttribute('stroke-dasharray',dash.toFixed(1)+' 377');
-}
-
-function renderTempLog(){
-  const el=document.getElementById('tempLog');
-  if(!tempLogData.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:16px;font-size:12px">Sin datos</div>';return;}
-  el.innerHTML=tempLogData.slice(0,15).map(e=>
-    '<div class="temp-log-row"><span class="temp-log-time">'+e.time+'</span><span class="'+(e.alert?'temp-log-alert':'temp-log-temp')+'">'+e.temp.toFixed(1)+'°F '+(e.alert?'⚠️':'')+'</span></div>'
-  ).join('');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
