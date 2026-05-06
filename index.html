@@ -22940,6 +22940,8 @@ FIREBASE_CONFIG = {
     <!-- Force scan button (bypass detection, always visible) -->
     <button id="eldForceBtn" onclick="forceEldScan()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(16,185,129,.35);background:rgba(16,185,129,.10);color:#10b981;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🔵 Forzar Escaneo ELD (si no aparece)</button>
 
+    <!-- Demo mode button — always available for simulation / iOS -->
+    <button id="eldDemoBtn" onclick="startEldDemo()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:#f59e0b;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🎮 Activar Modo Simulación ELD</button>
 
     <!-- Diagnostic panel (live environment detection) -->
     <div id="eldDiag" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11px;line-height:1.55;color:var(--muted)">
@@ -23531,11 +23533,13 @@ function openEldSheet(){
   if(!hasWebBT){
     if(noBT) noBT.style.display='block';
     if(scanBtn) scanBtn.style.display='none';
-    // demoBtn se mantiene visible
+    if(forceBtn) forceBtn.style.display='none';
+    // demoBtn se mantiene visible para simulación
+    renderEldDiagnostics();
     return;
   }
   // Case 5: todo OK — Android Chrome/Edge con HTTPS
-  // scanBtn y demoBtn ya están visibles
+  // scanBtn, forceBtn y demoBtn ya están visibles
 
   // Render diagnostic panel at the end
   renderEldDiagnostics();
