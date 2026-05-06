@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rutas-dot-v91';
+const CACHE_NAME = 'hos-tracker-v92';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
