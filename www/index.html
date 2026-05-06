@@ -23391,7 +23391,7 @@ FIREBASE_CONFIG = {
           <div style="font-size:13px;color:var(--text)"><b>Truck Precision:</b> Usa el modo simulación para practicar el logbook y registrar tus horas manualmente.</div>
         </div>
       </div>
-      <button onclick="startEldDemo()" style="width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🎮 Activar Modo Simulación ELD</button>
+
     </div>
 
     <!-- Android/Chrome BLE scan button -->
@@ -23508,8 +23508,8 @@ FIREBASE_CONFIG = {
     <div id="eldNoBluetooth" style="display:none;text-align:center;padding:16px 0;color:var(--muted)">
       <div style="font-size:36px;margin-bottom:8px">📶</div>
       <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Bluetooth Web no disponible</div>
-      <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Requiere Chrome/Edge en Android.<br>En iPhone usa el modo simulación.</div>
-      <button onclick="startEldDemo()" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">🎮 Activar Modo Simulación</button>
+      <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Requiere Chrome/Edge en Android.<br></div>
+
     </div>
   </div>
 </div>
@@ -23995,8 +23995,8 @@ function openEldSheet(){
       noBT.innerHTML = `
         <div style="font-size:36px;margin-bottom:8px">🔒</div>
         <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Navegador in-app detectado</div>
-        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Abre esta página en <b>Chrome</b> o <b>Edge</b> (Android) para conectar Bluetooth.<br>Mientras tanto, usa el modo simulación.</div>
-        <button onclick="startEldDemo()" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">🎮 Activar Modo Simulación</button>`;
+        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Abre esta página en <b>Chrome</b> o <b>Edge</b> (Android) para conectar Bluetooth.</div>
+
     }
     if(scanBtn) scanBtn.style.display='none';
     if(demoBtn) demoBtn.style.display='none';
@@ -24009,8 +24009,8 @@ function openEldSheet(){
       noBT.innerHTML = `
         <div style="font-size:36px;margin-bottom:8px">🔐</div>
         <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">HTTPS requerido</div>
-        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Web Bluetooth solo funciona en sitios seguros (HTTPS).<br>Accede a la versión HTTPS o usa el modo simulación.</div>
-        <button onclick="startEldDemo()" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">🎮 Activar Modo Simulación</button>`;
+        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Web Bluetooth solo funciona en sitios seguros (HTTPS).</div>
+
     }
     if(scanBtn) scanBtn.style.display='none';
     if(demoBtn) demoBtn.style.display='none';
@@ -28172,10 +28172,10 @@ window._hosAutoRecalc = false;
   // ── Escaneo manual (primer toque al badge ELD) ─────────────
   window.heroBleScan = async function(){
     if (_connected) return;
-    if (!navigator.bluetooth){
-      alert('Bluetooth no disponible. Abre la app en Chrome para Android.');
-      return;
-    }
+    if (IS_CAPACITOR || !navigator.bluetooth){ openEldSheet(); return; }
+
+
+
     _setBtBadge('scanning');
     try {
       const device = await navigator.bluetooth.requestDevice({
