@@ -22893,24 +22893,11 @@ FIREBASE_CONFIG = {
       <span>⚠️</span><span id="eldAlertText" style="font-size:13px;font-weight:700;color:#ef4444"></span>
     </div>
     <!-- iOS notice (shown only on iOS) -->
-    <div id="eldIosNotice" style="display:none;background:rgba(245,158,11,.1);border:1.5px solid rgba(245,158,11,.3);border-radius:14px;padding:14px;margin-bottom:14px">
-      <div style="font-size:15px;font-weight:800;color:#f59e0b;margin-bottom:6px">📱 iOS — Bluetooth vía App</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:10px">Safari en iPhone no admite Web Bluetooth. Para conectar tu ELD:</div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
-        <div style="display:flex;align-items:flex-start;gap:8px">
-          <span style="font-size:18px">1️⃣</span>
-          <div style="font-size:13px;color:var(--text)"><b>Keep Truckin / Motive:</b> Abre la app oficial del ELD y completa el logbook ahí.</div>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:8px">
-          <span style="font-size:18px">2️⃣</span>
-          <div style="font-size:13px;color:var(--text)"><b>Samsara / PeopleNet:</b> Usa la app oficial de tu proveedor ELD para iOS.</div>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:8px">
-          <span style="font-size:18px">3️⃣</span>
-          <div style="font-size:13px;color:var(--text)"><b>Truck Precision:</b> Usa el modo simulación para practicar el logbook y registrar tus horas manualmente.</div>
-        </div>
-      </div>
-
+    <div id="eldIosNotice" style="display:none;background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.3);border-radius:14px;padding:16px;margin-bottom:14px;text-align:center">
+      <div style="font-size:32px;margin-bottom:8px">🔒</div>
+      <div style="font-size:15px;font-weight:800;color:#ef4444;margin-bottom:8px">Bluetooth no disponible en iOS</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">Apple no permite Web Bluetooth en Safari ni en ningún navegador de iPhone/iPad.<br><br>
+      Para conectar tu ELD vía Bluetooth usa la <b style="color:var(--text)">app oficial de tu proveedor ELD</b> (Motive, Samsara, PeopleNet, etc.) instalada en tu iPhone.</div>
     </div>
 
     <!-- Android/Chrome BLE scan button -->
@@ -23470,12 +23457,13 @@ function openEldSheet(){
   if(demoBtn)      demoBtn.style.display='block';
   if(forceBtn)     forceBtn.style.display='block';
 
-  // Case 1: iOS → BT imposible, mostrar aviso + ocultar todo lo de scan
+  // Case 1: iOS → Web Bluetooth no soportado en ningún navegador iOS
   if(isIOS){
     if(iosNotice)  iosNotice.style.display='block';
     if(scanBtn)    scanBtn.style.display='none';
     if(demoBtn)    demoBtn.style.display='none';
     if(forceBtn)   forceBtn.style.display='none';
+    renderEldDiagnostics();
     return;
   }
   // Case 2: in-app browser (Instagram/Facebook/TikTok) → BT bloqueado
