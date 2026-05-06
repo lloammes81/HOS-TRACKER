@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hos-tracker-v96';
+const CACHE_NAME = 'truck-precision-v97';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
