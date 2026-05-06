@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hos-tracker-v92';
+const CACHE_NAME = 'hos-tracker-v93';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
