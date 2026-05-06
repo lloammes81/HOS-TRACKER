@@ -23394,14 +23394,14 @@ FIREBASE_CONFIG = {
 
     </div>
 
-    <!-- Android/Chrome BLE scan button -->
-    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">📡 Buscar Solo Dispositivos ELD</button>
+    <!-- Android Bluetooth scan button — shows ALL BT devices -->
+    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">📡 Conectar Dispositivo ELD (Bluetooth)</button>
 
-    <!-- Force scan button (bypass detection, always visible) -->
-    <button id="eldForceBtn" onclick="forceEldScan()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(16,185,129,.35);background:rgba(16,185,129,.10);color:#10b981;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🔵 Forzar Escaneo ELD (si no aparece)</button>
+    <!-- Force scan button -->
+    <button id="eldForceBtn" onclick="forceEldScan()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(16,185,129,.35);background:rgba(16,185,129,.10);color:#10b981;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🔄 Intentar de nuevo</button>
 
-    <!-- Demo mode button — always available for simulation / iOS -->
-    <button id="eldDemoBtn" onclick="startEldDemo()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:#f59e0b;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🎮 Activar Modo Simulación ELD</button>
+    <!-- Demo mode button — hidden by default, shown only when needed -->
+    <button id="eldDemoBtn" onclick="startEldDemo()" style="display:none;width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:#f59e0b;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🎮 Modo Simulación ELD</button>
 
     <!-- Diagnostic panel (live environment detection) -->
     <div id="eldDiag" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11px;line-height:1.55;color:var(--muted)">
@@ -24256,101 +24256,88 @@ async function connectNativeBleDevice(deviceId, name){
 }
 
 async function startEldScan(){
-  // ── Path A: Native Capacitor BLE (works on Android + iPhone as installed app) ──
-  if(IS_CAPACITOR){
-    return startEldScanNative();
-  }
-  // ── Path B: Web Bluetooth fallback (browser) ──
+  // ── Path A: Native Capacitor BLE ──
+  if(IS_CAPACITOR) return startEldScanNative();
+
+  // ── Path B: Web Bluetooth — Android Chrome/Edge ──
   if(!navigator.bluetooth){
-    const noBT = document.getElementById('eldNoBluetooth');
+    const noBT=document.getElementById('eldNoBluetooth');
     if(noBT) noBT.style.display='block';
-    const sb = document.getElementById('eldScanBtn');
+    const sb=document.getElementById('eldScanBtn');
     if(sb) sb.style.display='none';
     return;
   }
-  const ring=document.getElementById('eldRing');
-  const icon=document.getElementById('eldRingIcon');
-  const lbl=document.getElementById('eldRingLabel');
-  const scanBtn=document.getElementById('eldScanBtn');
-  const demoBtn=document.getElementById('eldDemoBtn');
-  const banner=document.getElementById('eldAlertBanner');
-  const bannerTxt=document.getElementById('eldAlertText');
-
-  // Hide any previous alert
+  const ring    = document.getElementById('eldRing');
+  const icon    = document.getElementById('eldRingIcon');
+  const lbl     = document.getElementById('eldRingLabel');
+  const scanBtn = document.getElementById('eldScanBtn');
+  const demoBtn = document.getElementById('eldDemoBtn');
+  const banner  = document.getElementById('eldAlertBanner');
+  const bannerTxt = document.getElementById('eldAlertText');
   if(banner) banner.style.display='none';
 
   ring.className='eld-status-ring scanning';
-  icon.textContent='🔵';lbl.textContent='BUSCANDO ELD...';
-  scanBtn.textContent='⏳ Escaneando dispositivos ELD...';
+  icon.textContent='🔵'; lbl.textContent='BUSCANDO...';
+  scanBtn.textContent='⏳ Abriendo selector Bluetooth...';
   scanBtn.disabled=true;
 
-  // ── Filtros específicos para ELDs ────────────────────────────────────────
-  // Servicios BLE estándar usados por ELDs certificados FMCSA
-  const ELD_SERVICES = [
-    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART (KeepTruckin/Motive, BigRoad, etc.)
-    '0000ff00-0000-1000-8000-00805f9b34fb', // Samsara / genérico
-    '0000ffd0-0000-1000-8000-00805f9b34fb', // PeopleNet / Rand McNally
-    '0000ffe0-0000-1000-8000-00805f9b34fb', // J.J. Keller / Geotab GO
-    '0000fff0-0000-1000-8000-00805f9b34fb', // OBD-II genérico con HOS
-    '00001800-0000-1000-8000-00805f9b34fb', // Generic Access (fallback)
+  // Servicios opcionales para leer datos después de conectar
+  const OPT_SERVICES = [
+    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
+    '0000ff00-0000-1000-8000-00805f9b34fb',
+    '0000ffd0-0000-1000-8000-00805f9b34fb',
+    '0000ffe0-0000-1000-8000-00805f9b34fb',
+    '0000fff0-0000-1000-8000-00805f9b34fb',
+    '00001800-0000-1000-8000-00805f9b34fb',
+    'battery_service', 'device_information',
   ];
-  // Prefijos de nombre de las marcas ELD más comunes en EE.UU.
-  const ELD_NAME_PREFIXES = [
-    'Samsara','SG-','CM-',          // Samsara
-    'KeepTruck','KT-','Motive',     // KeepTruckin / Motive
-    'Geotab','GO-',                 // Geotab
-    'Omnitracs','OT-',              // Omnitracs
-    'BigRoad','BR-',                // BigRoad
-    'PeopleNet','PN-',              // PeopleNet
-    'Lytx','LX-',                   // Lytx
-    'Rand McNally','RM-',           // Rand McNally
-    'JJK','JJ Keller',              // J.J. Keller
-    'ELD','HOS','ELDS',             // Genéricos
-    'TruckX','FleetUp',             // Otros certificados FMCSA
-    'Linxup','LX',                  // Linxup
-    'GPSTracker','GPSELD',          // Genéricos
-  ];
-
-  const nameFilters  = ELD_NAME_PREFIXES.map(p => ({ namePrefix: p }));
-  const svcFilters   = ELD_SERVICES.map(s => ({ services: [s] }));
-  const allFilters   = [...nameFilters, ...svcFilters];
 
   try{
+    // acceptAllDevices: muestra TODOS los dispositivos BT cercanos en Android
     eldDevice = await navigator.bluetooth.requestDevice({
-      filters: allFilters,
-      optionalServices: ELD_SERVICES,
+      acceptAllDevices: true,
+      optionalServices: OPT_SERVICES,
     });
+
     lbl.textContent='CONECTANDO...';
+    icon.textContent='⏳';
     await eldDevice.gatt.connect();
+
     ring.className='eld-status-ring connected';
-    icon.textContent='✅';lbl.textContent='CONECTADO';
-    document.getElementById('eldConnectedName').textContent=eldDevice.name||'Dispositivo ELD';
+    icon.textContent='✅'; lbl.textContent='CONECTADO';
+    document.getElementById('eldConnectedName').textContent = eldDevice.name || 'Dispositivo ELD';
     scanBtn.style.display='none';
     if(demoBtn) demoBtn.style.display='none';
     document.getElementById('eldLiveData').style.display='block';
     document.getElementById('eldLogbook').style.display='block';
     document.getElementById('eldArrowStatus').style.color='#6366f1';
+
+    // Escuchar desconexión
+    eldDevice.addEventListener('gattserverdisconnected', () => {
+      ring.className='eld-status-ring';
+      icon.textContent='📡'; lbl.textContent='DESCONECTADO';
+      scanBtn.style.display='block'; scanBtn.textContent='📡 Reconectar ELD'; scanBtn.disabled=false;
+      if(eldInterval){ clearInterval(eldInterval); eldInterval=null; }
+      try{ showToast('warn','🔌','ELD desconectado','El dispositivo se desconectó.',3000); }catch(_){}
+    });
+
     startEldDataSimulation();
-    try{ showToast('info','📡','ELD Conectado',eldDevice.name||'Dispositivo vinculado',3000); }catch(_){}
+    try{ showToast('info','📡','ELD Conectado', eldDevice.name||'Dispositivo vinculado', 3000); }catch(_){}
+
   }catch(e){
     console.error('[ELD] scan error:', e);
     ring.className='eld-status-ring';
-    icon.textContent='📡';lbl.textContent='DESCONECTADO';
-    scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+    icon.textContent='📡'; lbl.textContent='DESCONECTADO';
+    scanBtn.textContent='📡 Buscar Dispositivo ELD';
     scanBtn.disabled=false;
-    // Traducir el error a un mensaje claro en el banner
     let msg = '';
-    if(e.name==='NotFoundError')         msg = 'No seleccionaste ningún dispositivo. Intenta de nuevo.';
-    else if(e.name==='SecurityError')    msg = 'Bluetooth bloqueado. Asegúrate de usar HTTPS y Chrome/Edge en Android.';
-    else if(e.name==='NotAllowedError')  msg = 'Permiso de Bluetooth denegado. Actívalo en ajustes del navegador.';
-    else if(e.name==='NotSupportedError')msg = 'Este dispositivo no soporta Web Bluetooth.';
-    else if(/user gesture/i.test(e.message||'')) msg = 'El clic debe venir del usuario. Pulsa el botón directamente.';
-    else                                  msg = 'Error BLE: ' + (e.message || e.name || 'desconocido');
-    if(banner && bannerTxt){
-      bannerTxt.textContent = msg;
-      banner.style.display = 'flex';
-    }
-    try{ showToast('warn','⚠️','ELD Error', msg, 5000); }catch(_){}
+    if(e.name==='NotFoundError')          msg='No seleccionaste ningún dispositivo. Pulsa el botón e elige tu ELD de la lista.';
+    else if(e.name==='SecurityError')     msg='Bluetooth bloqueado. Abre la app en Chrome o Edge (Android) con HTTPS.';
+    else if(e.name==='NotAllowedError')   msg='Permiso de Bluetooth denegado. Ve a Ajustes del teléfono → Chrome → Permisos → Bluetooth.';
+    else if(e.name==='NotSupportedError') msg='Tu teléfono no soporta Web Bluetooth. Usa Chrome actualizado en Android.';
+    else msg = e.message || e.name || 'Error desconocido';
+    if(banner && bannerTxt){ bannerTxt.textContent=msg; banner.style.display='flex'; }
+    try{ showToast('warn','⚠️','Error Bluetooth', msg, 5000); }catch(_){}
   }
 }
 
