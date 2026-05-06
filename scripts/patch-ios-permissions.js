@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 /**
  * Patches ios/App/App/Info.plist with required permission descriptions.
- * Runs after `npx cap add ios` in the AppFlow build script.
+ * Cross-platform: uses pure Node.js fs (no PlistBuddy / macOS dependency).
  */
 
-const { execSync } = require('child_process');
+const fs   = require('fs');
 const path = require('path');
 
 const PLIST = path.join(__dirname, '..', 'ios', 'App', 'App', 'Info.plist');
-const PB = '/usr/libexec/PlistBuddy';
 
 const permissions = [
   ['NSCameraUsageDescription',
@@ -35,26 +34,35 @@ const permissions = [
    'Necesario para alertas de horas de servicio, límites de manejo y recordatorios de descanso.'],
 ];
 
-let patched = 0;
-let skipped = 0;
-
-for (const [key, value] of permissions) {
-  try {
-    // Try to add; if key exists PlistBuddy exits with error — catch and skip
-    execSync(`${PB} -c "Add :${key} string '${value}'" "${PLIST}"`, { stdio: 'pipe' });
-    console.log(`✅ Added: ${key}`);
-    patched++;
-  } catch {
-    try {
-      // Key already exists — overwrite it
-      execSync(`${PB} -c "Set :${key} '${value}'" "${PLIST}"`, { stdio: 'pipe' });
-      console.log(`🔄 Updated: ${key}`);
-      patched++;
-    } catch (e2) {
-      console.warn(`⚠️  Skipped: ${key} — ${e2.message}`);
-      skipped++;
-    }
-  }
+if (!fs.existsSync(PLIST)) {
+  console.warn('⚠️  Info.plist not found — skipping iOS permissions patch.');
+  console.warn(`   Expected at: ${PLIST}`);
+  process.exit(0);
 }
 
-console.log(`\n✅ iOS permissions patched: ${patched} added/updated, ${skipped} skipped.`);
+let xml = fs.readFileSync(PLIST, 'utf8');
+let patched = 0;
+
+for (const [key, value] of permissions) {
+  const escaped = value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Check if key already exists
+  const existingRe = new RegExp(
+    `(<key>${key}<\\/key>\\s*<string>)[^<]*(</string>)`, 's'
+  );
+
+  if (existingRe.test(xml)) {
+    // Update existing value
+    xml = xml.replace(existingRe, `$1${escaped}$2`);
+    console.log(`🔄 Updated: ${key}`);
+  } else {
+    // Insert before closing </dict> of the root dict
+    const insertBlock = `\t<key>${key}</key>\n\t<string>${escaped}</string>\n`;
+    xml = xml.replace(/(<\/dict>\s*<\/plist>)/, `${insertBlock}$1`);
+    console.log(`✅ Added: ${key}`);
+  }
+  patched++;
+}
+
+fs.writeFileSync(PLIST, xml, 'utf8');
+console.log(`\n✅ iOS permissions patched: ${patched} added/updated.`);
