@@ -11,24 +11,24 @@
 <meta name="apple-mobile-web-app-title" content="Truck Precision" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#10b981" />
-<link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
-  <link rel="icon" type="image/png" sizes="96x96" href="/icon-96.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png">
-  <meta name="msapplication-TileImage" content="/icon-144.png">
+<link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="icon-96.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png">
+  <meta name="msapplication-TileImage" content="icon-144.png">
 <meta name="msapplication-TileColor" content="#0b173a" />
 
 <title>Truck Precision 🚛</title>
 
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 
 
-  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
@@ -62,7 +62,7 @@
     --sal: env(safe-area-inset-left, 0px);
     --sar: env(safe-area-inset-right, 0px);
     --tab-h: calc(60px + var(--sab));
-    --header-pt: calc(14px + var(--sat));
+    --header-pt: calc(3px + var(--sat));
   }
   body.dark {
     --bg: #06090f;
@@ -79,13 +79,14 @@
      RESET + BASE
   ══════════════════════════════════════════ */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { height: 100%; -webkit-text-size-adjust: 100%; }
+  html { height: 100%; height: -webkit-fill-available; -webkit-text-size-adjust: 100%; }
   body {
     font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100%;
     min-height: -webkit-fill-available;
+    min-height: 100dvh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -132,6 +133,7 @@
     padding-left: calc(26px + var(--sal));
     padding-right: calc(26px + var(--sar));
   }
+  #page-plan .container { padding-bottom: 6px; }
 
   /* ══════════════════════════════════════════
      TAB BAR — native app feel
@@ -176,8 +178,8 @@
   }
   .tab-btn:active::before { opacity: 0.08; transform: scale(1); }
   .tab-btn svg {
-    width: 22px; height: 22px; fill: none; stroke: currentColor;
-    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    width: 28px; height: 28px; fill: none; stroke: currentColor;
+    stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
     transition: transform .2s;
   }
   .tab-btn.active { color: var(--accent); }
@@ -288,24 +290,21 @@
      MOBILE REDESIGN — Main Form
   ══════════════════════════════════════════ */
   .form-section-label {
-    font-size: 11px; font-weight: 800; letter-spacing: 1.1px;
-    text-transform: uppercase; color: rgba(255,255,255,.72);
-    margin: 16px 0 8px; display: flex; align-items: center; gap: 8px;
-    background: linear-gradient(90deg,rgba(16,185,129,.10) 0%,transparent 100%);
-    border-left: 2.5px solid rgba(16,185,129,.55);
-    border-radius: 0 6px 6px 0;
-    padding: 5px 10px 5px 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04);
-    text-shadow: 0 0 14px rgba(16,185,129,.45), 0 1px 3px rgba(0,0,0,.6);
+    font-size: 10px; font-weight: 800; letter-spacing: 1.4px;
+    text-transform: uppercase; color: rgba(255,255,255,.45);
+    margin: 14px 0 6px; display: flex; align-items: center; gap: 8px;
+    padding: 0;
+    background: none; border-left: none; border-radius: 0;
+    box-shadow: none; text-shadow: none;
   }
   .form-section-label::after {
-    content: ''; flex: 1; height: 1px; background: rgba(16,185,129,.18);
+    content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.10);
   }
   .route-inputs-card {
     background: var(--surface);
     border-radius: 20px;
     padding: 18px;
-    margin-bottom: 12px;
+    margin-bottom: 0;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
   }
@@ -367,48 +366,45 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .stop-row-mobile .stop-refresh-btn {
-    width: 36px; height: 36px; border-radius: 10px; border: none;
-    background: rgba(16,185,129,.1); color: #10b981;
+    width: 38px; height: 38px; border-radius: 12px; border: none;
+    background: rgba(255,255,255,.07); color: #67e8f9;
     font-size: 16px; cursor: pointer; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     touch-action: manipulation;
+    box-shadow: 0 2px 8px rgba(0,0,0,.35);
   }
-  /* Origin GPS — plain centered label */
+  /* Origin GPS */
   .origin-label-row {
     display: flex; flex-direction: column; align-items: flex-start;
-    margin-bottom: 8px;
-    padding: 4px 8px;
+    margin-bottom: 10px; padding: 0;
   }
   .origin-loc-title {
-    font-size: 11px; font-weight: 800; letter-spacing: 1.1px;
-    text-transform: uppercase; color: rgba(255,255,255,.72);
-    margin: 16px 0 8px; display: flex; align-items: center; gap: 8px;
+    font-size: 10px; font-weight: 800; letter-spacing: 1.4px;
+    text-transform: uppercase; color: rgba(255,255,255,.45);
+    margin: 0 0 6px; display: flex; align-items: center; gap: 8px;
     width: 100%;
-    background: linear-gradient(90deg,rgba(16,185,129,.10) 0%,transparent 100%);
-    border-left: 2.5px solid rgba(16,185,129,.55);
-    border-radius: 0 6px 6px 0;
-    padding: 5px 10px 5px 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04);
-    text-shadow: 0 0 14px rgba(16,185,129,.45), 0 1px 3px rgba(0,0,0,.6);
+    background: none; border-left: none; border-radius: 0;
+    padding: 0; box-shadow: none; text-shadow: none;
   }
   .origin-loc-title::after {
-    content: ''; flex: 1; height: 1px; background: rgba(16,185,129,.18);
+    content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.10);
   }
   .origin-label-body {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    width: 100%; padding: 4px 0 4px 2px;
   }
   .origin-label-row .origin-loc-text {
-    font-size: 20px; font-weight: 700; color: var(--text);
-    flex: 1; text-align: center;
+    font-size: 22px; font-weight: 700; color: var(--text);
+    flex: 1; text-align: left;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .origin-label-row .stop-refresh-btn {
-    width: 32px; height: 32px; border-radius: 10px; border: none;
-    background: rgba(16,185,129,.1); color: #10b981;
-    font-size: 15px; cursor: pointer; flex-shrink: 0;
+    width: 38px; height: 38px; border-radius: 12px; border: none;
+    background: rgba(255,255,255,.07); color: #67e8f9;
+    font-size: 16px; cursor: pointer; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     touch-action: manipulation;
+    box-shadow: 0 2px 8px rgba(0,0,0,.35);
   }
   /* Header card separado del formulario */
   .plan-header-card {
@@ -450,21 +446,25 @@
   .param-box input[type="datetime-local"] {
     font-size: 14px; color-scheme: light; color: var(--text);
   }
+  .trip-params-grid .param-box.full-width {
+    background: none; border: none; padding: 0; box-shadow: none;
+  }
   .departure-input {
-    font-size: 18px !important;
+    font-size: 24px !important;
     font-weight: 700 !important;
     color: #f97316 !important;
-    background: var(--surface2) !important;
-    color-scheme: light;
-    width: 86% !important;
+    background: transparent !important;
+    color-scheme: dark;
+    width: 100% !important;
     display: block !important;
-    margin: 0 auto !important;
-    padding: 8px 10px !important;
-    min-height: 40px !important;
-    border-radius: 10px !important;
+    margin: 0 !important;
+    padding: 10px 0 !important;
+    min-height: 44px !important;
+    border-radius: 0 !important;
     cursor: pointer;
-    border: 1.5px solid var(--border) !important;
-    box-shadow: 0 6px 20px rgba(0,0,0,.55), 0 0 14px rgba(249,115,22,.2) !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-align: center !important;
   }
   body.dark .departure-input { color-scheme: dark; }
   body.dark .param-box input[type="datetime-local"] {
@@ -493,14 +493,14 @@
   }
   .btn-calc-mobile {
     width: 100%; padding: 18px;
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, #166534, #15803d);
     border: none; border-radius: 16px;
     font-family: "DM Sans", sans-serif;
-    font-size: 21px; font-weight: 800; color: #fff;
+    font-size: 20px; font-weight: 800; color: #fff;
     letter-spacing: .3px; cursor: pointer;
     touch-action: manipulation;
     display: flex; align-items: center; justify-content: center; gap: 10px;
-    box-shadow: 0 4px 20px rgba(16,185,129,.4);
+    box-shadow: 0 4px 20px rgba(21,128,61,.35);
     transition: transform .12s, opacity .12s;
     margin-top: 14px;
   }
@@ -1235,6 +1235,10 @@
     0%   { transform:rotate(0deg) scale(1); }
     50%  { transform:rotate(180deg) scale(1.3); }
     100% { transform:rotate(360deg) scale(1); }
+  }
+  @keyframes heroFogPulse {
+    0%,100% { opacity:.5; }
+    50%     { opacity:1; }
   }
   #wxEffectsOverlay .wx-fx-banner {
     position:absolute; bottom:28%; left:50%; transform:translateX(-50%);
@@ -3458,16 +3462,19 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .stop-remove:active { background: rgba(239,68,68,.25); }
   .add-stop-btn {
-    display: flex; align-items: center; gap: 6px;
-    padding: 12px 12px; border-radius: 10px;
-    background: rgba(59,130,246,.08); border: 1.5px dashed rgba(59,130,246,.3);
-    color: #3b82f6; font-size: 21px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+    padding: 15px 12px; border-radius: 16px;
+    background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+    border: none;
+    color: #1e3a5f; font-size: 17px; font-weight: 800;
     cursor: pointer; touch-action: manipulation;
     margin-bottom: 10px; width: 100%;
     justify-content: center;
-    transition: background .15s;
+    transition: opacity .15s, transform .12s;
+    box-shadow: 0 4px 16px rgba(147,197,253,.25);
+    letter-spacing: .2px;
   }
-  .add-stop-btn:active { background: rgba(59,130,246,.18); }
+  .add-stop-btn:active { opacity: .85; transform: scale(.98); }
   .stops-reorder-hint {
     font-size:10px; color:var(--muted); text-align:center;
     margin-bottom:6px; font-weight:600;
@@ -3656,16 +3663,16 @@ body.dark #fullMap .leaflet-tile-pane {
   ════════════════════════════════════════════════════════════ */
   .hero-wrap {
     background: linear-gradient(160deg, #dceafb 0%, #e4eefa 55%, #d8f0ec 100%);
-    margin: -16px -16px 4px;
+    margin: 0 0 12px;
     padding: 0;
-    border-radius: 0 0 22px 22px;
+    border-radius: 22px;
     position: relative;
     overflow: hidden;
-    border-bottom: 1px solid #c8d8f0;
+    border: 1px solid #c8d8f0;
   }
   body.dark .hero-wrap {
     background: #0b0f1c;
-    border-bottom: none;
+    border: none;
     box-shadow:
       inset 0 0 0 1px rgba(220,150,30,0.38),
       0 0 22px rgba(210,140,20,0.22),
@@ -3702,33 +3709,37 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .hero-inner {
     position: relative; z-index: 1;
-    padding: calc(var(--header-pt) + 2px) 8px 10px 14px;
+    padding: var(--header-pt) 12px 12px 14px;
   }
   .hero-top-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 8px; padding-right: 90px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 4px;
   }
-  .hero-brand { display: flex; align-items: center; gap: 9px; }
-  .hero-brand-icon {
-    width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
-    background: linear-gradient(135deg, #10b981, #059669);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 3px 12px rgba(16,185,129,.45), 0 0 0 1px rgba(16,185,129,.2);
-    overflow: hidden;
+  .hero-brand { display: flex; align-items: center; gap: 8px; }
+  .hero-logo-img {
+    height: 40px; width: auto; max-width: 180px;
+    object-fit: contain;
   }
-  .hero-brand-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 9px; }
-  .hero-brand-text { line-height: 1.1; }
   .hero-brand-name {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px; letter-spacing: 1.5px; color: #0f172a; line-height: 1;
+    display: flex; flex-direction: column; line-height: 1;
   }
-  body.dark .hero-brand-name { color: #fff; }
-  .hero-brand-sub {
-    font-size: 8px; color: rgba(15,23,42,.45);
-    font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+  .hero-brand-name .hbn-top {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 2px;
+    color: #ffffff;
+    line-height: 1;
+  }
+  .hero-brand-name .hbn-bot {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1;
     margin-top: 1px;
   }
-  body.dark .hero-brand-sub { color: rgba(255,255,255,.45); }
+  body.light .hero-brand-name .hbn-top { color: #1e3a5f; }
+  body.light .hero-brand-name .hbn-bot { color: rgba(30,58,95,0.6); }
   .hero-btns { display: flex; align-items: center; gap: 6px; }
   .hero-btn {
     width: 36px; height: 36px; border-radius: 10px;
@@ -3925,10 +3936,10 @@ body.dark #fullMap .leaflet-tile-pane {
 
   .hero-pill {
     display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 10px; border-radius: 999px;
+    padding: 3px 9px; border-radius: 999px;
     background: rgba(255,255,255,.07);
     border: 1px solid rgba(255,255,255,.18);
-    margin-bottom: 6px;
+    margin-bottom: 3px;
   }
   .hero-pill-dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -3944,14 +3955,14 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .hero-h1 {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 40px; letter-spacing: 1.5px; line-height: 1;
+    font-size: 28px; letter-spacing: 1.5px; line-height: 1;
     color: #fff; margin-bottom: 0;
   }
   .hero-h1 em { color: #10b981; font-style: normal; }
   .hero-sub { display: none; }
-  .hero-kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; justify-items: center; margin-top: 10px; margin-bottom: 0; }
+  .hero-kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; justify-items: center; margin-top: 6px; margin-bottom: 0; }
   .hero-kpi {
-    width: 94px; height: 94px; border-radius: 50%;
+    width: 78px; height: 78px; border-radius: 50%;
     position: relative;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
@@ -3976,7 +3987,7 @@ body.dark #fullMap .leaflet-tile-pane {
     transition: stroke-dashoffset 0.8s ease, stroke 0.4s ease;
   }
   .hero-kpi-inner {
-    width: 74px; height: 74px; border-radius: 50%;
+    width: 60px; height: 60px; border-radius: 50%;
     background: radial-gradient(circle at 38% 34%, #172a3e, #091420);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     box-shadow: inset 0 3px 14px rgba(0,0,0,.9), inset 0 -1px 3px rgba(255,255,255,.04);
@@ -3984,7 +3995,7 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .hero-kpi-val {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px; letter-spacing: 1px; color: #10b981; line-height: 1;
+    font-size: 18px; letter-spacing: 1px; color: #10b981; line-height: 1;
     transition: color 0.4s ease;
   }
   .hero-kpi-lbl {
@@ -3993,6 +4004,24 @@ body.dark #fullMap .leaflet-tile-pane {
     text-align: center; padding: 0 4px; line-height: 1.2;
   }
 
+  /* ── Hero weather bar ── */
+  .hero-wx-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 7px 12px;
+    margin-bottom: 6px;
+  }
+  .hero-wx-icon { font-size: 22px; flex-shrink: 0; }
+  .hero-wx-temp {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px; line-height: 1; color: #fff; letter-spacing: 1px;
+  }
+  .hero-wx-info { display: flex; flex-direction: column; gap: 1px; }
+  .hero-wx-desc { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.75); }
+  .hero-wx-loc  { font-size: 10px; font-weight: 600; color: rgba(255,255,255,.4); }
+  .hero-wx-wind { font-size: 10px; color: rgba(255,255,255,.4); margin-left: auto; text-align: right; }
 
   /* ════════════════════════════════════════════════════════════
      📅  CALENDAR WIDGET (hero section)
@@ -4022,14 +4051,14 @@ body.dark #fullMap .leaflet-tile-pane {
   ════════════════════════════════════════════════════════════ */
   .tab-btn {
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px; border: none; background: none; color: var(--muted);
-    font-family: "DM Sans", sans-serif; font-size: 9px; font-weight: 700;
+    gap: 4px; border: none; background: none; color: var(--muted);
+    font-family: "DM Sans", sans-serif; font-size: 11px; font-weight: 700;
     cursor: pointer; padding: 6px 2px 4px;
     transition: color .18s; position: relative;
     -webkit-tap-highlight-color: transparent; touch-action: manipulation;
     letter-spacing: .2px;
   }
-  .tab-btn svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s; }
+  .tab-btn svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s; }
   .tab-btn.active { color: var(--accent); }
   .tab-btn.active svg { transform: translateY(-1px); }
 
@@ -5736,14 +5765,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span id="tabLblPlan">Plan</span>
     </button>
-    <button class="tab-btn" data-tab="drives" onclick="switchTab('drives')">
-      <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-      <span id="tabLblDrives">Drives</span>
-    </button>
-    <button class="tab-btn" data-tab="summary" onclick="switchTab('summary')">
-      <svg viewBox="0 0 24 24"><path d="M3 22V7l7-5 7 5v15"/><path d="M3 22h14"/><path d="M10 22V12h4v10"/><path d="M20 11V7.5l2-1.5v6.5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-1"/><path d="M19 7h2"/></svg>
-      <span id="tabLblSummary">Fuel</span>
-    </button>
+
     <button class="tab-btn" data-tab="tools" onclick="switchTab('tools')">
       <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
       <span>Tools</span>
@@ -5830,18 +5852,58 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div class="page active" id="page-plan">
     <div class="container">
       <div class="hero-wrap">
+  <div id="heroWxFx" style="position:absolute;inset:0;overflow:hidden;border-radius:22px;pointer-events:none;z-index:10"></div>
   <div class="hero-inner">
 
     <!-- TOP BAR -->
     <div class="hero-top-bar">
-      <div class="hero-brand">
-        <div class="hero-brand-icon">
-          <img src="/icon-192.png" alt="Truck Precision">
+      <!-- Left: brand -->
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div class="hero-brand">
+          <img src="logo.png" class="hero-logo-img" alt="Truck Precision">
+          <div class="hero-brand-name">
+            <span class="hbn-top">TRUCK</span>
+            <span class="hbn-bot">PRECISION</span>
+          </div>
         </div>
-        <div class="hero-brand-text">
-          <div class="hero-brand-name">Truck Precision</div>
-          <div class="hero-brand-sub">by fab-visual™</div>
+        <div class="hero-pill" style="align-self:flex-start">
+          <div class="hero-pill-dot"></div>
+          <span class="hero-pill-text">DOT Certified Planner</span>
         </div>
+      </div>
+      <!-- Right: calendar + BT badge (was absolutely positioned) -->
+      <div id="heroCalendarWrap" style="display:flex;flex-direction:column;gap:6px;align-items:center;flex-shrink:0;">
+        <div style="
+          background:rgba(8,14,26,.82);
+          backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+          border-radius:14px; overflow:hidden;
+          border:1px solid rgba(255,255,255,.13);
+          box-shadow:0 8px 28px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07);
+          font-family:sans-serif; width:82px; text-align:center;
+        ">
+          <div style="
+            font-family:'Bebas Neue',sans-serif;
+            font-size:52px;font-weight:900;color:#fff;
+            padding:8px 4px 0;line-height:1;
+            text-shadow:0 2px 12px rgba(0,0,0,.9);" id="calDayNum">7</div>
+          <div style="
+            font-size:12px;font-weight:800;letter-spacing:2px;
+            text-transform:uppercase;color:#10b981;
+            padding-bottom:8px;" id="calMonthName">MAY</div>
+        </div>
+        <button id="heroBtBadge" onclick="heroBleScan()" style="
+          display:flex;align-items:center;justify-content:center;gap:5px;
+          width:82px;
+          background:rgba(8,14,26,.82);
+          border:1px solid rgba(255,255,255,.13);
+          border-radius:12px;padding:6px 0;
+          cursor:pointer;-webkit-tap-highlight-color:transparent;
+          backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+          box-shadow:0 4px 16px rgba(0,0,0,.5);
+        ">
+          <span id="heroBtDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0;"></span>
+          <span id="heroBtTxt" style="font-size:10px;font-weight:700;letter-spacing:0.5px;color:#9ca3af;">ELD BT</span>
+        </button>
       </div>
       <!-- hidden controls kept for JS compatibility -->
       <button id="gpsBtn" style="display:none"></button>
@@ -5853,22 +5915,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <select id="countrySelectMenu" style="display:none"></select>
       </div>
     </div>
-
-    <!-- DOT BADGE + BT badge en la misma fila -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
-      <div class="hero-pill">
-        <div class="hero-pill-dot"></div>
-        <span class="hero-pill-text">DOT Certified Planner</span>
-      </div>
-      <!-- Badge Bluetooth ELD -->
-      <button id="heroBtBadge" onclick="heroBleScan()" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:4px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
-        <span id="heroBtDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0;"></span>
-        <span id="heroBtTxt" style="font-size:10px;font-weight:700;letter-spacing:0.5px;color:#9ca3af;">ELD</span>
-      </button>
-    </div>
+<script>(function(){try{var now=new Date(),m=now.getMonth(),d=now.getDate(),mEN=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];document.getElementById('calDayNum').textContent=d;document.getElementById('calMonthName').textContent=mEN[m];}catch(e){}})()</script>
 
     <!-- TÍTULO + BOTONES en la misma fila -->
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
       <div class="hero-h1">Hours of <em>Service</em><br>Intelligence</div>
       <div class="hero-btns" style="flex-shrink:0;margin-top:20px">
         <button class="hero-btn" id="themeToggle" title="Cambiar color">🌙</button>
@@ -5878,10 +5928,21 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
 
     <!-- Estado de servicio (auto-detectado por GPS) -->
-    <div id="heroDutyRow" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+    <div id="heroDutyRow" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
       <span id="heroDutyDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0;transition:background 0.4s;"></span>
       <span id="heroDutyTxt" style="font-size:11px;font-weight:700;letter-spacing:1px;color:#6b7280;transition:color 0.4s;">ESPERANDO GPS...</span>
       <span id="heroDutyViol" style="display:none;background:rgba(248,113,113,0.15);border-radius:10px;padding:1px 7px;font-size:9px;color:#f87171;font-weight:700;">⚠ DOT</span>
+    </div>
+
+    <!-- WEATHER BAR — real-time GPS weather -->
+    <div class="hero-wx-bar" id="heroWxBar">
+      <div class="hero-wx-icon" id="heroWxIcon">🌤️</div>
+      <div class="hero-wx-temp" id="heroWxTemp">--°</div>
+      <div class="hero-wx-info">
+        <span class="hero-wx-desc" id="heroWxDesc">Obteniendo clima...</span>
+        <span class="hero-wx-loc"  id="heroWxLoc">📍 Localizando...</span>
+      </div>
+      <div class="hero-wx-wind" id="heroWxWind"></div>
     </div>
 
     <!-- KPI GAUGES — 3 anillos HOSIntelligence -->
@@ -5924,41 +5985,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   </div>
 
-  <!-- CALENDAR WIDGET — glass style, top-right -->
-  <div id="heroCalendarWrap" style="
-    position:absolute; top:calc(var(--header-pt) + 2px); right:14px;
-    z-index:3; width:82px;
-  ">
-    <div style="
-      background:rgba(8,14,26,.82);
-      backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-      border-radius:14px; overflow:hidden;
-      border:1px solid rgba(255,255,255,.13);
-      box-shadow:0 8px 28px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07);
-      font-family:sans-serif; width:82px; text-align:center;
-    ">
-      <div style="
-        font-family:'Bebas Neue',sans-serif;
-        font-size:52px;font-weight:900;color:#fff;
-        padding:8px 4px 0;line-height:1;
-        text-shadow:0 2px 12px rgba(0,0,0,.9);" id="calDayNum">29</div>
-      <div style="
-        font-size:12px;font-weight:800;letter-spacing:2px;
-        text-transform:uppercase;color:#10b981;
-        padding-bottom:8px;" id="calMonthName">APR</div>
-    </div>
-  </div>
-<script>
-(function(){
-  try {
-    var now=new Date();
-    var m=now.getMonth(),d=now.getDate();
-    var mEN=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-    document.getElementById('calDayNum').textContent=d;
-    document.getElementById('calMonthName').textContent=mEN[m];
-  }catch(e){}
-})();
-</script>
 
 </div>
 
@@ -6061,29 +6087,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <input type="number" id="speedInput" value="60" style="display:none" />
         <input type="number" id="dailyHoursInput" value="11" style="display:none" />
 
-        <!-- TRUCK ROUTE OPTIONS -->
-        <div class="truck-opts-panel" id="truckOptsPanel" style="margin-top:10px">
-          <button class="truck-opts-toggle" onclick="toggleTruckOpts()" type="button">
-            <span style="font-size:16px">🚛</span>
-            <span class="truck-opts-label">Opciones de Ruta</span>
-            <svg class="truck-opts-arrow" id="truckOptsArrow" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="truck-opts-body" id="truckOptsBody" style="display:none">
-
-            <!-- Route type -->
-            <div class="truck-opts-section">
-              <div class="truck-opts-sec-label">Tipo de ruta</div>
-              <div class="route-type-pills">
-                <button class="rt-pill active" data-type="fastest"         type="button" onclick="setRouteType('fastest')">⚡ Más rápida</button>
-                <button class="rt-pill"        data-type="shortest"        type="button" onclick="setRouteType('shortest')">📏 Más corta</button>
-                <button class="rt-pill"        data-type="avoid_tolls"     type="button" onclick="setRouteType('avoid_tolls')">💰 Sin peajes</button>
-                <button class="rt-pill"        data-type="avoid_highways"  type="button" onclick="setRouteType('avoid_highways')">🏘️ Sin autopistas</button>
-              </div>
-            </div>
-
-
-          </div>
-        </div>
 
         <div class="error" id="errorBox" style="display:none;margin-top:10px"></div>
 
@@ -8112,11 +8115,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
      HOS DASHBOARD SCREEN
      Muestra info HOS cuando inicia el rastreo
 ══════════════════════════════════════ -->
-<div id="hosDashScreen" style="display:none;position:fixed;inset:0;z-index:25000;background:linear-gradient(to bottom,rgba(24,29,44,0) 0px,rgba(24,29,44,0) 145px,rgba(24,29,44,0.88) 185px,rgba(24,29,44,0.92) 100%);flex-direction:column;font-family:'DM Sans',sans-serif;">
+<div id="hosDashScreen" style="display:none;position:fixed;inset:0;z-index:25000;background:#06090f;flex-direction:column;font-family:'DM Sans',sans-serif;">
 
   <!-- ① HEADER: tarjeta única con volver + perfil + mapa -->
   <div style="flex:0 0 auto;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 12px;background:transparent;">
-    <div style="display:flex;align-items:center;gap:12px;background:rgba(15,20,35,0.52);border:1px solid rgba(255,255,255,0.13);border-radius:22px;padding:6px 14px;box-shadow:0 8px 28px rgba(0,0,0,0.35),0 1px 0 rgba(255,255,255,0.07) inset;overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);">
+    <div style="display:flex;align-items:center;gap:12px;background:rgba(15,20,35,0.52);border:1px solid rgba(255,255,255,0.13);border-radius:22px;padding:6px 14px;box-shadow:0 8px 40px rgba(0,0,0,0.7),0 2px 12px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07);overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);">
       <!-- Botón volver -->
       <button onclick="showFullMapFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:22px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
 
@@ -8124,11 +8127,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div id="dashProfilePhoto" style="width:72px;height:72px;border-radius:50%;flex-shrink:0;background:#1e293b;border:none;box-shadow:0 4px 16px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;margin:-10px 0;position:relative;z-index:1;"></div>
       <div style="flex:1;min-width:0;">
         <div id="dashProfileName" style="font-size:22px;font-weight:900;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;">Driver</div>
-        <div style="font-size:13px;margin-top:4px;display:flex;align-items:center;gap:5px;">
-          <span style="color:rgba(255,255,255,0.35);">Estado</span>
-          <span style="color:rgba(255,255,255,0.18);">|</span>
-          <span id="dashStatusLabel" style="color:#10b981;font-weight:800;">Conduciendo</span>
-        </div>
       </div>
 
       <!-- Botón campana notificaciones -->
@@ -8136,86 +8134,109 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         🔔
         <span id="notifBellBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;border-radius:999px;min-width:18px;padding:2px 5px;text-align:center;border:2px solid #181d2c;line-height:1.2;pointer-events:none"></span>
       </button>
-      <!-- Botón HOS Intelligence -->
-      <button onclick="openHosIntel()" style="background:rgba(167,139,250,0.13);border:1.5px solid rgba(167,139,250,0.35);border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;" title="HOS Intelligence">⚡</button>
     </div>
   </div>
 
-  <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
-  <div id="dashRingBg" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:18px 0 10px;transition:background 0.7s ease;">
-    <div style="position:relative;display:inline-block;filter:drop-shadow(0 0 14px rgba(210,140,20,0.16)) drop-shadow(0 4px 22px rgba(0,0,0,0.50));">
-    <div id="dashRingWrap" style="position:relative;width:240px;height:240px;">
-      <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
-        <!-- Hidden for JS compatibility -->
-        <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
-        <!-- Light inner fill -->
-        <circle cx="130" cy="130" r="108" fill="#f0f0f2"/>
-        <!-- Track -->
-        <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(0,0,0,0.10)" stroke-width="10" id="dashRingTrack"/>
-        <!-- Progress arc -->
-        <circle cx="130" cy="130" r="108" fill="none"
-                stroke="#10b981" stroke-width="10"
-                stroke-linecap="round"
-                stroke-dasharray="679 679"
-                id="dashRingArc"
-                transform="rotate(-90 130 130)"
-                style="transition:stroke-dasharray 1s ease, stroke 0.4s ease;"/>
-      </svg>
-      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="dashHosTime" style="font-size:33px;font-weight:900;color:#1a1a1a;line-height:1;letter-spacing:-2px;">11h 0m</div>
-        <div id="dashHosLabel" style="font-size:11px;font-weight:600;color:rgba(0,0,0,0.50);text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
-      </div>
+  <!-- TARJETA PRINCIPAL — fondo sólido con borde -->
+  <div style="flex:0 0 auto;margin:0 12px 10px;background:#0d1220;border-radius:24px;border:1px solid rgba(16,185,129,0.22);box-shadow:0 0 0 1px rgba(16,185,129,0.08),0 8px 48px rgba(0,0,0,0.95),0 4px 20px rgba(0,0,0,0.7),0 0 40px rgba(16,185,129,0.07),inset 0 1px 0 rgba(255,255,255,0.09);display:flex;flex-direction:column;overflow:hidden;padding:12px 0 0;">
+
+  <!-- ② BADGE DE ESTADO -->
+  <div style="flex:0 0 auto;padding:0 16px 10px;">
+    <div id="dashStatusPillWrap" style="display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,0.08);border:1px solid #10b981;border-radius:999px;padding:4px 12px;">
+      <span id="dashStatusDot" style="width:6px;height:6px;border-radius:50%;background:#10b981;flex-shrink:0;"></span>
+      <span id="dashMainStatusLabel" style="font-size:10px;font-weight:900;letter-spacing:1px;color:#10b981;text-transform:uppercase;">CONDUCIENDO</span>
     </div>
-    <!-- ── Círculo ON-SHIFT ── -->
-    <div id="dash14hWrap" style="position:absolute;top:16px;right:-84px;display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,.38);letter-spacing:1px;text-transform:uppercase;">ON-SHIFT</div>
-      <div style="position:relative;width:74px;height:74px;">
-        <svg viewBox="0 0 90 90" width="74" height="74" style="display:block;">
-          <circle cx="45" cy="45" r="36" fill="#12162a"/>
-          <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
-          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none"
-                  stroke="#10b981" stroke-width="6" stroke-linecap="round"
-                  stroke-dasharray="226 226" transform="rotate(-90 45 45)"
-                  style="transition:stroke-dasharray 1s ease, stroke 0.4s ease;"/>
+  </div>
+
+  <!-- ③ TRES ANILLOS KPI — centro más grande -->
+  <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 10px 14px;">
+
+    <!-- TURNO ring (purple) -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
+      <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 8px 20px rgba(167,139,250,0.35)) drop-shadow(0 4px 10px rgba(0,0,0,0.5));">
+        <svg viewBox="0 0 90 90" style="width:100%;height:100%;position:absolute;inset:0;">
+          <circle cx="45" cy="45" r="36" fill="#151c30" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#a78bfa" stroke-width="7" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
-          <div id="dash14hTime" style="font-size:13px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-0.5px;">14h</div>
-          <div style="font-size:6px;color:rgba(255,255,255,.32);margin-top:2px;letter-spacing:.2px;">restante</div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;">
+          <div id="dash14hTime" style="font-size:12px;font-weight:900;color:#c4b5fd;letter-spacing:-0.5px;line-height:1;">--:--</div>
+          <div style="font-size:6px;color:rgba(196,181,253,0.5);margin-top:1px;">inicio</div>
+          <div style="width:20px;height:0.5px;background:rgba(255,255,255,0.15);margin:2px 0;"></div>
+          <div id="dash14hLabel" style="font-size:9px;color:rgba(196,181,253,0.6);line-height:1;">--:--</div>
+          <div id="dashBtStatus" style="font-size:6px;color:rgba(196,181,253,0.55);margin-top:1px;letter-spacing:0.3px;">BT ○</div>
         </div>
       </div>
-      <div id="dash14hLabel" style="font-size:7.5px;font-weight:700;color:rgba(255,255,255,.28);">de 14h</div>
+      <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">TURNO</div>
     </div>
-    </div><!-- /inline-block wrapper -->
 
-    <!-- Weather strip below ring -->
-    <div id="dashWeatherRow" style="display:none;align-items:center;justify-content:center;margin-top:12px;width:100%;">
-      <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:8px 22px;">
-        <span id="dashWxIcon" style="font-size:22px;">🌤️</span>
-        <span id="dashWxTemp" style="font-size:20px;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px;"></span>
-        <span id="dashWxDesc" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.55);"></span>
-        <span id="dashWxWind" style="font-size:11px;color:rgba(255,255,255,0.32);"></span>
+    <!-- DISPONIBLES ring (green) — GRANDE, usa dashRingArc/dashRingTrack -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto;">
+      <div id="dashRingWrap" style="position:relative;width:168px;height:168px;filter:drop-shadow(0 12px 32px rgba(16,185,129,0.40)) drop-shadow(0 6px 18px rgba(0,0,0,0.65));">
+        <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
+          <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
+          <circle cx="130" cy="130" r="99" fill="#eaf7f2"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="16" id="dashRingTrack"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="#10b981" stroke-width="16" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div id="dashHosTime" style="font-size:34px;font-weight:900;color:#064e3b;letter-spacing:-2px;line-height:1;">11h 0m</div>
+          <div id="dashHosLabel" style="font-size:10px;color:rgba(6,78,59,0.6);text-align:center;margin-top:5px;line-height:1.3;max-width:110px;">de 11h límite</div>
+        </div>
+      </div>
+      <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">DISPONIBLES</div>
+    </div>
+
+    <!-- CICLO 70H ring (blue) -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
+      <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 8px 20px rgba(96,165,250,0.35)) drop-shadow(0 4px 10px rgba(0,0,0,0.5));">
+        <svg viewBox="0 0 94 94" style="width:100%;height:100%;position:absolute;inset:0;">
+          <circle cx="47" cy="47" r="40" fill="#131e30" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#60a5fa" stroke-width="7" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div id="dashWeekHours" style="font-size:16px;font-weight:900;color:#93c5fd;letter-spacing:-0.5px;line-height:1;">70H</div>
+          <div id="dashCicloUsed" style="font-size:7px;color:rgba(147,197,253,0.6);margin-top:3px;">0h usadas</div>
+        </div>
+      </div>
+      <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">CICLO 70H</div>
+    </div>
+  </div>
+
+  <!-- ④ TARJETA DESTINO -->
+  <div id="dashDestCard" style="flex:0 0 auto;padding:0 12px 10px;">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:12px;min-height:0;">
+      <div style="font-size:20px;flex-shrink:0;line-height:1;">📍</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px;">DESTINO</div>
+        <div id="dashDestName" style="font-size:13px;font-weight:900;color:#f1f5f9;letter-spacing:-0.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;">Sin destino asignado</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:2px;">LLEGADA</div>
+        <div id="dashDestArrival" style="font-size:13px;font-weight:800;color:#10b981;letter-spacing:-0.2px;line-height:1;">--</div>
+        <div id="dashDestDate" style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);margin-top:2px;">--</div>
       </div>
     </div>
   </div>
 
-  <!-- ③ TARJETAS ESTADÍSTICAS — tamaño fijo -->
-  <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;padding:0 14px 10px;">
-    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:10px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
-      <div id="dashArrivalDay" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.6px;min-height:13px;"></div>
-      <div id="dashArrival" style="font-size:24px;font-weight:900;color:#f1f5f9;line-height:1.15;">--:--</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:4px;font-weight:600;">Llegada</div>
+  <!-- ⑤ BARRAS DE PROGRESO -->
+  <div style="flex:0 0 auto;padding:0 14px 14px;display:flex;flex-direction:column;gap:14px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="font-size:9px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:1.2px;width:68px;flex-shrink:0;">MANEJO</div>
+      <div style="flex:1;height:5px;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden;">
+        <div id="dashManejoProg" style="height:100%;background:#10b981;border-radius:999px;width:0%;transition:width 1s ease;"></div>
+      </div>
+      <div id="dashManejoLabel" style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:52px;text-align:right;flex-shrink:0;">0h 00m</div>
     </div>
-    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:14px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
-      <div id="dashWeekHours" style="font-size:26px;font-weight:900;color:#f1f5f9;">70h</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:4px;font-weight:600;">Ciclo 70h</div>
-    </div>
-    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:14px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
-      <div id="dashMilesLeft" style="font-size:26px;font-weight:900;color:#f1f5f9;">--</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:4px;font-weight:600;">Mi restantes</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="font-size:9px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:1.2px;width:68px;flex-shrink:0;">CICLO 8D</div>
+      <div style="flex:1;height:5px;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden;">
+        <div id="dashCicloProg" style="height:100%;background:#60a5fa;border-radius:999px;width:0%;transition:width 1s ease;"></div>
+      </div>
+      <div id="dashCicloLabel" style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:52px;text-align:right;flex-shrink:0;">0H / 70H</div>
     </div>
   </div>
 
-  <!-- GARMIN-STYLE NAV CARD — reemplaza los 4 botones cuando el vehículo se mueve -->
+  <!-- GARMIN-STYLE NAV CARD -->
   <div id="hosNavCard" style="display:none;flex:0 0 auto;margin:0 14px 10px;border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.55);">
     <div class="hnc-orange" style="background:#d4520a;display:flex;flex-direction:column;padding:8px 16px 11px;">
       <div style="font-size:9px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:2px;">Destino</div>
@@ -8226,29 +8247,19 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- ④ PESTAÑAS — barra entre estadísticas y mapa -->
-  <div id="dashTabsRow" style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:0 14px 10px;">
-    <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
-    <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
-    <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">Espera</button>
-    <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Sleeper</button>
+  <!-- Hidden elements for JS compatibility -->
+  <div style="display:none;">
+    <div id="dashArrivalDay"></div>
+    <div id="dashArrival">--:--</div>
+    <div id="dashMilesLeft">--</div>
+    <div id="dashWeatherRow"></div>
+    <span id="dashWxIcon"></span><span id="dashWxTemp"></span><span id="dashWxDesc"></span><span id="dashWxWind"></span>
   </div>
 
-  <!-- ⑤ MINI MAPA — ocupa el resto de la pantalla -->
-  <div id="hosMiniMap" style="flex:1;min-height:0;background:#0f1c2e;border-top:1px solid rgba(255,255,255,0.07);position:relative;">
-    <!-- SOS button below speed signs -->
-    <button onclick="triggerSOS()" style="
-      position:absolute; top:170px; right:12px; z-index:9999;
-      width:44px; height:44px; border-radius:50%;
-      background:#ef4444; border:2.5px solid #fff;
-      color:#fff; font-size:10px; font-weight:900; letter-spacing:.5px;
-      display:flex; align-items:center; justify-content:center;
-      box-shadow:0 4px 16px rgba(239,68,68,.6);
-      cursor:pointer; font-family:'DM Sans',sans-serif;
-      animation:sosFabPulse 2s ease-in-out infinite;
-      -webkit-tap-highlight-color:transparent;
-    ">SOS</button>
-  </div>
+  </div><!-- /tarjeta principal -->
+
+  <!-- ⑥ MINI MAPA GPS -->
+  <div id="hosMiniMap" style="flex:1;min-height:0;background:#0f1c2e;border-top:1px solid rgba(255,255,255,0.07);position:relative;"></div>
 
 </div>
 
@@ -8256,18 +8267,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 /* ── HOS Dashboard ───────────────────────── */
 
 .dash-tab {
-  padding:6px 4px;border-radius:10px;
+  padding:4px 2px;border-radius:8px;
   border:1px solid rgba(255,255,255,0.12);
   background:rgba(255,255,255,0.07);
   color:rgba(255,255,255,0.95);
-  font-size:16px!important;font-weight:900;cursor:pointer;
+  font-size:10px!important;font-weight:800;cursor:pointer;
   font-family:'DM Sans',sans-serif;
-  letter-spacing:0.2px;
+  letter-spacing:0.1px;
   text-shadow:0 1px 4px rgba(0,0,0,0.7);
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
   transition:background .2s,color .2s,border-color .2s,box-shadow .2s;
-  box-shadow:0 4px 12px rgba(0,0,0,0.5),0 1px 3px rgba(0,0,0,0.3);
+  box-shadow:0 2px 8px rgba(0,0,0,0.4),0 1px 3px rgba(0,0,0,0.3);
 }
 .dash-tab-active {
   background:#10b981!important;
@@ -8390,38 +8401,38 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 /* City / State bar at top of HOS minimap */
 #hosCityBar {
   position: absolute;
-  top: 10px; left: 50%; transform: translateX(-50%);
+  top: 8px; left: 50%; transform: translateX(-50%);
   z-index: 1001;
   background: rgba(8,14,28,0.88);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,0.18);
   border-radius: 24px;
-  padding: 7px 18px 7px 13px;
+  padding: 5px 12px 5px 9px;
   pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   font-family: 'DM Sans', sans-serif;
   white-space: nowrap;
-  max-width: calc(100% - 100px);
+  max-width: calc(100% - 110px);
   box-shadow: 0 3px 16px rgba(0,0,0,0.6);
 }
 #hosCityBar .hcb-dot {
-  width: 11px; height: 11px; border-radius: 50%;
+  width: 7px; height: 7px; border-radius: 50%;
   background: #10b981;
   flex-shrink: 0;
-  box-shadow: 0 0 10px rgba(16,185,129,0.9);
+  box-shadow: 0 0 8px rgba(16,185,129,0.9);
 }
 #hosCityBar .hcb-text {
-  font-size: 20px;
-  font-weight: 800;
-  color: rgba(255,255,255,0.98);
-  letter-spacing: 0.2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  letter-spacing: 0.1px;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 /* Speed limit custom editor sheet */
 #dashSpeedSheet {
@@ -9347,122 +9358,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 </div>
 
-<!-- ══ HOS INTELLIGENCE PANEL ══ -->
-<div id="hosIntelPanel" style="display:none;position:fixed;inset:0;z-index:26000;background:#0a0f1a;flex-direction:column;font-family:'DM Sans',sans-serif;overflow-y:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 24px;">
-
-  <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-    <button onclick="closeHosIntel()" style="background:rgba(255,255,255,0.07);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:22px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
-    <div style="flex:1;margin:0 10px;">
-      <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:0.5px;line-height:1.1;">HOURS OF <span style="color:#00e5a0">SERVICE</span></div>
-      <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:0.5px;margin-top:-3px;">INTELLIGENCE</div>
-    </div>
-    <div id="hiBtBadge" onclick="hiStartBleScan()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:6px 12px;cursor:pointer;flex-shrink:0;">
-      <span id="hiBtDot" style="width:7px;height:7px;border-radius:50%;background:#6b7280;flex-shrink:0;"></span>
-      <span id="hiBtText" style="font-size:11px;font-weight:700;letter-spacing:0.5px;color:#9ca3af;">DESCONECTADO</span>
-    </div>
-  </div>
-
-  <!-- Status pill + DOT violation -->
-  <div id="hiStatusPill" style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(0,229,160,0.3);border-radius:20px;padding:5px 12px;margin-bottom:20px;">
-    <span id="hiStatusDot" style="width:6px;height:6px;border-radius:50%;background:#00e5a0;flex-shrink:0;"></span>
-    <span id="hiStatusText" style="font-size:11px;font-weight:700;letter-spacing:1px;color:#00e5a0;">CONDUCIENDO</span>
-    <span id="hiViolBadge" style="display:none;background:rgba(248,113,113,0.15);border-radius:10px;padding:2px 8px;margin-left:4px;font-size:10px;color:#f87171;font-weight:700;">⚠ VIOLACIÓN DOT</span>
-  </div>
-
-  <!-- 3 Rings row -->
-  <div style="display:flex;justify-content:space-around;align-items:flex-end;margin-bottom:22px;">
-
-    <!-- Ring 1: Turno -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-      <div style="position:relative;width:108px;height:108px;">
-        <svg width="108" height="108" style="position:absolute;inset:0;overflow:visible;">
-          <g transform="rotate(-90 54 54)">
-            <circle cx="54" cy="54" r="46" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
-            <circle id="hiRing1Arc" cx="54" cy="54" r="46" fill="none" stroke="#a78bfa" stroke-width="7" stroke-linecap="round" stroke-dasharray="289 289" style="transition:stroke-dasharray 1s ease;"/>
-          </g>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <span id="hiShiftStart" style="font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.3px;">--:--</span>
-          <span style="font-size:8px;color:rgba(255,255,255,.4);font-weight:600;">inicio</span>
-          <div style="width:28px;height:0.5px;background:rgba(255,255,255,.15);margin:3px 0;"></div>
-          <span id="hiBtTime" style="font-size:13px;font-weight:700;color:#a78bfa;letter-spacing:-0.3px;">--:--</span>
-          <span id="hiBtConnLabel" style="font-size:8px;color:#a78bfa;font-weight:700;">BT ○</span>
-        </div>
-      </div>
-      <div style="font-size:8px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1.5px;">TURNO</div>
-    </div>
-
-    <!-- Ring 2: Disponibles (bigger) -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-      <div style="position:relative;width:130px;height:130px;">
-        <svg width="130" height="130" style="position:absolute;inset:0;overflow:visible;">
-          <g transform="rotate(-90 65 65)">
-            <circle cx="65" cy="65" r="57" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
-            <circle id="hiRing2Arc" cx="65" cy="65" r="57" fill="none" stroke="#00e5a0" stroke-width="9" stroke-linecap="round" stroke-dasharray="358 358" style="transition:stroke-dasharray 1s ease,stroke 0.4s;"/>
-          </g>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <span id="hiDriveAvail" style="font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.5px;">11h 00m</span>
-          <span style="font-size:9px;color:rgba(255,255,255,.4);font-weight:600;">de 11h límite</span>
-        </div>
-      </div>
-      <div style="font-size:8px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1.5px;">DISPONIBLES</div>
-    </div>
-
-    <!-- Ring 3: Ciclo 70H -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-      <div style="position:relative;width:108px;height:108px;">
-        <svg width="108" height="108" style="position:absolute;inset:0;overflow:visible;">
-          <g transform="rotate(-90 54 54)">
-            <circle cx="54" cy="54" r="46" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
-            <circle id="hiRing3Arc" cx="54" cy="54" r="46" fill="none" stroke="#00b4ff" stroke-width="7" stroke-linecap="round" stroke-dasharray="289 289" style="transition:stroke-dasharray 1s ease,stroke 0.4s;"/>
-          </g>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <span id="hiCycleAvail" style="font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.5px;">70H</span>
-          <span id="hiCycleUsed" style="font-size:9px;color:rgba(255,255,255,.4);font-weight:600;">0h usadas</span>
-        </div>
-      </div>
-      <div style="font-size:8px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1.5px;">CICLO 70H</div>
-    </div>
-
-  </div>
-
-  <!-- Duty status tabs -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:18px;">
-    <button id="hiDutyDRIVING"  onclick="hiSetDuty('DRIVING')"  class="hi-duty-tab hi-duty-active">Conduciendo</button>
-    <button id="hiDutyON_DUTY"  onclick="hiSetDuty('ON_DUTY')"  class="hi-duty-tab">En Servicio</button>
-    <button id="hiDutySLEEPER"  onclick="hiSetDuty('SLEEPER')"  class="hi-duty-tab">Descanso</button>
-    <button id="hiDutyOFF_DUTY" onclick="hiSetDuty('OFF_DUTY')" class="hi-duty-tab">Fuera</button>
-  </div>
-
-  <!-- Progress bars -->
-  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:700;letter-spacing:1px;width:56px;">MANEJO</span>
-      <div style="flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
-        <div id="hiBar1" style="height:100%;border-radius:3px;background:#00e5a0;width:0%;transition:width 0.8s ease;"></div>
-      </div>
-      <span id="hiBar1Val" style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;width:68px;text-align:right;">0h 00m</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:700;letter-spacing:1px;width:56px;">CICLO 8D</span>
-      <div style="flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
-        <div id="hiBar2" style="height:100%;border-radius:3px;background:#00b4ff;width:0%;transition:width 0.8s ease;"></div>
-      </div>
-      <span id="hiBar2Val" style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;width:68px;text-align:right;">0H / 70H</span>
-    </div>
-  </div>
-
-  <!-- Footer clock -->
-  <div style="display:flex;justify-content:space-between;align-items:center;border-top:0.5px solid rgba(255,255,255,0.08);padding-top:14px;">
-    <span id="hiClock" style="font-size:26px;font-weight:700;color:#fff;letter-spacing:1px;">--:--</span>
-    <span id="hiDate" style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:500;text-transform:capitalize;text-align:right;"></span>
-  </div>
-
-</div>
-
 <!-- ══ CALC PROGRESS OVERLAY ══ -->
 <div id="calcProgressOverlay">
   <div class="calc-progress-card">
@@ -9934,7 +9829,7 @@ let tripStart = null;
 
 /* ── Safety feature states ────────────────────── */
 let fatigueActive   = localStorage.getItem('hos_fatigue')  !== 'false' ? false : false;
-let weatherActive   = localStorage.getItem('hos_weather')  === 'true';
+let weatherActive   = true; // always on
 let bridgeActive    = localStorage.getItem('hos_bridge') === 'true';
 let trailerHeight   = parseFloat(localStorage.getItem('hos_trailer') || '13.6');
 
@@ -10346,11 +10241,24 @@ function updateWeatherWidget(wx) {
   if (!wx) return;
   const isDanger  = WX_DANGER_CODES.has(wx.code);
   const isWarning = WX_WARNING_CODES.has(wx.code);
-  document.getElementById('wxIcon').textContent = WX_ICONS[wx.code] || '🌡️';
-  document.getElementById('wxTemp').textContent = `${wx.temp}°F`;
+  const wxIconTxt = WX_ICONS[wx.code] || '🌡️';
+  const wxTempTxt = `${wx.temp}°F`;
+  const wxWindTxt = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
+  // Map widget
+  document.getElementById('wxIcon').textContent = wxIconTxt;
+  document.getElementById('wxTemp').textContent = wxTempTxt;
   document.getElementById('wxDesc').textContent = wx.desc;
   const wxWindEl = document.getElementById('wxWind');
-  if (wxWindEl) wxWindEl.textContent = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
+  if (wxWindEl) wxWindEl.textContent = wxWindTxt;
+  // Hero weather bar
+  const hIcon = document.getElementById('heroWxIcon');
+  const hTemp = document.getElementById('heroWxTemp');
+  const hDesc = document.getElementById('heroWxDesc');
+  const hWind = document.getElementById('heroWxWind');
+  if (hIcon) hIcon.textContent = wxIconTxt;
+  if (hTemp) hTemp.textContent = wxTempTxt;
+  if (hDesc) hDesc.textContent = wx.desc;
+  if (hWind) hWind.textContent = wxWindTxt;
   refreshDashWeather();
   // Color the temp red if danger
   document.getElementById('wxTemp').className = 'wx-temp' + (isDanger ? ' wx-danger' : '');
@@ -10377,6 +10285,65 @@ function updateWeatherWidget(wx) {
   }
   document.getElementById('weatherStatusTxt').textContent =
     `${WX_ICONS[wx.code]||'🌡️'} ${wx.temp}°F · ${wx.desc}`;
+  applyHeroWeatherFx(wx.code, wx.wind);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🌦️  HERO PERSISTENT WEATHER FX — inside the hero card
+════════════════════════════════════════════════════════════ */
+function applyHeroWeatherFx(wxCode, windSpeed) {
+  const fx = document.getElementById('heroWxFx');
+  if (!fx) return;
+  fx.innerHTML = '';
+
+  const isThunder = [95,96,99].includes(wxCode);
+  const isSnow    = [71,73,75,77,85,86].includes(wxCode);
+  const isIce     = [56,57,66,67].includes(wxCode);
+  const isRain    = [51,53,55,61,63,65,80,81,82].includes(wxCode) || isThunder || isIce;
+  const isFog     = [45,48].includes(wxCode);
+
+  if (isRain || isThunder) {
+    const count = isThunder ? 70 : (wxCode >= 65 || wxCode === 82 ? 55 : 38);
+    const col   = isIce ? 'rgba(160,230,255,0.75)' : 'rgba(130,185,255,0.70)';
+    for (let i = 0; i < count; i++) {
+      const d = document.createElement('div');
+      const spd = (0.35 + Math.random() * 0.5).toFixed(2);
+      const delay = (Math.random() * 2).toFixed(2);
+      d.style.cssText =
+        `position:absolute;left:${(Math.random()*106-3).toFixed(1)}%;top:-20px;` +
+        `width:${(1.5+Math.random()*1).toFixed(1)}px;height:${(12+Math.random()*16).toFixed(0)}px;` +
+        `background:${col};border-radius:2px;` +
+        `animation:wxRainDrop ${spd}s linear ${delay}s infinite;`;
+      fx.appendChild(d);
+    }
+    if (isThunder) {
+      const fl = document.createElement('div');
+      fl.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,180,0.10);animation:wxLightningFlash 4s ease-in-out 0.8s infinite;';
+      fx.appendChild(fl);
+    }
+  }
+
+  if (isSnow) {
+    const glyphs = ['❄','❅','❆','·'];
+    for (let i = 0; i < 35; i++) {
+      const s = document.createElement('div');
+      const sz = 10 + Math.random() * 13;
+      const spd = (2.5 + Math.random() * 3).toFixed(2);
+      const delay = (Math.random() * 3.5).toFixed(2);
+      s.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+      s.style.cssText =
+        `position:absolute;left:${(Math.random()*104).toFixed(1)}%;top:-20px;` +
+        `font-size:${sz.toFixed(0)}px;color:rgba(220,240,255,0.80);` +
+        `animation:wxSnowDrift ${spd}s linear ${delay}s infinite;`;
+      fx.appendChild(s);
+    }
+  }
+
+  if (isFog) {
+    const fog = document.createElement('div');
+    fog.style.cssText = 'position:absolute;inset:0;background:rgba(180,200,220,0.14);animation:heroFogPulse 5s ease-in-out infinite;';
+    fx.appendChild(fog);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -10492,21 +10459,35 @@ async function startWeatherMonitor() {
   document.getElementById('wxDesc').textContent = 'Loading...';
 
   const updateNow = async () => {
-    if (!weatherActive) return;
-    if (!navigator.geolocation) return;
+    let lat = null, lon = null;
+    // 1. Try GPS
     try {
-      const pos = await getGPSPosition(30000, 10000); // 30s cache ok for weather
-      const { latitude: lat, longitude: lon } = pos.coords;
-      // Don't re-fetch if barely moved (<5 miles)
-      if (lastWeatherLat && haversine(lat,lon,lastWeatherLat,lastWeatherLon) < 5) return;
-      lastWeatherLat = lat; lastWeatherLon = lon;
-      const wx = await fetchWeather(lat, lon);
-      updateWeatherWidget(wx);
+      if (navigator.geolocation) {
+        const pos = await getGPSPosition(8000, 5000);
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+      }
     } catch {}
+    // 2. Last known coords
+    if (lat == null && lastWeatherLat != null) {
+      lat = lastWeatherLat; lon = lastWeatherLon;
+    }
+    // 3. IP-based fallback
+    if (lat == null) {
+      try {
+        const r = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
+        const d = await r.json();
+        lat = d.latitude; lon = d.longitude;
+      } catch {}
+    }
+    if (lat == null) return;
+    lastWeatherLat = lat; lastWeatherLon = lon;
+    const wx = await fetchWeather(lat, lon);
+    if (wx) updateWeatherWidget(wx);
   };
 
   await updateNow();
-  weatherInterval = setInterval(updateNow, 10 * 60 * 1000); // every 10 min
+  weatherInterval = setInterval(updateNow, 5 * 60 * 1000); // every 5 min
   document.getElementById('weatherToggle').classList.add('on');
 }
 
@@ -10519,11 +10500,8 @@ function stopWeatherMonitor() {
 }
 
 function toggleWeatherMonitor() {
-  weatherActive = !weatherActive;
-  localStorage.setItem('hos_weather', weatherActive);
-  document.getElementById('weatherToggle').classList.toggle('on', weatherActive);
-  if (weatherActive) startWeatherMonitor();
-  else stopWeatherMonitor();
+  // Weather is always active — toggling just restarts the monitor
+  if (!weatherInterval) startWeatherMonitor();
 }
 
 function showWeatherDetail() {
@@ -13816,6 +13794,9 @@ function _applyRouteResult(road, depart, hours, speed, isInitialLoad) {
     }
   }
 
+  // Update destination card whenever route/arrival recalculates
+  if (typeof updateDashDestCard === 'function') updateDashDestCard();
+
   if (road.source === 'Fallback') {
     const _reason = road.fallbackReason || '';
     const isFetching = _reason.includes('buscando') || _reason.includes('fetching');
@@ -14023,6 +14004,8 @@ function renderSummary() {
 function setOriginLabel(name) {
   const txt = document.getElementById('originLabelText');
   if (txt) { txt.textContent = name; txt.style.color = 'var(--text)'; }
+  const loc = document.getElementById('heroWxLoc');
+  if (loc && name) loc.textContent = '📍 ' + name;
 }
 
 function useGPS() {
@@ -15164,7 +15147,61 @@ async function _fetchStopCityAhead(targetMiles, onResult) {
   } catch { onResult(null); }
 }
 
-// ── Garmin-style nav card (reemplaza los 4 botones cuando el vehículo se mueve) ──
+// ── Tarjeta destino — siempre visible, se actualiza con cada cambio de ruta/parada ──
+function updateDashDestCard() {
+  const nameEl = document.getElementById('dashDestName');
+  const arrEl  = document.getElementById('dashDestArrival');
+  const dateEl = document.getElementById('dashDestDate');
+  if (!nameEl || !arrEl) return;
+
+  const breakDue  = !b30Complete && b30Warned30m;
+  const hoursGone = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft <= 0;
+  const hoursLow  = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft > 0 && _hosCurrentDriveLeft <= 2;
+
+  if (!destination?.name) {
+    nameEl.textContent = 'Sin destino asignado';
+    arrEl.textContent = '--';
+    if (dateEl) dateEl.textContent = '';
+    return;
+  }
+
+  if (hoursGone) {
+    nameEl.textContent = '🛑 Horas de manejo agotadas';
+    arrEl.textContent = 'Para el vehículo';
+    if (dateEl) dateEl.textContent = 'Descanso requerido';
+    return;
+  }
+  if (breakDue) {
+    nameEl.textContent = '⏸ Pausa obligatoria 30 min';
+    arrEl.textContent = 'Detente pronto';
+    if (dateEl) dateEl.textContent = '';
+    return;
+  }
+  if (hoursLow) {
+    const h = Math.floor(_hosCurrentDriveLeft), m = Math.round((_hosCurrentDriveLeft - h) * 60);
+    nameEl.textContent = `⚠️ ${destination.name.split(',')[0].trim()}`;
+    arrEl.textContent = `${h > 0 ? h+'h ' : ''}${m}min restantes`;
+    if (dateEl) dateEl.textContent = 'Busca lugar para detenerte';
+    return;
+  }
+
+  nameEl.textContent = destination.name.split(',').slice(0,2).join(',').trim();
+
+  if (arrivalTime instanceof Date) {
+    const days   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const d = arrivalTime;
+    const h = d.getHours(), m = d.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
+    arrEl.textContent = `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+    if (dateEl) dateEl.textContent = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+  } else {
+    arrEl.textContent = 'Calculando...';
+    if (dateEl) dateEl.textContent = '';
+  }
+}
+
+// ── Garmin-style nav card ──
 function updateNextStopCard() {
   const card = document.getElementById('hosNavCard');
   const tabs = document.getElementById('dashTabsRow');
@@ -15172,7 +15209,7 @@ function updateNextStopCard() {
 
   const show = fmVehicleMoving && navSteps.length > 0;
   card.style.display = show ? 'block' : 'none';
-  if (tabs) tabs.style.display = show ? 'none' : 'grid';
+  updateDashDestCard();
   if (!show) return;
 
   // ── Barra verde: próxima instrucción de navegación ──
@@ -16171,16 +16208,30 @@ function showHosDashboard() {
   const _dashElapsed   = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
   const _dashDriveLeft = Math.max(0, _dashDriveMax - _dashElapsed);
   updateHosDashboard(_dashDriveLeft, _dashDriveMax);
+  updateDashDestCard();
 
   // Mostrar clima si está activo
   refreshDashWeather();
+
+  // GPS auto-status: si no hay ruta activa, usar watch propio del dashboard
+  if (!fmIsTracking && navigator.geolocation) {
+    if (_dashGpsWatchId != null) navigator.geolocation.clearWatch(_dashGpsWatchId);
+    _dashGpsWatchId = navigator.geolocation.watchPosition(pos => {
+      const rawSpeed = pos.coords.speed;
+      const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
+      autoUpdateDashStatus(gpsSpeed > 3);
+    }, () => {}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
+  }
 
   // Iniciar mini mapa después de un tick para que el div sea visible
   setTimeout(initHosMinimap, 120);
 }
 
+let _dashGpsWatchId = null;
+
 function hideHosDashboard() {
   if (_dash14hInterval) { clearInterval(_dash14hInterval); _dash14hInterval = null; }
+  if (_dashGpsWatchId != null) { navigator.geolocation.clearWatch(_dashGpsWatchId); _dashGpsWatchId = null; }
   const screen = document.getElementById('hosDashScreen');
   if (screen) screen.style.display = 'none';
   // Restaurar widgets flotantes que fueron ocultados
@@ -16350,7 +16401,8 @@ function initHosMinimap() {
         <div class="dsp-top">YOUR<br>SPEED</div>
         <div class="dsp-num" id="dashSpeedNum">${typeof fmCurrentSpeed !== 'undefined' ? Math.round(fmCurrentSpeed) : 0}</div>
         <div class="dsp-label" id="dashSpeedUnit">MPH</div>
-      </div>`;
+      </div>
+      <button onclick="triggerSOS()" style="pointer-events:auto;width:44px;height:44px;border-radius:50%;background:#ef4444;border:2.5px solid #fff;color:#fff;font-size:11px;font-weight:900;letter-spacing:0.5px;cursor:pointer;box-shadow:0 4px 16px rgba(239,68,68,0.65),0 2px 8px rgba(0,0,0,0.6);-webkit-tap-highlight-color:transparent;margin-top:4px;">SOS</button>`;
     el.appendChild(_panel);
   }
 
@@ -16661,17 +16713,47 @@ function updateHosDashboard(driveLeft, driveMax) {
 
   // Horas restantes del ciclo 70h
   const weekEl = document.getElementById('dashWeekHours');
+  const cycMax = parseFloat(document.getElementById('hoursInput')?.value) || 70;
+  const cycLeft = Math.max(0, cycMax - (driveMax - driveLeft));
   if (weekEl) {
     const fm70 = document.getElementById('fm70Left');
     if (fm70 && fm70.textContent && fm70.textContent !== '--') {
       weekEl.textContent = fm70.textContent;
     } else {
-      const cycMax = parseFloat(document.getElementById('hoursInput')?.value) || 70;
-      const cycLeft = Math.max(0, cycMax - (driveMax - driveLeft));
       const ch = Math.floor(cycLeft), cm = Math.round((cycLeft - ch) * 60);
-      weekEl.textContent = ch > 0 ? `${ch}h ${cm}m` : `${cm}m`;
+      weekEl.textContent = ch > 0 ? `${ch}h` : `${cm}m`;
     }
   }
+  // CICLO ring arc (C = 2π×40 ≈ 251)
+  const cicloArc = document.getElementById('dashCicloArc');
+  if (cicloArc) {
+    const pctC = Math.max(0, Math.min(1, cycLeft / cycMax));
+    cicloArc.setAttribute('stroke-dasharray', `${(pctC * 251).toFixed(1)} 251`);
+    cicloArc.setAttribute('stroke', cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#f59e0b' : '#60a5fa');
+  }
+  const cicloUsedEl = document.getElementById('dashCicloUsed');
+  if (cicloUsedEl) {
+    const used = cycMax - cycLeft;
+    const uh = Math.floor(used), um = Math.round((used - uh) * 60);
+    cicloUsedEl.textContent = `${uh}h ${String(um).padStart(2,'0')}m usadas`;
+  }
+  // Progress bars — start full, drain as hours are consumed, color shifts green→yellow→red
+  const manProg  = document.getElementById('dashManejoProg');
+  const manLabel = document.getElementById('dashManejoLabel');
+  const cProg    = document.getElementById('dashCicloProg');
+  const cLabel   = document.getElementById('dashCicloLabel');
+  const pctDrive = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
+  if (manProg) {
+    manProg.style.width = `${(pctDrive * 100).toFixed(1)}%`;
+    manProg.style.background = pctDrive > 0.5 ? '#10b981' : pctDrive > 0.25 ? '#f59e0b' : '#ef4444';
+  }
+  if (manLabel) { const uh = Math.floor(driveLeft), um = Math.round((driveLeft - uh) * 60); manLabel.textContent = `${uh}h ${String(um).padStart(2,'0')}m`; }
+  const pctCycle = Math.max(0, Math.min(1, cycLeft / Math.max(1, cycMax)));
+  if (cProg) {
+    cProg.style.width = `${(pctCycle * 100).toFixed(1)}%`;
+    cProg.style.background = pctCycle > 0.5 ? '#60a5fa' : pctCycle > 0.25 ? '#f59e0b' : '#ef4444';
+  }
+  if (cLabel) cLabel.textContent = `${Math.floor(cycLeft)}H / ${cycMax}H`;
   updateNextStopCard();
   update14hCircle();
 }
@@ -16758,10 +16840,10 @@ function setDashStatus(status) {
     off:     document.getElementById('dashTabOff')
   };
   const labels = {
-    driving: 'Conduciendo',
-    rest:    'Descansando',
-    wait:    'En espera',
-    off:     'Sleeper'
+    driving: 'CONDUCIENDO',
+    rest:    'DESCANSO',
+    wait:    'EN SERVICIO',
+    off:     'FUERA'
   };
   const colors = {
     driving: '#10b981',
@@ -16786,6 +16868,13 @@ function setDashStatus(status) {
     statusEl.textContent = labels[status] || status;
     statusEl.style.color  = colors[status] || '#10b981';
   }
+  // Update main status pill
+  const mainLbl = document.getElementById('dashMainStatusLabel');
+  const mainDot = document.getElementById('dashStatusDot');
+  const pillWrap = document.getElementById('dashStatusPillWrap');
+  if (mainLbl) { mainLbl.textContent = labels[status] || status; mainLbl.style.color = colors[status] || '#10b981'; }
+  if (mainDot) mainDot.style.background = colors[status] || '#10b981';
+  if (pillWrap) { pillWrap.style.borderColor = colors[status] || '#10b981'; pillWrap.style.background = `${colors[status] || '#10b981'}14`; }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -22914,24 +23003,11 @@ FIREBASE_CONFIG = {
       <span>⚠️</span><span id="eldAlertText" style="font-size:13px;font-weight:700;color:#ef4444"></span>
     </div>
     <!-- iOS notice (shown only on iOS) -->
-    <div id="eldIosNotice" style="display:none;background:rgba(245,158,11,.1);border:1.5px solid rgba(245,158,11,.3);border-radius:14px;padding:14px;margin-bottom:14px">
-      <div style="font-size:15px;font-weight:800;color:#f59e0b;margin-bottom:6px">📱 iOS — Bluetooth vía App</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:10px">Safari en iPhone no admite Web Bluetooth. Para conectar tu ELD:</div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
-        <div style="display:flex;align-items:flex-start;gap:8px">
-          <span style="font-size:18px">1️⃣</span>
-          <div style="font-size:13px;color:var(--text)"><b>Keep Truckin / Motive:</b> Abre la app oficial del ELD y completa el logbook ahí.</div>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:8px">
-          <span style="font-size:18px">2️⃣</span>
-          <div style="font-size:13px;color:var(--text)"><b>Samsara / PeopleNet:</b> Usa la app oficial de tu proveedor ELD para iOS.</div>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:8px">
-          <span style="font-size:18px">3️⃣</span>
-          <div style="font-size:13px;color:var(--text)"><b>Truck Precision:</b> Usa el modo simulación para practicar el logbook y registrar tus horas manualmente.</div>
-        </div>
-      </div>
-
+    <div id="eldIosNotice" style="display:none;background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.3);border-radius:14px;padding:16px;margin-bottom:14px;text-align:center">
+      <div style="font-size:32px;margin-bottom:8px">🔒</div>
+      <div style="font-size:15px;font-weight:800;color:#ef4444;margin-bottom:8px">Bluetooth no disponible en iOS</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">Apple no permite Web Bluetooth en Safari ni en ningún navegador de iPhone/iPad.<br><br>
+      Para conectar tu ELD vía Bluetooth usa la <b style="color:var(--text)">app oficial de tu proveedor ELD</b> (Motive, Samsara, PeopleNet, etc.) instalada en tu iPhone.</div>
     </div>
 
     <!-- Android/Chrome BLE scan button -->
@@ -23467,82 +23543,41 @@ function openEldSheet(){
     document.getElementById('eldSheet').classList.add('open');
   } catch(e){ console.error('[ELD] openEldSheet error', e); return; }
 
-  const ua = navigator.userAgent || '';
-  // Detect iOS (no Web Bluetooth support anywhere, even Chrome iOS uses WebKit)
-  const isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
-  // Detect in-app browsers (no BT permission)
-  const isInApp = /(FBAN|FBAV|Instagram|Line\/|TikTok|Twitter|WhatsApp|MicroMessenger)/i.test(ua);
-  // Web Bluetooth availability
-  const hasWebBT = !!navigator.bluetooth;
-  // Secure context required for Web Bluetooth
-  const isSecure = window.isSecureContext;
-
-  // Reset all optional panels
-  const iosNotice  = document.getElementById('eldIosNotice');
   const scanBtn    = document.getElementById('eldScanBtn');
   const demoBtn    = document.getElementById('eldDemoBtn');
   const noBT       = document.getElementById('eldNoBluetooth');
   const forceBtn   = document.getElementById('eldForceBtn');
+  const iosNotice  = document.getElementById('eldIosNotice');
   const alertBanner= document.getElementById('eldAlertBanner');
+
   if(iosNotice)    iosNotice.style.display='none';
   if(noBT)         noBT.style.display='none';
   if(alertBanner)  alertBanner.style.display='none';
-  if(scanBtn){     scanBtn.style.display='block'; scanBtn.disabled=false; scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)'; }
+  if(forceBtn)     forceBtn.style.display='none';
   if(demoBtn)      demoBtn.style.display='block';
-  if(forceBtn)     forceBtn.style.display='block';
 
-  // Case 1: iOS → BT imposible, mostrar aviso + ocultar todo lo de scan
-  if(isIOS){
-    if(iosNotice)  iosNotice.style.display='block';
-    if(scanBtn)    scanBtn.style.display='none';
-    if(demoBtn)    demoBtn.style.display='none';
-    if(forceBtn)   forceBtn.style.display='none';
-    return;
-  }
-  // Case 2: in-app browser (Instagram/Facebook/TikTok) → BT bloqueado
-  if(isInApp){
+  if(!IS_CAPACITOR){
+    // Running in browser — native BLE not available
     if(noBT){
       noBT.style.display='block';
       noBT.innerHTML = `
-        <div style="font-size:36px;margin-bottom:8px">🔒</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Navegador in-app detectado</div>
-        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Abre esta página en <b>Chrome</b> o <b>Edge</b> (Android) para conectar Bluetooth.</div>
+        <div style="font-size:36px;margin-bottom:8px">📱</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">App nativa requerida</div>
+        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">
+          Instala <b>Truck Precision</b> como app en tu dispositivo para conectar dispositivos Bluetooth.
+        </div>
       `;
     }
-    if(scanBtn)  scanBtn.style.display='none';
-    if(demoBtn)  demoBtn.style.display='none';
-    if(forceBtn) forceBtn.style.display='none';
-    return;
-  }
-  // Case 3: no HTTPS (BT requiere contexto seguro)
-  if(!isSecure){
-    if(noBT){
-      noBT.style.display='block';
-      noBT.innerHTML = `
-        <div style="font-size:36px;margin-bottom:8px">🔐</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">HTTPS requerido</div>
-        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Web Bluetooth solo funciona en sitios seguros (HTTPS).</div>
-      `;
-    }
-    if(scanBtn)  scanBtn.style.display='none';
-    if(demoBtn)  demoBtn.style.display='none';
-    if(forceBtn) forceBtn.style.display='none';
-    return;
-  }
-  // Case 4: API no disponible (Firefox, Safari desktop, etc.)
-  if(!hasWebBT){
-    if(noBT) noBT.style.display='block';
     if(scanBtn) scanBtn.style.display='none';
-    if(forceBtn) forceBtn.style.display='none';
-    // demoBtn se mantiene visible para simulación
-    renderEldDiagnostics();
     return;
   }
-  // Case 5: todo OK — Android Chrome/Edge con HTTPS
-  // scanBtn, forceBtn y demoBtn ya están visibles
 
-  // Render diagnostic panel at the end
-  renderEldDiagnostics();
+  // Native Capacitor — show scan button
+  if(scanBtn){
+    scanBtn.style.display='block';
+    scanBtn.disabled=false;
+    scanBtn.textContent='🔍 Buscar Dispositivos Bluetooth';
+  }
 }
 
 // Render live environment diagnostic inside ELD sheet
@@ -23557,8 +23592,6 @@ function renderEldDiagnostics(){
   const isFirefox = /Firefox\//.test(ua);
   const isSamsung = /SamsungBrowser/.test(ua);
   const isInApp = /(FBAN|FBAV|Instagram|Line\/|TikTok|Twitter|WhatsApp|MicroMessenger)/i.test(ua);
-  const hasWebBT = !!navigator.bluetooth;
-  const isSecure = !!window.isSecureContext;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
   const ok = v => v ? '<span style="color:#10b981">✓</span>' : '<span style="color:#ef4444">✗</span>';
@@ -23580,29 +23613,13 @@ function renderEldDiagnostics(){
 
   diagEl.innerHTML = `
     <div>📱 Plataforma: <b style="color:var(--text)">${plat}</b></div>
-    <div>🌐 Navegador: <b style="color:var(--text)">${brw}</b></div>
-    <div>${ok(isSecure)} HTTPS (contexto seguro): <b style="color:var(--text)">${isSecure?'sí':'NO — requerido'}</b></div>
-    <div>${ok(hasWebBT)} API Web Bluetooth: <b style="color:var(--text)">${hasWebBT?'disponible':'NO disponible'}</b></div>
-    <div>${ok(!isInApp)} Navegador estándar: <b style="color:var(--text)">${isInApp?'in-app (bloquea BT)':'sí'}</b></div>
-    <div>${ok(isStandalone)} App instalada (PWA): <b style="color:var(--text)">${isStandalone?'sí — permisos ampliados':'no'}</b></div>
-    <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);color:${(hasWebBT&&isSecure&&!isInApp)?'#10b981':'#f59e0b'};font-weight:700">
-      ${(hasWebBT&&isSecure&&!isInApp) ? '✅ Tu dispositivo soporta Bluetooth Web — pulsa "Buscar Dispositivos ELD"' : isIOS ? '⚠️ iOS web no soporta Bluetooth. Compila como app nativa (Capacitor) para usar BT en iPhone.' : '⚠️ Usa Chrome o Edge en Android, sobre HTTPS, para escaneo BLE.'}
+    <div>📦 Entorno: <b style="color:#f59e0b">Navegador (sin acceso nativo BT)</b></div>
+    <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);color:#f59e0b;font-weight:700">
+      ⚠️ Instala Truck Precision como app nativa para conectar dispositivos Bluetooth.
     </div>`;
 }
 
-// Force scan — bypass all detection and try navigator.bluetooth directly
-// Useful for edge browsers (Samsung Internet 23+, Opera, Yandex) that DO support BT
 async function forceEldScan(){
-  if(typeof navigator.bluetooth === 'undefined'){
-    const banner=document.getElementById('eldAlertBanner');
-    const bannerTxt=document.getElementById('eldAlertText');
-    if(banner && bannerTxt){
-      bannerTxt.textContent = 'Tu navegador no tiene Web Bluetooth. Abre esta página en Chrome o Edge (Android).';
-      banner.style.display = 'flex';
-    }
-    return;
-  }
-  // Delegate to normal scan — the user gesture is preserved from this click
   return startEldScan();
 }
 function closeEldSheet(){document.getElementById('eldSheet').classList.remove('open');}
@@ -23655,47 +23672,22 @@ async function startEldScanNative(){
   try {
     await ble.initialize({ androidNeverForLocation: true });
     lbl.textContent='BUSCANDO ELD...';
-    scanBtn.textContent='⏳ Escaneando solo ELDs...';
+    scanBtn.textContent='⏳ Escaneando dispositivos...';
 
-    // Prefijos de nombre de ELDs certificados FMCSA
-    const ELD_PREFIXES = [
-      'samsara','sg-','cm-','keeptrack','kt-','motive','geotab','go-',
-      'omnitracs','ot-','bigroad','br-','peoplenet','pn-','lytx','lx-',
-      'rand mcnally','rm-','jjk','jj keller','eld','hos','elds',
-      'truckx','fleetup','linxup','gpstracker','gpseld'
-    ];
-    const ELD_UUIDS = [
-      '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-      '0000ff00-0000-1000-8000-00805f9b34fb',
-      '0000ffd0-0000-1000-8000-00805f9b34fb',
-      '0000ffe0-0000-1000-8000-00805f9b34fb',
-      '0000fff0-0000-1000-8000-00805f9b34fb',
-    ];
-
-    function isEldDevice(name, serviceUUIDs){
-      if (!name && !serviceUUIDs) return false;
-      const n = (name||'').toLowerCase();
-      if (ELD_PREFIXES.some(p => n.startsWith(p) || n.includes(p))) return true;
-      if (serviceUUIDs && serviceUUIDs.some(u => ELD_UUIDS.includes(u.toLowerCase()))) return true;
-      return false;
-    }
-
-    // Collect scan results into a list the user can tap
+    // Show ALL nearby Bluetooth devices — user picks their ELD
     const found = new Map(); // deviceId -> {name, rssi}
     if(list){ list.innerHTML=''; list.style.display='block'; }
     await ble.requestLEScan({ allowDuplicates:false }, (result) => {
       const id   = result.device?.deviceId;
       const name = result.device?.name || result.localName || '';
-      const uuids= result.serviceUUIDs || [];
       if(!id || found.has(id)) return;
-      // Mostrar SOLO dispositivos ELD
-      if(!isEldDevice(name, uuids)) return;
-      found.set(id, { name: name||'ELD Sin Nombre', id, rssi: result.rssi });
+      found.set(id, { name, id, rssi: result.rssi });
       if(list){
+        const displayName = name || 'Dispositivo sin nombre';
         const row = document.createElement('button');
         row.style.cssText = 'display:flex;width:100%;justify-content:space-between;align-items:center;padding:10px 12px;margin-bottom:6px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:10px;color:var(--text);font-family:inherit;cursor:pointer;font-size:13px;font-weight:700';
-        row.innerHTML = `<span>📡 ${name||'ELD Sin Nombre'}</span><span style="font-size:11px;color:var(--muted)">RSSI ${result.rssi??'?'} dBm</span>`;
-        row.onclick = () => connectNativeBleDevice(id, name||'ELD');
+        row.innerHTML = `<span>📡 ${displayName}</span><span style="font-size:11px;color:var(--muted)">RSSI ${result.rssi??'?'} dBm</span>`;
+        row.onclick = () => connectNativeBleDevice(id, displayName);
         list.appendChild(row);
       }
     });
@@ -23703,20 +23695,20 @@ async function startEldScanNative(){
     setTimeout(async () => {
       try { await ble.stopLEScan(); } catch(e){}
       if(found.size===0){
-        lbl.textContent='SIN ELD ENCONTRADO';
+        lbl.textContent='SIN DISPOSITIVOS';
         if(banner && bannerTxt){
-          bannerTxt.textContent = 'No se detectaron dispositivos ELD. Asegúrate de que el ELD esté encendido, en modo Bluetooth y dentro del rango (< 10 m).';
+          bannerTxt.textContent = 'No se detectaron dispositivos. Asegúrate de que el Bluetooth del dispositivo esté encendido y dentro del rango.';
           banner.style.display='flex';
         }
       }
-      scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+      scanBtn.textContent='🔍 Buscar Dispositivos Bluetooth';
       scanBtn.disabled=false;
-    }, 10000);
+    }, 15000);
   } catch(e){
     console.error('[ELD native] scan error:', e);
     ring.className='eld-status-ring';
     icon.textContent='📡'; lbl.textContent='ERROR';
-    scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+    scanBtn.textContent='🔍 Buscar Dispositivos Bluetooth';
     scanBtn.disabled=false;
     let msg = e?.message || e?.errorMessage || String(e);
     if(/location/i.test(msg)) msg = 'Activa el GPS del teléfono (requerido para escanear BLE en Android).';
@@ -23763,102 +23755,8 @@ async function connectNativeBleDevice(deviceId, name){
 }
 
 async function startEldScan(){
-  // ── Path A: Native Capacitor BLE (works on Android + iPhone as installed app) ──
-  if(IS_CAPACITOR){
-    return startEldScanNative();
-  }
-  // ── Path B: Web Bluetooth fallback (browser) ──
-  if(!navigator.bluetooth){
-    const noBT = document.getElementById('eldNoBluetooth');
-    if(noBT) noBT.style.display='block';
-    const sb = document.getElementById('eldScanBtn');
-    if(sb) sb.style.display='none';
-    return;
-  }
-  const ring=document.getElementById('eldRing');
-  const icon=document.getElementById('eldRingIcon');
-  const lbl=document.getElementById('eldRingLabel');
-  const scanBtn=document.getElementById('eldScanBtn');
-  const demoBtn=document.getElementById('eldDemoBtn');
-  const banner=document.getElementById('eldAlertBanner');
-  const bannerTxt=document.getElementById('eldAlertText');
-
-  // Hide any previous alert
-  if(banner) banner.style.display='none';
-
-  ring.className='eld-status-ring scanning';
-  icon.textContent='🔵';lbl.textContent='BUSCANDO ELD...';
-  scanBtn.textContent='⏳ Escaneando dispositivos ELD...';
-  scanBtn.disabled=true;
-
-  // ── Filtros específicos para ELDs ────────────────────────────────────────
-  // Servicios BLE estándar usados por ELDs certificados FMCSA
-  const ELD_SERVICES = [
-    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART (KeepTruckin/Motive, BigRoad, etc.)
-    '0000ff00-0000-1000-8000-00805f9b34fb', // Samsara / genérico
-    '0000ffd0-0000-1000-8000-00805f9b34fb', // PeopleNet / Rand McNally
-    '0000ffe0-0000-1000-8000-00805f9b34fb', // J.J. Keller / Geotab GO
-    '0000fff0-0000-1000-8000-00805f9b34fb', // OBD-II genérico con HOS
-    '00001800-0000-1000-8000-00805f9b34fb', // Generic Access (fallback)
-  ];
-  // Prefijos de nombre de las marcas ELD más comunes en EE.UU.
-  const ELD_NAME_PREFIXES = [
-    'Samsara','SG-','CM-',          // Samsara
-    'KeepTruck','KT-','Motive',     // KeepTruckin / Motive
-    'Geotab','GO-',                 // Geotab
-    'Omnitracs','OT-',              // Omnitracs
-    'BigRoad','BR-',                // BigRoad
-    'PeopleNet','PN-',              // PeopleNet
-    'Lytx','LX-',                   // Lytx
-    'Rand McNally','RM-',           // Rand McNally
-    'JJK','JJ Keller',              // J.J. Keller
-    'ELD','HOS','ELDS',             // Genéricos
-    'TruckX','FleetUp',             // Otros certificados FMCSA
-    'Linxup','LX',                  // Linxup
-    'GPSTracker','GPSELD',          // Genéricos
-  ];
-
-  const nameFilters  = ELD_NAME_PREFIXES.map(p => ({ namePrefix: p }));
-  const svcFilters   = ELD_SERVICES.map(s => ({ services: [s] }));
-  const allFilters   = [...nameFilters, ...svcFilters];
-
-  try{
-    eldDevice = await navigator.bluetooth.requestDevice({
-      filters: allFilters,
-      optionalServices: ELD_SERVICES,
-    });
-    lbl.textContent='CONECTANDO...';
-    await eldDevice.gatt.connect();
-    ring.className='eld-status-ring connected';
-    icon.textContent='✅';lbl.textContent='CONECTADO';
-    document.getElementById('eldConnectedName').textContent=eldDevice.name||'Dispositivo ELD';
-    scanBtn.style.display='none';
-    if(demoBtn) demoBtn.style.display='none';
-    document.getElementById('eldLiveData').style.display='block';
-    document.getElementById('eldLogbook').style.display='block';
-    document.getElementById('eldArrowStatus').style.color='#6366f1';
-    startEldDataSimulation();
-    try{ showToast('info','📡','ELD Conectado',eldDevice.name||'Dispositivo vinculado',3000); }catch(_){}
-  }catch(e){
-    console.error('[ELD] scan error:', e);
-    ring.className='eld-status-ring';
-    icon.textContent='📡';lbl.textContent='DESCONECTADO';
-    scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
-    scanBtn.disabled=false;
-    // Traducir el error a un mensaje claro en el banner
-    let msg = '';
-    if(e.name==='NotFoundError')         msg = 'No seleccionaste ningún dispositivo. Intenta de nuevo.';
-    else if(e.name==='SecurityError')    msg = 'Bluetooth bloqueado. Asegúrate de usar HTTPS y Chrome/Edge en Android.';
-    else if(e.name==='NotAllowedError')  msg = 'Permiso de Bluetooth denegado. Actívalo en ajustes del navegador.';
-    else if(e.name==='NotSupportedError')msg = 'Este dispositivo no soporta Web Bluetooth.';
-    else if(/user gesture/i.test(e.message||'')) msg = 'El clic debe venir del usuario. Pulsa el botón directamente.';
-    else                                  msg = 'Error BLE: ' + (e.message || e.name || 'desconocido');
-    if(banner && bannerTxt){
-      bannerTxt.textContent = msg;
-      banner.style.display = 'flex';
-    }
-    try{ showToast('warn','⚠️','ELD Error', msg, 5000); }catch(_){}
-  }
+  // Always use native Capacitor BLE — no Web Bluetooth
+  return startEldScanNative();
 }
 
 function startEldDataSimulation(){
@@ -23980,7 +23878,7 @@ function disconnectEld(){
   document.getElementById('eldLiveData').style.display='none';
   document.getElementById('eldLogbook').style.display='none';
   document.getElementById('eldScanBtn').style.display='block';
-  document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+  document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos Bluetooth';
   document.getElementById('eldScanBtn').disabled=false;
   const _demoBtn1 = document.getElementById('eldDemoBtn'); if(_demoBtn1) _demoBtn1.style.display='block';
   document.getElementById('eldAlertBanner').style.display='none';
@@ -27152,246 +27050,7 @@ window._hosAutoRecalc = false;
   window._driverRoutes = { bellState, openRoutesModal, closeRoutesModal };
 </script>
 
-<style>
-.hi-duty-tab {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 10px;
-  color: rgba(255,255,255,0.45);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 8px 4px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-.hi-duty-tab.hi-duty-active {
-  background: rgba(0,229,160,0.13);
-  border-color: rgba(0,229,160,0.40);
-  color: #00e5a0;
-}
-/* Hero duty status mini tabs */
-.hduty-tab {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 8px;
-  font-size: 13px;
-  width: 28px; height: 24px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  padding: 0;
-  transition: background 0.2s, border-color 0.2s;
-}
-.hduty-tab.hduty-on {
-  background: rgba(0,229,160,0.15);
-  border-color: rgba(0,229,160,0.40);
-}
-</style>
 
-<script>
-(function() {
-  const DRIVE_LIMIT  = 11;
-  const CYCLE_LIMIT  = 70;
-  const SHIFT_CIRC   = 2 * Math.PI * 46;  // r=46
-  const DRIVE_CIRC   = 2 * Math.PI * 57;  // r=57
-
-  const STATUS_COLORS = { DRIVING:'#00e5a0', ON_DUTY:'#00b4ff', SLEEPER:'#a78bfa', OFF_DUTY:'#6b7280' };
-  const STATUS_LABELS = { DRIVING:'CONDUCIENDO', ON_DUTY:'EN SERVICIO', SLEEPER:'DESCANSANDO', OFF_DUTY:'FUERA DE SERVICIO' };
-
-  let hiBleDevice     = null;
-  let hiShiftStart    = null;
-  let hiBtConnectedAt = null;
-  let hiBtStatus      = 'disconnected';
-  let hiDutyStatus    = 'DRIVING';
-  let hiClockInt      = null;
-  let hiUpdateInt     = null;
-
-  function openHosIntel() {
-    const panel = document.getElementById('hosIntelPanel');
-    if (!panel) return;
-    panel.style.display = 'flex';
-
-    // Leer valores del sistema HOS existente
-    const dailyMax  = parseFloat(document.getElementById('dailyHoursInput')?.value  || DRIVE_LIMIT);
-    const weeklyMax = parseFloat(document.getElementById('hoursInput')?.value || CYCLE_LIMIT);
-    const driveLeft = (typeof fmDriveSeconds !== 'undefined') ? Math.max(0, dailyMax - fmDriveSeconds / 3600) : dailyMax;
-    const weekLeft  = Math.max(0, weeklyMax - Math.max(0, dailyMax - driveLeft));
-
-    window._hiDriveUsed = Math.max(0, dailyMax - driveLeft);
-    window._hiCycleUsed = Math.max(0, weeklyMax - weekLeft);
-    window._hiDailyMax  = dailyMax;
-    window._hiWeeklyMax = weeklyMax;
-
-    if (!hiShiftStart && typeof fmStartTime !== 'undefined' && fmStartTime) {
-      hiShiftStart = new Date(fmStartTime);
-    }
-
-    hiUpdate();
-    clearInterval(hiClockInt);
-    clearInterval(hiUpdateInt);
-    hiClockInt  = setInterval(hiTick, 1000);
-    hiUpdateInt = setInterval(hiUpdate, 30000);
-  }
-
-  function closeHosIntel() {
-    const panel = document.getElementById('hosIntelPanel');
-    if (panel) panel.style.display = 'none';
-    clearInterval(hiClockInt);
-    clearInterval(hiUpdateInt);
-  }
-
-  function hiTick() {
-    const now = new Date();
-    const clockEl = document.getElementById('hiClock');
-    const dateEl  = document.getElementById('hiDate');
-    if (clockEl) clockEl.textContent = now.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
-    if (dateEl)  dateEl.textContent  = now.toLocaleDateString('es-MX', { weekday:'long', month:'short', day:'numeric' });
-    // Actualizar horas usadas si el rastreador está corriendo
-    if (typeof fmDriveSeconds !== 'undefined') {
-      const dailyMax = window._hiDailyMax || DRIVE_LIMIT;
-      window._hiDriveUsed = Math.min(fmDriveSeconds / 3600, dailyMax);
-    }
-  }
-
-  function hiUpdate() {
-    const driveUsed = window._hiDriveUsed || 0;
-    const cycleUsed = window._hiCycleUsed || 0;
-    const dailyMax  = window._hiDailyMax  || DRIVE_LIMIT;
-    const weeklyMax = window._hiWeeklyMax || CYCLE_LIMIT;
-
-    const driveAvail   = Math.max(0, dailyMax  - driveUsed);
-    const cycleAvail   = Math.max(0, weeklyMax - cycleUsed);
-    const driveProgress = driveUsed / dailyMax;
-    const cycleProgress = cycleUsed / weeklyMax;
-    const shiftProgress = hiShiftStart
-      ? Math.min((Date.now() - hiShiftStart.getTime()) / (14 * 3600000), 1) : 0;
-
-    const driveColor = driveAvail > 2 ? '#00e5a0' : driveAvail > 0 ? '#facc15' : '#f87171';
-    const cycleColor = cycleAvail > 10 ? '#00b4ff' : cycleAvail > 0 ? '#facc15' : '#f87171';
-
-    // Ring 1: Turno (progreso vs 14h turno)
-    const r1 = document.getElementById('hiRing1Arc');
-    if (r1) r1.setAttribute('stroke-dasharray', `${(1 - shiftProgress) * SHIFT_CIRC} ${SHIFT_CIRC}`);
-
-    // Ring 2: Disponibles
-    const r2 = document.getElementById('hiRing2Arc');
-    if (r2) {
-      r2.setAttribute('stroke-dasharray', `${(1 - driveProgress) * DRIVE_CIRC} ${DRIVE_CIRC}`);
-      r2.setAttribute('stroke', driveColor);
-    }
-
-    // Ring 3: Ciclo 70H
-    const r3 = document.getElementById('hiRing3Arc');
-    if (r3) {
-      r3.setAttribute('stroke-dasharray', `${(1 - cycleProgress) * SHIFT_CIRC} ${SHIFT_CIRC}`);
-      r3.setAttribute('stroke', cycleColor);
-    }
-
-    // Texto: horas disponibles
-    const da = document.getElementById('hiDriveAvail');
-    if (da) {
-      const h = Math.floor(driveAvail), m = Math.round((driveAvail - h) * 60);
-      da.textContent = `${h}h ${String(m).padStart(2,'0')}m`;
-      da.style.color = driveAvail > 2 ? '#fff' : driveAvail > 0 ? '#facc15' : '#f87171';
-    }
-
-    // Texto: ciclo
-    const ca = document.getElementById('hiCycleAvail');
-    if (ca) { ca.textContent = `${Math.round(cycleAvail)}H`; ca.style.color = cycleAvail > 10 ? '#fff' : cycleAvail > 0 ? '#facc15' : '#f87171'; }
-    const cu = document.getElementById('hiCycleUsed');
-    if (cu) cu.textContent = `${Math.round(cycleUsed)}h usadas`;
-
-    // Turno inicio / BT hora
-    const ss = document.getElementById('hiShiftStart');
-    if (ss) ss.textContent = hiShiftStart ? hiShiftStart.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '--:--';
-    const bt = document.getElementById('hiBtTime');
-    if (bt) bt.textContent = hiBtConnectedAt ? hiBtConnectedAt.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '--:--';
-    const bl = document.getElementById('hiBtConnLabel');
-    if (bl) bl.textContent = hiBtStatus === 'connected' ? 'BT ●' : 'BT ○';
-
-    // Barras de progreso
-    const b1 = document.getElementById('hiBar1');
-    if (b1) { b1.style.width = `${Math.min(driveProgress * 100, 100)}%`; b1.style.background = driveColor; }
-    const b1v = document.getElementById('hiBar1Val');
-    if (b1v) { const h=Math.floor(driveUsed),m=Math.round((driveUsed-h)*60); b1v.textContent=`${h}h ${String(m).padStart(2,'0')}m`; }
-
-    const b2 = document.getElementById('hiBar2');
-    if (b2) { b2.style.width = `${Math.min(cycleProgress * 100, 100)}%`; b2.style.background = cycleColor; }
-    const b2v = document.getElementById('hiBar2Val');
-    if (b2v) b2v.textContent = `${Math.round(cycleUsed)}H / 70H`;
-
-    // Status pill
-    const sc = STATUS_COLORS[hiDutyStatus];
-    const pill = document.getElementById('hiStatusPill');
-    const dot  = document.getElementById('hiStatusDot');
-    const txt  = document.getElementById('hiStatusText');
-    const viol = document.getElementById('hiViolBadge');
-    if (pill) pill.style.borderColor = sc + '55';
-    if (dot)  dot.style.background   = sc;
-    if (txt)  { txt.textContent = STATUS_LABELS[hiDutyStatus]; txt.style.color = sc; }
-    if (viol) viol.style.display = (driveAvail <= 0 || cycleAvail <= 0) ? 'inline-block' : 'none';
-
-    hiTick();
-  }
-
-  // ── Web Bluetooth ELD ──────────────────────────────────────────────────────
-  async function hiStartBleScan() {
-    if (hiBtStatus === 'connected') return;
-    if (!navigator.bluetooth) {
-      alert('Bluetooth no está disponible. Abre la app en Chrome para Android.');
-      return;
-    }
-    _hiBtBadge('scanning');
-    try {
-      hiBleDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
-      hiBleDevice.addEventListener('gattserverdisconnected', () => {
-        _hiBtBadge('disconnected');
-        hiBtConnectedAt = null;
-        hiBleDevice = null;
-        hiUpdate();
-      });
-      await hiBleDevice.gatt.connect();
-      _hiBtBadge('connected');
-      hiBtConnectedAt = new Date();
-      if (!hiShiftStart) hiShiftStart = new Date();
-      hiUpdate();
-    } catch (e) {
-      _hiBtBadge(e.name === 'NotFoundError' ? 'disconnected' : 'error');
-    }
-  }
-
-  function _hiBtBadge(status) {
-    hiBtStatus = status;
-    const colors = { connected:'#00e5a0', scanning:'#facc15', error:'#f87171', disconnected:'#6b7280' };
-    const labels = { connected:'CONECTADO', scanning:'BUSCANDO...', error:'ERROR BT', disconnected:'DESCONECTADO' };
-    const dot   = document.getElementById('hiBtDot');
-    const txt   = document.getElementById('hiBtText');
-    const badge = document.getElementById('hiBtBadge');
-    if (dot)   dot.style.background  = colors[status];
-    if (txt)   { txt.textContent = labels[status]; txt.style.color = colors[status]; }
-    if (badge) {
-      badge.style.borderColor  = status === 'connected' ? 'rgba(0,229,160,0.35)' : 'rgba(255,255,255,0.12)';
-      badge.style.background   = status === 'connected' ? 'rgba(0,229,160,0.08)' : 'rgba(255,255,255,0.05)';
-    }
-  }
-
-  // ── Tabs de estado de servicio ─────────────────────────────────────────────
-  function hiSetDuty(status) {
-    hiDutyStatus = status;
-    document.querySelectorAll('.hi-duty-tab').forEach(t => t.classList.remove('hi-duty-active'));
-    const btn = document.getElementById('hiDuty' + status);
-    if (btn) btn.classList.add('hi-duty-active');
-    hiUpdate();
-  }
-
-  window.openHosIntel  = openHosIntel;
-  window.closeHosIntel = closeHosIntel;
-  window.hiStartBleScan = hiStartBleScan;
-  window.hiSetDuty      = hiSetDuty;
-})();
-</script>
 
 <script>
 /* ── HOS ELD Tracker — datos 100% desde el ELD via Bluetooth ── */
@@ -27559,39 +27218,23 @@ window._hosAutoRecalc = false;
 
   // ── Auto-reconexión a ELD ya autorizado ───────────────────
   async function _autoReconnect(){
-    if (_connected || !navigator.bluetooth) return;
-    try {
-      // getDevices() devuelve dispositivos ya autorizados sin pedir permiso
-      const devices = await navigator.bluetooth.getDevices();
-      if (!devices.length) return;
-      // Tomar el primer dispositivo autorizado (el ELD guardado)
-      _setBtBadge('scanning');
-      await _connect(devices[0]);
-    } catch(_){}
+    if (_connected) return;
+    // Native reconnect via saved deviceId
+    if(IS_CAPACITOR && eldDevice?.deviceId){
+      try {
+        _setBtBadge('scanning');
+        await connectNativeBleDevice(eldDevice.deviceId, eldDevice.name || 'ELD');
+      } catch(_){}
+    }
   }
 
   // ── Escaneo manual (primer toque al badge ELD) ─────────────
   window.heroBleScan = async function(){
     if (_connected) return;
-    if (IS_CAPACITOR){ openEldSheet(); setTimeout(() => { try { startEldScan(); } catch(e){} }, 350); return; }
-    if (!navigator.bluetooth){ openEldSheet(); return; }
-
-
-
-    _setBtBadge('scanning');
-    try {
-      const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        // Lista de servicios opcionales para aumentar posibilidades de lectura
-        optionalServices: [
-          '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-          'battery_service',
-          'device_information',
-        ]
-      });
-      await _connect(device);
-    } catch(e){
-      _setBtBadge(e.name === 'NotFoundError' ? 'disconnected' : 'error');
+    // Always open ELD sheet with native BLE scan
+    openEldSheet();
+    if(IS_CAPACITOR){
+      setTimeout(() => { try { startEldScan(); } catch(e){} }, 350);
     }
   };
 
@@ -27674,6 +27317,12 @@ window._hosAutoRecalc = false;
     if (badge){
       badge.style.borderColor = s === 'connected' ? 'rgba(0,229,160,0.35)' : 'rgba(255,255,255,0.12)';
       badge.style.background  = s === 'connected' ? 'rgba(0,229,160,0.08)' : 'rgba(255,255,255,0.05)';
+    }
+    // Sync BT status into dash TURNO ring
+    const dashBt = document.getElementById('dashBtStatus');
+    if (dashBt) {
+      dashBt.textContent = s === 'connected' ? 'BT ●' : s === 'scanning' ? 'BT...' : 'BT ○';
+      dashBt.style.color = s === 'connected' ? '#00e5a0' : s === 'scanning' ? '#facc15' : 'rgba(167,139,250,0.55)';
     }
   }
 
