@@ -1235,6 +1235,10 @@
     50%  { transform:rotate(180deg) scale(1.3); }
     100% { transform:rotate(360deg) scale(1); }
   }
+  @keyframes heroFogPulse {
+    0%,100% { opacity:.5; }
+    50%     { opacity:1; }
+  }
   #wxEffectsOverlay .wx-fx-banner {
     position:absolute; bottom:28%; left:50%; transform:translateX(-50%);
     background:rgba(0,0,0,.88); backdrop-filter:blur(10px);
@@ -5854,6 +5858,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div class="page active" id="page-plan">
     <div class="container">
       <div class="hero-wrap">
+  <div id="heroWxFx" style="position:absolute;inset:0;overflow:hidden;border-radius:22px;pointer-events:none;z-index:0"></div>
   <div class="hero-inner">
 
     <!-- TOP BAR -->
@@ -10301,6 +10306,65 @@ function updateWeatherWidget(wx) {
   }
   document.getElementById('weatherStatusTxt').textContent =
     `${WX_ICONS[wx.code]||'🌡️'} ${wx.temp}°F · ${wx.desc}`;
+  applyHeroWeatherFx(wx.code, wx.wind);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🌦️  HERO PERSISTENT WEATHER FX — inside the hero card
+════════════════════════════════════════════════════════════ */
+function applyHeroWeatherFx(wxCode, windSpeed) {
+  const fx = document.getElementById('heroWxFx');
+  if (!fx) return;
+  fx.innerHTML = '';
+
+  const isThunder = [95,96,99].includes(wxCode);
+  const isSnow    = [71,73,75,77,85,86].includes(wxCode);
+  const isIce     = [56,57,66,67].includes(wxCode);
+  const isRain    = [51,53,55,61,63,65,80,81,82].includes(wxCode) || isThunder || isIce;
+  const isFog     = [45,48].includes(wxCode);
+
+  if (isRain || isThunder) {
+    const count = isThunder ? 55 : (wxCode >= 65 || wxCode === 82 ? 45 : 25);
+    const col   = isIce ? 'rgba(150,220,255,0.45)' : 'rgba(110,170,255,0.40)';
+    for (let i = 0; i < count; i++) {
+      const d = document.createElement('div');
+      const spd = (0.4 + Math.random() * 0.55).toFixed(2);
+      const delay = (Math.random() * 2).toFixed(2);
+      d.style.cssText =
+        `position:absolute;left:${(Math.random()*104-2).toFixed(1)}%;top:-20px;` +
+        `width:${(1.2+Math.random()*0.8).toFixed(1)}px;height:${(10+Math.random()*14).toFixed(0)}px;` +
+        `background:${col};border-radius:2px;` +
+        `animation:wxRainDrop ${spd}s linear ${delay}s infinite;`;
+      fx.appendChild(d);
+    }
+    if (isThunder) {
+      const fl = document.createElement('div');
+      fl.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,180,0.07);animation:wxLightningFlash 4s ease-in-out 0.8s infinite;';
+      fx.appendChild(fl);
+    }
+  }
+
+  if (isSnow) {
+    const glyphs = ['❄','❅','❆','·'];
+    for (let i = 0; i < 28; i++) {
+      const s = document.createElement('div');
+      const sz = 9 + Math.random() * 11;
+      const spd = (2.8 + Math.random() * 3).toFixed(2);
+      const delay = (Math.random() * 3.5).toFixed(2);
+      s.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+      s.style.cssText =
+        `position:absolute;left:${(Math.random()*104).toFixed(1)}%;top:-20px;` +
+        `font-size:${sz.toFixed(0)}px;color:rgba(210,235,255,0.65);` +
+        `animation:wxSnowDrift ${spd}s linear ${delay}s infinite;`;
+      fx.appendChild(s);
+    }
+  }
+
+  if (isFog) {
+    const fog = document.createElement('div');
+    fog.style.cssText = 'position:absolute;inset:0;background:rgba(180,200,220,0.08);animation:heroFogPulse 5s ease-in-out infinite;';
+    fx.appendChild(fog);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
