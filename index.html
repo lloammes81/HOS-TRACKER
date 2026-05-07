@@ -8100,7 +8100,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
      HOS DASHBOARD SCREEN
      Muestra info HOS cuando inicia el rastreo
 ══════════════════════════════════════ -->
-<div id="hosDashScreen" style="display:none;position:fixed;inset:0;z-index:25000;background:linear-gradient(to bottom,rgba(24,29,44,0) 0px,rgba(24,29,44,0) 145px,rgba(24,29,44,0.88) 185px,rgba(24,29,44,0.92) 100%);flex-direction:column;font-family:'DM Sans',sans-serif;">
+<div id="hosDashScreen" style="display:none;position:fixed;inset:0;z-index:25000;background:#06090f;flex-direction:column;font-family:'DM Sans',sans-serif;">
 
   <!-- ① HEADER: tarjeta única con volver + perfil + mapa -->
   <div style="flex:0 0 auto;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 12px;background:transparent;">
@@ -8129,61 +8129,64 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
+  <!-- TARJETA PRINCIPAL — fondo sólido con borde -->
+  <div style="flex:1;margin:0 12px 12px;background:#0d1220;border-radius:24px;border:1px solid rgba(255,255,255,0.10);box-shadow:0 8px 32px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.06);display:flex;flex-direction:column;overflow:hidden;padding:14px 0 0;">
+
   <!-- ② BADGE DE ESTADO -->
-  <div style="flex:0 0 auto;padding:0 14px 10px;">
+  <div style="flex:0 0 auto;padding:0 16px 12px;">
     <div id="dashStatusPillWrap" style="display:inline-flex;align-items:center;gap:8px;background:rgba(16,185,129,0.08);border:1.5px solid #10b981;border-radius:999px;padding:7px 18px;">
       <span id="dashStatusDot" style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;"></span>
       <span id="dashMainStatusLabel" style="font-size:13px;font-weight:900;letter-spacing:1.5px;color:#10b981;text-transform:uppercase;">CONDUCIENDO</span>
     </div>
   </div>
 
-  <!-- ③ TRES ANILLOS KPI -->
-  <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:0 12px 12px;align-items:end;">
+  <!-- ③ TRES ANILLOS KPI — centro más grande -->
+  <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 10px 14px;">
 
     <!-- TURNO ring (purple) -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <div style="position:relative;width:100px;height:100px;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
+      <div style="position:relative;width:96px;height:96px;">
         <svg viewBox="0 0 90 90" style="width:100%;height:100%;position:absolute;inset:0;">
           <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
           <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#a78bfa" stroke-width="7" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;">
-          <div id="dash14hTime" style="font-size:13px;font-weight:900;color:#a78bfa;letter-spacing:-0.5px;line-height:1;">--:--</div>
-          <div style="font-size:7px;color:rgba(255,255,255,0.35);margin-top:1px;">inicio</div>
-          <div style="width:22px;height:0.5px;background:rgba(255,255,255,0.15);margin:2px 0;"></div>
-          <div id="dash14hLabel" style="font-size:10px;color:rgba(255,255,255,0.38);line-height:1;">--:--</div>
-          <div id="dashBtStatus" style="font-size:7px;color:rgba(167,139,250,0.55);margin-top:1px;letter-spacing:0.3px;">BT ○</div>
+          <div id="dash14hTime" style="font-size:12px;font-weight:900;color:#a78bfa;letter-spacing:-0.5px;line-height:1;">--:--</div>
+          <div style="font-size:6px;color:rgba(255,255,255,0.35);margin-top:1px;">inicio</div>
+          <div style="width:20px;height:0.5px;background:rgba(255,255,255,0.15);margin:2px 0;"></div>
+          <div id="dash14hLabel" style="font-size:9px;color:rgba(255,255,255,0.38);line-height:1;">--:--</div>
+          <div id="dashBtStatus" style="font-size:6px;color:rgba(167,139,250,0.55);margin-top:1px;letter-spacing:0.3px;">BT ○</div>
         </div>
       </div>
       <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">TURNO</div>
     </div>
 
-    <!-- DISPONIBLES ring (green) — uses existing dashRingArc/dashRingTrack, SVG scaled via CSS -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <div id="dashRingWrap" style="position:relative;width:110px;height:110px;">
+    <!-- DISPONIBLES ring (green) — GRANDE, usa dashRingArc/dashRingTrack -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto;">
+      <div id="dashRingWrap" style="position:relative;width:168px;height:168px;">
         <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
           <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="18" id="dashRingTrack"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="#10b981" stroke-width="18" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="16" id="dashRingTrack"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="#10b981" stroke-width="16" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div id="dashHosTime" style="font-size:17px;font-weight:900;color:#10b981;letter-spacing:-1px;line-height:1;">11h 0m</div>
-          <div id="dashHosLabel" style="font-size:8px;color:rgba(255,255,255,0.45);text-align:center;margin-top:3px;line-height:1.3;max-width:80px;">de 11h límite</div>
+          <div id="dashHosTime" style="font-size:26px;font-weight:900;color:#10b981;letter-spacing:-1.5px;line-height:1;">11h 0m</div>
+          <div id="dashHosLabel" style="font-size:10px;color:rgba(255,255,255,0.45);text-align:center;margin-top:5px;line-height:1.3;max-width:110px;">de 11h límite</div>
         </div>
       </div>
       <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">DISPONIBLES</div>
     </div>
 
     <!-- CICLO 70H ring (blue) -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <div style="position:relative;width:100px;height:100px;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
+      <div style="position:relative;width:96px;height:96px;">
         <svg viewBox="0 0 94 94" style="width:100%;height:100%;position:absolute;inset:0;">
           <circle cx="47" cy="47" r="40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
           <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#60a5fa" stroke-width="7" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div id="dashWeekHours" style="font-size:18px;font-weight:900;color:#60a5fa;letter-spacing:-1px;line-height:1;">70H</div>
-          <div id="dashCicloUsed" style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:3px;">0h usadas</div>
+          <div id="dashWeekHours" style="font-size:16px;font-weight:900;color:#60a5fa;letter-spacing:-0.5px;line-height:1;">70H</div>
+          <div id="dashCicloUsed" style="font-size:7px;color:rgba(255,255,255,0.45);margin-top:3px;">0h usadas</div>
         </div>
       </div>
       <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">CICLO 70H</div>
@@ -8236,8 +8239,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <span id="dashWxIcon"></span><span id="dashWxTemp"></span><span id="dashWxDesc"></span><span id="dashWxWind"></span>
   </div>
 
+  </div><!-- /tarjeta principal -->
+
   <!-- ⑥ MINI MAPA GPS — oculto visualmente pero activo para tracking -->
-  <div id="hosMiniMap" style="flex:0 0 1px;height:1px;overflow:hidden;visibility:hidden;position:absolute;top:0;left:0;width:1px;">
+  <div id="hosMiniMap" style="position:absolute;top:0;left:0;width:1px;height:1px;overflow:hidden;visibility:hidden;">
     <button onclick="triggerSOS()" style="display:none;">SOS</button>
   </div>
 
