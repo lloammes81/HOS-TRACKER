@@ -3726,14 +3726,14 @@ body.dark #fullMap .leaflet-tile-pane {
   .hero-brand-name .hbn-top {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 26px;
-    letter-spacing: 2px;
+    letter-spacing: 0.5px;
     color: #ffffff;
     line-height: 1;
   }
   .hero-brand-name .hbn-bot {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 13px;
-    letter-spacing: 4px;
+    letter-spacing: 1px;
     color: rgba(255,255,255,0.65);
     line-height: 1;
     margin-top: 1px;
@@ -3950,7 +3950,7 @@ body.dark #fullMap .leaflet-tile-pane {
     0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)}
   }
   .hero-pill-text {
-    font-size: 9px; font-weight: 800; letter-spacing: 1px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0;
     text-transform: uppercase; color: #10b981;
   }
   .hero-h1 {
@@ -5872,7 +5872,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
       <!-- Right: calendar + BT badge (was absolutely positioned) -->
-      <div id="heroCalendarWrap" style="display:flex;flex-direction:column;gap:6px;align-items:center;flex-shrink:0;">
+      <div id="heroCalendarWrap" style="flex-shrink:0;">
         <div style="
           background:rgba(8,14,26,.82);
           backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
@@ -5891,19 +5891,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             text-transform:uppercase;color:#10b981;
             padding-bottom:8px;" id="calMonthName">MAY</div>
         </div>
-        <button id="heroBtBadge" onclick="heroBleScan()" style="
-          display:flex;align-items:center;justify-content:center;gap:5px;
-          width:82px;
-          background:rgba(8,14,26,.82);
-          border:1px solid rgba(255,255,255,.13);
-          border-radius:12px;padding:6px 0;
-          cursor:pointer;-webkit-tap-highlight-color:transparent;
-          backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-          box-shadow:0 4px 16px rgba(0,0,0,.5);
-        ">
-          <span id="heroBtDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0;"></span>
-          <span id="heroBtTxt" style="font-size:10px;font-weight:700;letter-spacing:0.5px;color:#9ca3af;">ELD BT</span>
-        </button>
       </div>
       <!-- hidden controls kept for JS compatibility -->
       <button id="gpsBtn" style="display:none"></button>
@@ -5985,6 +5972,23 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   </div>
 
+  <!-- Floating ELD BT icon -->
+  <button id="heroBtBadge" onclick="heroBleScan()" style="
+    position:absolute;bottom:14px;right:14px;z-index:12;
+    width:38px;height:38px;border-radius:50%;
+    background:rgba(8,14,26,.85);
+    border:1px solid rgba(255,255,255,.15);
+    box-shadow:0 4px 14px rgba(0,0,0,.6);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    cursor:pointer;-webkit-tap-highlight-color:transparent;
+  ">
+    <svg width="14" height="18" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 1L11.5 5.5L7 10M7 10L11.5 14.5L7 19M7 1V17M7 10L2.5 5.5M7 10L2.5 14.5" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span id="heroBtDot" style="width:5px;height:5px;border-radius:50%;background:#6b7280;margin-top:1px;"></span>
+    <span id="heroBtTxt" style="display:none;">ELD BT</span>
+  </button>
 
 </div>
 
