@@ -61,7 +61,7 @@
     --sab: env(safe-area-inset-bottom, 0px);
     --sal: env(safe-area-inset-left, 0px);
     --sar: env(safe-area-inset-right, 0px);
-    --tab-h: calc(60px + var(--sab));
+    --tab-h: calc(68px + var(--sab));
     --header-pt: calc(3px + var(--sat));
   }
   body.dark {
@@ -133,7 +133,7 @@
     padding-left: calc(26px + var(--sal));
     padding-right: calc(26px + var(--sar));
   }
-  #page-plan .container { padding-bottom: 6px; }
+  #page-plan .container { padding-top: 16px; padding-bottom: 6px; }
 
   /* ══════════════════════════════════════════
      TAB BAR — native app feel
@@ -4049,22 +4049,94 @@ body.dark #fullMap .leaflet-tile-pane {
   /* ════════════════════════════════════════════════════════════
      6-TAB BAR ADJUSTMENTS
   ════════════════════════════════════════════════════════════ */
+  /* ── 3D Tab Icons ── */
   .tab-btn {
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 4px; border: none; background: none; color: var(--muted);
-    font-family: "DM Sans", sans-serif; font-size: 11px; font-weight: 700;
-    cursor: pointer; padding: 6px 2px 4px;
-    transition: color .18s; position: relative;
+    gap: 5px; border: none; background: none; color: var(--muted);
+    font-family: "DM Sans", sans-serif; font-size: 10px; font-weight: 700;
+    cursor: pointer; padding: 6px 2px 6px;
+    transition: color .2s; position: relative;
     -webkit-tap-highlight-color: transparent; touch-action: manipulation;
     letter-spacing: .2px;
   }
-  .tab-btn svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s; }
+  /* 3D pill platform behind icon */
+  .tab-btn::before {
+    content: '';
+    position: absolute;
+    top: 5px; left: 50%;
+    transform: translateX(-50%);
+    width: 52px; height: 38px;
+    border-radius: 16px;
+    background: linear-gradient(175deg, rgba(255,255,255,.04) 0%, rgba(0,0,0,.22) 100%);
+    box-shadow:
+      0 5px 10px rgba(0,0,0,.40),
+      0 2px 3px rgba(0,0,0,.25),
+      inset 0 1px 0 rgba(255,255,255,.08),
+      inset 0 -2px 0 rgba(0,0,0,.30);
+    opacity: 0.55;
+    transition: all .22s cubic-bezier(.34,1.56,.64,1);
+  }
+  .tab-btn:active::before {
+    transform: translateX(-50%) translateY(1px) scale(.93);
+    box-shadow: 0 2px 4px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+    opacity: 0.7;
+  }
+  .tab-btn.active::before {
+    opacity: 1;
+    background: linear-gradient(175deg, rgba(16,185,129,.30) 0%, rgba(16,185,129,.10) 100%);
+    box-shadow:
+      0 6px 20px rgba(16,185,129,.42),
+      0 2px 5px rgba(0,0,0,.30),
+      inset 0 1px 0 rgba(255,255,255,.20),
+      inset 0 -2px 0 rgba(16,185,129,.18);
+    transform: translateX(-50%);
+  }
+  /* SVG icon */
+  .tab-btn svg {
+    width: 32px; height: 32px;
+    fill: none; stroke: currentColor;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    transition: transform .22s cubic-bezier(.34,1.56,.64,1), filter .22s;
+    position: relative; z-index: 1;
+  }
+  .tab-btn.active svg {
+    transform: translateY(-3px);
+    filter: drop-shadow(0 3px 6px rgba(16,185,129,.60));
+  }
+  .tab-btn:active svg { transform: translateY(1px) scale(.9); }
   .tab-btn.active { color: var(--accent); }
-  .tab-btn.active svg { transform: translateY(-1px); }
-
-  /* Special accent tabs */
-  .tab-btn[data-tab="tools"].active    { color: #10b981; }
+  /* Glow underline on active */
+  .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: calc(var(--sab) + 5px);
+    left: 50%; transform: translateX(-50%);
+    width: 22px; height: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(16,185,129,.85), 0 0 4px rgba(16,185,129,.5);
+  }
+  .tab-btn span { position: relative; z-index: 1; font-size: 10px; }
+  /* Special accent per tab */
+  .tab-btn[data-tab="tools"].active { color: #10b981; }
+  .tab-btn[data-tab="tools"].active::before {
+    background: linear-gradient(175deg, rgba(16,185,129,.30) 0%, rgba(16,185,129,.10) 100%);
+    box-shadow: 0 6px 20px rgba(16,185,129,.42), 0 2px 5px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.20);
+  }
   .tab-btn[data-tab="community"].active { color: #7c3aed; }
+  .tab-btn[data-tab="community"].active::before {
+    background: linear-gradient(175deg, rgba(124,58,237,.30) 0%, rgba(124,58,237,.10) 100%);
+    box-shadow: 0 6px 20px rgba(124,58,237,.42), 0 2px 5px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.20);
+  }
+  .tab-btn[data-tab="community"].active::after { background: #7c3aed; box-shadow: 0 0 10px rgba(124,58,237,.85); }
+  .tab-btn[data-tab="community"].active svg { filter: drop-shadow(0 3px 6px rgba(124,58,237,.60)); }
+  .tab-btn[data-tab="settings"].active { color: #f59e0b; }
+  .tab-btn[data-tab="settings"].active::before {
+    background: linear-gradient(175deg, rgba(245,158,11,.30) 0%, rgba(245,158,11,.10) 100%);
+    box-shadow: 0 6px 20px rgba(245,158,11,.35), 0 2px 5px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.20);
+  }
+  .tab-btn[data-tab="settings"].active::after { background: #f59e0b; box-shadow: 0 0 10px rgba(245,158,11,.85); }
+  .tab-btn[data-tab="settings"].active svg { filter: drop-shadow(0 3px 6px rgba(245,158,11,.60)); }
 
   /* Tools tab badge */
   .tab-tools-glow {
@@ -27387,6 +27459,56 @@ window._hosAutoRecalc = false;
   setInterval(_save, 30000);
 
   window._hosTracker = { driveLeft: _driveLeft, cycleLeft: _cycleLeft };
+})();
+</script>
+
+<script>
+/* ── Draggable floating BT button ── */
+(function(){
+  const btn = document.getElementById('heroBtBadge');
+  if (!btn) return;
+  // Restore saved position
+  try {
+    const saved = JSON.parse(localStorage.getItem('btBtnPos'));
+    if (saved) { btn.style.bottom = 'auto'; btn.style.right = 'auto'; btn.style.top = saved.top + 'px'; btn.style.left = saved.left + 'px'; }
+  } catch(e){}
+
+  let dragging = false, ox = 0, oy = 0, moved = false;
+
+  function start(x, y) {
+    dragging = true; moved = false;
+    const r = btn.getBoundingClientRect();
+    ox = x - r.left; oy = y - r.top;
+    btn.style.transition = 'none';
+    btn.style.bottom = 'auto'; btn.style.right = 'auto';
+    btn.style.top = r.top + 'px'; btn.style.left = r.left + 'px';
+    btn.setPointerCapture && btn.setPointerCapture(btn._pid);
+  }
+  function move(x, y) {
+    if (!dragging) return;
+    const nx = x - ox, ny = y - oy;
+    const maxX = window.innerWidth - btn.offsetWidth - 4;
+    const maxY = window.innerHeight - btn.offsetHeight - 4;
+    btn.style.left = Math.max(4, Math.min(nx, maxX)) + 'px';
+    btn.style.top  = Math.max(4, Math.min(ny, maxY)) + 'px';
+    moved = true;
+  }
+  function end() {
+    if (!dragging) return;
+    dragging = false;
+    btn.style.transition = '';
+    try { localStorage.setItem('btBtnPos', JSON.stringify({ top: parseFloat(btn.style.top), left: parseFloat(btn.style.left) })); } catch(e){}
+    if (moved) { btn.addEventListener('click', function stop(e){ e.stopImmediatePropagation(); btn.removeEventListener('click', stop); }, { once: true, capture: true }); }
+  }
+
+  btn.addEventListener('pointerdown', function(e) {
+    btn._pid = e.pointerId;
+    btn.setPointerCapture(e.pointerId);
+    start(e.clientX, e.clientY);
+  });
+  btn.addEventListener('pointermove', function(e) { move(e.clientX, e.clientY); });
+  btn.addEventListener('pointerup',   end);
+  btn.addEventListener('pointercancel', end);
 })();
 </script>
 
