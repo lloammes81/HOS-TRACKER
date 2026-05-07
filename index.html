@@ -9812,7 +9812,7 @@ let tripStart = null;
 
 /* ── Safety feature states ────────────────────── */
 let fatigueActive   = localStorage.getItem('hos_fatigue')  !== 'false' ? false : false;
-let weatherActive   = localStorage.getItem('hos_weather')  === 'true';
+let weatherActive   = true; // always on
 let bridgeActive    = localStorage.getItem('hos_bridge') === 'true';
 let trailerHeight   = parseFloat(localStorage.getItem('hos_trailer') || '13.6');
 
@@ -10370,13 +10370,10 @@ async function startWeatherMonitor() {
   document.getElementById('wxDesc').textContent = 'Loading...';
 
   const updateNow = async () => {
-    if (!weatherActive) return;
     if (!navigator.geolocation) return;
     try {
-      const pos = await getGPSPosition(30000, 10000); // 30s cache ok for weather
+      const pos = await getGPSPosition(10000, 5000);
       const { latitude: lat, longitude: lon } = pos.coords;
-      // Don't re-fetch if barely moved (<5 miles)
-      if (lastWeatherLat && haversine(lat,lon,lastWeatherLat,lastWeatherLon) < 5) return;
       lastWeatherLat = lat; lastWeatherLon = lon;
       const wx = await fetchWeather(lat, lon);
       updateWeatherWidget(wx);
@@ -10384,7 +10381,7 @@ async function startWeatherMonitor() {
   };
 
   await updateNow();
-  weatherInterval = setInterval(updateNow, 10 * 60 * 1000); // every 10 min
+  weatherInterval = setInterval(updateNow, 5 * 60 * 1000); // every 5 min
   document.getElementById('weatherToggle').classList.add('on');
 }
 
@@ -10397,11 +10394,8 @@ function stopWeatherMonitor() {
 }
 
 function toggleWeatherMonitor() {
-  weatherActive = !weatherActive;
-  localStorage.setItem('hos_weather', weatherActive);
-  document.getElementById('weatherToggle').classList.toggle('on', weatherActive);
-  if (weatherActive) startWeatherMonitor();
-  else stopWeatherMonitor();
+  // Weather is always active — toggling just restarts the monitor
+  if (!weatherInterval) startWeatherMonitor();
 }
 
 function showWeatherDetail() {
