@@ -8129,81 +8129,94 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- ② ANILLO HOS GRANDE — tamaño fijo, centrado -->
-  <div id="dashRingBg" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:18px 0 10px;transition:background 0.7s ease;">
-    <div style="position:relative;display:inline-block;filter:drop-shadow(0 0 14px rgba(210,140,20,0.16)) drop-shadow(0 4px 22px rgba(0,0,0,0.50));">
-    <div id="dashRingWrap" style="position:relative;width:240px;height:240px;">
-      <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
-        <!-- Hidden for JS compatibility -->
-        <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
-        <!-- Light inner fill -->
-        <circle cx="130" cy="130" r="108" fill="#f0f0f2"/>
-        <!-- Track -->
-        <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(0,0,0,0.10)" stroke-width="10" id="dashRingTrack"/>
-        <!-- Progress arc -->
-        <circle cx="130" cy="130" r="108" fill="none"
-                stroke="#10b981" stroke-width="10"
-                stroke-linecap="round"
-                stroke-dasharray="679 679"
-                id="dashRingArc"
-                transform="rotate(-90 130 130)"
-                style="transition:stroke-dasharray 1s ease, stroke 0.4s ease;"/>
-      </svg>
-      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="dashHosTime" style="font-size:33px;font-weight:900;color:#1a1a1a;line-height:1;letter-spacing:-2px;">11h 0m</div>
-        <div id="dashHosLabel" style="font-size:11px;font-weight:600;color:rgba(0,0,0,0.50);text-align:center;margin-top:6px;max-width:115px;line-height:1.4;">Tiempo de conducción restante</div>
-      </div>
+  <!-- ② BADGE DE ESTADO -->
+  <div style="flex:0 0 auto;padding:0 14px 10px;">
+    <div id="dashStatusPillWrap" style="display:inline-flex;align-items:center;gap:8px;background:rgba(16,185,129,0.08);border:1.5px solid #10b981;border-radius:999px;padding:7px 18px;">
+      <span id="dashStatusDot" style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;"></span>
+      <span id="dashMainStatusLabel" style="font-size:13px;font-weight:900;letter-spacing:1.5px;color:#10b981;text-transform:uppercase;">CONDUCIENDO</span>
     </div>
-    <!-- ── Círculo ON-SHIFT ── -->
-    <div id="dash14hWrap" style="position:absolute;top:16px;right:-84px;display:flex;flex-direction:column;align-items:center;gap:2px;">
-      <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,.38);letter-spacing:1px;text-transform:uppercase;">ON-SHIFT</div>
-      <div style="position:relative;width:74px;height:74px;">
-        <svg viewBox="0 0 90 90" width="74" height="74" style="display:block;">
-          <circle cx="45" cy="45" r="36" fill="#12162a"/>
-          <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="6"/>
-          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none"
-                  stroke="#10b981" stroke-width="6" stroke-linecap="round"
-                  stroke-dasharray="226 226" transform="rotate(-90 45 45)"
-                  style="transition:stroke-dasharray 1s ease, stroke 0.4s ease;"/>
+  </div>
+
+  <!-- ③ TRES ANILLOS KPI -->
+  <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:0 12px 12px;align-items:end;">
+
+    <!-- TURNO ring (purple) -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <div style="position:relative;width:100px;height:100px;">
+        <svg viewBox="0 0 90 90" style="width:100%;height:100%;position:absolute;inset:0;">
+          <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#a78bfa" stroke-width="7" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
-          <div id="dash14hTime" style="font-size:13px;font-weight:900;color:#ffffff;line-height:1;letter-spacing:-0.5px;">14h</div>
-          <div style="font-size:6px;color:rgba(255,255,255,.32);margin-top:2px;letter-spacing:.2px;">restante</div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;">
+          <div id="dash14hTime" style="font-size:13px;font-weight:900;color:#a78bfa;letter-spacing:-0.5px;line-height:1;">--:--</div>
+          <div style="font-size:7px;color:rgba(255,255,255,0.35);margin-top:1px;">inicio</div>
+          <div style="width:22px;height:0.5px;background:rgba(255,255,255,0.15);margin:2px 0;"></div>
+          <div id="dash14hLabel" style="font-size:10px;color:rgba(255,255,255,0.38);line-height:1;">--:--</div>
+          <div id="dashBtStatus" style="font-size:7px;color:rgba(167,139,250,0.55);margin-top:1px;letter-spacing:0.3px;">BT ○</div>
         </div>
       </div>
-      <div id="dash14hLabel" style="font-size:7.5px;font-weight:700;color:rgba(255,255,255,.28);">de 14h</div>
+      <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">TURNO</div>
     </div>
-    </div><!-- /inline-block wrapper -->
 
-    <!-- Weather strip below ring -->
-    <div id="dashWeatherRow" style="display:none;align-items:center;justify-content:center;margin-top:12px;width:100%;">
-      <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:8px 22px;">
-        <span id="dashWxIcon" style="font-size:22px;">🌤️</span>
-        <span id="dashWxTemp" style="font-size:20px;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px;"></span>
-        <span id="dashWxDesc" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.55);"></span>
-        <span id="dashWxWind" style="font-size:11px;color:rgba(255,255,255,0.32);"></span>
+    <!-- DISPONIBLES ring (green) — uses existing dashRingArc/dashRingTrack, SVG scaled via CSS -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <div id="dashRingWrap" style="position:relative;width:110px;height:110px;">
+        <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
+          <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="18" id="dashRingTrack"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="#10b981" stroke-width="18" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div id="dashHosTime" style="font-size:17px;font-weight:900;color:#10b981;letter-spacing:-1px;line-height:1;">11h 0m</div>
+          <div id="dashHosLabel" style="font-size:8px;color:rgba(255,255,255,0.45);text-align:center;margin-top:3px;line-height:1.3;max-width:80px;">de 11h límite</div>
+        </div>
       </div>
+      <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">DISPONIBLES</div>
+    </div>
+
+    <!-- CICLO 70H ring (blue) -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <div style="position:relative;width:100px;height:100px;">
+        <svg viewBox="0 0 94 94" style="width:100%;height:100%;position:absolute;inset:0;">
+          <circle cx="47" cy="47" r="40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#60a5fa" stroke-width="7" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div id="dashWeekHours" style="font-size:18px;font-weight:900;color:#60a5fa;letter-spacing:-1px;line-height:1;">70H</div>
+          <div id="dashCicloUsed" style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:3px;">0h usadas</div>
+        </div>
+      </div>
+      <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">CICLO 70H</div>
     </div>
   </div>
 
-  <!-- ③ TARJETAS ESTADÍSTICAS — tamaño fijo -->
-  <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;padding:0 14px 10px;">
-    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:10px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
-      <div id="dashArrivalDay" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.6px;min-height:13px;"></div>
-      <div id="dashArrival" style="font-size:24px;font-weight:900;color:#f1f5f9;line-height:1.15;">--:--</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:4px;font-weight:600;">Llegada</div>
+  <!-- ④ PESTAÑAS DE ESTADO -->
+  <div id="dashTabsRow" style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:0 14px 12px;">
+    <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
+    <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">En Servicio</button>
+    <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
+    <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Fuera</button>
+  </div>
+
+  <!-- ⑤ BARRAS DE PROGRESO -->
+  <div style="flex:0 0 auto;padding:0 14px 14px;display:flex;flex-direction:column;gap:14px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="font-size:9px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:1.2px;width:68px;flex-shrink:0;">MANEJO</div>
+      <div style="flex:1;height:5px;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden;">
+        <div id="dashManejoProg" style="height:100%;background:#10b981;border-radius:999px;width:0%;transition:width 1s ease;"></div>
+      </div>
+      <div id="dashManejoLabel" style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:52px;text-align:right;flex-shrink:0;">0h 00m</div>
     </div>
-    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:14px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
-      <div id="dashWeekHours" style="font-size:26px;font-weight:900;color:#f1f5f9;">70h</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:4px;font-weight:600;">Ciclo 70h</div>
-    </div>
-    <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:14px 6px;text-align:center;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 12px rgba(0,0,0,0.4);">
-      <div id="dashMilesLeft" style="font-size:26px;font-weight:900;color:#f1f5f9;">--</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:4px;font-weight:600;">Mi restantes</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="font-size:9px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:1.2px;width:68px;flex-shrink:0;">CICLO 8D</div>
+      <div style="flex:1;height:5px;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden;">
+        <div id="dashCicloProg" style="height:100%;background:#60a5fa;border-radius:999px;width:0%;transition:width 1s ease;"></div>
+      </div>
+      <div id="dashCicloLabel" style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:52px;text-align:right;flex-shrink:0;">0H / 70H</div>
     </div>
   </div>
 
-  <!-- GARMIN-STYLE NAV CARD — reemplaza los 4 botones cuando el vehículo se mueve -->
+  <!-- GARMIN-STYLE NAV CARD -->
   <div id="hosNavCard" style="display:none;flex:0 0 auto;margin:0 14px 10px;border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.55);">
     <div class="hnc-orange" style="background:#d4520a;display:flex;flex-direction:column;padding:8px 16px 11px;">
       <div style="font-size:9px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:2px;">Destino</div>
@@ -8214,28 +8227,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- ④ PESTAÑAS — barra entre estadísticas y mapa -->
-  <div id="dashTabsRow" style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:0 14px 10px;">
-    <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
-    <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
-    <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">Espera</button>
-    <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Sleeper</button>
+  <!-- Hidden elements for JS compatibility -->
+  <div style="display:none;">
+    <div id="dashArrivalDay"></div>
+    <div id="dashArrival">--:--</div>
+    <div id="dashMilesLeft">--</div>
+    <div id="dashWeatherRow"></div>
+    <span id="dashWxIcon"></span><span id="dashWxTemp"></span><span id="dashWxDesc"></span><span id="dashWxWind"></span>
   </div>
 
-  <!-- ⑤ MINI MAPA — ocupa el resto de la pantalla -->
-  <div id="hosMiniMap" style="flex:1;min-height:0;background:#0f1c2e;border-top:1px solid rgba(255,255,255,0.07);position:relative;">
-    <!-- SOS button below speed signs -->
-    <button onclick="triggerSOS()" style="
-      position:absolute; top:170px; right:12px; z-index:9999;
-      width:44px; height:44px; border-radius:50%;
-      background:#ef4444; border:2.5px solid #fff;
-      color:#fff; font-size:10px; font-weight:900; letter-spacing:.5px;
-      display:flex; align-items:center; justify-content:center;
-      box-shadow:0 4px 16px rgba(239,68,68,.6);
-      cursor:pointer; font-family:'DM Sans',sans-serif;
-      animation:sosFabPulse 2s ease-in-out infinite;
-      -webkit-tap-highlight-color:transparent;
-    ">SOS</button>
+  <!-- ⑥ MINI MAPA GPS — oculto visualmente pero activo para tracking -->
+  <div id="hosMiniMap" style="flex:0 0 1px;height:1px;overflow:hidden;visibility:hidden;position:absolute;top:0;left:0;width:1px;">
+    <button onclick="triggerSOS()" style="display:none;">SOS</button>
   </div>
 
 </div>
@@ -16649,17 +16652,41 @@ function updateHosDashboard(driveLeft, driveMax) {
 
   // Horas restantes del ciclo 70h
   const weekEl = document.getElementById('dashWeekHours');
+  const cycMax = parseFloat(document.getElementById('hoursInput')?.value) || 70;
+  const cycLeft = Math.max(0, cycMax - (driveMax - driveLeft));
   if (weekEl) {
     const fm70 = document.getElementById('fm70Left');
     if (fm70 && fm70.textContent && fm70.textContent !== '--') {
       weekEl.textContent = fm70.textContent;
     } else {
-      const cycMax = parseFloat(document.getElementById('hoursInput')?.value) || 70;
-      const cycLeft = Math.max(0, cycMax - (driveMax - driveLeft));
       const ch = Math.floor(cycLeft), cm = Math.round((cycLeft - ch) * 60);
-      weekEl.textContent = ch > 0 ? `${ch}h ${cm}m` : `${cm}m`;
+      weekEl.textContent = ch > 0 ? `${ch}h` : `${cm}m`;
     }
   }
+  // CICLO ring arc (C = 2π×40 ≈ 251)
+  const cicloArc = document.getElementById('dashCicloArc');
+  if (cicloArc) {
+    const pctC = Math.max(0, Math.min(1, cycLeft / cycMax));
+    cicloArc.setAttribute('stroke-dasharray', `${(pctC * 251).toFixed(1)} 251`);
+    cicloArc.setAttribute('stroke', cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#f59e0b' : '#60a5fa');
+  }
+  const cicloUsedEl = document.getElementById('dashCicloUsed');
+  if (cicloUsedEl) {
+    const used = cycMax - cycLeft;
+    const uh = Math.floor(used), um = Math.round((used - uh) * 60);
+    cicloUsedEl.textContent = `${uh}h ${String(um).padStart(2,'0')}m usadas`;
+  }
+  // Progress bars
+  const manProg  = document.getElementById('dashManejoProg');
+  const manLabel = document.getElementById('dashManejoLabel');
+  const cProg    = document.getElementById('dashCicloProg');
+  const cLabel   = document.getElementById('dashCicloLabel');
+  const usedDrive = Math.max(0, driveMax - driveLeft);
+  if (manProg)  manProg.style.width  = `${Math.min(100, (usedDrive / driveMax) * 100).toFixed(1)}%`;
+  if (manLabel) { const uh = Math.floor(usedDrive), um = Math.round((usedDrive - uh) * 60); manLabel.textContent = `${uh}h ${String(um).padStart(2,'0')}m`; }
+  const usedCycle = cycMax - cycLeft;
+  if (cProg)   cProg.style.width   = `${Math.min(100, (usedCycle / cycMax) * 100).toFixed(1)}%`;
+  if (cLabel)  cLabel.textContent  = `${Math.floor(usedCycle)}H / ${cycMax}H`;
   updateNextStopCard();
   update14hCircle();
 }
@@ -16746,10 +16773,10 @@ function setDashStatus(status) {
     off:     document.getElementById('dashTabOff')
   };
   const labels = {
-    driving: 'Conduciendo',
-    rest:    'Descansando',
-    wait:    'En espera',
-    off:     'Sleeper'
+    driving: 'CONDUCIENDO',
+    rest:    'DESCANSO',
+    wait:    'EN SERVICIO',
+    off:     'FUERA'
   };
   const colors = {
     driving: '#10b981',
@@ -16774,6 +16801,13 @@ function setDashStatus(status) {
     statusEl.textContent = labels[status] || status;
     statusEl.style.color  = colors[status] || '#10b981';
   }
+  // Update main status pill
+  const mainLbl = document.getElementById('dashMainStatusLabel');
+  const mainDot = document.getElementById('dashStatusDot');
+  const pillWrap = document.getElementById('dashStatusPillWrap');
+  if (mainLbl) { mainLbl.textContent = labels[status] || status; mainLbl.style.color = colors[status] || '#10b981'; }
+  if (mainDot) mainDot.style.background = colors[status] || '#10b981';
+  if (pillWrap) { pillWrap.style.borderColor = colors[status] || '#10b981'; pillWrap.style.background = `${colors[status] || '#10b981'}14`; }
 }
 
 /* ════════════════════════════════════════════════════════════
