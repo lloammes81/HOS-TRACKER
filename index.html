@@ -2769,23 +2769,25 @@
 #mapStylePanel{
   position:fixed;
   top:50%; left:50%;
-  transform:translate(-50%, -40%);
+  transform:translate(-50%, -50%) scale(0.88);
+  transform-origin:center center;
   background:rgba(10,18,35,0.97);
-  backdrop-filter:blur(18px);
-  border:1px solid rgba(255,255,255,.14);
-  border-radius:20px;
-  padding:18px 20px;
-  display:flex; gap:12px; flex-wrap:wrap;
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+  border:1px solid rgba(16,185,129,0.22);
+  border-radius:22px;
+  padding:20px 22px;
+  display:flex; gap:14px; flex-wrap:wrap;
   justify-content:center;
   width:max-content; max-width:calc(100vw - 32px);
   z-index:99999;
   opacity:0; pointer-events:none;
-  transition:opacity .22s, transform .22s;
-  box-shadow:0 12px 40px rgba(0,0,0,.7);
+  transition:opacity .20s ease, transform .20s ease;
+  box-shadow:0 0 0 1px rgba(16,185,129,0.10),0 16px 48px rgba(0,0,0,.85),0 0 32px rgba(16,185,129,0.10);
 }
 #mapStylePanel.visible{
   opacity:1; pointer-events:all;
-  transform:translate(-50%, -50%);
+  transform:translate(-50%, -50%) scale(1);
 }
 .map-style-btn{
   display:flex; flex-direction:column; align-items:center; gap:5px;
@@ -7807,7 +7809,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div class="local-radius-info" id="localRadiusInfo" style="display:none">📍 Local Mode — 100 mi radius</div>
     <div id="routeAlertPill" onclick="switchTab('community')">🚨 Alert on your route — tap</div>
 
-  <!-- Map Style Picker Panel -->
+  <!-- Map Style Picker overlay + panel -->
+  <div id="mapStyleOverlay" onclick="toggleMapStylePanel()" style="position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .20s ease;"></div>
   <div id="mapStylePanel"></div>
 
   <!-- NEXT TURN / EXIT INSTRUCTION -->
@@ -12409,8 +12412,15 @@ function changeMapStyle(styleKey) {
 }
 
 function toggleMapStylePanel() {
-  const panel = document.getElementById('mapStylePanel');
-  if (panel) panel.classList.toggle('visible');
+  const panel   = document.getElementById('mapStylePanel');
+  const overlay = document.getElementById('mapStyleOverlay');
+  if (!panel) return;
+  const opening = !panel.classList.contains('visible');
+  panel.classList.toggle('visible', opening);
+  if (overlay) {
+    overlay.style.opacity        = opening ? '1' : '0';
+    overlay.style.pointerEvents  = opening ? 'all' : 'none';
+  }
 }
 
 // Cycle through map color themes quickly
