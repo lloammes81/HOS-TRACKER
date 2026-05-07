@@ -8188,13 +8188,22 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- ④ PESTAÑAS DE ESTADO -->
-  <div id="dashTabsRow" style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;padding:0 14px 10px;">
-    <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
-    <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">En Servicio</button>
-    <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
-    <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Fuera</button>
+  <!-- ④ TARJETA DESTINO -->
+  <div id="dashDestCard" style="flex:0 0 auto;padding:0 12px 10px;">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:12px;min-height:0;">
+      <div style="font-size:20px;flex-shrink:0;line-height:1;">📍</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px;">DESTINO</div>
+        <div id="dashDestName" style="font-size:13px;font-weight:900;color:#f1f5f9;letter-spacing:-0.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;">Sin destino asignado</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:2px;">LLEGADA</div>
+        <div id="dashDestArrival" style="font-size:13px;font-weight:800;color:#10b981;letter-spacing:-0.2px;line-height:1;">--</div>
+        <div id="dashDestDate" style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);margin-top:2px;">--</div>
+      </div>
+    </div>
   </div>
+
 
   <!-- ⑤ BARRAS DE PROGRESO -->
   <div style="flex:0 0 auto;padding:0 14px 14px;display:flex;flex-direction:column;gap:14px;">
@@ -13689,6 +13698,9 @@ function _applyRouteResult(road, depart, hours, speed, isInitialLoad) {
     }
   }
 
+  // Update destination card whenever route/arrival recalculates
+  if (typeof updateDashDestCard === 'function') updateDashDestCard();
+
   if (road.source === 'Fallback') {
     const _reason = road.fallbackReason || '';
     const isFetching = _reason.includes('buscando') || _reason.includes('fetching');
@@ -15037,6 +15049,55 @@ async function _fetchStopCityAhead(targetMiles, onResult) {
   } catch { onResult(null); }
 }
 
+// ── Tarjeta destino ──
+function updateDashDestCard() {
+  const nameEl = document.getElementById('dashDestName');
+  const arrEl  = document.getElementById('dashDestArrival');
+  const dateEl = document.getElementById('dashDestDate');
+  if (!nameEl || !arrEl) return;
+  const breakDue  = !b30Complete && b30Warned30m;
+  const hoursGone = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft <= 0;
+  const hoursLow  = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft > 0 && _hosCurrentDriveLeft <= 2;
+  if (!destination?.name) {
+    nameEl.textContent = 'Sin destino asignado';
+    arrEl.textContent = '--';
+    if (dateEl) dateEl.textContent = '';
+    return;
+  }
+  if (hoursGone) {
+    nameEl.textContent = '🛑 Horas de manejo agotadas';
+    arrEl.textContent = 'Para el vehículo';
+    if (dateEl) dateEl.textContent = 'Descanso requerido';
+    return;
+  }
+  if (breakDue) {
+    nameEl.textContent = '⏸ Pausa obligatoria 30 min';
+    arrEl.textContent = 'Detente pronto';
+    if (dateEl) dateEl.textContent = '';
+    return;
+  }
+  if (hoursLow) {
+    const h = Math.floor(_hosCurrentDriveLeft), m = Math.round((_hosCurrentDriveLeft - h) * 60);
+    nameEl.textContent = '⚠️ ' + destination.name.split(',')[0].trim();
+    arrEl.textContent = (h > 0 ? h+'h ' : '') + m+'min restantes';
+    if (dateEl) dateEl.textContent = 'Busca lugar para detenerte';
+    return;
+  }
+  nameEl.textContent = destination.name.split(',').slice(0,2).join(',').trim();
+  if (arrivalTime instanceof Date) {
+    const days   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const d = arrivalTime;
+    const h = d.getHours(), m = d.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
+    arrEl.textContent = h12+':'+String(m).padStart(2,'0')+' '+ampm;
+    if (dateEl) dateEl.textContent = days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+  } else {
+    arrEl.textContent = 'Calculando...';
+    if (dateEl) dateEl.textContent = '';
+  }
+}
+
 // ── Garmin-style nav card (reemplaza los 4 botones cuando el vehículo se mueve) ──
 function updateNextStopCard() {
   const card = document.getElementById('hosNavCard');
@@ -15045,7 +15106,7 @@ function updateNextStopCard() {
 
   const show = fmVehicleMoving && navSteps.length > 0;
   card.style.display = show ? 'block' : 'none';
-  if (tabs) tabs.style.display = show ? 'none' : 'grid';
+  updateDashDestCard();
   if (!show) return;
 
   // ── Barra verde: próxima instrucción de navegación ──
@@ -16044,6 +16105,7 @@ function showHosDashboard() {
   const _dashElapsed   = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
   const _dashDriveLeft = Math.max(0, _dashDriveMax - _dashElapsed);
   updateHosDashboard(_dashDriveLeft, _dashDriveMax);
+  updateDashDestCard();
 
   // Mostrar clima si está activo
   refreshDashWeather();
