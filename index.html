@@ -8261,16 +8261,16 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
     <!-- DISPONIBLES ring (green) — GRANDE, usa dashRingArc/dashRingTrack -->
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto;">
-      <div id="dashRingWrap" style="position:relative;width:168px;height:168px;filter:drop-shadow(0 12px 32px rgba(16,185,129,0.40)) drop-shadow(0 6px 18px rgba(0,0,0,0.65));">
+      <div id="dashRingWrap" style="position:relative;width:196px;height:196px;filter:drop-shadow(0 12px 32px rgba(16,185,129,0.45)) drop-shadow(0 6px 18px rgba(0,0,0,0.70));transition:filter 0.6s ease;">
         <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
           <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
-          <circle cx="130" cy="130" r="99" fill="#eaf7f2"/>
+          <circle cx="130" cy="130" r="99" fill="#0d1a28"/>
           <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="16" id="dashRingTrack"/>
           <circle cx="130" cy="130" r="108" fill="none" stroke="#10b981" stroke-width="16" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div id="dashHosTime" style="font-size:34px;font-weight:900;color:#064e3b;letter-spacing:-2px;line-height:1;">11h 0m</div>
-          <div id="dashHosLabel" style="font-size:10px;color:rgba(6,78,59,0.6);text-align:center;margin-top:5px;line-height:1.3;max-width:110px;">de 11h límite</div>
+          <div id="dashHosTime" style="font-size:36px;font-weight:900;color:#6ee7b7;letter-spacing:-2px;line-height:1;">11h 0m</div>
+          <div id="dashHosLabel" style="font-size:10px;color:rgba(110,231,183,0.55);text-align:center;margin-top:5px;line-height:1.3;max-width:110px;">de 11h límite</div>
         </div>
       </div>
       <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">DISPONIBLES</div>
@@ -8292,7 +8292,25 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- ④ TARJETA DESTINO -->
+  <!-- ④ CLIMA DASHBOARD -->
+  <div id="dashWxBar" onclick="openNativeWeatherApp()" style="
+    flex:0 0 auto;margin:0 12px 10px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:14px;padding:9px 14px;
+    display:flex;align-items:center;gap:10px;
+    cursor:pointer;-webkit-tap-highlight-color:transparent;
+  ">
+    <span id="dashWxIconVis" style="font-size:22px;flex-shrink:0;line-height:1;">🌤️</span>
+    <span id="dashWxTempVis" style="font-size:18px;font-weight:900;color:#f1f5f9;letter-spacing:-0.5px;flex-shrink:0;">--°</span>
+    <div style="flex:1;min-width:0;">
+      <div id="dashWxDescVis" style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Obteniendo clima...</div>
+      <div id="dashWxLocVis"  style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:1px;">📍 Localizando...</div>
+    </div>
+    <span id="dashWxWindVis" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);flex-shrink:0;"></span>
+  </div>
+
+  <!-- ⑤ TARJETA DESTINO -->
   <div id="dashDestCard" style="flex:0 0 auto;padding:0 12px 10px;">
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:12px;min-height:0;">
       <div style="font-size:20px;flex-shrink:0;line-height:1;">📍</div>
@@ -10334,21 +10352,33 @@ async function fetchWeather(lat, lon) {
 }
 
 function refreshDashWeather() {
-  const row = document.getElementById('dashWeatherRow');
-  if (!row) return;
   const icon = document.getElementById('wxIcon');
   const temp = document.getElementById('wxTemp');
   const desc = document.getElementById('wxDesc');
   const wind = document.getElementById('wxWind');
-  if (weatherActive && temp && temp.textContent && temp.textContent !== '--°') {
+  const hasData = weatherActive && temp && temp.textContent && temp.textContent !== '--°';
+  // Legacy hidden row
+  const row = document.getElementById('dashWeatherRow');
+  if (row) row.style.display = hasData ? 'flex' : 'none';
+  if (hasData) {
     if (icon) document.getElementById('dashWxIcon').textContent = icon.textContent;
     if (temp) document.getElementById('dashWxTemp').textContent = temp.textContent;
     if (desc) document.getElementById('dashWxDesc').textContent = desc.textContent;
     if (wind) document.getElementById('dashWxWind').textContent = wind.textContent || '';
-    row.style.display = 'flex';
-  } else {
-    row.style.display = 'none';
   }
+  // Visible dashboard weather bar
+  const iconV = document.getElementById('dashWxIconVis');
+  const tempV = document.getElementById('dashWxTempVis');
+  const descV = document.getElementById('dashWxDescVis');
+  const windV = document.getElementById('dashWxWindVis');
+  const locV  = document.getElementById('dashWxLocVis');
+  if (iconV && icon) iconV.textContent = icon.textContent;
+  if (tempV && temp) tempV.textContent = temp.textContent;
+  if (descV && desc) descV.textContent = desc.textContent;
+  if (windV && wind) windV.textContent = wind.textContent || '';
+  // Sync location label from hero
+  const heroLoc = document.getElementById('heroWxLoc');
+  if (locV && heroLoc) locV.textContent = heroLoc.textContent;
 }
 
 function updateWeatherWidget(wx) {
@@ -11087,6 +11117,19 @@ function initDriveHoursDrag() {
   bindDragEvents(w, onDown, onMove, onUp);
 }
 
+function updateDashRingGlow(mph, isOver) {
+  const wrap = document.getElementById('dashRingWrap');
+  if (!wrap) return;
+  const moving = mph > 3;
+  if (isOver) {
+    wrap.style.filter = 'drop-shadow(0 0 22px rgba(239,68,68,0.80)) drop-shadow(0 0 44px rgba(239,68,68,0.40)) drop-shadow(0 6px 18px rgba(0,0,0,0.70))';
+  } else if (moving) {
+    wrap.style.filter = 'drop-shadow(0 0 22px rgba(59,130,246,0.75)) drop-shadow(0 0 44px rgba(59,130,246,0.35)) drop-shadow(0 6px 18px rgba(0,0,0,0.70))';
+  } else {
+    wrap.style.filter = 'drop-shadow(0 12px 32px rgba(16,185,129,0.45)) drop-shadow(0 6px 18px rgba(0,0,0,0.70))';
+  }
+}
+
 function updateSpeedometer(mph) {
   // ── Highway mode: change route color when speed > 40 mph ─────────
   const isHighway = mph > 40;
@@ -11125,6 +11168,7 @@ function updateSpeedometer(mph) {
   if (_dashLimSign) _dashLimSign.classList.toggle('over', !!over);
   const _dashSpdoEl = document.getElementById('dashSpeedoWrap');
   if (_dashSpdoEl) _dashSpdoEl.classList.toggle('over', !!over);
+  updateDashRingGlow(mph, !!over);
 
   if (!speedoVisible) return;
   const num = document.getElementById('speedoNum');
