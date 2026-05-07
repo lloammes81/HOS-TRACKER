@@ -8112,9 +8112,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div id="dashProfilePhoto" style="width:72px;height:72px;border-radius:50%;flex-shrink:0;background:#1e293b;border:none;box-shadow:0 4px 16px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;margin:-10px 0;position:relative;z-index:1;"></div>
       <div style="flex:1;min-width:0;">
         <div id="dashProfileName" style="font-size:22px;font-weight:900;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;">Driver</div>
-        <div style="font-size:13px;margin-top:4px;display:flex;align-items:center;gap:5px;">
-          <span style="color:rgba(255,255,255,0.35);">Estado</span>
-          <span style="color:rgba(255,255,255,0.18);">|</span>
+        <div style="font-size:12px;margin-top:3px;display:flex;align-items:center;gap:5px;">
           <span id="dashStatusLabel" style="color:#10b981;font-weight:800;">Conduciendo</span>
         </div>
       </div>
@@ -8124,8 +8122,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         🔔
         <span id="notifBellBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;border-radius:999px;min-width:18px;padding:2px 5px;text-align:center;border:2px solid #181d2c;line-height:1.2;pointer-events:none"></span>
       </button>
-      <!-- Botón HOS Intelligence -->
-      <button onclick="openHosIntel()" style="background:rgba(167,139,250,0.13);border:1.5px solid rgba(167,139,250,0.35);border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;" title="HOS Intelligence">⚡</button>
     </div>
   </div>
 
@@ -8194,12 +8190,15 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- ④ PESTAÑAS DE ESTADO -->
-  <div id="dashTabsRow" style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:0 14px 12px;">
+  <!-- SOS + PESTAÑAS DE ESTADO -->
+  <div style="flex:0 0 auto;padding:0 14px 10px;display:flex;align-items:center;gap:10px;">
+    <button onclick="triggerSOS()" style="flex-shrink:0;width:46px;height:46px;border-radius:50%;background:#ef4444;border:2.5px solid #fff;color:#fff;font-size:11px;font-weight:900;letter-spacing:0.5px;cursor:pointer;box-shadow:0 4px 16px rgba(239,68,68,0.6);-webkit-tap-highlight-color:transparent;">SOS</button>
+    <div id="dashTabsRow" style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;">
     <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
     <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">En Servicio</button>
     <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
     <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Fuera</button>
+    </div>
   </div>
 
   <!-- ⑤ BARRAS DE PROGRESO -->
@@ -8243,9 +8242,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div><!-- /tarjeta principal -->
 
   <!-- ⑥ MINI MAPA GPS -->
-  <div id="hosMiniMap" style="flex:1;min-height:0;background:#0f1c2e;border-top:1px solid rgba(255,255,255,0.07);position:relative;">
-    <button onclick="triggerSOS()" style="position:absolute;top:12px;right:12px;z-index:9999;width:44px;height:44px;border-radius:50%;background:#ef4444;border:2.5px solid #fff;color:#fff;font-size:11px;font-weight:900;letter-spacing:0.5px;cursor:pointer;box-shadow:0 4px 16px rgba(239,68,68,0.6);">SOS</button>
-  </div>
+  <div id="hosMiniMap" style="flex:1;min-height:0;background:#0f1c2e;border-top:1px solid rgba(255,255,255,0.07);position:relative;"></div>
 
 </div>
 
@@ -9342,122 +9339,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button class="hos-popup-btn" onclick="window._hosArrivalSave()" style="margin-bottom:10px">💾 Guardar ciclo de horas</button>
     <button class="hos-popup-btn" onclick="window._hosArrivalDiscard()" style="background:rgba(255,255,255,.07);color:#94a3b8;margin-top:0">🗺️ Nueva ruta sin guardar</button>
   </div>
-</div>
-
-<!-- ══ HOS INTELLIGENCE PANEL ══ -->
-<div id="hosIntelPanel" style="display:none;position:fixed;inset:0;z-index:26000;background:#0a0f1a;flex-direction:column;font-family:'DM Sans',sans-serif;overflow-y:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 24px;">
-
-  <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-    <button onclick="closeHosIntel()" style="background:rgba(255,255,255,0.07);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:22px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
-    <div style="flex:1;margin:0 10px;">
-      <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:0.5px;line-height:1.1;">HOURS OF <span style="color:#00e5a0">SERVICE</span></div>
-      <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:0.5px;margin-top:-3px;">INTELLIGENCE</div>
-    </div>
-    <div id="hiBtBadge" onclick="hiStartBleScan()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:6px 12px;cursor:pointer;flex-shrink:0;">
-      <span id="hiBtDot" style="width:7px;height:7px;border-radius:50%;background:#6b7280;flex-shrink:0;"></span>
-      <span id="hiBtText" style="font-size:11px;font-weight:700;letter-spacing:0.5px;color:#9ca3af;">DESCONECTADO</span>
-    </div>
-  </div>
-
-  <!-- Status pill + DOT violation -->
-  <div id="hiStatusPill" style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(0,229,160,0.3);border-radius:20px;padding:5px 12px;margin-bottom:20px;">
-    <span id="hiStatusDot" style="width:6px;height:6px;border-radius:50%;background:#00e5a0;flex-shrink:0;"></span>
-    <span id="hiStatusText" style="font-size:11px;font-weight:700;letter-spacing:1px;color:#00e5a0;">CONDUCIENDO</span>
-    <span id="hiViolBadge" style="display:none;background:rgba(248,113,113,0.15);border-radius:10px;padding:2px 8px;margin-left:4px;font-size:10px;color:#f87171;font-weight:700;">⚠ VIOLACIÓN DOT</span>
-  </div>
-
-  <!-- 3 Rings row -->
-  <div style="display:flex;justify-content:space-around;align-items:flex-end;margin-bottom:22px;">
-
-    <!-- Ring 1: Turno -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-      <div style="position:relative;width:108px;height:108px;">
-        <svg width="108" height="108" style="position:absolute;inset:0;overflow:visible;">
-          <g transform="rotate(-90 54 54)">
-            <circle cx="54" cy="54" r="46" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
-            <circle id="hiRing1Arc" cx="54" cy="54" r="46" fill="none" stroke="#a78bfa" stroke-width="7" stroke-linecap="round" stroke-dasharray="289 289" style="transition:stroke-dasharray 1s ease;"/>
-          </g>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <span id="hiShiftStart" style="font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.3px;">--:--</span>
-          <span style="font-size:8px;color:rgba(255,255,255,.4);font-weight:600;">inicio</span>
-          <div style="width:28px;height:0.5px;background:rgba(255,255,255,.15);margin:3px 0;"></div>
-          <span id="hiBtTime" style="font-size:13px;font-weight:700;color:#a78bfa;letter-spacing:-0.3px;">--:--</span>
-          <span id="hiBtConnLabel" style="font-size:8px;color:#a78bfa;font-weight:700;">BT ○</span>
-        </div>
-      </div>
-      <div style="font-size:8px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1.5px;">TURNO</div>
-    </div>
-
-    <!-- Ring 2: Disponibles (bigger) -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-      <div style="position:relative;width:130px;height:130px;">
-        <svg width="130" height="130" style="position:absolute;inset:0;overflow:visible;">
-          <g transform="rotate(-90 65 65)">
-            <circle cx="65" cy="65" r="57" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
-            <circle id="hiRing2Arc" cx="65" cy="65" r="57" fill="none" stroke="#00e5a0" stroke-width="9" stroke-linecap="round" stroke-dasharray="358 358" style="transition:stroke-dasharray 1s ease,stroke 0.4s;"/>
-          </g>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <span id="hiDriveAvail" style="font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.5px;">11h 00m</span>
-          <span style="font-size:9px;color:rgba(255,255,255,.4);font-weight:600;">de 11h límite</span>
-        </div>
-      </div>
-      <div style="font-size:8px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1.5px;">DISPONIBLES</div>
-    </div>
-
-    <!-- Ring 3: Ciclo 70H -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-      <div style="position:relative;width:108px;height:108px;">
-        <svg width="108" height="108" style="position:absolute;inset:0;overflow:visible;">
-          <g transform="rotate(-90 54 54)">
-            <circle cx="54" cy="54" r="46" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
-            <circle id="hiRing3Arc" cx="54" cy="54" r="46" fill="none" stroke="#00b4ff" stroke-width="7" stroke-linecap="round" stroke-dasharray="289 289" style="transition:stroke-dasharray 1s ease,stroke 0.4s;"/>
-          </g>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <span id="hiCycleAvail" style="font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.5px;">70H</span>
-          <span id="hiCycleUsed" style="font-size:9px;color:rgba(255,255,255,.4);font-weight:600;">0h usadas</span>
-        </div>
-      </div>
-      <div style="font-size:8px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1.5px;">CICLO 70H</div>
-    </div>
-
-  </div>
-
-  <!-- Duty status tabs -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:18px;">
-    <button id="hiDutyDRIVING"  onclick="hiSetDuty('DRIVING')"  class="hi-duty-tab hi-duty-active">Conduciendo</button>
-    <button id="hiDutyON_DUTY"  onclick="hiSetDuty('ON_DUTY')"  class="hi-duty-tab">En Servicio</button>
-    <button id="hiDutySLEEPER"  onclick="hiSetDuty('SLEEPER')"  class="hi-duty-tab">Descanso</button>
-    <button id="hiDutyOFF_DUTY" onclick="hiSetDuty('OFF_DUTY')" class="hi-duty-tab">Fuera</button>
-  </div>
-
-  <!-- Progress bars -->
-  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:700;letter-spacing:1px;width:56px;">MANEJO</span>
-      <div style="flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
-        <div id="hiBar1" style="height:100%;border-radius:3px;background:#00e5a0;width:0%;transition:width 0.8s ease;"></div>
-      </div>
-      <span id="hiBar1Val" style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;width:68px;text-align:right;">0h 00m</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:700;letter-spacing:1px;width:56px;">CICLO 8D</span>
-      <div style="flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
-        <div id="hiBar2" style="height:100%;border-radius:3px;background:#00b4ff;width:0%;transition:width 0.8s ease;"></div>
-      </div>
-      <span id="hiBar2Val" style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;width:68px;text-align:right;">0H / 70H</span>
-    </div>
-  </div>
-
-  <!-- Footer clock -->
-  <div style="display:flex;justify-content:space-between;align-items:center;border-top:0.5px solid rgba(255,255,255,0.08);padding-top:14px;">
-    <span id="hiClock" style="font-size:26px;font-weight:700;color:#fff;letter-spacing:1px;">--:--</span>
-    <span id="hiDate" style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:500;text-transform:capitalize;text-align:right;"></span>
-  </div>
-
 </div>
 
 <!-- ══ CALC PROGRESS OVERLAY ══ -->
@@ -16682,17 +16563,23 @@ function updateHosDashboard(driveLeft, driveMax) {
     const uh = Math.floor(used), um = Math.round((used - uh) * 60);
     cicloUsedEl.textContent = `${uh}h ${String(um).padStart(2,'0')}m usadas`;
   }
-  // Progress bars
+  // Progress bars — start full, drain as hours are consumed, color shifts green→yellow→red
   const manProg  = document.getElementById('dashManejoProg');
   const manLabel = document.getElementById('dashManejoLabel');
   const cProg    = document.getElementById('dashCicloProg');
   const cLabel   = document.getElementById('dashCicloLabel');
-  const usedDrive = Math.max(0, driveMax - driveLeft);
-  if (manProg)  manProg.style.width  = `${Math.min(100, (usedDrive / driveMax) * 100).toFixed(1)}%`;
-  if (manLabel) { const uh = Math.floor(usedDrive), um = Math.round((usedDrive - uh) * 60); manLabel.textContent = `${uh}h ${String(um).padStart(2,'0')}m`; }
-  const usedCycle = cycMax - cycLeft;
-  if (cProg)   cProg.style.width   = `${Math.min(100, (usedCycle / cycMax) * 100).toFixed(1)}%`;
-  if (cLabel)  cLabel.textContent  = `${Math.floor(usedCycle)}H / ${cycMax}H`;
+  const pctDrive = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
+  if (manProg) {
+    manProg.style.width = `${(pctDrive * 100).toFixed(1)}%`;
+    manProg.style.background = pctDrive > 0.5 ? '#10b981' : pctDrive > 0.25 ? '#f59e0b' : '#ef4444';
+  }
+  if (manLabel) { const uh = Math.floor(driveLeft), um = Math.round((driveLeft - uh) * 60); manLabel.textContent = `${uh}h ${String(um).padStart(2,'0')}m`; }
+  const pctCycle = Math.max(0, Math.min(1, cycLeft / Math.max(1, cycMax)));
+  if (cProg) {
+    cProg.style.width = `${(pctCycle * 100).toFixed(1)}%`;
+    cProg.style.background = pctCycle > 0.5 ? '#60a5fa' : pctCycle > 0.25 ? '#f59e0b' : '#ef4444';
+  }
+  if (cLabel) cLabel.textContent = `${Math.floor(cycLeft)}H / ${cycMax}H`;
   updateNextStopCard();
   update14hCircle();
 }
@@ -27168,246 +27055,7 @@ window._hosAutoRecalc = false;
   window._driverRoutes = { bellState, openRoutesModal, closeRoutesModal };
 </script>
 
-<style>
-.hi-duty-tab {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 10px;
-  color: rgba(255,255,255,0.45);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 8px 4px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-.hi-duty-tab.hi-duty-active {
-  background: rgba(0,229,160,0.13);
-  border-color: rgba(0,229,160,0.40);
-  color: #00e5a0;
-}
-/* Hero duty status mini tabs */
-.hduty-tab {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 8px;
-  font-size: 13px;
-  width: 28px; height: 24px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  padding: 0;
-  transition: background 0.2s, border-color 0.2s;
-}
-.hduty-tab.hduty-on {
-  background: rgba(0,229,160,0.15);
-  border-color: rgba(0,229,160,0.40);
-}
-</style>
 
-<script>
-(function() {
-  const DRIVE_LIMIT  = 11;
-  const CYCLE_LIMIT  = 70;
-  const SHIFT_CIRC   = 2 * Math.PI * 46;  // r=46
-  const DRIVE_CIRC   = 2 * Math.PI * 57;  // r=57
-
-  const STATUS_COLORS = { DRIVING:'#00e5a0', ON_DUTY:'#00b4ff', SLEEPER:'#a78bfa', OFF_DUTY:'#6b7280' };
-  const STATUS_LABELS = { DRIVING:'CONDUCIENDO', ON_DUTY:'EN SERVICIO', SLEEPER:'DESCANSANDO', OFF_DUTY:'FUERA DE SERVICIO' };
-
-  let hiBleDevice     = null;
-  let hiShiftStart    = null;
-  let hiBtConnectedAt = null;
-  let hiBtStatus      = 'disconnected';
-  let hiDutyStatus    = 'DRIVING';
-  let hiClockInt      = null;
-  let hiUpdateInt     = null;
-
-  function openHosIntel() {
-    const panel = document.getElementById('hosIntelPanel');
-    if (!panel) return;
-    panel.style.display = 'flex';
-
-    // Leer valores del sistema HOS existente
-    const dailyMax  = parseFloat(document.getElementById('dailyHoursInput')?.value  || DRIVE_LIMIT);
-    const weeklyMax = parseFloat(document.getElementById('hoursInput')?.value || CYCLE_LIMIT);
-    const driveLeft = (typeof fmDriveSeconds !== 'undefined') ? Math.max(0, dailyMax - fmDriveSeconds / 3600) : dailyMax;
-    const weekLeft  = Math.max(0, weeklyMax - Math.max(0, dailyMax - driveLeft));
-
-    window._hiDriveUsed = Math.max(0, dailyMax - driveLeft);
-    window._hiCycleUsed = Math.max(0, weeklyMax - weekLeft);
-    window._hiDailyMax  = dailyMax;
-    window._hiWeeklyMax = weeklyMax;
-
-    if (!hiShiftStart && typeof fmStartTime !== 'undefined' && fmStartTime) {
-      hiShiftStart = new Date(fmStartTime);
-    }
-
-    hiUpdate();
-    clearInterval(hiClockInt);
-    clearInterval(hiUpdateInt);
-    hiClockInt  = setInterval(hiTick, 1000);
-    hiUpdateInt = setInterval(hiUpdate, 30000);
-  }
-
-  function closeHosIntel() {
-    const panel = document.getElementById('hosIntelPanel');
-    if (panel) panel.style.display = 'none';
-    clearInterval(hiClockInt);
-    clearInterval(hiUpdateInt);
-  }
-
-  function hiTick() {
-    const now = new Date();
-    const clockEl = document.getElementById('hiClock');
-    const dateEl  = document.getElementById('hiDate');
-    if (clockEl) clockEl.textContent = now.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
-    if (dateEl)  dateEl.textContent  = now.toLocaleDateString('es-MX', { weekday:'long', month:'short', day:'numeric' });
-    // Actualizar horas usadas si el rastreador está corriendo
-    if (typeof fmDriveSeconds !== 'undefined') {
-      const dailyMax = window._hiDailyMax || DRIVE_LIMIT;
-      window._hiDriveUsed = Math.min(fmDriveSeconds / 3600, dailyMax);
-    }
-  }
-
-  function hiUpdate() {
-    const driveUsed = window._hiDriveUsed || 0;
-    const cycleUsed = window._hiCycleUsed || 0;
-    const dailyMax  = window._hiDailyMax  || DRIVE_LIMIT;
-    const weeklyMax = window._hiWeeklyMax || CYCLE_LIMIT;
-
-    const driveAvail   = Math.max(0, dailyMax  - driveUsed);
-    const cycleAvail   = Math.max(0, weeklyMax - cycleUsed);
-    const driveProgress = driveUsed / dailyMax;
-    const cycleProgress = cycleUsed / weeklyMax;
-    const shiftProgress = hiShiftStart
-      ? Math.min((Date.now() - hiShiftStart.getTime()) / (14 * 3600000), 1) : 0;
-
-    const driveColor = driveAvail > 2 ? '#00e5a0' : driveAvail > 0 ? '#facc15' : '#f87171';
-    const cycleColor = cycleAvail > 10 ? '#00b4ff' : cycleAvail > 0 ? '#facc15' : '#f87171';
-
-    // Ring 1: Turno (progreso vs 14h turno)
-    const r1 = document.getElementById('hiRing1Arc');
-    if (r1) r1.setAttribute('stroke-dasharray', `${(1 - shiftProgress) * SHIFT_CIRC} ${SHIFT_CIRC}`);
-
-    // Ring 2: Disponibles
-    const r2 = document.getElementById('hiRing2Arc');
-    if (r2) {
-      r2.setAttribute('stroke-dasharray', `${(1 - driveProgress) * DRIVE_CIRC} ${DRIVE_CIRC}`);
-      r2.setAttribute('stroke', driveColor);
-    }
-
-    // Ring 3: Ciclo 70H
-    const r3 = document.getElementById('hiRing3Arc');
-    if (r3) {
-      r3.setAttribute('stroke-dasharray', `${(1 - cycleProgress) * SHIFT_CIRC} ${SHIFT_CIRC}`);
-      r3.setAttribute('stroke', cycleColor);
-    }
-
-    // Texto: horas disponibles
-    const da = document.getElementById('hiDriveAvail');
-    if (da) {
-      const h = Math.floor(driveAvail), m = Math.round((driveAvail - h) * 60);
-      da.textContent = `${h}h ${String(m).padStart(2,'0')}m`;
-      da.style.color = driveAvail > 2 ? '#fff' : driveAvail > 0 ? '#facc15' : '#f87171';
-    }
-
-    // Texto: ciclo
-    const ca = document.getElementById('hiCycleAvail');
-    if (ca) { ca.textContent = `${Math.round(cycleAvail)}H`; ca.style.color = cycleAvail > 10 ? '#fff' : cycleAvail > 0 ? '#facc15' : '#f87171'; }
-    const cu = document.getElementById('hiCycleUsed');
-    if (cu) cu.textContent = `${Math.round(cycleUsed)}h usadas`;
-
-    // Turno inicio / BT hora
-    const ss = document.getElementById('hiShiftStart');
-    if (ss) ss.textContent = hiShiftStart ? hiShiftStart.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '--:--';
-    const bt = document.getElementById('hiBtTime');
-    if (bt) bt.textContent = hiBtConnectedAt ? hiBtConnectedAt.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '--:--';
-    const bl = document.getElementById('hiBtConnLabel');
-    if (bl) bl.textContent = hiBtStatus === 'connected' ? 'BT ●' : 'BT ○';
-
-    // Barras de progreso
-    const b1 = document.getElementById('hiBar1');
-    if (b1) { b1.style.width = `${Math.min(driveProgress * 100, 100)}%`; b1.style.background = driveColor; }
-    const b1v = document.getElementById('hiBar1Val');
-    if (b1v) { const h=Math.floor(driveUsed),m=Math.round((driveUsed-h)*60); b1v.textContent=`${h}h ${String(m).padStart(2,'0')}m`; }
-
-    const b2 = document.getElementById('hiBar2');
-    if (b2) { b2.style.width = `${Math.min(cycleProgress * 100, 100)}%`; b2.style.background = cycleColor; }
-    const b2v = document.getElementById('hiBar2Val');
-    if (b2v) b2v.textContent = `${Math.round(cycleUsed)}H / 70H`;
-
-    // Status pill
-    const sc = STATUS_COLORS[hiDutyStatus];
-    const pill = document.getElementById('hiStatusPill');
-    const dot  = document.getElementById('hiStatusDot');
-    const txt  = document.getElementById('hiStatusText');
-    const viol = document.getElementById('hiViolBadge');
-    if (pill) pill.style.borderColor = sc + '55';
-    if (dot)  dot.style.background   = sc;
-    if (txt)  { txt.textContent = STATUS_LABELS[hiDutyStatus]; txt.style.color = sc; }
-    if (viol) viol.style.display = (driveAvail <= 0 || cycleAvail <= 0) ? 'inline-block' : 'none';
-
-    hiTick();
-  }
-
-  // ── Web Bluetooth ELD ──────────────────────────────────────────────────────
-  async function hiStartBleScan() {
-    if (hiBtStatus === 'connected') return;
-    if (!navigator.bluetooth) {
-      alert('Bluetooth no está disponible. Abre la app en Chrome para Android.');
-      return;
-    }
-    _hiBtBadge('scanning');
-    try {
-      hiBleDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
-      hiBleDevice.addEventListener('gattserverdisconnected', () => {
-        _hiBtBadge('disconnected');
-        hiBtConnectedAt = null;
-        hiBleDevice = null;
-        hiUpdate();
-      });
-      await hiBleDevice.gatt.connect();
-      _hiBtBadge('connected');
-      hiBtConnectedAt = new Date();
-      if (!hiShiftStart) hiShiftStart = new Date();
-      hiUpdate();
-    } catch (e) {
-      _hiBtBadge(e.name === 'NotFoundError' ? 'disconnected' : 'error');
-    }
-  }
-
-  function _hiBtBadge(status) {
-    hiBtStatus = status;
-    const colors = { connected:'#00e5a0', scanning:'#facc15', error:'#f87171', disconnected:'#6b7280' };
-    const labels = { connected:'CONECTADO', scanning:'BUSCANDO...', error:'ERROR BT', disconnected:'DESCONECTADO' };
-    const dot   = document.getElementById('hiBtDot');
-    const txt   = document.getElementById('hiBtText');
-    const badge = document.getElementById('hiBtBadge');
-    if (dot)   dot.style.background  = colors[status];
-    if (txt)   { txt.textContent = labels[status]; txt.style.color = colors[status]; }
-    if (badge) {
-      badge.style.borderColor  = status === 'connected' ? 'rgba(0,229,160,0.35)' : 'rgba(255,255,255,0.12)';
-      badge.style.background   = status === 'connected' ? 'rgba(0,229,160,0.08)' : 'rgba(255,255,255,0.05)';
-    }
-  }
-
-  // ── Tabs de estado de servicio ─────────────────────────────────────────────
-  function hiSetDuty(status) {
-    hiDutyStatus = status;
-    document.querySelectorAll('.hi-duty-tab').forEach(t => t.classList.remove('hi-duty-active'));
-    const btn = document.getElementById('hiDuty' + status);
-    if (btn) btn.classList.add('hi-duty-active');
-    hiUpdate();
-  }
-
-  window.openHosIntel  = openHosIntel;
-  window.closeHosIntel = closeHosIntel;
-  window.hiStartBleScan = hiStartBleScan;
-  window.hiSetDuty      = hiSetDuty;
-})();
-</script>
 
 <script>
 /* ── HOS ELD Tracker — datos 100% desde el ELD via Bluetooth ── */
