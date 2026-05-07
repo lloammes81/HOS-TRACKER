@@ -8104,7 +8104,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- ① HEADER: tarjeta única con volver + perfil + mapa -->
   <div style="flex:0 0 auto;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 12px;background:transparent;">
-    <div style="display:flex;align-items:center;gap:12px;background:rgba(15,20,35,0.52);border:1px solid rgba(255,255,255,0.13);border-radius:22px;padding:6px 14px;box-shadow:0 8px 28px rgba(0,0,0,0.35),0 1px 0 rgba(255,255,255,0.07) inset;overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);">
+    <div style="display:flex;align-items:center;gap:12px;background:rgba(15,20,35,0.52);border:1px solid rgba(255,255,255,0.13);border-radius:22px;padding:6px 14px;box-shadow:0 8px 40px rgba(0,0,0,0.7),0 2px 12px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07);overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);">
       <!-- Botón volver -->
       <button onclick="showFullMapFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:22px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
 
@@ -8191,15 +8191,17 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- SOS + PESTAÑAS DE ESTADO -->
-  <div style="flex:0 0 auto;padding:0 14px 10px;display:flex;align-items:center;gap:10px;">
-    <button onclick="triggerSOS()" style="flex-shrink:0;width:46px;height:46px;border-radius:50%;background:#ef4444;border:2.5px solid #fff;color:#fff;font-size:11px;font-weight:900;letter-spacing:0.5px;cursor:pointer;box-shadow:0 4px 16px rgba(239,68,68,0.6);-webkit-tap-highlight-color:transparent;">SOS</button>
-    <div id="dashTabsRow" style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;">
+  <!-- SOS — centrado debajo del speedometer -->
+  <div style="flex:0 0 auto;display:flex;justify-content:center;padding:0 0 10px;">
+    <button onclick="triggerSOS()" style="width:52px;height:52px;border-radius:50%;background:#ef4444;border:3px solid #fff;color:#fff;font-size:12px;font-weight:900;letter-spacing:0.5px;cursor:pointer;box-shadow:0 4px 20px rgba(239,68,68,0.65),0 2px 8px rgba(0,0,0,0.5);-webkit-tap-highlight-color:transparent;">SOS</button>
+  </div>
+
+  <!-- ④ PESTAÑAS DE ESTADO -->
+  <div id="dashTabsRow" style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;padding:0 14px 10px;">
     <button id="dashTabDriving" onclick="setDashStatus('driving')" class="dash-tab dash-tab-active">Conduciendo</button>
     <button id="dashTabWait"    onclick="setDashStatus('wait')"    class="dash-tab">En Servicio</button>
     <button id="dashTabRest"    onclick="setDashStatus('rest')"    class="dash-tab">Descanso</button>
     <button id="dashTabOff"     onclick="setDashStatus('off')"     class="dash-tab">Fuera</button>
-    </div>
   </div>
 
   <!-- ⑤ BARRAS DE PROGRESO -->
@@ -16054,12 +16056,25 @@ function showHosDashboard() {
   // Mostrar clima si está activo
   refreshDashWeather();
 
+  // GPS auto-status: si no hay ruta activa, usar watch propio del dashboard
+  if (!fmIsTracking && navigator.geolocation) {
+    if (_dashGpsWatchId != null) navigator.geolocation.clearWatch(_dashGpsWatchId);
+    _dashGpsWatchId = navigator.geolocation.watchPosition(pos => {
+      const rawSpeed = pos.coords.speed;
+      const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
+      autoUpdateDashStatus(gpsSpeed > 3);
+    }, () => {}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
+  }
+
   // Iniciar mini mapa después de un tick para que el div sea visible
   setTimeout(initHosMinimap, 120);
 }
 
+let _dashGpsWatchId = null;
+
 function hideHosDashboard() {
   if (_dash14hInterval) { clearInterval(_dash14hInterval); _dash14hInterval = null; }
+  if (_dashGpsWatchId != null) { navigator.geolocation.clearWatch(_dashGpsWatchId); _dashGpsWatchId = null; }
   const screen = document.getElementById('hosDashScreen');
   if (screen) screen.style.display = 'none';
   // Restaurar widgets flotantes que fueron ocultados
