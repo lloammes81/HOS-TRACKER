@@ -8345,7 +8345,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- RUTA PROGRESO LINE -->
-  <div id="dashRouteProgress" style="display:none;flex:0 0 auto;padding:0 14px 12px;">
+  <div id="dashRouteProgress" style="display:block;flex:0 0 auto;padding:0 14px 12px;">
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:11px 14px;">
       <!-- Origen → Destino -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
@@ -16922,25 +16922,30 @@ async function _updateHosCityBar(lat, lon, force) {
 function updateDashRouteProgress(pct, remaining) {
   const panel = document.getElementById('dashRouteProgress');
   if (!panel) return;
-  const hasRoute = (typeof destination !== 'undefined' && destination) &&
-                   (typeof origin !== 'undefined' && origin);
-  panel.style.display = hasRoute ? 'block' : 'none';
-  if (!hasRoute) return;
 
-  const originEl    = document.getElementById('dashRouteOrigin');
-  const destEl      = document.getElementById('dashRouteDest');
-  const progEl      = document.getElementById('dashRouteProg');
-  const remEl       = document.getElementById('dashRouteRemaining');
-  const pctEl       = document.getElementById('dashRoutePct');
+  const hasDest   = typeof destination !== 'undefined' && destination;
+  const hasOrigin = typeof origin !== 'undefined' && origin;
 
-  if (originEl) originEl.textContent = (origin.name || '').split(',')[0].trim() || '--';
-  if (destEl)   destEl.textContent   = (destination.name || '').split(',')[0].trim() || '--';
-  if (progEl)   progEl.style.width   = Math.max(1, pct) + '%';
+  const originEl = document.getElementById('dashRouteOrigin');
+  const destEl   = document.getElementById('dashRouteDest');
+  const progEl   = document.getElementById('dashRouteProg');
+  const remEl    = document.getElementById('dashRouteRemaining');
+  const pctEl    = document.getElementById('dashRoutePct');
+
+  if (originEl) originEl.textContent = hasOrigin ? ((origin.name || '').split(',')[0].trim() || 'Origen') : 'Sin ruta';
+  if (destEl)   destEl.textContent   = hasDest   ? ((destination.name || '').split(',')[0].trim() || 'Destino') : 'Sin destino';
+
+  const hasRoute = hasDest && hasOrigin && pct > 0;
+  if (progEl)   progEl.style.width = hasRoute ? Math.max(1, pct) + '%' : '0%';
   if (remEl) {
-    const rem = typeof remaining === 'number' ? remaining : parseFloat(remaining) || 0;
-    remEl.textContent = rem < 10 ? rem.toFixed(1) + ' mi restantes' : Math.round(rem).toLocaleString() + ' mi restantes';
+    if (hasRoute) {
+      const rem = typeof remaining === 'number' ? remaining : parseFloat(remaining) || 0;
+      remEl.textContent = rem < 10 ? rem.toFixed(1) + ' mi restantes' : Math.round(rem).toLocaleString() + ' mi restantes';
+    } else {
+      remEl.textContent = hasDest ? 'Ruta no iniciada' : 'Sin destino asignado';
+    }
   }
-  if (pctEl) pctEl.textContent = pct + '%';
+  if (pctEl) pctEl.textContent = hasRoute ? pct + '%' : '0%';
 }
 
 function _openDashSpeedLimitEditor() {
