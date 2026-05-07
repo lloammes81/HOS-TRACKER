@@ -23558,83 +23558,41 @@ function openEldSheet(){
     document.getElementById('eldSheet').classList.add('open');
   } catch(e){ console.error('[ELD] openEldSheet error', e); return; }
 
-  const ua = navigator.userAgent || '';
-  // Detect iOS (no Web Bluetooth support anywhere, even Chrome iOS uses WebKit)
-  const isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
-  // Detect in-app browsers (no BT permission)
-  const isInApp = /(FBAN|FBAV|Instagram|Line\/|TikTok|Twitter|WhatsApp|MicroMessenger)/i.test(ua);
-  // Web Bluetooth availability
-  const hasWebBT = !!navigator.bluetooth;
-  // Secure context required for Web Bluetooth
-  const isSecure = window.isSecureContext;
-
-  // Reset all optional panels
-  const iosNotice  = document.getElementById('eldIosNotice');
   const scanBtn    = document.getElementById('eldScanBtn');
   const demoBtn    = document.getElementById('eldDemoBtn');
   const noBT       = document.getElementById('eldNoBluetooth');
   const forceBtn   = document.getElementById('eldForceBtn');
+  const iosNotice  = document.getElementById('eldIosNotice');
   const alertBanner= document.getElementById('eldAlertBanner');
+
   if(iosNotice)    iosNotice.style.display='none';
   if(noBT)         noBT.style.display='none';
   if(alertBanner)  alertBanner.style.display='none';
-  if(scanBtn){     scanBtn.style.display='block'; scanBtn.disabled=false; scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)'; }
+  if(forceBtn)     forceBtn.style.display='none';
   if(demoBtn)      demoBtn.style.display='block';
-  if(forceBtn)     forceBtn.style.display='block';
 
-  // Case 1: iOS → Web Bluetooth no soportado en ningún navegador iOS
-  if(isIOS){
-    if(iosNotice)  iosNotice.style.display='block';
-    if(scanBtn)    scanBtn.style.display='none';
-    if(demoBtn)    demoBtn.style.display='none';
-    if(forceBtn)   forceBtn.style.display='none';
-    renderEldDiagnostics();
-    return;
-  }
-  // Case 2: in-app browser (Instagram/Facebook/TikTok) → BT bloqueado
-  if(isInApp){
+  if(!IS_CAPACITOR){
+    // Running in browser — native BLE not available
     if(noBT){
       noBT.style.display='block';
       noBT.innerHTML = `
-        <div style="font-size:36px;margin-bottom:8px">🔒</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Navegador in-app detectado</div>
-        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Abre esta página en <b>Chrome</b> o <b>Edge</b> (Android) para conectar Bluetooth.</div>
+        <div style="font-size:36px;margin-bottom:8px">📱</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">App nativa requerida</div>
+        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">
+          Instala <b>Truck Precision</b> como app en tu dispositivo para conectar dispositivos Bluetooth.
+        </div>
       `;
     }
-    if(scanBtn)  scanBtn.style.display='none';
-    if(demoBtn)  demoBtn.style.display='none';
-    if(forceBtn) forceBtn.style.display='none';
-    return;
-  }
-  // Case 3: no HTTPS (BT requiere contexto seguro)
-  if(!isSecure){
-    if(noBT){
-      noBT.style.display='block';
-      noBT.innerHTML = `
-        <div style="font-size:36px;margin-bottom:8px">🔐</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">HTTPS requerido</div>
-        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Web Bluetooth solo funciona en sitios seguros (HTTPS).</div>
-      `;
-    }
-    if(scanBtn)  scanBtn.style.display='none';
-    if(demoBtn)  demoBtn.style.display='none';
-    if(forceBtn) forceBtn.style.display='none';
-    return;
-  }
-  // Case 4: API no disponible (Firefox, Safari desktop, etc.)
-  if(!hasWebBT){
-    if(noBT) noBT.style.display='block';
     if(scanBtn) scanBtn.style.display='none';
-    if(forceBtn) forceBtn.style.display='none';
-    // demoBtn se mantiene visible para simulación
-    renderEldDiagnostics();
     return;
   }
-  // Case 5: todo OK — Android Chrome/Edge con HTTPS
-  // scanBtn, forceBtn y demoBtn ya están visibles
 
-  // Render diagnostic panel at the end
-  renderEldDiagnostics();
+  // Native Capacitor — show scan button
+  if(scanBtn){
+    scanBtn.style.display='block';
+    scanBtn.disabled=false;
+    scanBtn.textContent='🔍 Buscar Dispositivos Bluetooth';
+  }
 }
 
 // Render live environment diagnostic inside ELD sheet
@@ -23649,8 +23607,6 @@ function renderEldDiagnostics(){
   const isFirefox = /Firefox\//.test(ua);
   const isSamsung = /SamsungBrowser/.test(ua);
   const isInApp = /(FBAN|FBAV|Instagram|Line\/|TikTok|Twitter|WhatsApp|MicroMessenger)/i.test(ua);
-  const hasWebBT = !!navigator.bluetooth;
-  const isSecure = !!window.isSecureContext;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
   const ok = v => v ? '<span style="color:#10b981">✓</span>' : '<span style="color:#ef4444">✗</span>';
@@ -23672,29 +23628,13 @@ function renderEldDiagnostics(){
 
   diagEl.innerHTML = `
     <div>📱 Plataforma: <b style="color:var(--text)">${plat}</b></div>
-    <div>🌐 Navegador: <b style="color:var(--text)">${brw}</b></div>
-    <div>${ok(isSecure)} HTTPS (contexto seguro): <b style="color:var(--text)">${isSecure?'sí':'NO — requerido'}</b></div>
-    <div>${ok(hasWebBT)} API Web Bluetooth: <b style="color:var(--text)">${hasWebBT?'disponible':'NO disponible'}</b></div>
-    <div>${ok(!isInApp)} Navegador estándar: <b style="color:var(--text)">${isInApp?'in-app (bloquea BT)':'sí'}</b></div>
-    <div>${ok(isStandalone)} App instalada (PWA): <b style="color:var(--text)">${isStandalone?'sí — permisos ampliados':'no'}</b></div>
-    <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);color:${(hasWebBT&&isSecure&&!isInApp)?'#10b981':'#f59e0b'};font-weight:700">
-      ${(hasWebBT&&isSecure&&!isInApp) ? '✅ Tu dispositivo soporta Bluetooth Web — pulsa "Buscar Dispositivos ELD"' : isIOS ? '⚠️ iOS web no soporta Bluetooth. Compila como app nativa (Capacitor) para usar BT en iPhone.' : '⚠️ Usa Chrome o Edge en Android, sobre HTTPS, para escaneo BLE.'}
+    <div>📦 Entorno: <b style="color:#f59e0b">Navegador (sin acceso nativo BT)</b></div>
+    <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);color:#f59e0b;font-weight:700">
+      ⚠️ Instala Truck Precision como app nativa para conectar dispositivos Bluetooth.
     </div>`;
 }
 
-// Force scan — bypass all detection and try navigator.bluetooth directly
-// Useful for edge browsers (Samsung Internet 23+, Opera, Yandex) that DO support BT
 async function forceEldScan(){
-  if(typeof navigator.bluetooth === 'undefined'){
-    const banner=document.getElementById('eldAlertBanner');
-    const bannerTxt=document.getElementById('eldAlertText');
-    if(banner && bannerTxt){
-      bannerTxt.textContent = 'Tu navegador no tiene Web Bluetooth. Abre esta página en Chrome o Edge (Android).';
-      banner.style.display = 'flex';
-    }
-    return;
-  }
-  // Delegate to normal scan — the user gesture is preserved from this click
   return startEldScan();
 }
 function closeEldSheet(){document.getElementById('eldSheet').classList.remove('open');}
@@ -23747,47 +23687,22 @@ async function startEldScanNative(){
   try {
     await ble.initialize({ androidNeverForLocation: true });
     lbl.textContent='BUSCANDO ELD...';
-    scanBtn.textContent='⏳ Escaneando solo ELDs...';
+    scanBtn.textContent='⏳ Escaneando dispositivos...';
 
-    // Prefijos de nombre de ELDs certificados FMCSA
-    const ELD_PREFIXES = [
-      'samsara','sg-','cm-','keeptrack','kt-','motive','geotab','go-',
-      'omnitracs','ot-','bigroad','br-','peoplenet','pn-','lytx','lx-',
-      'rand mcnally','rm-','jjk','jj keller','eld','hos','elds',
-      'truckx','fleetup','linxup','gpstracker','gpseld'
-    ];
-    const ELD_UUIDS = [
-      '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-      '0000ff00-0000-1000-8000-00805f9b34fb',
-      '0000ffd0-0000-1000-8000-00805f9b34fb',
-      '0000ffe0-0000-1000-8000-00805f9b34fb',
-      '0000fff0-0000-1000-8000-00805f9b34fb',
-    ];
-
-    function isEldDevice(name, serviceUUIDs){
-      if (!name && !serviceUUIDs) return false;
-      const n = (name||'').toLowerCase();
-      if (ELD_PREFIXES.some(p => n.startsWith(p) || n.includes(p))) return true;
-      if (serviceUUIDs && serviceUUIDs.some(u => ELD_UUIDS.includes(u.toLowerCase()))) return true;
-      return false;
-    }
-
-    // Collect scan results into a list the user can tap
+    // Show ALL nearby Bluetooth devices — user picks their ELD
     const found = new Map(); // deviceId -> {name, rssi}
     if(list){ list.innerHTML=''; list.style.display='block'; }
     await ble.requestLEScan({ allowDuplicates:false }, (result) => {
       const id   = result.device?.deviceId;
       const name = result.device?.name || result.localName || '';
-      const uuids= result.serviceUUIDs || [];
       if(!id || found.has(id)) return;
-      // Mostrar SOLO dispositivos ELD
-      if(!isEldDevice(name, uuids)) return;
-      found.set(id, { name: name||'ELD Sin Nombre', id, rssi: result.rssi });
+      found.set(id, { name, id, rssi: result.rssi });
       if(list){
+        const displayName = name || 'Dispositivo sin nombre';
         const row = document.createElement('button');
         row.style.cssText = 'display:flex;width:100%;justify-content:space-between;align-items:center;padding:10px 12px;margin-bottom:6px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:10px;color:var(--text);font-family:inherit;cursor:pointer;font-size:13px;font-weight:700';
-        row.innerHTML = `<span>📡 ${name||'ELD Sin Nombre'}</span><span style="font-size:11px;color:var(--muted)">RSSI ${result.rssi??'?'} dBm</span>`;
-        row.onclick = () => connectNativeBleDevice(id, name||'ELD');
+        row.innerHTML = `<span>📡 ${displayName}</span><span style="font-size:11px;color:var(--muted)">RSSI ${result.rssi??'?'} dBm</span>`;
+        row.onclick = () => connectNativeBleDevice(id, displayName);
         list.appendChild(row);
       }
     });
@@ -23795,20 +23710,20 @@ async function startEldScanNative(){
     setTimeout(async () => {
       try { await ble.stopLEScan(); } catch(e){}
       if(found.size===0){
-        lbl.textContent='SIN ELD ENCONTRADO';
+        lbl.textContent='SIN DISPOSITIVOS';
         if(banner && bannerTxt){
-          bannerTxt.textContent = 'No se detectaron dispositivos ELD. Asegúrate de que el ELD esté encendido, en modo Bluetooth y dentro del rango (< 10 m).';
+          bannerTxt.textContent = 'No se detectaron dispositivos. Asegúrate de que el Bluetooth del dispositivo esté encendido y dentro del rango.';
           banner.style.display='flex';
         }
       }
-      scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+      scanBtn.textContent='🔍 Buscar Dispositivos Bluetooth';
       scanBtn.disabled=false;
-    }, 10000);
+    }, 15000);
   } catch(e){
     console.error('[ELD native] scan error:', e);
     ring.className='eld-status-ring';
     icon.textContent='📡'; lbl.textContent='ERROR';
-    scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+    scanBtn.textContent='🔍 Buscar Dispositivos Bluetooth';
     scanBtn.disabled=false;
     let msg = e?.message || e?.errorMessage || String(e);
     if(/location/i.test(msg)) msg = 'Activa el GPS del teléfono (requerido para escanear BLE en Android).';
@@ -23855,102 +23770,8 @@ async function connectNativeBleDevice(deviceId, name){
 }
 
 async function startEldScan(){
-  // ── Path A: Native Capacitor BLE (works on Android + iPhone as installed app) ──
-  if(IS_CAPACITOR){
-    return startEldScanNative();
-  }
-  // ── Path B: Web Bluetooth fallback (browser) ──
-  if(!navigator.bluetooth){
-    const noBT = document.getElementById('eldNoBluetooth');
-    if(noBT) noBT.style.display='block';
-    const sb = document.getElementById('eldScanBtn');
-    if(sb) sb.style.display='none';
-    return;
-  }
-  const ring=document.getElementById('eldRing');
-  const icon=document.getElementById('eldRingIcon');
-  const lbl=document.getElementById('eldRingLabel');
-  const scanBtn=document.getElementById('eldScanBtn');
-  const demoBtn=document.getElementById('eldDemoBtn');
-  const banner=document.getElementById('eldAlertBanner');
-  const bannerTxt=document.getElementById('eldAlertText');
-
-  // Hide any previous alert
-  if(banner) banner.style.display='none';
-
-  ring.className='eld-status-ring scanning';
-  icon.textContent='🔵';lbl.textContent='BUSCANDO ELD...';
-  scanBtn.textContent='⏳ Escaneando dispositivos ELD...';
-  scanBtn.disabled=true;
-
-  // ── Filtros específicos para ELDs ────────────────────────────────────────
-  // Servicios BLE estándar usados por ELDs certificados FMCSA
-  const ELD_SERVICES = [
-    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART (KeepTruckin/Motive, BigRoad, etc.)
-    '0000ff00-0000-1000-8000-00805f9b34fb', // Samsara / genérico
-    '0000ffd0-0000-1000-8000-00805f9b34fb', // PeopleNet / Rand McNally
-    '0000ffe0-0000-1000-8000-00805f9b34fb', // J.J. Keller / Geotab GO
-    '0000fff0-0000-1000-8000-00805f9b34fb', // OBD-II genérico con HOS
-    '00001800-0000-1000-8000-00805f9b34fb', // Generic Access (fallback)
-  ];
-  // Prefijos de nombre de las marcas ELD más comunes en EE.UU.
-  const ELD_NAME_PREFIXES = [
-    'Samsara','SG-','CM-',          // Samsara
-    'KeepTruck','KT-','Motive',     // KeepTruckin / Motive
-    'Geotab','GO-',                 // Geotab
-    'Omnitracs','OT-',              // Omnitracs
-    'BigRoad','BR-',                // BigRoad
-    'PeopleNet','PN-',              // PeopleNet
-    'Lytx','LX-',                   // Lytx
-    'Rand McNally','RM-',           // Rand McNally
-    'JJK','JJ Keller',              // J.J. Keller
-    'ELD','HOS','ELDS',             // Genéricos
-    'TruckX','FleetUp',             // Otros certificados FMCSA
-    'Linxup','LX',                  // Linxup
-    'GPSTracker','GPSELD',          // Genéricos
-  ];
-
-  const nameFilters  = ELD_NAME_PREFIXES.map(p => ({ namePrefix: p }));
-  const svcFilters   = ELD_SERVICES.map(s => ({ services: [s] }));
-  const allFilters   = [...nameFilters, ...svcFilters];
-
-  try{
-    eldDevice = await navigator.bluetooth.requestDevice({
-      filters: allFilters,
-      optionalServices: ELD_SERVICES,
-    });
-    lbl.textContent='CONECTANDO...';
-    await eldDevice.gatt.connect();
-    ring.className='eld-status-ring connected';
-    icon.textContent='✅';lbl.textContent='CONECTADO';
-    document.getElementById('eldConnectedName').textContent=eldDevice.name||'Dispositivo ELD';
-    scanBtn.style.display='none';
-    if(demoBtn) demoBtn.style.display='none';
-    document.getElementById('eldLiveData').style.display='block';
-    document.getElementById('eldLogbook').style.display='block';
-    document.getElementById('eldArrowStatus').style.color='#6366f1';
-    startEldDataSimulation();
-    try{ showToast('info','📡','ELD Conectado',eldDevice.name||'Dispositivo vinculado',3000); }catch(_){}
-  }catch(e){
-    console.error('[ELD] scan error:', e);
-    ring.className='eld-status-ring';
-    icon.textContent='📡';lbl.textContent='DESCONECTADO';
-    scanBtn.textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
-    scanBtn.disabled=false;
-    // Traducir el error a un mensaje claro en el banner
-    let msg = '';
-    if(e.name==='NotFoundError')         msg = 'No seleccionaste ningún dispositivo. Intenta de nuevo.';
-    else if(e.name==='SecurityError')    msg = 'Bluetooth bloqueado. Asegúrate de usar HTTPS y Chrome/Edge en Android.';
-    else if(e.name==='NotAllowedError')  msg = 'Permiso de Bluetooth denegado. Actívalo en ajustes del navegador.';
-    else if(e.name==='NotSupportedError')msg = 'Este dispositivo no soporta Web Bluetooth.';
-    else if(/user gesture/i.test(e.message||'')) msg = 'El clic debe venir del usuario. Pulsa el botón directamente.';
-    else                                  msg = 'Error BLE: ' + (e.message || e.name || 'desconocido');
-    if(banner && bannerTxt){
-      bannerTxt.textContent = msg;
-      banner.style.display = 'flex';
-    }
-    try{ showToast('warn','⚠️','ELD Error', msg, 5000); }catch(_){}
-  }
+  // Always use native Capacitor BLE — no Web Bluetooth
+  return startEldScanNative();
 }
 
 function startEldDataSimulation(){
@@ -24072,7 +23893,7 @@ function disconnectEld(){
   document.getElementById('eldLiveData').style.display='none';
   document.getElementById('eldLogbook').style.display='none';
   document.getElementById('eldScanBtn').style.display='block';
-  document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos ELD (Bluetooth)';
+  document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos Bluetooth';
   document.getElementById('eldScanBtn').disabled=false;
   const _demoBtn1 = document.getElementById('eldDemoBtn'); if(_demoBtn1) _demoBtn1.style.display='block';
   document.getElementById('eldAlertBanner').style.display='none';
@@ -27412,39 +27233,23 @@ window._hosAutoRecalc = false;
 
   // ── Auto-reconexión a ELD ya autorizado ───────────────────
   async function _autoReconnect(){
-    if (_connected || !navigator.bluetooth) return;
-    try {
-      // getDevices() devuelve dispositivos ya autorizados sin pedir permiso
-      const devices = await navigator.bluetooth.getDevices();
-      if (!devices.length) return;
-      // Tomar el primer dispositivo autorizado (el ELD guardado)
-      _setBtBadge('scanning');
-      await _connect(devices[0]);
-    } catch(_){}
+    if (_connected) return;
+    // Native reconnect via saved deviceId
+    if(IS_CAPACITOR && eldDevice?.deviceId){
+      try {
+        _setBtBadge('scanning');
+        await connectNativeBleDevice(eldDevice.deviceId, eldDevice.name || 'ELD');
+      } catch(_){}
+    }
   }
 
   // ── Escaneo manual (primer toque al badge ELD) ─────────────
   window.heroBleScan = async function(){
     if (_connected) return;
-    if (IS_CAPACITOR){ openEldSheet(); setTimeout(() => { try { startEldScan(); } catch(e){} }, 350); return; }
-    if (!navigator.bluetooth){ openEldSheet(); return; }
-
-
-
-    _setBtBadge('scanning');
-    try {
-      const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        // Lista de servicios opcionales para aumentar posibilidades de lectura
-        optionalServices: [
-          '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-          'battery_service',
-          'device_information',
-        ]
-      });
-      await _connect(device);
-    } catch(e){
-      _setBtBadge(e.name === 'NotFoundError' ? 'disconnected' : 'error');
+    // Always open ELD sheet with native BLE scan
+    openEldSheet();
+    if(IS_CAPACITOR){
+      setTimeout(() => { try { startEldScan(); } catch(e){} }, 350);
     }
   };
 
