@@ -1,15 +1,20 @@
-const CACHE_NAME = 'truck-precision-v124';
+const CACHE_NAME = 'truck-precision-v125';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-  // Delete ALL caches — always serve fresh from network
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.map(key => caches.delete(key)))
-    ).then(() => self.clients.claim())
+    ).then(() => {
+      self.clients.claim();
+      // Force reload all open clients
+      return self.clients.matchAll({ type: 'window' }).then(clients => {
+        clients.forEach(client => client.navigate(client.url));
+      });
+    })
   );
 });
 
