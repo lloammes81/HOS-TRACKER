@@ -8301,7 +8301,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     display:flex;align-items:center;gap:10px;
     cursor:pointer;-webkit-tap-highlight-color:transparent;
   ">
-    <span id="dashWxIconVis" style="font-size:22px;flex-shrink:0;line-height:1;">🌤️</span>
+    <span id="dashWxIconVis" style="display:none;"></span>
     <span id="dashWxTempVis" style="font-size:18px;font-weight:900;color:#f1f5f9;letter-spacing:-0.5px;flex-shrink:0;">--°</span>
     <div style="flex:1;min-width:0;">
       <div id="dashWxDescVis" style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Obteniendo clima...</div>
@@ -8344,15 +8344,41 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- GARMIN-STYLE NAV CARD -->
-  <div id="hosNavCard" style="display:none;flex:0 0 auto;margin:0 14px 10px;border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.55);">
-    <div class="hnc-orange" style="background:#d4520a;display:flex;flex-direction:column;padding:8px 16px 11px;">
-      <div style="font-size:9px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:2px;">Destino</div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:18px;flex-shrink:0;">📍</span>
-        <div id="hncStop" style="font-size:20px;font-weight:900;color:#fff;flex:1;overflow:hidden;white-space:nowrap;line-height:1.2;">---</div>
+  <!-- RUTA PROGRESO LINE -->
+  <div id="dashRouteProgress" style="display:none;flex:0 0 auto;padding:0 14px 12px;">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:11px 14px;">
+      <!-- Origen → Destino -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,0.30);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">ORIGEN</div>
+          <div id="dashRouteOrigin" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.55);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">--</div>
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.20);flex-shrink:0;">→</div>
+        <div style="flex:1;min-width:0;text-align:right;">
+          <div style="font-size:7px;font-weight:800;color:rgba(16,185,129,0.55);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">DESTINO</div>
+          <div id="dashRouteDest" style="font-size:10px;font-weight:700;color:#10b981;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;">--</div>
+        </div>
+      </div>
+      <!-- Barra de progreso con camión -->
+      <div style="position:relative;height:8px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:visible;margin-bottom:7px;">
+        <div id="dashRouteProg" style="height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:999px;width:0%;transition:width 1.2s ease;position:relative;">
+          <div id="dashRouteTruck" style="position:absolute;right:-9px;top:50%;transform:translateY(-50%);font-size:14px;line-height:1;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));">🚛</div>
+        </div>
+      </div>
+      <!-- Millas restantes y porcentaje -->
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div id="dashRouteRemaining" style="font-size:12px;font-weight:800;color:#f1f5f9;letter-spacing:-0.3px;">-- mi restantes</div>
+        <div id="dashRoutePct" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);">0%</div>
       </div>
     </div>
+  </div>
+
+  <!-- Hidden hosNavCard kept for JS compatibility -->
+  <div id="hosNavCard" style="display:none;">
+    <div id="hncStop"></div>
+    <div id="hncDist"></div>
+    <div id="hncArrow"></div>
+    <div id="hncRoad"></div>
   </div>
 
   <!-- Hidden elements for JS compatibility -->
@@ -11823,12 +11849,14 @@ async function _geocodeState(lat, lon) {
 
 async function detectStateAndUpdateLimit(lat, lon) {
   const now = Date.now();
-  if (now - lastStateCheck < 20000) return;
+  // If state is already known throttle at 20s; if unknown retry every 8s
+  const throttle = currentStateCode ? 20000 : 8000;
+  if (now - lastStateCheck < throttle) return;
   lastStateCheck = now;
   const result = await _geocodeState(lat, lon);
   if (!result) { lastStateCheck = 0; return; } // retry next GPS tick on failure
   const { raw: stateRaw, code } = result;
-  if (!code) return;
+  if (!code) { lastStateCheck = 0; return; }
   if (code !== currentStateCode) {
     currentStateCode = code;
     lastBorderWarnState = ''; // reset border warning for next state
@@ -11936,8 +11964,14 @@ async function fetchRoadSpeedLimit(lat, lon) {
     const stateLimits = STATE_SPEED_LIMITS[currentStateCode];
     if (stateLimits && currentTruckSpeedLimit !== stateLimits.truck) {
       updateMapSpeedSign(stateLimits.truck, stateLimits.car, currentStateCode, currentStateCode);
+    } else if (!currentStateCode) {
+      // State not detected yet — reset timer to retry sooner (next GPS tick)
+      lastRoadSpeedCheck = 0;
     }
-  } catch(e) {}
+  } catch(e) {
+    // Reset timer so Overpass is retried on next GPS tick
+    lastRoadSpeedCheck = 0;
+  }
 }
 
 function updateMapSpeedSign(truckMph, carMph, code, stateName) {
@@ -16013,6 +16047,9 @@ function fmStartTracking() {
       _dashMi.textContent = remaining < 10 ? remaining.toFixed(1) : Math.round(remaining).toLocaleString();
     }
 
+    // ── Barra de progreso de ruta en el dashboard ────────────────
+    updateDashRouteProgress(pct, remaining);
+
     const _dailyMax  = Math.max(0, parseFloat(document.getElementById('dailyHoursInput')?.value || 11));
     const _weeklyMax = Math.max(0, parseFloat(document.getElementById('hoursInput')?.value || 70));
     const driveMax  = Math.min(_dailyMax, _weeklyMax);
@@ -16405,6 +16442,12 @@ function showHosDashboard() {
   const _dashDriveLeft = Math.max(0, _dashDriveMax - _dashElapsed);
   updateHosDashboard(_dashDriveLeft, _dashDriveMax);
   updateDashDestCard();
+  // Inicializar barra de progreso de ruta si hay ruta activa
+  if (typeof updateDashRouteProgress === 'function') {
+    const _curPct = parseInt(document.getElementById('fmPct')?.textContent) || 0;
+    const _curRem = parseFloat(document.getElementById('fmRem')?.textContent) || 0;
+    updateDashRouteProgress(_curPct, _curRem);
+  }
 
   // Mostrar clima si está activo
   refreshDashWeather();
@@ -16810,6 +16853,30 @@ async function _updateHosCityBar(lat, lon, force) {
   } catch(e) {}
 }
 
+function updateDashRouteProgress(pct, remaining) {
+  const panel = document.getElementById('dashRouteProgress');
+  if (!panel) return;
+  const hasRoute = (typeof destination !== 'undefined' && destination) &&
+                   (typeof origin !== 'undefined' && origin);
+  panel.style.display = hasRoute ? 'block' : 'none';
+  if (!hasRoute) return;
+
+  const originEl    = document.getElementById('dashRouteOrigin');
+  const destEl      = document.getElementById('dashRouteDest');
+  const progEl      = document.getElementById('dashRouteProg');
+  const remEl       = document.getElementById('dashRouteRemaining');
+  const pctEl       = document.getElementById('dashRoutePct');
+
+  if (originEl) originEl.textContent = (origin.name || '').split(',')[0].trim() || '--';
+  if (destEl)   destEl.textContent   = (destination.name || '').split(',')[0].trim() || '--';
+  if (progEl)   progEl.style.width   = Math.max(1, pct) + '%';
+  if (remEl) {
+    const rem = typeof remaining === 'number' ? remaining : parseFloat(remaining) || 0;
+    remEl.textContent = rem < 10 ? rem.toFixed(1) + ' mi restantes' : Math.round(rem).toLocaleString() + ' mi restantes';
+  }
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
 function _openDashSpeedLimitEditor() {
   const sheet = document.getElementById('dashSpeedSheet');
   const input = document.getElementById('dashSpeedInput');
@@ -16869,13 +16936,21 @@ function updateHosDashboard(driveLeft, driveMax) {
   // Arc turns red when over speed limit OR when nearly out of drive time
   const arcColor = (dashSpeedOver || driveLeft < 2) ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
   arc.setAttribute('stroke', arcColor);
-  timeEl.style.color = (dashSpeedOver || driveLeft <= 0.5) ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#1a1a1a';
+  timeEl.style.color = (dashSpeedOver || driveLeft <= 0.5) ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#6ee7b7';
 
   // Texto de tiempo restante
   const totalMins = Math.round(driveLeft * 60);
   const h = Math.floor(totalMins / 60);
   const m = totalMins % 60;
   timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+
+  // Actualizar etiqueta del anillo DISPONIBLES
+  const lblEl = document.getElementById('dashHosLabel');
+  if (lblEl) {
+    const used = driveMax - driveLeft;
+    const uh = Math.floor(used), um = Math.round((used - uh) * 60);
+    lblEl.textContent = `de ${driveMax}h · usadas ${uh}h ${String(um).padStart(2,'0')}m`;
+  }
 
   // Hora estimada de llegada
   const arrEl  = document.getElementById('dashArrival');
