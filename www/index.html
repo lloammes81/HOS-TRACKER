@@ -3712,8 +3712,8 @@ body.dark #fullMap .leaflet-tile-pane {
     padding: var(--header-pt) 12px 12px 14px;
   }
   .hero-top-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 4px; padding-right: 96px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 4px;
   }
   .hero-brand { display: flex; align-items: center; gap: 8px; }
   .hero-logo-img {
@@ -5857,12 +5857,53 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
     <!-- TOP BAR -->
     <div class="hero-top-bar">
-      <div class="hero-brand">
-        <img src="logo.png" class="hero-logo-img" alt="Truck Precision">
-        <div class="hero-brand-name">
-          <span class="hbn-top">TRUCK</span>
-          <span class="hbn-bot">PRECISION</span>
+      <!-- Left: brand -->
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div class="hero-brand">
+          <img src="logo.png" class="hero-logo-img" alt="Truck Precision">
+          <div class="hero-brand-name">
+            <span class="hbn-top">TRUCK</span>
+            <span class="hbn-bot">PRECISION</span>
+          </div>
         </div>
+        <div class="hero-pill" style="align-self:flex-start">
+          <div class="hero-pill-dot"></div>
+          <span class="hero-pill-text">DOT Certified Planner</span>
+        </div>
+      </div>
+      <!-- Right: calendar + BT badge (was absolutely positioned) -->
+      <div id="heroCalendarWrap" style="display:flex;flex-direction:column;gap:6px;align-items:center;flex-shrink:0;">
+        <div style="
+          background:rgba(8,14,26,.82);
+          backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+          border-radius:14px; overflow:hidden;
+          border:1px solid rgba(255,255,255,.13);
+          box-shadow:0 8px 28px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07);
+          font-family:sans-serif; width:82px; text-align:center;
+        ">
+          <div style="
+            font-family:'Bebas Neue',sans-serif;
+            font-size:52px;font-weight:900;color:#fff;
+            padding:8px 4px 0;line-height:1;
+            text-shadow:0 2px 12px rgba(0,0,0,.9);" id="calDayNum">7</div>
+          <div style="
+            font-size:12px;font-weight:800;letter-spacing:2px;
+            text-transform:uppercase;color:#10b981;
+            padding-bottom:8px;" id="calMonthName">MAY</div>
+        </div>
+        <button id="heroBtBadge" onclick="heroBleScan()" style="
+          display:flex;align-items:center;justify-content:center;gap:5px;
+          width:82px;
+          background:rgba(8,14,26,.82);
+          border:1px solid rgba(255,255,255,.13);
+          border-radius:12px;padding:6px 0;
+          cursor:pointer;-webkit-tap-highlight-color:transparent;
+          backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+          box-shadow:0 4px 16px rgba(0,0,0,.5);
+        ">
+          <span id="heroBtDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0;"></span>
+          <span id="heroBtTxt" style="font-size:10px;font-weight:700;letter-spacing:0.5px;color:#9ca3af;">ELD BT</span>
+        </button>
       </div>
       <!-- hidden controls kept for JS compatibility -->
       <button id="gpsBtn" style="display:none"></button>
@@ -5874,14 +5915,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <select id="countrySelectMenu" style="display:none"></select>
       </div>
     </div>
-
-    <!-- DOT BADGE -->
-    <div style="display:flex;align-items:center;margin-bottom:2px;padding-right:96px;">
-      <div class="hero-pill">
-        <div class="hero-pill-dot"></div>
-        <span class="hero-pill-text">DOT Certified Planner</span>
-      </div>
-    </div>
+<script>(function(){try{var now=new Date(),m=now.getMonth(),d=now.getDate(),mEN=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];document.getElementById('calDayNum').textContent=d;document.getElementById('calMonthName').textContent=mEN[m];}catch(e){}})()</script>
 
     <!-- TÍTULO + BOTONES en la misma fila -->
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
@@ -5951,55 +5985,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   </div>
 
-  <!-- CALENDAR WIDGET — glass style, top-right -->
-  <div id="heroCalendarWrap" style="
-    position:absolute; top:var(--header-pt); right:14px;
-    z-index:4; width:82px; display:flex; flex-direction:column; gap:6px; align-items:center;
-  ">
-    <div style="
-      background:rgba(8,14,26,.82);
-      backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-      border-radius:14px; overflow:hidden;
-      border:1px solid rgba(255,255,255,.13);
-      box-shadow:0 8px 28px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07);
-      font-family:sans-serif; width:82px; text-align:center;
-    ">
-      <div style="
-        font-family:'Bebas Neue',sans-serif;
-        font-size:52px;font-weight:900;color:#fff;
-        padding:8px 4px 0;line-height:1;
-        text-shadow:0 2px 12px rgba(0,0,0,.9);" id="calDayNum">29</div>
-      <div style="
-        font-size:12px;font-weight:800;letter-spacing:2px;
-        text-transform:uppercase;color:#10b981;
-        padding-bottom:8px;" id="calMonthName">APR</div>
-    </div>
-    <!-- Badge Bluetooth ELD — flotante bajo calendario -->
-    <button id="heroBtBadge" onclick="heroBleScan()" style="
-      display:flex;align-items:center;justify-content:center;gap:5px;
-      width:82px;
-      background:rgba(8,14,26,.82);
-      border:1px solid rgba(255,255,255,.13);
-      border-radius:12px;padding:6px 0;
-      cursor:pointer;-webkit-tap-highlight-color:transparent;
-      backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-      box-shadow:0 4px 16px rgba(0,0,0,.5);
-    ">
-      <span id="heroBtDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0;"></span>
-      <span id="heroBtTxt" style="font-size:10px;font-weight:700;letter-spacing:0.5px;color:#9ca3af;">ELD BT</span>
-    </button>
-  </div>
-<script>
-(function(){
-  try {
-    var now=new Date();
-    var m=now.getMonth(),d=now.getDate();
-    var mEN=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-    document.getElementById('calDayNum').textContent=d;
-    document.getElementById('calMonthName').textContent=mEN[m];
-  }catch(e){}
-})();
-</script>
 
 </div>
 
