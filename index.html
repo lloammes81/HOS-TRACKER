@@ -3995,6 +3995,24 @@ body.dark #fullMap .leaflet-tile-pane {
     text-align: center; padding: 0 4px; line-height: 1.2;
   }
 
+  /* ── Hero weather bar ── */
+  .hero-wx-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 7px 12px;
+    margin-bottom: 6px;
+  }
+  .hero-wx-icon { font-size: 22px; flex-shrink: 0; }
+  .hero-wx-temp {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px; line-height: 1; color: #fff; letter-spacing: 1px;
+  }
+  .hero-wx-info { display: flex; flex-direction: column; gap: 1px; }
+  .hero-wx-desc { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.75); }
+  .hero-wx-loc  { font-size: 10px; font-weight: 600; color: rgba(255,255,255,.4); }
+  .hero-wx-wind { font-size: 10px; color: rgba(255,255,255,.4); margin-left: auto; text-align: right; }
 
   /* ════════════════════════════════════════════════════════════
      📅  CALENDAR WIDGET (hero section)
@@ -5877,6 +5895,17 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <span id="heroDutyDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0;transition:background 0.4s;"></span>
       <span id="heroDutyTxt" style="font-size:11px;font-weight:700;letter-spacing:1px;color:#6b7280;transition:color 0.4s;">ESPERANDO GPS...</span>
       <span id="heroDutyViol" style="display:none;background:rgba(248,113,113,0.15);border-radius:10px;padding:1px 7px;font-size:9px;color:#f87171;font-weight:700;">⚠ DOT</span>
+    </div>
+
+    <!-- WEATHER BAR — real-time GPS weather -->
+    <div class="hero-wx-bar" id="heroWxBar">
+      <div class="hero-wx-icon" id="heroWxIcon">🌤️</div>
+      <div class="hero-wx-temp" id="heroWxTemp">--°</div>
+      <div class="hero-wx-info">
+        <span class="hero-wx-desc" id="heroWxDesc">Obteniendo clima...</span>
+        <span class="hero-wx-loc"  id="heroWxLoc">📍 Localizando...</span>
+      </div>
+      <div class="hero-wx-wind" id="heroWxWind"></div>
     </div>
 
     <!-- KPI GAUGES — 3 anillos HOSIntelligence -->
@@ -10224,11 +10253,24 @@ function updateWeatherWidget(wx) {
   if (!wx) return;
   const isDanger  = WX_DANGER_CODES.has(wx.code);
   const isWarning = WX_WARNING_CODES.has(wx.code);
-  document.getElementById('wxIcon').textContent = WX_ICONS[wx.code] || '🌡️';
-  document.getElementById('wxTemp').textContent = `${wx.temp}°F`;
+  const wxIconTxt = WX_ICONS[wx.code] || '🌡️';
+  const wxTempTxt = `${wx.temp}°F`;
+  const wxWindTxt = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
+  // Map widget
+  document.getElementById('wxIcon').textContent = wxIconTxt;
+  document.getElementById('wxTemp').textContent = wxTempTxt;
   document.getElementById('wxDesc').textContent = wx.desc;
   const wxWindEl = document.getElementById('wxWind');
-  if (wxWindEl) wxWindEl.textContent = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
+  if (wxWindEl) wxWindEl.textContent = wxWindTxt;
+  // Hero weather bar
+  const hIcon = document.getElementById('heroWxIcon');
+  const hTemp = document.getElementById('heroWxTemp');
+  const hDesc = document.getElementById('heroWxDesc');
+  const hWind = document.getElementById('heroWxWind');
+  if (hIcon) hIcon.textContent = wxIconTxt;
+  if (hTemp) hTemp.textContent = wxTempTxt;
+  if (hDesc) hDesc.textContent = wx.desc;
+  if (hWind) hWind.textContent = wxWindTxt;
   refreshDashWeather();
   // Color the temp red if danger
   document.getElementById('wxTemp').className = 'wx-temp' + (isDanger ? ' wx-danger' : '');
@@ -13898,6 +13940,8 @@ function renderSummary() {
 function setOriginLabel(name) {
   const txt = document.getElementById('originLabelText');
   if (txt) { txt.textContent = name; txt.style.color = 'var(--text)'; }
+  const loc = document.getElementById('heroWxLoc');
+  if (loc && name) loc.textContent = '📍 ' + name;
 }
 
 function useGPS() {
