@@ -27685,6 +27685,12 @@ window._hosAutoRecalc = false;
       badge.style.borderColor = s === 'connected' ? 'rgba(0,229,160,0.35)' : 'rgba(255,255,255,0.12)';
       badge.style.background  = s === 'connected' ? 'rgba(0,229,160,0.08)' : 'rgba(255,255,255,0.05)';
     }
+    // Sync BT status into dash TURNO ring
+    const dashBt = document.getElementById('dashBtStatus');
+    if (dashBt) {
+      dashBt.textContent = s === 'connected' ? 'BT ●' : s === 'scanning' ? 'BT...' : 'BT ○';
+      dashBt.style.color = s === 'connected' ? '#00e5a0' : s === 'scanning' ? '#facc15' : 'rgba(167,139,250,0.55)';
+    }
   }
 
   function _fmt(d){ return d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}); }
