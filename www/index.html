@@ -79,13 +79,14 @@
      RESET + BASE
   ══════════════════════════════════════════ */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { height: 100%; -webkit-text-size-adjust: 100%; }
+  html { height: 100%; height: -webkit-fill-available; -webkit-text-size-adjust: 100%; }
   body {
     font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100%;
     min-height: -webkit-fill-available;
+    min-height: 100dvh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -177,8 +178,8 @@
   }
   .tab-btn:active::before { opacity: 0.08; transform: scale(1); }
   .tab-btn svg {
-    width: 22px; height: 22px; fill: none; stroke: currentColor;
-    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    width: 28px; height: 28px; fill: none; stroke: currentColor;
+    stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
     transition: transform .2s;
   }
   .tab-btn.active { color: var(--accent); }
@@ -4050,14 +4051,14 @@ body.dark #fullMap .leaflet-tile-pane {
   ════════════════════════════════════════════════════════════ */
   .tab-btn {
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px; border: none; background: none; color: var(--muted);
-    font-family: "DM Sans", sans-serif; font-size: 9px; font-weight: 700;
+    gap: 4px; border: none; background: none; color: var(--muted);
+    font-family: "DM Sans", sans-serif; font-size: 11px; font-weight: 700;
     cursor: pointer; padding: 6px 2px 4px;
     transition: color .18s; position: relative;
     -webkit-tap-highlight-color: transparent; touch-action: manipulation;
     letter-spacing: .2px;
   }
-  .tab-btn svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s; }
+  .tab-btn svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s; }
   .tab-btn.active { color: var(--accent); }
   .tab-btn.active svg { transform: translateY(-1px); }
 
@@ -10473,14 +10474,31 @@ async function startWeatherMonitor() {
   document.getElementById('wxDesc').textContent = 'Loading...';
 
   const updateNow = async () => {
-    if (!navigator.geolocation) return;
+    let lat = null, lon = null;
+    // 1. Try GPS
     try {
-      const pos = await getGPSPosition(10000, 5000);
-      const { latitude: lat, longitude: lon } = pos.coords;
-      lastWeatherLat = lat; lastWeatherLon = lon;
-      const wx = await fetchWeather(lat, lon);
-      updateWeatherWidget(wx);
+      if (navigator.geolocation) {
+        const pos = await getGPSPosition(8000, 5000);
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+      }
     } catch {}
+    // 2. Last known coords
+    if (lat == null && lastWeatherLat != null) {
+      lat = lastWeatherLat; lon = lastWeatherLon;
+    }
+    // 3. IP-based fallback
+    if (lat == null) {
+      try {
+        const r = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
+        const d = await r.json();
+        lat = d.latitude; lon = d.longitude;
+      } catch {}
+    }
+    if (lat == null) return;
+    lastWeatherLat = lat; lastWeatherLon = lon;
+    const wx = await fetchWeather(lat, lon);
+    if (wx) updateWeatherWidget(wx);
   };
 
   await updateNow();
