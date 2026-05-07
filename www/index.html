@@ -1240,6 +1240,12 @@
     0%,100% { opacity:.5; }
     50%     { opacity:1; }
   }
+  @keyframes wxCloudDrift {
+    0%   { transform:translateX(-160px); opacity:0; }
+    8%   { opacity:1; }
+    92%  { opacity:1; }
+    100% { transform:translateX(calc(100% + 160px)); opacity:0; }
+  }
   #wxEffectsOverlay .wx-fx-banner {
     position:absolute; bottom:28%; left:50%; transform:translateX(-50%);
     background:rgba(0,0,0,.88); backdrop-filter:blur(10px);
@@ -10409,6 +10415,30 @@ function applyHeroWeatherFx(wxCode, windSpeed) {
   const isIce     = [56,57,66,67].includes(wxCode);
   const isRain    = [51,53,55,61,63,65,80,81,82].includes(wxCode) || isThunder || isIce;
   const isFog     = [45,48].includes(wxCode);
+  const isCloud   = [2,3].includes(wxCode);            // partly cloudy / overcast
+  const isPartly  = wxCode === 1;                       // mainly clear — very subtle
+
+  if (isCloud || isPartly) {
+    // Number of cloud layers: more for overcast, fewer for partly cloudy
+    const count = wxCode === 3 ? 5 : wxCode === 2 ? 3 : 1;
+    for (let i = 0; i < count; i++) {
+      const w      = 90 + Math.random() * 80;           // cloud width px
+      const h      = w * (0.38 + Math.random() * 0.18); // cloud height
+      const top    = 2 + Math.random() * 55;            // vertical %
+      const spd    = (22 + Math.random() * 18).toFixed(1);
+      const delay  = (-(Math.random() * 20)).toFixed(1);
+      const dark   = wxCode === 3 ? 0.28 : wxCode === 2 ? 0.20 : 0.10;
+      const c      = document.createElement('div');
+      c.style.cssText =
+        `position:absolute;top:${top}%;left:0;` +
+        `width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;` +
+        `background:rgba(190,210,235,${dark});` +
+        `border-radius:${h.toFixed(0)}px;` +
+        `filter:blur(${(6 + Math.random()*6).toFixed(0)}px);` +
+        `animation:wxCloudDrift ${spd}s linear ${delay}s infinite;`;
+      fx.appendChild(c);
+    }
+  }
 
   if (isRain || isThunder) {
     const count = isThunder ? 70 : (wxCode >= 65 || wxCode === 82 ? 55 : 38);
