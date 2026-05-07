@@ -5922,7 +5922,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
 
     <!-- WEATHER BAR — real-time GPS weather -->
-    <div class="hero-wx-bar" id="heroWxBar">
+    <div class="hero-wx-bar" id="heroWxBar" onclick="openNativeWeatherApp()" style="cursor:pointer;">
       <div class="hero-wx-icon" id="heroWxIcon">🌤️</div>
       <div class="hero-wx-temp" id="heroWxTemp">--°</div>
       <div class="hero-wx-info">
@@ -9872,34 +9872,58 @@ let _gpsCache       = null;   // { lat, lon, accuracy, timestamp }
 let _gpsWarmId      = null;
 
 function startGPSWarm() {
-  if (!navigator.geolocation || _gpsWarmId !== null) return;
-  _gpsWarmId = navigator.geolocation.watchPosition(
-    pos => {
+  if (_gpsWarmId !== null) return;
+  if (IS_CAPACITOR) {
+    // Native: use Capacitor Geolocation watchPosition
+    const Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+    if (!Geo) return;
+    Geo.watchPosition({ enableHighAccuracy: true, timeout: 20000 }, (pos, err) => {
+      if (err || !pos) return;
+      const c = pos.coords;
       _gpsCache = {
-        lat:       pos.coords.latitude,
-        lon:       pos.coords.longitude,
-        accuracy:  pos.coords.accuracy,
-        speed:     pos.coords.speed,
-        heading:   pos.coords.heading,
-        timestamp: pos.timestamp,
-        raw:       pos
+        lat: c.latitude, lon: c.longitude,
+        accuracy: c.accuracy, speed: c.speed, heading: c.heading,
+        timestamp: pos.timestamp, raw: pos
       };
-    },
-    () => { /* silently ignore warm-cache errors */ },
-    { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
-  );
+    }).then(id => { _gpsWarmId = id; }).catch(() => {});
+  } else {
+    if (!navigator.geolocation) return;
+    _gpsWarmId = navigator.geolocation.watchPosition(
+      pos => {
+        _gpsCache = {
+          lat:       pos.coords.latitude,
+          lon:       pos.coords.longitude,
+          accuracy:  pos.coords.accuracy,
+          speed:     pos.coords.speed,
+          heading:   pos.coords.heading,
+          timestamp: pos.timestamp,
+          raw:       pos
+        };
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+    );
+  }
 }
 
-/**
- * Returns a Promise<{lat,lon,...}> using the warm GPS cache when fresh
- * (< maxAgeMs old), otherwise falls back to getCurrentPosition.
- * @param {number} maxAgeMs   Max cache age to accept (default 4 s)
- * @param {number} timeoutMs  Fallback timeout (default 12 s)
- */
 function getGPSPosition(maxAgeMs = 4000, timeoutMs = 12000) {
   const now = Date.now();
   if (_gpsCache && (now - _gpsCache.timestamp) < maxAgeMs) {
-    return Promise.resolve(_gpsCache.raw);
+    return Promise.resolve(_gpsCache.raw || _gpsCache);
+  }
+  if (IS_CAPACITOR) {
+    const Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+    if (Geo) {
+      return Geo.getCurrentPosition({ enableHighAccuracy: true, timeout: timeoutMs })
+        .then(pos => {
+          _gpsCache = {
+            lat: pos.coords.latitude, lon: pos.coords.longitude,
+            accuracy: pos.coords.accuracy, speed: pos.coords.speed,
+            heading: pos.coords.heading, timestamp: pos.timestamp, raw: pos
+          };
+          return pos;
+        });
+    }
   }
   return new Promise((resolve, reject) =>
     navigator.geolocation.getCurrentPosition(resolve, reject,
@@ -10466,11 +10490,9 @@ async function startWeatherMonitor() {
     let lat = null, lon = null;
     // 1. Try GPS
     try {
-      if (navigator.geolocation) {
-        const pos = await getGPSPosition(8000, 5000);
-        lat = pos.coords.latitude;
-        lon = pos.coords.longitude;
-      }
+      const pos = await getGPSPosition(8000, 5000);
+      lat = pos.coords.latitude;
+      lon = pos.coords.longitude;
     } catch {}
     // 2. Last known coords
     if (lat == null && lastWeatherLat != null) {
@@ -10513,6 +10535,17 @@ function showWeatherDetail() {
   const desc = document.getElementById('wxDesc').textContent;
   const temp = document.getElementById('wxTemp').textContent;
   showToast('info', '🌡️', 'Clima actual', `${desc} · ${temp}`, 6000);
+}
+
+function openNativeWeatherApp() {
+  if (IS_CAPACITOR) {
+    // iOS: opens Apple Weather; Android: falls through to Google Weather
+    const ios = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios';
+    const url = ios ? 'weather://' : 'https://weather.google.com';
+    window.open(url, '_system');
+  } else {
+    window.open('https://weather.google.com', '_blank');
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -15596,7 +15629,12 @@ function fmStartTracking() {
   // ── STEP 5: Live tracking ─────────────────────────────────
   // Pause warm-cache watcher so only one GPS watcher runs (avoids conflicts)
   if (_gpsWarmId != null) {
-    navigator.geolocation.clearWatch(_gpsWarmId);
+    if (IS_CAPACITOR) {
+      const Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+      if (Geo) Geo.clearWatch({ id: _gpsWarmId }).catch(() => {});
+    } else {
+      navigator.geolocation.clearWatch(_gpsWarmId);
+    }
     _gpsWarmId = null;
   }
 
