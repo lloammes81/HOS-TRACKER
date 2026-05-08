@@ -16069,6 +16069,8 @@ function fmStartTracking() {
     updateNavInstruction(lat, lon);
     // ── Auto status buttons (Conduciendo / Descanso) ─────
     autoUpdateDashStatus(isMoving);
+    // ── Reportar movimiento al tracker HOS (sin ELD) ─────
+    if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(isMoving, gpsSpeed);
     // ── Próxima parada card ───────────────────────────────
     updateNextStopCard();
     // ── Weigh station warning ─────────────────────────────
@@ -27728,7 +27730,16 @@ window._hosAutoRecalc = false;
   setInterval(_updateRings, 1000);
   setInterval(_save, 30000);
 
-  window._hosTracker = { driveLeft: _driveLeft, cycleLeft: _cycleLeft };
+  window._hosTracker = {
+    driveLeft:     _driveLeft,
+    cycleLeft:     _cycleLeft,
+    // Llamado desde el bucle GPS cuando no hay ELD conectado
+    reportMoving: function(moving, speedMph) {
+      if (_connected) return; // ELD tiene prioridad cuando está conectado
+      if (moving) _onEldMoving(speedMph || 0);
+      else        _onEldStopped();
+    }
+  };
 })();
 </script>
 
