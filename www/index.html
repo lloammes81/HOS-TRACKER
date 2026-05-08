@@ -15977,6 +15977,8 @@ function fmStartTracking() {
   document.getElementById('fmPct').textContent  = '0%';
   document.getElementById('fmBar').style.width  = '0%';
   document.getElementById('fmRem').textContent  = routeDistance + ' mi';
+  // Guardar estado de la ruta inmediatamente al iniciar rastreo
+  setTimeout(_fmSaveActiveRoute, 300);
 
   fmWatchId = navigator.geolocation.watchPosition(async pos => {
     const lat  = pos.coords.latitude;
@@ -16091,6 +16093,7 @@ function fmStartTracking() {
       // Persist every 30 s so sessions survive app restarts/crashes
       if (Math.round(fmDriveSeconds) % 30 === 0) {
         try { localStorage.setItem('hos_fm_drive_secs', JSON.stringify({secs: fmDriveSeconds, date: new Date().toDateString(), ts: Date.now()})); } catch(e) {}
+        _fmSaveActiveRoute();
       }
     }
     fmLastMoveTime = isMoving ? now : null;
@@ -16379,6 +16382,7 @@ function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
+  _fmClearActiveRoute();
   b30Reset(); // limpiar sistema de pausa al detener rastreo
   _autoStopSecs   = 0;
   _autoStopLastTs = null;
@@ -16438,6 +16442,103 @@ function fmStopTracking() {
     if (ov) ov.style.display = 'none';
   });
 }
+
+/* ════════════════════════════════════════════════════════════
+   🔄  PERSISTENCIA DE RUTA ACTIVA — reanudar tras cierre de app
+════════════════════════════════════════════════════════════ */
+const _FM_ROUTE_KEY = 'hos_active_route';
+
+function _fmSaveActiveRoute() {
+  if (!fmIsTracking || !origin || !destination) return;
+  try {
+    localStorage.setItem(_FM_ROUTE_KEY, JSON.stringify({
+      origin,
+      destination,
+      routeDistance,
+      roadGeometry: roadGeometry ? roadGeometry.slice(0, 2000) : null,
+      schedule: typeof schedule !== 'undefined' ? schedule : [],
+      arrivalTimestamp: arrivalTime instanceof Date ? arrivalTime.getTime() : null,
+      navSteps: (typeof navSteps !== 'undefined' ? navSteps : []).slice(0, 60),
+      navStepIdx: typeof navStepIdx !== 'undefined' ? navStepIdx : 0,
+      routeSource: typeof routeSource !== 'undefined' ? routeSource : '',
+      savedAt: Date.now()
+    }));
+  } catch(e) {}
+}
+
+function _fmClearActiveRoute() {
+  try { localStorage.removeItem(_FM_ROUTE_KEY); } catch(e) {}
+}
+
+function _fmCheckResumeRoute() {
+  let saved;
+  try { saved = JSON.parse(localStorage.getItem(_FM_ROUTE_KEY)); } catch(e) { return; }
+  if (!saved || !saved.origin || !saved.destination) return;
+  // No ofrecer reanudar si pasaron más de 10h (el conductor descansó)
+  const ageH = (Date.now() - (saved.savedAt || 0)) / 3600000;
+  if (ageH > 10) { _fmClearActiveRoute(); return; }
+
+  const isEs = typeof lang !== 'undefined' && lang === 'es';
+  const destName = (saved.destination.name || '').split(',')[0] || 'destino';
+  const originName = (saved.origin.name || '').split(',')[0] || '';
+
+  let dlg = document.getElementById('fmResumeDialog');
+  if (!dlg) {
+    dlg = document.createElement('div');
+    dlg.id = 'fmResumeDialog';
+    dlg.style.cssText = 'display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);align-items:center;justify-content:center;padding:20px';
+    document.body.appendChild(dlg);
+  }
+  dlg.innerHTML = `
+    <div style="background:#0f172a;border:1.5px solid rgba(16,185,129,.45);border-radius:22px;padding:32px 24px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.95)">
+      <div style="font-size:46px;margin-bottom:10px">🚛</div>
+      <div style="font-size:10px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:8px">${isEs ? 'RUTA ACTIVA DETECTADA' : 'ACTIVE ROUTE DETECTED'}</div>
+      <div style="font-size:18px;font-weight:800;color:#f1f5f9;margin-bottom:8px">${isEs ? '¿Continuar ruta?' : 'Continue route?'}</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:4px">${isEs ? 'Desde' : 'From'}: <span style="color:#94a3b8">${originName}</span></div>
+      <div style="font-size:14px;font-weight:700;color:#10b981;margin-bottom:20px">${isEs ? 'Hacia' : 'To'}: ${destName}</div>
+      <button id="fmResumeYes" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;letter-spacing:.3px">
+        ✅ ${isEs ? 'Sí, continuar rastreo' : 'Yes, resume tracking'}
+      </button>
+      <button id="fmResumeNo" style="width:100%;background:rgba(255,255,255,.06);color:#94a3b8;border:1.5px solid rgba(255,255,255,.12);border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">
+        ❌ ${isEs ? 'No, cancelar ruta' : 'No, cancel route'}
+      </button>
+    </div>
+  `;
+  dlg.style.display = 'flex';
+
+  document.getElementById('fmResumeYes').onclick = () => {
+    dlg.style.display = 'none';
+    _fmRestoreRoute(saved);
+  };
+  document.getElementById('fmResumeNo').onclick = () => {
+    dlg.style.display = 'none';
+    _fmClearActiveRoute();
+    // El tiempo HOS ya acumulado (fmDriveSeconds / hos_fm_drive_secs) no se toca
+  };
+}
+
+function _fmRestoreRoute(saved) {
+  origin        = saved.origin;
+  destination   = saved.destination;
+  routeDistance = saved.routeDistance || 0;
+  roadGeometry  = saved.roadGeometry  || null;
+  if (typeof schedule    !== 'undefined') schedule    = saved.schedule    || [];
+  if (typeof arrivalTime !== 'undefined') arrivalTime = saved.arrivalTimestamp ? new Date(saved.arrivalTimestamp) : null;
+  if (typeof navSteps    !== 'undefined') navSteps    = saved.navSteps    || [];
+  if (typeof routeSource !== 'undefined') routeSource = saved.routeSource || '';
+  // navStepIdx se restaura después de fmStartTracking() porque éste lo resetea a 0
+
+  openFullMapScreen();
+  setTimeout(() => {
+    fmStartTracking();
+    // Restaurar posición en la navegación tras el reset que hace fmStartTracking
+    const restoredIdx = saved.navStepIdx || 0;
+    if (restoredIdx > 0) setTimeout(() => { if (typeof navStepIdx !== 'undefined') navStepIdx = restoredIdx; }, 300);
+  }, 400);
+}
+
+// Verificar ruta pendiente al abrir la app (1.5s para que el DOM esté listo)
+setTimeout(_fmCheckResumeRoute, 1500);
 
 /* ════════════════════════════════════════════════════════════
    📊  HOS DASHBOARD — pantalla de estado al iniciar rastreo
