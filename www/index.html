@@ -25485,6 +25485,36 @@ window._hosAutoRecalc = false;
       return;
     }
 
+    // Sin ELD: verificar si ya hay registro de horas guardado
+    const _noEldReg = (function() {
+      try { return JSON.parse(localStorage.getItem('hos_no_eld_reg')); } catch(e) { return null; }
+    })();
+
+    if (_noEldReg) {
+      const cLeft = window._hosTracker ? window._hosTracker.cycleLeft() : 0;
+      // Bloquear si el ciclo de 70h está agotado → descanso obligatorio
+      if (cLeft <= 0) {
+        _hosShowMandatoryRest();
+        return;
+      }
+      // Aviso si quedan menos de 5 horas del ciclo
+      if (cLeft < 5 && typeof showToast === 'function') {
+        showToast('danger','⚠️',
+          lang === 'es' ? '¡Ciclo casi agotado!' : 'Cycle almost exhausted!',
+          lang === 'es' ? `Te quedan ${cLeft.toFixed(1)} h de las 70h del ciclo. Planifica tu descanso de 34h.`
+                        : `${cLeft.toFixed(1)} h remaining of 70h cycle. Plan your 34h reset.`,
+          10000);
+      }
+      // Usar valores live del tracker directamente sin popups
+      const dLeft = window._hosTracker ? window._hosTracker.driveLeft() : 11;
+      const dailyInp  = document.getElementById('dailyHoursInput');
+      const weeklyInp = document.getElementById('hoursInput');
+      if (dailyInp)  dailyInp.value  = Math.max(0, dLeft).toFixed(2);
+      if (weeklyInp) weeklyInp.value = Math.max(0, cLeft).toFixed(2);
+      _origCalcForPopup();
+      return;
+    }
+
     _hosOpenPopup1();
   };
 
@@ -25708,6 +25738,19 @@ window._hosAutoRecalc = false;
   window._hosStep3Confirm = function() {
     document.getElementById('hosPopup3')?.classList.remove('active');
 
+    // Guardar registro único de horas (modo sin ELD)
+    const _regDailyHrs  = parseFloat(document.getElementById('dailyHoursInput')?.value || 11);
+    const _regCycleHrs  = parseFloat(document.getElementById('hoursInput')?.value || 70);
+    try {
+      localStorage.setItem('hos_no_eld_reg', JSON.stringify({
+        dailyHrs: _regDailyHrs,
+        cycleHrs: _regCycleHrs,
+        savedAt: Date.now()
+      }));
+    } catch(e) {}
+    // Inicializar el tracker con las horas restantes ingresadas
+    window._hosTracker?.setInitialHours?.(_regDailyHrs, _regCycleHrs);
+
     // Mostrar progress bar
     const overlay = document.getElementById('calcProgressOverlay');
     if (overlay) {
@@ -25904,6 +25947,60 @@ window._hosAutoRecalc = false;
   });
 
   // Tap fuera NO cierra los popups (el driver debe ingresar un valor)
+
+  // ── Descanso obligatorio 34h (límite 70h del ciclo) ──────────────────
+  function _hosShowMandatoryRest() {
+    let ov = document.getElementById('hosMandatoryRestOverlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'hosMandatoryRestOverlay';
+      ov.style.cssText = 'display:flex;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.9);align-items:center;justify-content:center;padding:20px';
+      ov.innerHTML = `
+        <div style="background:#0f172a;border:2px solid rgba(239,68,68,.55);border-radius:22px;padding:32px 24px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.95)">
+          <div style="font-size:52px;margin-bottom:10px">🛑</div>
+          <div style="font-size:11px;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:8px">LÍMITE 70 HORAS ALCANZADO</div>
+          <div style="font-size:19px;font-weight:800;color:#f1f5f9;margin-bottom:8px">Descanso Obligatorio</div>
+          <div style="font-size:13px;color:#94a3b8;line-height:1.65;margin-bottom:18px">
+            Has agotado tus <strong style="color:#ef4444">70 horas</strong> del ciclo de 8 días.<br>
+            Debes tomar <strong style="color:#60a5fa">34 horas consecutivas</strong> fuera de servicio antes de retomar el manejo.
+          </div>
+          <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:12px;padding:14px;margin-bottom:20px;font-size:12px;color:#fca5a5;line-height:1.55;text-align:left">
+            ⚖️ <strong>Regulación DOT FMCSA</strong><br>
+            El reinicio de 34h debe incluir dos períodos entre <strong>1:00 AM – 5:00 AM</strong>.<br>
+            Referencia: 49 CFR § 395.3(c).
+          </div>
+          <button id="hosMandatoryRestDoneBtn" style="width:100%;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;letter-spacing:.3px">
+            ✅ Tomé mis 34 horas — Reiniciar Ciclo
+          </button>
+          <button onclick="document.getElementById('hosMandatoryRestOverlay').style.display='none'" style="width:100%;background:rgba(255,255,255,.06);color:#64748b;border:1.5px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">
+            Cerrar
+          </button>
+        </div>
+      `;
+      document.body.appendChild(ov);
+      document.getElementById('hosMandatoryRestDoneBtn').addEventListener('click', window._hosMandatoryRestDone);
+    } else {
+      ov.style.display = 'flex';
+    }
+  }
+
+  window._hosMandatoryRestDone = function() {
+    const ov = document.getElementById('hosMandatoryRestOverlay');
+    if (ov) ov.style.display = 'none';
+    // Limpiar registro — las próximas horas se pedirán de nuevo via popups
+    try {
+      localStorage.removeItem('hos_no_eld_reg');
+      localStorage.removeItem('hos_cycle_state');
+    } catch(e) {}
+    // Reiniciar el tracker a ciclo completo
+    window._hosTracker?.setInitialHours?.(11, 70);
+    if (typeof showToast === 'function') {
+      showToast('success','✅',
+        lang === 'es' ? 'Ciclo reiniciado' : 'Cycle reset',
+        lang === 'es' ? 'Tienes 70 horas disponibles. Ingresa tus horas al calcular la próxima ruta.' : 'You have 70 hours available. Enter your hours on next route.',
+        7000);
+    }
+  };
 })();
 
 /* ════════════════════════════════════════════════════════════
@@ -27485,8 +27582,8 @@ window._hosAutoRecalc = false;
     try {
       const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
       if (!d) return;
-      // Si el turno tiene más de 24h, lo reiniciamos
-      if (d.shiftTs && Date.now() - d.shiftTs > 24 * 3600000){
+      // Ciclo DOT: ventana de 8 días; reiniciar si supera ese límite
+      if (d.shiftTs && Date.now() - d.shiftTs > 8 * 24 * 3600000){
         localStorage.removeItem(SAVE_KEY); return;
       }
       _shiftStart  = d.shiftTs  ? new Date(d.shiftTs)  : null;
@@ -27793,6 +27890,14 @@ window._hosAutoRecalc = false;
     driveLeft:     _driveLeft,
     cycleLeft:     _cycleLeft,
     eldConnected:  () => _connected,
+    // Inicializa el tracker con las horas RESTANTES que el driver ingresó
+    setInitialHours: function(dailyHrsLeft, cycleHrsLeft) {
+      _driveMs = Math.max(0, (DRIVE_MAX - dailyHrsLeft) * 3600000);
+      _cycleMs = Math.max(0, (CYCLE_MAX - cycleHrsLeft) * 3600000);
+      _sessionStart = null;
+      if (!_shiftStart) _shiftStart = new Date();
+      _save();
+    },
     // Llamado desde el bucle GPS cuando no hay ELD conectado
     reportMoving: function(moving, speedMph) {
       if (_connected) return; // ELD tiene prioridad cuando está conectado
