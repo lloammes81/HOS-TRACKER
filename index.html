@@ -15962,11 +15962,13 @@ function fmStartTracking() {
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
   showDriveHoursWidget();
-  // Use available cycle hours (max 11 per day, but limited by 70hr cycle)
-  const initCycleHours = Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 70);
-  const initDriveMax = Math.min(11, initCycleHours);
-  updateDriveHoursWidget(initDriveMax, initDriveMax);
-  updateHeroKPIs(initDriveMax, initDriveMax, initCycleHours, initCycleHours);
+  // Leer horas restantes del tracker (respeta lo que el driver ingresó en el popup)
+  const _initDriveLeft  = window._hosTracker ? Math.max(0, window._hosTracker.driveLeft())  : 11;
+  const _initCycleLeft  = window._hosTracker ? Math.max(0, window._hosTracker.cycleLeft())  : parseFloat(document.getElementById('hoursInput').value) || 70;
+  // El "máximo" del arco es el tiempo diario que el driver indicó (dailyHoursInput)
+  const _initDriveMax   = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput').value) || _initDriveLeft);
+  updateDriveHoursWidget(Math.min(_initDriveLeft, _initDriveMax), _initDriveMax);
+  updateHeroKPIs(_initDriveLeft, _initDriveMax, _initCycleLeft, 70);
   // Mostrar dashboard HOS en lugar del mapa completo
   showHosDashboard();
   // Show speed sign immediately — will update with real state on first GPS fix
@@ -16648,20 +16650,24 @@ function showHosDashboard() {
   const _dashDailyHrs  = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11);
   const _dashWeeklyHrs = Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70);
   const _dashDriveMax  = Math.min(_dashDailyHrs, _dashWeeklyHrs);
-  const _dashElapsed   = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
-  const _dashDriveLeft = Math.max(0, _dashDriveMax - _dashElapsed);
+  // Usar horas restantes del tracker (no restar fmDriveSeconds del input, ya está contabilizado)
+  const _dashDriveLeft = window._hosTracker
+    ? Math.max(0, Math.min(window._hosTracker.driveLeft(), _dashDriveMax))
+    : _dashDriveMax;
   updateHosDashboard(_dashDriveLeft, _dashDriveMax);
 
   // Refrescar el anillo principal y el ciclo cada segundo mientras el dashboard es visible
   if (_dashRingInterval) clearInterval(_dashRingInterval);
   _dashRingInterval = setInterval(() => {
     if (b30InBreak && !b30Complete) return;
-    const dMax  = Math.min(
+    const dMax = Math.min(
       Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11),
       Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70)
     );
-    const elapsed  = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
-    const dLeft    = Math.max(0, dMax - elapsed);
+    // Leer horas restantes directamente del tracker
+    const dLeft = window._hosTracker
+      ? Math.max(0, Math.min(window._hosTracker.driveLeft(), dMax))
+      : Math.max(0, dMax);
     updateHosDashboard(dLeft, dMax);
   }, 1000);
 
