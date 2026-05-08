@@ -16564,6 +16564,7 @@ function showHosDashboard() {
       const rawSpeed = pos.coords.speed;
       const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
       autoUpdateDashStatus(gpsSpeed > 3);
+      if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(gpsSpeed > 3, gpsSpeed);
     }, () => {}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
   }
 
@@ -27453,6 +27454,8 @@ window._hosAutoRecalc = false;
   let _isMoving    = false;
   let _eldSpeed    = 0;      // mph reportado por ELD
   let _pollId      = null;
+  let _gpsWatchId  = null;  // watchPosition del teléfono (modo sin ELD)
+  let _gpsActive   = false;
 
   // ── Persistencia ───────────────────────────────────────────
   function _save(){
@@ -27503,6 +27506,37 @@ window._hosAutoRecalc = false;
     _isMoving = false;
     _eldSpeed  = 0;
     _setDuty('DETENIDO · ELD', '#f59e0b');
+  }
+
+  // ── Modo GPS del teléfono (fallback sin ELD) ─────────
+  function _startGpsMode() {
+    if (_connected || _gpsWatchId != null || !navigator.geolocation) return;
+    _gpsActive = true;
+    _setDuty(typeof lang !== 'undefined' && lang === 'es' ? 'GPS ACTIVO' : 'GPS ACTIVE', '#10b981');
+    _setBtBadge('gps');
+    _gpsWatchId = navigator.geolocation.watchPosition(
+      pos => {
+        if (_connected) { _stopGpsMode(); return; }
+        const raw = pos.coords.speed;
+        const mph = (raw != null && raw >= 0) ? raw * 0.621371 : 0;
+        if (mph > 2) _onEldMoving(Math.round(mph));
+        else         _onEldStopped();
+      },
+      () => {
+        _gpsActive = false;
+        _setDuty(typeof lang !== 'undefined' && lang === 'es' ? 'SIN GPS' : 'NO GPS', '#6b7280');
+        _setBtBadge('disconnected');
+      },
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 }
+    );
+  }
+
+  function _stopGpsMode() {
+    if (_gpsWatchId != null) {
+      navigator.geolocation.clearWatch(_gpsWatchId);
+      _gpsWatchId = null;
+    }
+    _gpsActive = false;
   }
 
   // ── Parser de datos ELD ───────────────────────────────────
@@ -27575,6 +27609,7 @@ window._hosAutoRecalc = false;
       _connectedAt = new Date();
       if (!_shiftStart) _shiftStart = new Date();
       _save();
+      _stopGpsMode();
       _setBtBadge('connected');
       _setDuty('ELD CONECTADO', '#a78bfa');
 
@@ -27593,6 +27628,8 @@ window._hosAutoRecalc = false;
     _setBtBadge('disconnected');
     _setDuty('ELD DESCONECTADO', '#6b7280');
     _save();
+    // Activar GPS del teléfono como fallback inmediatamente
+    _startGpsMode();
     // Intentar reconectar automáticamente después de 5s
     setTimeout(_autoReconnect, 5000);
   }
@@ -27643,10 +27680,16 @@ window._hosAutoRecalc = false;
     if (valT) valT.textContent = _connectedAt ? _fmt(_connectedAt) : '--:--';
     const subT = document.getElementById('heroTurnoSub');
     if (subT){
-      subT.textContent = _connected
-        ? (_isMoving ? `${_eldSpeed} mph` : 'ELD ●')
-        : 'ELD ○';
-      subT.style.color = _connected ? '#a78bfa' : 'rgba(167,139,250,0.4)';
+      if (_connected) {
+        subT.textContent = _isMoving ? `${_eldSpeed} mph` : 'ELD ●';
+        subT.style.color = '#a78bfa';
+      } else if (_gpsActive) {
+        subT.textContent = _isMoving ? `${_eldSpeed} mph · GPS` : 'GPS ●';
+        subT.style.color = _isMoving ? '#10b981' : 'rgba(16,185,129,0.7)';
+      } else {
+        subT.textContent = 'ELD ○';
+        subT.style.color = 'rgba(167,139,250,0.4)';
+      }
     }
     const valT2 = document.getElementById('heroValTurno2');
     if (valT2) valT2.textContent = _shiftStart ? _fmtElapsed(_shiftStart) : '--:--';
@@ -27688,8 +27731,8 @@ window._hosAutoRecalc = false;
   }
 
   function _setBtBadge(s){
-    const colors = { connected:'#00e5a0', scanning:'#facc15', error:'#f87171', disconnected:'#6b7280' };
-    const labels = { connected:'ELD ●', scanning:'Buscando...', error:'Error BT', disconnected:'ELD' };
+    const colors = { connected:'#00e5a0', scanning:'#facc15', error:'#f87171', disconnected:'#6b7280', gps:'#10b981' };
+    const labels = { connected:'ELD ●', scanning:'Buscando...', error:'Error BT', disconnected:'ELD', gps:'GPS ●' };
     const dot   = document.getElementById('heroBtDot');
     const txt   = document.getElementById('heroBtTxt');
     const badge = document.getElementById('heroBtBadge');
@@ -27700,15 +27743,16 @@ window._hosAutoRecalc = false;
     if (badge){
       const connected = s === 'connected';
       const scanning  = s === 'scanning';
-      badge.style.borderColor = connected ? 'rgba(0,229,160,0.50)'  : scanning ? 'rgba(250,204,21,0.40)' : 'rgba(255,255,255,0.18)';
-      badge.style.background  = connected ? 'rgba(0,229,160,0.12)'  : scanning ? 'rgba(250,204,21,0.08)' : 'rgba(8,14,26,0.88)';
-      badge.classList.toggle('bt-disconnected', !connected && !scanning);
+      const gps       = s === 'gps';
+      badge.style.borderColor = connected ? 'rgba(0,229,160,0.50)' : scanning ? 'rgba(250,204,21,0.40)' : gps ? 'rgba(16,185,129,0.50)' : 'rgba(255,255,255,0.18)';
+      badge.style.background  = connected ? 'rgba(0,229,160,0.12)' : scanning ? 'rgba(250,204,21,0.08)' : gps ? 'rgba(16,185,129,0.12)' : 'rgba(8,14,26,0.88)';
+      badge.classList.toggle('bt-disconnected', !connected && !scanning && !gps);
     }
-    // Sync BT status into dash TURNO ring
+    // Sync BT/GPS status into dash TURNO ring
     const dashBt = document.getElementById('dashBtStatus');
     if (dashBt) {
-      dashBt.textContent = s === 'connected' ? 'BT ●' : s === 'scanning' ? 'BT...' : 'BT ○';
-      dashBt.style.color = s === 'connected' ? '#00e5a0' : s === 'scanning' ? '#facc15' : 'rgba(167,139,250,0.55)';
+      dashBt.textContent = s === 'connected' ? 'BT ●' : s === 'scanning' ? 'BT...' : s === 'gps' ? 'GPS ●' : 'BT ○';
+      dashBt.style.color = s === 'connected' ? '#00e5a0' : s === 'scanning' ? '#facc15' : s === 'gps' ? '#10b981' : 'rgba(167,139,250,0.55)';
     }
   }
 
@@ -27722,6 +27766,9 @@ window._hosAutoRecalc = false;
   _load();
   _setDuty('SIN ELD', '#6b7280');
   _updateRings();
+
+  // Sin ELD: usar GPS del teléfono como fuente de movimiento por defecto
+  setTimeout(() => { if (!_connected) _startGpsMode(); }, 500);
 
   // Intentar auto-reconectar a ELD previamente autorizado al abrir el app
   setTimeout(_autoReconnect, 1500);
