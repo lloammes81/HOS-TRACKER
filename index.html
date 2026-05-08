@@ -16163,10 +16163,13 @@ function fmStartTracking() {
     // ── Barra de progreso de ruta en el dashboard ────────────────
     updateDashRouteProgress(pct, remaining);
 
-    const _dailyMax  = Math.max(0, parseFloat(document.getElementById('dailyHoursInput')?.value || 11));
-    const _weeklyMax = Math.max(0, parseFloat(document.getElementById('hoursInput')?.value || 70));
-    const driveMax  = Math.min(_dailyMax, _weeklyMax);
-    const driveLeft = Math.max(0, driveMax - elapsed);
+    const _dailyMax  = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11);
+    const _weeklyMax = Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70);
+    const driveMax   = Math.min(_dailyMax, _weeklyMax);
+    // Usar tracker directamente — fmDriveSeconds es sobreescrito por _updateRings() con el valor acumulado total
+    const driveLeft  = window._hosTracker
+      ? Math.max(0, Math.min(window._hosTracker.driveLeft(), driveMax))
+      : Math.max(0, driveMax - elapsed);
     _hosCurrentDriveLeft = driveLeft;
     const driveEl = document.getElementById('fmDriveLeft');
     driveEl.textContent = fmtH(driveLeft);
@@ -16282,7 +16285,9 @@ function fmStartTracking() {
     } catch(e) {}
 
 
-    const cycleLeft = Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
+    const cycleLeft = window._hosTracker
+      ? Math.max(0, window._hosTracker.cycleLeft())
+      : Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
     const cyEl = document.getElementById('fm70Left');
     cyEl.textContent = fmtH(cycleLeft);
     cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
@@ -28060,9 +28065,12 @@ window._hosAutoRecalc = false;
     const viol = document.getElementById('heroDutyViol');
     if (viol) viol.style.display = (dl <= 0 || cl <= 0) ? 'inline-block' : 'none';
 
-    // Sincronizar fmDriveSeconds para el resto del app
-    const extra = (_sessionStart && _isMoving) ? (Date.now() - _sessionStart.getTime()) / 1000 : 0;
-    if (typeof fmDriveSeconds !== 'undefined') fmDriveSeconds = _driveMs / 1000 + extra;
+    // Sincronizar fmDriveSeconds solo cuando el rastreo GPS propio NO está activo
+    // (durante fmIsTracking el bucle GPS acumula fmDriveSeconds por su cuenta)
+    if (typeof fmIsTracking === 'undefined' || !fmIsTracking) {
+      const extra = (_sessionStart && _isMoving) ? (Date.now() - _sessionStart.getTime()) / 1000 : 0;
+      if (typeof fmDriveSeconds !== 'undefined') fmDriveSeconds = _driveMs / 1000 + extra;
+    }
   }
 
   function _setDuty(label, color){
