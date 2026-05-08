@@ -25473,6 +25473,18 @@ window._hosAutoRecalc = false;
       return;
     }
 
+    // ELD conectado: usar los valores exactos de los anillos, omitir popups
+    if (window._hosTracker?.eldConnected?.()) {
+      const dLeft = window._hosTracker.driveLeft();
+      const cLeft = window._hosTracker.cycleLeft();
+      const dailyInp  = document.getElementById('dailyHoursInput');
+      const weeklyInp = document.getElementById('hoursInput');
+      if (dailyInp)  dailyInp.value  = Math.max(0, dLeft).toFixed(2);
+      if (weeklyInp) weeklyInp.value = Math.max(0, cLeft).toFixed(2);
+      _origCalcForPopup();
+      return;
+    }
+
     _hosOpenPopup1();
   };
 
@@ -27780,6 +27792,7 @@ window._hosAutoRecalc = false;
   window._hosTracker = {
     driveLeft:     _driveLeft,
     cycleLeft:     _cycleLeft,
+    eldConnected:  () => _connected,
     // Llamado desde el bucle GPS cuando no hay ELD conectado
     reportMoving: function(moving, speedMph) {
       if (_connected) return; // ELD tiene prioridad cuando está conectado
