@@ -16451,6 +16451,7 @@ let hosShiftStartTime   = parseInt(localStorage.getItem('hos_shift_start') || '0
 let _offDutyStartMs     = parseInt(localStorage.getItem('hos_off_start')  || '0') || null;
 _vehicleStopStartMs     = parseInt(localStorage.getItem('hos_stop_start') || '0') || null;
 let _dash14hInterval  = null;
+let _dashRingInterval = null;
 // Flags de sesión para alertas de horas de manejo (se reinician al iniciar viaje)
 let _hosWarn1hFired  = false;
 let _hosWarn30mFired = false;
@@ -16529,6 +16530,20 @@ function showHosDashboard() {
   const _dashElapsed   = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
   const _dashDriveLeft = Math.max(0, _dashDriveMax - _dashElapsed);
   updateHosDashboard(_dashDriveLeft, _dashDriveMax);
+
+  // Refrescar el anillo principal y el ciclo cada segundo mientras el dashboard es visible
+  if (_dashRingInterval) clearInterval(_dashRingInterval);
+  _dashRingInterval = setInterval(() => {
+    if (b30InBreak && !b30Complete) return;
+    const dMax  = Math.min(
+      parseFloat(document.getElementById('dailyHoursInput')?.value || 11),
+      parseFloat(document.getElementById('hoursInput')?.value || 70)
+    );
+    const elapsed  = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
+    const dLeft    = Math.max(0, dMax - elapsed);
+    updateHosDashboard(dLeft, dMax);
+  }, 1000);
+
   updateDashDestCard();
   // Inicializar barra de progreso de ruta si hay ruta activa
   if (typeof updateDashRouteProgress === 'function') {
@@ -16557,7 +16572,8 @@ function showHosDashboard() {
 let _dashGpsWatchId = null;
 
 function hideHosDashboard() {
-  if (_dash14hInterval) { clearInterval(_dash14hInterval); _dash14hInterval = null; }
+  if (_dash14hInterval)  { clearInterval(_dash14hInterval);  _dash14hInterval  = null; }
+  if (_dashRingInterval) { clearInterval(_dashRingInterval); _dashRingInterval = null; }
   if (_dashGpsWatchId != null) { navigator.geolocation.clearWatch(_dashGpsWatchId); _dashGpsWatchId = null; }
   const screen = document.getElementById('hosDashScreen');
   if (screen) screen.style.display = 'none';
