@@ -8392,6 +8392,24 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   </div><!-- /tarjeta principal -->
 
+  <!-- ⑦ ACCIONES DE RASTREO — siempre visibles mientras se rastrea -->
+  <div style="flex:0 0 auto;padding:0 10px 8px;display:flex;gap:8px;">
+    <!-- Edit hours button -->
+    <button onclick="window.hosOpenEditHours && window.hosOpenEditHours()"
+      style="flex:1;background:rgba(16,185,129,0.12);border:1.5px solid rgba(16,185,129,0.4);border-radius:12px;padding:12px 8px;
+      color:#10b981;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:800;cursor:pointer;
+      touch-action:manipulation;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:6px;">
+      ✏️ Editar Horas
+    </button>
+    <!-- Stop tracking button -->
+    <button onclick="fmStopTracking()"
+      style="flex:1;background:rgba(239,68,68,0.15);border:1.5px solid rgba(239,68,68,0.5);border-radius:12px;padding:12px 8px;
+      color:#ef4444;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:800;cursor:pointer;
+      touch-action:manipulation;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:6px;">
+      🛑 Detener Seguimiento
+    </button>
+  </div>
+
   <!-- ⑥ MINI MAPA GPS -->
   <div id="hosMiniMap" style="flex:1;min-height:0;background:#0f1c2e;border-top:1px solid rgba(255,255,255,0.07);position:relative;"></div>
 
@@ -16627,8 +16645,8 @@ function showHosDashboard() {
   update14hCircle();
 
   // Actualizar el círculo grande inmediatamente con las horas actuales
-  const _dashDailyHrs  = parseFloat(document.getElementById('dailyHoursInput')?.value || 11);
-  const _dashWeeklyHrs = parseFloat(document.getElementById('hoursInput')?.value || 70);
+  const _dashDailyHrs  = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11);
+  const _dashWeeklyHrs = Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70);
   const _dashDriveMax  = Math.min(_dashDailyHrs, _dashWeeklyHrs);
   const _dashElapsed   = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
   const _dashDriveLeft = Math.max(0, _dashDriveMax - _dashElapsed);
@@ -16639,8 +16657,8 @@ function showHosDashboard() {
   _dashRingInterval = setInterval(() => {
     if (b30InBreak && !b30Complete) return;
     const dMax  = Math.min(
-      parseFloat(document.getElementById('dailyHoursInput')?.value || 11),
-      parseFloat(document.getElementById('hoursInput')?.value || 70)
+      Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11),
+      Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70)
     );
     const elapsed  = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
     const dLeft    = Math.max(0, dMax - elapsed);
@@ -17245,6 +17263,13 @@ function showFullMapFromDash() {
   // Ocultar dashboard, dejar fullMapScreen visible (sigue activo detrás)
   const screen = document.getElementById('hosDashScreen');
   if (screen) screen.style.display = 'none';
+  // Restaurar widgets de mapa que showHosDashboard() ocultó con display:none !important
+  if (fmIsTracking) {
+    ['driveHoursWidget','speedometerWidget'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.removeProperty('display');
+    });
+  }
   // Invalidar tamaño del mapa principal para que se redibuje correctamente
   setTimeout(() => { if (typeof fmMapInst !== 'undefined' && fmMapInst) fmMapInst.invalidateSize(); }, 150);
 }
@@ -25587,14 +25612,14 @@ window._hosAutoRecalc = false;
       return;
     }
 
-    // Sin ELD: verificar si ya hay registro de horas guardado
+    // Sin ELD: siempre mostrar popup de confirmación con horas pre-llenadas del tracker
     const _noEldReg = (function() {
       try { return JSON.parse(localStorage.getItem('hos_no_eld_reg')); } catch(e) { return null; }
     })();
 
+    // Bloquear si el ciclo de 70h está agotado → descanso obligatorio
     if (_noEldReg) {
       const cLeft = window._hosTracker ? window._hosTracker.cycleLeft() : 0;
-      // Bloquear si el ciclo de 70h está agotado → descanso obligatorio
       if (cLeft <= 0) {
         _hosShowMandatoryRest();
         return;
@@ -25607,16 +25632,9 @@ window._hosAutoRecalc = false;
                         : `${cLeft.toFixed(1)} h remaining of 70h cycle. Plan your 34h reset.`,
           10000);
       }
-      // Usar valores live del tracker directamente sin popups
-      const dLeft = window._hosTracker ? window._hosTracker.driveLeft() : 11;
-      const dailyInp  = document.getElementById('dailyHoursInput');
-      const weeklyInp = document.getElementById('hoursInput');
-      if (dailyInp)  dailyInp.value  = Math.max(0, dLeft).toFixed(2);
-      if (weeklyInp) weeklyInp.value = Math.max(0, cLeft).toFixed(2);
-      _origCalcForPopup();
-      return;
     }
 
+    // Mostrar popup pre-llenado con valores actuales del tracker (siempre)
     _hosOpenPopup1();
   };
 
@@ -25654,11 +25672,16 @@ window._hosAutoRecalc = false;
     const inp     = document.getElementById('hosStep2Input');
     const err     = document.getElementById('hosStep2Error');
     if (err) err.style.display = 'none';
-    if (inp) inp.value = '70';
+    // Pre-llenar con valor actual del tracker (si existe), sino 70
+    const tCycle = window._hosTracker?.cycleLeft?.();
+    const preVal = (tCycle != null && tCycle > 0 && tCycle < 70)
+      ? Math.max(1, Math.min(70, Math.round(tCycle)))
+      : 70;
+    if (inp) inp.value = preVal;
     const d2 = document.getElementById('hosStep2Display');
-    if (d2) d2.textContent = '70';
-    _hosUpdateWeeklyBar(70);
-    _hosUpdateStepperBtns(2, 70);
+    if (d2) d2.textContent = preVal;
+    _hosUpdateWeeklyBar(preVal);
+    _hosUpdateStepperBtns(2, preVal);
     if (overlay) overlay.classList.add('active');
   }
 
@@ -25896,7 +25919,7 @@ window._hosAutoRecalc = false;
     localStorage.removeItem(HOS_CYCLE_KEY);
   }
 
-  // ── Override popup 1 para mostrar ciclo guardado ────
+  // ── Override popup 1 — pre-llenado con valores del tracker ────
   const _origOpenPopup1 = _hosOpenPopup1;
   _hosOpenPopup1 = function() {
     const saved = _hosLoadCycleState();
@@ -25924,7 +25947,18 @@ window._hosAutoRecalc = false;
     const inp = document.getElementById('hosStep1Input');
     const err = document.getElementById('hosStep1Error');
     if (err) err.style.display = 'none';
-    if (inp) { inp.value = '11'; setTimeout(() => inp.select(), 80); }
+    if (inp) {
+      // Pre-llenar con valor actual del tracker (si existe), sino 11
+      const tDrive = window._hosTracker?.driveLeft?.();
+      const preVal = (tDrive != null && tDrive > 0 && tDrive < 11)
+        ? (Math.round(tDrive * 10) / 10)
+        : 11;
+      inp.value = preVal;
+      const d1 = document.getElementById('hosStep1Display');
+      if (d1) d1.textContent = preVal;
+      if (typeof _hosUpdateStepperBtns === 'function') _hosUpdateStepperBtns(1, preVal);
+      setTimeout(() => inp.select(), 80);
+    }
     if (overlay) overlay.classList.add('active');
   };
 
@@ -26102,6 +26136,95 @@ window._hosAutoRecalc = false;
         lang === 'es' ? 'Tienes 70 horas disponibles. Ingresa tus horas al calcular la próxima ruta.' : 'You have 70 hours available. Enter your hours on next route.',
         7000);
     }
+  };
+
+  // ── Editor rápido de horas HOS — siempre accesible ────────
+  window.hosOpenEditHours = function() {
+    let dlg = document.getElementById('hosEditHoursDialog');
+    if (!dlg) {
+      dlg = document.createElement('div');
+      dlg.id = 'hosEditHoursDialog';
+      dlg.style.cssText = "display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);align-items:center;justify-content:center;padding:20px;font-family:'DM Sans',sans-serif";
+      document.body.appendChild(dlg);
+    }
+
+    const dLeft = window._hosTracker?.driveLeft?.() ?? 11;
+    const cLeft = window._hosTracker?.cycleLeft?.() ?? 70;
+    const safeDrive = Math.max(0, Math.min(11, Math.round(dLeft * 10) / 10));
+    const safeCycle = Math.max(0, Math.min(70, Math.round(cLeft)));
+
+    dlg.innerHTML = `
+      <div style="background:#0f172a;border:1.5px solid rgba(16,185,129,.45);border-radius:22px;padding:28px 20px 20px;max-width:340px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.95)">
+        <div style="font-size:10px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:4px;text-align:center">✏️ EDITAR HORAS HOS</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:18px;text-align:center">Ajusta tus horas disponibles</div>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">⏱ Manejo disponible hoy (máx 11h)</label>
+          <input id="hosEditDriveInp" type="number" min="0" max="11" step="0.5" value="${safeDrive}"
+            style="width:100%;background:#1e293b;border:1.5px solid rgba(16,185,129,.4);border-radius:10px;padding:12px 14px;font-size:22px;font-weight:900;color:#6ee7b7;text-align:center;font-family:'DM Sans',sans-serif;box-sizing:border-box;-webkit-appearance:none">
+        </div>
+
+        <div style="margin-bottom:20px">
+          <label style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">📅 Ciclo semanal disponible (máx 70h)</label>
+          <input id="hosEditCycleInp" type="number" min="0" max="70" step="1" value="${safeCycle}"
+            style="width:100%;background:#1e293b;border:1.5px solid rgba(96,165,250,.4);border-radius:10px;padding:12px 14px;font-size:22px;font-weight:900;color:#93c5fd;text-align:center;font-family:'DM Sans',sans-serif;box-sizing:border-box;-webkit-appearance:none">
+        </div>
+
+        <button id="hosEditConfirmBtn" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;letter-spacing:.3px;touch-action:manipulation">
+          ✅ Guardar Horas
+        </button>
+        <button id="hosEditCancelBtn" style="width:100%;background:rgba(255,255,255,.06);color:#94a3b8;border:1.5px solid rgba(255,255,255,.12);border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation">
+          ✕ Cancelar
+        </button>
+      </div>
+    `;
+
+    dlg.style.display = 'flex';
+
+    document.getElementById('hosEditConfirmBtn').addEventListener('click', () => {
+      const newDrive = Math.min(11, Math.max(0, parseFloat(document.getElementById('hosEditDriveInp').value) || 0));
+      const newCycle = Math.min(70, Math.max(0, parseFloat(document.getElementById('hosEditCycleInp').value) || 0));
+
+      // Update tracker state
+      window._hosTracker?.setInitialHours?.(newDrive, newCycle);
+
+      // Update form inputs used by route calculation
+      const dailyInp  = document.getElementById('dailyHoursInput');
+      const weeklyInp = document.getElementById('hoursInput');
+      if (dailyInp)  dailyInp.value  = newDrive.toFixed(2);
+      if (weeklyInp) weeklyInp.value = newCycle.toFixed(2);
+
+      // Update hero rings on main screen
+      if (typeof updateHeroKPIs === 'function') {
+        updateHeroKPIs(newDrive, Math.min(11, newCycle), newCycle, 70);
+      }
+
+      // Refresh HOS dashboard if visible
+      if (document.getElementById('hosDashScreen')?.style.display !== 'none') {
+        const dMax = Math.min(newDrive, newCycle);
+        if (typeof updateHosDashboard === 'function') updateHosDashboard(newDrive, dMax);
+      }
+
+      // Persist registration
+      try {
+        localStorage.setItem('hos_no_eld_reg', JSON.stringify({
+          dailyHrs: newDrive, cycleHrs: newCycle, savedAt: Date.now()
+        }));
+      } catch(e) {}
+
+      dlg.style.display = 'none';
+
+      if (typeof showToast === 'function') {
+        showToast('success', '✅',
+          lang === 'es' ? 'Horas actualizadas' : 'Hours updated',
+          `${lang === 'es' ? 'Manejo' : 'Drive'}: ${newDrive}h · ${lang === 'es' ? 'Ciclo' : 'Cycle'}: ${newCycle}h`,
+          4000);
+      }
+    });
+
+    document.getElementById('hosEditCancelBtn').addEventListener('click', () => {
+      dlg.style.display = 'none';
+    });
   };
 })();
 
@@ -27676,6 +27799,7 @@ window._hosAutoRecalc = false;
       connTs     : _connectedAt  ? _connectedAt.getTime()  : null,
       driveMs    : _driveMs + extra,
       cycleMs    : _cycleMs + extra,
+      driveDate  : new Date().toDateString(),
       savedAt    : Date.now()
     }));
   }
@@ -27690,8 +27814,9 @@ window._hosAutoRecalc = false;
       }
       _shiftStart  = d.shiftTs  ? new Date(d.shiftTs)  : null;
       _connectedAt = d.connTs   ? new Date(d.connTs)   : null;
-      _driveMs     = d.driveMs  || 0;
-      _cycleMs     = d.cycleMs  || 0;
+      // Reiniciar horas diarias si cambió el día calendario (el ciclo 70h sigue acumulando)
+      _driveMs = (d.driveDate && d.driveDate === new Date().toDateString()) ? (d.driveMs || 0) : 0;
+      _cycleMs = d.cycleMs || 0;
     } catch(e){}
   }
 
