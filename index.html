@@ -27392,14 +27392,11 @@ window._hosAutoRecalc = false;
       await cleanupCurrentFleet(false);
     }
 
-    // 2) Esperar a que Firebase esté conectado (hasta 6s)
-    _flShowOk('🔄 Conectando a Firebase... (máx. 6s)');
-    const online = await waitForFirebaseConnection(6000);
-    if (!online){
-      if (btn){ btn.disabled = false; btn.textContent = origText; }
-      _flShowErr('❌ Sin conexión a Firebase.\n\nVerifica:\n• Tu internet (WiFi o datos)\n• Que no estés en modo avión\n• Recarga la página e intenta de nuevo');
-      return;
-    }
+    // 2) Verificar conexión en paralelo (no bloqueante) — si falla, el write timeout dará el error real
+    _flShowOk('🔄 Registrando en la flota ' + c + '...');
+    waitForFirebaseConnection(2000).then(ok => {
+      if (!ok) console.warn('[FleetLink] .info/connected no respondió true en 2s — intentando write igualmente');
+    });
 
     state.fleetId = c;
     localStorage.setItem('fleet_link_fleet', c);
@@ -27408,7 +27405,6 @@ window._hosAutoRecalc = false;
     localStorage.setItem('fleet_link_plate', state.plate);
     localStorage.setItem('fleet_link_phone', state.phone);
 
-    _flShowOk('🔄 Registrando en la flota ' + c + '...');
     try {
       await registerPresence();
       console.log('[FleetLink] ✅ Registrado en Firebase correctamente');
@@ -27453,7 +27449,7 @@ window._hosAutoRecalc = false;
     // Timeout más corto (6s) — si Firebase no responde en ese tiempo hay algo raro
     let timer;
     const timeoutPromise = new Promise((_, rej) => {
-      timer = setTimeout(() => rej(new Error('Timeout escribiendo en Firebase (6s)')), 6000);
+      timer = setTimeout(() => rej(new Error('Timeout escribiendo en Firebase (12s) — puede ser red lenta o reglas bloqueando')), 12000);
     });
     try{
       await Promise.race([ set(ref(db, base), info), timeoutPromise ]);
