@@ -16128,7 +16128,13 @@ function fmStartTracking() {
 
     // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
-      // Zoom stays fixed at the fitBounds level — no auto-zoom by speed
+      // Dynamic zoom by speed: stationary → zoom in tight; >40 mph → zoom out
+      if (!fmUserZoomed) {
+        const targetZoom = !isMoving ? 17 : gpsSpeed > 40 ? 13 : 15;
+        if (Math.abs(fmCurrentZoom - targetZoom) >= 1) {
+          fmCurrentZoom = targetZoom;
+        }
+      }
       window._fmProgrammaticMove = true;
       // Rotate BEFORE pan — flag as programmatic so rotatestart doesn't
       // set fmUserRotated and block future GPS-driven rotations
