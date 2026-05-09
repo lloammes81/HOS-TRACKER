@@ -16232,7 +16232,7 @@ function fmStartTracking() {
     if (fmFollowing && fmMapInst) {
       // Dynamic zoom by speed: stationary → zoom in tight; >40 mph → zoom out
       if (!fmUserZoomed) {
-        const targetZoom = !isMoving ? 17 : gpsSpeed > 40 ? 13 : 15;
+        const targetZoom = gpsSpeed < 20 ? 17 : 13;
         if (Math.abs(fmCurrentZoom - targetZoom) >= 1) {
           fmCurrentZoom = targetZoom;
         }
@@ -16758,7 +16758,7 @@ let _hosWarnExpiredFired = false;
 // Centra el mini-mapa con el icono del camión en la zona inferior (≈25% desde abajo)
 function _hosMinimapFollow(lat, lon) {
   if (!hosMinimapInst) return;
-  const _miniTargetZoom = !fmVehicleMoving ? 17 : (fmCurrentSpeed > 40 ? 13 : 15);
+  const _miniTargetZoom = fmCurrentSpeed < 20 ? 17 : 13;
   hosMinimapInst.setView([lat, lon], _miniTargetZoom, { animate: false });
   const sz = hosMinimapInst.getSize();
   hosMinimapInst.panBy([0, -Math.round(sz.y * 0.28)], { animate: false });
