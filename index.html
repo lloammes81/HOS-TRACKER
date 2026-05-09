@@ -3998,12 +3998,12 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .kpi-track {
     fill: none;
-    stroke: rgba(255,255,255,0.10);
+    stroke: rgba(0,0,0,0.12);
     stroke-width: 5;
   }
   .kpi-arc {
     fill: none;
-    stroke: #10b981;
+    stroke: #1a1a1a;
     stroke-width: 5;
     stroke-linecap: round;
     stroke-dasharray: 251.3;
@@ -6045,11 +6045,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="hero-kpi">
         <svg class="kpi-svg" viewBox="0 0 94 94">
           <circle class="kpi-track" cx="47" cy="47" r="40"/>
-          <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40" style="stroke:#a78bfa;"/>
+          <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40"/>
         </svg>
         <div class="hero-kpi-inner" style="gap:0;">
-          <div class="hero-kpi-val" id="heroValTurno" style="font-size:22px;color:#0a0a0a;letter-spacing:2px;">--:--</div>
-          <div class="hero-kpi-lbl" style="color:rgba(0,0,0,0.5);letter-spacing:1.5px;" id="heroTurnoSub">BT ○</div>
+          <div class="hero-kpi-val" id="heroValTurno" style="font-size:22px;letter-spacing:2px;">--:--</div>
+          <div class="hero-kpi-lbl" id="heroTurnoSub">BT ○</div>
           <div style="width:22px;height:0.5px;background:rgba(0,0,0,.2);margin:2px 0;"></div>
           <div class="hero-kpi-val" id="heroValTurno2" style="font-size:18px;color:rgba(0,0,0,0.45);letter-spacing:2px;">--:--</div>
           <div class="hero-kpi-lbl">inicio</div>
@@ -6058,7 +6058,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
       <!-- Anillo 2: MANEJO (horas disponibles) -->
       <div class="hero-kpi">
-        <svg class="kpi-svg" viewBox="0 0 94 94"><circle class="kpi-track" cx="47" cy="47" r="40"/><circle class="kpi-arc" id="heroArcDrive" cx="47" cy="47" r="40"/></svg>
+        <svg class="kpi-svg" viewBox="0 0 94 94">
+          <circle class="kpi-track" cx="47" cy="47" r="40"/>
+          <circle class="kpi-arc" id="heroArcDrive" cx="47" cy="47" r="40"/>
+        </svg>
         <div class="hero-kpi-inner">
           <div class="hero-kpi-val" id="heroValDrive">11H</div>
           <div class="hero-kpi-lbl">Manejo</div>
@@ -6067,9 +6070,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
       <!-- Anillo 3: CICLO 70H (horas disponibles) -->
       <div class="hero-kpi">
-        <svg class="kpi-svg" viewBox="0 0 94 94"><circle class="kpi-track" cx="47" cy="47" r="40"/><circle class="kpi-arc" id="heroArcCycle" cx="47" cy="47" r="40" style="stroke:#00b4ff;"/></svg>
+        <svg class="kpi-svg" viewBox="0 0 94 94">
+          <circle class="kpi-track" cx="47" cy="47" r="40"/>
+          <circle class="kpi-arc" id="heroArcCycle" cx="47" cy="47" r="40"/>
+        </svg>
         <div class="hero-kpi-inner">
-          <div class="hero-kpi-val" id="heroValCycle" style="color:#1a1a1a;">70H</div>
+          <div class="hero-kpi-val" id="heroValCycle">70H</div>
           <div class="hero-kpi-lbl">Ciclo 70H</div>
         </div>
       </div>
@@ -10981,7 +10987,7 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
     const h = Math.floor(driveLeft), m = Math.round((driveLeft - h) * 60);
     valD.textContent = h > 0 ? `${h}H` : `${m}M`;
-    const col = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+    const col = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#1a1a1a';
     arcD.style.stroke = col; arcD.style.strokeDashoffset = C * (1 - pct);
     valD.style.color = col;
   }
@@ -10991,7 +10997,7 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     const pct = Math.max(0, Math.min(1, cycleLeft / Math.max(1, cycleMax)));
     const h = Math.floor(cycleLeft);
     valC.textContent = `${h}H`;
-    const col = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
+    const col = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#1a1a1a';
     arcC.style.stroke = col; arcC.style.strokeDashoffset = C * (1 - pct);
     valC.style.color = col;
   }
@@ -28129,13 +28135,13 @@ window._hosAutoRecalc = false;
     if (subT){
       if (_connected) {
         subT.textContent = _isMoving ? `${_eldSpeed} mph` : 'ELD ●';
-        subT.style.color = '#a78bfa';
+        subT.style.color = 'rgba(0,0,0,0.6)';
       } else if (_gpsActive) {
         subT.textContent = _isMoving ? `${_eldSpeed} mph · GPS` : 'GPS ●';
-        subT.style.color = _isMoving ? '#10b981' : 'rgba(16,185,129,0.7)';
+        subT.style.color = 'rgba(0,0,0,0.6)';
       } else {
         subT.textContent = 'ELD ○';
-        subT.style.color = 'rgba(167,139,250,0.4)';
+        subT.style.color = 'rgba(0,0,0,0.35)';
       }
     }
     const valT2 = document.getElementById('heroValTurno2');
@@ -28143,7 +28149,7 @@ window._hosAutoRecalc = false;
 
     // Anillo 2: Manejo disponible
     const dPct = dl / DRIVE_MAX;
-    const dCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#10b981';
+    const dCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#1a1a1a';
     const arcD = document.getElementById('heroArcDrive');
     if (arcD){ arcD.style.strokeDashoffset = C * (1 - dPct); arcD.style.stroke = dCol; }
     const valD = document.getElementById('heroValDrive');
@@ -28155,7 +28161,7 @@ window._hosAutoRecalc = false;
 
     // Anillo 3: Ciclo 70H disponible
     const cPct = cl / CYCLE_MAX;
-    const cCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#00b4ff';
+    const cCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#1a1a1a';
     const arcC = document.getElementById('heroArcCycle');
     if (arcC){ arcC.style.strokeDashoffset = C * (1 - cPct); arcC.style.stroke = cCol; }
     const valC = document.getElementById('heroValCycle');
