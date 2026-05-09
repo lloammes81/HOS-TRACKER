@@ -10419,11 +10419,12 @@ const WX_ICONS = {
   80:'🌦️', 81:'🌧️', 82:'⛈️', 85:'🌨️', 86:'🌨️❄️',
   95:'⛈️', 96:'⛈️🌩️', 99:'⛈️🌩️❄️'
 };
+const WX_ICONS_NIGHT = { 0:'🌙', 1:'🌙', 2:'🌙⛅', 3:'☁️' };
 
 async function fetchWeather(lat, lon) {
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&current=temperature_2m,weathercode,windspeed_10m,precipitation&wind_speed_unit=mph` +
+      `&current=temperature_2m,weathercode,windspeed_10m,precipitation,is_day&wind_speed_unit=mph` +
       `&temperature_unit=fahrenheit&timezone=auto`;
     const r = await fetch(url);
     const d = await r.json();
@@ -10433,7 +10434,8 @@ async function fetchWeather(lat, lon) {
       temp  : Math.round(c.temperature_2m),
       wind  : Math.round(c.windspeed_10m),
       precip: c.precipitation,
-      desc  : WX_DESC[c.weathercode] || 'Unknown'
+      desc  : WX_DESC[c.weathercode] || 'Unknown',
+      isDay : c.is_day !== 0
     };
   } catch { return null; }
 }
@@ -10472,7 +10474,7 @@ function updateWeatherWidget(wx) {
   if (!wx) return;
   const isDanger  = WX_DANGER_CODES.has(wx.code);
   const isWarning = WX_WARNING_CODES.has(wx.code);
-  const wxIconTxt = WX_ICONS[wx.code] || '🌡️';
+  const wxIconTxt = (!wx.isDay && WX_ICONS_NIGHT[wx.code]) ? WX_ICONS_NIGHT[wx.code] : (WX_ICONS[wx.code] || '🌡️');
   const wxTempTxt = `${wx.temp}°F`;
   const wxWindTxt = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
   // Map widget
