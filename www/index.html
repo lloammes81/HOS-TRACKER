@@ -17238,10 +17238,8 @@ function loadMiniMapInterstates(lat, lon) {
 function updateHosDashMinimap(lat, lon) {
   if (!hosMinimapInst || !hosMinimapTruck) return;
   hosMinimapTruck.setLatLng([lat, lon]);
-  // Solo seguir al camión si no hay ruta cargada; si hay ruta, mantener la vista fitBounds
-  if (!(typeof roadGeometry !== 'undefined' && roadGeometry?.length > 2)) {
-    _hosMinimapFollow(lat, lon);
-  }
+  // Always follow truck and update zoom — roadGeometry doesn't block follow on mini map
+  _hosMinimapFollow(lat, lon);
   _updateHosCityBar(lat, lon);
 }
 
