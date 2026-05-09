@@ -16997,7 +16997,9 @@ function initHosMinimap() {
   L.marker([lat, lon], { icon: originIcon }).addTo(hosMinimapInst);
 
   // Marcador del camión (posición actual): foto o emoji sobre anillo verde
-  const _uPhoto = (typeof driverProfile !== 'undefined' && driverProfile?.photo) || null;
+  const _cu2 = (typeof currentUser !== 'undefined' && currentUser) || null;
+  const _ps2 = (() => { try { return JSON.parse(localStorage.getItem('hos_driver_profile') || '{}'); } catch(e){ return {}; } })();
+  const _uPhoto = (_cu2 && _cu2.photoData) || _ps2.photo || (typeof driverProfile !== 'undefined' && driverProfile?.photo) || localStorage.getItem('hos_profile_photo') || null;
   const _uEmoji = (typeof TRUCK_EMOJIS !== 'undefined' && driverProfile?.truckType) ? (TRUCK_EMOJIS[driverProfile.truckType] || '🚛') : '🚛';
   const truckHtml = _uPhoto
     ? `<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:3px solid #10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.35),0 3px 12px rgba(0,0,0,.75);"><img src="${_uPhoto}" style="width:100%;height:100%;object-fit:cover;display:block;"></div>`
@@ -21594,6 +21596,21 @@ function applyAllAvatars() {
   // Profile display name
   const pName = document.getElementById('profileDisplayName');
   if (pName && name) pName.textContent = name;
+
+  // Refresh live GPS map marker so it shows the updated photo
+  if (typeof fmGpsMarker !== 'undefined' && fmGpsMarker && typeof buildTruckIconHTML === 'function') {
+    try {
+      const _html = buildTruckIconHTML(typeof fmLastHeading !== 'undefined' ? fmLastHeading : 0, typeof fmVehicleMoving !== 'undefined' ? fmVehicleMoving : false);
+      fmGpsMarker.setIcon(L.divIcon({ className: '', html: _html, iconAnchor: [28, 44], iconSize: [56, 72] }));
+    } catch(e) {}
+  }
+  // Refresh mini map truck icon if it uses a custom icon
+  if (typeof hosMinimapTruck !== 'undefined' && hosMinimapTruck && typeof getTruckIconHTML === 'function') {
+    try {
+      const _mIcon = L.divIcon({ className: '', html: `<div style="display:flex;align-items:center;justify-content:center">${getTruckIconHTML(24)}</div>`, iconAnchor: [16, 16], iconSize: [32, 32] });
+      hosMinimapTruck.setIcon(_mIcon);
+    } catch(e) {}
+  }
 }
 
 function updateFuelAvatar() { applyAllAvatars(); }
