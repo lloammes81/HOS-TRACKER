@@ -5142,13 +5142,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   #fmHud.compact .fm-stat{
     width: auto !important;
     height: auto !important;
-    border-radius: 8px !important;
-    padding: 6px 8px !important;
-    background: #d1d5db !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
     border-top: none !important;
     border-right: none !important;
     border-bottom: none !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+    box-shadow: none !important;
     display:flex !important;
     flex-direction:column !important;
     align-items:center !important;
@@ -10938,8 +10938,9 @@ let wasMoving = false;
 
 
 function showSpeedometer() {
-  // Floating speedometer removed from map — speed shown in mapSpeedSign "YOUR SPEED"
   speedoVisible = true;
+  const w = document.getElementById('speedometerWidget');
+  if (w) { w.classList.add('visible'); applySpeedometerPos(); }
 }
 
 function hideSpeedometer() {
