@@ -8349,7 +8349,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- RUTA PROGRESO LINE -->
   <div id="dashRouteProgress" style="display:block;flex:0 0 auto;padding:0 10px 10px;">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:11px 14px;">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(16,185,129,0.22);border-radius:14px;padding:11px 14px;
+                box-shadow:0 0 0 1px rgba(16,185,129,0.10),0 0 18px rgba(16,185,129,0.22),0 0 36px rgba(59,130,246,0.12),0 4px 18px rgba(0,0,0,0.5);">
       <!-- Origen → Destino -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
         <div style="flex:1;min-width:0;">
@@ -8369,9 +8370,21 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
       <!-- Millas restantes y porcentaje -->
-      <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <div id="dashRouteRemaining" style="font-size:12px;font-weight:800;color:#f1f5f9;letter-spacing:-0.3px;">-- mi restantes</div>
         <div id="dashRoutePct" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);">0%</div>
+      </div>
+      <!-- Horas de manejo restantes -->
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span style="font-size:11px;flex-shrink:0;">🕐</span>
+        <div id="dashRouteDriveLeft" style="font-size:11px;font-weight:800;color:#10b981;flex-shrink:0;min-width:70px;">-- h manejo</div>
+        <div style="flex:1;height:3px;background:rgba(255,255,255,0.10);border-radius:999px;overflow:hidden;">
+          <div id="dashRouteDriveBarFill" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width 1s ease;"></div>
+        </div>
+      </div>
+      <!-- Parada obligatoria (aparece cuando se necesita) -->
+      <div id="dashRouteStopRow" style="display:none;margin-top:7px;border-radius:8px;padding:5px 9px;">
+        <div id="dashRouteStopCity" style="font-size:10px;font-weight:800;line-height:1.4;"></div>
       </div>
     </div>
   </div>
@@ -16160,6 +16173,7 @@ function fmStartTracking() {
     driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
     // Update circular widget on the map
     updateDriveHoursWidget(driveLeft, driveMax);
+    if (typeof updateDashRouteHoursRow === 'function') updateDashRouteHoursRow();
 
     // ── Recalcular hora de llegada al detenerse ───────────────────────────
     if (!isMoving && _wasMovingPrev && destination && remaining > 0) {
@@ -17101,6 +17115,72 @@ function updateDashRouteProgress(pct, remaining) {
     }
   }
   if (pctEl) pctEl.textContent = hasRoute ? pct + '%' : '0%';
+  updateDashRouteHoursRow();
+}
+
+function updateDashRouteHoursRow() {
+  const driveLeftEl  = document.getElementById('dashRouteDriveLeft');
+  const barFill      = document.getElementById('dashRouteDriveBarFill');
+  const stopRow      = document.getElementById('dashRouteStopRow');
+  const stopCityEl   = document.getElementById('dashRouteStopCity');
+  if (!driveLeftEl) return;
+
+  const dLeft = (typeof _hosCurrentDriveLeft !== 'undefined') ? _hosCurrentDriveLeft : 11;
+  const dMax  = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11);
+  const col   = dLeft <= 0 ? '#ef4444' : dLeft < 2 ? '#f59e0b' : '#10b981';
+
+  const h = Math.floor(Math.max(0, dLeft));
+  const m = Math.round((Math.max(0, dLeft) - h) * 60);
+  driveLeftEl.textContent = dLeft <= 0 ? 'Horas agotadas' : (h > 0 ? h + 'h ' : '') + m + 'min manejo';
+  driveLeftEl.style.color = col;
+  if (barFill) {
+    barFill.style.width = Math.max(0, Math.min(100, (dLeft / dMax) * 100)) + '%';
+    barFill.style.background = col;
+  }
+
+  if (!stopRow || !stopCityEl) return;
+
+  const breakDue  = (typeof b30Complete !== 'undefined') && !b30Complete && (typeof b30Warned30m !== 'undefined') && b30Warned30m;
+  const hoursGone = dLeft <= 0;
+  const hoursLow  = dLeft > 0 && dLeft <= 2;
+
+  if (breakDue) {
+    stopRow.style.display = 'block';
+    stopRow.style.background = 'rgba(245,158,11,0.12)';
+    stopRow.style.border = '1px solid rgba(245,158,11,0.4)';
+    stopCityEl.style.color = '#f59e0b';
+    if (!_hosBreakStopName && !_hosBreakStopFetching && typeof _fetchStopCityAhead === 'function') {
+      _hosBreakStopFetching = true;
+      _fetchStopCityAhead(10, name => {
+        _hosBreakStopName = name || 'próxima ciudad';
+        _hosBreakStopFetching = false;
+        updateDashRouteHoursRow();
+      });
+    }
+    const city = _hosBreakStopName || '...';
+    stopCityEl.textContent = `⏸ Para en ${city} — Descanso obligatorio 30 min`;
+  } else if (hoursGone || hoursLow) {
+    stopRow.style.display = 'block';
+    stopRow.style.background = 'rgba(239,68,68,0.12)';
+    stopRow.style.border = '1px solid rgba(239,68,68,0.4)';
+    stopCityEl.style.color = '#ef4444';
+    if (!_hosHoursStopName && !_hosHoursStopFetching && typeof _fetchStopCityAhead === 'function') {
+      _hosHoursStopFetching = true;
+      const distMi = hoursGone ? 5 : Math.max(5, Math.round(dLeft * ((typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55)));
+      _fetchStopCityAhead(distMi, name => {
+        _hosHoursStopName = name || 'próxima ciudad';
+        _hosHoursStopFetching = false;
+        updateDashRouteHoursRow();
+      });
+    }
+    const city = _hosHoursStopName || '...';
+    stopCityEl.textContent = hoursGone
+      ? `🛑 Para en ${city} — Horas de manejo agotadas`
+      : `⚠️ Para en ${city} — Descanso 10 horas obligatorio`;
+  } else {
+    stopRow.style.display = 'none';
+    _hosHoursStopName = null;
+  }
 }
 
 function _openDashSpeedLimitEditor() {
