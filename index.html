@@ -5765,8 +5765,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     const { initializeApp }      = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
     const { getDatabase, ref, push, query, orderByChild, limitToLast, onValue, serverTimestamp }
                                   = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+    const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
     const app = initializeApp(FIREBASE_CONFIG);
     const db  = getDatabase(app);
+    try { await signInAnonymously(getAuth(app)); } catch(e) { console.warn('[Firebase] Anonymous auth failed:', e.code); }
 
     // Expose to global scope for the chat functions
     window._chatDB              = db;
@@ -9820,6 +9822,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect, remove, get, orderByChild, endAt }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   /* ─── FIREBASE CONFIG ─────────────────────────────────────── */
   const firebaseConfig = {
@@ -9840,6 +9843,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   try {
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     db = getDatabase(app);
+    try { await signInAnonymously(getAuth(app)); } catch(ae) { console.warn('[Chat] Anonymous auth failed:', ae.code); }
     messagesRef = ref(db, 'chat/messages');
     connectedRef = ref(db, '.info/connected');
     firebaseReady = true;
@@ -27192,6 +27196,7 @@ window._hosAutoRecalc = false;
   import {
     getDatabase, ref, set, update, onValue, push, remove, onDisconnect, serverTimestamp, query, orderByChild, limitToLast
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   window._fleetLinkModuleOk = true;
 
   const firebaseConfig = {
@@ -27205,6 +27210,7 @@ window._hosAutoRecalc = false;
   };
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const db  = getDatabase(app);
+  try { await signInAnonymously(getAuth(app)); } catch(ae) { console.warn('[FleetLink] Anonymous auth failed:', ae.code); }
 
   // User ID estable
   let MY_ID = localStorage.getItem('fleet_link_uid');
@@ -27692,6 +27698,7 @@ window._hosAutoRecalc = false;
   import {
     getDatabase, ref, onValue, update, query, orderByChild, limitToLast
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
@@ -27704,6 +27711,7 @@ window._hosAutoRecalc = false;
   };
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const db  = getDatabase(app);
+  try { await signInAnonymously(getAuth(app)); } catch(ae) { console.warn('[Routes] Anonymous auth failed:', ae.code); }
 
   // ── User id estable (compartido con fleet-link) ────────
   let MY_ID = localStorage.getItem('fleet_link_uid');

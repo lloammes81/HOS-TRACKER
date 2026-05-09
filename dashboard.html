@@ -3010,6 +3010,7 @@ import {
   serverTimestamp, query, orderByChild, limitToLast,
   onDisconnect, get
 } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
 // ── Firebase config ───────────────────────────────────────────
 const firebaseConfig = {
@@ -3023,6 +3024,7 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
+try { await signInAnonymously(getAuth(app)); } catch(ae) { console.warn('[Dashboard] Anonymous auth failed:', ae.code); }
 
 // ── Crypto helpers ────────────────────────────────────────────
 async function sha256(str){
