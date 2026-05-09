@@ -17105,9 +17105,17 @@ function initHosMinimap() {
       e.stopPropagation();
       const open = _stylePanel.style.opacity === '1';
       if (open) { closePanel(); return; }
-      // Position panel near the button
+      // Position panel near the button — flip above if not enough space below
       const r = _styleBtn.getBoundingClientRect();
-      _stylePanel.style.top  = (r.bottom + 8) + 'px';
+      const panelH = 180;
+      const spaceBelow = window.innerHeight - r.bottom;
+      if (spaceBelow < panelH) {
+        _stylePanel.style.top    = 'auto';
+        _stylePanel.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+      } else {
+        _stylePanel.style.bottom = 'auto';
+        _stylePanel.style.top    = (r.bottom + 8) + 'px';
+      }
       _stylePanel.style.right = (window.innerWidth - r.right) + 'px';
       _stylePanel.style.opacity = '1';
       _stylePanel.style.pointerEvents = 'all';
