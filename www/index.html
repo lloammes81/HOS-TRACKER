@@ -2615,7 +2615,7 @@
     backdrop-filter:blur(12px);
     -webkit-backdrop-filter:blur(12px);
     border:1px solid rgba(255,255,255,.13);
-    box-shadow:0 6px 28px rgba(0,0,0,.5);
+    box-shadow:0 4px 18px rgba(0,0,0,.5);
     pointer-events:none;
     display:flex;
     align-items:stretch;
@@ -2993,8 +2993,6 @@ body:not(.map-active) #speedLimitWidget,
 body:not(.map-active) #speedToast {
   display: none !important;
 }
-
-/* ── OVERRIDES (layout fixes) ───────────────────────────── */
 /* btnCenter y btnMapColor ahora están dentro de #mapLeftControls — posición estática */
 #mapLeftControls #btnCenter,
 #mapLeftControls #btnMapColor {
@@ -9226,7 +9224,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   position:fixed; top:calc(80px + env(safe-area-inset-top,0px));
   left:14px; right:14px; z-index:30002;
   background:linear-gradient(135deg,#0a1628 0%,#0d2040 100%);
-  border:1.5px solid #2563eb; border-radius:10px;
+  border:1.5px solid #2563eb; border-radius:16px;
   padding:13px 15px 12px; box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 0 1px rgba(37,99,235,.2);
   transform:translateY(-250px); opacity:0;
   transition:transform .4s cubic-bezier(.16,1,.3,1),opacity .4s;
@@ -10452,7 +10450,10 @@ const WX_ICONS = {
   80:'🌦️', 81:'🌧️', 82:'⛈️', 85:'🌨️', 86:'🌨️❄️',
   95:'⛈️', 96:'⛈️🌩️', 99:'⛈️🌩️❄️'
 };
-const WX_ICONS_NIGHT = { 0:'🌙', 1:'🌙', 2:'🌙⛅', 3:'☁️' };
+// Night overrides for clear/partly-cloudy codes (is_day === 0)
+const WX_ICONS_NIGHT = {
+  0:'🌙', 1:'🌙', 2:'🌙⛅', 3:'☁️'
+};
 
 async function fetchWeather(lat, lon) {
   try {
@@ -10467,8 +10468,8 @@ async function fetchWeather(lat, lon) {
       temp  : Math.round(c.temperature_2m),
       wind  : Math.round(c.windspeed_10m),
       precip: c.precipitation,
-      desc  : WX_DESC[c.weathercode] || 'Unknown',
-      isDay : c.is_day !== 0
+      isDay : c.is_day !== 0,
+      desc  : WX_DESC[c.weathercode] || 'Unknown'
     };
   } catch { return null; }
 }
@@ -14342,6 +14343,7 @@ function renderResults(hours, speed, depart) {
   _detectAndShowViolations(_dailyHrs, _weeklyHrs);
 
   // Geocodificar ciudades de descanso de forma asíncrona
+  // Reset stored cities for new route
   _nextBreakCity = null;
   _nextRestCity  = null;
   if (restStops.length && roadGeometry && roadGeometry.length > 1) {
@@ -14352,6 +14354,7 @@ function renderResults(hours, speed, depart) {
         _reverseGeocodeCity(pos[0], pos[1]).then(city => {
           const el = document.getElementById('schedCity' + stop.idx);
           if (el) { el.textContent = '📍 ' + city; el.classList.remove('loading'); el.classList.add('loaded'); }
+          // Store in dedicated vars: first break30 and first rest found
           const sType = schedule[stop.idx]?.type;
           if (sType === 'break30' && !_nextBreakCity) _nextBreakCity = city;
           if ((sType === 'rest' || sType === 'reset') && !_nextRestCity) _nextRestCity = city;
@@ -15616,8 +15619,8 @@ function updateDashDestCard() {
 }
 
 // ── Route bar HASTA label: shows next mandatory stop city ──
-let _nextBreakCity = null;
-let _nextRestCity  = null;
+let _nextBreakCity = null;  // city for next 30-min break
+let _nextRestCity  = null;  // city for next 10h rest
 
 function updateFmToDisplay() {
   const toEl  = document.getElementById('fmTo');
@@ -15629,6 +15632,7 @@ function updateFmToDisplay() {
   const hoursGone = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft <= 0;
   const hoursLow  = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft > 0 && _hosCurrentDriveLeft <= 2;
 
+  // Priority 1: active break or break urgently due
   if (_b30due || _b30brk) {
     if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
     const city = _hosBreakStopName || _nextBreakCity;
@@ -15636,6 +15640,7 @@ function updateFmToDisplay() {
     toEl.textContent = city || 'Próxima parada';
     return;
   }
+  // Priority 2: hours exhausted or nearly gone
   if (hoursGone || hoursLow) {
     if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
     const city = _hosHoursStopName || _nextRestCity;
@@ -15643,20 +15648,23 @@ function updateFmToDisplay() {
     toEl.textContent = city || 'Busca área de descanso';
     return;
   }
+  // Priority 3: show upcoming 30-min break city from schedule
   if (_nextBreakCity) {
     if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
     toEl.style.color = '#f59e0b';
     toEl.textContent = _nextBreakCity;
     return;
   }
+  // Priority 4: show upcoming 10h rest city from schedule
   if (_nextRestCity) {
     if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
     toEl.style.color = '#818cf8';
     toEl.textContent = _nextRestCity;
     return;
   }
-  const hasBreakInSched = Array.isArray(schedule) && schedule.some(s => s.type === 'break30');
-  const hasRestInSched  = Array.isArray(schedule) && schedule.some(s => s.type === 'rest' || s.type === 'reset');
+  // Priority 5: geocoding still in progress — show placeholder with destination
+  const hasBreakInSched  = Array.isArray(schedule) && schedule.some(s => s.type === 'break30');
+  const hasRestInSched   = Array.isArray(schedule) && schedule.some(s => s.type === 'rest' || s.type === 'reset');
   if (hasBreakInSched) {
     if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
     toEl.style.color = '#f59e0b';
@@ -15669,6 +15677,7 @@ function updateFmToDisplay() {
     toEl.textContent = '…';
     return;
   }
+  // Default: show final destination
   if (lblEl) { lblEl.textContent = 'HASTA'; lblEl.style.color = 'rgba(255,255,255,0.35)'; }
   toEl.style.color = '';
   toEl.textContent = destination ? destination.name.split(',')[0] : '--';
@@ -16096,7 +16105,6 @@ function fmStartTracking() {
   lastStateCheck = 0;
   lastFuelCheck  = 0;
   lastRoadSpeedCheck = 0;
-
   // Show "back to dashboard" button when tracking is active
   const _btd = document.getElementById('backToDashBtn');
   if (_btd) _btd.style.display = 'flex';
@@ -16177,7 +16185,8 @@ function fmStartTracking() {
 
     const rawSpeed = pos.coords.speed;
     const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
-    const isMoving = gpsSpeed >= 8; // 8 mph threshold to filter GPS drift
+    // 8 mph threshold to filter GPS drift noise (GPS can report 3-6 mph when stationary)
+    const isMoving = gpsSpeed >= 8;
     // Expose globally so calculateRoute can check
     fmCurrentSpeed = gpsSpeed;
     fmVehicleMoving = isMoving;
@@ -16230,7 +16239,7 @@ function fmStartTracking() {
 
     // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
-      // Dynamic zoom by speed: stationary → zoom in tight; >40 mph → zoom out
+      // Dynamic zoom: <20 mph or stopped → zoom 17 (tight); ≥20 mph → zoom 13 (wider)
       if (!fmUserZoomed) {
         const targetZoom = gpsSpeed < 20 ? 17 : 13;
         if (Math.abs(fmCurrentZoom - targetZoom) >= 1) {
@@ -16342,7 +16351,7 @@ function fmStartTracking() {
     _hosCurrentDriveLeft = driveLeft;
     const driveEl = document.getElementById('fmDriveLeft');
     driveEl.textContent = fmtH(driveLeft);
-    driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#1a1a1a';
+    driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
     // Update circular widget on the map
     updateDriveHoursWidget(driveLeft, driveMax);
     if (typeof updateDashRouteHoursRow === 'function') updateDashRouteHoursRow();
@@ -16460,10 +16469,10 @@ function fmStartTracking() {
       : Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
     const cyEl = document.getElementById('fm70Left');
     cyEl.textContent = fmtH(cycleLeft);
-    cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#1a1a1a';
+    cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
     // Update outer-ring arc for 70 HRS
     const _70arcGps = document.getElementById('hud70Arc');
-    if (_70arcGps) { const cycMax = parseFloat(document.getElementById('hoursInput').value) || 70; const f = Math.max(0, cycleLeft / cycMax); const c = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#1a1a1a'; _70arcGps.setAttribute('stroke-dasharray', `${f * 226} 226`); _70arcGps.setAttribute('stroke', c); }
+    if (_70arcGps) { const cycMax = parseFloat(document.getElementById('hoursInput').value) || 70; const f = Math.max(0, cycleLeft / cycMax); const c = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6'; _70arcGps.setAttribute('stroke-dasharray', `${f * 226} 226`); _70arcGps.setAttribute('stroke', c); }
     // Update hero KPI rings
     const _cycMax = parseFloat(document.getElementById('hoursInput').value) || 70;
     updateHeroKPIs(driveLeft, driveMax, cycleLeft, _cycMax);
@@ -16758,6 +16767,7 @@ let _hosWarnExpiredFired = false;
 // Centra el mini-mapa con el icono del camión en la zona inferior (≈25% desde abajo)
 function _hosMinimapFollow(lat, lon) {
   if (!hosMinimapInst) return;
+  // Dynamic zoom by speed — matches full map logic
   const _miniTargetZoom = fmCurrentSpeed < 20 ? 17 : 13;
   hosMinimapInst.setView([lat, lon], _miniTargetZoom, { animate: false });
   const sz = hosMinimapInst.getSize();
@@ -21602,7 +21612,7 @@ function applyAllAvatars() {
       fmGpsMarker.setIcon(L.divIcon({ className: '', html: _html, iconAnchor: [28, 44], iconSize: [56, 72] }));
     } catch(e) {}
   }
-  // Refresh mini map truck icon
+  // Refresh mini map truck icon if it uses a custom icon
   if (typeof hosMinimapTruck !== 'undefined' && hosMinimapTruck && typeof getTruckIconHTML === 'function') {
     try {
       const _mIcon = L.divIcon({ className: '', html: `<div style="display:flex;align-items:center;justify-content:center">${getTruckIconHTML(24)}</div>`, iconAnchor: [16, 16], iconSize: [32, 32] });
@@ -27060,6 +27070,8 @@ window._hosAutoRecalc = false;
     background:#fff; color:#0f172a;
   }
   body.dark #fleetLinkModal .fl-field input{ background:#0f172a; color:#e6edf7; border-color:#334155; }
+  body.dark #flJoinError{ background:#2a0a10; color:#fca5a5; border-color:#7f1d1d; }
+  body.dark #flJoinOk{ background:#052e1a; color:#86efac; border-color:#14532d; }
   #fleetLinkModal .fl-video{
     width:100%; border-radius:10px; background:#000; margin-top:10px; display:none; aspect-ratio:1;
   }
@@ -27087,8 +27099,10 @@ window._hosAutoRecalc = false;
     <div id="flNotConnected">
       <div class="fl-field">
         <label>Ingresa el código de 6 caracteres</label>
-        <input id="flFleetInput" class="fl-input" maxlength="6" autocomplete="off" placeholder="ABC123" />
+        <input id="flFleetInput" class="fl-input" maxlength="6" autocomplete="off" placeholder="ABC123" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" />
       </div>
+      <div id="flJoinError" style="display:none;padding:10px 12px;border-radius:10px;font-size:13px;margin-top:8px;background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;white-space:pre-line"></div>
+      <div id="flJoinOk" style="display:none;padding:10px 12px;border-radius:10px;font-size:13px;margin-top:8px;background:#f0fdf4;color:#065f46;border:1px solid #86efac"></div>
       <div class="fl-row">
         <button class="fl-btn primary" id="flJoinBtn">Unirme a la flota</button>
         <button class="fl-btn" id="flScanBtn">📷 Escanear QR</button>
@@ -27161,10 +27175,21 @@ window._hosAutoRecalc = false;
 </div>
 
 <script type="module">
+  // Si este bloque no llega a ejecutarse (fallo de red / CSP), el botón quedará sin handler
+  // — avisamos al usuario desde un onerror global en window
+  window._fleetLinkModuleOk = false;
+  window.addEventListener('error', (e) => {
+    if (!window._fleetLinkModuleOk && e.filename && e.filename.includes('gstatic')) {
+      const errEl = document.getElementById('flJoinError');
+      if (errEl) { errEl.textContent = '⚠️ No se pudo cargar Firebase.\nVerifica tu conexión a internet y recarga la página.'; errEl.style.display='block'; }
+    }
+  }, true);
+
   import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
     getDatabase, ref, set, update, onValue, push, remove, onDisconnect, serverTimestamp, query, orderByChild, limitToLast
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  window._fleetLinkModuleOk = true;
 
   const firebaseConfig = {
     apiKey:            "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
@@ -27219,6 +27244,12 @@ window._hosAutoRecalc = false;
   const video   = document.getElementById('flVideo');
   const canvas  = document.getElementById('flCanvas');
   const lastPingEl = document.getElementById('flLastPing');
+  const joinErrEl  = document.getElementById('flJoinError');
+  const joinOkEl   = document.getElementById('flJoinOk');
+
+  function _flShowErr(msg){ if(joinErrEl){ joinErrEl.textContent = msg; joinErrEl.style.display='block'; } if(joinOkEl) joinOkEl.style.display='none'; }
+  function _flShowOk(msg) { if(joinOkEl) { joinOkEl.textContent = msg; joinOkEl.style.display='block'; } if(joinErrEl) joinErrEl.style.display='none'; }
+  function _flClearMsg()  { if(joinErrEl) joinErrEl.style.display='none'; if(joinOkEl) joinOkEl.style.display='none'; }
 
   // Inicializar valores
   plateInput.value = state.plate; phoneInput.value = state.phone;
@@ -27340,22 +27371,30 @@ window._hosAutoRecalc = false;
 
   async function joinFleet(code){
     const c = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-    if (c.length < 4){ flToast('Código inválido'); return; }
+    _flClearMsg();
+    if (c.length < 4){ _flShowErr('⚠️ El código debe tener al menos 4 caracteres.'); return; }
+
+    // Feedback inmediato en el botón
+    const btn = document.getElementById('flJoinBtn');
+    const origText = btn ? btn.textContent : '';
+    if (btn){ btn.disabled = true; btn.textContent = '⏳ Conectando...'; }
+
     console.log('[FleetLink] Intentando unirse a flota:', c, 'como', MY_ID);
+    _flShowOk('🔄 Verificando conexión con Firebase...');
 
     // 1) Si ya había una flota previa, limpiamos todo primero
     if (state.fleetId && state.fleetId !== c){
-      console.log('[FleetLink] Cambiando de flota, limpiando', state.fleetId);
       await cleanupCurrentFleet(true);
     } else if (state.fleetId === c){
-      // Reconexión a la misma flota — sólo resetear listeners
       await cleanupCurrentFleet(false);
     }
 
-    // 2) Esperar a que Firebase esté conectado (hasta 4s)
-    const online = await waitForFirebaseConnection(4000);
+    // 2) Esperar a que Firebase esté conectado (hasta 6s)
+    _flShowOk('🔄 Conectando a Firebase... (máx. 6s)');
+    const online = await waitForFirebaseConnection(6000);
     if (!online){
-      alert('❌ Sin conexión a internet o Firebase no responde.\n\nVerifica tu red y vuelve a intentar.');
+      if (btn){ btn.disabled = false; btn.textContent = origText; }
+      _flShowErr('❌ Sin conexión a Firebase.\n\nVerifica:\n• Tu internet (WiFi o datos)\n• Que no estés en modo avión\n• Recarga la página e intenta de nuevo');
       return;
     }
 
@@ -27366,36 +27405,39 @@ window._hosAutoRecalc = false;
     localStorage.setItem('fleet_link_plate', state.plate);
     localStorage.setItem('fleet_link_phone', state.phone);
 
+    _flShowOk('🔄 Registrando en la flota ' + c + '...');
     try {
       await registerPresence();
       console.log('[FleetLink] ✅ Registrado en Firebase correctamente');
     } catch(e){
       console.error('[FleetLink] ❌ Error al registrar:', e);
       const msg = (e && e.message) || String(e);
-      // Detectar tipo de error para dar un mensaje útil
-      let detail = msg;
-      let hint   = '';
+      let detail = '', hint = '';
       if (/permission[_\s-]?denied/i.test(msg)){
         detail = 'Permiso denegado por Firebase';
-        hint   = '• Las reglas de Firebase no permiten escribir en /fleets/' + c + '/drivers\n• Pide al admin que actualice firebase-rules.json';
+        hint   = '• Las reglas de seguridad de Firebase no permiten escribir.\n• El código de flota puede ser incorrecto.\n• Contacta al administrador del dispatcher.';
       } else if (/timeout/i.test(msg)){
-        detail = 'Timeout escribiendo en Firebase';
-        hint   = '• Tu conexión es muy lenta o intermitente\n• Cierra y abre la app\n• Intenta con WiFi';
+        detail = 'Tiempo de espera agotado';
+        hint   = '• Tu conexión es lenta o intermitente.\n• Intenta con WiFi o 4G.\n• Cierra y abre la app.';
       } else if (/network|offline/i.test(msg)){
         detail = 'Sin conexión de red';
-        hint   = '• Revisa tu conexión WiFi o datos móviles';
+        hint   = '• Revisa tu WiFi o datos móviles.';
       } else {
-        hint = '• Código posiblemente incorrecto\n• Las reglas de Firebase pueden estar bloqueando\n• Problema de conexión';
+        detail = msg;
+        hint   = '• Código posiblemente incorrecto.\n• Problema de conexión o reglas Firebase.';
       }
       state.fleetId = null;
       localStorage.removeItem('fleet_link_fleet');
+      if (btn){ btn.disabled = false; btn.textContent = origText; }
       renderStatus();
-      alert('❌ No se pudo conectar a la flota.\n\nDetalle: ' + detail + '\n\nPosibles causas:\n' + hint);
+      _flShowErr('❌ No se pudo conectar a la flota ' + c + '\n\n' + detail + '\n\n' + hint);
       return;
     }
+    if (btn){ btn.disabled = false; btn.textContent = origText; }
     startLocationSharing();
     listenNotifications();
     renderStatus();
+    _flClearMsg();
     flToast('✅ Conectado al dispatcher');
   }
 
@@ -27591,7 +27633,7 @@ window._hosAutoRecalc = false;
         console.log('[FleetLink] ✅ Auto-reconectado a flota', state.fleetId);
       } catch(e){
         console.error('[FleetLink] ❌ Auto-reconexión falló:', e);
-        alert('No se pudo reconectar a la flota ' + state.fleetId + '\n\nError: ' + e.message + '\n\nTe desconectaré para que puedas intentarlo de nuevo.');
+        _flShowErr('⚠️ No se pudo reconectar a la flota ' + state.fleetId + '\n' + (e.message || '') + '\n\nIngresa el código de nuevo para reconectarte.');
         state.fleetId = null;
         localStorage.removeItem('fleet_link_fleet');
         renderStatus();
@@ -28431,7 +28473,8 @@ window._hosAutoRecalc = false;
       if (!_shiftStart) _shiftStart = new Date();
       _save();
     },
-    // Siempre usa GPS del dispositivo para movimiento (ELD solo para identificación)
+    // Llamado desde el bucle GPS — siempre usa GPS del dispositivo para movimiento,
+    // incluso cuando el ELD está conectado (ELD solo se usa para identificación/logging)
     reportMoving: function(moving, speedMph) {
       if (moving) _onEldMoving(speedMph || 0);
       else        _onEldStopped();
