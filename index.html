@@ -5211,30 +5211,33 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     top: 50%;
     transform: translateY(-50%);
     z-index: 6502;
-    width: 16px;
-    height: 64px;
-    background: rgba(249,115,22,.32);
-    border: 1px solid rgba(249,115,22,.45);
-    border-right: none;
+    width: 28px;
+    height: 100px;
+    background: #b0b0b0;
+    border: none;
     border-radius: 8px 0 0 8px;
-    color: rgba(255,255,255,.85);
-    font-size: 13px;
-    font-weight: 900;
+    color: #222;
+    font-size: 11px;
+    font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    box-shadow: -2px 0 8px rgba(0,0,0,.18);
     transition: right .28s cubic-bezier(.4,0,.2,1), background .15s;
     padding: 0;
     line-height: 1;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    letter-spacing: 1px;
+    text-transform: uppercase;
   }
   #sideMenuToggle.open {
     right: 34px;
-    background: rgba(249,115,22,.5);
+    background: #9e9e9e;
   }
-  #sideMenuToggle:active { opacity: .65; }
+  #sideMenuToggle:hover { background: #c8c8c8; }
+  #sideMenuToggle:active { opacity: .75; }
 
   #sideTabStack {
     position: fixed;
@@ -7827,7 +7830,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </div>
 
 <!-- ══ SIDE TAB MENU (main screen) ══ -->
-<button id="sideMenuToggle" onclick="toggleSideTabMenu()" aria-label="Menú lateral">‹</button>
+<button id="sideMenuToggle" onclick="toggleSideTabMenu()" aria-label="Menú lateral">Menú</button>
 <div id="sideTabStack">
   <button class="side-tab-btn" onclick="closeSideTabMenu();openDotPanel()">
     <span class="side-tab-icon">📋</span>
@@ -19994,7 +19997,7 @@ function toggleSideTabMenu() {
   const toggle = document.getElementById('sideMenuToggle');
   const isOpen = stack.classList.toggle('open');
   toggle.classList.toggle('open', isOpen);
-  toggle.textContent = isOpen ? '›' : '‹';
+  toggle.textContent = 'Menú';
   // Si se cierra el menú, cerrar también el panel de comunidad
   if (!isOpen) {
     document.getElementById('commQuickPanel')?.classList.remove('open');
@@ -20060,7 +20063,7 @@ function closeSideTabMenu() {
   if (!stack) return;
   stack.classList.remove('open');
   toggle?.classList.remove('open');
-  if (toggle) toggle.textContent = '‹';
+  if (toggle) toggle.textContent = 'Menú';
   document.getElementById('commQuickPanel')?.classList.remove('open');
   document.getElementById('commQuickOverlay')?.classList.remove('open');
   document.getElementById('commQuickOverlay')?.classList.remove('show');
