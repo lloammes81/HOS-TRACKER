@@ -11166,7 +11166,7 @@ function initDriveHoursDrag() {
 function updateDashRingGlow(mph, isOver) {
   const wrap = document.getElementById('dashRingWrap');
   if (!wrap) return;
-  const moving = mph > 3;
+  const moving = mph >= 8;
   if (isOver) {
     wrap.style.filter = 'drop-shadow(0 0 22px rgba(239,68,68,0.80)) drop-shadow(0 0 44px rgba(239,68,68,0.40)) drop-shadow(0 6px 18px rgba(0,0,0,0.70))';
   } else if (moving) {
@@ -11224,7 +11224,7 @@ function updateSpeedometer(mph) {
   const statusBadge = document.getElementById('speedoStatus');
 
   num.textContent = Math.round(mph);
-  const moving = mph > 3;
+  const moving = mph >= 8;
 
 
   // Over-limit based on state truck speed limit (if available)
@@ -14144,7 +14144,7 @@ async function calculateRoute() {
   if (isNaN(speed)||speed<=0) { showError(t('errSpeed')); return; }
 
   // 🚨 Safety: block if vehicle is currently moving
-  if (fmVehicleMoving && fmCurrentSpeed > 3) {
+  if (fmVehicleMoving && fmCurrentSpeed >= 8) {
     showToast('danger','🚨',
       lang === 'es' ? '¡Vehículo en movimiento!' : 'Vehicle in Motion!',
       lang === 'es'
@@ -15738,9 +15738,9 @@ function autoUpdateDashStatus(isMoving) {
       setDashStatus('rest');
     }
 
-    // ── SIN pausa pendiente → Espera inmediata al detenerse ──
+    // ── SIN pausa pendiente → Espera después de 2 min parado ──
     const noBreakPending = b30Complete || !breakDue;
-    if (noBreakPending) {
+    if (noBreakPending && _autoStopSecs >= 120) {
       if (waitBtn) waitBtn.classList.add('dash-tab-wait-pulse');
       if (_dashCurrentStatus === 'driving') setDashStatus('wait');
     } else {
@@ -16016,7 +16016,8 @@ function fmStartTracking() {
 
     const rawSpeed = pos.coords.speed;
     const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
-    const isMoving = gpsSpeed > 3;
+    // 8 mph threshold to filter GPS drift noise (GPS can report 3-6 mph when stationary)
+    const isMoving = gpsSpeed >= 8;
     // Expose globally so calculateRoute can check
     fmCurrentSpeed = gpsSpeed;
     fmVehicleMoving = isMoving;
@@ -16055,7 +16056,7 @@ function fmStartTracking() {
       const dLon = (snapLon - fmLastStablePos.lon) * Math.PI / 180;
       const a = Math.sin(dLat/2)**2 + Math.cos(fmLastStablePos.lat * Math.PI/180) * Math.cos(snapLat * Math.PI/180) * Math.sin(dLon/2)**2;
       const distM = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      if (distM < 10) return; // menos de 10m parado — ignorar actualización
+      if (distM < 30) return; // menos de 30m parado — ignorar drift GPS
     }
     fmLastStablePos = { lat: snapLat, lon: snapLon };
 
@@ -20714,7 +20715,7 @@ calculateRoute = async function() {
   if (isNaN(hours)||hours<=0||hours>70) { showError(t('err70')); return; }
   if (isNaN(speed)||speed<=0) { showError(t('errSpeed')); return; }
 
-  if (fmVehicleMoving && fmCurrentSpeed > 3) {
+  if (fmVehicleMoving && fmCurrentSpeed >= 8) {
     showToast('danger','🚨', lang==='es'?'¡Vehículo en movimiento!':'Vehicle in Motion!',
       lang==='es'?`Por tu seguridad detente para usar esta función.`:`Please stop the vehicle first.`, 8000);
     vibrate([200,100,200,100,200]);
@@ -25673,7 +25674,7 @@ window._hosAutoRecalc = false;
   // Reemplaza calculateRoute con el flujo de popups
   calculateRoute = function() {
     if (!origin || !destination) { showError(t('errSel')); return; }
-    if (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving && fmCurrentSpeed > 3) {
+    if (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving && fmCurrentSpeed >= 8) {
       showToast('danger','🚨',
         lang==='es' ? '¡Vehículo en movimiento!' : 'Vehicle in Motion!',
         lang==='es' ? 'Detente para usar esta función.' : 'Please stop the vehicle first.',
