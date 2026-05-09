@@ -6207,7 +6207,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <div class="grid2" id="shareTrackBtns" style="display:none;margin-top:10px">
           <button class="btn btn-blue" id="shareBtn" onclick="shareRoute()">📤 Compartir</button>
-          <button class="btn btn-purple" id="trackBtn" onclick="if(!origin||!destination){alert(t('errSel'));return;}openFullMapScreen()">📍 Rastreo en Vivo</button>
+          <button class="btn btn-purple" id="trackBtn" onclick="launchTrackingDirect()">📍 Rastreo en Vivo</button>
         </div>
       </div>
 
@@ -14477,6 +14477,16 @@ localStorage.setItem('hos_reports', JSON.stringify(communityReports));
 
 // Current logged-in user
 let currentUser = JSON.parse(localStorage.getItem('hos_user') || 'null');
+
+function launchTrackingDirect() {
+  if (!origin || !destination) { alert(t ? t('errSel') : 'Select origin and destination'); return; }
+  openFullMapScreen();
+  // Hide the confirmation banner — skip the "map only / start tracking" choice
+  const banner = document.getElementById('fmTrackBanner');
+  if (banner) banner.style.display = 'none';
+  // Small delay so the map DOM is ready before starting tracking
+  setTimeout(() => { fmStartTracking(); }, 150);
+}
 
 function openFullMapScreen() {
   const screen = document.getElementById('fullMapScreen');
