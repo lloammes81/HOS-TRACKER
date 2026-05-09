@@ -27070,6 +27070,8 @@ window._hosAutoRecalc = false;
     background:#fff; color:#0f172a;
   }
   body.dark #fleetLinkModal .fl-field input{ background:#0f172a; color:#e6edf7; border-color:#334155; }
+  body.dark #flJoinError{ background:#2a0a10; color:#fca5a5; border-color:#7f1d1d; }
+  body.dark #flJoinOk{ background:#052e1a; color:#86efac; border-color:#14532d; }
   #fleetLinkModal .fl-video{
     width:100%; border-radius:10px; background:#000; margin-top:10px; display:none; aspect-ratio:1;
   }
@@ -27097,8 +27099,10 @@ window._hosAutoRecalc = false;
     <div id="flNotConnected">
       <div class="fl-field">
         <label>Ingresa el código de 6 caracteres</label>
-        <input id="flFleetInput" class="fl-input" maxlength="6" autocomplete="off" placeholder="ABC123" />
+        <input id="flFleetInput" class="fl-input" maxlength="6" autocomplete="off" placeholder="ABC123" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" />
       </div>
+      <div id="flJoinError" style="display:none;padding:10px 12px;border-radius:10px;font-size:13px;margin-top:8px;background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;white-space:pre-line"></div>
+      <div id="flJoinOk" style="display:none;padding:10px 12px;border-radius:10px;font-size:13px;margin-top:8px;background:#f0fdf4;color:#065f46;border:1px solid #86efac"></div>
       <div class="fl-row">
         <button class="fl-btn primary" id="flJoinBtn">Unirme a la flota</button>
         <button class="fl-btn" id="flScanBtn">📷 Escanear QR</button>
@@ -27171,10 +27175,21 @@ window._hosAutoRecalc = false;
 </div>
 
 <script type="module">
+  // Si este bloque no llega a ejecutarse (fallo de red / CSP), el botón quedará sin handler
+  // — avisamos al usuario desde un onerror global en window
+  window._fleetLinkModuleOk = false;
+  window.addEventListener('error', (e) => {
+    if (!window._fleetLinkModuleOk && e.filename && e.filename.includes('gstatic')) {
+      const errEl = document.getElementById('flJoinError');
+      if (errEl) { errEl.textContent = '⚠️ No se pudo cargar Firebase.\nVerifica tu conexión a internet y recarga la página.'; errEl.style.display='block'; }
+    }
+  }, true);
+
   import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
     getDatabase, ref, set, update, onValue, push, remove, onDisconnect, serverTimestamp, query, orderByChild, limitToLast
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  window._fleetLinkModuleOk = true;
 
   const firebaseConfig = {
     apiKey:            "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
@@ -27229,6 +27244,12 @@ window._hosAutoRecalc = false;
   const video   = document.getElementById('flVideo');
   const canvas  = document.getElementById('flCanvas');
   const lastPingEl = document.getElementById('flLastPing');
+  const joinErrEl  = document.getElementById('flJoinError');
+  const joinOkEl   = document.getElementById('flJoinOk');
+
+  function _flShowErr(msg){ if(joinErrEl){ joinErrEl.textContent = msg; joinErrEl.style.display='block'; } if(joinOkEl) joinOkEl.style.display='none'; }
+  function _flShowOk(msg) { if(joinOkEl) { joinOkEl.textContent = msg; joinOkEl.style.display='block'; } if(joinErrEl) joinErrEl.style.display='none'; }
+  function _flClearMsg()  { if(joinErrEl) joinErrEl.style.display='none'; if(joinOkEl) joinOkEl.style.display='none'; }
 
   // Inicializar valores
   plateInput.value = state.plate; phoneInput.value = state.phone;
@@ -27350,22 +27371,30 @@ window._hosAutoRecalc = false;
 
   async function joinFleet(code){
     const c = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-    if (c.length < 4){ flToast('Código inválido'); return; }
+    _flClearMsg();
+    if (c.length < 4){ _flShowErr('⚠️ El código debe tener al menos 4 caracteres.'); return; }
+
+    // Feedback inmediato en el botón
+    const btn = document.getElementById('flJoinBtn');
+    const origText = btn ? btn.textContent : '';
+    if (btn){ btn.disabled = true; btn.textContent = '⏳ Conectando...'; }
+
     console.log('[FleetLink] Intentando unirse a flota:', c, 'como', MY_ID);
+    _flShowOk('🔄 Verificando conexión con Firebase...');
 
     // 1) Si ya había una flota previa, limpiamos todo primero
     if (state.fleetId && state.fleetId !== c){
-      console.log('[FleetLink] Cambiando de flota, limpiando', state.fleetId);
       await cleanupCurrentFleet(true);
     } else if (state.fleetId === c){
-      // Reconexión a la misma flota — sólo resetear listeners
       await cleanupCurrentFleet(false);
     }
 
-    // 2) Esperar a que Firebase esté conectado (hasta 4s)
-    const online = await waitForFirebaseConnection(4000);
+    // 2) Esperar a que Firebase esté conectado (hasta 6s)
+    _flShowOk('🔄 Conectando a Firebase... (máx. 6s)');
+    const online = await waitForFirebaseConnection(6000);
     if (!online){
-      alert('❌ Sin conexión a internet o Firebase no responde.\n\nVerifica tu red y vuelve a intentar.');
+      if (btn){ btn.disabled = false; btn.textContent = origText; }
+      _flShowErr('❌ Sin conexión a Firebase.\n\nVerifica:\n• Tu internet (WiFi o datos)\n• Que no estés en modo avión\n• Recarga la página e intenta de nuevo');
       return;
     }
 
@@ -27376,36 +27405,39 @@ window._hosAutoRecalc = false;
     localStorage.setItem('fleet_link_plate', state.plate);
     localStorage.setItem('fleet_link_phone', state.phone);
 
+    _flShowOk('🔄 Registrando en la flota ' + c + '...');
     try {
       await registerPresence();
       console.log('[FleetLink] ✅ Registrado en Firebase correctamente');
     } catch(e){
       console.error('[FleetLink] ❌ Error al registrar:', e);
       const msg = (e && e.message) || String(e);
-      // Detectar tipo de error para dar un mensaje útil
-      let detail = msg;
-      let hint   = '';
+      let detail = '', hint = '';
       if (/permission[_\s-]?denied/i.test(msg)){
         detail = 'Permiso denegado por Firebase';
-        hint   = '• Las reglas de Firebase no permiten escribir en /fleets/' + c + '/drivers\n• Pide al admin que actualice firebase-rules.json';
+        hint   = '• Las reglas de seguridad de Firebase no permiten escribir.\n• El código de flota puede ser incorrecto.\n• Contacta al administrador del dispatcher.';
       } else if (/timeout/i.test(msg)){
-        detail = 'Timeout escribiendo en Firebase';
-        hint   = '• Tu conexión es muy lenta o intermitente\n• Cierra y abre la app\n• Intenta con WiFi';
+        detail = 'Tiempo de espera agotado';
+        hint   = '• Tu conexión es lenta o intermitente.\n• Intenta con WiFi o 4G.\n• Cierra y abre la app.';
       } else if (/network|offline/i.test(msg)){
         detail = 'Sin conexión de red';
-        hint   = '• Revisa tu conexión WiFi o datos móviles';
+        hint   = '• Revisa tu WiFi o datos móviles.';
       } else {
-        hint = '• Código posiblemente incorrecto\n• Las reglas de Firebase pueden estar bloqueando\n• Problema de conexión';
+        detail = msg;
+        hint   = '• Código posiblemente incorrecto.\n• Problema de conexión o reglas Firebase.';
       }
       state.fleetId = null;
       localStorage.removeItem('fleet_link_fleet');
+      if (btn){ btn.disabled = false; btn.textContent = origText; }
       renderStatus();
-      alert('❌ No se pudo conectar a la flota.\n\nDetalle: ' + detail + '\n\nPosibles causas:\n' + hint);
+      _flShowErr('❌ No se pudo conectar a la flota ' + c + '\n\n' + detail + '\n\n' + hint);
       return;
     }
+    if (btn){ btn.disabled = false; btn.textContent = origText; }
     startLocationSharing();
     listenNotifications();
     renderStatus();
+    _flClearMsg();
     flToast('✅ Conectado al dispatcher');
   }
 
@@ -27601,7 +27633,7 @@ window._hosAutoRecalc = false;
         console.log('[FleetLink] ✅ Auto-reconectado a flota', state.fleetId);
       } catch(e){
         console.error('[FleetLink] ❌ Auto-reconexión falló:', e);
-        alert('No se pudo reconectar a la flota ' + state.fleetId + '\n\nError: ' + e.message + '\n\nTe desconectaré para que puedas intentarlo de nuevo.');
+        _flShowErr('⚠️ No se pudo reconectar a la flota ' + state.fleetId + '\n' + (e.message || '') + '\n\nIngresa el código de nuevo para reconectarte.');
         state.fleetId = null;
         localStorage.removeItem('fleet_link_fleet');
         renderStatus();
