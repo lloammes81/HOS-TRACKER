@@ -28137,15 +28137,15 @@ window._hosAutoRecalc = false;
     _setDuty('DETENIDO · ELD', '#f59e0b');
   }
 
-  // ── Modo GPS del teléfono (fallback sin ELD) ─────────
+  // ── GPS del dispositivo — siempre activo para detección de movimiento ────
+  // (incluso cuando ELD está conectado; ELD solo se usa para identificación)
   function _startGpsMode() {
-    if (_connected || _gpsWatchId != null || !navigator.geolocation) return;
+    if (_gpsWatchId != null || !navigator.geolocation) return;
     _gpsActive = true;
     _setDuty(typeof lang !== 'undefined' && lang === 'es' ? 'GPS ACTIVO' : 'GPS ACTIVE', '#10b981');
-    _setBtBadge('gps');
+    _setBtBadge(_connected ? 'connected' : 'gps');
     _gpsWatchId = navigator.geolocation.watchPosition(
       pos => {
-        if (_connected) { _stopGpsMode(); return; }
         const raw = pos.coords.speed;
         const mph = (raw != null && raw >= 0) ? raw * 0.621371 : 0;
         if (mph > 2) _onEldMoving(Math.round(mph));
@@ -28400,7 +28400,7 @@ window._hosAutoRecalc = false;
   _updateRings();
 
   // Sin ELD: usar GPS del teléfono como fuente de movimiento por defecto
-  setTimeout(() => { if (!_connected) _startGpsMode(); }, 500);
+  setTimeout(() => { _startGpsMode(); }, 500); // GPS siempre activo
 
   // Intentar auto-reconectar a ELD previamente autorizado al abrir el app
   setTimeout(_autoReconnect, 1500);
@@ -28421,9 +28421,9 @@ window._hosAutoRecalc = false;
       if (!_shiftStart) _shiftStart = new Date();
       _save();
     },
-    // Llamado desde el bucle GPS cuando no hay ELD conectado
+    // Llamado desde el bucle GPS — siempre usa GPS del dispositivo para movimiento,
+    // incluso cuando el ELD está conectado (ELD solo se usa para identificación/logging)
     reportMoving: function(moving, speedMph) {
-      if (_connected) return; // ELD tiene prioridad cuando está conectado
       if (moving) _onEldMoving(speedMph || 0);
       else        _onEldStopped();
     }
