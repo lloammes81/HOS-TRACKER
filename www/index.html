@@ -14342,6 +14342,8 @@ function renderResults(hours, speed, depart) {
   _detectAndShowViolations(_dailyHrs, _weeklyHrs);
 
   // Geocodificar ciudades de descanso de forma asíncrona
+  _nextBreakCity = null;
+  _nextRestCity  = null;
   if (restStops.length && roadGeometry && roadGeometry.length > 1) {
     restStops.forEach((stop, i) => {
       setTimeout(() => {
@@ -14350,12 +14352,14 @@ function renderResults(hours, speed, depart) {
         _reverseGeocodeCity(pos[0], pos[1]).then(city => {
           const el = document.getElementById('schedCity' + stop.idx);
           if (el) { el.textContent = '📍 ' + city; el.classList.remove('loading'); el.classList.add('loaded'); }
+          const sType = schedule[stop.idx]?.type;
+          if (sType === 'break30' && !_nextBreakCity) _nextBreakCity = city;
+          if ((sType === 'rest' || sType === 'reset') && !_nextRestCity) _nextRestCity = city;
+          updateFmToDisplay();
         });
-      }, i * 1100); // 1.1s entre llamadas → respeta Nominatim rate-limit
-        setTimeout(updateFmToDisplay, (i * 1100) + 200);
+      }, i * 1100);
     });
   }
-  _schedCityCache = {};
   setTimeout(updateFmToDisplay, 100);
 }
 
@@ -15612,64 +15616,62 @@ function updateDashDestCard() {
 }
 
 // ── Route bar HASTA label: shows next mandatory stop city ──
+let _nextBreakCity = null;
+let _nextRestCity  = null;
+
 function updateFmToDisplay() {
   const toEl  = document.getElementById('fmTo');
   const lblEl = document.getElementById('fmToLbl');
   if (!toEl) return;
 
-  const breakDue  = use30min && !b30Complete && b30Warned30m;
+  const _b30due  = typeof use30min !== 'undefined' && use30min && typeof b30Complete !== 'undefined' && !b30Complete && typeof b30Warned30m !== 'undefined' && b30Warned30m;
+  const _b30brk  = typeof b30InBreak !== 'undefined' && b30InBreak && typeof b30Complete !== 'undefined' && !b30Complete;
   const hoursGone = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft <= 0;
   const hoursLow  = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft > 0 && _hosCurrentDriveLeft <= 2;
 
-  if (breakDue || (use30min && b30InBreak && !b30Complete)) {
+  if (_b30due || _b30brk) {
     if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
-    const city = _hosBreakStopName || _fetchNextStopFromSchedule('break30');
+    const city = _hosBreakStopName || _nextBreakCity;
     toEl.style.color = '#f59e0b';
     toEl.textContent = city || 'Próxima parada';
     return;
   }
   if (hoursGone || hoursLow) {
     if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
-    const city = _hosHoursStopName || _fetchNextStopFromSchedule('rest');
+    const city = _hosHoursStopName || _nextRestCity;
     toEl.style.color = '#818cf8';
     toEl.textContent = city || 'Busca área de descanso';
     return;
   }
-  const nextBreak = _fetchNextStopFromSchedule('break30');
-  if (nextBreak) {
-    if (lblEl) { lblEl.textContent = '☕ PRÓXIMA PAUSA'; lblEl.style.color = '#f59e0b'; }
+  if (_nextBreakCity) {
+    if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
     toEl.style.color = '#f59e0b';
-    toEl.textContent = nextBreak;
+    toEl.textContent = _nextBreakCity;
     return;
   }
-  const nextRest = _fetchNextStopFromSchedule('rest');
-  if (nextRest) {
-    if (lblEl) { lblEl.textContent = '😴 PRÓXIMO DESCANSO'; lblEl.style.color = '#818cf8'; }
+  if (_nextRestCity) {
+    if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
     toEl.style.color = '#818cf8';
-    toEl.textContent = nextRest;
+    toEl.textContent = _nextRestCity;
+    return;
+  }
+  const hasBreakInSched = Array.isArray(schedule) && schedule.some(s => s.type === 'break30');
+  const hasRestInSched  = Array.isArray(schedule) && schedule.some(s => s.type === 'rest' || s.type === 'reset');
+  if (hasBreakInSched) {
+    if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
+    toEl.style.color = '#f59e0b';
+    toEl.textContent = '…';
+    return;
+  }
+  if (hasRestInSched) {
+    if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
+    toEl.style.color = '#818cf8';
+    toEl.textContent = '…';
     return;
   }
   if (lblEl) { lblEl.textContent = 'HASTA'; lblEl.style.color = 'rgba(255,255,255,0.35)'; }
   toEl.style.color = '';
   toEl.textContent = destination ? destination.name.split(',')[0] : '--';
-}
-
-let _schedCityCache = {};
-function _fetchNextStopFromSchedule(type) {
-  if (!Array.isArray(schedule)) return null;
-  for (let i = 0; i < schedule.length; i++) {
-    const s = schedule[i];
-    if (s.type !== type) continue;
-    if (s.start && new Date(s.start) < new Date()) continue;
-    if (_schedCityCache[i]) return _schedCityCache[i];
-    const el = document.getElementById('schedCity' + i);
-    if (el && !el.classList.contains('loading')) {
-      const txt = el.textContent.replace('📍 ','').trim();
-      if (txt) { _schedCityCache[i] = txt; return txt; }
-    }
-    return null;
-  }
-  return null;
 }
 
 // ── Garmin-style nav card ──
