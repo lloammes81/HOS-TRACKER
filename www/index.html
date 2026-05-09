@@ -1660,7 +1660,7 @@
   #mapSpeedGroup {
     position: absolute;
     top: calc(70px + env(safe-area-inset-top, 0px));
-    right: calc(12px + env(safe-area-inset-right, 0px));
+    right: calc(10px + env(safe-area-inset-right, 0px));
     z-index: 650;
     display: flex;
     flex-direction: column;
@@ -2859,7 +2859,9 @@ body #mapSpeedGroup #sosFab {
 
 /* Speed sign group positioned top-right */
 #mapSpeedGroup{
-  top: calc(90px + env(safe-area-inset-top, 0px)) !important;
+  top: calc(70px + env(safe-area-inset-top, 0px)) !important;
+  right: calc(10px + env(safe-area-inset-right, 0px)) !important;
+  align-items: center !important;
 }
 #speedLimitWidget{
   top: calc(var(--header-pt) + 4px) !important;
@@ -7843,6 +7845,15 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
     <!-- SOS button below speed signs -->
     <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
+    <!-- Community reports button — moved here to keep right column aligned -->
+    <button id="mapSpeedCommBtn" onclick="openCommunityPanel()" title="Community Reports"
+      style="position:relative;width:44px;height:44px;border-radius:50%;border:none;
+             background:rgba(15,23,42,0.88);backdrop-filter:blur(8px);color:#fff;
+             font-size:20px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.4);
+             display:flex;align-items:center;justify-content:center;
+             -webkit-tap-highlight-color:transparent;">
+      👥<span class="comm-count-badge" id="commBadge2"></span>
+    </button>
   </div>
 
   <!-- COMMUNITY REPORT ALERT POPUP -->
@@ -7940,7 +7951,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
 
   <!-- RIGHT SIDE CONTROL COLUMN: Community Reports -->
-  <div id="mapRightControls">
+  <div id="mapRightControls" style="display:none!important">
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
   </div>
 
@@ -20073,14 +20084,16 @@ function upvoteReport(id, el) {
 }
 
 function updateCommBadge(count) {
-  const badge = document.getElementById('commBadge');
-  if (!badge) return;
-  if (count > 0) {
-    badge.textContent = count > 9 ? '9+' : count;
-    badge.style.display = 'block';
-  } else {
-    badge.style.display = 'none';
-  }
+  ['commBadge','commBadge2'].forEach(id => {
+    const badge = document.getElementById(id);
+    if (!badge) return;
+    if (count > 0) {
+      badge.textContent = count > 9 ? '9+' : count;
+      badge.style.display = 'block';
+    } else {
+      badge.style.display = 'none';
+    }
+  });
 }
 
 function formatReportAge(ts) {
