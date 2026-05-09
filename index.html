@@ -16242,9 +16242,9 @@ function fmStartTracking() {
 
     // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
-      // Dynamic zoom by speed: stationary → zoom in tight; >40 mph → zoom out
+      // Dynamic zoom: <20 mph or stopped → zoom 17 (tight); ≥20 mph → zoom 13 (wider)
       if (!fmUserZoomed) {
-        const targetZoom = !isMoving ? 17 : gpsSpeed > 40 ? 13 : 15;
+        const targetZoom = gpsSpeed < 20 ? 17 : 13;
         if (Math.abs(fmCurrentZoom - targetZoom) >= 1) {
           fmCurrentZoom = targetZoom;
         }
@@ -16771,7 +16771,7 @@ let _hosWarnExpiredFired = false;
 function _hosMinimapFollow(lat, lon) {
   if (!hosMinimapInst) return;
   // Dynamic zoom by speed — matches full map logic
-  const _miniTargetZoom = !fmVehicleMoving ? 17 : (fmCurrentSpeed > 40 ? 13 : 15);
+  const _miniTargetZoom = fmCurrentSpeed < 20 ? 17 : 13;
   hosMinimapInst.setView([lat, lon], _miniTargetZoom, { animate: false });
   const sz = hosMinimapInst.getSize();
   hosMinimapInst.panBy([0, -Math.round(sz.y * 0.28)], { animate: false });
