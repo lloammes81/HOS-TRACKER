@@ -6581,6 +6581,16 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="tpb-arrow">›</div>
       </button>
 
+      <!-- Legal / Citations Tracker -->
+      <button class="tool-page-btn" id="citationsToolBtn" onclick="openCitationsSheet()" style="--tclr:#dc2626;--tcbg:rgba(220,38,38,.1);--tcbdr:rgba(220,38,38,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#991b1b,#dc2626)">⚖️</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Legal / Citations</div>
+          <div class="tpb-sub">Track traffic citations, court dates, and case status</div>
+        </div>
+        <div class="tpb-arrow" id="citationsArrow">›</div>
+      </button>
+
     </div>
   </div>
 
@@ -27614,6 +27624,238 @@ window._hosAutoRecalc = false;
   btn.addEventListener('pointermove', function(e) { move(e.clientX, e.clientY); });
   btn.addEventListener('pointerup',   end);
   btn.addEventListener('pointercancel', end);
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     ⚖️  LEGAL / CITATIONS TRACKER
+══════════════════════════════════════════════════════════ -->
+<style>
+.cit-sheet {
+  position:fixed;inset:0;z-index:900;background:#0b1120;
+  display:none;flex-direction:column;overflow:hidden;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+}
+.cit-sheet.open { display:flex; }
+.cit-topbar {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);
+  background:rgba(11,17,32,.97);position:sticky;top:0;z-index:2;flex-shrink:0;
+}
+.cit-topbar-title { font-size:17px;font-weight:800;color:#f1f5f9;letter-spacing:.3px; }
+.cit-close {
+  background:rgba(255,255,255,.08);border:none;color:#f1f5f9;
+  font-size:20px;width:36px;height:36px;border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.cit-body { padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1; }
+.cit-alert-banner {
+  background:linear-gradient(135deg,rgba(220,38,38,.18),rgba(239,68,68,.10));
+  border:1.5px solid rgba(239,68,68,.5);border-radius:14px;padding:14px 16px;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.cit-alert-icon { font-size:24px;flex-shrink:0;margin-top:2px; }
+.cit-alert-text { flex:1; }
+.cit-alert-title { font-size:14px;font-weight:800;color:#fca5a5;margin-bottom:4px; }
+.cit-alert-body { font-size:12px;color:rgba(252,165,165,.75);line-height:1.5; }
+.cit-alert-zoom {
+  display:inline-block;margin-top:8px;padding:6px 14px;
+  background:rgba(239,68,68,.25);border:1px solid rgba(239,68,68,.5);
+  border-radius:8px;font-size:12px;font-weight:700;color:#fca5a5;
+  text-decoration:none;cursor:pointer;
+}
+.cit-section-label {
+  font-size:10px;font-weight:800;color:rgba(255,255,255,.35);
+  letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;
+}
+.cit-card {
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:14px 16px;transition:border-color .2s;margin-bottom:10px;
+}
+.cit-card.open-case { border-color:rgba(239,68,68,.35); }
+.cit-card.closed-case { border-color:rgba(16,185,129,.3);opacity:.75; }
+.cit-card-top { display:flex;align-items:center;justify-content:space-between;margin-bottom:10px; }
+.cit-case-num { font-size:12px;font-weight:800;color:rgba(255,255,255,.55);letter-spacing:.4px; }
+.cit-status-badge {
+  font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;
+  letter-spacing:.5px;text-transform:uppercase;
+}
+.cit-status-badge.pending   { background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3); }
+.cit-status-badge.contested { background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3); }
+.cit-status-badge.dismissed { background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3); }
+.cit-status-badge.hearing   { background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.4); }
+.cit-card-row { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px; }
+.cit-field { flex:1;min-width:110px; }
+.cit-field-label { font-size:9px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px; }
+.cit-field-value { font-size:13px;font-weight:600;color:#e2e8f0; }
+.cit-notes { margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07); }
+.cit-notes-area {
+  width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);border-radius:8px;
+  color:#e2e8f0;font-size:12px;padding:8px 10px;resize:none;
+  font-family:inherit;line-height:1.5;
+}
+.cit-notes-area::placeholder { color:rgba(255,255,255,.2); }
+.cit-card-actions { display:flex;gap:8px;margin-top:10px;flex-wrap:wrap; }
+.cit-act-btn {
+  flex:1;min-width:80px;padding:7px 10px;border-radius:8px;border:none;
+  font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.4px;text-transform:uppercase;
+}
+.cit-act-btn.dismiss { background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3); }
+.cit-act-btn.reopen  { background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3); }
+.cit-act-btn.save    { background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3); }
+.cit-add-form {
+  background:rgba(255,255,255,.03);border:1.5px dashed rgba(255,255,255,.12);
+  border-radius:14px;padding:14px;display:none;flex-direction:column;gap:10px;
+}
+.cit-add-form.open { display:flex; }
+.cit-add-row { display:flex;gap:8px; }
+.cit-add-inp {
+  flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  border-radius:8px;color:#f1f5f9;font-size:13px;padding:8px 10px;font-family:inherit;
+}
+.cit-add-inp::placeholder { color:rgba(255,255,255,.2); }
+.cit-add-btn {
+  padding:9px 18px;border-radius:8px;border:none;font-size:12px;font-weight:800;
+  cursor:pointer;letter-spacing:.5px;text-transform:uppercase;
+}
+.cit-add-btn.primary { background:rgba(220,38,38,.25);color:#fca5a5;border:1px solid rgba(220,38,38,.4); }
+.cit-add-btn.cancel  { background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1); }
+.cit-toggle-add {
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px;border-radius:10px;border:1.5px dashed rgba(220,38,38,.3);
+  background:transparent;color:rgba(220,38,38,.7);font-size:12px;font-weight:700;
+  cursor:pointer;letter-spacing:.4px;text-transform:uppercase;width:100%;
+}
+</style>
+
+<div class="cit-sheet" id="citSheet">
+  <div class="cit-topbar">
+    <div class="cit-topbar-title">⚖️ Legal / Citations</div>
+    <button class="cit-close" onclick="closeCitationsSheet()">✕</button>
+  </div>
+  <div class="cit-body" id="citBody">
+    <div class="cit-alert-banner" id="citHearingAlert" style="display:none">
+      <div class="cit-alert-icon">🚨</div>
+      <div class="cit-alert-text">
+        <div class="cit-alert-title">HEARING TODAY — 11:00 AM</div>
+        <div class="cit-alert-body">
+          Pre-Trial Hearing (Pro Se) via Zoom – Palm Beach County Court<br>
+          Meeting ID: <strong>964 4865 4396</strong> &nbsp;|&nbsp; Phone: 888-475-4499
+        </div>
+        <a class="cit-alert-zoom" href="https://zoom.us/join" target="_blank">Join Zoom →</a>
+      </div>
+    </div>
+    <div>
+      <div class="cit-section-label">Active Cases</div>
+      <div id="citCasesList"></div>
+    </div>
+    <button class="cit-toggle-add" onclick="toggleCitAddForm()">+ Add Citation</button>
+    <div class="cit-add-form" id="citAddForm">
+      <div class="cit-add-row">
+        <input class="cit-add-inp" id="citAddCase" placeholder="Case # (e.g. 50-2026-MO-000755)" />
+      </div>
+      <div class="cit-add-row">
+        <input class="cit-add-inp" id="citAddCitation" placeholder="Citation #" style="flex:.6" />
+        <input class="cit-add-inp" id="citAddDate" placeholder="Hearing Date" type="date" style="flex:.4" />
+      </div>
+      <div class="cit-add-row">
+        <input class="cit-add-inp" id="citAddDesc" placeholder="Description / offense" />
+      </div>
+      <div class="cit-add-row" style="justify-content:flex-end;gap:8px">
+        <button class="cit-add-btn cancel" onclick="toggleCitAddForm()">Cancel</button>
+        <button class="cit-add-btn primary" onclick="saveCitAddForm()">Save Case</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CIT_KEY = 'hos_citations_v1';
+const DEFAULT_CITATIONS = [
+  { id:'cit_750', caseNum:'50-2026-MO-000750-AXXX-MB', citation:'6013347', hearingDate:'2026-05-11', status:'hearing', desc:'PTHP – TR Pre Trial Hrg (Pro Se)', notes:'' },
+  { id:'cit_751', caseNum:'50-2026-MO-000751-AXXX-MB', citation:'6013380', hearingDate:'2026-05-11', status:'hearing', desc:'PTHP – TR Pre Trial Hrg (Pro Se)', notes:'' },
+  { id:'cit_752', caseNum:'50-2026-MO-000752-AXXX-MB', citation:'6013326', hearingDate:'2026-05-11', status:'hearing', desc:'PTHP – TR Pre Trial Hrg (Pro Se)', notes:'' },
+  { id:'cit_753', caseNum:'50-2026-MO-000753-AXXX-MB', citation:'6013345', hearingDate:'2026-05-11', status:'hearing', desc:'PTHP – TR Pre Trial Hrg (Pro Se)', notes:'' },
+  { id:'cit_754', caseNum:'50-2026-MO-000754-AXXX-MB', citation:'6013379', hearingDate:'2026-05-11', status:'hearing', desc:'PTHP – TR Pre Trial Hrg (Pro Se)', notes:'' },
+];
+
+function loadCitations() {
+  try { const r = localStorage.getItem(CIT_KEY); if (r) return JSON.parse(r); } catch(e){}
+  return DEFAULT_CITATIONS.map(c => ({ ...c }));
+}
+function saveCitations(list) {
+  try { localStorage.setItem(CIT_KEY, JSON.stringify(list)); } catch(e){}
+}
+function citStatusLabel(s) {
+  return { pending:'Pending', contested:'Contested', dismissed:'Dismissed', hearing:'Hearing Today' }[s] || s;
+}
+function renderCitations() {
+  const list = loadCitations();
+  const el = document.getElementById('citCasesList');
+  if (!list.length) { el.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;text-align:center;padding:20px">No citations tracked</div>'; return; }
+  el.innerHTML = list.map((c, idx) => `
+    <div class="cit-card ${c.status==='dismissed'?'closed-case':'open-case'}" id="citCard_${idx}">
+      <div class="cit-card-top">
+        <div class="cit-case-num">${c.caseNum}</div>
+        <span class="cit-status-badge ${c.status}">${citStatusLabel(c.status)}</span>
+      </div>
+      <div class="cit-card-row">
+        <div class="cit-field"><div class="cit-field-label">Citation #</div><div class="cit-field-value">${c.citation}</div></div>
+        <div class="cit-field"><div class="cit-field-label">Hearing Date</div><div class="cit-field-value">${c.hearingDate||'—'}</div></div>
+      </div>
+      <div class="cit-card-row">
+        <div class="cit-field"><div class="cit-field-label">Description</div><div class="cit-field-value" style="font-size:12px">${c.desc||'—'}</div></div>
+      </div>
+      <div class="cit-notes">
+        <div class="cit-field-label" style="margin-bottom:4px">Defense Notes</div>
+        <textarea class="cit-notes-area" rows="3" id="citNotes_${idx}" placeholder="Add notes, arguments, evidence…">${c.notes||''}</textarea>
+      </div>
+      <div class="cit-card-actions">
+        <button class="cit-act-btn save" onclick="citSaveNotes(${idx})">Save Notes</button>
+        ${c.status!=='dismissed'
+          ? `<button class="cit-act-btn dismiss" onclick="citSetStatus(${idx},'dismissed')">Mark Dismissed</button>`
+          : `<button class="cit-act-btn reopen" onclick="citSetStatus(${idx},'contested')">Reopen</button>`}
+      </div>
+    </div>`).join('');
+}
+function citSaveNotes(idx) {
+  const list = loadCitations(); list[idx].notes = document.getElementById('citNotes_'+idx).value; saveCitations(list);
+  const btn = document.querySelector('#citCard_'+idx+' .cit-act-btn.save');
+  if (btn) { btn.textContent='Saved ✓'; setTimeout(()=>{ btn.textContent='Save Notes'; },1500); }
+}
+function citSetStatus(idx, status) {
+  const list = loadCitations(); list[idx].status = status; saveCitations(list); renderCitations();
+}
+function toggleCitAddForm() { document.getElementById('citAddForm').classList.toggle('open'); }
+function saveCitAddForm() {
+  const caseNum=document.getElementById('citAddCase').value.trim();
+  if (!caseNum) return;
+  const list=loadCitations();
+  list.push({ id:'cit_'+Date.now(), caseNum, citation:document.getElementById('citAddCitation').value.trim(),
+    hearingDate:document.getElementById('citAddDate').value, status:'pending',
+    desc:document.getElementById('citAddDesc').value.trim(), notes:'' });
+  saveCitations(list);
+  ['citAddCase','citAddCitation','citAddDate','citAddDesc'].forEach(id=>{ document.getElementById(id).value=''; });
+  toggleCitAddForm(); renderCitations();
+}
+function openCitationsSheet() {
+  document.getElementById('citSheet').classList.add('open');
+  renderCitations();
+  const today=new Date().toISOString().slice(0,10);
+  const list=loadCitations();
+  const hasToday=list.some(c=>c.hearingDate===today && c.status!=='dismissed');
+  document.getElementById('citHearingAlert').style.display=hasToday?'flex':'none';
+}
+function closeCitationsSheet() { document.getElementById('citSheet').classList.remove('open'); }
+
+(function citBadgeCheck() {
+  const today=new Date().toISOString().slice(0,10);
+  const list=loadCitations();
+  const active=list.filter(c=>c.status!=='dismissed');
+  const hearingToday=active.some(c=>c.hearingDate===today);
+  const arrow=document.getElementById('citationsArrow');
+  if (arrow) arrow.textContent=hearingToday?'🔴':(active.length?active.length+'':'›');
 })();
 </script>
 
