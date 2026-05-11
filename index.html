@@ -3275,21 +3275,6 @@ body.dark #fullMap .leaflet-tile-pane {
     font-size:11px;text-align:left;color:#86efac;overflow-x:auto;
     max-width:100%;white-space:pre-wrap;word-break:break-all;
   }
-  .chat-fab{
-    position:fixed;bottom:calc(var(--tab-h) + 16px);right:16px;z-index:800;
-    width:50px;height:50px;border-radius:50%;border:none;
-    background:linear-gradient(135deg,var(--accent),#6d28d9);
-    color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 18px rgba(124,58,237,.5);
-    display:none;align-items:center;justify-content:center;
-    transition:transform .2s;
-  }
-  .chat-fab:active{transform:scale(.92);}
-  .chat-fab-badge{
-    position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;
-    border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:900;
-    display:flex;align-items:center;justify-content:center;
-    border:2px solid var(--bg);
-  }
   .chat-empty{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
     color:var(--muted);gap:8px;font-size:14px;
@@ -8070,6 +8055,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 #hncStop.hnc-scrolling { animation: hnc-marquee 7s ease-in-out infinite; }
 /* ── Menú lateral del HOS Dashboard — OCULTO (movido a pantalla principal) ── */
 #dashSideMenuToggle, #dashSideTabStack { display:none !important; }
+.dash-side-tab {
+  position:relative;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;padding:10px 8px;border:none;
+  background:rgba(255,255,255,.06);border-radius:14px;cursor:pointer;
+  touch-action:manipulation;width:100%;transition:background .15s;
+}
+.dash-side-tab:active { background:rgba(255,255,255,.12); }
 .dash-side-tab-badge {
   position:absolute;top:5px;left:5px;
   background:#ef4444;color:#fff;
@@ -10544,7 +10536,7 @@ function adjustHeight(delta) {
   localStorage.setItem('hos_trailer', trailerHeight);
   document.getElementById('bridgeDisplayVal').textContent = trailerHeight.toFixed(1);
   document.getElementById('trailerHeightInput').value = trailerHeight;
-  document.getElementById('bridgeStatusTxt').textContent = `Active · ${trailerHeight}ft trailer`;
+  const _bst = document.getElementById('bridgeStatusTxt'); if (_bst) _bst.textContent = `Active · ${trailerHeight}ft trailer`;
   checkBridges(); // recheck with new height
 }
 
@@ -11384,7 +11376,7 @@ function toggleSpeedLimit(btn) {
   document.getElementById('speedLimitStatusTxt').textContent =
     speedLimitActive ? 'Límite real de la vía actual' : 'Desactivado';
   if (!speedLimitActive) {
-    document.getElementById('speedLimitWidget').classList.remove('visible');
+    document.getElementById('speedLimitWidget')?.classList.remove('visible');
   }
 }
 
@@ -11556,9 +11548,9 @@ async function detectStateAndUpdateLimit(lat, lon) {
     if (speedLimitActive) {
       const limits = STATE_SPEED_LIMITS[code];
       if (limits) {
-        document.getElementById('slNum').textContent = limits.truck;
-        document.getElementById('slState').textContent = code;
-        document.getElementById('speedLimitWidget').classList.add('visible');
+        const _slNum = document.getElementById('slNum'); if (_slNum) _slNum.textContent = limits.truck;
+        const _slState = document.getElementById('slState'); if (_slState) _slState.textContent = code;
+        document.getElementById('speedLimitWidget')?.classList.add('visible');
         updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
       }
     }
@@ -11716,8 +11708,8 @@ function showPoliceAlert(gpsSpeed, limit) {
   if (policeAlertCooldown) return;
   policeAlertCooldown = true;
   const el = document.getElementById('policeAlert');
-  document.getElementById('paSpeedTxt').textContent  = `${Math.round(gpsSpeed)} mph`;
-  document.getElementById('paLimitTxt').textContent  = `Límite: ${limit} mph`;
+  const _paSpeed = document.getElementById('paSpeedTxt'); if (_paSpeed) _paSpeed.textContent = `${Math.round(gpsSpeed)} mph`;
+  const _paLimit = document.getElementById('paLimitTxt'); if (_paLimit) _paLimit.textContent = `Límite: ${limit} mph`;
   el.classList.add('show');
   vibrate([300,100,300,100,600]);
   // Auto-dismiss after 8 seconds
@@ -11917,7 +11909,7 @@ function initSosSettings() {
   if (sosContact.phone) document.getElementById('sosPhoneInput').value  = sosContact.phone;
   document.getElementById('sosToggle').classList.toggle('on', sosBtnActive);
   document.getElementById('speedLimitToggle')?.classList.toggle('on', speedLimitActive);
-  document.getElementById('fuelToggle').classList.toggle('on', fuelActive);
+  document.getElementById('fuelToggle')?.classList.toggle('on', fuelActive);
 }
 
 function triggerSOS() {
@@ -16164,7 +16156,7 @@ function fmStopTracking() {
   updateIncidentBadge();
   document.getElementById('sosFab').classList.remove('visible');
   document.getElementById('fuelWidget').classList.remove('visible');
-  document.getElementById('speedLimitWidget').classList.remove('visible');
+  document.getElementById('speedLimitWidget')?.classList.remove('visible');
   document.getElementById('speedToast').classList.remove('show');
   hideMapSpeedSign();
   fuelMarkers.forEach(m => { try { fmMapInst?.removeLayer(m); } catch {} });
@@ -17871,7 +17863,7 @@ async function loadAllPOIs(lat, lon) {
     loadFromWaypoints('parking'),
     loadTruckRestrictionsFullMap(filtered),
   ]);
-  renderCommunityReports();
+  renderCommunityMapMarkers();
 
   const restrictCount = fmPoiLayers.restrict.filter(l => l.getLatLngs).length;
   if (restrictCount > 0) {
@@ -18968,7 +18960,7 @@ function addReportMarker(report) {
   fmPoiLayers.reports.push(marker);
 }
 
-function renderCommunityReports() {
+function renderCommunityMapMarkers() {
   // Clear old report markers
   fmPoiLayers.reports.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
   fmPoiLayers.reports = [];
@@ -19009,7 +19001,7 @@ function confirmReport(reportId, isStillThere) {
       showToast('info','🗑️','Aviso eliminado','2 choferes confirmaron que ya no está.', 3000);
       communityReports = communityReports.filter(r => String(r.id) !== String(reportId));
       localStorage.setItem('hos_reports', JSON.stringify(communityReports));
-      renderCommunityReports();
+      renderCommunityMapMarkers();
       return;
     } else {
       showToast('warning','❌','Voto registrado',`${report.denials.length}/4 choferes dicen que ya no está.`, 2500);
@@ -19018,7 +19010,7 @@ function confirmReport(reportId, isStillThere) {
 
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
   // Refresh markers to update counts
-  renderCommunityReports();
+  renderCommunityMapMarkers();
   // Close popup
   if (fmMapInst) fmMapInst.closePopup();
 }
@@ -19725,6 +19717,7 @@ function refreshCommunityReports() {
   // Remove expired (>2h old) and re-render
   communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+  renderCommunityMapMarkers();
   renderCommunityReports();
   showToast('info','🔄','Reports Refreshed', communityReports.length + ' active reports in your area', 3000);
 }
@@ -20972,7 +20965,7 @@ function renderCommPage() {
   if (commFilterByRoute) {
     if (!roadGeometry || roadGeometry.length < 2) {
       list.innerHTML = '<div class="comm-no-route"><div class="comm-no-route-icon">🛣️</div><div class="comm-no-route-text">No active route.<br>Calculate a route first to filter reports.</div></div>';
-      document.getElementById('commPageCount').textContent = '0';
+      if (document.getElementById('commPageCount')) document.getElementById('commPageCount').textContent = '0';
       return;
     }
     reports = reports.filter(r => isReportOnRoute(r, 10));
@@ -20984,7 +20977,7 @@ function renderCommPage() {
   }
 
   // Update count
-  document.getElementById('commPageCount').textContent = reports.length;
+  if (document.getElementById('commPageCount')) document.getElementById('commPageCount').textContent = reports.length;
 
   const interstates = getRouteInterstates();
   const routeLabel  = interstates.length ? interstates.slice(0,3).join(' · ') : (roadGeometry ? 'Your route' : '');
