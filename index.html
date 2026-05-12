@@ -1042,32 +1042,25 @@
   .safety-toast {
     position: fixed; top: calc(14px + env(safe-area-inset-top,0px));
     left: 14px; right: 14px; z-index: 30000;
-    border-radius: 18px; padding: 16px 18px;
-    display: flex; align-items: flex-start; gap: 14px;
+    border-radius: 16px; padding: 14px 16px;
+    display: flex; align-items: flex-start; gap: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
     transform: translateY(-120px); opacity: 0;
     transition: transform .35s cubic-bezier(.16,1,.3,1), opacity .35s;
     pointer-events: all;
     max-width: 520px; margin: 0 auto;
-    background: #0d111c;
   }
   .safety-toast.show { transform: translateY(0); opacity: 1; }
-  .safety-toast.danger  { background: #0d111c; border: 2px solid #ef4444; box-shadow: 0 8px 40px rgba(239,68,68,.22); }
-  .safety-toast.warning { background: #0d111c; border: 2px solid #f59e0b; box-shadow: 0 8px 40px rgba(245,158,11,.22); }
-  .safety-toast.info    { background: #0d111c; border: 2px solid #3b82f6; box-shadow: 0 8px 40px rgba(59,130,246,.22); }
-  .toast-icon {
-    font-size: 24px; flex-shrink: 0; line-height: 1;
-    width: 48px; height: 48px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .safety-toast.danger  .toast-icon { background: rgba(239,68,68,.15); }
-  .safety-toast.warning .toast-icon { background: rgba(245,158,11,.15); }
-  .safety-toast.info    .toast-icon { background: rgba(59,130,246,.15); }
+  .safety-toast.danger  { background: #1a0505; border: 1.5px solid #ef4444; }
+  .safety-toast.warning { background: #1a1005; border: 1.5px solid #f59e0b; }
+  .safety-toast.info    { background: #05101a; border: 1.5px solid #3b82f6; }
+  .toast-icon { font-size: 28px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
   .toast-body { flex: 1; }
-  .toast-title { font-size: 17px; font-weight: 800; color: #fff; margin-bottom: 4px; letter-spacing: -.2px; line-height: 1.2; }
-  .toast-msg   { font-size: 14px; color: rgba(255,255,255,.7); line-height: 1.45; }
+  .toast-title { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 3px; }
+  .toast-msg   { font-size: 14px; color: rgba(255,255,255,.75); line-height: 1.4; }
   .toast-close {
-    width: 30px; height: 30px; border-radius: 50%; border: none;
-    background: rgba(255,255,255,.1); color: rgba(255,255,255,.55);
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,.12); color: #fff;
     font-size: 16px; cursor: pointer; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-family: "DM Sans",sans-serif;
@@ -1897,13 +1890,12 @@
     top: calc(var(--header-pt) + 80px);
     left: 50%; transform: translateX(-50%);
     z-index: 800;
-    background: #0d111c;
-    color: #fff; border-radius: 14px;
-    padding: 12px 22px;
+    background: #ef4444;
+    color: #fff; border-radius: 12px;
+    padding: 10px 20px;
     font-size: 14px; font-weight: 800;
     white-space: nowrap;
-    border: 2px solid #ef4444;
-    box-shadow: 0 8px 32px rgba(239,68,68,.28);
+    box-shadow: 0 4px 20px rgba(239,68,68,.5);
     display: none;
     animation: fadeIn .2s ease;
   }
@@ -3283,6 +3275,21 @@ body.dark #fullMap .leaflet-tile-pane {
     font-size:11px;text-align:left;color:#86efac;overflow-x:auto;
     max-width:100%;white-space:pre-wrap;word-break:break-all;
   }
+  .chat-fab{
+    position:fixed;bottom:calc(var(--tab-h) + 16px);right:16px;z-index:800;
+    width:50px;height:50px;border-radius:50%;border:none;
+    background:linear-gradient(135deg,var(--accent),#6d28d9);
+    color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 18px rgba(124,58,237,.5);
+    display:none;align-items:center;justify-content:center;
+    transition:transform .2s;
+  }
+  .chat-fab:active{transform:scale(.92);}
+  .chat-fab-badge{
+    position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;
+    border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid var(--bg);
+  }
   .chat-empty{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
     color:var(--muted);gap:8px;font-size:14px;
@@ -3993,12 +4000,12 @@ body.dark #fullMap .leaflet-tile-pane {
   .kpi-track {
     fill: none;
     stroke: rgba(0,0,0,0.12);
-    stroke-width: 3;
+    stroke-width: 5;
   }
   .kpi-arc {
     fill: none;
-    stroke: #10b981;
-    stroke-width: 3;
+    stroke: #1a1a1a;
+    stroke-width: 5;
     stroke-linecap: round;
     stroke-dasharray: 251.3;
     stroke-dashoffset: 0;
@@ -4781,11 +4788,11 @@ body.dark #fullMap .leaflet-tile-pane {
     background: linear-gradient(180deg, #ef4444, #dc2626);
     border-radius: 4px 0 0 4px;
   }
-  .comm-alert-icon { font-size: 22px; flex-shrink: 0; width: 44px; height: 44px; border-radius: 11px; background: rgba(239,68,68,.15); display: flex; align-items: center; justify-content: center; }
+  .comm-alert-icon { font-size: 22px; flex-shrink: 0; }
   .comm-alert-body { flex: 1; }
-  .comm-alert-title { font-size: 14px; font-weight: 800; color: #fca5a5; margin-bottom: 4px; letter-spacing: -.1px; }
-  .comm-alert-detail { font-size: 13px; color: rgba(255,255,255,.75); font-weight: 500; line-height: 1.5; }
-  .comm-alert-meta   { font-size: 11px; color: var(--muted); margin-top: 5px; font-weight: 600; }
+  .comm-alert-title { font-size: 13px; font-weight: 900; color: #ef4444; margin-bottom: 3px; }
+  .comm-alert-detail { font-size: 11px; color: var(--text); font-weight: 600; line-height: 1.5; }
+  .comm-alert-meta   { font-size: 10px; color: var(--muted); margin-top: 4px; font-weight: 600; }
   .comm-alert-dismiss {
     position: absolute; top: 10px; right: 12px;
     font-size: 16px; color: var(--muted); cursor: pointer;
@@ -5204,33 +5211,30 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     top: 50%;
     transform: translateY(-50%);
     z-index: 6502;
-    width: 28px;
-    height: 100px;
-    background: #b0b0b0;
-    border: none;
+    width: 16px;
+    height: 64px;
+    background: rgba(249,115,22,.32);
+    border: 1px solid rgba(249,115,22,.45);
+    border-right: none;
     border-radius: 8px 0 0 8px;
-    color: #222;
-    font-size: 11px;
-    font-weight: 700;
+    color: rgba(255,255,255,.85);
+    font-size: 13px;
+    font-weight: 900;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: -2px 0 8px rgba(0,0,0,.18);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     transition: right .28s cubic-bezier(.4,0,.2,1), background .15s;
     padding: 0;
     line-height: 1;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    letter-spacing: 1px;
-    text-transform: uppercase;
   }
   #sideMenuToggle.open {
     right: 48px;
     background: rgba(249,115,22,.5);
   }
-  #sideMenuToggle:hover { background: #c8c8c8; }
-  #sideMenuToggle:active { opacity: .75; }
+  #sideMenuToggle:active { opacity: .65; }
 
   #sideTabStack {
     position: fixed;
@@ -5403,6 +5407,338 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   #fullMapScreen:not([style*="display:none"]) ~ #sideMenuToggle,
   #fullMapScreen:not([style*="display: none"]) ~ #sideMenuToggle { display: none; }
 
+  /* Hide chatFab — replaced by side tab */
+  #chatFab { display: none !important; }
+
+     💬  CARRIERCHAT — channels + rooms + side drawer
+  ════════════════════════════════════════════════════════════ */
+
+  /* FAB */
+  #chatFab {
+    position: fixed;
+    bottom: calc(74px + env(safe-area-inset-bottom,0px) + 14px);
+    right: 16px;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+    color: #fff; font-size: 24px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 24px rgba(79,70,229,.55);
+    cursor: pointer; touch-action: manipulation;
+    z-index: 7000; border: none;
+    transition: transform .15s;
+  }
+  #chatFab:active { transform: scale(.9); }
+  #chatFabBadge {
+    position: absolute; top: -3px; right: -3px;
+    background: #ef4444; color: #fff;
+    font-size: 10px; font-weight: 900;
+    border-radius: 999px; padding: 2px 6px;
+    min-width: 16px; text-align: center; display: none;
+  }
+
+  /* Hamburger */
+  #drawerHamburger {
+    position: fixed;
+    top: calc(env(safe-area-inset-top,0px) + 12px);
+    left: 14px;
+    width: 42px; height: 42px; border-radius: 12px;
+    background: rgba(20,20,40,.82);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.12);
+    color: #fff; font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; touch-action: manipulation;
+    z-index: 7000; transition: transform .12s;
+  }
+  #drawerHamburger:active { transform: scale(.9); }
+
+  /* ── SIDE DRAWER ─────────────────────────────────────────── */
+  #drawerBackdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 11000; display: none;
+  }
+  #drawerBackdrop.open { display: block; animation: tcFadeIn .22s ease; }
+  #sideDrawer {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: min(300px, 82vw);
+    background: #1a1b2e;
+    z-index: 11001;
+    display: flex; flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform .32s cubic-bezier(.16,1,.3,1);
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(env(safe-area-inset-bottom,0px) + 24px);
+    scrollbar-width: none;
+  }
+  #sideDrawer::-webkit-scrollbar { display: none; }
+  #sideDrawer.open { transform: translateX(0); }
+  .drawer-profile {
+    padding: calc(env(safe-area-inset-top,0px) + 20px) 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .drawer-profile-row { display: flex; align-items: center; gap: 14px; }
+  .drawer-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg,#7c3aed,#6d28d9);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 900; color: #fff; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,.15);
+  }
+  .drawer-profile-name { font-size: 17px; font-weight: 800; color: #fff; }
+  .drawer-online-status {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: #10b981; margin-top: 3px;
+  }
+  .drawer-online-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,.25);
+  }
+  .drawer-section { padding: 8px 0; }
+  .drawer-section-title {
+    font-size: 10px; font-weight: 800; color: rgba(255,255,255,.3);
+    text-transform: uppercase; letter-spacing: .8px;
+    padding: 8px 20px 4px;
+  }
+  .drawer-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 20px; cursor: pointer; touch-action: manipulation;
+    transition: background .15s;
+  }
+  .drawer-item:active { background: rgba(255,255,255,.07); }
+  .drawer-item-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .drawer-item-name { font-size: 15px; font-weight: 700; color: #fff; }
+  .drawer-divider { height: 1px; background: rgba(255,255,255,.07); margin: 4px 0; }
+
+  /* ── CHAT FULL-SCREEN OVERLAY ────────────────────────────── */
+  #chatOverlay {
+    position: fixed; inset: 0;
+    z-index: 26000; background: #12131e;
+    display: none; flex-direction: column; overflow: hidden;
+  }
+  #chatOverlay.open { display: flex; animation: tcFadeIn .18s ease; }
+
+  /* Channels list */
+  #chatChannelsList {
+    flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  }
+  .cc-header {
+    padding: calc(env(safe-area-inset-top,0px) + 22px) 20px 10px;
+    flex-shrink: 0;
+  }
+  .cc-header-top {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cc-title {
+    font-size: 34px; font-weight: 900; color: #fff; letter-spacing: -.5px;
+  }
+  .cc-close-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,.1); border: none;
+    color: #fff; font-size: 22px; font-weight: 300;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .cc-divider { height: 1px; background: rgba(255,255,255,.1); margin-top: 10px; }
+  .cc-channels-scroll {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .cc-channels-scroll::-webkit-scrollbar { display: none; }
+  .cc-channel-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px; cursor: pointer; touch-action: manipulation;
+    transition: background .15s;
+  }
+  .cc-channel-item:active { background: rgba(255,255,255,.06); }
+  .cc-channel-item + .cc-channel-item { border-top: 1px solid rgba(255,255,255,.05); }
+  .cc-channel-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+  }
+  .cc-channel-info { flex: 1; min-width: 0; }
+  .cc-channel-name { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+  .cc-channel-preview {
+    font-size: 13px; color: rgba(255,255,255,.45);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cc-channel-right {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0;
+  }
+  .cc-channel-time { font-size: 12px; color: rgba(255,255,255,.35); font-weight: 600; }
+  .cc-channel-badge {
+    background: #4f46e5; color: #fff;
+    font-size: 11px; font-weight: 900;
+    border-radius: 999px; padding: 2px 8px;
+    min-width: 22px; text-align: center;
+  }
+
+  /* Chat room */
+  #chatRoom {
+    flex: 1; display: none; flex-direction: column;
+    background: #0b141a;
+    overflow: hidden;
+  }
+  #chatRoom.active { display: flex; }
+  .room-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: calc(env(safe-area-inset-top,0px) + 12px) 12px 12px;
+    background: #1f2c34;
+    border-bottom: 1px solid rgba(255,255,255,.06); flex-shrink: 0;
+  }
+  .room-back-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: transparent; border: none;
+    color: #aebac1; font-size: 26px; font-weight: 300; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; touch-action: manipulation; flex-shrink: 0;
+    padding: 0;
+  }
+  .room-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  }
+  .room-header-info { flex: 1; min-width: 0; }
+  .room-title {
+    font-size: 16px; font-weight: 700; color: #e9edef;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .room-subtitle {
+    font-size: 12px; color: #8696a0; margin-top: 1px;
+  }
+  #roomMessages {
+    flex: 1; overflow-y: auto;
+    padding: 10px 0 6px;
+    display: flex; flex-direction: column; gap: 2px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    background: #0b141a;
+  }
+  #roomMessages::-webkit-scrollbar { display: none; }
+
+  /* WhatsApp-style message row */
+  .room-msg {
+    display: flex; align-items: flex-end; gap: 6px;
+    padding: 1px 8px;
+    animation: commPop .25s cubic-bezier(.16,1,.3,1);
+  }
+  .room-msg.own { flex-direction: row-reverse; }
+  .room-msg.own .room-avatar { display: none; }
+
+  /* Avatar circle — shows photo or emoji */
+  .room-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    flex-shrink: 0; align-self: flex-end;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; overflow: hidden;
+    border: 2px solid rgba(255,255,255,.1);
+  }
+
+  /* Bubble wrapper */
+  .room-bubble-wrap {
+    max-width: 75%; display: flex; flex-direction: column;
+  }
+
+  /* Sender name (only for others) */
+  .room-bubble-name {
+    font-size: 12px; font-weight: 700;
+    margin-bottom: 2px; padding-left: 10px;
+    /* color set inline via nameColor() */
+  }
+  .room-msg.own .room-bubble-name { display: none; }
+
+  /* Bubble body */
+  .room-bubble {
+    position: relative;
+    padding: 7px 12px 20px 10px;
+    border-radius: 0px 8px 8px 8px;   /* received: flat top-left */
+    background: #202c33;
+    color: #e9edef; font-size: 14.5px;
+    line-height: 1.45; word-break: break-word;
+    box-shadow: 0 1px 2px rgba(0,0,0,.35);
+  }
+  /* tail for received */
+  .room-bubble::before {
+    content: '';
+    position: absolute; left: -7px; top: 0px;
+    border-width: 0 8px 8px 0;
+    border-style: solid;
+    border-color: transparent #202c33 transparent transparent;
+  }
+
+  /* Own message bubble */
+  .room-msg.own .room-bubble {
+    border-radius: 8px 0px 8px 8px;   /* flat top-right */
+    background: #005c4b;
+  }
+  /* tail for sent */
+  .room-msg.own .room-bubble::before {
+    left: auto; right: -7px; top: 0px;
+    border-width: 0 0 8px 8px;
+    border-color: transparent transparent transparent #005c4b;
+  }
+
+  /* Timestamp inside bubble */
+  .room-bubble-time {
+    font-size: 10px; color: rgba(255,255,255,.4);
+    position: absolute; bottom: 4px; right: 8px;
+    white-space: nowrap;
+  }
+  .room-empty {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px;
+  }
+  .room-empty-icon { font-size: 44px; opacity: .45; }
+  .room-empty-text { font-size: 13px; color: rgba(255,255,255,.35); font-weight: 600; }
+  .room-quick-alerts {
+    display: flex; gap: 6px; padding: 8px 10px 4px;
+    background: #1f2c34; overflow-x: auto; flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .room-quick-alerts::-webkit-scrollbar { display: none; }
+  .rqa-btn {
+    white-space: nowrap; border: none; border-radius: 16px;
+    padding: 6px 12px; font-size: 13px; font-weight: 600;
+    background: #2a3942; color: #aebac1; cursor: pointer;
+    touch-action: manipulation; flex-shrink: 0;
+    transition: background .15s, color .15s;
+  }
+  .rqa-btn:active { background: #00a884; color: #fff; }
+  .rqa-btn.rqa-alert { background: rgba(239,68,68,.15); color: #f87171; }
+  .rqa-btn.rqa-alert:active { background: #ef4444; color: #fff; }
+  .room-input-row {
+    display: flex; gap: 8px; align-items: flex-end;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom,0px));
+    background: #1f2c34; flex-shrink: 0;
+  }
+  #chatInput {
+    flex: 1;
+    background: #2a3942;
+    border: none;
+    border-radius: 22px; padding: 13px 18px;
+    font-size: 16px; color: #e9edef;
+    font-family: 'DM Sans', sans-serif;
+    resize: none; max-height: 120px; min-height: 48px;
+    -webkit-appearance: none; outline: none; line-height: 1.4;
+  }
+  #chatInput::placeholder { color: rgba(233,237,239,.35); }
+  #chatSendBtn {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #00a884; border: none; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; cursor: pointer; touch-action: manipulation;
+    flex-shrink: 0; transition: transform .12s, opacity .12s;
+  }
+  #chatSendBtn:active { transform: scale(.9); }
+  #chatSendBtn:disabled { opacity: .4; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <!-- Firebase SDK (Driver Chat) -->
@@ -5426,10 +5762,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     const { initializeApp }      = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
     const { getDatabase, ref, push, query, orderByChild, limitToLast, onValue, serverTimestamp }
                                   = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
-    const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
     const app = initializeApp(FIREBASE_CONFIG);
     const db  = getDatabase(app);
-    try { await signInAnonymously(getAuth(app)); } catch(e) { console.warn('[Firebase] Anonymous auth failed:', e.code); }
 
     // Expose to global scope for the chat functions
     window._chatDB              = db;
@@ -5547,6 +5881,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <span id="tabLblSettings">Settings</span>
     </button>
   </div>
+
+  <!-- FLOATING CHAT BUTTON (hidden — replaced by side tab) -->
+  <button id="chatFab" onclick="openChatChannel('general')" aria-label="Driver Chat" style="display:none">
+    💬<span id="chatFabBadge"></span>
+  </button>
 
   <!-- COMMUNITY QUICK PANEL OVERLAY -->
   <div id="commQuickOverlay" onclick="closeCommQuickPanel()"></div>
@@ -6589,16 +6928,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="tpb-arrow">›</div>
       </button>
 
-      <!-- Legal / Citations Tracker -->
-      <button class="tool-page-btn" id="citationsToolBtn" onclick="openCitationsSheet()" style="--tclr:#dc2626;--tcbg:rgba(220,38,38,.1);--tcbdr:rgba(220,38,38,.3)">
-        <div class="tpb-icon" style="background:linear-gradient(135deg,#991b1b,#dc2626)">⚖️</div>
-        <div class="tpb-info">
-          <div class="tpb-title">Legal / Citations</div>
-          <div class="tpb-sub">Track traffic citations, court dates, and case status</div>
-        </div>
-        <div class="tpb-arrow" id="citationsArrow">›</div>
-      </button>
-
     </div>
   </div>
 
@@ -6626,17 +6955,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 .restr-row:last-child { margin-bottom:0; }
 .restr-label { font-size:13px;color:rgba(255,255,255,.7);font-weight:600;flex:1; }
 .restr-input { background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#f1f5f9;font-size:14px;font-weight:700;padding:8px 10px;width:90px;text-align:center; }
-.restr-alert-item { display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:14px;margin-bottom:8px; }
+.restr-alert-item { display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:10px;margin-bottom:8px; }
 .restr-alert-item:last-child { margin-bottom:0; }
-.restr-alert-item.warn   { background:#0d111c;border:1.5px solid rgba(249,115,22,.6);box-shadow:0 4px 20px rgba(249,115,22,.12); }
-.restr-alert-item.danger { background:#0d111c;border:1.5px solid rgba(239,68,68,.6);box-shadow:0 4px 20px rgba(239,68,68,.12); }
-.restr-alert-item.ok     { background:#0d111c;border:1.5px solid rgba(16,185,129,.5);box-shadow:0 4px 20px rgba(16,185,129,.1); }
-.restr-alert-ico { font-size:22px;flex-shrink:0;margin-top:1px;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center; }
-.restr-alert-item.warn   .restr-alert-ico { background:rgba(249,115,22,.15); }
-.restr-alert-item.danger .restr-alert-ico { background:rgba(239,68,68,.15); }
-.restr-alert-item.ok     .restr-alert-ico { background:rgba(16,185,129,.12); }
-.restr-alert-title { font-size:14px;font-weight:800;color:#f1f5f9;line-height:1.2; }
-.restr-alert-sub { font-size:12px;color:rgba(255,255,255,.5);margin-top:3px;line-height:1.4; }
+.restr-alert-item.warn { background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3); }
+.restr-alert-item.danger { background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3); }
+.restr-alert-item.ok { background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2); }
+.restr-alert-ico { font-size:22px;flex-shrink:0;margin-top:1px; }
+.restr-alert-title { font-size:13px;font-weight:800;color:#f1f5f9; }
+.restr-alert-sub { font-size:11px;color:rgba(255,255,255,.5);margin-top:2px; }
 .restr-toggle-row { display:flex;align-items:center;justify-content:space-between;padding:10px 0; }
 .restr-toggle { position:relative;width:46px;height:26px; }
 .restr-toggle input { opacity:0;width:0;height:0; }
@@ -7045,6 +7371,132 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </div>
 
 <!-- ============================================================
+     💬  CARRIERCHAT — FAB + Drawer + Channels + Room
+     ============================================================ -->
+
+<!-- Hamburger (side drawer) -->
+<button id="drawerHamburger" onclick="openDrawer()" aria-label="Menú" style="display:none">☰</button>
+
+<!-- Drawer backdrop -->
+<div id="drawerBackdrop" onclick="closeDrawer()"></div>
+
+<!-- Side Drawer -->
+<div id="sideDrawer">
+  <div class="drawer-profile">
+    <div class="drawer-profile-row">
+      <div class="drawer-avatar" id="drawerAvatar">👤</div>
+      <div>
+        <div class="drawer-profile-name" id="drawerName">Conductor</div>
+        <div class="drawer-online-status">
+          <div class="drawer-online-dot"></div>Online
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-section">
+    <div class="drawer-item" onclick="switchTab('plan');closeDrawer()">
+      <div class="drawer-item-icon" style="background:rgba(99,102,241,.2)">🗺️</div>
+      <div class="drawer-item-name">Dashboard</div>
+    </div>
+    <div class="drawer-item" onclick="openProfileFromDrawer();closeDrawer()">
+      <div class="drawer-item-icon" style="background:rgba(16,185,129,.2)">👤</div>
+      <div class="drawer-item-name">My Profile</div>
+    </div>
+  </div>
+
+  <div class="drawer-divider"></div>
+
+  <div class="drawer-section">
+    <div class="drawer-section-title">Truck Services</div>
+    <div class="drawer-item" onclick="openChatChannel('weighstation');closeDrawer()">
+      <div class="drawer-item-icon" style="background:rgba(234,88,12,.2)">🚛</div>
+      <div class="drawer-item-name">DOT Weigh Stations</div>
+    </div>
+    <div class="drawer-item" onclick="openChatChannel('mechanics');closeDrawer()">
+      <div class="drawer-item-icon" style="background:rgba(124,58,237,.2)">🔧</div>
+      <div class="drawer-item-name">Mechanics</div>
+    </div>
+    <div class="drawer-item" onclick="openChatChannel('parts');closeDrawer()">
+      <div class="drawer-item-icon" style="background:rgba(59,130,246,.2)">⚙️</div>
+      <div class="drawer-item-name">Parts</div>
+    </div>
+    <div class="drawer-item" onclick="openChatChannel('tires');closeDrawer()">
+      <div class="drawer-item-icon" style="background:rgba(139,92,246,.2)">🔄</div>
+      <div class="drawer-item-name">Tires</div>
+    </div>
+    <div class="drawer-item" onclick="openChatChannel('truckwash');closeDrawer()">
+      <div class="drawer-item-icon" style="background:rgba(14,165,233,.2)">🚿</div>
+      <div class="drawer-item-name">Truck Wash</div>
+    </div>
+    <div class="drawer-item" onclick="openChatChannel('restarea');closeDrawer()">
+      <div class="drawer-item-icon" style="background:rgba(99,102,241,.2)">🛌</div>
+      <div class="drawer-item-name">Rest Area</div>
+    </div>
+    <div class="drawer-item" onclick="openChatChannel('parking');closeDrawer()">
+      <div class="drawer-item-icon" style="background:rgba(59,130,246,.2)">🅿️</div>
+      <div class="drawer-item-name">Parking paid/free</div>
+    </div>
+    <div class="drawer-item" onclick="openChatChannel('towing');closeDrawer()">
+      <div class="drawer-item-icon" style="background:rgba(234,88,12,.2)">🏗️</div>
+      <div class="drawer-item-name">Towing / Grúa</div>
+    </div>
+  </div>
+</div>
+
+<!-- Chat full-screen overlay -->
+<div id="chatOverlay">
+
+  <!-- View 1: Channels list -->
+  <div id="chatChannelsList">
+    <div class="cc-header">
+      <div class="cc-header-top">
+        <div class="cc-title">CarrierChat</div>
+        <button class="cc-close-btn" onclick="closeChat()">×</button>
+      </div>
+      <div class="cc-divider"></div>
+    </div>
+    <div class="cc-channels-scroll" id="ccChannelsList"></div>
+  </div>
+
+  <!-- View 2: Chat room -->
+  <div id="chatRoom">
+    <div class="room-header">
+      <button class="room-back-btn" onclick="backToChannels()">‹</button>
+      <div class="room-icon" id="roomIcon">💬</div>
+      <div class="room-header-info">
+        <div class="room-title" id="roomTitle">General</div>
+        <div class="room-subtitle" id="roomSubtitle">Canal de truckers</div>
+      </div>
+    </div>
+    <div id="roomMessages">
+      <div class="room-empty" id="roomEmpty">
+        <div class="room-empty-icon">💬</div>
+        <div class="room-empty-text">No messages yet</div>
+      </div>
+    </div>
+    <div class="room-quick-alerts" id="roomQuickAlerts">
+      <button class="rqa-btn" onclick="sendQuickAlert('🚔 Policía en área — precaución')">🚔 Policía</button>
+      <button class="rqa-btn" onclick="sendQuickAlert('📋 Inspección DOT activa — adelante')">📋 DOT</button>
+      <button class="rqa-btn" onclick="sendQuickAlert('🔍 Inspección de vehículo en progreso')">🔍 Inspección</button>
+      <button class="rqa-btn rqa-alert" onclick="sendQuickAlert('🚨 Accidente en la vía — tener cuidado')">🚨 Accidente</button>
+    </div>
+    <div class="room-input-row">
+      <textarea
+        id="chatInput"
+        placeholder="Write a message..."
+        maxlength="300"
+        rows="1"
+        onkeydown="handleChatKey(event)"
+        oninput="autoresizeChatInput(this)"
+      ></textarea>
+      <button id="chatSendBtn" onclick="sendChatMessage()" disabled>➤</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================
      FULLSCREEN MAP VIEW  (Google Maps style)
      ============================================================ -->
 
@@ -7375,7 +7827,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </div>
 
 <!-- ══ SIDE TAB MENU (main screen) ══ -->
-<button id="sideMenuToggle" onclick="toggleSideTabMenu()" aria-label="Menú lateral">Menú</button>
+<button id="sideMenuToggle" onclick="toggleSideTabMenu()" aria-label="Menú lateral">‹</button>
 <div id="sideTabStack">
   <button class="side-tab-btn" onclick="closeSideTabMenu();openDotPanel()">
     <span class="side-tab-icon">📋</span>
@@ -7385,6 +7837,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <span class="side-tab-badge" id="sideTabBadge"></span>
     <span class="side-tab-icon">👥</span>
     <span class="side-tab-label">Comunidad</span>
+  </button>
+  <button class="side-tab-btn" onclick="closeSideTabMenu();openChatChannel('general')">
+    <span class="side-tab-icon">💬</span>
+    <span class="side-tab-label">Live Chat</span>
   </button>
 </div>
 
@@ -7860,9 +8316,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
       <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
         <svg viewBox="0 0 90 90" style="width:100%;height:100%;position:absolute;inset:0;">
-          <circle cx="45" cy="45" r="36" fill="url(#grayGrad1)" stroke="rgba(0,0,0,0.10)" stroke-width="4"/>
+          <circle cx="45" cy="45" r="36" fill="url(#grayGrad1)" stroke="rgba(0,0,0,0.10)" stroke-width="7"/>
           <defs><radialGradient id="grayGrad1" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
-          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#1a1a1a" stroke-width="7" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;">
           <div id="dash14hTime" style="font-family:'Share Tech Mono',monospace;font-size:12px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">--:--</div>
@@ -7882,15 +8338,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <defs><radialGradient id="grayGrad2" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
           <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
           <circle cx="130" cy="130" r="99" fill="url(#grayGrad2)"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(0,0,0,0.10)" stroke-width="9" id="dashRingTrack"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="#10b981" stroke-width="9" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(0,0,0,0.10)" stroke-width="16" id="dashRingTrack"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="#1a1a1a" stroke-width="16" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;">
           <div id="dashHosTime" style="font-family:'Share Tech Mono',monospace;font-size:40px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">11h 0m</div>
           <div id="dashHosLabel" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,0,0,0.45);text-align:center;margin-top:7px;line-height:1.4;max-width:130px;letter-spacing:0.5px;">de 11h límite</div>
-        </div>
-        <div style="position:absolute;bottom:32px;left:0;right:0;display:flex;justify-content:center;pointer-events:none;">
-          <div id="dashSecondsClock" style="font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:900;color:#10b981;letter-spacing:4px;text-shadow:0 0 8px rgba(16,185,129,0.7);">00</div>
+          <div id="dashSecondsClock" style="font-family:'Share Tech Mono',monospace;font-size:28px;font-weight:900;color:#0a0a0a;letter-spacing:5px;text-shadow:none;margin-top:14px;">00</div>
         </div>
       </div>
       <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">DISPONIBLES</div>
@@ -7901,8 +8355,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
         <svg viewBox="0 0 94 94" style="width:100%;height:100%;position:absolute;inset:0;">
           <defs><radialGradient id="grayGrad3" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
-          <circle cx="47" cy="47" r="40" fill="url(#grayGrad3)" stroke="rgba(0,0,0,0.10)" stroke-width="4"/>
-          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <circle cx="47" cy="47" r="40" fill="url(#grayGrad3)" stroke="rgba(0,0,0,0.10)" stroke-width="7"/>
+          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#1a1a1a" stroke-width="7" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
           <div id="dashWeekHours" style="font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">70H</div>
@@ -8079,13 +8533,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 #hncStop.hnc-scrolling { animation: hnc-marquee 7s ease-in-out infinite; }
 /* ── Menú lateral del HOS Dashboard — OCULTO (movido a pantalla principal) ── */
 #dashSideMenuToggle, #dashSideTabStack { display:none !important; }
-.dash-side-tab {
-  position:relative;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:3px;padding:10px 8px;border:none;
-  background:rgba(255,255,255,.06);border-radius:14px;cursor:pointer;
-  touch-action:manipulation;width:100%;transition:background .15s;
-}
-.dash-side-tab:active { background:rgba(255,255,255,.12); }
 .dash-side-tab-badge {
   position:absolute;top:5px;left:5px;
   background:#ef4444;color:#fff;
@@ -8335,10 +8782,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 /* ── DOT News Cards ───────────────────────────────────── */
 .dot-news-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-left:3px solid #f97316;border-radius:14px;padding:12px 14px;margin-bottom:10px}
-.dot-news-tag{display:inline-block;font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
-.dot-news-title{font-size:16px;font-weight:800;color:#f1f5f9;line-height:1.4;margin-bottom:6px}
-.dot-news-body{font-size:14px;color:#94a3b8;line-height:1.6;margin-bottom:8px}
-.dot-news-meta{font-size:12px;color:#475569;font-weight:600}
+.dot-news-tag{display:inline-block;font-size:9px;font-weight:800;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.dot-news-title{font-size:13px;font-weight:800;color:#f1f5f9;line-height:1.4;margin-bottom:6px}
+.dot-news-body{font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:8px}
+.dot-news-meta{font-size:10px;color:#475569;font-weight:600}
 
 /* ── HOS Input Popups ─────────────────────────────────── */
 .hos-popup-overlay{display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.78);align-items:center;justify-content:center;padding:20px}
@@ -9371,7 +9818,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect, remove, get, orderByChild, endAt }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   /* ─── FIREBASE CONFIG ─────────────────────────────────────── */
   const firebaseConfig = {
@@ -9392,7 +9838,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   try {
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     db = getDatabase(app);
-    try { await signInAnonymously(getAuth(app)); } catch(ae) { console.warn('[Chat] Anonymous auth failed:', ae.code); }
     messagesRef = ref(db, 'chat/messages');
     connectedRef = ref(db, '.info/connected');
     firebaseReady = true;
@@ -10560,7 +11005,7 @@ function adjustHeight(delta) {
   localStorage.setItem('hos_trailer', trailerHeight);
   document.getElementById('bridgeDisplayVal').textContent = trailerHeight.toFixed(1);
   document.getElementById('trailerHeightInput').value = trailerHeight;
-  const _bst = document.getElementById('bridgeStatusTxt'); if (_bst) _bst.textContent = `Active · ${trailerHeight}ft trailer`;
+  document.getElementById('bridgeStatusTxt').textContent = `Active · ${trailerHeight}ft trailer`;
   checkBridges(); // recheck with new height
 }
 
@@ -10613,7 +11058,7 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
     const h = Math.floor(driveLeft), m = Math.round((driveLeft - h) * 60);
     valD.textContent = h > 0 ? `${h}H` : `${m}M`;
-    const col = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+    const col = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#1a1a1a';
     arcD.style.stroke = col; arcD.style.strokeDashoffset = C * (1 - pct);
     valD.style.color = col;
   }
@@ -10623,7 +11068,7 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     const pct = Math.max(0, Math.min(1, cycleLeft / Math.max(1, cycleMax)));
     const h = Math.floor(cycleLeft);
     valC.textContent = `${h}H`;
-    const col = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#10b981';
+    const col = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#1a1a1a';
     arcC.style.stroke = col; arcC.style.strokeDashoffset = C * (1 - pct);
     valC.style.color = col;
   }
@@ -11400,7 +11845,7 @@ function toggleSpeedLimit(btn) {
   document.getElementById('speedLimitStatusTxt').textContent =
     speedLimitActive ? 'Límite real de la vía actual' : 'Desactivado';
   if (!speedLimitActive) {
-    document.getElementById('speedLimitWidget')?.classList.remove('visible');
+    document.getElementById('speedLimitWidget').classList.remove('visible');
   }
 }
 
@@ -11572,9 +12017,9 @@ async function detectStateAndUpdateLimit(lat, lon) {
     if (speedLimitActive) {
       const limits = STATE_SPEED_LIMITS[code];
       if (limits) {
-        const _slNum = document.getElementById('slNum'); if (_slNum) _slNum.textContent = limits.truck;
-        const _slState = document.getElementById('slState'); if (_slState) _slState.textContent = code;
-        document.getElementById('speedLimitWidget')?.classList.add('visible');
+        document.getElementById('slNum').textContent = limits.truck;
+        document.getElementById('slState').textContent = code;
+        document.getElementById('speedLimitWidget').classList.add('visible');
         updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
       }
     }
@@ -11732,8 +12177,8 @@ function showPoliceAlert(gpsSpeed, limit) {
   if (policeAlertCooldown) return;
   policeAlertCooldown = true;
   const el = document.getElementById('policeAlert');
-  const _paSpeed = document.getElementById('paSpeedTxt'); if (_paSpeed) _paSpeed.textContent = `${Math.round(gpsSpeed)} mph`;
-  const _paLimit = document.getElementById('paLimitTxt'); if (_paLimit) _paLimit.textContent = `Límite: ${limit} mph`;
+  document.getElementById('paSpeedTxt').textContent  = `${Math.round(gpsSpeed)} mph`;
+  document.getElementById('paLimitTxt').textContent  = `Límite: ${limit} mph`;
   el.classList.add('show');
   vibrate([300,100,300,100,600]);
   // Auto-dismiss after 8 seconds
@@ -11933,7 +12378,7 @@ function initSosSettings() {
   if (sosContact.phone) document.getElementById('sosPhoneInput').value  = sosContact.phone;
   document.getElementById('sosToggle').classList.toggle('on', sosBtnActive);
   document.getElementById('speedLimitToggle')?.classList.toggle('on', speedLimitActive);
-  document.getElementById('fuelToggle')?.classList.toggle('on', fuelActive);
+  document.getElementById('fuelToggle').classList.toggle('on', fuelActive);
 }
 
 function triggerSOS() {
@@ -15164,20 +15609,6 @@ function updateDashDestCard() {
   nameEl.textContent = destination.name.split(',').slice(0,2).join(',').trim();
 
   if (arrivalTime instanceof Date) {
-    // Recalculate if arrival date is in the past (stale from a previous session)
-    if (arrivalTime < new Date() && typeof calculateSchedule === 'function') {
-      try {
-        const _rem = parseFloat(document.getElementById('dashRouteRemaining')?.textContent
-                     || document.getElementById('fmRem')?.textContent || '0');
-        const _spd = parseFloat(document.getElementById('speedInput')?.value) || 55;
-        const _dMax = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11);
-        const _drLeft = window._hosTracker ? Math.max(0, window._hosTracker.driveLeft()) : _dMax;
-        if (_rem > 0 && destination) {
-          const _sc = calculateSchedule(new Date(), _rem, _spd, _drLeft, _dMax);
-          arrivalTime = _sc.at(-1)?.end || new Date();
-        }
-      } catch(e) {}
-    }
     const days   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
     const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     const d = arrivalTime;
@@ -16197,7 +16628,7 @@ function fmStopTracking() {
   updateIncidentBadge();
   document.getElementById('sosFab').classList.remove('visible');
   document.getElementById('fuelWidget').classList.remove('visible');
-  document.getElementById('speedLimitWidget')?.classList.remove('visible');
+  document.getElementById('speedLimitWidget').classList.remove('visible');
   document.getElementById('speedToast').classList.remove('show');
   hideMapSpeedSign();
   fuelMarkers.forEach(m => { try { fmMapInst?.removeLayer(m); } catch {} });
@@ -16421,11 +16852,9 @@ function showHosDashboard() {
   // Refrescar el anillo principal y el ciclo cada segundo mientras el dashboard es visible
   if (_dashRingInterval) clearInterval(_dashRingInterval);
   _dashRingInterval = setInterval(() => {
-    if (b30InBreak && !b30Complete) {
-      const _sc = document.getElementById('dashSecondsClock');
-      if (_sc) _sc.textContent = String(new Date().getSeconds()).padStart(2,'0');
-      return;
-    }
+    const _sc = document.getElementById('dashSecondsClock');
+    if (_sc) _sc.textContent = String(new Date().getSeconds()).padStart(2,'0');
+    if (b30InBreak && !b30Complete) return;
     const dMax = Math.min(
       Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11),
       Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70)
@@ -16435,9 +16864,6 @@ function showHosDashboard() {
       ? Math.max(0, Math.min(window._hosTracker.driveLeft(), dMax))
       : Math.max(0, dMax);
     updateHosDashboard(dLeft, dMax);
-    // Segundos dentro del anillo DISPONIBLES
-    const _sc = document.getElementById('dashSecondsClock');
-    if (_sc) _sc.textContent = String(new Date().getSeconds()).padStart(2,'0');
   }, 1000);
 
   updateDashDestCard();
@@ -16736,7 +17162,11 @@ function initHosMinimap() {
         <span class="side-tab-icon">👥</span>
         <span class="side-tab-label">Comunidad</span>
       </button>
-      `;
+      <button class="dash-side-tab" aria-label="Live Chat"
+        onclick="closeDashSideMenu();openChatChannel('general')">
+        <span class="side-tab-icon">💬</span>
+        <span class="side-tab-label">Live Chat</span>
+      </button>`;
 
     _dashScreen.appendChild(_sideToggle);
     _dashScreen.appendChild(_sideStack);
@@ -17010,7 +17440,7 @@ function updateHosDashboard(driveLeft, driveMax) {
 
   if (track) track.setAttribute('stroke', 'rgba(0,0,0,0.10)');
   // Arc turns red when over speed limit OR when nearly out of drive time
-  const arcColor = (dashSpeedOver || driveLeft < 2) ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+  const arcColor = (dashSpeedOver || driveLeft < 2) ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#1a1a1a';
   arc.setAttribute('stroke', arcColor);
   timeEl.style.color = (dashSpeedOver || driveLeft <= 0.5) ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#0a0a0a';
 
@@ -17075,7 +17505,7 @@ function updateHosDashboard(driveLeft, driveMax) {
   if (cicloArc) {
     const pctC = Math.max(0, Math.min(1, cycLeft / cycMax));
     cicloArc.setAttribute('stroke-dasharray', `${(pctC * 251).toFixed(1)} 251`);
-    cicloArc.setAttribute('stroke', cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#f59e0b' : '#10b981');
+    cicloArc.setAttribute('stroke', cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#f59e0b' : '#1a1a1a');
   }
   const cicloUsedEl = document.getElementById('dashCicloUsed');
   if (cicloUsedEl) {
@@ -17911,7 +18341,7 @@ async function loadAllPOIs(lat, lon) {
     loadFromWaypoints('parking'),
     loadTruckRestrictionsFullMap(filtered),
   ]);
-  renderCommunityMapMarkers();
+  renderCommunityReports();
 
   const restrictCount = fmPoiLayers.restrict.filter(l => l.getLatLngs).length;
   if (restrictCount > 0) {
@@ -19008,7 +19438,7 @@ function addReportMarker(report) {
   fmPoiLayers.reports.push(marker);
 }
 
-function renderCommunityMapMarkers() {
+function renderCommunityReports() {
   // Clear old report markers
   fmPoiLayers.reports.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
   fmPoiLayers.reports = [];
@@ -19049,7 +19479,7 @@ function confirmReport(reportId, isStillThere) {
       showToast('info','🗑️','Aviso eliminado','2 choferes confirmaron que ya no está.', 3000);
       communityReports = communityReports.filter(r => String(r.id) !== String(reportId));
       localStorage.setItem('hos_reports', JSON.stringify(communityReports));
-      renderCommunityMapMarkers();
+      renderCommunityReports();
       return;
     } else {
       showToast('warning','❌','Voto registrado',`${report.denials.length}/4 choferes dicen que ya no está.`, 2500);
@@ -19058,7 +19488,7 @@ function confirmReport(reportId, isStillThere) {
 
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
   // Refresh markers to update counts
-  renderCommunityMapMarkers();
+  renderCommunityReports();
   // Close popup
   if (fmMapInst) fmMapInst.closePopup();
 }
@@ -19231,6 +19661,8 @@ function switchTab(tab) {
     try { loadDriverProfile(); } catch(e) {}
     try { applyAllAvatars(); } catch(e) {}
   }
+  const fab = document.getElementById('chatFab');
+  if (fab) fab.style.display = tab === 'community' ? 'none' : 'flex';
 }
 
 function bindEvents() {
@@ -19654,7 +20086,7 @@ function toggleSideTabMenu() {
   const toggle = document.getElementById('sideMenuToggle');
   const isOpen = stack.classList.toggle('open');
   toggle.classList.toggle('open', isOpen);
-  toggle.textContent = 'Menú';
+  toggle.textContent = isOpen ? '›' : '‹';
   // Si se cierra el menú, cerrar también el panel de comunidad
   if (!isOpen) {
     document.getElementById('commQuickPanel')?.classList.remove('open');
@@ -19720,7 +20152,7 @@ function closeSideTabMenu() {
   if (!stack) return;
   stack.classList.remove('open');
   toggle?.classList.remove('open');
-  if (toggle) toggle.textContent = 'Menú';
+  if (toggle) toggle.textContent = '‹';
   document.getElementById('commQuickPanel')?.classList.remove('open');
   document.getElementById('commQuickOverlay')?.classList.remove('open');
   document.getElementById('commQuickOverlay')?.classList.remove('show');
@@ -19765,7 +20197,6 @@ function refreshCommunityReports() {
   // Remove expired (>2h old) and re-render
   communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
-  renderCommunityMapMarkers();
   renderCommunityReports();
   showToast('info','🔄','Reports Refreshed', communityReports.length + ' active reports in your area', 3000);
 }
@@ -21013,7 +21444,7 @@ function renderCommPage() {
   if (commFilterByRoute) {
     if (!roadGeometry || roadGeometry.length < 2) {
       list.innerHTML = '<div class="comm-no-route"><div class="comm-no-route-icon">🛣️</div><div class="comm-no-route-text">No active route.<br>Calculate a route first to filter reports.</div></div>';
-      if (document.getElementById('commPageCount')) document.getElementById('commPageCount').textContent = '0';
+      document.getElementById('commPageCount').textContent = '0';
       return;
     }
     reports = reports.filter(r => isReportOnRoute(r, 10));
@@ -21025,7 +21456,7 @@ function renderCommPage() {
   }
 
   // Update count
-  if (document.getElementById('commPageCount')) document.getElementById('commPageCount').textContent = reports.length;
+  document.getElementById('commPageCount').textContent = reports.length;
 
   const interstates = getRouteInterstates();
   const routeLabel  = interstates.length ? interstates.slice(0,3).join(' · ') : (roadGeometry ? 'Your route' : '');
@@ -24674,6 +25105,449 @@ async function sendScanEmail() {
 }
 
 
+/* ════════════════════════════════════════════════════════════════════
+   💬  CARRIERCHAT — multi-channel real-time chat + side drawer
+════════════════════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  // ── Channel definitions ──────────────────────────────────────
+  const CHANNELS = [
+    { id:'general',      name:'General',              icon:'☕', color:'#3b82f6' },
+    { id:'sos',          name:'SOS',                  icon:'🔊', color:'#ef4444' },
+    { id:'warning',      name:'Warning',              icon:'⚠️', color:'#f59e0b' },
+    { id:'weighstation', name:'DOT Weigh Stations',   icon:'🚛', color:'#ea580c' },
+    { id:'mechanics',    name:'Mechanics',            icon:'🔧', color:'#7c3aed' },
+    { id:'parts',        name:'Parts',                icon:'⚙️', color:'#3b82f6' },
+    { id:'tires',        name:'Tires',                icon:'🔄', color:'#8b5cf6' },
+    { id:'truckwash',    name:'Truck Wash',           icon:'🚿', color:'#0ea5e9' },
+    { id:'restarea',     name:'Rest Area',            icon:'🛌', color:'#6366f1' },
+    { id:'parking',      name:'Parking paid/free',    icon:'🅿️', color:'#3b82f6' },
+    { id:'towing',       name:'Towing / Grúa',        icon:'🏗️', color:'#ea580c' },
+  ];
+
+  // ── User ID ─────────────────────────────────────────────────
+  let myUserId = localStorage.getItem('chat_uid');
+  if (!myUserId) {
+    myUserId = 'u_' + Math.random().toString(36).slice(2,10);
+    localStorage.setItem('chat_uid', myUserId);
+  }
+
+  // ── State ────────────────────────────────────────────────────
+  let chatOpen = false;
+  let currentChannelId = null;
+  let channelListeners = {};   // channelId → unsubscribe fn (firebase)
+  let channelBc = {};          // channelId → BroadcastChannel
+  let unreadTotal = 0;
+  // channelMeta[id] = { lastMsg, lastTime, unread }
+  let channelMeta = JSON.parse(localStorage.getItem('chat_meta') || '{}');
+
+  // ── Timestamp to ignore old messages on listener init ────────
+  const _chatStartTime = Date.now();
+
+  // ── Request notification permission immediately ───────────────
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+
+  // ── Show push notification for any chat message ───────────────
+  function showChatNotif(channelId, msg) {
+    if (msg.userId === myUserId) return; // no notificar mensajes propios
+    // Ignorar mensajes viejos (anteriores a que se abrió la app)
+    const msgTime = msg.ts || msg.clientTs || 0;
+    if (msgTime && msgTime < _chatStartTime - 5000) return;
+
+    const chInfo = CHANNELS.find(c => c.id === channelId) || { name: channelId, icon: '🔔' };
+    const title  = `${chInfo.icon} ${chInfo.name}`;
+    const body   = `${msg.name || 'Driver'}: ${msg.text}`;
+    const icon   = './HOS_Tracker_Version1.png';
+    const tag    = 'chat-' + channelId;
+    const notifOpts = { body, icon, tag, vibrate: [200, 100, 200], badge: './HOS_Tracker_Version1.png', data: { url: './' }, requireInteraction: false };
+
+    // Request permission if not yet decided
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') _fireNotif(title, notifOpts);
+      });
+      return;
+    }
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    _fireNotif(title, notifOpts);
+  }
+
+  function _fireNotif(title, opts) {
+    // Priority 1: ServiceWorkerRegistration.showNotification — works in background on mobile
+    const swReg = window._swReg;
+    if (swReg) {
+      const active = swReg.active || swReg.waiting || swReg.installing;
+      if (active) {
+        // Post message to SW so it shows a persistent notification
+        active.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body: opts.body, tag: opts.tag, icon: opts.icon });
+        return;
+      }
+      // If reg exists but no active worker yet, try showNotification directly
+      swReg.showNotification(title, opts).catch(() => {});
+      return;
+    }
+    // Priority 2: controller postMessage
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body: opts.body, tag: opts.tag, icon: opts.icon });
+      return;
+    }
+    // Priority 3: fallback in-tab notification
+    try { new Notification(title, opts); } catch(e) {}
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────
+  function getEl(id) { return document.getElementById(id); }
+
+  function getMyName() {
+    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
+    return dp.name || 'Driver';
+  }
+
+  function getMyEmoji() {
+    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
+    const map = { '18wheeler':'🚛','box':'📦','tanker':'🛢️','flatbed':'🚚','reefer':'❄️','local':'🚐','dump':'🪨','tow':'🚔','hotshot':'🔥','rv':'🚌','lowboy':'🏗️','concrete':'🪨','stepdecks':'🚚','livestock':'🐄' };
+    return map[dp.truckType] || '🚛';
+  }
+
+  function getMyPhoto() {
+    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
+    return dp.photo || null;
+  }
+
+  function getInitials(name) {
+    const parts = (name || 'D').trim().split(/\s+/);
+    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+  }
+
+  // deterministic color from name
+  const AVATAR_COLORS = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899','#0ea5e9','#14b8a6'];
+  function nameColor(name) {
+    let h = 0;
+    for (let i = 0; i < (name||'').length; i++) h = (h*31 + name.charCodeAt(i)) & 0xffffffff;
+    return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function fmtTime(ts) {
+    if (!ts) return '';
+    const d = new Date(typeof ts === 'object' ? Date.now() : ts);
+    return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  }
+
+  // ── Channels list rendering ──────────────────────────────────
+  function renderChannelsList() {
+    const list = getEl('ccChannelsList');
+    if (!list) return;
+    list.innerHTML = '';
+    CHANNELS.forEach(ch => {
+      const meta = channelMeta[ch.id] || {};
+      const item = document.createElement('div');
+      item.className = 'cc-channel-item';
+      item.onclick = () => openRoom(ch.id);
+      const unread = meta.unread || 0;
+      const rightHtml = unread > 0
+        ? `<div class="cc-channel-badge">${unread > 99 ? '99+' : unread}</div>`
+        : (meta.lastTime ? `<div class="cc-channel-time">${fmtTime(meta.lastTime)}</div>` : '');
+      item.innerHTML = `
+        <div class="cc-channel-icon" style="background:${ch.color}22">${ch.icon}</div>
+        <div class="cc-channel-info">
+          <div class="cc-channel-name">${esc(ch.name)}</div>
+          <div class="cc-channel-preview">${esc(meta.lastMsg || 'No messages yet')}</div>
+        </div>
+        <div class="cc-channel-right">${rightHtml}</div>`;
+      list.appendChild(item);
+    });
+  }
+
+  // ── Open/close chat ──────────────────────────────────────────
+  function openChat() {
+    chatOpen = true;
+    unreadTotal = 0;
+    const badge = getEl('chatFabBadge');
+    if (badge) badge.style.display = 'none';
+    getEl('chatOverlay').classList.add('open');
+    showChannelsList();
+    renderChannelsList();
+    updateDrawerProfile();
+  }
+  window.openChat = openChat;
+
+  function closeChat() {
+    chatOpen = false;
+    getEl('chatOverlay').classList.remove('open');
+    currentChannelId = null;
+    getEl('chatRoom').classList.remove('active');
+    getEl('chatChannelsList').style.display = '';
+  }
+  window.closeChat = closeChat;
+
+  function showChannelsList() {
+    getEl('chatChannelsList').style.display = '';
+    getEl('chatRoom').classList.remove('active');
+    currentChannelId = null;
+  }
+  window.backToChannels = showChannelsList;
+
+  // ── Open a room ──────────────────────────────────────────────
+  function openRoom(channelId) {
+    const ch = CHANNELS.find(c => c.id === channelId);
+    if (!ch) return;
+    currentChannelId = channelId;
+
+    // Clear unread for this channel
+    if (channelMeta[channelId]) { channelMeta[channelId].unread = 0; saveChannelMeta(); }
+
+    // Show room
+    getEl('chatChannelsList').style.display = 'none';
+    const room = getEl('chatRoom');
+    room.classList.add('active');
+
+    // Set header
+    const iconEl = getEl('roomIcon');
+    iconEl.textContent = ch.icon;
+    iconEl.style.background = ch.color + '44';
+    iconEl.style.border = `2px solid ${ch.color}66`;
+    getEl('roomTitle').textContent = ch.name;
+    const sub = getEl('roomSubtitle');
+    if (sub) sub.textContent = '🟢 Canal activo · truckers en línea';
+
+    // Clear messages
+    const msgs = getEl('roomMessages');
+    msgs.innerHTML = `<div class="room-empty" id="roomEmpty"><div class="room-empty-icon">${ch.icon}</div><div class="room-empty-text">No messages yet</div></div>`;
+
+    // Enable send
+    getEl('chatSendBtn').disabled = false;
+
+    // Load messages
+    initRoomMessages(channelId);
+
+    setTimeout(() => {
+      msgs.scrollTop = msgs.scrollHeight;
+      getEl('chatInput').focus();
+    }, 120);
+  }
+  window.openChatChannel = function(id) { openChat(); openRoom(id); };
+
+  // ── Load / listen messages for a room ─────────────────────────
+  function initRoomMessages(channelId) {
+    // Unsubscribe previous listener for this channel if any
+    if (channelListeners[channelId]) {
+      channelListeners[channelId]();
+      channelListeners[channelId] = null;
+    }
+
+    const fb = window._chatFirebase;
+    if (fb && fb.ready()) {
+      channelListeners[channelId] = fb.listenChannel(channelId, (msg, key) => {
+        if (currentChannelId === channelId) appendRoomMessage(msg, key);
+        updateChannelMeta(channelId, msg);
+        showChatNotif(channelId, msg);
+      });
+    } else {
+      // Local fallback
+      loadLocalMessages(channelId);
+      if (!channelBc[channelId] && typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('hos_chat_' + channelId);
+        bc.onmessage = e => {
+          if (currentChannelId === channelId && e.data?.userId !== myUserId)
+            appendRoomMessage(e.data, e.data.localKey);
+          updateChannelMeta(channelId, e.data);
+        };
+        channelBc[channelId] = bc;
+      }
+    }
+  }
+
+  function loadLocalMessages(channelId) {
+    const msgs = JSON.parse(localStorage.getItem('chat_ch_' + channelId) || '[]');
+    const cutoff = Date.now() - 3600000; // 1 hour
+    // Also prune and save back — remove expired messages from storage
+    const recent = msgs.filter(m => (m.clientTs||0) > cutoff);
+    if (recent.length < msgs.length) localStorage.setItem('chat_ch_' + channelId, JSON.stringify(recent));
+    recent.slice(-80).forEach(m => appendRoomMessage(m, m.localKey));
+  }
+
+  function saveLocalMsg(channelId, msg) {
+    const key = 'chat_ch_' + channelId;
+    const arr = JSON.parse(localStorage.getItem(key) || '[]');
+    arr.push(msg);
+    if (arr.length > 200) arr.splice(0, arr.length - 200);
+    localStorage.setItem(key, JSON.stringify(arr));
+    if (channelBc[channelId]) channelBc[channelId].postMessage(msg);
+  }
+
+  // ── Append a message bubble (WhatsApp style) ─────────────────
+  function appendRoomMessage(msg, key) {
+    const container = getEl('roomMessages');
+    if (!container) return;
+    const empty = getEl('roomEmpty');
+    if (empty) empty.remove();
+    if (key && container.querySelector(`[data-key="${CSS.escape(key)}"]`)) return;
+
+    const isOwn = msg.userId === myUserId;
+    const emoji = msg.emoji || '🚛';
+    const nameClr = nameColor(msg.name || '');
+    // Avatar: photo (circular img) or emoji on colored bg
+    const avatarInner = msg.photo
+      ? `<img src="${msg.photo}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`
+      : emoji;
+    const avatarBg = msg.photo ? 'transparent' : nameClr;
+
+    const div = document.createElement('div');
+    div.className = 'room-msg' + (isOwn ? ' own' : '');
+    if (key) div.dataset.key = key;
+    div.innerHTML = `
+      <div class="room-avatar" style="background:${avatarBg}">${avatarInner}</div>
+      <div class="room-bubble-wrap">
+        <div class="room-bubble-name" style="color:${nameClr}">${esc(msg.name || 'Driver')}</div>
+        <div class="room-bubble">
+          ${esc(msg.text)}
+          <span class="room-bubble-time">${fmtTime(msg.ts || msg.clientTs)}</span>
+        </div>
+      </div>`;
+    container.appendChild(div);
+
+    const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 130;
+    if (atBottom) container.scrollTop = container.scrollHeight;
+  }
+
+  // ── Channel meta (last msg, unread) ──────────────────────────
+  function updateChannelMeta(channelId, msg) {
+    if (!msg) return;
+    const existing = channelMeta[channelId] || {};
+    channelMeta[channelId] = {
+      lastMsg: (msg.name ? msg.name.split(' ')[0] + ': ' : '') + (msg.text || '').slice(0, 50),
+      lastTime: msg.ts || msg.clientTs || Date.now(),
+      unread: currentChannelId === channelId ? 0 : (existing.unread || 0) + (msg.userId !== myUserId ? 1 : 0)
+    };
+    saveChannelMeta();
+    if (chatOpen && currentChannelId !== channelId) renderChannelsList();
+    // Global unread badge
+    const totalUnread = Object.values(channelMeta).reduce((s, m) => s + (m.unread || 0), 0);
+    const badge = getEl('chatFabBadge');
+    if (badge) {
+      badge.textContent = totalUnread > 9 ? '9+' : totalUnread;
+      badge.style.display = totalUnread > 0 && !chatOpen ? 'block' : 'none';
+    }
+  }
+
+  function saveChannelMeta() {
+    try { localStorage.setItem('chat_meta', JSON.stringify(channelMeta)); } catch {}
+  }
+
+  // ── Send quick alert preset ───────────────────────────────────
+  async function sendQuickAlert(text) {
+    if (!currentChannelId) { window.openChatChannel('general'); await new Promise(r => setTimeout(r,300)); }
+    const input = getEl('chatInput');
+    input.value = text;
+    autoresizeChatInput(input);
+    await sendChatMessage();
+  }
+  window.sendQuickAlert = sendQuickAlert;
+
+  // ── Send message ─────────────────────────────────────────────
+  async function sendChatMessage() {
+    if (!currentChannelId) return;
+    const input = getEl('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const btn = getEl('chatSendBtn');
+    btn.disabled = true;
+    const photo = getMyPhoto();
+    const msg = { userId: myUserId, name: getMyName(), emoji: getMyEmoji(), photo: photo || undefined, text, clientTs: Date.now() };
+    input.value = ''; input.style.height = '';
+
+    const fb = window._chatFirebase;
+    if (fb && fb.ready()) {
+      try { await fb.sendToChannel(currentChannelId, msg); }
+      catch { appendRoomMessage({...msg, ts: msg.clientTs}, 'loc_'+msg.clientTs); saveLocalMsg(currentChannelId, {...msg, localKey:'loc_'+msg.clientTs}); }
+    } else {
+      const key = 'loc_' + msg.clientTs;
+      appendRoomMessage({...msg, ts: msg.clientTs}, key);
+      saveLocalMsg(currentChannelId, {...msg, localKey: key});
+      updateChannelMeta(currentChannelId, {...msg, ts: msg.clientTs});
+    }
+    btn.disabled = false;
+    setTimeout(() => { const c = getEl('roomMessages'); if(c) c.scrollTop = c.scrollHeight; }, 40);
+  }
+  window.sendChatMessage = sendChatMessage;
+
+  // ── Drawer ───────────────────────────────────────────────────
+  function openDrawer() {
+    updateDrawerProfile();
+    getEl('drawerBackdrop').classList.add('open');
+    getEl('sideDrawer').classList.add('open');
+  }
+  window.openDrawer = openDrawer;
+
+  function closeDrawer() {
+    getEl('drawerBackdrop').classList.remove('open');
+    getEl('sideDrawer').classList.remove('open');
+  }
+  window.closeDrawer = closeDrawer;
+
+  function updateDrawerProfile() {
+    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
+    const name = dp.name || 'Conductor';
+    const avatarEl = getEl('drawerAvatar');
+    const nameEl = getEl('drawerName');
+    if (nameEl) nameEl.textContent = name;
+    if (avatarEl) {
+      const map = { '18wheeler':'🚛','box':'📦','tanker':'🛢️','flatbed':'🚚','refer':'❄️','local':'🚐' };
+      const emoji = map[dp.truckType] || '🚛';
+      avatarEl.textContent = emoji;
+      avatarEl.style.background = `linear-gradient(135deg, ${nameColor(name)}, ${nameColor(name+'x')})`;
+      avatarEl.style.fontSize = '26px';
+    }
+  }
+  window.updateDrawerProfile = updateDrawerProfile;
+
+  function openProfileFromDrawer() {
+    if (typeof openProfileModal === 'function') openProfileModal();
+  }
+  window.openProfileFromDrawer = openProfileFromDrawer;
+
+  // ── Input helpers ─────────────────────────────────────────────
+  function handleChatKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+  }
+  window.handleChatKey = handleChatKey;
+
+  function autoresizeChatInput(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+    getEl('chatSendBtn').disabled = el.value.trim().length === 0;
+  }
+  window.autoresizeChatInput = autoresizeChatInput;
+
+  // ── Init ──────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    updateDrawerProfile();
+    renderChannelsList();
+    // Patch firebase module to support per-channel
+    const tryPatchFirebase = () => {
+      const fb = window._chatFirebase;
+      if (!fb) return;
+      if (!fb.sendToChannel) {
+        fb.sendToChannel = (channelId, msg) => fb.sendMessage(msg, 'channels/' + channelId + '/messages');
+        fb.listenChannel = (channelId, cb) => {
+          fb.listenMessages(cb, 'channels/' + channelId + '/messages');
+          return () => {};
+        };
+      }
+    };
+    document.addEventListener('chatFirebaseReady', tryPatchFirebase);
+    setTimeout(tryPatchFirebase, 3000);
+  });
+
+})();
+
 
 /* ════════════════════════════════════════════════════════════
    ⚠️  DOT VIOLATION DETECTOR
@@ -26321,7 +27195,6 @@ window._hosAutoRecalc = false;
   import {
     getDatabase, ref, set, update, onValue, push, remove, onDisconnect, serverTimestamp, query, orderByChild, limitToLast
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   window._fleetLinkModuleOk = true;
 
   const firebaseConfig = {
@@ -26335,7 +27208,6 @@ window._hosAutoRecalc = false;
   };
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const db  = getDatabase(app);
-  try { await signInAnonymously(getAuth(app)); } catch(ae) { console.warn('[FleetLink] Anonymous auth failed:', ae.code); }
 
   // User ID estable
   let MY_ID = localStorage.getItem('fleet_link_uid');
@@ -26823,7 +27695,6 @@ window._hosAutoRecalc = false;
   import {
     getDatabase, ref, onValue, update, query, orderByChild, limitToLast
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
@@ -26836,7 +27707,6 @@ window._hosAutoRecalc = false;
   };
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const db  = getDatabase(app);
-  try { await signInAnonymously(getAuth(app)); } catch(ae) { console.warn('[Routes] Anonymous auth failed:', ae.code); }
 
   // ── User id estable (compartido con fleet-link) ────────
   let MY_ID = localStorage.getItem('fleet_link_uid');
@@ -27289,8 +28159,9 @@ window._hosAutoRecalc = false;
       if (d.shiftTs && Date.now() - d.shiftTs > 8 * 24 * 3600000){
         localStorage.removeItem(SAVE_KEY); return;
       }
-      _shiftStart  = d.shiftTs  ? new Date(d.shiftTs)  : null;
-      _connectedAt = d.connTs   ? new Date(d.connTs)   : null;
+      // Resetear turno si tiene más de 24h (ventana diaria DOT)
+      _shiftStart  = (d.shiftTs && Date.now() - d.shiftTs < 24 * 3600000) ? new Date(d.shiftTs) : null;
+      _connectedAt = (d.connTs  && Date.now() - d.connTs  < 24 * 3600000) ? new Date(d.connTs)  : null;
       // Reiniciar horas diarias si cambió el día calendario (el ciclo 70h sigue acumulando)
       _driveMs = (d.driveDate && d.driveDate === new Date().toDateString()) ? (d.driveMs || 0) : 0;
       _cycleMs = d.cycleMs || 0;
@@ -27330,10 +28201,6 @@ window._hosAutoRecalc = false;
     _setBtBadge(_connected ? 'connected' : 'gps');
     _gpsWatchId = navigator.geolocation.watchPosition(
       pos => {
-        // Yield to the main tracking loop when a trip is active — both watchers
-        // calling _onEldMoving/_onEldStopped simultaneously causes the timer to
-        // reset on every stale GPS position, keeping "usadas" stuck at 0.
-        if (typeof fmIsTracking !== 'undefined' && fmIsTracking) return;
         const raw = pos.coords.speed;
         const mph = (raw != null && raw >= 0) ? raw * 0.621371 : 0;
         if (mph > 2) _onEldMoving(Math.round(mph));
@@ -27491,12 +28358,8 @@ window._hosAutoRecalc = false;
     // Anillo 1: Turno / Conexión ELD
     const shiftPct = _shiftStart
       ? Math.min((Date.now() - _shiftStart.getTime()) / (14 * 3600000), 1) : 0;
-    const shiftLeft = 14 * (1 - shiftPct);
     const arcT = document.getElementById('heroArcTurno');
-    if (arcT) {
-      arcT.style.strokeDashoffset = C * (1 - shiftPct);
-      arcT.style.stroke = shiftLeft < 2 ? '#ef4444' : shiftLeft < 4 ? '#f59e0b' : '#10b981';
-    }
+    if (arcT) arcT.style.strokeDashoffset = C * (1 - shiftPct);
     const valT = document.getElementById('heroValTurno');
     if (valT) valT.textContent = _connectedAt ? _fmt(_connectedAt) : '--:--';
     const subT = document.getElementById('heroTurnoSub');
@@ -27517,7 +28380,7 @@ window._hosAutoRecalc = false;
 
     // Anillo 2: Manejo disponible
     const dPct = dl / DRIVE_MAX;
-    const dCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#10b981';
+    const dCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#1a1a1a';
     const arcD = document.getElementById('heroArcDrive');
     if (arcD){ arcD.style.strokeDashoffset = C * (1 - dPct); arcD.style.stroke = dCol; }
     const valD = document.getElementById('heroValDrive');
@@ -27529,7 +28392,7 @@ window._hosAutoRecalc = false;
 
     // Anillo 3: Ciclo 70H disponible
     const cPct = cl / CYCLE_MAX;
-    const cCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#10b981';
+    const cCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#1a1a1a';
     const arcC = document.getElementById('heroArcCycle');
     if (arcC){ arcC.style.strokeDashoffset = C * (1 - cPct); arcC.style.stroke = cCol; }
     const valC = document.getElementById('heroValCycle');
@@ -27582,7 +28445,7 @@ window._hosAutoRecalc = false;
 
   function _fmt(d){ return d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}); }
   function _fmtElapsed(from){
-    const mins = Math.floor((Date.now() - from.getTime()) / 60000);
+    const mins = Math.min(Math.floor((Date.now() - from.getTime()) / 60000), 14 * 60);
     return `${Math.floor(mins/60)}h ${mins%60}m`;
   }
 
@@ -27670,239 +28533,6 @@ window._hosAutoRecalc = false;
   btn.addEventListener('pointermove', function(e) { move(e.clientX, e.clientY); });
   btn.addEventListener('pointerup',   end);
   btn.addEventListener('pointercancel', end);
-})();
-</script>
-
-<!-- ══════════════════════════════════════════════════════════
-     ⚖️  LEGAL / CITATIONS TRACKER
-══════════════════════════════════════════════════════════ -->
-<style>
-.cit-sheet {
-  position:fixed;inset:0;z-index:900;background:#0b1120;
-  display:none;flex-direction:column;overflow:hidden;
-  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
-}
-.cit-sheet.open { display:flex; }
-.cit-topbar {
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);
-  background:rgba(11,17,32,.97);position:sticky;top:0;z-index:2;flex-shrink:0;
-}
-.cit-topbar-title { font-size:17px;font-weight:800;color:#f1f5f9;letter-spacing:.3px; }
-.cit-close {
-  background:rgba(255,255,255,.08);border:none;color:#f1f5f9;
-  font-size:20px;width:36px;height:36px;border-radius:50%;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-}
-.cit-body { padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1; }
-.cit-alert-banner {
-  background:#0d111c;
-  border:2px solid rgba(239,68,68,.6);border-radius:16px;padding:16px 18px;
-  display:flex;align-items:flex-start;gap:14px;
-  box-shadow:0 6px 28px rgba(239,68,68,.18);
-}
-.cit-alert-icon { font-size:22px;flex-shrink:0;width:46px;height:46px;border-radius:12px;background:rgba(239,68,68,.15);display:flex;align-items:center;justify-content:center; }
-.cit-alert-text { flex:1; }
-.cit-alert-title { font-size:16px;font-weight:800;color:#fff;margin-bottom:5px;letter-spacing:-.2px; }
-.cit-alert-body { font-size:13px;color:rgba(255,255,255,.65);line-height:1.5; }
-.cit-alert-zoom {
-  display:inline-block;margin-top:8px;padding:6px 14px;
-  background:rgba(239,68,68,.25);border:1px solid rgba(239,68,68,.5);
-  border-radius:8px;font-size:12px;font-weight:700;color:#fca5a5;
-  text-decoration:none;cursor:pointer;
-}
-.cit-section-label {
-  font-size:10px;font-weight:800;color:rgba(255,255,255,.35);
-  letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;
-}
-.cit-card {
-  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
-  border-radius:14px;padding:14px 16px;transition:border-color .2s;margin-bottom:10px;
-}
-.cit-card.open-case { border-color:rgba(239,68,68,.35); }
-.cit-card.closed-case { border-color:rgba(16,185,129,.3);opacity:.75; }
-.cit-card-top { display:flex;align-items:center;justify-content:space-between;margin-bottom:10px; }
-.cit-case-num { font-size:12px;font-weight:800;color:rgba(255,255,255,.55);letter-spacing:.4px; }
-.cit-status-badge {
-  font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;
-  letter-spacing:.5px;text-transform:uppercase;
-}
-.cit-status-badge.pending   { background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3); }
-.cit-status-badge.contested { background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3); }
-.cit-status-badge.dismissed { background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3); }
-.cit-status-badge.hearing   { background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.4); }
-.cit-card-row { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px; }
-.cit-field { flex:1;min-width:110px; }
-.cit-field-label { font-size:9px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px; }
-.cit-field-value { font-size:13px;font-weight:600;color:#e2e8f0; }
-.cit-notes { margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07); }
-.cit-notes-area {
-  width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.1);border-radius:8px;
-  color:#e2e8f0;font-size:12px;padding:8px 10px;resize:none;
-  font-family:inherit;line-height:1.5;
-}
-.cit-notes-area::placeholder { color:rgba(255,255,255,.2); }
-.cit-card-actions { display:flex;gap:8px;margin-top:10px;flex-wrap:wrap; }
-.cit-act-btn {
-  flex:1;min-width:80px;padding:7px 10px;border-radius:8px;border:none;
-  font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.4px;text-transform:uppercase;
-}
-.cit-act-btn.dismiss { background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3); }
-.cit-act-btn.reopen  { background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3); }
-.cit-act-btn.save    { background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3); }
-.cit-add-form {
-  background:rgba(255,255,255,.03);border:1.5px dashed rgba(255,255,255,.12);
-  border-radius:14px;padding:14px;display:none;flex-direction:column;gap:10px;
-}
-.cit-add-form.open { display:flex; }
-.cit-add-row { display:flex;gap:8px; }
-.cit-add-inp {
-  flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
-  border-radius:8px;color:#f1f5f9;font-size:13px;padding:8px 10px;font-family:inherit;
-}
-.cit-add-inp::placeholder { color:rgba(255,255,255,.2); }
-.cit-add-btn {
-  padding:9px 18px;border-radius:8px;border:none;font-size:12px;font-weight:800;
-  cursor:pointer;letter-spacing:.5px;text-transform:uppercase;
-}
-.cit-add-btn.primary { background:rgba(220,38,38,.25);color:#fca5a5;border:1px solid rgba(220,38,38,.4); }
-.cit-add-btn.cancel  { background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1); }
-.cit-toggle-add {
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  padding:10px;border-radius:10px;border:1.5px dashed rgba(220,38,38,.3);
-  background:transparent;color:rgba(220,38,38,.7);font-size:12px;font-weight:700;
-  cursor:pointer;letter-spacing:.4px;text-transform:uppercase;width:100%;
-}
-</style>
-
-<div class="cit-sheet" id="citSheet">
-  <div class="cit-topbar">
-    <div class="cit-topbar-title">⚖️ Legal / Citations</div>
-    <button class="cit-close" onclick="closeCitationsSheet()">✕</button>
-  </div>
-  <div class="cit-body" id="citBody">
-    <div class="cit-alert-banner" id="citHearingAlert" style="display:none">
-      <div class="cit-alert-icon">🚨</div>
-      <div class="cit-alert-text">
-        <div class="cit-alert-title">HEARING TODAY — 11:00 AM</div>
-        <div class="cit-alert-body">
-          Pre-Trial Hearing (Pro Se) via Zoom – Palm Beach County Court<br>
-          Meeting ID: <strong>964 4865 4396</strong> &nbsp;|&nbsp; Phone: 888-475-4499
-        </div>
-        <a class="cit-alert-zoom" href="https://zoom.us/join" target="_blank">Join Zoom →</a>
-      </div>
-    </div>
-    <div>
-      <div class="cit-section-label">Active Cases</div>
-      <div id="citCasesList"></div>
-    </div>
-    <button class="cit-toggle-add" onclick="toggleCitAddForm()">+ Add Citation</button>
-    <div class="cit-add-form" id="citAddForm">
-      <div class="cit-add-row">
-        <input class="cit-add-inp" id="citAddCase" placeholder="Case # (e.g. 50-2026-MO-000755)" />
-      </div>
-      <div class="cit-add-row">
-        <input class="cit-add-inp" id="citAddCitation" placeholder="Citation #" style="flex:.6" />
-        <input class="cit-add-inp" id="citAddDate" placeholder="Hearing Date" type="date" style="flex:.4" />
-      </div>
-      <div class="cit-add-row">
-        <input class="cit-add-inp" id="citAddDesc" placeholder="Description / offense" />
-      </div>
-      <div class="cit-add-row" style="justify-content:flex-end;gap:8px">
-        <button class="cit-add-btn cancel" onclick="toggleCitAddForm()">Cancel</button>
-        <button class="cit-add-btn primary" onclick="saveCitAddForm()">Save Case</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-const CIT_KEY = 'hos_citations_v1';
-const DEFAULT_CITATIONS = [
-  { id:'cit_750', caseNum:'50-2026-MO-000750-AXXX-MB', citation:'6013347', hearingDate:'2026-05-11', status:'hearing', desc:'PTHP – TR Pre Trial Hrg (Pro Se)', notes:'' },
-  { id:'cit_751', caseNum:'50-2026-MO-000751-AXXX-MB', citation:'6013380', hearingDate:'2026-05-11', status:'hearing', desc:'PTHP – TR Pre Trial Hrg (Pro Se)', notes:'' },
-  { id:'cit_752', caseNum:'50-2026-MO-000752-AXXX-MB', citation:'6013326', hearingDate:'2026-05-11', status:'hearing', desc:'PTHP – TR Pre Trial Hrg (Pro Se)', notes:'' },
-  { id:'cit_753', caseNum:'50-2026-MO-000753-AXXX-MB', citation:'6013345', hearingDate:'2026-05-11', status:'hearing', desc:'PTHP – TR Pre Trial Hrg (Pro Se)', notes:'' },
-  { id:'cit_754', caseNum:'50-2026-MO-000754-AXXX-MB', citation:'6013379', hearingDate:'2026-05-11', status:'hearing', desc:'PTHP – TR Pre Trial Hrg (Pro Se)', notes:'' },
-];
-
-function loadCitations() {
-  try { const r = localStorage.getItem(CIT_KEY); if (r) return JSON.parse(r); } catch(e){}
-  return DEFAULT_CITATIONS.map(c => ({ ...c }));
-}
-function saveCitations(list) {
-  try { localStorage.setItem(CIT_KEY, JSON.stringify(list)); } catch(e){}
-}
-function citStatusLabel(s) {
-  return { pending:'Pending', contested:'Contested', dismissed:'Dismissed', hearing:'Hearing Today' }[s] || s;
-}
-function renderCitations() {
-  const list = loadCitations();
-  const el = document.getElementById('citCasesList');
-  if (!list.length) { el.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;text-align:center;padding:20px">No citations tracked</div>'; return; }
-  el.innerHTML = list.map((c, idx) => `
-    <div class="cit-card ${c.status==='dismissed'?'closed-case':'open-case'}" id="citCard_${idx}">
-      <div class="cit-card-top">
-        <div class="cit-case-num">${c.caseNum}</div>
-        <span class="cit-status-badge ${c.status}">${citStatusLabel(c.status)}</span>
-      </div>
-      <div class="cit-card-row">
-        <div class="cit-field"><div class="cit-field-label">Citation #</div><div class="cit-field-value">${c.citation}</div></div>
-        <div class="cit-field"><div class="cit-field-label">Hearing Date</div><div class="cit-field-value">${c.hearingDate||'—'}</div></div>
-      </div>
-      <div class="cit-card-row">
-        <div class="cit-field"><div class="cit-field-label">Description</div><div class="cit-field-value" style="font-size:12px">${c.desc||'—'}</div></div>
-      </div>
-      <div class="cit-notes">
-        <div class="cit-field-label" style="margin-bottom:4px">Defense Notes</div>
-        <textarea class="cit-notes-area" rows="3" id="citNotes_${idx}" placeholder="Add notes, arguments, evidence…">${c.notes||''}</textarea>
-      </div>
-      <div class="cit-card-actions">
-        <button class="cit-act-btn save" onclick="citSaveNotes(${idx})">Save Notes</button>
-        ${c.status!=='dismissed'
-          ? `<button class="cit-act-btn dismiss" onclick="citSetStatus(${idx},'dismissed')">Mark Dismissed</button>`
-          : `<button class="cit-act-btn reopen" onclick="citSetStatus(${idx},'contested')">Reopen</button>`}
-      </div>
-    </div>`).join('');
-}
-function citSaveNotes(idx) {
-  const list = loadCitations(); list[idx].notes = document.getElementById('citNotes_'+idx).value; saveCitations(list);
-  const btn = document.querySelector('#citCard_'+idx+' .cit-act-btn.save');
-  if (btn) { btn.textContent='Saved ✓'; setTimeout(()=>{ btn.textContent='Save Notes'; },1500); }
-}
-function citSetStatus(idx, status) {
-  const list = loadCitations(); list[idx].status = status; saveCitations(list); renderCitations();
-}
-function toggleCitAddForm() { document.getElementById('citAddForm').classList.toggle('open'); }
-function saveCitAddForm() {
-  const caseNum=document.getElementById('citAddCase').value.trim();
-  if (!caseNum) return;
-  const list=loadCitations();
-  list.push({ id:'cit_'+Date.now(), caseNum, citation:document.getElementById('citAddCitation').value.trim(),
-    hearingDate:document.getElementById('citAddDate').value, status:'pending',
-    desc:document.getElementById('citAddDesc').value.trim(), notes:'' });
-  saveCitations(list);
-  ['citAddCase','citAddCitation','citAddDate','citAddDesc'].forEach(id=>{ document.getElementById(id).value=''; });
-  toggleCitAddForm(); renderCitations();
-}
-function openCitationsSheet() {
-  document.getElementById('citSheet').classList.add('open');
-  renderCitations();
-  const today=new Date().toISOString().slice(0,10);
-  const list=loadCitations();
-  const hasToday=list.some(c=>c.hearingDate===today && c.status!=='dismissed');
-  document.getElementById('citHearingAlert').style.display=hasToday?'flex':'none';
-}
-function closeCitationsSheet() { document.getElementById('citSheet').classList.remove('open'); }
-
-(function citBadgeCheck() {
-  const today=new Date().toISOString().slice(0,10);
-  const list=loadCitations();
-  const active=list.filter(c=>c.status!=='dismissed');
-  const hearingToday=active.some(c=>c.hearingDate===today);
-  const arrow=document.getElementById('citationsArrow');
-  if (arrow) arrow.textContent=hearingToday?'🔴':(active.length?active.length+'':'›');
 })();
 </script>
 
