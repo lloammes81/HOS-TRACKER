@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
 <style>
   /* ══════════════════════════════════════════
      DESIGN TOKENS
@@ -1660,7 +1660,7 @@
   #mapSpeedGroup {
     position: absolute;
     top: calc(70px + env(safe-area-inset-top, 0px));
-    right: calc(12px + env(safe-area-inset-right, 0px));
+    right: calc(10px + env(safe-area-inset-right, 0px));
     z-index: 650;
     display: flex;
     flex-direction: column;
@@ -2611,11 +2611,11 @@
     z-index: 9999;
     background:rgba(10,16,30,.93);
     color:#fff;
-    border-radius:16px;
+    border-radius:10px;
     backdrop-filter:blur(12px);
     -webkit-backdrop-filter:blur(12px);
     border:1px solid rgba(255,255,255,.13);
-    box-shadow:0 6px 28px rgba(0,0,0,.5);
+    box-shadow:0 4px 18px rgba(0,0,0,.5);
     pointer-events:none;
     display:flex;
     align-items:stretch;
@@ -2623,11 +2623,11 @@
     padding:0;
   }
   .nav-arrow-panel{
-    min-width:70px; width:70px;
+    min-width:44px; width:44px;
     display:flex; align-items:center; justify-content:center;
     background:#10b981;
-    font-size:34px;
-    border-radius:16px 0 0 16px;
+    font-size:22px;
+    border-radius:10px 0 0 10px;
     flex-shrink:0;
     transition:background .3s;
   }
@@ -2638,15 +2638,16 @@
     50%{ opacity:.55; }
   }
   .nav-body{
-    flex:1; padding:10px 14px 10px 12px; min-width:0;
+    flex:1; padding:6px 10px 6px 9px; min-width:0;
     display:flex; flex-direction:column; justify-content:center;
   }
   .nav-dist{
-    font-size:22px; font-weight:900; color:#fff; line-height:1;
+    font-family:'Share Tech Mono',monospace;
+    font-size:15px; font-weight:900; color:#fff; line-height:1;
   }
   .nav-inst{
-    font-size:13px; font-weight:700; color:rgba(255,255,255,.82);
-    margin-top:4px;
+    font-size:10px; font-weight:700; color:rgba(255,255,255,.80);
+    margin-top:3px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
 
@@ -2859,7 +2860,9 @@ body #mapSpeedGroup #sosFab {
 
 /* Speed sign group positioned top-right */
 #mapSpeedGroup{
-  top: calc(90px + env(safe-area-inset-top, 0px)) !important;
+  top: calc(70px + env(safe-area-inset-top, 0px)) !important;
+  right: calc(10px + env(safe-area-inset-right, 0px)) !important;
+  align-items: center !important;
 }
 #speedLimitWidget{
   top: calc(var(--header-pt) + 4px) !important;
@@ -2981,8 +2984,15 @@ body.map-active #driveHoursWidget{
 #mrUnit{ font-size:8px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.6px; margin-top:1px; }
 #mrLabel{ font-size:8px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:.4px; margin-top:2px; }
 
-
-/* ── OVERRIDES (layout fixes) ───────────────────────────── */
+/* ── Floating map-only widgets: hidden when map is not active ── */
+body:not(.map-active) #speedometerWidget,
+body:not(.map-active) #milesRemainingWidget,
+body:not(.map-active) #fuelWidget,
+body:not(.map-active) #driveHoursWidget,
+body:not(.map-active) #speedLimitWidget,
+body:not(.map-active) #speedToast {
+  display: none !important;
+}
 /* btnCenter y btnMapColor ahora están dentro de #mapLeftControls — posición estática */
 #mapLeftControls #btnCenter,
 #mapLeftControls #btnMapColor {
@@ -3975,7 +3985,7 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .hero-h1 em { color: #10b981; font-style: normal; }
   .hero-sub { display: none; }
-  .hero-kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; justify-items: center; margin-top: 6px; margin-bottom: 0; }
+  .hero-kpis { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; justify-items: center; margin-top: 6px; margin-bottom: 0; }
   .hero-kpi {
     width: 118px; height: 118px; border-radius: 50%;
     position: relative;
@@ -3989,12 +3999,12 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .kpi-track {
     fill: none;
-    stroke: rgba(255,255,255,0.10);
+    stroke: rgba(0,0,0,0.12);
     stroke-width: 5;
   }
   .kpi-arc {
     fill: none;
-    stroke: #10b981;
+    stroke: #1a1a1a;
     stroke-width: 5;
     stroke-linecap: round;
     stroke-dasharray: 251.3;
@@ -4003,19 +4013,23 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .hero-kpi-inner {
     width: 96px; height: 96px; border-radius: 50%;
-    background: radial-gradient(circle at 38% 34%, #172a3e, #091420);
+    background-color: #d0d0d0;
+    background-image: linear-gradient(135deg, #e0e0e0 0%, #bebebe 100%);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    box-shadow: inset 0 3px 14px rgba(0,0,0,.9), inset 0 -1px 3px rgba(255,255,255,.04);
+    border: 2.5px solid rgba(0,0,0,0.55);
+    box-shadow: inset 0 3px 10px rgba(0,0,0,.18), inset 0 -1px 4px rgba(255,255,255,.5), 0 2px 8px rgba(0,0,0,0.35);
     position: relative; z-index: 1;
   }
   .hero-kpi-val {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 32px; letter-spacing: 1px; color: #10b981; line-height: 1;
+    font-family: 'Share Tech Mono', 'Bebas Neue', monospace;
+    font-size: 30px; letter-spacing: 2px; color: #0a0a0a; line-height: 1;
+    font-weight: 900; text-shadow: 0 1px 0 rgba(255,255,255,0.4), 0 -1px 0 rgba(0,0,0,0.2);
     transition: color 0.4s ease;
   }
   .hero-kpi-lbl {
-    font-size: 11px; font-weight: 800; text-transform: uppercase;
-    letter-spacing: .5px; color: rgba(255,255,255,.42); margin-top: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: rgba(0,0,0,0.55); margin-top: 2px;
     text-align: center; padding: 0 4px; line-height: 1.2;
   }
 
@@ -5142,13 +5156,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   #fmHud.compact .fm-stat{
     width: auto !important;
     height: auto !important;
-    border-radius: 8px !important;
-    padding: 6px 8px !important;
-    background: #d1d5db !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
     border-top: none !important;
     border-right: none !important;
     border-bottom: none !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+    box-shadow: none !important;
     display:flex !important;
     flex-direction:column !important;
     align-items:center !important;
@@ -5217,7 +5231,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     line-height: 1;
   }
   #sideMenuToggle.open {
-    right: 34px;
+    right: 48px;
     background: rgba(249,115,22,.5);
   }
   #sideMenuToggle:active { opacity: .65; }
@@ -5241,31 +5255,31 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     background: linear-gradient(160deg,#f97316,#ea580c);
     color: #fff;
     border: none;
-    border-radius: 10px 0 0 10px;
-    width: 34px;
-    height: 100px;
+    border-radius: 12px 0 0 12px;
+    width: 48px;
+    height: 110px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 6px;
     cursor: pointer;
-    box-shadow: -3px 0 16px rgba(249,115,22,.45);
+    box-shadow: -4px 0 20px rgba(249,115,22,.55);
     transition: width .2s, height .2s, background .2s, box-shadow .2s, transform .2s;
     touch-action: manipulation;
     padding: 0;
   }
   .side-tab-btn:hover {
-    width: 42px;
-    height: 112px;
+    width: 58px;
+    height: 122px;
     background: linear-gradient(160deg,#fb923c,#f97316);
-    box-shadow: -4px 0 22px rgba(249,115,22,.7);
-    transform: scaleX(1.06);
+    box-shadow: -6px 0 26px rgba(249,115,22,.8);
+    transform: scaleX(1.04);
   }
-  .side-tab-btn:active { width: 28px; box-shadow: -2px 0 8px rgba(249,115,22,.3); transform: scaleX(.95); }
-  .side-tab-icon { font-size: 16px; line-height: 1; }
+  .side-tab-btn:active { width: 38px; box-shadow: -2px 0 8px rgba(249,115,22,.3); transform: scaleX(.95); }
+  .side-tab-icon { font-size: 20px; line-height: 1; }
   .side-tab-label {
-    font-size: 9px; font-weight: 900; letter-spacing: .6px;
+    font-size: 9px; font-weight: 900; letter-spacing: .8px;
     writing-mode: vertical-rl; text-orientation: mixed;
     transform: rotate(180deg); color: #fff;
     text-transform: uppercase;
@@ -6033,31 +6047,37 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="hero-kpi">
         <svg class="kpi-svg" viewBox="0 0 94 94">
           <circle class="kpi-track" cx="47" cy="47" r="40"/>
-          <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40" style="stroke:#a78bfa;"/>
+          <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40"/>
         </svg>
         <div class="hero-kpi-inner" style="gap:0;">
-          <div class="hero-kpi-val" id="heroValTurno" style="font-size:24px;color:#a78bfa;letter-spacing:0;">--:--</div>
-          <div class="hero-kpi-lbl" style="color:#a78bfa;opacity:0.7;" id="heroTurnoSub">BT ○</div>
-          <div style="width:22px;height:0.5px;background:rgba(255,255,255,.15);margin:2px 0;"></div>
-          <div class="hero-kpi-val" id="heroValTurno2" style="font-size:20px;color:rgba(255,255,255,0.5);letter-spacing:0;">--:--</div>
+          <div class="hero-kpi-val" id="heroValTurno" style="font-size:22px;letter-spacing:2px;">--:--</div>
+          <div class="hero-kpi-lbl" id="heroTurnoSub">BT ○</div>
+          <div style="width:22px;height:0.5px;background:rgba(0,0,0,.2);margin:2px 0;"></div>
+          <div class="hero-kpi-val" id="heroValTurno2" style="font-size:18px;color:rgba(0,0,0,0.45);letter-spacing:2px;">--:--</div>
           <div class="hero-kpi-lbl">inicio</div>
         </div>
       </div>
 
-      <!-- Anillo 2: MANEJO (horas disponibles) -->
-      <div class="hero-kpi">
-        <svg class="kpi-svg" viewBox="0 0 94 94"><circle class="kpi-track" cx="47" cy="47" r="40"/><circle class="kpi-arc" id="heroArcDrive" cx="47" cy="47" r="40"/></svg>
-        <div class="hero-kpi-inner">
-          <div class="hero-kpi-val" id="heroValDrive">11H</div>
+      <!-- Anillo 2: MANEJO (horas disponibles) — más grande -->
+      <div class="hero-kpi" style="width:148px;height:148px;">
+        <svg class="kpi-svg" viewBox="0 0 94 94">
+          <circle class="kpi-track" cx="47" cy="47" r="40"/>
+          <circle class="kpi-arc" id="heroArcDrive" cx="47" cy="47" r="40"/>
+        </svg>
+        <div class="hero-kpi-inner" style="width:120px;height:120px;">
+          <div class="hero-kpi-val" id="heroValDrive" style="font-size:36px;">11H</div>
           <div class="hero-kpi-lbl">Manejo</div>
         </div>
       </div>
 
       <!-- Anillo 3: CICLO 70H (horas disponibles) -->
       <div class="hero-kpi">
-        <svg class="kpi-svg" viewBox="0 0 94 94"><circle class="kpi-track" cx="47" cy="47" r="40"/><circle class="kpi-arc" id="heroArcCycle" cx="47" cy="47" r="40" style="stroke:#00b4ff;"/></svg>
+        <svg class="kpi-svg" viewBox="0 0 94 94">
+          <circle class="kpi-track" cx="47" cy="47" r="40"/>
+          <circle class="kpi-arc" id="heroArcCycle" cx="47" cy="47" r="40"/>
+        </svg>
         <div class="hero-kpi-inner">
-          <div class="hero-kpi-val" id="heroValCycle" style="color:#00b4ff;">70H</div>
+          <div class="hero-kpi-val" id="heroValCycle">70H</div>
           <div class="hero-kpi-lbl">Ciclo 70H</div>
         </div>
       </div>
@@ -6195,7 +6215,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <div class="grid2" id="shareTrackBtns" style="display:none;margin-top:10px">
           <button class="btn btn-blue" id="shareBtn" onclick="shareRoute()">📤 Compartir</button>
-          <button class="btn btn-purple" id="trackBtn" onclick="if(!origin||!destination){alert(t('errSel'));return;}openFullMapScreen()">📍 Rastreo en Vivo</button>
+          <button class="btn btn-purple" id="trackBtn" onclick="launchTrackingDirect()">📍 Rastreo en Vivo</button>
         </div>
       </div>
 
@@ -7806,6 +7826,24 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 </div>
 
+<!-- ══ SIDE TAB MENU (main screen) ══ -->
+<button id="sideMenuToggle" onclick="toggleSideTabMenu()" aria-label="Menú lateral">‹</button>
+<div id="sideTabStack">
+  <button class="side-tab-btn" onclick="closeSideTabMenu();openDotPanel()">
+    <span class="side-tab-icon">📋</span>
+    <span class="side-tab-label">DOT</span>
+  </button>
+  <button class="side-tab-btn" onclick="closeSideTabMenu();toggleCommQuickPanel()">
+    <span class="side-tab-badge" id="sideTabBadge"></span>
+    <span class="side-tab-icon">👥</span>
+    <span class="side-tab-label">Comunidad</span>
+  </button>
+  <button class="side-tab-btn" onclick="closeSideTabMenu();openChatChannel('general')">
+    <span class="side-tab-icon">💬</span>
+    <span class="side-tab-label">Live Chat</span>
+  </button>
+</div>
+
 <div id="fullMapScreen" style="
   display:none; position:fixed; inset:0; z-index:500;
   background:#000; flex-direction:column;
@@ -7843,6 +7881,15 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
     <!-- SOS button below speed signs -->
     <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
+    <!-- Community reports button — moved here to keep right column aligned -->
+    <button id="mapSpeedCommBtn" onclick="openCommunityPanel()" title="Community Reports"
+      style="position:relative;width:44px;height:44px;border-radius:50%;border:none;
+             background:rgba(15,23,42,0.88);backdrop-filter:blur(8px);color:#fff;
+             font-size:20px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.4);
+             display:flex;align-items:center;justify-content:center;
+             -webkit-tap-highlight-color:transparent;">
+      👥<span class="comm-count-badge" id="commBadge2"></span>
+    </button>
   </div>
 
   <!-- COMMUNITY REPORT ALERT POPUP -->
@@ -7940,7 +7987,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
 
   <!-- RIGHT SIDE CONTROL COLUMN: Community Reports -->
-  <div id="mapRightControls">
+  <div id="mapRightControls" style="display:none!important">
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
   </div>
 
@@ -7976,6 +8023,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         -webkit-tap-highlight-color:transparent;
         touch-action:manipulation;
       ">‹</button>
+
+      <!-- Botón detalles de ruta (visible solo cuando hay rastreo activo) -->
+      <button id="backToDashBtn" onclick="if(fmIsTracking){showHosDashboard()}" style="
+        display:none;
+        width:40px;height:40px;border-radius:12px;border:1px solid rgba(16,185,129,0.4);
+        background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
+        color:#10b981;font-size:18px;cursor:pointer;
+        align-items:center;justify-content:center;
+        box-shadow:0 2px 12px rgba(0,0,0,0.4),0 0 8px rgba(16,185,129,0.2);
+        -webkit-tap-highlight-color:transparent;
+        touch-action:manipulation;
+      ">📋</button>
 
       <!-- SOS ahora está en mapRightControls -->
 
@@ -8162,7 +8221,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
       <div style="font-size:18px;color:rgba(255,255,255,0.25);flex-shrink:0">→</div>
       <div style="flex:1;min-width:0;text-align:right">
-        <div style="font-size:9px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.4px">HASTA</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.4px" id="fmToLbl">HASTA</div>
         <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:rtl" id="fmTo">--</div>
       </div>
     </div>
@@ -8221,12 +8280,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div style="flex:0 0 auto;padding:calc(6px + env(safe-area-inset-top,0px)) 12px 8px;background:transparent;position:relative;">
     <!-- Glow layer behind the header pill -->
     <div style="position:absolute;inset:0;border-radius:26px;background:radial-gradient(ellipse 85% 70% at 50% 100%,rgba(16,185,129,0.28) 0%,rgba(59,130,246,0.12) 55%,transparent 100%);filter:blur(12px);pointer-events:none;z-index:0;"></div>
-    <div style="display:flex;align-items:center;gap:10px;background:rgba(15,20,35,0.60);border:1px solid rgba(16,185,129,0.30);border-radius:18px;padding:5px 12px;box-shadow:0 0 0 1px rgba(16,185,129,0.10),0 8px 32px rgba(0,0,0,0.65),0 0 28px rgba(16,185,129,0.18),0 0 60px rgba(59,130,246,0.10),inset 0 1px 0 rgba(255,255,255,0.10);overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);position:relative;z-index:1;">
+    <div style="display:flex;align-items:center;gap:14px;background:rgba(15,20,35,0.60);border:1px solid rgba(16,185,129,0.30);border-radius:18px;padding:5px 12px;box-shadow:0 0 0 1px rgba(16,185,129,0.10),0 8px 32px rgba(0,0,0,0.65),0 0 28px rgba(16,185,129,0.18),0 0 60px rgba(59,130,246,0.10),inset 0 1px 0 rgba(255,255,255,0.10);overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);position:relative;z-index:1;">
       <!-- Botón volver -->
-      <button onclick="showFullMapFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:20px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
+      <button onclick="backToMainFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:20px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
 
       <!-- Foto + nombre -->
-      <div id="dashProfilePhoto" style="width:60px;height:60px;border-radius:50%;flex-shrink:0;background:#1e293b;border:none;box-shadow:0 4px 16px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;margin:-8px 0;position:relative;z-index:1;"></div>
+      <div id="dashProfilePhoto" style="width:68px;height:68px;border-radius:50%;flex-shrink:0;background:#1e293b;border:3px solid rgba(16,185,129,0.7);box-shadow:0 0 0 2px rgba(16,185,129,0.25),0 0 18px rgba(16,185,129,0.55),0 0 36px rgba(16,185,129,0.2),0 6px 20px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;margin:-14px 0;position:relative;z-index:2;transform:scale(1.08);"></div>
       <div style="flex:1;min-width:0;">
         <div id="dashProfileName" style="font-size:19px;font-weight:900;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;">Driver</div>
       </div>
@@ -8253,51 +8312,57 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- ③ TRES ANILLOS KPI — centro más grande -->
   <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px 10px;">
 
-    <!-- TURNO ring (purple) -->
+    <!-- TURNO ring -->
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
-      <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 8px 20px rgba(167,139,250,0.35)) drop-shadow(0 4px 10px rgba(0,0,0,0.5));">
+      <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
         <svg viewBox="0 0 90 90" style="width:100%;height:100%;position:absolute;inset:0;">
-          <circle cx="45" cy="45" r="36" fill="#151c30" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
-          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#a78bfa" stroke-width="7" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <circle cx="45" cy="45" r="36" fill="url(#grayGrad1)" stroke="rgba(0,0,0,0.10)" stroke-width="7"/>
+          <defs><radialGradient id="grayGrad1" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
+          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#1a1a1a" stroke-width="7" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;">
-          <div id="dash14hTime" style="font-size:12px;font-weight:900;color:#c4b5fd;letter-spacing:-0.5px;line-height:1;">--:--</div>
-          <div style="font-size:6px;color:rgba(196,181,253,0.5);margin-top:1px;">inicio</div>
-          <div style="width:20px;height:0.5px;background:rgba(255,255,255,0.15);margin:2px 0;"></div>
-          <div id="dash14hLabel" style="font-size:9px;color:rgba(196,181,253,0.6);line-height:1;">--:--</div>
-          <div id="dashBtStatus" style="font-size:6px;color:rgba(196,181,253,0.55);margin-top:1px;letter-spacing:0.3px;">BT ○</div>
+          <div id="dash14hTime" style="font-family:'Share Tech Mono',monospace;font-size:12px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">--:--</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:6px;color:rgba(0,0,0,0.45);margin-top:1px;letter-spacing:1px;">INICIO</div>
+          <div style="width:20px;height:0.5px;background:rgba(0,0,0,0.18);margin:2px 0;"></div>
+          <div id="dash14hLabel" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,0,0,0.5);line-height:1;letter-spacing:1px;">--:--</div>
+          <div id="dashBtStatus" style="font-family:'Share Tech Mono',monospace;font-size:6px;color:rgba(0,0,0,0.4);margin-top:1px;letter-spacing:0.5px;">BT ○</div>
         </div>
       </div>
       <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">TURNO</div>
     </div>
 
-    <!-- DISPONIBLES ring (green) — GRANDE, usa dashRingArc/dashRingTrack -->
+    <!-- DISPONIBLES ring — GRANDE -->
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto;">
-      <div id="dashRingWrap" style="position:relative;width:196px;height:196px;filter:drop-shadow(0 12px 32px rgba(16,185,129,0.45)) drop-shadow(0 6px 18px rgba(0,0,0,0.70));transition:filter 0.6s ease;">
+      <div id="dashRingWrap" style="position:relative;width:230px;height:230px;filter:drop-shadow(0 6px 20px rgba(0,0,0,0.5));transition:filter 0.6s ease;">
         <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
+          <defs><radialGradient id="grayGrad2" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
           <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
-          <circle cx="130" cy="130" r="99" fill="#0d1a28"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="16" id="dashRingTrack"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="#10b981" stroke-width="16" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <circle cx="130" cy="130" r="99" fill="url(#grayGrad2)"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(0,0,0,0.10)" stroke-width="16" id="dashRingTrack"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="#1a1a1a" stroke-width="16" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div id="dashHosTime" style="font-size:36px;font-weight:900;color:#6ee7b7;letter-spacing:-2px;line-height:1;">11h 0m</div>
-          <div id="dashHosLabel" style="font-size:10px;color:rgba(110,231,183,0.55);text-align:center;margin-top:5px;line-height:1.3;max-width:110px;">de 11h límite</div>
+          <div id="dashHosTime" style="font-family:'Share Tech Mono',monospace;font-size:40px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">11h 0m</div>
+          <div id="dashHosLabel" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,0,0,0.45);text-align:center;margin-top:7px;line-height:1.4;max-width:130px;letter-spacing:0.5px;">de 11h límite</div>
+        </div>
+        <div style="position:absolute;bottom:32px;left:0;right:0;display:flex;justify-content:center;pointer-events:none;">
+          <div id="dashSecondsClock" style="font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:900;color:#10b981;letter-spacing:4px;text-shadow:0 0 8px rgba(16,185,129,0.7);">00</div>
         </div>
       </div>
       <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">DISPONIBLES</div>
     </div>
 
-    <!-- CICLO 70H ring (blue) -->
+    <!-- CICLO 70H ring -->
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
-      <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 8px 20px rgba(96,165,250,0.35)) drop-shadow(0 4px 10px rgba(0,0,0,0.5));">
+      <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
         <svg viewBox="0 0 94 94" style="width:100%;height:100%;position:absolute;inset:0;">
-          <circle cx="47" cy="47" r="40" fill="#131e30" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
-          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#60a5fa" stroke-width="7" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
+          <defs><radialGradient id="grayGrad3" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
+          <circle cx="47" cy="47" r="40" fill="url(#grayGrad3)" stroke="rgba(0,0,0,0.10)" stroke-width="7"/>
+          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#1a1a1a" stroke-width="7" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div id="dashWeekHours" style="font-size:16px;font-weight:900;color:#93c5fd;letter-spacing:-0.5px;line-height:1;">70H</div>
-          <div id="dashCicloUsed" style="font-size:7px;color:rgba(147,197,253,0.6);margin-top:3px;">0h usadas</div>
+          <div id="dashWeekHours" style="font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">70H</div>
+          <div id="dashCicloUsed" style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(0,0,0,0.45);margin-top:3px;letter-spacing:0.5px;">0h usadas</div>
         </div>
       </div>
       <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">CICLO 70H</div>
@@ -8329,27 +8394,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
   </div>
 
-  <!-- ⑤ BARRAS DE PROGRESO -->
-  <div style="flex:0 0 auto;padding:0 12px 10px;display:flex;flex-direction:column;gap:10px;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="font-size:9px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:1.2px;width:68px;flex-shrink:0;">MANEJO</div>
-      <div style="flex:1;height:5px;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden;">
-        <div id="dashManejoProg" style="height:100%;background:#10b981;border-radius:999px;width:0%;transition:width 1s ease;"></div>
-      </div>
-      <div id="dashManejoLabel" style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:52px;text-align:right;flex-shrink:0;">0h 00m</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="font-size:9px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:1.2px;width:68px;flex-shrink:0;">CICLO 8D</div>
-      <div style="flex:1;height:5px;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden;">
-        <div id="dashCicloProg" style="height:100%;background:#60a5fa;border-radius:999px;width:0%;transition:width 1s ease;"></div>
-      </div>
-      <div id="dashCicloLabel" style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:52px;text-align:right;flex-shrink:0;">0H / 70H</div>
-    </div>
-  </div>
+  <!-- ⑤ BARRAS DE PROGRESO — eliminadas (IDs movidos a stubs ocultos para compat JS) -->
 
   <!-- RUTA PROGRESO LINE -->
   <div id="dashRouteProgress" style="display:block;flex:0 0 auto;padding:0 10px 10px;">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:11px 14px;">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(16,185,129,0.22);border-radius:14px;padding:11px 14px;
+                box-shadow:0 0 0 1px rgba(16,185,129,0.10),0 0 18px rgba(16,185,129,0.22),0 0 36px rgba(59,130,246,0.12),0 4px 18px rgba(0,0,0,0.5);">
       <!-- Origen → Destino -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
         <div style="flex:1;min-width:0;">
@@ -8369,9 +8419,21 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
       <!-- Millas restantes y porcentaje -->
-      <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <div id="dashRouteRemaining" style="font-size:12px;font-weight:800;color:#f1f5f9;letter-spacing:-0.3px;">-- mi restantes</div>
         <div id="dashRoutePct" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);">0%</div>
+      </div>
+      <!-- Horas de manejo restantes -->
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span style="font-size:11px;flex-shrink:0;">🕐</span>
+        <div id="dashRouteDriveLeft" style="font-size:11px;font-weight:800;color:#10b981;flex-shrink:0;min-width:70px;">-- h manejo</div>
+        <div style="flex:1;height:3px;background:rgba(255,255,255,0.10);border-radius:999px;overflow:hidden;">
+          <div id="dashRouteDriveBarFill" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width 1s ease;"></div>
+        </div>
+      </div>
+      <!-- Parada obligatoria (aparece cuando se necesita) -->
+      <div id="dashRouteStopRow" style="display:none;margin-top:7px;border-radius:8px;padding:5px 9px;">
+        <div id="dashRouteStopCity" style="font-size:10px;font-weight:800;line-height:1.4;"></div>
       </div>
     </div>
   </div>
@@ -8388,12 +8450,28 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div id="dashMilesLeft">--</div>
     <div id="dashWeatherRow"></div>
     <span id="dashWxIcon"></span><span id="dashWxTemp"></span><span id="dashWxDesc"></span><span id="dashWxWind"></span>
+    <div id="dashManejoProg"></div><div id="dashManejoLabel"></div>
+    <div id="dashCicloProg"></div><div id="dashCicloLabel"></div>
   </div>
 
   </div><!-- /tarjeta principal -->
 
+
   <!-- ⑥ MINI MAPA GPS -->
-  <div id="hosMiniMap" style="flex:1;min-height:0;background:#0f1c2e;border-top:1px solid rgba(255,255,255,0.07);position:relative;"></div>
+  <div style="flex:1;min-height:0;position:relative;border-top:1px solid rgba(255,255,255,0.07);">
+    <div id="hosMiniMap" style="width:100%;height:100%;background:#0f1c2e;"></div>
+    <!-- Botón abrir mapa grande (izquierda para no tapar speed limit) -->
+    <button onclick="showFullMapFromDash()" style="
+      position:absolute;bottom:12px;left:12px;z-index:999;
+      background:rgba(10,16,30,0.85);backdrop-filter:blur(10px);
+      border:1px solid rgba(16,185,129,0.5);border-radius:12px;
+      padding:7px 12px;display:flex;align-items:center;gap:6px;
+      color:#f1f5f9;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:800;
+      cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 10px rgba(16,185,129,0.2);
+      -webkit-tap-highlight-color:transparent;letter-spacing:0.3px;">
+      <span style="font-size:14px;">🗺️</span> Mapa completo
+    </button>
+  </div>
 
 </div>
 
@@ -8455,43 +8533,58 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   100%    { transform:translateX(0); }
 }
 #hncStop.hnc-scrolling { animation: hnc-marquee 7s ease-in-out infinite; }
-/* ── Menú lateral del HOS Dashboard ─────────────────────── */
-#dashSideMenuToggle {
-  position:absolute;right:0;top:50%;transform:translateY(-50%);
-  z-index:25010;width:16px;height:64px;
-  background:rgba(249,115,22,.32);border:1px solid rgba(249,115,22,.45);
-  border-right:none;border-radius:8px 0 0 8px;
-  color:rgba(255,255,255,.85);font-size:13px;font-weight:900;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  transition:right .28s cubic-bezier(.4,0,.2,1),background .15s;
-  padding:0;line-height:1;touch-action:manipulation;
-}
-#dashSideMenuToggle.open { right:34px;background:rgba(249,115,22,.5); }
-#dashSideTabStack {
-  position:absolute;right:0;top:50%;
-  transform:translateY(-50%) translateX(100%);
-  z-index:25009;display:flex;flex-direction:column;gap:3px;
-  transition:transform .28s cubic-bezier(.4,0,.2,1);
-}
-#dashSideTabStack.open { transform:translateY(-50%) translateX(0); }
-.dash-side-tab {
-  position:relative;background:linear-gradient(160deg,#f97316,#ea580c);
-  color:#fff;border:none;border-radius:10px 0 0 10px;
-  width:34px;height:100px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:5px;cursor:pointer;
-  box-shadow:-3px 0 16px rgba(249,115,22,.45);
-  transition:width .2s,height .2s,background .2s,box-shadow .2s;
-  touch-action:manipulation;padding:0;
-}
-.dash-side-tab:hover { width:42px;height:112px;background:linear-gradient(160deg,#fb923c,#f97316);box-shadow:-4px 0 22px rgba(249,115,22,.7); }
-.dash-side-tab:active { width:28px;box-shadow:-2px 0 8px rgba(249,115,22,.3); }
+/* ── Menú lateral del HOS Dashboard — OCULTO (movido a pantalla principal) ── */
+#dashSideMenuToggle, #dashSideTabStack { display:none !important; }
 .dash-side-tab-badge {
   position:absolute;top:5px;left:5px;
   background:#ef4444;color:#fff;
   font-size:9px;font-weight:900;border-radius:999px;
   padding:1px 4px;min-width:14px;text-align:center;
   display:none;
+}
+
+/* ── Quick Actions bar — pantalla principal hero ────────── */
+#heroQuickActions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  padding: 10px 14px 4px;
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: center;
+}
+.hqa-btn {
+  flex: 1;
+  max-width: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 9px 6px 8px;
+  border: 1.5px solid rgba(249,115,22,.35);
+  border-radius: 14px;
+  background: rgba(249,115,22,.10);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background .18s, transform .14s, box-shadow .18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.hqa-btn:active { background: rgba(249,115,22,.25); transform: scale(.94); }
+.hqa-icon { font-size: 18px; line-height: 1; }
+.hqa-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; font-weight: 900; letter-spacing: 1px;
+  text-transform: uppercase; color: rgba(255,255,255,.85);
+  line-height: 1;
+}
+.hqa-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: #ef4444; color: #fff;
+  font-size: 8px; font-weight: 900; border-radius: 999px;
+  padding: 1px 4px; min-width: 14px; text-align: center;
+  display: none;
 }
 
 /* Tooltip del mini mapa */
@@ -8595,10 +8688,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   box-shadow: 0 4px 14px rgba(0,0,0,0.65), inset 0 0 0 2px rgba(0,0,0,0.06);
 }
 .dsp-top {
+  font-family: 'Share Tech Mono', monospace;
   font-size: 7px;
   font-weight: 900;
   color: #000;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.8px;
   line-height: 1.15;
   text-transform: uppercase;
 }
@@ -8607,14 +8701,15 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   font-weight: 900;
   color: #000;
   line-height: 1;
-  font-family: 'DM Sans', sans-serif;
-  letter-spacing: -1px;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0px;
 }
 .dsp-label {
+  font-family: 'Share Tech Mono', monospace;
   font-size: 7px;
   font-weight: 800;
   color: #000;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
 }
 #dashSpeedoWrap {
@@ -8635,8 +8730,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   font-weight: 900;
   color: #000;
   line-height: 1;
-  font-family: 'DM Sans', sans-serif;
-  letter-spacing: -1px;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0px;
   transition: color .4s ease;
 }
 #dashSpeedUnit {
@@ -10358,11 +10453,15 @@ const WX_ICONS = {
   80:'🌦️', 81:'🌧️', 82:'⛈️', 85:'🌨️', 86:'🌨️❄️',
   95:'⛈️', 96:'⛈️🌩️', 99:'⛈️🌩️❄️'
 };
+// Night overrides for clear/partly-cloudy codes (is_day === 0)
+const WX_ICONS_NIGHT = {
+  0:'🌙', 1:'🌙', 2:'🌙⛅', 3:'☁️'
+};
 
 async function fetchWeather(lat, lon) {
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&current=temperature_2m,weathercode,windspeed_10m,precipitation&wind_speed_unit=mph` +
+      `&current=temperature_2m,weathercode,windspeed_10m,precipitation,is_day&wind_speed_unit=mph` +
       `&temperature_unit=fahrenheit&timezone=auto`;
     const r = await fetch(url);
     const d = await r.json();
@@ -10372,6 +10471,7 @@ async function fetchWeather(lat, lon) {
       temp  : Math.round(c.temperature_2m),
       wind  : Math.round(c.windspeed_10m),
       precip: c.precipitation,
+      isDay : c.is_day !== 0,
       desc  : WX_DESC[c.weathercode] || 'Unknown'
     };
   } catch { return null; }
@@ -10411,7 +10511,7 @@ function updateWeatherWidget(wx) {
   if (!wx) return;
   const isDanger  = WX_DANGER_CODES.has(wx.code);
   const isWarning = WX_WARNING_CODES.has(wx.code);
-  const wxIconTxt = WX_ICONS[wx.code] || '🌡️';
+  const wxIconTxt = (!wx.isDay && WX_ICONS_NIGHT[wx.code]) ? WX_ICONS_NIGHT[wx.code] : (WX_ICONS[wx.code] || '🌡️');
   const wxTempTxt = `${wx.temp}°F`;
   const wxWindTxt = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
   // Map widget
@@ -10920,8 +11020,9 @@ let wasMoving = false;
 
 
 function showSpeedometer() {
-  // Floating speedometer removed from map — speed shown in mapSpeedSign "YOUR SPEED"
   speedoVisible = true;
+  const w = document.getElementById('speedometerWidget');
+  if (w) { w.classList.add('visible'); applySpeedometerPos(); }
 }
 
 function hideSpeedometer() {
@@ -10959,7 +11060,7 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
     const h = Math.floor(driveLeft), m = Math.round((driveLeft - h) * 60);
     valD.textContent = h > 0 ? `${h}H` : `${m}M`;
-    const col = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+    const col = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#1a1a1a';
     arcD.style.stroke = col; arcD.style.strokeDashoffset = C * (1 - pct);
     valD.style.color = col;
   }
@@ -10969,7 +11070,7 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     const pct = Math.max(0, Math.min(1, cycleLeft / Math.max(1, cycleMax)));
     const h = Math.floor(cycleLeft);
     valC.textContent = `${h}H`;
-    const col = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
+    const col = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#1a1a1a';
     arcC.style.stroke = col; arcC.style.strokeDashoffset = C * (1 - pct);
     valC.style.color = col;
   }
@@ -11146,7 +11247,7 @@ function initDriveHoursDrag() {
 function updateDashRingGlow(mph, isOver) {
   const wrap = document.getElementById('dashRingWrap');
   if (!wrap) return;
-  const moving = mph > 3;
+  const moving = mph >= 8;
   if (isOver) {
     wrap.style.filter = 'drop-shadow(0 0 22px rgba(239,68,68,0.80)) drop-shadow(0 0 44px rgba(239,68,68,0.40)) drop-shadow(0 6px 18px rgba(0,0,0,0.70))';
   } else if (moving) {
@@ -11204,7 +11305,7 @@ function updateSpeedometer(mph) {
   const statusBadge = document.getElementById('speedoStatus');
 
   num.textContent = Math.round(mph);
-  const moving = mph > 3;
+  const moving = mph >= 8;
 
 
   // Over-limit based on state truck speed limit (if available)
@@ -14124,7 +14225,7 @@ async function calculateRoute() {
   if (isNaN(speed)||speed<=0) { showError(t('errSpeed')); return; }
 
   // 🚨 Safety: block if vehicle is currently moving
-  if (fmVehicleMoving && fmCurrentSpeed > 3) {
+  if (fmVehicleMoving && fmCurrentSpeed >= 8) {
     showToast('danger','🚨',
       lang === 'es' ? '¡Vehículo en movimiento!' : 'Vehicle in Motion!',
       lang === 'es'
@@ -14245,6 +14346,9 @@ function renderResults(hours, speed, depart) {
   _detectAndShowViolations(_dailyHrs, _weeklyHrs);
 
   // Geocodificar ciudades de descanso de forma asíncrona
+  // Reset stored cities for new route
+  _nextBreakCity = null;
+  _nextRestCity  = null;
   if (restStops.length && roadGeometry && roadGeometry.length > 1) {
     restStops.forEach((stop, i) => {
       setTimeout(() => {
@@ -14253,10 +14357,16 @@ function renderResults(hours, speed, depart) {
         _reverseGeocodeCity(pos[0], pos[1]).then(city => {
           const el = document.getElementById('schedCity' + stop.idx);
           if (el) { el.textContent = '📍 ' + city; el.classList.remove('loading'); el.classList.add('loaded'); }
+          // Store in dedicated vars: first break30 and first rest found
+          const sType = schedule[stop.idx]?.type;
+          if (sType === 'break30' && !_nextBreakCity) _nextBreakCity = city;
+          if ((sType === 'rest' || sType === 'reset') && !_nextRestCity) _nextRestCity = city;
+          updateFmToDisplay();
         });
-      }, i * 1100); // 1.1s entre llamadas → respeta Nominatim rate-limit
+      }, i * 1100);
     });
   }
+  setTimeout(updateFmToDisplay, 100);
 }
 
 function renderDrives() {
@@ -14456,6 +14566,16 @@ localStorage.setItem('hos_reports', JSON.stringify(communityReports));
 // Current logged-in user
 let currentUser = JSON.parse(localStorage.getItem('hos_user') || 'null');
 
+function launchTrackingDirect() {
+  if (!origin || !destination) { alert(t ? t('errSel') : 'Select origin and destination'); return; }
+  openFullMapScreen();
+  // Hide the confirmation banner — skip the "map only / start tracking" choice
+  const banner = document.getElementById('fmTrackBanner');
+  if (banner) banner.style.display = 'none';
+  // Small delay so the map DOM is ready before starting tracking
+  setTimeout(() => { fmStartTracking(); }, 150);
+}
+
 function openFullMapScreen() {
   const screen = document.getElementById('fullMapScreen');
   screen.style.display = 'flex';
@@ -14480,7 +14600,10 @@ function openFullMapScreen() {
   });
 
   if (origin) document.getElementById('fmFrom').textContent = origin.name.split(',')[0];
-  if (destination) document.getElementById('fmTo').textContent = destination.name.split(',')[0];
+  if (destination) {
+    document.getElementById('fmTo').textContent = destination.name.split(',')[0];
+    setTimeout(updateFmToDisplay, 200);
+  }
 
   // Build map style panel buttons (once)
   const stylePanel = document.getElementById('mapStylePanel');
@@ -14881,6 +15004,9 @@ function fmTickClock() {
   if (speedClock) {
     speedClock.textContent = now.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit',hour12:true});
   }
+  // Segundos dentro del anillo DISPONIBLES
+  const secClock = document.getElementById('dashSecondsClock');
+  if (secClock) secClock.textContent = String(now.getSeconds()).padStart(2,'0');
 }
 
 /* ── Búsqueda de destino desde el mapa ── */
@@ -15498,6 +15624,71 @@ function updateDashDestCard() {
   }
 }
 
+// ── Route bar HASTA label: shows next mandatory stop city ──
+let _nextBreakCity = null;  // city for next 30-min break
+let _nextRestCity  = null;  // city for next 10h rest
+
+function updateFmToDisplay() {
+  const toEl  = document.getElementById('fmTo');
+  const lblEl = document.getElementById('fmToLbl');
+  if (!toEl) return;
+
+  const _b30due  = typeof use30min !== 'undefined' && use30min && typeof b30Complete !== 'undefined' && !b30Complete && typeof b30Warned30m !== 'undefined' && b30Warned30m;
+  const _b30brk  = typeof b30InBreak !== 'undefined' && b30InBreak && typeof b30Complete !== 'undefined' && !b30Complete;
+  const hoursGone = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft <= 0;
+  const hoursLow  = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft > 0 && _hosCurrentDriveLeft <= 2;
+
+  // Priority 1: active break or break urgently due
+  if (_b30due || _b30brk) {
+    if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
+    const city = _hosBreakStopName || _nextBreakCity;
+    toEl.style.color = '#f59e0b';
+    toEl.textContent = city || 'Próxima parada';
+    return;
+  }
+  // Priority 2: hours exhausted or nearly gone
+  if (hoursGone || hoursLow) {
+    if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
+    const city = _hosHoursStopName || _nextRestCity;
+    toEl.style.color = '#818cf8';
+    toEl.textContent = city || 'Busca área de descanso';
+    return;
+  }
+  // Priority 3: show upcoming 30-min break city from schedule
+  if (_nextBreakCity) {
+    if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
+    toEl.style.color = '#f59e0b';
+    toEl.textContent = _nextBreakCity;
+    return;
+  }
+  // Priority 4: show upcoming 10h rest city from schedule
+  if (_nextRestCity) {
+    if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
+    toEl.style.color = '#818cf8';
+    toEl.textContent = _nextRestCity;
+    return;
+  }
+  // Priority 5: geocoding still in progress — show placeholder with destination
+  const hasBreakInSched  = Array.isArray(schedule) && schedule.some(s => s.type === 'break30');
+  const hasRestInSched   = Array.isArray(schedule) && schedule.some(s => s.type === 'rest' || s.type === 'reset');
+  if (hasBreakInSched) {
+    if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
+    toEl.style.color = '#f59e0b';
+    toEl.textContent = '…';
+    return;
+  }
+  if (hasRestInSched) {
+    if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
+    toEl.style.color = '#818cf8';
+    toEl.textContent = '…';
+    return;
+  }
+  // Default: show final destination
+  if (lblEl) { lblEl.textContent = 'HASTA'; lblEl.style.color = 'rgba(255,255,255,0.35)'; }
+  toEl.style.color = '';
+  toEl.textContent = destination ? destination.name.split(',')[0] : '--';
+}
+
 // ── Garmin-style nav card ──
 function updateNextStopCard() {
   const card = document.getElementById('hosNavCard');
@@ -15507,6 +15698,7 @@ function updateNextStopCard() {
   // hosNavCard removed from UI — keep permanently hidden, only update hidden fields for compat
   card.style.display = 'none';
   updateDashDestCard();
+  updateFmToDisplay();
   const show = fmVehicleMoving && navSteps.length > 0;
   if (!show) return;
 
@@ -15718,9 +15910,9 @@ function autoUpdateDashStatus(isMoving) {
       setDashStatus('rest');
     }
 
-    // ── SIN pausa pendiente → Espera inmediata al detenerse ──
+    // ── SIN pausa pendiente → Espera después de 2 min parado ──
     const noBreakPending = b30Complete || !breakDue;
-    if (noBreakPending) {
+    if (noBreakPending && _autoStopSecs >= 120) {
       if (waitBtn) waitBtn.classList.add('dash-tab-wait-pulse');
       if (_dashCurrentStatus === 'driving') setDashStatus('wait');
     } else {
@@ -15919,6 +16111,9 @@ function fmStartTracking() {
   lastStateCheck = 0;
   lastFuelCheck  = 0;
   lastRoadSpeedCheck = 0;
+  // Show "back to dashboard" button when tracking is active
+  const _btd = document.getElementById('backToDashBtn');
+  if (_btd) _btd.style.display = 'flex';
 
   // Restore accumulated drive seconds for today (persisted across sessions)
   fmDriveSeconds = 0;
@@ -15944,11 +16139,13 @@ function fmStartTracking() {
   document.getElementById('fmStopBtn').style.display = 'block';
   showSpeedometer();
   showDriveHoursWidget();
-  // Use available cycle hours (max 11 per day, but limited by 70hr cycle)
-  const initCycleHours = Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 70);
-  const initDriveMax = Math.min(11, initCycleHours);
-  updateDriveHoursWidget(initDriveMax, initDriveMax);
-  updateHeroKPIs(initDriveMax, initDriveMax, initCycleHours, initCycleHours);
+  // Leer horas restantes del tracker (respeta lo que el driver ingresó en el popup)
+  const _initDriveLeft  = window._hosTracker ? Math.max(0, window._hosTracker.driveLeft())  : 11;
+  const _initCycleLeft  = window._hosTracker ? Math.max(0, window._hosTracker.cycleLeft())  : parseFloat(document.getElementById('hoursInput').value) || 70;
+  // El "máximo" del arco es el tiempo diario que el driver indicó (dailyHoursInput)
+  const _initDriveMax   = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput').value) || _initDriveLeft);
+  updateDriveHoursWidget(Math.min(_initDriveLeft, _initDriveMax), _initDriveMax);
+  updateHeroKPIs(_initDriveLeft, _initDriveMax, _initCycleLeft, 70);
   // Mostrar dashboard HOS en lugar del mapa completo
   showHosDashboard();
   // Show speed sign immediately — will update with real state on first GPS fix
@@ -15977,6 +16174,8 @@ function fmStartTracking() {
   document.getElementById('fmPct').textContent  = '0%';
   document.getElementById('fmBar').style.width  = '0%';
   document.getElementById('fmRem').textContent  = routeDistance + ' mi';
+  // Guardar estado de la ruta inmediatamente al iniciar rastreo
+  setTimeout(_fmSaveActiveRoute, 300);
 
   fmWatchId = navigator.geolocation.watchPosition(async pos => {
     const lat  = pos.coords.latitude;
@@ -15992,7 +16191,8 @@ function fmStartTracking() {
 
     const rawSpeed = pos.coords.speed;
     const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
-    const isMoving = gpsSpeed > 3;
+    // 8 mph threshold to filter GPS drift noise (GPS can report 3-6 mph when stationary)
+    const isMoving = gpsSpeed >= 8;
     // Expose globally so calculateRoute can check
     fmCurrentSpeed = gpsSpeed;
     fmVehicleMoving = isMoving;
@@ -16031,7 +16231,7 @@ function fmStartTracking() {
       const dLon = (snapLon - fmLastStablePos.lon) * Math.PI / 180;
       const a = Math.sin(dLat/2)**2 + Math.cos(fmLastStablePos.lat * Math.PI/180) * Math.cos(snapLat * Math.PI/180) * Math.sin(dLon/2)**2;
       const distM = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      if (distM < 10) return; // menos de 10m parado — ignorar actualización
+      if (distM < 30) return; // menos de 30m parado — ignorar drift GPS
     }
     fmLastStablePos = { lat: snapLat, lon: snapLon };
 
@@ -16045,7 +16245,13 @@ function fmStartTracking() {
 
     // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
-      // Zoom stays fixed at the fitBounds level — no auto-zoom by speed
+      // Dynamic zoom: <20 mph or stopped → zoom 17 (tight); ≥20 mph → zoom 13 (wider)
+      if (!fmUserZoomed) {
+        const targetZoom = gpsSpeed < 20 ? 17 : 13;
+        if (Math.abs(fmCurrentZoom - targetZoom) >= 1) {
+          fmCurrentZoom = targetZoom;
+        }
+      }
       window._fmProgrammaticMove = true;
       // Rotate BEFORE pan — flag as programmatic so rotatestart doesn't
       // set fmUserRotated and block future GPS-driven rotations
@@ -16069,6 +16275,8 @@ function fmStartTracking() {
     updateNavInstruction(lat, lon);
     // ── Auto status buttons (Conduciendo / Descanso) ─────
     autoUpdateDashStatus(isMoving);
+    // ── Reportar movimiento al tracker HOS (sin ELD) ─────
+    if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(isMoving, gpsSpeed);
     // ── Próxima parada card ───────────────────────────────
     updateNextStopCard();
     // ── Weigh station warning ─────────────────────────────
@@ -16089,6 +16297,7 @@ function fmStartTracking() {
       // Persist every 30 s so sessions survive app restarts/crashes
       if (Math.round(fmDriveSeconds) % 30 === 0) {
         try { localStorage.setItem('hos_fm_drive_secs', JSON.stringify({secs: fmDriveSeconds, date: new Date().toDateString(), ts: Date.now()})); } catch(e) {}
+        _fmSaveActiveRoute();
       }
     }
     fmLastMoveTime = isMoving ? now : null;
@@ -16138,16 +16347,20 @@ function fmStartTracking() {
     // ── Barra de progreso de ruta en el dashboard ────────────────
     updateDashRouteProgress(pct, remaining);
 
-    const _dailyMax  = Math.max(0, parseFloat(document.getElementById('dailyHoursInput')?.value || 11));
-    const _weeklyMax = Math.max(0, parseFloat(document.getElementById('hoursInput')?.value || 70));
-    const driveMax  = Math.min(_dailyMax, _weeklyMax);
-    const driveLeft = Math.max(0, driveMax - elapsed);
+    const _dailyMax  = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11);
+    const _weeklyMax = Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70);
+    const driveMax   = Math.min(_dailyMax, _weeklyMax);
+    // Usar tracker directamente — fmDriveSeconds es sobreescrito por _updateRings() con el valor acumulado total
+    const driveLeft  = window._hosTracker
+      ? Math.max(0, Math.min(window._hosTracker.driveLeft(), driveMax))
+      : Math.max(0, driveMax - elapsed);
     _hosCurrentDriveLeft = driveLeft;
     const driveEl = document.getElementById('fmDriveLeft');
     driveEl.textContent = fmtH(driveLeft);
     driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
     // Update circular widget on the map
     updateDriveHoursWidget(driveLeft, driveMax);
+    if (typeof updateDashRouteHoursRow === 'function') updateDashRouteHoursRow();
 
     // ── Recalcular hora de llegada al detenerse ───────────────────────────
     if (!isMoving && _wasMovingPrev && destination && remaining > 0) {
@@ -16257,7 +16470,9 @@ function fmStartTracking() {
     } catch(e) {}
 
 
-    const cycleLeft = Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
+    const cycleLeft = window._hosTracker
+      ? Math.max(0, window._hosTracker.cycleLeft())
+      : Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
     const cyEl = document.getElementById('fm70Left');
     cyEl.textContent = fmtH(cycleLeft);
     cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
@@ -16377,6 +16592,7 @@ function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
+  _fmClearActiveRoute();
   b30Reset(); // limpiar sistema de pausa al detener rastreo
   _autoStopSecs   = 0;
   _autoStopLastTs = null;
@@ -16438,6 +16654,103 @@ function fmStopTracking() {
 }
 
 /* ════════════════════════════════════════════════════════════
+   🔄  PERSISTENCIA DE RUTA ACTIVA — reanudar tras cierre de app
+════════════════════════════════════════════════════════════ */
+const _FM_ROUTE_KEY = 'hos_active_route';
+
+function _fmSaveActiveRoute() {
+  if (!fmIsTracking || !origin || !destination) return;
+  try {
+    localStorage.setItem(_FM_ROUTE_KEY, JSON.stringify({
+      origin,
+      destination,
+      routeDistance,
+      roadGeometry: roadGeometry ? roadGeometry.slice(0, 2000) : null,
+      schedule: typeof schedule !== 'undefined' ? schedule : [],
+      arrivalTimestamp: arrivalTime instanceof Date ? arrivalTime.getTime() : null,
+      navSteps: (typeof navSteps !== 'undefined' ? navSteps : []).slice(0, 60),
+      navStepIdx: typeof navStepIdx !== 'undefined' ? navStepIdx : 0,
+      routeSource: typeof routeSource !== 'undefined' ? routeSource : '',
+      savedAt: Date.now()
+    }));
+  } catch(e) {}
+}
+
+function _fmClearActiveRoute() {
+  try { localStorage.removeItem(_FM_ROUTE_KEY); } catch(e) {}
+}
+
+function _fmCheckResumeRoute() {
+  let saved;
+  try { saved = JSON.parse(localStorage.getItem(_FM_ROUTE_KEY)); } catch(e) { return; }
+  if (!saved || !saved.origin || !saved.destination) return;
+  // No ofrecer reanudar si pasaron más de 10h (el conductor descansó)
+  const ageH = (Date.now() - (saved.savedAt || 0)) / 3600000;
+  if (ageH > 10) { _fmClearActiveRoute(); return; }
+
+  const isEs = typeof lang !== 'undefined' && lang === 'es';
+  const destName = (saved.destination.name || '').split(',')[0] || 'destino';
+  const originName = (saved.origin.name || '').split(',')[0] || '';
+
+  let dlg = document.getElementById('fmResumeDialog');
+  if (!dlg) {
+    dlg = document.createElement('div');
+    dlg.id = 'fmResumeDialog';
+    dlg.style.cssText = 'display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);align-items:center;justify-content:center;padding:20px';
+    document.body.appendChild(dlg);
+  }
+  dlg.innerHTML = `
+    <div style="background:#0f172a;border:1.5px solid rgba(16,185,129,.45);border-radius:22px;padding:32px 24px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.95)">
+      <div style="font-size:46px;margin-bottom:10px">🚛</div>
+      <div style="font-size:10px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:8px">${isEs ? 'RUTA ACTIVA DETECTADA' : 'ACTIVE ROUTE DETECTED'}</div>
+      <div style="font-size:18px;font-weight:800;color:#f1f5f9;margin-bottom:8px">${isEs ? '¿Continuar ruta?' : 'Continue route?'}</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:4px">${isEs ? 'Desde' : 'From'}: <span style="color:#94a3b8">${originName}</span></div>
+      <div style="font-size:14px;font-weight:700;color:#10b981;margin-bottom:20px">${isEs ? 'Hacia' : 'To'}: ${destName}</div>
+      <button id="fmResumeYes" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;letter-spacing:.3px">
+        ✅ ${isEs ? 'Sí, continuar rastreo' : 'Yes, resume tracking'}
+      </button>
+      <button id="fmResumeNo" style="width:100%;background:rgba(255,255,255,.06);color:#94a3b8;border:1.5px solid rgba(255,255,255,.12);border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">
+        ❌ ${isEs ? 'No, cancelar ruta' : 'No, cancel route'}
+      </button>
+    </div>
+  `;
+  dlg.style.display = 'flex';
+
+  document.getElementById('fmResumeYes').onclick = () => {
+    dlg.style.display = 'none';
+    _fmRestoreRoute(saved);
+  };
+  document.getElementById('fmResumeNo').onclick = () => {
+    dlg.style.display = 'none';
+    _fmClearActiveRoute();
+    // El tiempo HOS ya acumulado (fmDriveSeconds / hos_fm_drive_secs) no se toca
+  };
+}
+
+function _fmRestoreRoute(saved) {
+  origin        = saved.origin;
+  destination   = saved.destination;
+  routeDistance = saved.routeDistance || 0;
+  roadGeometry  = saved.roadGeometry  || null;
+  if (typeof schedule    !== 'undefined') schedule    = saved.schedule    || [];
+  if (typeof arrivalTime !== 'undefined') arrivalTime = saved.arrivalTimestamp ? new Date(saved.arrivalTimestamp) : null;
+  if (typeof navSteps    !== 'undefined') navSteps    = saved.navSteps    || [];
+  if (typeof routeSource !== 'undefined') routeSource = saved.routeSource || '';
+  // navStepIdx se restaura después de fmStartTracking() porque éste lo resetea a 0
+
+  openFullMapScreen();
+  setTimeout(() => {
+    fmStartTracking();
+    // Restaurar posición en la navegación tras el reset que hace fmStartTracking
+    const restoredIdx = saved.navStepIdx || 0;
+    if (restoredIdx > 0) setTimeout(() => { if (typeof navStepIdx !== 'undefined') navStepIdx = restoredIdx; }, 300);
+  }, 400);
+}
+
+// Verificar ruta pendiente al abrir la app (1.5s para que el DOM esté listo)
+setTimeout(_fmCheckResumeRoute, 1500);
+
+/* ════════════════════════════════════════════════════════════
    📊  HOS DASHBOARD — pantalla de estado al iniciar rastreo
 ════════════════════════════════════════════════════════════ */
 let hosMinimapInst    = null;  // instancia Leaflet del mini mapa
@@ -16451,6 +16764,7 @@ let hosShiftStartTime   = parseInt(localStorage.getItem('hos_shift_start') || '0
 let _offDutyStartMs     = parseInt(localStorage.getItem('hos_off_start')  || '0') || null;
 _vehicleStopStartMs     = parseInt(localStorage.getItem('hos_stop_start') || '0') || null;
 let _dash14hInterval  = null;
+let _dashRingInterval = null;
 // Flags de sesión para alertas de horas de manejo (se reinician al iniciar viaje)
 let _hosWarn1hFired  = false;
 let _hosWarn30mFired = false;
@@ -16459,7 +16773,9 @@ let _hosWarnExpiredFired = false;
 // Centra el mini-mapa con el icono del camión en la zona inferior (≈25% desde abajo)
 function _hosMinimapFollow(lat, lon) {
   if (!hosMinimapInst) return;
-  hosMinimapInst.setView([lat, lon], hosMinimapInst.getZoom(), { animate: false });
+  // Dynamic zoom by speed — matches full map logic
+  const _miniTargetZoom = fmCurrentSpeed < 20 ? 17 : 13;
+  hosMinimapInst.setView([lat, lon], _miniTargetZoom, { animate: false });
   const sz = hosMinimapInst.getSize();
   hosMinimapInst.panBy([0, -Math.round(sz.y * 0.28)], { animate: false });
 }
@@ -16496,10 +16812,13 @@ function showHosDashboard() {
   });
 
   // Llenar datos del perfil
-  const name  = (typeof driverProfile !== 'undefined' && driverProfile?.name) || 'Driver';
-  const photo = (typeof driverProfile !== 'undefined' && driverProfile?.photo) || null;
-  const emoji = (typeof TRUCK_EMOJIS !== 'undefined' && driverProfile?.truckType)
-                ? (TRUCK_EMOJIS[driverProfile.truckType] || '🚛') : '🚛';
+  let _cu = null; try { _cu = currentUser && currentUser.name ? currentUser : JSON.parse(localStorage.getItem('hos_user') || 'null'); } catch(e){}
+  const _ps = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
+  const _dp = (typeof driverProfile !== 'undefined' && driverProfile) || {};
+  const name  = (_cu?.name) || _ps.name || _dp.name || 'Driver';
+  const photo = (_cu?.photoData) || _ps.photo || _dp.photo || localStorage.getItem('hos_profile_photo') || null;
+  const emoji = (typeof TRUCK_EMOJIS !== 'undefined' && (_dp.truckType || _ps.truckType))
+                ? (TRUCK_EMOJIS[_dp.truckType || _ps.truckType] || '🚛') : '🚛';
 
   const nameEl  = document.getElementById('dashProfileName');
   const photoEl = document.getElementById('dashProfilePhoto');
@@ -16523,12 +16842,32 @@ function showHosDashboard() {
   update14hCircle();
 
   // Actualizar el círculo grande inmediatamente con las horas actuales
-  const _dashDailyHrs  = parseFloat(document.getElementById('dailyHoursInput')?.value || 11);
-  const _dashWeeklyHrs = parseFloat(document.getElementById('hoursInput')?.value || 70);
+  const _dashDailyHrs  = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11);
+  const _dashWeeklyHrs = Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70);
   const _dashDriveMax  = Math.min(_dashDailyHrs, _dashWeeklyHrs);
-  const _dashElapsed   = (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds : 0) / 3600;
-  const _dashDriveLeft = Math.max(0, _dashDriveMax - _dashElapsed);
+  // Usar horas restantes del tracker (no restar fmDriveSeconds del input, ya está contabilizado)
+  const _dashDriveLeft = window._hosTracker
+    ? Math.max(0, Math.min(window._hosTracker.driveLeft(), _dashDriveMax))
+    : _dashDriveMax;
   updateHosDashboard(_dashDriveLeft, _dashDriveMax);
+
+  // Refrescar el anillo principal y el ciclo cada segundo mientras el dashboard es visible
+  if (_dashRingInterval) clearInterval(_dashRingInterval);
+  _dashRingInterval = setInterval(() => {
+    const _sc = document.getElementById('dashSecondsClock');
+    if (_sc) _sc.textContent = String(new Date().getSeconds()).padStart(2,'0');
+    if (b30InBreak && !b30Complete) return;
+    const dMax = Math.min(
+      Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11),
+      Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70)
+    );
+    // Leer horas restantes directamente del tracker
+    const dLeft = window._hosTracker
+      ? Math.max(0, Math.min(window._hosTracker.driveLeft(), dMax))
+      : Math.max(0, dMax);
+    updateHosDashboard(dLeft, dMax);
+  }, 1000);
+
   updateDashDestCard();
   // Inicializar barra de progreso de ruta si hay ruta activa
   if (typeof updateDashRouteProgress === 'function') {
@@ -16547,6 +16886,7 @@ function showHosDashboard() {
       const rawSpeed = pos.coords.speed;
       const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
       autoUpdateDashStatus(gpsSpeed > 3);
+      if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(gpsSpeed > 3, gpsSpeed);
     }, () => {}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
   }
 
@@ -16557,7 +16897,8 @@ function showHosDashboard() {
 let _dashGpsWatchId = null;
 
 function hideHosDashboard() {
-  if (_dash14hInterval) { clearInterval(_dash14hInterval); _dash14hInterval = null; }
+  if (_dash14hInterval)  { clearInterval(_dash14hInterval);  _dash14hInterval  = null; }
+  if (_dashRingInterval) { clearInterval(_dashRingInterval); _dashRingInterval = null; }
   if (_dashGpsWatchId != null) { navigator.geolocation.clearWatch(_dashGpsWatchId); _dashGpsWatchId = null; }
   const screen = document.getElementById('hosDashScreen');
   if (screen) screen.style.display = 'none';
@@ -16664,7 +17005,9 @@ function initHosMinimap() {
   L.marker([lat, lon], { icon: originIcon }).addTo(hosMinimapInst);
 
   // Marcador del camión (posición actual): foto o emoji sobre anillo verde
-  const _uPhoto = (typeof driverProfile !== 'undefined' && driverProfile?.photo) || null;
+  const _cu2 = (typeof currentUser !== 'undefined' && currentUser) || null;
+  const _ps2 = (() => { try { return JSON.parse(localStorage.getItem('hos_driver_profile') || '{}'); } catch(e){ return {}; } })();
+  const _uPhoto = (_cu2 && _cu2.photoData) || _ps2.photo || (typeof driverProfile !== 'undefined' && driverProfile?.photo) || localStorage.getItem('hos_profile_photo') || null;
   const _uEmoji = (typeof TRUCK_EMOJIS !== 'undefined' && driverProfile?.truckType) ? (TRUCK_EMOJIS[driverProfile.truckType] || '🚛') : '🚛';
   const truckHtml = _uPhoto
     ? `<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:3px solid #10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.35),0 3px 12px rgba(0,0,0,.75);"><img src="${_uPhoto}" style="width:100%;height:100%;object-fit:cover;display:block;"></div>`
@@ -16767,9 +17110,17 @@ function initHosMinimap() {
       e.stopPropagation();
       const open = _stylePanel.style.opacity === '1';
       if (open) { closePanel(); return; }
-      // Position panel near the button
+      // Position panel near the button — flip above if not enough space below
       const r = _styleBtn.getBoundingClientRect();
-      _stylePanel.style.top  = (r.bottom + 8) + 'px';
+      const panelH = 180;
+      const spaceBelow = window.innerHeight - r.bottom;
+      if (spaceBelow < panelH) {
+        _stylePanel.style.top    = 'auto';
+        _stylePanel.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+      } else {
+        _stylePanel.style.bottom = 'auto';
+        _stylePanel.style.top    = (r.bottom + 8) + 'px';
+      }
       _stylePanel.style.right = (window.innerWidth - r.right) + 'px';
       _stylePanel.style.opacity = '1';
       _stylePanel.style.pointerEvents = 'all';
@@ -16915,10 +17266,8 @@ function loadMiniMapInterstates(lat, lon) {
 function updateHosDashMinimap(lat, lon) {
   if (!hosMinimapInst || !hosMinimapTruck) return;
   hosMinimapTruck.setLatLng([lat, lon]);
-  // Solo seguir al camión si no hay ruta cargada; si hay ruta, mantener la vista fitBounds
-  if (!(typeof roadGeometry !== 'undefined' && roadGeometry?.length > 2)) {
-    _hosMinimapFollow(lat, lon);
-  }
+  // Always follow truck and update zoom — roadGeometry doesn't block follow on mini map
+  _hosMinimapFollow(lat, lon);
   _updateHosCityBar(lat, lon);
 }
 
@@ -16968,6 +17317,72 @@ function updateDashRouteProgress(pct, remaining) {
     }
   }
   if (pctEl) pctEl.textContent = hasRoute ? pct + '%' : '0%';
+  updateDashRouteHoursRow();
+}
+
+function updateDashRouteHoursRow() {
+  const driveLeftEl  = document.getElementById('dashRouteDriveLeft');
+  const barFill      = document.getElementById('dashRouteDriveBarFill');
+  const stopRow      = document.getElementById('dashRouteStopRow');
+  const stopCityEl   = document.getElementById('dashRouteStopCity');
+  if (!driveLeftEl) return;
+
+  const dLeft = (typeof _hosCurrentDriveLeft !== 'undefined') ? _hosCurrentDriveLeft : 11;
+  const dMax  = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11);
+  const col   = dLeft <= 0 ? '#ef4444' : dLeft < 2 ? '#f59e0b' : '#10b981';
+
+  const h = Math.floor(Math.max(0, dLeft));
+  const m = Math.round((Math.max(0, dLeft) - h) * 60);
+  driveLeftEl.textContent = dLeft <= 0 ? 'Horas agotadas' : (h > 0 ? h + 'h ' : '') + m + 'min manejo';
+  driveLeftEl.style.color = col;
+  if (barFill) {
+    barFill.style.width = Math.max(0, Math.min(100, (dLeft / dMax) * 100)) + '%';
+    barFill.style.background = col;
+  }
+
+  if (!stopRow || !stopCityEl) return;
+
+  const breakDue  = (typeof b30Complete !== 'undefined') && !b30Complete && (typeof b30Warned30m !== 'undefined') && b30Warned30m;
+  const hoursGone = dLeft <= 0;
+  const hoursLow  = dLeft > 0 && dLeft <= 2;
+
+  if (breakDue) {
+    stopRow.style.display = 'block';
+    stopRow.style.background = 'rgba(245,158,11,0.12)';
+    stopRow.style.border = '1px solid rgba(245,158,11,0.4)';
+    stopCityEl.style.color = '#f59e0b';
+    if (!_hosBreakStopName && !_hosBreakStopFetching && typeof _fetchStopCityAhead === 'function') {
+      _hosBreakStopFetching = true;
+      _fetchStopCityAhead(10, name => {
+        _hosBreakStopName = name || 'próxima ciudad';
+        _hosBreakStopFetching = false;
+        updateDashRouteHoursRow();
+      });
+    }
+    const city = _hosBreakStopName || '...';
+    stopCityEl.textContent = `⏸ Para en ${city} — Descanso obligatorio 30 min`;
+  } else if (hoursGone || hoursLow) {
+    stopRow.style.display = 'block';
+    stopRow.style.background = 'rgba(239,68,68,0.12)';
+    stopRow.style.border = '1px solid rgba(239,68,68,0.4)';
+    stopCityEl.style.color = '#ef4444';
+    if (!_hosHoursStopName && !_hosHoursStopFetching && typeof _fetchStopCityAhead === 'function') {
+      _hosHoursStopFetching = true;
+      const distMi = hoursGone ? 5 : Math.max(5, Math.round(dLeft * ((typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55)));
+      _fetchStopCityAhead(distMi, name => {
+        _hosHoursStopName = name || 'próxima ciudad';
+        _hosHoursStopFetching = false;
+        updateDashRouteHoursRow();
+      });
+    }
+    const city = _hosHoursStopName || '...';
+    stopCityEl.textContent = hoursGone
+      ? `🛑 Para en ${city} — Horas de manejo agotadas`
+      : `⚠️ Para en ${city} — Descanso 10 horas obligatorio`;
+  } else {
+    stopRow.style.display = 'none';
+    _hosHoursStopName = null;
+  }
 }
 
 function _openDashSpeedLimitEditor() {
@@ -17027,9 +17442,9 @@ function updateHosDashboard(driveLeft, driveMax) {
 
   if (track) track.setAttribute('stroke', 'rgba(0,0,0,0.10)');
   // Arc turns red when over speed limit OR when nearly out of drive time
-  const arcColor = (dashSpeedOver || driveLeft < 2) ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+  const arcColor = (dashSpeedOver || driveLeft < 2) ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#1a1a1a';
   arc.setAttribute('stroke', arcColor);
-  timeEl.style.color = (dashSpeedOver || driveLeft <= 0.5) ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#6ee7b7';
+  timeEl.style.color = (dashSpeedOver || driveLeft <= 0.5) ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#0a0a0a';
 
   // Texto de tiempo restante
   const totalMins = Math.round(driveLeft * 60);
@@ -17092,7 +17507,7 @@ function updateHosDashboard(driveLeft, driveMax) {
   if (cicloArc) {
     const pctC = Math.max(0, Math.min(1, cycLeft / cycMax));
     cicloArc.setAttribute('stroke-dasharray', `${(pctC * 251).toFixed(1)} 251`);
-    cicloArc.setAttribute('stroke', cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#f59e0b' : '#60a5fa');
+    cicloArc.setAttribute('stroke', cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#f59e0b' : '#1a1a1a');
   }
   const cicloUsedEl = document.getElementById('dashCicloUsed');
   if (cicloUsedEl) {
@@ -17125,8 +17540,31 @@ function showFullMapFromDash() {
   // Ocultar dashboard, dejar fullMapScreen visible (sigue activo detrás)
   const screen = document.getElementById('hosDashScreen');
   if (screen) screen.style.display = 'none';
+  // Restaurar widgets de mapa que showHosDashboard() ocultó con display:none !important
+  if (fmIsTracking) {
+    ['driveHoursWidget','speedometerWidget'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.removeProperty('display');
+    });
+  }
   // Invalidar tamaño del mapa principal para que se redibuje correctamente
   setTimeout(() => { if (typeof fmMapInst !== 'undefined' && fmMapInst) fmMapInst.invalidateSize(); }, 150);
+}
+
+function backToMainFromDash() {
+  // Ocultar dashboard Y mapa grande → regresar a pantalla principal
+  const dash = document.getElementById('hosDashScreen');
+  if (dash) dash.style.display = 'none';
+  const map = document.getElementById('fullMapScreen');
+  if (map) map.style.display = 'none';
+  document.getElementById('fmHud').style.transform = 'translateY(100%)';
+  document.body.classList.remove('map-active');
+  // Restaurar widgets flotantes
+  ['milesRemainingWidget','driveHoursWidget','speedometerWidget',
+   'fuelWidget','speedLimitWidget','mapSpeedSign','incidentPanel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.removeProperty('display');
+  });
 }
 
 // Botón "Volver al Dashboard" que aparece en el mapa completo durante rastreo
@@ -19183,6 +19621,7 @@ function resetForm() {
   origin = null; destination = null;
   routeDistance = 0; schedule = []; arrivalTime = null; totalTime = 0;
   roadGeometry = null; routeSource = null;
+  _fmClearActiveRoute();
   // Restore "Calcular Ruta" button
   const _cb = document.getElementById('calcBtn');
   if (_cb) { _cb.style.display = ''; _cb.disabled = false; _cb.textContent = ''; }
@@ -19836,14 +20275,16 @@ function upvoteReport(id, el) {
 }
 
 function updateCommBadge(count) {
-  const badge = document.getElementById('commBadge');
-  if (!badge) return;
-  if (count > 0) {
-    badge.textContent = count > 9 ? '9+' : count;
-    badge.style.display = 'block';
-  } else {
-    badge.style.display = 'none';
-  }
+  ['commBadge','commBadge2'].forEach(id => {
+    const badge = document.getElementById(id);
+    if (!badge) return;
+    if (count > 0) {
+      badge.textContent = count > 9 ? '9+' : count;
+      badge.style.display = 'block';
+    } else {
+      badge.style.display = 'none';
+    }
+  });
 }
 
 function formatReportAge(ts) {
@@ -20470,7 +20911,7 @@ calculateRoute = async function() {
   if (isNaN(hours)||hours<=0||hours>70) { showError(t('err70')); return; }
   if (isNaN(speed)||speed<=0) { showError(t('errSpeed')); return; }
 
-  if (fmVehicleMoving && fmCurrentSpeed > 3) {
+  if (fmVehicleMoving && fmCurrentSpeed >= 8) {
     showToast('danger','🚨', lang==='es'?'¡Vehículo en movimiento!':'Vehicle in Motion!',
       lang==='es'?`Por tu seguridad detente para usar esta función.`:`Please stop the vehicle first.`, 8000);
     vibrate([200,100,200,100,200]);
@@ -21153,6 +21594,15 @@ function applyAllAvatars() {
   applyAv('planAvatarImg', 'planAvatarName', '10px');
   applyAv('heroAvatarImg', 'heroAvatarName', '50%');
 
+  // Dashboard header photo
+  const dashPhEl = document.getElementById('dashProfilePhoto');
+  const dashNmEl = document.getElementById('dashProfileName');
+  if (dashPhEl) {
+    if (photo) dashPhEl.innerHTML = '<img src="'+photo+'" alt="foto" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">';
+    else dashPhEl.textContent = emoji;
+  }
+  if (dashNmEl && name) dashNmEl.textContent = name;
+
   // Profile card avatar
   const pAv = document.getElementById('profileAvatar');
   if (pAv) {
@@ -21162,6 +21612,21 @@ function applyAllAvatars() {
   // Profile display name
   const pName = document.getElementById('profileDisplayName');
   if (pName && name) pName.textContent = name;
+
+  // Refresh live GPS map marker so it shows the updated photo
+  if (typeof fmGpsMarker !== 'undefined' && fmGpsMarker && typeof buildTruckIconHTML === 'function') {
+    try {
+      const _html = buildTruckIconHTML(typeof fmLastHeading !== 'undefined' ? fmLastHeading : 0, typeof fmVehicleMoving !== 'undefined' ? fmVehicleMoving : false);
+      fmGpsMarker.setIcon(L.divIcon({ className: '', html: _html, iconAnchor: [28, 44], iconSize: [56, 72] }));
+    } catch(e) {}
+  }
+  // Refresh mini map truck icon if it uses a custom icon
+  if (typeof hosMinimapTruck !== 'undefined' && hosMinimapTruck && typeof getTruckIconHTML === 'function') {
+    try {
+      const _mIcon = L.divIcon({ className: '', html: `<div style="display:flex;align-items:center;justify-content:center">${getTruckIconHTML(24)}</div>`, iconAnchor: [16, 16], iconSize: [32, 32] });
+      hosMinimapTruck.setIcon(_mIcon);
+    } catch(e) {}
+  }
 }
 
 function updateFuelAvatar() { applyAllAvatars(); }
@@ -25413,6 +25878,8 @@ function closeDotNewsDetail() {
     if (side) { side.textContent = legacy.textContent; side.style.display = legacy.style.display; }
     const dash = document.getElementById('dashSideTabBadge');
     if (dash) { dash.textContent = legacy.textContent; dash.style.display = legacy.style.display; }
+    const hqa = document.getElementById('hqaBadgeComm');
+    if (hqa) { hqa.textContent = legacy.textContent; hqa.style.display = legacy.style.display; }
   });
   obs.observe(legacy, { attributes: true, childList: true, subtree: true });
 })();
@@ -25429,7 +25896,7 @@ window._hosAutoRecalc = false;
   // Reemplaza calculateRoute con el flujo de popups
   calculateRoute = function() {
     if (!origin || !destination) { showError(t('errSel')); return; }
-    if (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving && fmCurrentSpeed > 3) {
+    if (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving && fmCurrentSpeed >= 8) {
       showToast('danger','🚨',
         lang==='es' ? '¡Vehículo en movimiento!' : 'Vehicle in Motion!',
         lang==='es' ? 'Detente para usar esta función.' : 'Please stop the vehicle first.',
@@ -25454,6 +25921,41 @@ window._hosAutoRecalc = false;
       return;
     }
 
+    // ELD conectado: usar los valores exactos de los anillos, omitir popups
+    if (window._hosTracker?.eldConnected?.()) {
+      const dLeft = window._hosTracker.driveLeft();
+      const cLeft = window._hosTracker.cycleLeft();
+      const dailyInp  = document.getElementById('dailyHoursInput');
+      const weeklyInp = document.getElementById('hoursInput');
+      if (dailyInp)  dailyInp.value  = Math.max(0, dLeft).toFixed(2);
+      if (weeklyInp) weeklyInp.value = Math.max(0, cLeft).toFixed(2);
+      _origCalcForPopup();
+      return;
+    }
+
+    // Sin ELD: siempre mostrar popup de confirmación con horas pre-llenadas del tracker
+    const _noEldReg = (function() {
+      try { return JSON.parse(localStorage.getItem('hos_no_eld_reg')); } catch(e) { return null; }
+    })();
+
+    // Bloquear si el ciclo de 70h está agotado → descanso obligatorio
+    if (_noEldReg) {
+      const cLeft = window._hosTracker ? window._hosTracker.cycleLeft() : 0;
+      if (cLeft <= 0) {
+        _hosShowMandatoryRest();
+        return;
+      }
+      // Aviso si quedan menos de 5 horas del ciclo
+      if (cLeft < 5 && typeof showToast === 'function') {
+        showToast('danger','⚠️',
+          lang === 'es' ? '¡Ciclo casi agotado!' : 'Cycle almost exhausted!',
+          lang === 'es' ? `Te quedan ${cLeft.toFixed(1)} h de las 70h del ciclo. Planifica tu descanso de 34h.`
+                        : `${cLeft.toFixed(1)} h remaining of 70h cycle. Plan your 34h reset.`,
+          10000);
+      }
+    }
+
+    // Mostrar popup pre-llenado con valores actuales del tracker (siempre)
     _hosOpenPopup1();
   };
 
@@ -25491,11 +25993,16 @@ window._hosAutoRecalc = false;
     const inp     = document.getElementById('hosStep2Input');
     const err     = document.getElementById('hosStep2Error');
     if (err) err.style.display = 'none';
-    if (inp) inp.value = '70';
+    // Pre-llenar con valor actual del tracker (si existe), sino 70
+    const tCycle = window._hosTracker?.cycleLeft?.();
+    const preVal = (tCycle != null && tCycle > 0 && tCycle < 70)
+      ? Math.max(1, Math.min(70, Math.round(tCycle)))
+      : 70;
+    if (inp) inp.value = preVal;
     const d2 = document.getElementById('hosStep2Display');
-    if (d2) d2.textContent = '70';
-    _hosUpdateWeeklyBar(70);
-    _hosUpdateStepperBtns(2, 70);
+    if (d2) d2.textContent = preVal;
+    _hosUpdateWeeklyBar(preVal);
+    _hosUpdateStepperBtns(2, preVal);
     if (overlay) overlay.classList.add('active');
   }
 
@@ -25677,6 +26184,19 @@ window._hosAutoRecalc = false;
   window._hosStep3Confirm = function() {
     document.getElementById('hosPopup3')?.classList.remove('active');
 
+    // Guardar registro único de horas (modo sin ELD)
+    const _regDailyHrs  = parseFloat(document.getElementById('dailyHoursInput')?.value || 11);
+    const _regCycleHrs  = parseFloat(document.getElementById('hoursInput')?.value || 70);
+    try {
+      localStorage.setItem('hos_no_eld_reg', JSON.stringify({
+        dailyHrs: _regDailyHrs,
+        cycleHrs: _regCycleHrs,
+        savedAt: Date.now()
+      }));
+    } catch(e) {}
+    // Inicializar el tracker con las horas restantes ingresadas
+    window._hosTracker?.setInitialHours?.(_regDailyHrs, _regCycleHrs);
+
     // Mostrar progress bar
     const overlay = document.getElementById('calcProgressOverlay');
     if (overlay) {
@@ -25720,7 +26240,7 @@ window._hosAutoRecalc = false;
     localStorage.removeItem(HOS_CYCLE_KEY);
   }
 
-  // ── Override popup 1 para mostrar ciclo guardado ────
+  // ── Override popup 1 — pre-llenado con valores del tracker ────
   const _origOpenPopup1 = _hosOpenPopup1;
   _hosOpenPopup1 = function() {
     const saved = _hosLoadCycleState();
@@ -25748,7 +26268,18 @@ window._hosAutoRecalc = false;
     const inp = document.getElementById('hosStep1Input');
     const err = document.getElementById('hosStep1Error');
     if (err) err.style.display = 'none';
-    if (inp) { inp.value = '11'; setTimeout(() => inp.select(), 80); }
+    if (inp) {
+      // Pre-llenar con valor actual del tracker (si existe), sino 11
+      const tDrive = window._hosTracker?.driveLeft?.();
+      const preVal = (tDrive != null && tDrive > 0 && tDrive < 11)
+        ? (Math.round(tDrive * 10) / 10)
+        : 11;
+      inp.value = preVal;
+      const d1 = document.getElementById('hosStep1Display');
+      if (d1) d1.textContent = preVal;
+      if (typeof _hosUpdateStepperBtns === 'function') _hosUpdateStepperBtns(1, preVal);
+      setTimeout(() => inp.select(), 80);
+    }
     if (overlay) overlay.classList.add('active');
   };
 
@@ -25873,6 +26404,149 @@ window._hosAutoRecalc = false;
   });
 
   // Tap fuera NO cierra los popups (el driver debe ingresar un valor)
+
+  // ── Descanso obligatorio 34h (límite 70h del ciclo) ──────────────────
+  function _hosShowMandatoryRest() {
+    let ov = document.getElementById('hosMandatoryRestOverlay');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'hosMandatoryRestOverlay';
+      ov.style.cssText = 'display:flex;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.9);align-items:center;justify-content:center;padding:20px';
+      ov.innerHTML = `
+        <div style="background:#0f172a;border:2px solid rgba(239,68,68,.55);border-radius:22px;padding:32px 24px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.95)">
+          <div style="font-size:52px;margin-bottom:10px">🛑</div>
+          <div style="font-size:11px;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:8px">LÍMITE 70 HORAS ALCANZADO</div>
+          <div style="font-size:19px;font-weight:800;color:#f1f5f9;margin-bottom:8px">Descanso Obligatorio</div>
+          <div style="font-size:13px;color:#94a3b8;line-height:1.65;margin-bottom:18px">
+            Has agotado tus <strong style="color:#ef4444">70 horas</strong> del ciclo de 8 días.<br>
+            Debes tomar <strong style="color:#60a5fa">34 horas consecutivas</strong> fuera de servicio antes de retomar el manejo.
+          </div>
+          <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:12px;padding:14px;margin-bottom:20px;font-size:12px;color:#fca5a5;line-height:1.55;text-align:left">
+            ⚖️ <strong>Regulación DOT FMCSA</strong><br>
+            El reinicio de 34h debe incluir dos períodos entre <strong>1:00 AM – 5:00 AM</strong>.<br>
+            Referencia: 49 CFR § 395.3(c).
+          </div>
+          <button id="hosMandatoryRestDoneBtn" style="width:100%;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;letter-spacing:.3px">
+            ✅ Tomé mis 34 horas — Reiniciar Ciclo
+          </button>
+          <button onclick="document.getElementById('hosMandatoryRestOverlay').style.display='none'" style="width:100%;background:rgba(255,255,255,.06);color:#64748b;border:1.5px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">
+            Cerrar
+          </button>
+        </div>
+      `;
+      document.body.appendChild(ov);
+      document.getElementById('hosMandatoryRestDoneBtn').addEventListener('click', window._hosMandatoryRestDone);
+    } else {
+      ov.style.display = 'flex';
+    }
+  }
+
+  window._hosMandatoryRestDone = function() {
+    const ov = document.getElementById('hosMandatoryRestOverlay');
+    if (ov) ov.style.display = 'none';
+    // Limpiar registro — las próximas horas se pedirán de nuevo via popups
+    try {
+      localStorage.removeItem('hos_no_eld_reg');
+      localStorage.removeItem('hos_cycle_state');
+    } catch(e) {}
+    // Reiniciar el tracker a ciclo completo
+    window._hosTracker?.setInitialHours?.(11, 70);
+    if (typeof showToast === 'function') {
+      showToast('success','✅',
+        lang === 'es' ? 'Ciclo reiniciado' : 'Cycle reset',
+        lang === 'es' ? 'Tienes 70 horas disponibles. Ingresa tus horas al calcular la próxima ruta.' : 'You have 70 hours available. Enter your hours on next route.',
+        7000);
+    }
+  };
+
+  // ── Editor rápido de horas HOS — siempre accesible ────────
+  window.hosOpenEditHours = function() {
+    let dlg = document.getElementById('hosEditHoursDialog');
+    if (!dlg) {
+      dlg = document.createElement('div');
+      dlg.id = 'hosEditHoursDialog';
+      dlg.style.cssText = "display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);align-items:center;justify-content:center;padding:20px;font-family:'DM Sans',sans-serif";
+      document.body.appendChild(dlg);
+    }
+
+    const dLeft = window._hosTracker?.driveLeft?.() ?? 11;
+    const cLeft = window._hosTracker?.cycleLeft?.() ?? 70;
+    const safeDrive = Math.max(0, Math.min(11, Math.round(dLeft * 10) / 10));
+    const safeCycle = Math.max(0, Math.min(70, Math.round(cLeft)));
+
+    dlg.innerHTML = `
+      <div style="background:#0f172a;border:1.5px solid rgba(16,185,129,.45);border-radius:22px;padding:28px 20px 20px;max-width:340px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.95)">
+        <div style="font-size:10px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:4px;text-align:center">✏️ EDITAR HORAS HOS</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:18px;text-align:center">Ajusta tus horas disponibles</div>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">⏱ Manejo disponible hoy (máx 11h)</label>
+          <input id="hosEditDriveInp" type="number" min="0" max="11" step="0.5" value="${safeDrive}"
+            style="width:100%;background:#1e293b;border:1.5px solid rgba(16,185,129,.4);border-radius:10px;padding:12px 14px;font-size:22px;font-weight:900;color:#6ee7b7;text-align:center;font-family:'DM Sans',sans-serif;box-sizing:border-box;-webkit-appearance:none">
+        </div>
+
+        <div style="margin-bottom:20px">
+          <label style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">📅 Ciclo semanal disponible (máx 70h)</label>
+          <input id="hosEditCycleInp" type="number" min="0" max="70" step="1" value="${safeCycle}"
+            style="width:100%;background:#1e293b;border:1.5px solid rgba(96,165,250,.4);border-radius:10px;padding:12px 14px;font-size:22px;font-weight:900;color:#93c5fd;text-align:center;font-family:'DM Sans',sans-serif;box-sizing:border-box;-webkit-appearance:none">
+        </div>
+
+        <button id="hosEditConfirmBtn" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;letter-spacing:.3px;touch-action:manipulation">
+          ✅ Guardar Horas
+        </button>
+        <button id="hosEditCancelBtn" style="width:100%;background:rgba(255,255,255,.06);color:#94a3b8;border:1.5px solid rgba(255,255,255,.12);border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation">
+          ✕ Cancelar
+        </button>
+      </div>
+    `;
+
+    dlg.style.display = 'flex';
+
+    document.getElementById('hosEditConfirmBtn').addEventListener('click', () => {
+      const newDrive = Math.min(11, Math.max(0, parseFloat(document.getElementById('hosEditDriveInp').value) || 0));
+      const newCycle = Math.min(70, Math.max(0, parseFloat(document.getElementById('hosEditCycleInp').value) || 0));
+
+      // Update tracker state
+      window._hosTracker?.setInitialHours?.(newDrive, newCycle);
+
+      // Update form inputs used by route calculation
+      const dailyInp  = document.getElementById('dailyHoursInput');
+      const weeklyInp = document.getElementById('hoursInput');
+      if (dailyInp)  dailyInp.value  = newDrive.toFixed(2);
+      if (weeklyInp) weeklyInp.value = newCycle.toFixed(2);
+
+      // Update hero rings on main screen
+      if (typeof updateHeroKPIs === 'function') {
+        updateHeroKPIs(newDrive, Math.min(11, newCycle), newCycle, 70);
+      }
+
+      // Refresh HOS dashboard if visible
+      if (document.getElementById('hosDashScreen')?.style.display !== 'none') {
+        const dMax = Math.min(newDrive, newCycle);
+        if (typeof updateHosDashboard === 'function') updateHosDashboard(newDrive, dMax);
+      }
+
+      // Persist registration
+      try {
+        localStorage.setItem('hos_no_eld_reg', JSON.stringify({
+          dailyHrs: newDrive, cycleHrs: newCycle, savedAt: Date.now()
+        }));
+      } catch(e) {}
+
+      dlg.style.display = 'none';
+
+      if (typeof showToast === 'function') {
+        showToast('success', '✅',
+          lang === 'es' ? 'Horas actualizadas' : 'Hours updated',
+          `${lang === 'es' ? 'Manejo' : 'Drive'}: ${newDrive}h · ${lang === 'es' ? 'Ciclo' : 'Cycle'}: ${newCycle}h`,
+          4000);
+      }
+    });
+
+    document.getElementById('hosEditCancelBtn').addEventListener('click', () => {
+      dlg.style.display = 'none';
+    });
+  };
 })();
 
 /* ════════════════════════════════════════════════════════════
@@ -26404,6 +27078,8 @@ window._hosAutoRecalc = false;
     background:#fff; color:#0f172a;
   }
   body.dark #fleetLinkModal .fl-field input{ background:#0f172a; color:#e6edf7; border-color:#334155; }
+  body.dark #flJoinError{ background:#2a0a10; color:#fca5a5; border-color:#7f1d1d; }
+  body.dark #flJoinOk{ background:#052e1a; color:#86efac; border-color:#14532d; }
   #fleetLinkModal .fl-video{
     width:100%; border-radius:10px; background:#000; margin-top:10px; display:none; aspect-ratio:1;
   }
@@ -26431,8 +27107,10 @@ window._hosAutoRecalc = false;
     <div id="flNotConnected">
       <div class="fl-field">
         <label>Ingresa el código de 6 caracteres</label>
-        <input id="flFleetInput" class="fl-input" maxlength="6" autocomplete="off" placeholder="ABC123" />
+        <input id="flFleetInput" class="fl-input" maxlength="6" autocomplete="off" placeholder="ABC123" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" />
       </div>
+      <div id="flJoinError" style="display:none;padding:10px 12px;border-radius:10px;font-size:13px;margin-top:8px;background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;white-space:pre-line"></div>
+      <div id="flJoinOk" style="display:none;padding:10px 12px;border-radius:10px;font-size:13px;margin-top:8px;background:#f0fdf4;color:#065f46;border:1px solid #86efac"></div>
       <div class="fl-row">
         <button class="fl-btn primary" id="flJoinBtn">Unirme a la flota</button>
         <button class="fl-btn" id="flScanBtn">📷 Escanear QR</button>
@@ -26505,10 +27183,21 @@ window._hosAutoRecalc = false;
 </div>
 
 <script type="module">
+  // Si este bloque no llega a ejecutarse (fallo de red / CSP), el botón quedará sin handler
+  // — avisamos al usuario desde un onerror global en window
+  window._fleetLinkModuleOk = false;
+  window.addEventListener('error', (e) => {
+    if (!window._fleetLinkModuleOk && e.filename && e.filename.includes('gstatic')) {
+      const errEl = document.getElementById('flJoinError');
+      if (errEl) { errEl.textContent = '⚠️ No se pudo cargar Firebase.\nVerifica tu conexión a internet y recarga la página.'; errEl.style.display='block'; }
+    }
+  }, true);
+
   import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
     getDatabase, ref, set, update, onValue, push, remove, onDisconnect, serverTimestamp, query, orderByChild, limitToLast
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  window._fleetLinkModuleOk = true;
 
   const firebaseConfig = {
     apiKey:            "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
@@ -26563,6 +27252,12 @@ window._hosAutoRecalc = false;
   const video   = document.getElementById('flVideo');
   const canvas  = document.getElementById('flCanvas');
   const lastPingEl = document.getElementById('flLastPing');
+  const joinErrEl  = document.getElementById('flJoinError');
+  const joinOkEl   = document.getElementById('flJoinOk');
+
+  function _flShowErr(msg){ if(joinErrEl){ joinErrEl.textContent = msg; joinErrEl.style.display='block'; } if(joinOkEl) joinOkEl.style.display='none'; }
+  function _flShowOk(msg) { if(joinOkEl) { joinOkEl.textContent = msg; joinOkEl.style.display='block'; } if(joinErrEl) joinErrEl.style.display='none'; }
+  function _flClearMsg()  { if(joinErrEl) joinErrEl.style.display='none'; if(joinOkEl) joinOkEl.style.display='none'; }
 
   // Inicializar valores
   plateInput.value = state.plate; phoneInput.value = state.phone;
@@ -26684,24 +27379,29 @@ window._hosAutoRecalc = false;
 
   async function joinFleet(code){
     const c = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-    if (c.length < 4){ flToast('Código inválido'); return; }
+    _flClearMsg();
+    if (c.length < 4){ _flShowErr('⚠️ El código debe tener al menos 4 caracteres.'); return; }
+
+    // Feedback inmediato en el botón
+    const btn = document.getElementById('flJoinBtn');
+    const origText = btn ? btn.textContent : '';
+    if (btn){ btn.disabled = true; btn.textContent = '⏳ Conectando...'; }
+
     console.log('[FleetLink] Intentando unirse a flota:', c, 'como', MY_ID);
+    _flShowOk('🔄 Verificando conexión con Firebase...');
 
     // 1) Si ya había una flota previa, limpiamos todo primero
     if (state.fleetId && state.fleetId !== c){
-      console.log('[FleetLink] Cambiando de flota, limpiando', state.fleetId);
       await cleanupCurrentFleet(true);
     } else if (state.fleetId === c){
-      // Reconexión a la misma flota — sólo resetear listeners
       await cleanupCurrentFleet(false);
     }
 
-    // 2) Esperar a que Firebase esté conectado (hasta 4s)
-    const online = await waitForFirebaseConnection(4000);
-    if (!online){
-      alert('❌ Sin conexión a internet o Firebase no responde.\n\nVerifica tu red y vuelve a intentar.');
-      return;
-    }
+    // 2) Verificar conexión en paralelo (no bloqueante) — si falla, el write timeout dará el error real
+    _flShowOk('🔄 Registrando en la flota ' + c + '...');
+    waitForFirebaseConnection(2000).then(ok => {
+      if (!ok) console.warn('[FleetLink] .info/connected no respondió true en 2s — intentando write igualmente');
+    });
 
     state.fleetId = c;
     localStorage.setItem('fleet_link_fleet', c);
@@ -26716,30 +27416,32 @@ window._hosAutoRecalc = false;
     } catch(e){
       console.error('[FleetLink] ❌ Error al registrar:', e);
       const msg = (e && e.message) || String(e);
-      // Detectar tipo de error para dar un mensaje útil
-      let detail = msg;
-      let hint   = '';
+      let detail = '', hint = '';
       if (/permission[_\s-]?denied/i.test(msg)){
         detail = 'Permiso denegado por Firebase';
-        hint   = '• Las reglas de Firebase no permiten escribir en /fleets/' + c + '/drivers\n• Pide al admin que actualice firebase-rules.json';
+        hint   = '• Las reglas de seguridad de Firebase no permiten escribir.\n• El código de flota puede ser incorrecto.\n• Contacta al administrador del dispatcher.';
       } else if (/timeout/i.test(msg)){
-        detail = 'Timeout escribiendo en Firebase';
-        hint   = '• Tu conexión es muy lenta o intermitente\n• Cierra y abre la app\n• Intenta con WiFi';
+        detail = 'Tiempo de espera agotado';
+        hint   = '• Tu conexión es lenta o intermitente.\n• Intenta con WiFi o 4G.\n• Cierra y abre la app.';
       } else if (/network|offline/i.test(msg)){
         detail = 'Sin conexión de red';
-        hint   = '• Revisa tu conexión WiFi o datos móviles';
+        hint   = '• Revisa tu WiFi o datos móviles.';
       } else {
-        hint = '• Código posiblemente incorrecto\n• Las reglas de Firebase pueden estar bloqueando\n• Problema de conexión';
+        detail = msg;
+        hint   = '• Código posiblemente incorrecto.\n• Problema de conexión o reglas Firebase.';
       }
       state.fleetId = null;
       localStorage.removeItem('fleet_link_fleet');
+      if (btn){ btn.disabled = false; btn.textContent = origText; }
       renderStatus();
-      alert('❌ No se pudo conectar a la flota.\n\nDetalle: ' + detail + '\n\nPosibles causas:\n' + hint);
+      _flShowErr('❌ No se pudo conectar a la flota ' + c + '\n\n' + detail + '\n\n' + hint);
       return;
     }
+    if (btn){ btn.disabled = false; btn.textContent = origText; }
     startLocationSharing();
     listenNotifications();
     renderStatus();
+    _flClearMsg();
     flToast('✅ Conectado al dispatcher');
   }
 
@@ -26752,7 +27454,7 @@ window._hosAutoRecalc = false;
     // Timeout más corto (6s) — si Firebase no responde en ese tiempo hay algo raro
     let timer;
     const timeoutPromise = new Promise((_, rej) => {
-      timer = setTimeout(() => rej(new Error('Timeout escribiendo en Firebase (6s)')), 6000);
+      timer = setTimeout(() => rej(new Error('Timeout escribiendo en Firebase (12s) — puede ser red lenta o reglas bloqueando')), 12000);
     });
     try{
       await Promise.race([ set(ref(db, base), info), timeoutPromise ]);
@@ -26935,7 +27637,7 @@ window._hosAutoRecalc = false;
         console.log('[FleetLink] ✅ Auto-reconectado a flota', state.fleetId);
       } catch(e){
         console.error('[FleetLink] ❌ Auto-reconexión falló:', e);
-        alert('No se pudo reconectar a la flota ' + state.fleetId + '\n\nError: ' + e.message + '\n\nTe desconectaré para que puedas intentarlo de nuevo.');
+        _flShowErr('⚠️ No se pudo reconectar a la flota ' + state.fleetId + '\n' + (e.message || '') + '\n\nIngresa el código de nuevo para reconectarte.');
         state.fleetId = null;
         localStorage.removeItem('fleet_link_fleet');
         renderStatus();
@@ -27435,6 +28137,8 @@ window._hosAutoRecalc = false;
   let _isMoving    = false;
   let _eldSpeed    = 0;      // mph reportado por ELD
   let _pollId      = null;
+  let _gpsWatchId  = null;  // watchPosition del teléfono (modo sin ELD)
+  let _gpsActive   = false;
 
   // ── Persistencia ───────────────────────────────────────────
   function _save(){
@@ -27444,6 +28148,7 @@ window._hosAutoRecalc = false;
       connTs     : _connectedAt  ? _connectedAt.getTime()  : null,
       driveMs    : _driveMs + extra,
       cycleMs    : _cycleMs + extra,
+      driveDate  : new Date().toDateString(),
       savedAt    : Date.now()
     }));
   }
@@ -27452,14 +28157,15 @@ window._hosAutoRecalc = false;
     try {
       const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
       if (!d) return;
-      // Si el turno tiene más de 24h, lo reiniciamos
-      if (d.shiftTs && Date.now() - d.shiftTs > 24 * 3600000){
+      // Ciclo DOT: ventana de 8 días; reiniciar si supera ese límite
+      if (d.shiftTs && Date.now() - d.shiftTs > 8 * 24 * 3600000){
         localStorage.removeItem(SAVE_KEY); return;
       }
       _shiftStart  = d.shiftTs  ? new Date(d.shiftTs)  : null;
       _connectedAt = d.connTs   ? new Date(d.connTs)   : null;
-      _driveMs     = d.driveMs  || 0;
-      _cycleMs     = d.cycleMs  || 0;
+      // Reiniciar horas diarias si cambió el día calendario (el ciclo 70h sigue acumulando)
+      _driveMs = (d.driveDate && d.driveDate === new Date().toDateString()) ? (d.driveMs || 0) : 0;
+      _cycleMs = d.cycleMs || 0;
     } catch(e){}
   }
 
@@ -27485,6 +28191,37 @@ window._hosAutoRecalc = false;
     _isMoving = false;
     _eldSpeed  = 0;
     _setDuty('DETENIDO · ELD', '#f59e0b');
+  }
+
+  // ── GPS del dispositivo — siempre activo para detección de movimiento ────
+  // (incluso cuando ELD está conectado; ELD solo se usa para identificación)
+  function _startGpsMode() {
+    if (_gpsWatchId != null || !navigator.geolocation) return;
+    _gpsActive = true;
+    _setDuty(typeof lang !== 'undefined' && lang === 'es' ? 'GPS ACTIVO' : 'GPS ACTIVE', '#10b981');
+    _setBtBadge(_connected ? 'connected' : 'gps');
+    _gpsWatchId = navigator.geolocation.watchPosition(
+      pos => {
+        const raw = pos.coords.speed;
+        const mph = (raw != null && raw >= 0) ? raw * 0.621371 : 0;
+        if (mph > 2) _onEldMoving(Math.round(mph));
+        else         _onEldStopped();
+      },
+      () => {
+        _gpsActive = false;
+        _setDuty(typeof lang !== 'undefined' && lang === 'es' ? 'SIN GPS' : 'NO GPS', '#6b7280');
+        _setBtBadge('disconnected');
+      },
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 }
+    );
+  }
+
+  function _stopGpsMode() {
+    if (_gpsWatchId != null) {
+      navigator.geolocation.clearWatch(_gpsWatchId);
+      _gpsWatchId = null;
+    }
+    _gpsActive = false;
   }
 
   // ── Parser de datos ELD ───────────────────────────────────
@@ -27557,6 +28294,7 @@ window._hosAutoRecalc = false;
       _connectedAt = new Date();
       if (!_shiftStart) _shiftStart = new Date();
       _save();
+      _stopGpsMode();
       _setBtBadge('connected');
       _setDuty('ELD CONECTADO', '#a78bfa');
 
@@ -27575,6 +28313,8 @@ window._hosAutoRecalc = false;
     _setBtBadge('disconnected');
     _setDuty('ELD DESCONECTADO', '#6b7280');
     _save();
+    // Activar GPS del teléfono como fallback inmediatamente
+    _startGpsMode();
     // Intentar reconectar automáticamente después de 5s
     setTimeout(_autoReconnect, 5000);
   }
@@ -27625,17 +28365,23 @@ window._hosAutoRecalc = false;
     if (valT) valT.textContent = _connectedAt ? _fmt(_connectedAt) : '--:--';
     const subT = document.getElementById('heroTurnoSub');
     if (subT){
-      subT.textContent = _connected
-        ? (_isMoving ? `${_eldSpeed} mph` : 'ELD ●')
-        : 'ELD ○';
-      subT.style.color = _connected ? '#a78bfa' : 'rgba(167,139,250,0.4)';
+      if (_connected) {
+        subT.textContent = _isMoving ? `${_eldSpeed} mph` : 'ELD ●';
+        subT.style.color = 'rgba(0,0,0,0.6)';
+      } else if (_gpsActive) {
+        subT.textContent = _isMoving ? `${_eldSpeed} mph · GPS` : 'GPS ●';
+        subT.style.color = 'rgba(0,0,0,0.6)';
+      } else {
+        subT.textContent = 'ELD ○';
+        subT.style.color = 'rgba(0,0,0,0.35)';
+      }
     }
     const valT2 = document.getElementById('heroValTurno2');
     if (valT2) valT2.textContent = _shiftStart ? _fmtElapsed(_shiftStart) : '--:--';
 
     // Anillo 2: Manejo disponible
     const dPct = dl / DRIVE_MAX;
-    const dCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#10b981';
+    const dCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#1a1a1a';
     const arcD = document.getElementById('heroArcDrive');
     if (arcD){ arcD.style.strokeDashoffset = C * (1 - dPct); arcD.style.stroke = dCol; }
     const valD = document.getElementById('heroValDrive');
@@ -27647,7 +28393,7 @@ window._hosAutoRecalc = false;
 
     // Anillo 3: Ciclo 70H disponible
     const cPct = cl / CYCLE_MAX;
-    const cCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#00b4ff';
+    const cCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#1a1a1a';
     const arcC = document.getElementById('heroArcCycle');
     if (arcC){ arcC.style.strokeDashoffset = C * (1 - cPct); arcC.style.stroke = cCol; }
     const valC = document.getElementById('heroValCycle');
@@ -27657,9 +28403,12 @@ window._hosAutoRecalc = false;
     const viol = document.getElementById('heroDutyViol');
     if (viol) viol.style.display = (dl <= 0 || cl <= 0) ? 'inline-block' : 'none';
 
-    // Sincronizar fmDriveSeconds para el resto del app
-    const extra = (_sessionStart && _isMoving) ? (Date.now() - _sessionStart.getTime()) / 1000 : 0;
-    if (typeof fmDriveSeconds !== 'undefined') fmDriveSeconds = _driveMs / 1000 + extra;
+    // Sincronizar fmDriveSeconds solo cuando el rastreo GPS propio NO está activo
+    // (durante fmIsTracking el bucle GPS acumula fmDriveSeconds por su cuenta)
+    if (typeof fmIsTracking === 'undefined' || !fmIsTracking) {
+      const extra = (_sessionStart && _isMoving) ? (Date.now() - _sessionStart.getTime()) / 1000 : 0;
+      if (typeof fmDriveSeconds !== 'undefined') fmDriveSeconds = _driveMs / 1000 + extra;
+    }
   }
 
   function _setDuty(label, color){
@@ -27670,8 +28419,8 @@ window._hosAutoRecalc = false;
   }
 
   function _setBtBadge(s){
-    const colors = { connected:'#00e5a0', scanning:'#facc15', error:'#f87171', disconnected:'#6b7280' };
-    const labels = { connected:'ELD ●', scanning:'Buscando...', error:'Error BT', disconnected:'ELD' };
+    const colors = { connected:'#00e5a0', scanning:'#facc15', error:'#f87171', disconnected:'#6b7280', gps:'#10b981' };
+    const labels = { connected:'ELD ●', scanning:'Buscando...', error:'Error BT', disconnected:'ELD', gps:'GPS ●' };
     const dot   = document.getElementById('heroBtDot');
     const txt   = document.getElementById('heroBtTxt');
     const badge = document.getElementById('heroBtBadge');
@@ -27682,15 +28431,16 @@ window._hosAutoRecalc = false;
     if (badge){
       const connected = s === 'connected';
       const scanning  = s === 'scanning';
-      badge.style.borderColor = connected ? 'rgba(0,229,160,0.50)'  : scanning ? 'rgba(250,204,21,0.40)' : 'rgba(255,255,255,0.18)';
-      badge.style.background  = connected ? 'rgba(0,229,160,0.12)'  : scanning ? 'rgba(250,204,21,0.08)' : 'rgba(8,14,26,0.88)';
-      badge.classList.toggle('bt-disconnected', !connected && !scanning);
+      const gps       = s === 'gps';
+      badge.style.borderColor = connected ? 'rgba(0,229,160,0.50)' : scanning ? 'rgba(250,204,21,0.40)' : gps ? 'rgba(16,185,129,0.50)' : 'rgba(255,255,255,0.18)';
+      badge.style.background  = connected ? 'rgba(0,229,160,0.12)' : scanning ? 'rgba(250,204,21,0.08)' : gps ? 'rgba(16,185,129,0.12)' : 'rgba(8,14,26,0.88)';
+      badge.classList.toggle('bt-disconnected', !connected && !scanning && !gps);
     }
-    // Sync BT status into dash TURNO ring
+    // Sync BT/GPS status into dash TURNO ring
     const dashBt = document.getElementById('dashBtStatus');
     if (dashBt) {
-      dashBt.textContent = s === 'connected' ? 'BT ●' : s === 'scanning' ? 'BT...' : 'BT ○';
-      dashBt.style.color = s === 'connected' ? '#00e5a0' : s === 'scanning' ? '#facc15' : 'rgba(167,139,250,0.55)';
+      dashBt.textContent = s === 'connected' ? 'BT ●' : s === 'scanning' ? 'BT...' : s === 'gps' ? 'GPS ●' : 'BT ○';
+      dashBt.style.color = s === 'connected' ? '#00e5a0' : s === 'scanning' ? '#facc15' : s === 'gps' ? '#10b981' : 'rgba(167,139,250,0.55)';
     }
   }
 
@@ -27705,6 +28455,9 @@ window._hosAutoRecalc = false;
   _setDuty('SIN ELD', '#6b7280');
   _updateRings();
 
+  // Sin ELD: usar GPS del teléfono como fuente de movimiento por defecto
+  setTimeout(() => { _startGpsMode(); }, 500); // GPS siempre activo
+
   // Intentar auto-reconectar a ELD previamente autorizado al abrir el app
   setTimeout(_autoReconnect, 1500);
 
@@ -27712,7 +28465,25 @@ window._hosAutoRecalc = false;
   setInterval(_updateRings, 1000);
   setInterval(_save, 30000);
 
-  window._hosTracker = { driveLeft: _driveLeft, cycleLeft: _cycleLeft };
+  window._hosTracker = {
+    driveLeft:     _driveLeft,
+    cycleLeft:     _cycleLeft,
+    eldConnected:  () => _connected,
+    // Inicializa el tracker con las horas RESTANTES que el driver ingresó
+    setInitialHours: function(dailyHrsLeft, cycleHrsLeft) {
+      _driveMs = Math.max(0, (DRIVE_MAX - dailyHrsLeft) * 3600000);
+      _cycleMs = Math.max(0, (CYCLE_MAX - cycleHrsLeft) * 3600000);
+      _sessionStart = null;
+      if (!_shiftStart) _shiftStart = new Date();
+      _save();
+    },
+    // Llamado desde el bucle GPS — siempre usa GPS del dispositivo para movimiento,
+    // incluso cuando el ELD está conectado (ELD solo se usa para identificación/logging)
+    reportMoving: function(moving, speedMph) {
+      if (moving) _onEldMoving(speedMph || 0);
+      else        _onEldStopped();
+    }
+  };
 })();
 </script>
 
