@@ -15147,6 +15147,20 @@ function updateDashDestCard() {
   nameEl.textContent = destination.name.split(',').slice(0,2).join(',').trim();
 
   if (arrivalTime instanceof Date) {
+    // Recalculate if arrival date is in the past (stale from a previous session)
+    if (arrivalTime < new Date() && typeof calculateSchedule === 'function') {
+      try {
+        const _rem = parseFloat(document.getElementById('dashRouteRemaining')?.textContent
+                     || document.getElementById('fmRem')?.textContent || '0');
+        const _spd = parseFloat(document.getElementById('speedInput')?.value) || 55;
+        const _dMax = Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11);
+        const _drLeft = window._hosTracker ? Math.max(0, window._hosTracker.driveLeft()) : _dMax;
+        if (_rem > 0 && destination) {
+          const _sc = calculateSchedule(new Date(), _rem, _spd, _drLeft, _dMax);
+          arrivalTime = _sc.at(-1)?.end || new Date();
+        }
+      } catch(e) {}
+    }
     const days   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
     const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     const d = arrivalTime;
@@ -27292,6 +27306,10 @@ window._hosAutoRecalc = false;
     _setBtBadge(_connected ? 'connected' : 'gps');
     _gpsWatchId = navigator.geolocation.watchPosition(
       pos => {
+        // Yield to the main tracking loop when a trip is active — both watchers
+        // calling _onEldMoving/_onEldStopped simultaneously causes the timer to
+        // reset on every stale GPS position, keeping "usadas" stuck at 0.
+        if (typeof fmIsTracking !== 'undefined' && fmIsTracking) return;
         const raw = pos.coords.speed;
         const mph = (raw != null && raw >= 0) ? raw * 0.621371 : 0;
         if (mph > 2) _onEldMoving(Math.round(mph));
