@@ -7889,9 +7889,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div id="dashHosTime" style="font-family:'Share Tech Mono',monospace;font-size:40px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">11h 0m</div>
           <div id="dashHosLabel" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,0,0,0.45);text-align:center;margin-top:7px;line-height:1.4;max-width:130px;letter-spacing:0.5px;">de 11h límite</div>
         </div>
+        <div style="position:absolute;bottom:32px;left:0;right:0;display:flex;justify-content:center;pointer-events:none;">
+          <div id="dashSecondsClock" style="font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:900;color:#10b981;letter-spacing:4px;text-shadow:0 0 8px rgba(16,185,129,0.7);">00</div>
+        </div>
       </div>
       <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">DISPONIBLES</div>
-      <div id="dashSecondsClock" style="font-family:'Share Tech Mono',monospace;font-size:22px;font-weight:900;color:#10b981;letter-spacing:3px;text-shadow:0 0 10px rgba(16,185,129,0.6);margin-top:2px;">00:00:00</div>
     </div>
 
     <!-- CICLO 70H ring -->
@@ -14555,14 +14557,9 @@ function fmTickClock() {
   if (speedClock) {
     speedClock.textContent = now.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit',hour12:true});
   }
-  // Reloj de segundos debajo del anillo DISPONIBLES
+  // Segundos dentro del anillo DISPONIBLES
   const secClock = document.getElementById('dashSecondsClock');
-  if (secClock) {
-    const h = String(now.getHours()).padStart(2,'0');
-    const m = String(now.getMinutes()).padStart(2,'0');
-    const s = String(now.getSeconds()).padStart(2,'0');
-    secClock.textContent = `${h}:${m}:${s}`;
-  }
+  if (secClock) secClock.textContent = String(now.getSeconds()).padStart(2,'0');
 }
 
 /* ── Búsqueda de destino desde el mapa ── */
@@ -16425,12 +16422,8 @@ function showHosDashboard() {
   if (_dashRingInterval) clearInterval(_dashRingInterval);
   _dashRingInterval = setInterval(() => {
     if (b30InBreak && !b30Complete) {
-      // Actualizar solo el reloj de segundos durante el descanso
       const _sc = document.getElementById('dashSecondsClock');
-      if (_sc) {
-        const _n = new Date();
-        _sc.textContent = `${String(_n.getHours()).padStart(2,'0')}:${String(_n.getMinutes()).padStart(2,'0')}:${String(_n.getSeconds()).padStart(2,'0')}`;
-      }
+      if (_sc) _sc.textContent = String(new Date().getSeconds()).padStart(2,'0');
       return;
     }
     const dMax = Math.min(
@@ -16442,12 +16435,9 @@ function showHosDashboard() {
       ? Math.max(0, Math.min(window._hosTracker.driveLeft(), dMax))
       : Math.max(0, dMax);
     updateHosDashboard(dLeft, dMax);
-    // Reloj de segundos
+    // Segundos dentro del anillo DISPONIBLES
     const _sc = document.getElementById('dashSecondsClock');
-    if (_sc) {
-      const _n = new Date();
-      _sc.textContent = `${String(_n.getHours()).padStart(2,'0')}:${String(_n.getMinutes()).padStart(2,'0')}:${String(_n.getSeconds()).padStart(2,'0')}`;
-    }
+    if (_sc) _sc.textContent = String(new Date().getSeconds()).padStart(2,'0');
   }, 1000);
 
   updateDashDestCard();
