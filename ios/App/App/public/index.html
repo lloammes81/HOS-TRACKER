@@ -28159,8 +28159,9 @@ window._hosAutoRecalc = false;
       if (d.shiftTs && Date.now() - d.shiftTs > 8 * 24 * 3600000){
         localStorage.removeItem(SAVE_KEY); return;
       }
-      _shiftStart  = d.shiftTs  ? new Date(d.shiftTs)  : null;
-      _connectedAt = d.connTs   ? new Date(d.connTs)   : null;
+      // Resetear turno si tiene más de 24h (ventana diaria DOT)
+      _shiftStart  = (d.shiftTs && Date.now() - d.shiftTs < 24 * 3600000) ? new Date(d.shiftTs) : null;
+      _connectedAt = (d.connTs  && Date.now() - d.connTs  < 24 * 3600000) ? new Date(d.connTs)  : null;
       // Reiniciar horas diarias si cambió el día calendario (el ciclo 70h sigue acumulando)
       _driveMs = (d.driveDate && d.driveDate === new Date().toDateString()) ? (d.driveMs || 0) : 0;
       _cycleMs = d.cycleMs || 0;
@@ -28444,7 +28445,7 @@ window._hosAutoRecalc = false;
 
   function _fmt(d){ return d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}); }
   function _fmtElapsed(from){
-    const mins = Math.floor((Date.now() - from.getTime()) / 60000);
+    const mins = Math.min(Math.floor((Date.now() - from.getTime()) / 60000), 14 * 60);
     return `${Math.floor(mins/60)}h ${mins%60}m`;
   }
 
