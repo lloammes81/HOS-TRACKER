@@ -3048,13 +3048,13 @@ body.dark #fullMap .leaflet-tile-pane {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(4,8,20,0.88);
-  border-radius: 13px;
-  padding: 8px 4px 6px;
-  border: 1px solid rgba(255,255,255,0.07);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 .hud-ring-lbl {
   font-size: 7.5px;
@@ -16217,7 +16217,7 @@ function fmStartTracking() {
   updateHeroKPIs(_initDriveLeft, _initDriveMax, _initCycleLeft, 70);
   // Mostrar dashboard HOS en lugar del mapa completo
   showHosDashboard();
-  // Show speed sign immediately — always visible when tracking starts
+  // Show speed signs immediately — always visible when tracking starts
   {
     const initSign = document.getElementById('mapSpeedSign');
     if (initSign && !initSign.classList.contains('visible')) {
@@ -16228,6 +16228,13 @@ function fmStartTracking() {
       if (mssState) mssState.textContent = '';
       if (mssDiff) mssDiff.textContent = '';
       initSign.classList.add('visible');
+    }
+    // Also show the draggable speed limit widget
+    const slw = document.getElementById('speedLimitWidget');
+    if (slw) {
+      const slNum = slw.querySelector('.sl-num');
+      if (slNum) slNum.textContent = '--';
+      slw.classList.add('visible');
     }
   }
   document.getElementById('reportFab').classList.add('visible');
