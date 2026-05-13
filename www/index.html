@@ -1111,6 +1111,137 @@
     50%    { transform:rotate(8deg); }
   }
 
+  /* ══════════════════════════════════════
+     📷  CAMERA WIDGET — floating preview
+  ══════════════════════════════════════ */
+  #cameraWidget {
+    position: fixed;
+    bottom: calc(var(--tab-h,60px) + 88px);
+    right: calc(12px + env(safe-area-inset-right,0px));
+    z-index: 30000;
+    display: none;
+    flex-direction: column;
+    width: 188px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 36px rgba(0,0,0,.80), 0 0 0 1.5px rgba(255,255,255,.10);
+    cursor: grab;
+    touch-action: none;
+    background: #060b18;
+    user-select: none;
+  }
+  #cameraWidget.visible  { display: flex; }
+  #cameraWidget.cam-drag { cursor: grabbing; }
+  #cameraWidget.minimized .cam-body,
+  #cameraWidget.minimized .cam-footer { display: none; }
+  .cam-header {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 10px;
+    background: rgba(10,16,30,.98);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    flex-shrink: 0;
+  }
+  .cam-live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #6b7280; flex-shrink: 0; transition: background .3s;
+  }
+  .cam-live-dot.live { background: #22c55e; box-shadow: 0 0 6px #22c55e; animation: camBlink 1.5s infinite; }
+  .cam-live-dot.rec  { background: #ef4444; box-shadow: 0 0 6px #ef4444; animation: camBlink .7s infinite; }
+  @keyframes camBlink { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .cam-title {
+    flex: 1; font-size: 10px; font-weight: 800;
+    letter-spacing: .8px; color: rgba(255,255,255,.8); text-transform: uppercase;
+  }
+  .cam-hbtn {
+    width: 24px; height: 24px; border-radius: 6px; border: none;
+    background: rgba(255,255,255,.07); color: rgba(255,255,255,.7);
+    font-size: 12px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent; transition: background .15s;
+  }
+  .cam-hbtn:active { background: rgba(255,255,255,.18); }
+  .cam-body {
+    position: relative; width: 188px; height: 126px;
+    background: #000; overflow: hidden; flex-shrink: 0;
+  }
+  #camVideo, #camImg { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .cam-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; background: rgba(6,11,24,.92);
+    font-size: 11px; font-weight: 700; color: rgba(255,255,255,.45);
+    flex-direction: column; gap: 6px; pointer-events: none;
+  }
+  .cam-footer {
+    display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+    background: rgba(10,16,30,.98);
+    border-top: 1px solid rgba(255,255,255,.08); flex-shrink: 0;
+  }
+  .cam-rec-btn {
+    flex: 1; padding: 5px 8px; border-radius: 8px;
+    border: 1.5px solid rgba(239,68,68,.5); background: rgba(239,68,68,.12);
+    color: #f87171; font-size: 10px; font-weight: 800; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; letter-spacing: .5px;
+    font-family: 'DM Sans', sans-serif; transition: background .15s;
+  }
+  .cam-rec-btn.recording { background: rgba(239,68,68,.32); border-color: #ef4444; color: #fff; }
+  .cam-snap-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,.18); background: rgba(255,255,255,.07);
+    color: rgba(255,255,255,.8); font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Camera settings section */
+  .cam-type-tabs {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 6px; margin: 12px 16px 0;
+  }
+  .cam-type-tab {
+    padding: 9px 4px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    color: var(--muted); font-size: 11px; font-weight: 700; cursor: pointer;
+    text-align: center; font-family: 'DM Sans',sans-serif;
+    transition: background .15s, border-color .15s, color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cam-type-tab.active { border-color: #3b82f6; background: rgba(59,130,246,.12); color: #3b82f6; }
+  .cam-connect-area { padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .cam-ip-input {
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    color: var(--text); font-family: 'DM Sans',sans-serif;
+    font-size: 14px; font-weight: 600; box-sizing: border-box; outline: none;
+  }
+  .cam-ip-input:focus { border-color: #3b82f6; }
+  .cam-connect-btn {
+    width: 100%; padding: 12px; border-radius: 10px; border: none;
+    background: #3b82f6; color: #fff; font-family: 'DM Sans',sans-serif;
+    font-size: 14px; font-weight: 800; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; transition: opacity .15s;
+  }
+  .cam-connect-btn:active { opacity: .8; }
+  .cam-connect-btn.cam-danger  { background: #ef4444; }
+  .cam-connect-btn.cam-success { background: #10b981; }
+  .cam-status-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px 12px;
+  }
+  .cam-status-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #6b7280; flex-shrink: 0;
+  }
+  .cam-status-dot.connected { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,.5); }
+  .cam-status-txt { font-size: 13px; font-weight: 600; color: var(--muted); flex: 1; }
+  .cam-bt-list { display: flex; flex-direction: column; gap: 6px; margin: 0 16px 12px; max-height: 160px; overflow-y: auto; }
+  .cam-bt-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface2);
+    cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color .15s;
+  }
+  .cam-bt-item:active { border-color: #3b82f6; }
+  .cam-bt-item-name { flex: 1; font-size: 13px; font-weight: 700; color: var(--text); }
+  .cam-bt-item-id   { font-size: 10px; color: var(--muted); }
+
   /* ── POLICE ALERT ──────────────────────── */
   @keyframes policeFlash {
     0%,100%{ background:rgba(30,0,0,0.96); }
@@ -2015,51 +2146,38 @@
     margin-top: 5px; text-align: center;
     white-space: nowrap;
   }
-  .speedo-ring {
-    width: 110px; height: 110px;
-    border-radius: 50%;
-    background: rgba(10,16,30,0.95);
-    border: 3px solid #10b981;
-    box-shadow: 0 0 0 2px rgba(16,185,129,0.15), 0 0 24px rgba(16,185,129,0.25), 0 8px 32px rgba(0,0,0,0.6);
+  /* Speed-limit-sign style speedometer */
+  .speedo-sign {
+    width: 72px; height: 88px;
+    background: #fff;
+    border: 5px solid #000;
+    border-radius: 6px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
+    box-shadow: 0 4px 18px rgba(0,0,0,.65);
     position: relative;
-    backdrop-filter: blur(16px);
+    transition: border-color .3s, background .3s;
   }
-  .speedo-ring.moving {
-    border-color: #10b981;
-    box-shadow: 0 0 0 2px rgba(16,185,129,0.3), 0 0 30px rgba(16,185,129,0.4), 0 8px 32px rgba(0,0,0,0.6);
-  }
-  .speedo-ring.stopped {
-    border-color: #6b7280;
-    box-shadow: 0 0 0 2px rgba(107,114,128,0.15), 0 8px 32px rgba(0,0,0,0.6);
-  }
-  .speedo-svg {
-    position: absolute; top: -5px; left: -5px;
-    width: 120px; height: 120px;
-    pointer-events: none;
+  .speedo-sign-top {
+    font-size: 8px; font-weight: 900;
+    letter-spacing: .5px;
+    text-align: center;
+    line-height: 1.15;
+    color: #000;
+    margin-bottom: 1px;
   }
   .speedo-num {
     font-family: "Bebas Neue", sans-serif;
-    font-size: 42px; line-height: 1;
-    color: #10b981;
+    font-size: 38px; line-height: 1;
+    color: #000;
     letter-spacing: 1px;
     z-index: 1;
   }
-  .speedo-num.stopped { color: #6b7280; }
   .speedo-unit {
-    font-size: 10px; font-weight: 800;
-    color: rgba(255,255,255,0.45);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    z-index: 1;
-    margin-top: -4px;
-  }
-  .speedo-label {
-    font-size: 9px; font-weight: 700;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: .8px;
-    margin-top: 3px;
+    font-size: 8px; font-weight: 900;
+    color: #6b7280;
+    letter-spacing: .3px;
+    margin-top: 1px;
   }
   .speedo-status {
     margin-top: 5px;
@@ -2943,9 +3061,9 @@ body.map-active #driveHoursWidget{
 
 
 /* Speedometer turns red when over state truck limit */
-#speedometerWidget.over-limit .speedo-ring{ border-color:#ef4444 !important; box-shadow:0 0 0 2px rgba(239,68,68,.25), 0 0 18px rgba(239,68,68,.35), 0 4px 18px rgba(0,0,0,.6) !important; }
+#speedometerWidget.over-limit .speedo-sign{ border-color:#ef4444 !important; background:#fef2f2 !important; box-shadow:0 0 0 2px rgba(239,68,68,.25), 0 4px 18px rgba(0,0,0,.6) !important; }
 #speedometerWidget.over-limit .speedo-num{ color:#ef4444 !important; }
-#speedometerWidget.over-limit .speedo-label{ color:rgba(255,255,255,.85) !important; }
+#speedometerWidget.over-limit .speedo-sign-top{ color:#ef4444 !important; }
 
 /* Drive hours: subtle highlight when driving */
 #driveHoursWidget.boost{ opacity:1 !important; }
@@ -3017,18 +3135,80 @@ body:not(.map-active) #speedToast {
 /* ── MAP TILE CLARITY — brighter, more contrast, sharper on mobile ── */
 #miniMap .leaflet-tile-pane,
 #fullMap .leaflet-tile-pane {
-  filter: brightness(1.18) contrast(1.12) saturate(1.08);
+  filter: brightness(0.9) contrast(1.22) saturate(0.82) hue-rotate(3deg);
 }
 
-/* Night mode: don't over-brighten dark tiles */
+/* Night mode */
 body.dark #miniMap .leaflet-tile-pane,
 body.dark #fullMap .leaflet-tile-pane {
-  filter: brightness(1.05) contrast(1.1) saturate(0.95);
+  filter: brightness(0.88) contrast(1.20) saturate(0.72) hue-rotate(5deg);
 }
-/* Satellite/hybrid: boost saturation more */
+/* Satellite/hybrid: richer saturation */
 #miniMap.satellite-style .leaflet-tile-pane,
 #fullMap.satellite-style .leaflet-tile-pane {
-  filter: brightness(1.1) contrast(1.15) saturate(1.25);
+  filter: brightness(0.92) contrast(1.18) saturate(1.15);
+}
+
+/* Professional map atmosphere — top gradient fade */
+#fullMap::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 90px;
+  background: linear-gradient(to bottom, rgba(4,8,20,0.55) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 450;
+}
+
+/* Professional HUD override */
+#fmHud {
+  background: rgba(5,9,20,0.97) !important;
+  border-top: 1px solid rgba(99,179,237,0.14) !important;
+  box-shadow: 0 -6px 40px rgba(0,0,0,0.7), 0 -1px 0 rgba(99,179,237,0.08) !important;
+}
+
+/* ── Professional ELD ring cards ─────────────────────── */
+.hud-rings-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 5px;
+  margin-bottom: 14px;
+  justify-items: stretch;
+}
+.hud-ring-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.hud-ring-lbl {
+  font-size: 7.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .65px;
+  line-height: 1;
+  margin-bottom: 1px;
+}
+.hud-ring-val {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  color: #f0f6ff;
+  line-height: 1.1;
+  margin-top: 2px;
+  letter-spacing: -.3px;
+}
+.hud-ring-card.warn     { border-color: rgba(245,158,11,.22); box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 14px rgba(245,158,11,.12), inset 0 1px 0 rgba(255,255,255,0.05); }
+.hud-ring-card.critical { border-color: rgba(239,68,68,.28);  box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 18px rgba(239,68,68,.18), inset 0 1px 0 rgba(255,255,255,0.05); animation: hudCardPulse 1.4s ease-in-out infinite; }
+@keyframes hudCardPulse {
+  0%,100% { box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 14px rgba(239,68,68,.15), inset 0 1px 0 rgba(255,255,255,0.05); }
+  50%     { box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 28px rgba(239,68,68,.40), inset 0 1px 0 rgba(255,255,255,0.05); }
 }
 
 
@@ -6684,7 +6864,70 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
 
+      <!-- ── CAMERA SECTION ── -->
+      <div class="sett-section" id="settCamSection">
+        <div class="sett-section-title">📷 Cámara del Vehículo</div>
+        <div class="sett-group" style="overflow:visible">
 
+          <!-- Type tabs -->
+          <div class="cam-type-tabs">
+            <button class="cam-type-tab active" id="camTab_device" onclick="selectCamType('device')">📱 Dispositivo</button>
+            <button class="cam-type-tab"        id="camTab_wifi"   onclick="selectCamType('wifi')">🌐 WiFi / IP</button>
+            <button class="cam-type-tab"        id="camTab_bt"     onclick="selectCamType('bt')">📶 Bluetooth</button>
+          </div>
+
+          <!-- Status row -->
+          <div class="cam-status-row">
+            <div class="cam-status-dot" id="camStatusDot"></div>
+            <div class="cam-status-txt" id="camStatusTxt">Sin cámara conectada</div>
+          </div>
+
+          <!-- Panel: device camera -->
+          <div id="camPanel_device" class="cam-connect-area">
+            <div style="font-size:12px;color:var(--muted);line-height:1.55">
+              Usa la cámara trasera del dispositivo. Sin hardware adicional.
+            </div>
+            <button class="cam-connect-btn" id="camDeviceBtn" onclick="toggleDeviceCamera()">📷 Activar cámara</button>
+          </div>
+
+          <!-- Panel: WiFi/IP camera -->
+          <div id="camPanel_wifi" class="cam-connect-area" style="display:none">
+            <div style="font-size:12px;color:var(--muted);line-height:1.55">
+              Cámara IP en tu misma red WiFi. Soporta MJPEG, JPEG y HLS.
+            </div>
+            <input class="cam-ip-input" id="camIpInput" type="text"
+              placeholder="Ej: 192.168.1.100:8080"
+              oninput="saveCamIp()" />
+            <select class="cam-ip-input" id="camProtoSelect" onchange="saveCamIp()" style="margin-top:-4px">
+              <option value="mjpeg">HTTP MJPEG  (/?action=stream)</option>
+              <option value="jpg">HTTP JPEG estático</option>
+              <option value="hls">HLS / m3u8</option>
+            </select>
+            <button class="cam-connect-btn" id="camWifiBtn" onclick="connectWifiCamera()">🌐 Conectar cámara</button>
+          </div>
+
+          <!-- Panel: Bluetooth scan -->
+          <div id="camPanel_bt" class="cam-connect-area" style="display:none">
+            <div style="font-size:12px;color:var(--muted);line-height:1.55">
+              Vincula una cámara Bluetooth. El video se transmite por WiFi tras la vinculación.
+            </div>
+            <button class="cam-connect-btn" id="camBtScanBtn" onclick="startCamBtScan()">📶 Escanear dispositivos</button>
+            <div class="cam-bt-list" id="camBtList" style="display:none"></div>
+          </div>
+
+          <!-- Preview toggle -->
+          <div class="sett-row" style="cursor:default;border-top:1px solid var(--border)">
+            <div class="sett-icon" style="background:#dbeafe">👁️</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">Mostrar preview</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">Ventana flotante durante el viaje</div>
+            </div>
+            <button class="sett-toggle" id="camPreviewToggle" onclick="toggleCamPreviewSetting(this)"></button>
+          </div>
+
+        </div>
+      </div>
+      <!-- END CAMERA SECTION -->
 
 
 <div class="sett-section" style="display:none">
@@ -6926,6 +7169,16 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div class="tpb-sub">Escanea BOL, facturas y envía por WhatsApp o Email como PDF/JPG</div>
         </div>
         <div class="tpb-arrow">›</div>
+      </button>
+
+      <!-- Vehicle Camera -->
+      <button class="tool-page-btn" onclick="openCameraFromTools()" style="--tclr:#22d3ee;--tcbg:rgba(34,211,238,.1);--tcbdr:rgba(34,211,238,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">📷</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Cámara del Vehículo</div>
+          <div class="tpb-sub" id="camToolSubtxt">Conecta cámara por dispositivo, WiFi o Bluetooth</div>
+        </div>
+        <div class="tpb-arrow" id="camToolArrow">›</div>
       </button>
 
     </div>
@@ -7962,6 +8215,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomIn()">+</button>
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
     <div class="map-ctrl-sep"></div>
+    <button id="trafficBtn" onclick="toggleTrafficLayer()" title="Tráfico en tiempo real" style="font-size:17px">🚦</button>
     <button id="mapSearchBtn" onclick="toggleMapSearch()" title="Buscar destino" style="font-size:18px">🔍</button>
   </div>
 
@@ -8152,61 +8406,61 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- 4 ELD-style stat circles -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:12px;justify-items:center;">
+    <!-- 4 ELD-style stat circles — professional glass cards -->
+    <div class="hud-rings-grid">
 
       <!-- LLEGADA -->
-      <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(6,182,212,.2)" stroke-width="5"/>
-            <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(34,211,238,.14)" stroke-width="5.5"/>
+            <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#22d3ee" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#06b6d4;line-height:1;" id="fmEtaLbl">LLEGADA</div>
-            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmEta">--</div>
+            <div class="hud-ring-lbl" style="color:#22d3ee" id="fmEtaLbl">LLEGADA</div>
+            <div class="hud-ring-val" id="fmEta">--</div>
           </div>
         </div>
       </div>
 
       <!-- MANEJO -->
-      <div id="hudManejoCell" style="display:flex;flex-direction:column;align-items:center;">
+      <div id="hudManejoCell" class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(16,185,129,.2)" stroke-width="5"/>
-            <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(52,211,153,.14)" stroke-width="5.5"/>
+            <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#34d399" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#10b981;line-height:1;" id="fmDriveLbl">MANEJO</div>
-            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmDriveLeft">11h</div>
+            <div class="hud-ring-lbl" style="color:#34d399" id="fmDriveLbl">MANEJO</div>
+            <div class="hud-ring-val" id="fmDriveLeft">11h</div>
           </div>
         </div>
       </div>
 
       <!-- RESTANTE -->
-      <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(59,130,246,.2)" stroke-width="5"/>
-            <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(96,165,250,.14)" stroke-width="5.5"/>
+            <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#60a5fa" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="226 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#3b82f6;line-height:1;" id="fmRemLbl">RESTANTE</div>
-            <div style="font-size:11px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmRem">--</div>
+            <div class="hud-ring-lbl" style="color:#60a5fa" id="fmRemLbl">RESTANTE</div>
+            <div class="hud-ring-val" style="font-size:12px" id="fmRem">--</div>
           </div>
         </div>
       </div>
 
       <!-- 70 HRS -->
-      <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(139,92,246,.2)" stroke-width="5"/>
-            <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(167,139,250,.14)" stroke-width="5.5"/>
+            <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#a78bfa" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="226 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#8b5cf6;line-height:1;" id="fm70Lbl">70 HRS</div>
-            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fm70Left">70h</div>
+            <div class="hud-ring-lbl" style="color:#a78bfa" id="fm70Lbl">70 HRS</div>
+            <div class="hud-ring-val" id="fm70Left">70h</div>
           </div>
         </div>
       </div>
@@ -8259,14 +8513,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- Stop button (only when tracking) -->
-    <button id="fmStopBtn" onclick="fmStopTracking()" style="
-      display:none;width:100%;margin-top:12px;padding:14px;
-      background:#ef4444;color:#fff;border:none;border-radius:12px;
-      font-family:'DM Sans',sans-serif;font-size:16px;font-weight:800;cursor:pointer;
-      touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-      box-shadow:0 4px 16px rgba(239,68,68,0.4);
-    ">🛑 Detener Seguimiento</button>
   </div>
 </div>
 
@@ -9688,18 +9934,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
      CIRCULAR SPEEDOMETER WIDGET
 ══════════════════════════════════════ -->
 <div id="speedometerWidget">
-  <div class="speedo-ring stopped" id="speedoRing">
-    <svg class="speedo-svg" id="speedoSvg" viewBox="0 0 120 120">
-      <circle cx="60" cy="60" r="55" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="6"/>
-      <circle cx="60" cy="60" r="55" fill="none" stroke="#10b981" stroke-width="6"
-              stroke-linecap="round" stroke-dasharray="0 345" id="speedoArc"
-              transform="rotate(-220 60 60)" style="transition:stroke-dasharray .5s ease"/>
-    </svg>
-    <div class="speedo-num stopped" id="speedoNum">0</div>
+  <div class="speedo-sign" id="speedoSign">
+    <div class="speedo-sign-top">YOUR<br>SPEED</div>
+    <div class="speedo-num" id="speedoNum">0</div>
     <div class="speedo-unit">MPH</div>
   </div>
-  <div class="speedo-label" id="speedoLabel">GPS SPEED</div>
-  <div class="speedo-status" id="speedoStatus">DETENIDO</div>
+  <div class="speedo-status" id="speedoStatus">⏸ DETENIDO</div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -9730,6 +9970,27 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div id="mrVal">--</div>
   <div id="mrUnit">mi restantes</div>
   <div id="mrLabel">AL DESTINO</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     📷 CAMERA PREVIEW WIDGET
+══════════════════════════════════════ -->
+<div id="cameraWidget">
+  <div class="cam-header">
+    <div class="cam-live-dot" id="camLiveDot"></div>
+    <div class="cam-title" id="camWidgetTitle">CAM</div>
+    <button class="cam-hbtn" onclick="toggleCamMinimize()" title="Minimizar">—</button>
+    <button class="cam-hbtn" onclick="closeCamWidget()" title="Cerrar">✕</button>
+  </div>
+  <div class="cam-body" id="camBody">
+    <video id="camVideo" autoplay muted playsinline></video>
+    <img id="camImg" alt="cam" />
+    <div class="cam-overlay" id="camOverlay"><span style="font-size:24px">📷</span><span>Sin señal</span></div>
+  </div>
+  <div class="cam-footer">
+    <button class="cam-rec-btn" id="camRecBtn" onclick="toggleCamRecord()">⏺ REC</button>
+    <button class="cam-snap-btn" onclick="takeCamSnapshot()" title="Captura">📸</button>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -10023,6 +10284,45 @@ const MAP_STYLES = {
 };
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 let fmTileLayer = null;
+let fmTrafficLayer = null;
+let fmTrafficEnabled = localStorage.getItem('hos_traffic') === 'true';
+
+function toggleTrafficLayer() {
+  fmTrafficEnabled = !fmTrafficEnabled;
+  localStorage.setItem('hos_traffic', fmTrafficEnabled);
+  const btn = document.getElementById('trafficBtn');
+  if (btn) {
+    btn.style.background = fmTrafficEnabled ? 'rgba(239,68,68,0.28)' : '';
+    btn.style.borderColor = fmTrafficEnabled ? 'rgba(239,68,68,0.6)' : '';
+    btn.title = fmTrafficEnabled ? 'Tráfico ACTIVO — toca para desactivar' : 'Tráfico en tiempo real';
+  }
+  if (fmTrafficEnabled) {
+    _addTrafficLayer();
+  } else {
+    if (fmTrafficLayer && fmMapInst) {
+      try { fmMapInst.removeLayer(fmTrafficLayer); } catch {}
+      fmTrafficLayer = null;
+    }
+  }
+}
+
+function _addTrafficLayer() {
+  if (!fmMapInst) return;
+  if (fmTrafficLayer) { try { fmMapInst.removeLayer(fmTrafficLayer); } catch {} fmTrafficLayer = null; }
+  fmTrafficLayer = L.tileLayer(
+    'https://mt{s}.google.com/vt/lyrs=h,traffic&x={x}&y={y}&z={z}',
+    { subdomains: '0123', maxZoom: 20, opacity: 0.82, attribution: '© Google Maps Traffic' }
+  ).addTo(fmMapInst);
+}
+
+// Restore traffic state on map open
+function _restoreTrafficState() {
+  const btn = document.getElementById('trafficBtn');
+  if (fmTrafficEnabled) {
+    if (btn) { btn.style.background = 'rgba(239,68,68,0.28)'; btn.style.borderColor = 'rgba(239,68,68,0.6)'; }
+    if (fmMapInst && !fmTrafficLayer) _addTrafficLayer();
+  }
+}
 
 // Tono base del dashboard según estilo del mapa (sutil, el color real lo da el mapa de fondo)
 const DASH_BG_MAP = {
@@ -10210,6 +10510,387 @@ function flashDanger(ms = 2000) {
   f.style.display = 'block';
   setTimeout(() => f.style.display = 'none', ms);
 }
+
+/* ════════════════════════════════════════════════════════════
+   📷  VEHICLE CAMERA SYSTEM
+   Supports: device (getUserMedia), WiFi/IP (MJPEG/JPEG/HLS),
+   Bluetooth (BLE scan + WiFi video).
+════════════════════════════════════════════════════════════ */
+let _camType          = localStorage.getItem('cam_type') || 'device';
+let _camConnected     = false;
+let _camStream        = null;
+let _camRecording     = false;
+let _camMediaRecorder = null;
+let _camRecChunks     = [];
+let _camMinimized     = false;
+let _camPreviewOn     = localStorage.getItem('cam_preview') === 'true';
+let _camIpUrl         = localStorage.getItem('cam_ip_url') || '';
+let _camProto         = localStorage.getItem('cam_proto') || 'mjpeg';
+let _camBtScanActive  = false;
+let _camBtScanTimer   = null;
+
+/* ── helpers ─────────────────────────────────────────────── */
+function _camEl(id) { return document.getElementById(id); }
+
+function _camShowOverlay(show, msg) {
+  const ov = _camEl('camOverlay');
+  if (!ov) return;
+  ov.style.display = show ? 'flex' : 'none';
+  if (msg) ov.innerHTML = `<span style="font-size:22px">📷</span><span>${msg}</span>`;
+}
+
+function _camSetLive(live) {
+  const dot  = _camEl('camLiveDot');
+  const wdot = _camEl('camStatusDot');
+  const txt  = _camEl('camStatusTxt');
+  if (dot)  { dot.className  = 'cam-live-dot' + (live ? ' live' : ''); }
+  if (wdot) { wdot.className = 'cam-status-dot' + (live ? ' connected' : ''); }
+  if (txt)  txt.textContent  = live ? '● Cámara conectada y activa' : 'Sin cámara conectada';
+  _camConnected = live;
+  _updateCamToolBtn();
+}
+
+function updateCamWidget() {
+  const w = _camEl('cameraWidget');
+  if (!w) return;
+  if (_camPreviewOn && _camConnected) {
+    w.classList.add('visible');
+  } else {
+    w.classList.remove('visible');
+  }
+}
+
+/* ── Settings: select camera type ──────────────────────── */
+function selectCamType(type) {
+  _camType = type;
+  localStorage.setItem('cam_type', type);
+  ['device','wifi','bt'].forEach(t => {
+    const tab = _camEl('camTab_' + t);
+    const pan = _camEl('camPanel_' + t);
+    if (tab) tab.classList.toggle('active', t === type);
+    if (pan) pan.style.display = t === type ? 'flex' : 'none';
+  });
+}
+
+/* ── Settings: save IP / protocol ──────────────────────── */
+function saveCamIp() {
+  const v = (_camEl('camIpInput') || {}).value || '';
+  const p = (_camEl('camProtoSelect') || {}).value || 'mjpeg';
+  _camIpUrl = v; _camProto = p;
+  localStorage.setItem('cam_ip_url', v);
+  localStorage.setItem('cam_proto', p);
+}
+
+/* ── Settings: preview toggle ──────────────────────────── */
+function toggleCamPreviewSetting(btn) {
+  _camPreviewOn = !_camPreviewOn;
+  localStorage.setItem('cam_preview', _camPreviewOn);
+  if (btn) btn.classList.toggle('on', _camPreviewOn);
+  updateCamWidget();
+}
+
+/* ── Device camera (getUserMedia rear-facing) ──────────── */
+async function toggleDeviceCamera() {
+  if (_camConnected && _camStream) {
+    disconnectCamera();
+    return;
+  }
+  const btn = _camEl('camDeviceBtn');
+  if (btn) { btn.textContent = '⏳ Solicitando acceso...'; btn.disabled = true; }
+  try {
+    _camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: false
+    });
+    const vid = _camEl('camVideo');
+    if (vid) { vid.srcObject = _camStream; vid.style.display = 'block'; }
+    _camEl('camImg') && (_camEl('camImg').style.display = 'none');
+    _camShowOverlay(false);
+    _camSetLive(true);
+    updateCamWidget();
+    if (btn) { btn.textContent = '⏹ Desactivar cámara'; btn.classList.add('cam-danger'); btn.disabled = false; }
+    const title = _camEl('camWidgetTitle');
+    if (title) title.textContent = 'CAM · VIVO';
+  } catch(e) {
+    _camShowOverlay(true, 'Permiso denegado');
+    _camSetLive(false);
+    if (btn) { btn.textContent = '📷 Activar cámara'; btn.disabled = false; }
+    showToast && showToast('warning','📷','Cámara requerida','Permite el acceso a la cámara del dispositivo.');
+  }
+}
+
+/* ── WiFi / IP camera ───────────────────────────────────── */
+function connectWifiCamera() {
+  const ip    = (_camEl('camIpInput') || {}).value?.trim();
+  const proto = (_camEl('camProtoSelect') || {}).value || 'mjpeg';
+  if (!ip) { showToast && showToast('warning','🌐','IP requerida','Ingresa la dirección IP de tu cámara.'); return; }
+
+  let url;
+  if (proto === 'mjpeg')     url = `http://${ip}/?action=stream`;
+  else if (proto === 'jpg')  url = `http://${ip}/?action=snapshot`;
+  else                       url = `http://${ip}`;  // HLS — video src
+
+  const imgEl = _camEl('camImg');
+  const vidEl = _camEl('camVideo');
+  const btn   = _camEl('camWifiBtn');
+
+  if (_camConnected) { disconnectCamera(); return; }
+
+  if (proto === 'hls' || proto === 'mjpeg_vid') {
+    if (vidEl) { vidEl.src = url; vidEl.style.display = 'block'; vidEl.play().catch(()=>{}); }
+    if (imgEl) imgEl.style.display = 'none';
+  } else if (proto === 'jpg') {
+    // poll JPEG every 500ms
+    if (imgEl) { imgEl.style.display = 'block'; imgEl.src = url + '&_=' + Date.now(); }
+    if (vidEl) vidEl.style.display = 'none';
+    window._camJpgPoll = setInterval(() => {
+      if (imgEl && _camConnected) imgEl.src = url + '&_=' + Date.now();
+    }, 500);
+  } else {
+    // MJPEG: browser renders directly from img src
+    if (imgEl) { imgEl.style.display = 'block'; imgEl.src = url; }
+    if (vidEl) vidEl.style.display = 'none';
+  }
+
+  imgEl && (imgEl.onerror = () => { _camShowOverlay(true,'Sin señal · verifica IP'); _camSetLive(false); });
+  imgEl && (imgEl.onload  = () => { _camShowOverlay(false); _camSetLive(true); });
+  _camShowOverlay(false);
+  _camSetLive(true);
+  updateCamWidget();
+  if (btn) { btn.textContent = '⏹ Desconectar'; btn.classList.add('cam-danger'); }
+  const title = _camEl('camWidgetTitle');
+  if (title) title.textContent = 'IP CAM · ' + ip.split(':')[0];
+}
+
+/* ── Bluetooth scan for cameras ────────────────────────── */
+async function startCamBtScan() {
+  const btn  = _camEl('camBtScanBtn');
+  const list = _camEl('camBtList');
+  if (_camBtScanActive) return;
+  _camBtScanActive = true;
+  if (btn)  { btn.textContent = '⏳ Escaneando...'; btn.disabled = true; }
+  if (list) { list.innerHTML = ''; list.style.display = 'flex'; }
+
+  const devices = [];
+  const addDevice = (id, name) => {
+    if (devices.find(d => d.id === id)) return;
+    devices.push({ id, name });
+    const item = document.createElement('div');
+    item.className = 'cam-bt-item';
+    item.innerHTML = `<span style="font-size:18px">📷</span>
+      <div class="cam-bt-item-name">${name || 'Dispositivo BT'}</div>
+      <div class="cam-bt-item-id">${id.substring(0,12)}...</div>`;
+    item.onclick = () => connectCamBtDevice(id, name);
+    if (list) list.appendChild(item);
+  };
+
+  // Native Capacitor BLE
+  const ble = await (typeof loadNativeBlePlugin === 'function' ? loadNativeBlePlugin() : Promise.resolve(null));
+  if (ble) {
+    try {
+      await ble.initialize({ androidNeverForLocation: false });
+      await ble.requestLEScan({ allowDuplicates: false }, r => {
+        const n = r.device?.name || r.localName || '';
+        if (n) addDevice(r.device?.deviceId || n, n);
+      });
+      _camBtScanTimer = setTimeout(async () => {
+        try { await ble.stopLEScan(); } catch {}
+        _camBtScanActive = false;
+        if (btn) { btn.textContent = '📶 Escanear de nuevo'; btn.disabled = false; }
+        if (!devices.length && list) list.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:4px 8px">No se encontraron dispositivos</div>';
+      }, 12000);
+    } catch(e) {
+      _camBtScanActive = false;
+      if (btn) { btn.textContent = '📶 Escanear dispositivos'; btn.disabled = false; }
+      showToast && showToast('warning','📶','Bluetooth','Activa Bluetooth para escanear cámaras.');
+    }
+  } else {
+    // Web Bluetooth API fallback
+    try {
+      const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
+      addDevice(dev.id || dev.name, dev.name || 'Cámara BT');
+    } catch(e) { /* user cancelled */ }
+    _camBtScanActive = false;
+    if (btn) { btn.textContent = '📶 Escanear de nuevo'; btn.disabled = false; }
+  }
+}
+
+function connectCamBtDevice(id, name) {
+  // BT pairing done — prompt user to connect via WiFi for video
+  const btn = _camEl('camBtScanBtn');
+  if (btn) btn.textContent = `✓ ${name} vinculado`;
+  _camSetLive(false);
+  const txt = _camEl('camStatusTxt');
+  if (txt) txt.textContent = `${name} vinculado — ingresa IP para video`;
+  // Switch to WiFi panel to finish connection
+  selectCamType('wifi');
+  showToast && showToast('success','📷',`${name} vinculado`,'Ingresa la IP de la cámara en el panel WiFi.');
+}
+
+/* ── Disconnect all ─────────────────────────────────────── */
+function disconnectCamera() {
+  if (_camStream) { _camStream.getTracks().forEach(t => t.stop()); _camStream = null; }
+  if (_camMediaRecorder && _camRecording) { try { _camMediaRecorder.stop(); } catch {} }
+  if (window._camJpgPoll) { clearInterval(window._camJpgPoll); window._camJpgPoll = null; }
+  const vid = _camEl('camVideo'); if (vid) { vid.srcObject = null; vid.src = ''; vid.style.display = 'none'; }
+  const img = _camEl('camImg');   if (img) { img.src = ''; img.style.display = 'none'; }
+  _camShowOverlay(true, 'Sin señal');
+  _camSetLive(false);
+  _camRecording = false;
+  updateCamWidget();
+  // Reset buttons
+  const db = _camEl('camDeviceBtn'); if (db) { db.textContent = '📷 Activar cámara'; db.classList.remove('cam-danger'); db.disabled = false; }
+  const wb = _camEl('camWifiBtn');   if (wb) { wb.textContent = '🌐 Conectar cámara'; wb.classList.remove('cam-danger'); }
+  const rb = _camEl('camRecBtn');    if (rb) { rb.textContent = '⏺ REC'; rb.classList.remove('recording'); }
+  const title = _camEl('camWidgetTitle'); if (title) title.textContent = 'CAM';
+}
+
+/* ── Widget controls ────────────────────────────────────── */
+function toggleCamMinimize() {
+  const w = _camEl('cameraWidget');
+  if (!w) return;
+  _camMinimized = !_camMinimized;
+  w.classList.toggle('minimized', _camMinimized);
+  const btn = w.querySelector('.cam-hbtn');
+  if (btn) btn.textContent = _camMinimized ? '▢' : '—';
+}
+
+function closeCamWidget() {
+  _camPreviewOn = false;
+  localStorage.setItem('cam_preview', 'false');
+  const t = _camEl('camPreviewToggle'); if (t) t.classList.remove('on');
+  updateCamWidget();
+}
+
+function openCameraFromTools() {
+  _camPreviewOn = true;
+  localStorage.setItem('cam_preview', 'true');
+  const t = _camEl('camPreviewToggle'); if (t) t.classList.add('on');
+  _camMinimized = false;
+  updateCamWidget();
+  if (!_camConnected) {
+    if (_camType === 'device') {
+      toggleDeviceCamera();
+    } else if (_camType === 'wifi') {
+      connectWifiCamera();
+    }
+  }
+  _updateCamToolBtn();
+}
+
+function _updateCamToolBtn() {
+  const sub = document.getElementById('camToolSubtxt');
+  const arrow = document.getElementById('camToolArrow');
+  if (!sub || !arrow) return;
+  if (_camConnected) {
+    sub.textContent = '● En vivo — toca para ver la ventana';
+    arrow.textContent = '◉';
+    arrow.style.color = '#22d3ee';
+  } else {
+    sub.textContent = 'Conecta cámara por dispositivo, WiFi o Bluetooth';
+    arrow.textContent = '›';
+    arrow.style.color = '';
+  }
+}
+
+/* ── Recording ──────────────────────────────────────────── */
+function toggleCamRecord() {
+  if (!_camConnected || !_camStream) {
+    showToast && showToast('warning','📷','Sin cámara','Conecta una cámara antes de grabar.');
+    return;
+  }
+  const btn = _camEl('camRecBtn');
+  const dot = _camEl('camLiveDot');
+  if (!_camRecording) {
+    _camRecChunks = [];
+    try {
+      _camMediaRecorder = new MediaRecorder(_camStream, { mimeType: 'video/webm;codecs=vp8' });
+    } catch { _camMediaRecorder = new MediaRecorder(_camStream); }
+    _camMediaRecorder.ondataavailable = e => { if (e.data.size > 0) _camRecChunks.push(e.data); };
+    _camMediaRecorder.onstop = () => {
+      const blob = new Blob(_camRecChunks, { type: 'video/webm' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = `cam_${Date.now()}.webm`; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    };
+    _camMediaRecorder.start(1000);
+    _camRecording = true;
+    if (btn) { btn.textContent = '⏹ STOP'; btn.classList.add('recording'); }
+    if (dot) dot.className = 'cam-live-dot rec';
+  } else {
+    if (_camMediaRecorder) { try { _camMediaRecorder.stop(); } catch {} }
+    _camRecording = false;
+    if (btn) { btn.textContent = '⏺ REC'; btn.classList.remove('recording'); }
+    if (dot) dot.className = 'cam-live-dot live';
+  }
+}
+
+/* ── Snapshot ───────────────────────────────────────────── */
+function takeCamSnapshot() {
+  const vid = _camEl('camVideo');
+  const img = _camEl('camImg');
+  const src = (vid && vid.style.display !== 'none') ? vid : null;
+  const cvs = document.createElement('canvas');
+  if (src) {
+    cvs.width = src.videoWidth || 640; cvs.height = src.videoHeight || 480;
+    cvs.getContext('2d').drawImage(src, 0, 0);
+  } else if (img && img.src) {
+    cvs.width = 640; cvs.height = 480;
+    cvs.getContext('2d').drawImage(img, 0, 0, 640, 480);
+  } else { showToast && showToast('warning','📷','Sin imagen','No hay video activo.'); return; }
+  const a = document.createElement('a');
+  a.href = cvs.toDataURL('image/jpeg', 0.92);
+  a.download = `snap_${Date.now()}.jpg`; a.click();
+}
+
+/* ── Drag widget ────────────────────────────────────────── */
+function initCamWidgetDrag() {
+  const w = _camEl('cameraWidget');
+  if (!w || w._camDragBound) return;
+  w._camDragBound = true;
+  let dx = 0, dy = 0, sx = 0, sy = 0, dragging = false;
+  const down = e => {
+    if (e.target.tagName === 'BUTTON') return;
+    dragging = true; w.classList.add('cam-drag');
+    const t = e.touches ? e.touches[0] : e;
+    sx = t.clientX - w.offsetLeft; sy = t.clientY - w.offsetTop;
+    e.preventDefault();
+  };
+  const move = e => {
+    if (!dragging) return;
+    const t = e.touches ? e.touches[0] : e;
+    const nx = t.clientX - sx, ny = t.clientY - sy;
+    w.style.left = Math.max(0, Math.min(window.innerWidth - w.offsetWidth, nx)) + 'px';
+    w.style.top  = Math.max(0, Math.min(window.innerHeight - w.offsetHeight, ny)) + 'px';
+    w.style.right = 'auto'; w.style.bottom = 'auto';
+  };
+  const up = () => { dragging = false; w.classList.remove('cam-drag'); };
+  const hdr = w.querySelector('.cam-header');
+  if (hdr) {
+    hdr.addEventListener('mousedown',  down, { passive: false });
+    hdr.addEventListener('touchstart', down, { passive: false });
+  }
+  window.addEventListener('mousemove', move);
+  window.addEventListener('touchmove', move, { passive: false });
+  window.addEventListener('mouseup',   up);
+  window.addEventListener('touchend',  up);
+}
+
+/* ── Init on page load ──────────────────────────────────── */
+(function initCameraSystem() {
+  // Restore settings UI state
+  document.addEventListener('DOMContentLoaded', () => {
+    selectCamType(_camType);
+    const ipEl = _camEl('camIpInput');
+    if (ipEl) ipEl.value = _camIpUrl;
+    const prEl = _camEl('camProtoSelect');
+    if (prEl) prEl.value = _camProto;
+    const pt = _camEl('camPreviewToggle');
+    if (pt) pt.classList.toggle('on', _camPreviewOn);
+    initCamWidgetDrag();
+  });
+})();
 
 /* ════════════════════════════════════════════════════════════
    😴  FATIGUE DETECTOR
@@ -11119,7 +11800,7 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   hrs.className   = 'dh-hrs'  + (isCritical ? ' critical' : isWarn ? ' warn' : '');
 
   // Arc color
-  const arcColor = isCritical ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981';
+  const arcColor = isCritical ? '#ef4444' : isWarn ? '#f59e0b' : '#34d399';
   arc.style.stroke = arcColor;
 
   // Track: tinted version of arc color
@@ -11295,17 +11976,6 @@ function updateSpeedometer(mph) {
   if (_dashSpdoEl) _dashSpdoEl.classList.toggle('over', !!over);
   updateDashRingGlow(mph, !!over);
 
-  if (!speedoVisible) return;
-  const num = document.getElementById('speedoNum');
-  const ring = document.getElementById('speedoRing');
-  const arc = document.getElementById('speedoArc');
-  const label = document.getElementById('speedoLabel');
-  const statusBadge = document.getElementById('speedoStatus');
-
-  num.textContent = Math.round(mph);
-  const moving = mph >= 8;
-
-
   // Over-limit based on state truck speed limit (if available)
   const spw = document.getElementById('speedometerWidget');
   if (spw) spw.classList.toggle('over-limit', !!over);
@@ -11319,6 +11989,13 @@ function updateSpeedometer(mph) {
     }
   }
 
+  if (!speedoVisible) return;
+  const num = document.getElementById('speedoNum');
+  const statusBadge = document.getElementById('speedoStatus');
+
+  num.textContent = Math.round(mph);
+  const moving = mph >= 8;
+
   // Drive-hours widget: scale up when driving, scale down when stopped
   const dhwSpd = document.getElementById('driveHoursWidget');
   if (dhwSpd && moving && !wasMoving) {
@@ -11326,32 +12003,21 @@ function updateSpeedometer(mph) {
     setTimeout(() => dhwSpd.classList.remove('boost'), 1200);
   }
   wasMoving = moving;
-if (moving) {
-    num.className = 'speedo-num';
-    ring.className = 'speedo-ring moving';
-    arc.style.stroke = mph > 75 ? '#ef4444' : mph > 55 ? '#f59e0b' : '#10b981';
-    label.textContent = 'GPS SPEED';
+
+  if (moving) {
+    num.style.color = over ? '#ef4444' : '#000';
     if (statusBadge) {
       statusBadge.textContent = over ? (lang === 'es' ? '⚠ EXCESO' : '⚠ OVER LIMIT')
                                      : (lang === 'es' ? '🚛 MANEJANDO' : '🚛 DRIVING');
       statusBadge.className = 'speedo-status ' + (over ? 'over-speed' : 'moving');
     }
   } else {
-    num.className = 'speedo-num stopped';
-    ring.className = 'speedo-ring stopped';
-    arc.style.stroke = '#6b7280';
-    label.textContent = 'GPS SPEED';
+    num.style.color = '#6b7280';
     if (statusBadge) {
       statusBadge.textContent = lang === 'es' ? '⏸ DETENIDO' : '⏸ STOPPED';
       statusBadge.className = 'speedo-status';
     }
   }
-
-  // Arc: max speed = 100mph = full circle (345 dasharray units)
-  const maxSpeed = 100;
-  const pct = Math.min(1, mph / maxSpeed);
-  const dashLen = pct * 295; // ~295 is ~85% of the circumference for the arc
-  arc.setAttribute('stroke-dasharray', `${dashLen} 345`);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -13689,6 +14355,7 @@ function updateNavInstruction(curLat, curLon){
   const box = document.getElementById('navNext');
   if (!box) return;
   if (!navSteps || !navSteps.length){ box.style.display='none'; return; }
+  if (!fmVehicleMoving){ box.style.display='none'; return; }
 
   // Advance step when within ~160 ft of maneuver
   for (let i = navStepIdx; i < navSteps.length; i++){
@@ -14587,7 +15254,7 @@ function openFullMapScreen() {
   screen.classList.toggle('bridge-mode', !!bridgeActive);
 
   document.getElementById('fmTrackBanner').style.display = 'block';
-  document.getElementById('fmStopBtn').style.display = 'none';
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'none'; }
   document.getElementById('poiLegend').classList.add('visible');
   document.getElementById('fmFollowBtn').classList.add('visible');
   // Sync chip visual state with fmPoiActive (all enabled by default)
@@ -14728,8 +15395,18 @@ function openFullMapScreen() {
       }
     }
     document.getElementById('fmHud').style.transform = 'translateY(0)';
+    // After HUD is visible and sized, position origin at bottom of screen
+    if (origin && fmMapInst && !fmIsTracking) {
+      setTimeout(() => {
+        const c = calcFollowCenter(origin.lat, origin.lon, 0);
+        window._fmProgrammaticMove = true;
+        fmMapInst.setView(c, fmMapInst.getZoom(), { animate: true, duration: 0.8 });
+        setTimeout(() => { window._fmProgrammaticMove = false; }, 1200);
+      }, 80);
+    }
   }, 200);
 
+  setTimeout(_restoreTrafficState, 300);
   fmTickClock();
   if (fmClockTimer) clearInterval(fmClockTimer);
   fmClockTimer = setInterval(fmTickClock, 1000);
@@ -16058,7 +16735,7 @@ function fmStartTracking() {
   navStepIdx = 0;
   window._navVoiceKey = null;
   const navBox = document.getElementById('navNext');
-  if (navBox) navBox.style.display = navSteps.length ? 'flex' : 'none';
+  if (navBox) navBox.style.display = 'none'; // only shown when vehicle is moving
 
   if (fmMapInst) {
     fmRedrawRoute(roadGeometry);
@@ -16134,7 +16811,7 @@ function fmStartTracking() {
   _hosWarn30mFired = false;
   _hosWarnExpiredFired = false;
   b30Reset();             // reinicia sistema de pausa 30 min
-  document.getElementById('fmStopBtn').style.display = 'block';
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'block'; }
   showSpeedometer();
   showDriveHoursWidget();
   // Leer horas restantes del tracker (respeta lo que el driver ingresó en el popup)
@@ -16146,17 +16823,24 @@ function fmStartTracking() {
   updateHeroKPIs(_initDriveLeft, _initDriveMax, _initCycleLeft, 70);
   // Mostrar dashboard HOS en lugar del mapa completo
   showHosDashboard();
-  // Show speed sign immediately — will update with real state on first GPS fix
-  if (speedLimitActive) {
+  // Show speed signs immediately — always visible when tracking starts
+  {
     const initSign = document.getElementById('mapSpeedSign');
     if (initSign && !initSign.classList.contains('visible')) {
       const mssNum = document.getElementById('mssNum');
       const mssState = document.getElementById('mssState');
       const mssDiff = document.getElementById('mssDiff');
       if (mssNum) mssNum.textContent = '--';
-      if (mssState) mssState.textContent = '...';
+      if (mssState) mssState.textContent = '';
       if (mssDiff) mssDiff.textContent = '';
       initSign.classList.add('visible');
+    }
+    // Also show the draggable speed limit widget
+    const slw = document.getElementById('speedLimitWidget');
+    if (slw) {
+      const slNum = slw.querySelector('.sl-num');
+      if (slNum) slNum.textContent = '--';
+      slw.classList.add('visible');
     }
   }
   document.getElementById('reportFab').classList.add('visible');
@@ -16473,10 +17157,10 @@ function fmStartTracking() {
       : Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
     const cyEl = document.getElementById('fm70Left');
     cyEl.textContent = fmtH(cycleLeft);
-    cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
+    cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#a78bfa';
     // Update outer-ring arc for 70 HRS
     const _70arcGps = document.getElementById('hud70Arc');
-    if (_70arcGps) { const cycMax = parseFloat(document.getElementById('hoursInput').value) || 70; const f = Math.max(0, cycleLeft / cycMax); const c = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6'; _70arcGps.setAttribute('stroke-dasharray', `${f * 226} 226`); _70arcGps.setAttribute('stroke', c); }
+    if (_70arcGps) { const cycMax = parseFloat(document.getElementById('hoursInput').value) || 70; const f = Math.max(0, cycleLeft / cycMax); const c = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#a78bfa'; _70arcGps.setAttribute('stroke-dasharray', `${f * 226} 226`); _70arcGps.setAttribute('stroke', c); }
     // Update hero KPI rings
     const _cycMax = parseFloat(document.getElementById('hoursInput').value) || 70;
     updateHeroKPIs(driveLeft, driveMax, cycleLeft, _cycMax);
@@ -16635,7 +17319,7 @@ function fmStopTracking() {
   fuelMarkers = [];
   fuelStations = [];
   currentStateCode = '';
-  document.getElementById('fmStopBtn').style.display = 'none';
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'none'; }
   document.getElementById('fmLiveDot').style.background = '#6b7280';
   document.getElementById('fmLiveDot').style.boxShadow = 'none';
   document.getElementById('fmLiveDot').style.animation = 'none';
@@ -19729,7 +20413,7 @@ function bindEvents() {
     document.getElementById('fmTrackBanner').style.display = 'none';
     fmStartTracking();
   });
-  document.getElementById('fmStopBtn').addEventListener('click', fmStopTracking);
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.addEventListener('click', fmStopTracking); }
 
 
   // Safety feature toggles
@@ -24639,9 +25323,9 @@ function startEldDataSimulation(){
     const cycleEl=document.getElementById('fm70Left');
     if(cycleEl) cycleEl.textContent=cycleHoursLeft.toFixed(1)+'h';
     const arc=document.getElementById('hudDhArc');
-    if(arc){ const pct=driveHoursLeft/11; arc.setAttribute('stroke-dasharray',`${pct*126} 126`); arc.setAttribute('stroke',driveHoursLeft<2?'#ef4444':driveHoursLeft<4?'#f59e0b':'#10b981'); }
+    if(arc){ const pct=driveHoursLeft/11; arc.setAttribute('stroke-dasharray',`${pct*226} 226`); arc.setAttribute('stroke',driveHoursLeft<2?'#ef4444':driveHoursLeft<4?'#f59e0b':'#34d399'); }
     const arc70=document.getElementById('hud70Arc');
-    if(arc70){ const f=Math.max(0,cycleHoursLeft/70); const c=cycleHoursLeft<10?'#ef4444':cycleHoursLeft<20?'#f59e0b':'#8b5cf6'; arc70.setAttribute('stroke-dasharray',`${f*226} 226`); arc70.setAttribute('stroke',c); }
+    if(arc70){ const f=Math.max(0,cycleHoursLeft/70); const c=cycleHoursLeft<10?'#ef4444':cycleHoursLeft<20?'#f59e0b':'#a78bfa'; arc70.setAttribute('stroke-dasharray',`${f*226} 226`); arc70.setAttribute('stroke',c); }
 
     // ── Logbook update ────────────────────────────────────
     const du=Math.min(driveHoursUsed,11);
