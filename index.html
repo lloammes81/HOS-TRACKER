@@ -2015,51 +2015,38 @@
     margin-top: 5px; text-align: center;
     white-space: nowrap;
   }
-  .speedo-ring {
-    width: 110px; height: 110px;
-    border-radius: 50%;
-    background: rgba(10,16,30,0.95);
-    border: 3px solid #10b981;
-    box-shadow: 0 0 0 2px rgba(16,185,129,0.15), 0 0 24px rgba(16,185,129,0.25), 0 8px 32px rgba(0,0,0,0.6);
+  /* Speed-limit-sign style speedometer */
+  .speedo-sign {
+    width: 72px; height: 88px;
+    background: #fff;
+    border: 5px solid #000;
+    border-radius: 6px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
+    box-shadow: 0 4px 18px rgba(0,0,0,.65);
     position: relative;
-    backdrop-filter: blur(16px);
+    transition: border-color .3s, background .3s;
   }
-  .speedo-ring.moving {
-    border-color: #10b981;
-    box-shadow: 0 0 0 2px rgba(16,185,129,0.3), 0 0 30px rgba(16,185,129,0.4), 0 8px 32px rgba(0,0,0,0.6);
-  }
-  .speedo-ring.stopped {
-    border-color: #6b7280;
-    box-shadow: 0 0 0 2px rgba(107,114,128,0.15), 0 8px 32px rgba(0,0,0,0.6);
-  }
-  .speedo-svg {
-    position: absolute; top: -5px; left: -5px;
-    width: 120px; height: 120px;
-    pointer-events: none;
+  .speedo-sign-top {
+    font-size: 8px; font-weight: 900;
+    letter-spacing: .5px;
+    text-align: center;
+    line-height: 1.15;
+    color: #000;
+    margin-bottom: 1px;
   }
   .speedo-num {
     font-family: "Bebas Neue", sans-serif;
-    font-size: 42px; line-height: 1;
-    color: #10b981;
+    font-size: 38px; line-height: 1;
+    color: #000;
     letter-spacing: 1px;
     z-index: 1;
   }
-  .speedo-num.stopped { color: #6b7280; }
   .speedo-unit {
-    font-size: 10px; font-weight: 800;
-    color: rgba(255,255,255,0.45);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    z-index: 1;
-    margin-top: -4px;
-  }
-  .speedo-label {
-    font-size: 9px; font-weight: 700;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: .8px;
-    margin-top: 3px;
+    font-size: 8px; font-weight: 900;
+    color: #6b7280;
+    letter-spacing: .3px;
+    margin-top: 1px;
   }
   .speedo-status {
     margin-top: 5px;
@@ -2943,9 +2930,9 @@ body.map-active #driveHoursWidget{
 
 
 /* Speedometer turns red when over state truck limit */
-#speedometerWidget.over-limit .speedo-ring{ border-color:#ef4444 !important; box-shadow:0 0 0 2px rgba(239,68,68,.25), 0 0 18px rgba(239,68,68,.35), 0 4px 18px rgba(0,0,0,.6) !important; }
+#speedometerWidget.over-limit .speedo-sign{ border-color:#ef4444 !important; background:#fef2f2 !important; box-shadow:0 0 0 2px rgba(239,68,68,.25), 0 4px 18px rgba(0,0,0,.6) !important; }
 #speedometerWidget.over-limit .speedo-num{ color:#ef4444 !important; }
-#speedometerWidget.over-limit .speedo-label{ color:rgba(255,255,255,.85) !important; }
+#speedometerWidget.over-limit .speedo-sign-top{ color:#ef4444 !important; }
 
 /* Drive hours: subtle highlight when driving */
 #driveHoursWidget.boost{ opacity:1 !important; }
@@ -8259,14 +8246,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- Stop button (only when tracking) -->
-    <button id="fmStopBtn" onclick="fmStopTracking()" style="
-      display:none;width:100%;margin-top:12px;padding:14px;
-      background:#ef4444;color:#fff;border:none;border-radius:12px;
-      font-family:'DM Sans',sans-serif;font-size:16px;font-weight:800;cursor:pointer;
-      touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-      box-shadow:0 4px 16px rgba(239,68,68,0.4);
-    ">🛑 Detener Seguimiento</button>
   </div>
 </div>
 
@@ -9688,18 +9667,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
      CIRCULAR SPEEDOMETER WIDGET
 ══════════════════════════════════════ -->
 <div id="speedometerWidget">
-  <div class="speedo-ring stopped" id="speedoRing">
-    <svg class="speedo-svg" id="speedoSvg" viewBox="0 0 120 120">
-      <circle cx="60" cy="60" r="55" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="6"/>
-      <circle cx="60" cy="60" r="55" fill="none" stroke="#10b981" stroke-width="6"
-              stroke-linecap="round" stroke-dasharray="0 345" id="speedoArc"
-              transform="rotate(-220 60 60)" style="transition:stroke-dasharray .5s ease"/>
-    </svg>
-    <div class="speedo-num stopped" id="speedoNum">0</div>
+  <div class="speedo-sign" id="speedoSign">
+    <div class="speedo-sign-top">YOUR<br>SPEED</div>
+    <div class="speedo-num" id="speedoNum">0</div>
     <div class="speedo-unit">MPH</div>
   </div>
-  <div class="speedo-label" id="speedoLabel">GPS SPEED</div>
-  <div class="speedo-status" id="speedoStatus">DETENIDO</div>
+  <div class="speedo-status" id="speedoStatus">⏸ DETENIDO</div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -11295,17 +11268,6 @@ function updateSpeedometer(mph) {
   if (_dashSpdoEl) _dashSpdoEl.classList.toggle('over', !!over);
   updateDashRingGlow(mph, !!over);
 
-  if (!speedoVisible) return;
-  const num = document.getElementById('speedoNum');
-  const ring = document.getElementById('speedoRing');
-  const arc = document.getElementById('speedoArc');
-  const label = document.getElementById('speedoLabel');
-  const statusBadge = document.getElementById('speedoStatus');
-
-  num.textContent = Math.round(mph);
-  const moving = mph >= 8;
-
-
   // Over-limit based on state truck speed limit (if available)
   const spw = document.getElementById('speedometerWidget');
   if (spw) spw.classList.toggle('over-limit', !!over);
@@ -11319,6 +11281,13 @@ function updateSpeedometer(mph) {
     }
   }
 
+  if (!speedoVisible) return;
+  const num = document.getElementById('speedoNum');
+  const statusBadge = document.getElementById('speedoStatus');
+
+  num.textContent = Math.round(mph);
+  const moving = mph >= 8;
+
   // Drive-hours widget: scale up when driving, scale down when stopped
   const dhwSpd = document.getElementById('driveHoursWidget');
   if (dhwSpd && moving && !wasMoving) {
@@ -11326,32 +11295,21 @@ function updateSpeedometer(mph) {
     setTimeout(() => dhwSpd.classList.remove('boost'), 1200);
   }
   wasMoving = moving;
-if (moving) {
-    num.className = 'speedo-num';
-    ring.className = 'speedo-ring moving';
-    arc.style.stroke = mph > 75 ? '#ef4444' : mph > 55 ? '#f59e0b' : '#10b981';
-    label.textContent = 'GPS SPEED';
+
+  if (moving) {
+    num.style.color = over ? '#ef4444' : '#000';
     if (statusBadge) {
       statusBadge.textContent = over ? (lang === 'es' ? '⚠ EXCESO' : '⚠ OVER LIMIT')
                                      : (lang === 'es' ? '🚛 MANEJANDO' : '🚛 DRIVING');
       statusBadge.className = 'speedo-status ' + (over ? 'over-speed' : 'moving');
     }
   } else {
-    num.className = 'speedo-num stopped';
-    ring.className = 'speedo-ring stopped';
-    arc.style.stroke = '#6b7280';
-    label.textContent = 'GPS SPEED';
+    num.style.color = '#6b7280';
     if (statusBadge) {
       statusBadge.textContent = lang === 'es' ? '⏸ DETENIDO' : '⏸ STOPPED';
       statusBadge.className = 'speedo-status';
     }
   }
-
-  // Arc: max speed = 100mph = full circle (345 dasharray units)
-  const maxSpeed = 100;
-  const pct = Math.min(1, mph / maxSpeed);
-  const dashLen = pct * 295; // ~295 is ~85% of the circumference for the arc
-  arc.setAttribute('stroke-dasharray', `${dashLen} 345`);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -13689,6 +13647,7 @@ function updateNavInstruction(curLat, curLon){
   const box = document.getElementById('navNext');
   if (!box) return;
   if (!navSteps || !navSteps.length){ box.style.display='none'; return; }
+  if (!fmVehicleMoving){ box.style.display='none'; return; }
 
   // Advance step when within ~160 ft of maneuver
   for (let i = navStepIdx; i < navSteps.length; i++){
@@ -14587,7 +14546,7 @@ function openFullMapScreen() {
   screen.classList.toggle('bridge-mode', !!bridgeActive);
 
   document.getElementById('fmTrackBanner').style.display = 'block';
-  document.getElementById('fmStopBtn').style.display = 'none';
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'none'; }
   document.getElementById('poiLegend').classList.add('visible');
   document.getElementById('fmFollowBtn').classList.add('visible');
   // Sync chip visual state with fmPoiActive (all enabled by default)
@@ -14728,6 +14687,15 @@ function openFullMapScreen() {
       }
     }
     document.getElementById('fmHud').style.transform = 'translateY(0)';
+    // After HUD is visible and sized, position origin at bottom of screen
+    if (origin && fmMapInst && !fmIsTracking) {
+      setTimeout(() => {
+        const c = calcFollowCenter(origin.lat, origin.lon, 0);
+        window._fmProgrammaticMove = true;
+        fmMapInst.setView(c, fmMapInst.getZoom(), { animate: true, duration: 0.8 });
+        setTimeout(() => { window._fmProgrammaticMove = false; }, 1200);
+      }, 80);
+    }
   }, 200);
 
   fmTickClock();
@@ -16058,7 +16026,7 @@ function fmStartTracking() {
   navStepIdx = 0;
   window._navVoiceKey = null;
   const navBox = document.getElementById('navNext');
-  if (navBox) navBox.style.display = navSteps.length ? 'flex' : 'none';
+  if (navBox) navBox.style.display = 'none'; // only shown when vehicle is moving
 
   if (fmMapInst) {
     fmRedrawRoute(roadGeometry);
@@ -16134,7 +16102,7 @@ function fmStartTracking() {
   _hosWarn30mFired = false;
   _hosWarnExpiredFired = false;
   b30Reset();             // reinicia sistema de pausa 30 min
-  document.getElementById('fmStopBtn').style.display = 'block';
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'block'; }
   showSpeedometer();
   showDriveHoursWidget();
   // Leer horas restantes del tracker (respeta lo que el driver ingresó en el popup)
@@ -16146,15 +16114,15 @@ function fmStartTracking() {
   updateHeroKPIs(_initDriveLeft, _initDriveMax, _initCycleLeft, 70);
   // Mostrar dashboard HOS en lugar del mapa completo
   showHosDashboard();
-  // Show speed sign immediately — will update with real state on first GPS fix
-  if (speedLimitActive) {
+  // Show speed sign immediately — always visible when tracking starts
+  {
     const initSign = document.getElementById('mapSpeedSign');
     if (initSign && !initSign.classList.contains('visible')) {
       const mssNum = document.getElementById('mssNum');
       const mssState = document.getElementById('mssState');
       const mssDiff = document.getElementById('mssDiff');
       if (mssNum) mssNum.textContent = '--';
-      if (mssState) mssState.textContent = '...';
+      if (mssState) mssState.textContent = '';
       if (mssDiff) mssDiff.textContent = '';
       initSign.classList.add('visible');
     }
@@ -16635,7 +16603,7 @@ function fmStopTracking() {
   fuelMarkers = [];
   fuelStations = [];
   currentStateCode = '';
-  document.getElementById('fmStopBtn').style.display = 'none';
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'none'; }
   document.getElementById('fmLiveDot').style.background = '#6b7280';
   document.getElementById('fmLiveDot').style.boxShadow = 'none';
   document.getElementById('fmLiveDot').style.animation = 'none';
@@ -19729,7 +19697,7 @@ function bindEvents() {
     document.getElementById('fmTrackBanner').style.display = 'none';
     fmStartTracking();
   });
-  document.getElementById('fmStopBtn').addEventListener('click', fmStopTracking);
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.addEventListener('click', fmStopTracking); }
 
 
   // Safety feature toggles
