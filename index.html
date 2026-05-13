@@ -6046,6 +6046,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span id="tabLblPlan">Plan</span>
     </button>
+    <button class="tab-btn" data-tab="drives" onclick="switchTab('drives')">
+      <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      <span id="tabLblDrives">Drives</span>
+    </button>
+    <button class="tab-btn" data-tab="summary" onclick="switchTab('summary')">
+      <svg viewBox="0 0 24 24"><path d="M3 22V7l7-5 7 5v15"/><path d="M3 22h14"/><path d="M10 22V12h4v10"/><path d="M20 11V7.5l2-1.5v6.5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-1"/><path d="M19 7h2"/></svg>
+      <span id="tabLblSummary">Fuel</span>
+    </button>
 
     <button class="tab-btn" data-tab="tools" onclick="switchTab('tools')">
       <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
@@ -6386,6 +6394,25 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <input type="number" id="speedInput" value="60" style="display:none" />
         <input type="number" id="dailyHoursInput" value="11" style="display:none" />
 
+        <!-- TRUCK ROUTE OPTIONS -->
+        <div class="truck-opts-panel" id="truckOptsPanel" style="margin-top:10px">
+          <button class="truck-opts-toggle" onclick="toggleTruckOpts()" type="button">
+            <span style="font-size:16px">🚛</span>
+            <span class="truck-opts-label">Opciones de Ruta</span>
+            <svg class="truck-opts-arrow" id="truckOptsArrow" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="truck-opts-body" id="truckOptsBody" style="display:none">
+            <div class="truck-opts-section">
+              <div class="truck-opts-sec-label">Tipo de ruta</div>
+              <div class="route-type-pills">
+                <button class="rt-pill active" data-type="fastest"        type="button" onclick="setRouteType('fastest')">⚡ Más rápida</button>
+                <button class="rt-pill"        data-type="shortest"       type="button" onclick="setRouteType('shortest')">📏 Más corta</button>
+                <button class="rt-pill"        data-type="avoid_tolls"    type="button" onclick="setRouteType('avoid_tolls')">💰 Sin peajes</button>
+                <button class="rt-pill"        data-type="avoid_highways" type="button" onclick="setRouteType('avoid_highways')">🏘️ Sin autopistas</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div class="error" id="errorBox" style="display:none;margin-top:10px"></div>
 
