@@ -3004,18 +3004,80 @@ body:not(.map-active) #speedToast {
 /* ── MAP TILE CLARITY — brighter, more contrast, sharper on mobile ── */
 #miniMap .leaflet-tile-pane,
 #fullMap .leaflet-tile-pane {
-  filter: brightness(1.18) contrast(1.12) saturate(1.08);
+  filter: brightness(0.9) contrast(1.22) saturate(0.82) hue-rotate(3deg);
 }
 
-/* Night mode: don't over-brighten dark tiles */
+/* Night mode */
 body.dark #miniMap .leaflet-tile-pane,
 body.dark #fullMap .leaflet-tile-pane {
-  filter: brightness(1.05) contrast(1.1) saturate(0.95);
+  filter: brightness(0.88) contrast(1.20) saturate(0.72) hue-rotate(5deg);
 }
-/* Satellite/hybrid: boost saturation more */
+/* Satellite/hybrid: richer saturation */
 #miniMap.satellite-style .leaflet-tile-pane,
 #fullMap.satellite-style .leaflet-tile-pane {
-  filter: brightness(1.1) contrast(1.15) saturate(1.25);
+  filter: brightness(0.92) contrast(1.18) saturate(1.15);
+}
+
+/* Professional map atmosphere — top gradient fade */
+#fullMap::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 90px;
+  background: linear-gradient(to bottom, rgba(4,8,20,0.55) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 450;
+}
+
+/* Professional HUD override */
+#fmHud {
+  background: rgba(5,9,20,0.97) !important;
+  border-top: 1px solid rgba(99,179,237,0.14) !important;
+  box-shadow: 0 -6px 40px rgba(0,0,0,0.7), 0 -1px 0 rgba(99,179,237,0.08) !important;
+}
+
+/* ── Professional ELD ring cards ─────────────────────── */
+.hud-rings-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 5px;
+  margin-bottom: 14px;
+  justify-items: stretch;
+}
+.hud-ring-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(4,8,20,0.88);
+  border-radius: 13px;
+  padding: 8px 4px 6px;
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.hud-ring-lbl {
+  font-size: 7.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .65px;
+  line-height: 1;
+  margin-bottom: 1px;
+}
+.hud-ring-val {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  color: #f0f6ff;
+  line-height: 1.1;
+  margin-top: 2px;
+  letter-spacing: -.3px;
+}
+.hud-ring-card.warn     { border-color: rgba(245,158,11,.22); box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 14px rgba(245,158,11,.12), inset 0 1px 0 rgba(255,255,255,0.05); }
+.hud-ring-card.critical { border-color: rgba(239,68,68,.28);  box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 18px rgba(239,68,68,.18), inset 0 1px 0 rgba(255,255,255,0.05); animation: hudCardPulse 1.4s ease-in-out infinite; }
+@keyframes hudCardPulse {
+  0%,100% { box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 14px rgba(239,68,68,.15), inset 0 1px 0 rgba(255,255,255,0.05); }
+  50%     { box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 28px rgba(239,68,68,.40), inset 0 1px 0 rgba(255,255,255,0.05); }
 }
 
 
@@ -7949,6 +8011,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomIn()">+</button>
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
     <div class="map-ctrl-sep"></div>
+    <button id="trafficBtn" onclick="toggleTrafficLayer()" title="Tráfico en tiempo real" style="font-size:17px">🚦</button>
     <button id="mapSearchBtn" onclick="toggleMapSearch()" title="Buscar destino" style="font-size:18px">🔍</button>
   </div>
 
@@ -8139,61 +8202,61 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- 4 ELD-style stat circles -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:12px;justify-items:center;">
+    <!-- 4 ELD-style stat circles — professional glass cards -->
+    <div class="hud-rings-grid">
 
       <!-- LLEGADA -->
-      <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(6,182,212,.2)" stroke-width="5"/>
-            <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(34,211,238,.14)" stroke-width="5.5"/>
+            <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#22d3ee" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#06b6d4;line-height:1;" id="fmEtaLbl">LLEGADA</div>
-            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmEta">--</div>
+            <div class="hud-ring-lbl" style="color:#22d3ee" id="fmEtaLbl">LLEGADA</div>
+            <div class="hud-ring-val" id="fmEta">--</div>
           </div>
         </div>
       </div>
 
       <!-- MANEJO -->
-      <div id="hudManejoCell" style="display:flex;flex-direction:column;align-items:center;">
+      <div id="hudManejoCell" class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(16,185,129,.2)" stroke-width="5"/>
-            <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(52,211,153,.14)" stroke-width="5.5"/>
+            <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#34d399" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#10b981;line-height:1;" id="fmDriveLbl">MANEJO</div>
-            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmDriveLeft">11h</div>
+            <div class="hud-ring-lbl" style="color:#34d399" id="fmDriveLbl">MANEJO</div>
+            <div class="hud-ring-val" id="fmDriveLeft">11h</div>
           </div>
         </div>
       </div>
 
       <!-- RESTANTE -->
-      <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(59,130,246,.2)" stroke-width="5"/>
-            <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(96,165,250,.14)" stroke-width="5.5"/>
+            <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#60a5fa" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="226 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#3b82f6;line-height:1;" id="fmRemLbl">RESTANTE</div>
-            <div style="font-size:11px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmRem">--</div>
+            <div class="hud-ring-lbl" style="color:#60a5fa" id="fmRemLbl">RESTANTE</div>
+            <div class="hud-ring-val" style="font-size:12px" id="fmRem">--</div>
           </div>
         </div>
       </div>
 
       <!-- 70 HRS -->
-      <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(139,92,246,.2)" stroke-width="5"/>
-            <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(167,139,250,.14)" stroke-width="5.5"/>
+            <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#a78bfa" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="226 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#8b5cf6;line-height:1;" id="fm70Lbl">70 HRS</div>
-            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fm70Left">70h</div>
+            <div class="hud-ring-lbl" style="color:#a78bfa" id="fm70Lbl">70 HRS</div>
+            <div class="hud-ring-val" id="fm70Left">70h</div>
           </div>
         </div>
       </div>
@@ -9996,6 +10059,45 @@ const MAP_STYLES = {
 };
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 let fmTileLayer = null;
+let fmTrafficLayer = null;
+let fmTrafficEnabled = localStorage.getItem('hos_traffic') === 'true';
+
+function toggleTrafficLayer() {
+  fmTrafficEnabled = !fmTrafficEnabled;
+  localStorage.setItem('hos_traffic', fmTrafficEnabled);
+  const btn = document.getElementById('trafficBtn');
+  if (btn) {
+    btn.style.background = fmTrafficEnabled ? 'rgba(239,68,68,0.28)' : '';
+    btn.style.borderColor = fmTrafficEnabled ? 'rgba(239,68,68,0.6)' : '';
+    btn.title = fmTrafficEnabled ? 'Tráfico ACTIVO — toca para desactivar' : 'Tráfico en tiempo real';
+  }
+  if (fmTrafficEnabled) {
+    _addTrafficLayer();
+  } else {
+    if (fmTrafficLayer && fmMapInst) {
+      try { fmMapInst.removeLayer(fmTrafficLayer); } catch {}
+      fmTrafficLayer = null;
+    }
+  }
+}
+
+function _addTrafficLayer() {
+  if (!fmMapInst) return;
+  if (fmTrafficLayer) { try { fmMapInst.removeLayer(fmTrafficLayer); } catch {} fmTrafficLayer = null; }
+  fmTrafficLayer = L.tileLayer(
+    'https://mt{s}.google.com/vt/lyrs=h,traffic&x={x}&y={y}&z={z}',
+    { subdomains: '0123', maxZoom: 20, opacity: 0.82, attribution: '© Google Maps Traffic' }
+  ).addTo(fmMapInst);
+}
+
+// Restore traffic state on map open
+function _restoreTrafficState() {
+  const btn = document.getElementById('trafficBtn');
+  if (fmTrafficEnabled) {
+    if (btn) { btn.style.background = 'rgba(239,68,68,0.28)'; btn.style.borderColor = 'rgba(239,68,68,0.6)'; }
+    if (fmMapInst && !fmTrafficLayer) _addTrafficLayer();
+  }
+}
 
 // Tono base del dashboard según estilo del mapa (sutil, el color real lo da el mapa de fondo)
 const DASH_BG_MAP = {
@@ -11092,7 +11194,7 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   hrs.className   = 'dh-hrs'  + (isCritical ? ' critical' : isWarn ? ' warn' : '');
 
   // Arc color
-  const arcColor = isCritical ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981';
+  const arcColor = isCritical ? '#ef4444' : isWarn ? '#f59e0b' : '#34d399';
   arc.style.stroke = arcColor;
 
   // Track: tinted version of arc color
@@ -14698,6 +14800,7 @@ function openFullMapScreen() {
     }
   }, 200);
 
+  setTimeout(_restoreTrafficState, 300);
   fmTickClock();
   if (fmClockTimer) clearInterval(fmClockTimer);
   fmClockTimer = setInterval(fmTickClock, 1000);
@@ -16441,10 +16544,10 @@ function fmStartTracking() {
       : Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
     const cyEl = document.getElementById('fm70Left');
     cyEl.textContent = fmtH(cycleLeft);
-    cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
+    cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#a78bfa';
     // Update outer-ring arc for 70 HRS
     const _70arcGps = document.getElementById('hud70Arc');
-    if (_70arcGps) { const cycMax = parseFloat(document.getElementById('hoursInput').value) || 70; const f = Math.max(0, cycleLeft / cycMax); const c = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6'; _70arcGps.setAttribute('stroke-dasharray', `${f * 226} 226`); _70arcGps.setAttribute('stroke', c); }
+    if (_70arcGps) { const cycMax = parseFloat(document.getElementById('hoursInput').value) || 70; const f = Math.max(0, cycleLeft / cycMax); const c = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#a78bfa'; _70arcGps.setAttribute('stroke-dasharray', `${f * 226} 226`); _70arcGps.setAttribute('stroke', c); }
     // Update hero KPI rings
     const _cycMax = parseFloat(document.getElementById('hoursInput').value) || 70;
     updateHeroKPIs(driveLeft, driveMax, cycleLeft, _cycMax);
@@ -24607,9 +24710,9 @@ function startEldDataSimulation(){
     const cycleEl=document.getElementById('fm70Left');
     if(cycleEl) cycleEl.textContent=cycleHoursLeft.toFixed(1)+'h';
     const arc=document.getElementById('hudDhArc');
-    if(arc){ const pct=driveHoursLeft/11; arc.setAttribute('stroke-dasharray',`${pct*126} 126`); arc.setAttribute('stroke',driveHoursLeft<2?'#ef4444':driveHoursLeft<4?'#f59e0b':'#10b981'); }
+    if(arc){ const pct=driveHoursLeft/11; arc.setAttribute('stroke-dasharray',`${pct*226} 226`); arc.setAttribute('stroke',driveHoursLeft<2?'#ef4444':driveHoursLeft<4?'#f59e0b':'#34d399'); }
     const arc70=document.getElementById('hud70Arc');
-    if(arc70){ const f=Math.max(0,cycleHoursLeft/70); const c=cycleHoursLeft<10?'#ef4444':cycleHoursLeft<20?'#f59e0b':'#8b5cf6'; arc70.setAttribute('stroke-dasharray',`${f*226} 226`); arc70.setAttribute('stroke',c); }
+    if(arc70){ const f=Math.max(0,cycleHoursLeft/70); const c=cycleHoursLeft<10?'#ef4444':cycleHoursLeft<20?'#f59e0b':'#a78bfa'; arc70.setAttribute('stroke-dasharray',`${f*226} 226`); arc70.setAttribute('stroke',c); }
 
     // ── Logbook update ────────────────────────────────────
     const du=Math.min(driveHoursUsed,11);
