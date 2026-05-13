@@ -6864,54 +6864,46 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
 
-      <!-- ── CAMERA SECTION ── -->
+      <!-- ── DASH CAM SECTION ── -->
       <div class="sett-section" id="settCamSection">
-        <div class="sett-section-title">📷 Cámara del Vehículo</div>
+        <div class="sett-section-title">🎥 Dash Cam</div>
         <div class="sett-group" style="overflow:visible">
 
           <!-- Type tabs -->
           <div class="cam-type-tabs">
-            <button class="cam-type-tab active" id="camTab_device" onclick="selectCamType('device')">📱 Dispositivo</button>
-            <button class="cam-type-tab"        id="camTab_wifi"   onclick="selectCamType('wifi')">🌐 WiFi / IP</button>
-            <button class="cam-type-tab"        id="camTab_bt"     onclick="selectCamType('bt')">📶 Bluetooth</button>
+            <button class="cam-type-tab active" id="camTab_wifi" onclick="selectCamType('wifi')">🌐 WiFi / IP</button>
+            <button class="cam-type-tab"        id="camTab_bt"   onclick="selectCamType('bt')">📶 Bluetooth</button>
           </div>
 
           <!-- Status row -->
           <div class="cam-status-row">
             <div class="cam-status-dot" id="camStatusDot"></div>
-            <div class="cam-status-txt" id="camStatusTxt">Sin cámara conectada</div>
+            <div class="cam-status-txt" id="camStatusTxt">Sin dash cam conectada</div>
           </div>
 
-          <!-- Panel: device camera -->
-          <div id="camPanel_device" class="cam-connect-area">
+          <!-- Panel: WiFi/IP dash cam -->
+          <div id="camPanel_wifi" class="cam-connect-area">
             <div style="font-size:12px;color:var(--muted);line-height:1.55">
-              Usa la cámara trasera del dispositivo. Sin hardware adicional.
-            </div>
-            <button class="cam-connect-btn" id="camDeviceBtn" onclick="toggleDeviceCamera()">📷 Activar cámara</button>
-          </div>
-
-          <!-- Panel: WiFi/IP camera -->
-          <div id="camPanel_wifi" class="cam-connect-area" style="display:none">
-            <div style="font-size:12px;color:var(--muted);line-height:1.55">
-              Cámara IP en tu misma red WiFi. Soporta MJPEG, JPEG y HLS.
+              Conéctate al hotspot WiFi de tu dash cam e ingresa su IP.<br>
+              <span style="font-size:11px;opacity:.7">Viofo: 192.168.1.254 · BlackVue: 192.168.1.1 · Nextbase: 192.168.0.1</span>
             </div>
             <input class="cam-ip-input" id="camIpInput" type="text"
-              placeholder="Ej: 192.168.1.100:8080"
+              placeholder="Ej: 192.168.1.254"
               oninput="saveCamIp()" />
             <select class="cam-ip-input" id="camProtoSelect" onchange="saveCamIp()" style="margin-top:-4px">
-              <option value="mjpeg">HTTP MJPEG  (/?action=stream)</option>
-              <option value="jpg">HTTP JPEG estático</option>
-              <option value="hls">HLS / m3u8</option>
+              <option value="mjpeg">MJPEG stream (Viofo, DDPai, IP Cam)</option>
+              <option value="hls">HLS / m3u8  (BlackVue, Thinkware)</option>
+              <option value="jpg">JPEG snapshot</option>
             </select>
-            <button class="cam-connect-btn" id="camWifiBtn" onclick="connectWifiCamera()">🌐 Conectar cámara</button>
+            <button class="cam-connect-btn" id="camWifiBtn" onclick="connectWifiCamera()">🌐 Conectar dash cam</button>
           </div>
 
           <!-- Panel: Bluetooth scan -->
           <div id="camPanel_bt" class="cam-connect-area" style="display:none">
             <div style="font-size:12px;color:var(--muted);line-height:1.55">
-              Vincula una cámara Bluetooth. El video se transmite por WiFi tras la vinculación.
+              Escanea tu dash cam Bluetooth. Tras vincularla ingresa su IP para ver el video.
             </div>
-            <button class="cam-connect-btn" id="camBtScanBtn" onclick="startCamBtScan()">📶 Escanear dispositivos</button>
+            <button class="cam-connect-btn" id="camBtScanBtn" onclick="startCamBtScan()">📶 Escanear dash cams</button>
             <div class="cam-bt-list" id="camBtList" style="display:none"></div>
           </div>
 
@@ -6920,14 +6912,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             <div class="sett-icon" style="background:#dbeafe">👁️</div>
             <div style="flex:1">
               <div class="sett-label" style="margin:0">Mostrar preview</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px">Ventana flotante durante el viaje</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">Ventana flotante de la dash cam durante el viaje</div>
             </div>
             <button class="sett-toggle" id="camPreviewToggle" onclick="toggleCamPreviewSetting(this)"></button>
           </div>
 
         </div>
       </div>
-      <!-- END CAMERA SECTION -->
+      <!-- END DASH CAM SECTION -->
 
 
 <div class="sett-section" style="display:none">
@@ -7171,12 +7163,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="tpb-arrow">›</div>
       </button>
 
-      <!-- Vehicle Camera -->
+      <!-- Dash Cam -->
       <button class="tool-page-btn" onclick="openCameraFromTools()" style="--tclr:#22d3ee;--tcbg:rgba(34,211,238,.1);--tcbdr:rgba(34,211,238,.3)">
-        <div class="tpb-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">📷</div>
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">🎥</div>
         <div class="tpb-info">
-          <div class="tpb-title">Cámara del Vehículo</div>
-          <div class="tpb-sub" id="camToolSubtxt">Conecta cámara por dispositivo, WiFi o Bluetooth</div>
+          <div class="tpb-title">Dash Cam</div>
+          <div class="tpb-sub" id="camToolSubtxt">Ver la dash cam en vivo — WiFi o Bluetooth</div>
         </div>
         <div class="tpb-arrow" id="camToolArrow">›</div>
       </button>
@@ -9978,7 +9970,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 <div id="cameraWidget">
   <div class="cam-header">
     <div class="cam-live-dot" id="camLiveDot"></div>
-    <div class="cam-title" id="camWidgetTitle">CAM</div>
+    <div class="cam-title" id="camWidgetTitle">DASH CAM</div>
     <button class="cam-hbtn" onclick="toggleCamMinimize()" title="Minimizar">—</button>
     <button class="cam-hbtn" onclick="closeCamWidget()" title="Cerrar">✕</button>
   </div>
@@ -10516,7 +10508,7 @@ function flashDanger(ms = 2000) {
    Supports: device (getUserMedia), WiFi/IP (MJPEG/JPEG/HLS),
    Bluetooth (BLE scan + WiFi video).
 ════════════════════════════════════════════════════════════ */
-let _camType          = localStorage.getItem('cam_type') || 'device';
+let _camType          = localStorage.getItem('cam_type') || 'wifi';
 let _camConnected     = false;
 let _camStream        = null;
 let _camRecording     = false;
@@ -10545,7 +10537,7 @@ function _camSetLive(live) {
   const txt  = _camEl('camStatusTxt');
   if (dot)  { dot.className  = 'cam-live-dot' + (live ? ' live' : ''); }
   if (wdot) { wdot.className = 'cam-status-dot' + (live ? ' connected' : ''); }
-  if (txt)  txt.textContent  = live ? '● Cámara conectada y activa' : 'Sin cámara conectada';
+  if (txt)  txt.textContent  = live ? '● Dash cam conectada y activa' : 'Sin dash cam conectada';
   _camConnected = live;
   _updateCamToolBtn();
 }
@@ -10564,7 +10556,7 @@ function updateCamWidget() {
 function selectCamType(type) {
   _camType = type;
   localStorage.setItem('cam_type', type);
-  ['device','wifi','bt'].forEach(t => {
+  ['wifi','bt'].forEach(t => {
     const tab = _camEl('camTab_' + t);
     const pan = _camEl('camPanel_' + t);
     if (tab) tab.classList.toggle('active', t === type);
@@ -10589,35 +10581,7 @@ function toggleCamPreviewSetting(btn) {
   updateCamWidget();
 }
 
-/* ── Device camera (getUserMedia rear-facing) ──────────── */
-async function toggleDeviceCamera() {
-  if (_camConnected && _camStream) {
-    disconnectCamera();
-    return;
-  }
-  const btn = _camEl('camDeviceBtn');
-  if (btn) { btn.textContent = '⏳ Solicitando acceso...'; btn.disabled = true; }
-  try {
-    _camStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: false
-    });
-    const vid = _camEl('camVideo');
-    if (vid) { vid.srcObject = _camStream; vid.style.display = 'block'; }
-    _camEl('camImg') && (_camEl('camImg').style.display = 'none');
-    _camShowOverlay(false);
-    _camSetLive(true);
-    updateCamWidget();
-    if (btn) { btn.textContent = '⏹ Desactivar cámara'; btn.classList.add('cam-danger'); btn.disabled = false; }
-    const title = _camEl('camWidgetTitle');
-    if (title) title.textContent = 'CAM · VIVO';
-  } catch(e) {
-    _camShowOverlay(true, 'Permiso denegado');
-    _camSetLive(false);
-    if (btn) { btn.textContent = '📷 Activar cámara'; btn.disabled = false; }
-    showToast && showToast('warning','📷','Cámara requerida','Permite el acceso a la cámara del dispositivo.');
-  }
-}
+/* ── Device camera removed — dash cam only (WiFi/BT) ───── */
 
 /* ── WiFi / IP camera ───────────────────────────────────── */
 function connectWifiCamera() {
@@ -10659,7 +10623,7 @@ function connectWifiCamera() {
   updateCamWidget();
   if (btn) { btn.textContent = '⏹ Desconectar'; btn.classList.add('cam-danger'); }
   const title = _camEl('camWidgetTitle');
-  if (title) title.textContent = 'IP CAM · ' + ip.split(':')[0];
+  if (title) title.textContent = 'DASH CAM · ' + ip.split(':')[0];
 }
 
 /* ── Bluetooth scan for cameras ────────────────────────── */
@@ -10742,7 +10706,7 @@ function disconnectCamera() {
   const db = _camEl('camDeviceBtn'); if (db) { db.textContent = '📷 Activar cámara'; db.classList.remove('cam-danger'); db.disabled = false; }
   const wb = _camEl('camWifiBtn');   if (wb) { wb.textContent = '🌐 Conectar cámara'; wb.classList.remove('cam-danger'); }
   const rb = _camEl('camRecBtn');    if (rb) { rb.textContent = '⏺ REC'; rb.classList.remove('recording'); }
-  const title = _camEl('camWidgetTitle'); if (title) title.textContent = 'CAM';
+  const title = _camEl('camWidgetTitle'); if (title) title.textContent = 'DASH CAM';
 }
 
 /* ── Widget controls ────────────────────────────────────── */
@@ -10768,12 +10732,8 @@ function openCameraFromTools() {
   const t = _camEl('camPreviewToggle'); if (t) t.classList.add('on');
   _camMinimized = false;
   updateCamWidget();
-  if (!_camConnected) {
-    if (_camType === 'device') {
-      toggleDeviceCamera();
-    } else if (_camType === 'wifi') {
-      connectWifiCamera();
-    }
+  if (!_camConnected && _camType === 'wifi' && _camIpUrl) {
+    connectWifiCamera();
   }
   _updateCamToolBtn();
 }
@@ -10787,7 +10747,7 @@ function _updateCamToolBtn() {
     arrow.textContent = '◉';
     arrow.style.color = '#22d3ee';
   } else {
-    sub.textContent = 'Conecta cámara por dispositivo, WiFi o Bluetooth';
+    sub.textContent = 'Ver la dash cam en vivo — WiFi o Bluetooth';
     arrow.textContent = '›';
     arrow.style.color = '';
   }
