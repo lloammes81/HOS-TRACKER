@@ -7171,6 +7171,16 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="tpb-arrow">›</div>
       </button>
 
+      <!-- Vehicle Camera -->
+      <button class="tool-page-btn" onclick="openCameraFromTools()" style="--tclr:#22d3ee;--tcbg:rgba(34,211,238,.1);--tcbdr:rgba(34,211,238,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">📷</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Cámara del Vehículo</div>
+          <div class="tpb-sub" id="camToolSubtxt">Conecta cámara por dispositivo, WiFi o Bluetooth</div>
+        </div>
+        <div class="tpb-arrow" id="camToolArrow">›</div>
+      </button>
+
     </div>
   </div>
 
@@ -10537,6 +10547,7 @@ function _camSetLive(live) {
   if (wdot) { wdot.className = 'cam-status-dot' + (live ? ' connected' : ''); }
   if (txt)  txt.textContent  = live ? '● Cámara conectada y activa' : 'Sin cámara conectada';
   _camConnected = live;
+  _updateCamToolBtn();
 }
 
 function updateCamWidget() {
@@ -10749,6 +10760,37 @@ function closeCamWidget() {
   localStorage.setItem('cam_preview', 'false');
   const t = _camEl('camPreviewToggle'); if (t) t.classList.remove('on');
   updateCamWidget();
+}
+
+function openCameraFromTools() {
+  _camPreviewOn = true;
+  localStorage.setItem('cam_preview', 'true');
+  const t = _camEl('camPreviewToggle'); if (t) t.classList.add('on');
+  _camMinimized = false;
+  updateCamWidget();
+  if (!_camConnected) {
+    if (_camType === 'device') {
+      toggleDeviceCamera();
+    } else if (_camType === 'wifi') {
+      connectWifiCamera();
+    }
+  }
+  _updateCamToolBtn();
+}
+
+function _updateCamToolBtn() {
+  const sub = document.getElementById('camToolSubtxt');
+  const arrow = document.getElementById('camToolArrow');
+  if (!sub || !arrow) return;
+  if (_camConnected) {
+    sub.textContent = '● En vivo — toca para ver la ventana';
+    arrow.textContent = '◉';
+    arrow.style.color = '#22d3ee';
+  } else {
+    sub.textContent = 'Conecta cámara por dispositivo, WiFi o Bluetooth';
+    arrow.textContent = '›';
+    arrow.style.color = '';
+  }
 }
 
 /* ── Recording ──────────────────────────────────────────── */
