@@ -1437,7 +1437,7 @@
   #fullMapScreen.bridge-mode #mapRightControls,
   #fullMapScreen.bridge-mode #mapLeftControls,
   #fullMapScreen.bridge-mode #reportFab,
-  #fullMapScreen.bridge-mode #reportSheet,
+  #fullMapScreen.bridge-mode #reportRadialMenu,
   #fullMapScreen.bridge-mode #incidentPanel {
     opacity: 0 !important;
     pointer-events: none !important;
@@ -1579,8 +1579,7 @@
     to   { transform: scale(1); opacity: 1; }
   }
 
-  /* Keep report panel CSS but hide the FAB */
-  #reportFab { display: none !important; }
+  /* reportFab display controlled by .visible class and drag system */
 
   /* Report panel */
   #reportPanel {
@@ -1645,66 +1644,91 @@
   .fm-zoom-btn:active { transform:scale(.92); }
 
   /* ── QUICK REPORT FAB + SHEET ─────────────────────────── */
+  /* ── DRAGGABLE REPORT FAB ─────────────────────────────── */
   #reportFab {
-    position: absolute;
-    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-    left: calc(10px + env(safe-area-inset-left, 0px));
-    z-index: 710;
-    width: 52px; height: 52px;
-    border-radius: 50%; border: 2.5px solid #fff;
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff; font-size: 22px;
+    position: fixed;
+    bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    z-index: 720;
+    width: 56px; height: 56px;
+    border-radius: 50%; border: 2.5px solid rgba(255,255,255,0.9);
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff; font-size: 24px;
     display: none; align-items: center; justify-content: center;
-    box-shadow: 0 4px 20px rgba(239,68,68,.55);
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 24px rgba(245,158,11,.65), 0 0 0 0 rgba(245,158,11,.4);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: box-shadow .2s, transform .15s;
     -webkit-tap-highlight-color: transparent;
+    animation: fabPulse 3s ease-in-out infinite;
+  }
+  @keyframes fabPulse {
+    0%, 100% { box-shadow: 0 4px 24px rgba(245,158,11,.65), 0 0 0 0 rgba(245,158,11,.35); }
+    50%       { box-shadow: 0 4px 24px rgba(245,158,11,.65), 0 0 0 10px rgba(245,158,11,0); }
   }
   #reportFab.visible { display: flex; }
-  #reportFab:active  { transform: scale(.92); }
-  #reportFab.spinning { animation: reportFabSpin .3s ease; }
+  #reportFab.dragging { cursor: grabbing; animation: none; transform: scale(1.12); box-shadow: 0 8px 32px rgba(245,158,11,.8); }
+  #reportFab.open-state { background: linear-gradient(135deg, #ef4444, #dc2626); animation: none; box-shadow: 0 4px 24px rgba(239,68,68,.7); }
+  #reportFab.spinning { animation: reportFabSpin .35s ease; }
   @keyframes reportFabSpin {
     from { transform: rotate(0deg) scale(1); }
-    50%  { transform: rotate(180deg) scale(.85); }
+    50%  { transform: rotate(180deg) scale(.8); }
     to   { transform: rotate(360deg) scale(1); }
   }
 
-  #reportSheet {
-    position: absolute;
-    bottom: calc(148px + env(safe-area-inset-bottom, 0px));
-    right: calc(14px + env(safe-area-inset-right, 0px));
-    z-index: 709;
+  /* ── RADIAL REPORT MENU ───────────────────────────────── */
+  #reportRadialMenu {
+    position: fixed;
+    inset: 0;
+    z-index: 719;
     display: none;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-end;
+    pointer-events: none;
   }
-  #reportSheet.open { display: flex; animation: sheetSlideIn .25s cubic-bezier(.34,1.56,.64,1); }
-  @keyframes sheetSlideIn {
-    from { opacity: 0; transform: translateY(24px) scale(.85); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+  #reportRadialMenu.open { display: block; }
+  #reportRadialMenu-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.35);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    pointer-events: all;
+    opacity: 0;
+    transition: opacity .25s ease;
   }
-  .rs-btn {
-    display: flex; align-items: center; gap: 8px;
-    padding: 9px 14px 9px 10px;
-    border-radius: 999px; border: none;
-    background: rgba(10,16,30,.93);
-    backdrop-filter: blur(14px);
-    color: #fff; cursor: pointer;
-    touch-action: manipulation;
-    box-shadow: 0 4px 16px rgba(0,0,0,.45);
-    transition: transform .12s;
-    white-space: nowrap;
+  #reportRadialMenu.open #reportRadialMenu-backdrop { opacity: 1; }
+  .rr-item {
+    position: fixed;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(255,255,255,.85);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px;
+    color: #fff;
+    cursor: pointer;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,.6);
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    z-index: 1;
   }
-  .rs-btn:active { transform: scale(.95); }
-  .rs-icon {
-    width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
+  .rr-item.visible {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
   }
-  .rs-label { font-size: 15px; font-weight: 800; letter-spacing: .2px; }
+  .rr-item:active { transform: translate(-50%, -50%) scale(.88); }
+  .rr-emoji { font-size: 22px; line-height: 1; }
+  .rr-label {
+    font-size: 8px; font-weight: 800; letter-spacing: .3px; line-height: 1;
+    text-align: center; color: rgba(255,255,255,.92);
+    font-family: 'DM Sans', sans-serif;
+    max-width: 52px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
 
   /* ── TOP BAR ROUND REPORT BUTTONS ────────────────────── */
   .top-rpt-btn {
@@ -8159,44 +8183,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button onclick="document.getElementById('reportAlertPopup').classList.remove('show')" style="margin-top:4px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;color:#f1f5f9;font-size:11px;font-weight:700;padding:4px 12px;cursor:pointer">✕ Cerrar</button>
   </div>
 
-  <!-- QUICK REPORT FAB (direct child — positioned correctly) -->
-  <button id="reportFab" onclick="toggleReportSheet()" title="Reportar incidente">⚠️</button>
+  <!-- DRAGGABLE REPORT FAB -->
+  <button id="reportFab" title="Reportar — arrastra para mover">🚨</button>
 
-  <!-- QUICK REPORT ACTION SHEET -->
-  <div id="reportSheet">
-    <button class="rs-btn" onclick="quickReport('police','🚔','Policía')">
-      <div class="rs-icon" style="background:#1d3a8a">🚔</div>
-      <span class="rs-label">Policía</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('accident','🚗','Accidente')">
-      <div class="rs-icon" style="background:#7f1d1d">💥</div>
-      <span class="rs-label">Accidente</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('hazard','⚠️','Peligro en vía')">
-      <div class="rs-icon" style="background:#7c2d12">⚠️</div>
-      <span class="rs-label">Peligro en vía</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('traffic','🚦','Tráfico lento')">
-      <div class="rs-icon" style="background:#78350f">🚦</div>
-      <span class="rs-label">Tráfico lento</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('construction','🚧','Construcción')">
-      <div class="rs-icon" style="background:#713f12">🚧</div>
-      <span class="rs-label">Construcción</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('closure','🚫','Vía cerrada')">
-      <div class="rs-icon" style="background:#450a0a">🚫</div>
-      <span class="rs-label">Vía cerrada</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('dot_police','🚛','DOT Police')">
-      <div class="rs-icon" style="background:#1e3a5f">🚛</div>
-      <span class="rs-label">DOT Police</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('inspection','🔍','Inspección DOT')">
-      <div class="rs-icon" style="background:#312e81">🔍</div>
-      <span class="rs-label">Inspección DOT</span>
-    </button>
-  </div>
+  <!-- RADIAL REPORT MENU (populated by JS) -->
+  <div id="reportRadialMenu"></div>
 
   <!-- LEFT PANEL TOGGLE TAB -->
   <button id="mapLeftPanelBtn" onclick="toggleMapLeftPanel()" title="Controles del mapa">›</button>
@@ -16817,6 +16808,7 @@ function fmStartTracking() {
     }
   }
   document.getElementById('reportFab').classList.add('visible');
+  setTimeout(initFabDrag, 100);
   const pfab = document.getElementById('profileFab');
   if (pfab) pfab.style.display = 'flex';
   const trb = document.getElementById('topReportBtns');
@@ -17276,7 +17268,7 @@ function fmStopTracking() {
   const mrw = document.getElementById('milesRemainingWidget');
   if (mrw) { mrw.classList.remove('visible', 'moving'); }
   document.getElementById('reportFab').classList.remove('visible');
-  document.getElementById('reportSheet').classList.remove('open');
+  closeRadialMenu();
   const trbStop = document.getElementById('topReportBtns');
   if (trbStop) trbStop.style.display = 'none';
   // Hide overlays
@@ -19901,41 +19893,164 @@ function initIncidentToggles() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   ⚠️  QUICK REPORT FAB — tap to pin incident at GPS location
+   🚨  DRAGGABLE REPORT FAB — radial menu with DOT + incident reports
 ════════════════════════════════════════════════════════════ */
 let reportSheetOpen = false;
+let _fabPos = null;     // { x, y } fixed viewport center of FAB
+let _fabDragState = null;
 
-function toggleReportSheet() {
+const REPORT_ITEMS = [
+  { type: 'dot_police',   emoji: '🚛', label: 'DOT Police',  bg: 'linear-gradient(135deg,#1e3a5f,#1e40af)' },
+  { type: 'inspection',   emoji: '🔍', label: 'Inspección',  bg: 'linear-gradient(135deg,#312e81,#4c1d95)' },
+  { type: 'weigh_station',emoji: '⚖️', label: 'Báscula',     bg: 'linear-gradient(135deg,#164e63,#0e7490)' },
+  { type: 'police',       emoji: '🚔', label: 'Policía',     bg: 'linear-gradient(135deg,#1d3a8a,#2563eb)' },
+  { type: 'accident',     emoji: '💥', label: 'Accidente',   bg: 'linear-gradient(135deg,#7f1d1d,#dc2626)' },
+  { type: 'hazard',       emoji: '⚠️', label: 'Peligro',     bg: 'linear-gradient(135deg,#7c2d12,#ea580c)' },
+  { type: 'traffic',      emoji: '🚦', label: 'Tráfico',     bg: 'linear-gradient(135deg,#78350f,#d97706)' },
+  { type: 'construction', emoji: '🚧', label: 'Obras',       bg: 'linear-gradient(135deg,#713f12,#ca8a04)' },
+  { type: 'closure',      emoji: '🚫', label: 'Cerrado',     bg: 'linear-gradient(135deg,#450a0a,#991b1b)' },
+];
+
+/* Init drag on the FAB — called once when tracking starts */
+function initFabDrag() {
+  const fab = document.getElementById('reportFab');
+  if (!fab || fab._dragInited) return;
+  fab._dragInited = true;
+
+  /* Read initial CSS position and store as fixed coords */
+  const r = fab.getBoundingClientRect();
+  _fabPos = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+
+  let _startX, _startY, _moved;
+
+  fab.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    fab.setPointerCapture(e.pointerId);
+    _startX = e.clientX; _startY = e.clientY; _moved = false;
+    _fabDragState = { ox: e.clientX - _fabPos.x, oy: e.clientY - _fabPos.y };
+    fab.classList.add('dragging');
+  }, { passive: false });
+
+  fab.addEventListener('pointermove', e => {
+    if (!_fabDragState) return;
+    const dx = e.clientX - _startX, dy = e.clientY - _startY;
+    if (!_moved && Math.hypot(dx, dy) > 8) {
+      _moved = true;
+      if (reportSheetOpen) closeRadialMenu();
+    }
+    if (_moved) {
+      const W = window.innerWidth, H = window.innerHeight, R = 32;
+      _fabPos.x = Math.max(R, Math.min(W - R, e.clientX - _fabDragState.ox));
+      _fabPos.y = Math.max(R, Math.min(H - R, e.clientY - _fabDragState.oy));
+      _applyFabPos(false);
+    }
+  });
+
+  const _onUp = () => {
+    fab.classList.remove('dragging');
+    const wasMoved = _moved;
+    _fabDragState = null;
+    if (!wasMoved) _toggleRadialMenu();
+    else _snapFabToEdge();
+  };
+  fab.addEventListener('pointerup',     _onUp);
+  fab.addEventListener('pointercancel', () => { _fabDragState = null; fab.classList.remove('dragging'); });
+}
+
+function _applyFabPos(animate) {
+  const fab = document.getElementById('reportFab');
+  if (!fab || !_fabPos) return;
+  if (animate) {
+    fab.style.transition = 'left .3s cubic-bezier(.34,1.56,.64,1), top .3s cubic-bezier(.34,1.56,.64,1)';
+    setTimeout(() => { if (fab) fab.style.transition = ''; }, 360);
+  }
+  fab.style.left   = (_fabPos.x - 28) + 'px';
+  fab.style.top    = (_fabPos.y - 28) + 'px';
+  fab.style.bottom = 'unset';
+  fab.style.right  = 'unset';
+}
+
+function _snapFabToEdge() {
+  const W = window.innerWidth;
+  _fabPos.x = _fabPos.x < W / 2 ? 38 : W - 38;
+  _applyFabPos(true);
+}
+
+function _toggleRadialMenu() {
   reportSheetOpen = !reportSheetOpen;
-  const sheet = document.getElementById('reportSheet');
-  const fab   = document.getElementById('reportFab');
+  const fab = document.getElementById('reportFab');
   fab.classList.add('spinning');
-  setTimeout(() => fab.classList.remove('spinning'), 320);
-  fab.textContent = reportSheetOpen ? '✕' : '⚠️';
-  sheet.classList.toggle('open', reportSheetOpen);
-  // Close on outside tap
+  setTimeout(() => fab.classList.remove('spinning'), 360);
   if (reportSheetOpen) {
-    setTimeout(() => {
-      const close = (e) => {
-        if (!sheet.contains(e.target) && e.target !== fab) {
-          reportSheetOpen = false;
-          fab.textContent = '⚠️';
-          sheet.classList.remove('open');
-        }
-        document.removeEventListener('pointerdown', close, true);
-      };
-      document.addEventListener('pointerdown', close, true);
-    }, 100);
+    fab.textContent = '✕';
+    fab.classList.add('open-state');
+    _openRadialMenu();
+  } else {
+    closeRadialMenu();
   }
 }
 
-function quickReport(type, emoji, label) {
-  // Close FAB sheet if open
-  if (reportSheetOpen) {
-    reportSheetOpen = false;
-    document.getElementById('reportFab').textContent = '⚠️';
-    document.getElementById('reportSheet').classList.remove('open');
+function _openRadialMenu() {
+  /* Make sure we have a fab position */
+  if (!_fabPos) {
+    const r = document.getElementById('reportFab').getBoundingClientRect();
+    _fabPos = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
+
+  const menu = document.getElementById('reportRadialMenu');
+  menu.innerHTML = '';
+  menu.classList.add('open');
+
+  /* Backdrop */
+  const bd = document.createElement('div');
+  bd.id = 'reportRadialMenu-backdrop';
+  bd.onclick = () => closeRadialMenu();
+  menu.appendChild(bd);
+  requestAnimationFrame(() => bd.style.opacity = '1');
+
+  /* Decide arc direction: semicircle above FAB normally, below if near top */
+  const W = window.innerWidth, H = window.innerHeight;
+  const goUp = _fabPos.y > H * 0.35;
+  const R = Math.min(W, H) * 0.26;   /* dynamic radius ≈ 26% of shorter dimension */
+  const total = REPORT_ITEMS.length;
+
+  REPORT_ITEMS.forEach((rt, i) => {
+    const t = total === 1 ? 0.5 : i / (total - 1);
+    const angleDeg = 180 * t;                          /* 0° → 180° (right → left) */
+    const rad = angleDeg * Math.PI / 180;
+    const dx  = Math.cos(rad) * R;
+    const dy  = (goUp ? -1 : 1) * Math.sin(rad) * R;
+
+    /* Clamp so items don't fly off screen */
+    const ix = Math.max(36, Math.min(W - 36, _fabPos.x + dx));
+    const iy = Math.max(36, Math.min(H - 36, _fabPos.y + dy));
+
+    const btn = document.createElement('button');
+    btn.className = 'rr-item';
+    btn.style.cssText = `left:${ix}px; top:${iy}px; background:${rt.bg}; transition-delay:${i * 30}ms;`;
+    btn.innerHTML = `<span class="rr-emoji">${rt.emoji}</span><span class="rr-label">${rt.label}</span>`;
+    btn.addEventListener('pointerdown', e => e.stopPropagation());
+    btn.onclick = () => { quickReport(rt.type, rt.emoji, rt.label); closeRadialMenu(); };
+    menu.appendChild(btn);
+
+    requestAnimationFrame(() => requestAnimationFrame(() => btn.classList.add('visible')));
+  });
+}
+
+function closeRadialMenu() {
+  reportSheetOpen = false;
+  const fab = document.getElementById('reportFab');
+  if (fab) { fab.textContent = '🚨'; fab.classList.remove('open-state'); }
+  const menu = document.getElementById('reportRadialMenu');
+  if (!menu) return;
+  menu.querySelectorAll('.rr-item').forEach(el => { el.style.transitionDelay = '0ms'; el.classList.remove('visible'); });
+  const bd = document.getElementById('reportRadialMenu-backdrop');
+  if (bd) bd.style.opacity = '0';
+  setTimeout(() => { menu.classList.remove('open'); menu.innerHTML = ''; }, 300);
+}
+
+function quickReport(type, emoji, label) {
+  closeRadialMenu();
 
   // Get exact GPS location — prefer live GPS marker, else map center
   let lat, lon;
