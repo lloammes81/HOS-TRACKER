@@ -1696,36 +1696,48 @@
     transition: opacity .25s ease;
   }
   #reportRadialMenu.open #reportRadialMenu-backdrop { opacity: 1; }
-  .rr-item {
+  /* ── REPORT GRID PANEL ───────────────────────────────── */
+  .rr-panel {
     position: fixed;
-    width: 60px; height: 60px;
+    display: grid;
+    background: rgba(8, 14, 26, 0.97);
+    border: 1.5px solid rgba(255,255,255,.13);
+    border-radius: 22px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 12px 48px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.06);
+    pointer-events: all;
+    z-index: 1;
+    transform: scale(0.75);
+    opacity: 0;
+    transition: transform .28s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
+  }
+  .rr-panel.rr-panel-visible {
+    transform: scale(1);
+    opacity: 1;
+  }
+  .rr-item {
+    width: 68px; height: 68px;
     border-radius: 50%;
-    border: 2.5px solid rgba(255,255,255,.85);
+    border: 2.5px solid rgba(255,255,255,.75);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 3px;
+    gap: 4px;
     color: #fff;
     cursor: pointer;
     pointer-events: all;
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-    transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
-    box-shadow: 0 4px 20px rgba(0,0,0,.6);
+    box-shadow: 0 4px 16px rgba(0,0,0,.5);
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    z-index: 1;
+    transition: transform .12s ease, box-shadow .12s ease;
   }
-  .rr-item.visible {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  .rr-item:active { transform: translate(-50%, -50%) scale(.88); }
-  .rr-emoji { font-size: 22px; line-height: 1; }
+  .rr-item:active { transform: scale(.88); box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+  .rr-emoji { font-size: 24px; line-height: 1; }
   .rr-label {
     font-size: 8px; font-weight: 800; letter-spacing: .3px; line-height: 1;
     text-align: center; color: rgba(255,255,255,.92);
     font-family: 'DM Sans', sans-serif;
-    max-width: 52px; white-space: nowrap;
+    max-width: 60px; white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis;
   }
 
@@ -20210,7 +20222,6 @@ function _toggleRadialMenu() {
 }
 
 function _openRadialMenu() {
-  /* Make sure we have a fab position */
   if (!_fabPos) {
     const r = document.getElementById('reportFab').getBoundingClientRect();
     _fabPos = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
@@ -20227,33 +20238,38 @@ function _openRadialMenu() {
   menu.appendChild(bd);
   requestAnimationFrame(() => bd.style.opacity = '1');
 
-  /* Decide arc direction: semicircle above FAB normally, below if near top */
+  /* Panel en cuadrícula 3×3 anclado sobre el FAB */
   const W = window.innerWidth, H = window.innerHeight;
-  const goUp = _fabPos.y > H * 0.35;
-  const R = Math.min(W, H) * 0.26;   /* dynamic radius ≈ 26% of shorter dimension */
-  const total = REPORT_ITEMS.length;
+  const COLS = 3, ITEM = 68, GAP = 10;
+  const ROWS = Math.ceil(REPORT_ITEMS.length / COLS);
+  const PW = COLS * ITEM + (COLS + 1) * GAP;
+  const PH = ROWS * ITEM + (ROWS + 1) * GAP;
 
-  REPORT_ITEMS.forEach((rt, i) => {
-    const t = total === 1 ? 0.5 : i / (total - 1);
-    const angleDeg = 180 * t;                          /* 0° → 180° (right → left) */
-    const rad = angleDeg * Math.PI / 180;
-    const dx  = Math.cos(rad) * R;
-    const dy  = (goUp ? -1 : 1) * Math.sin(rad) * R;
+  /* Anclar arriba del FAB o abajo si está muy alto */
+  const goUp = _fabPos.y > H * 0.4;
+  let px = _fabPos.x - PW / 2;
+  let py = goUp ? _fabPos.y - PH - 16 : _fabPos.y + 40;
+  px = Math.max(8, Math.min(W - PW - 8, px));
+  py = Math.max(8, Math.min(H - PH - 8, py));
 
-    /* Clamp so items don't fly off screen */
-    const ix = Math.max(36, Math.min(W - 36, _fabPos.x + dx));
-    const iy = Math.max(36, Math.min(H - 36, _fabPos.y + dy));
+  const panel = document.createElement('div');
+  panel.className = 'rr-panel';
+  panel.style.cssText = `left:${px}px;top:${py}px;width:${PW}px;
+    grid-template-columns:repeat(${COLS},${ITEM}px);gap:${GAP}px;padding:${GAP}px;
+    transform-origin:${_fabPos.x - px}px ${goUp ? PH : 0}px;`;
 
+  REPORT_ITEMS.forEach(rt => {
     const btn = document.createElement('button');
-    btn.className = 'rr-item';
-    btn.style.cssText = `left:${ix}px; top:${iy}px; background:${rt.bg}; transition-delay:${i * 30}ms;`;
+    btn.className = 'rr-item rr-grid-item';
+    btn.style.background = rt.bg;
     btn.innerHTML = `<span class="rr-emoji">${rt.emoji}</span><span class="rr-label">${rt.label}</span>`;
     btn.addEventListener('pointerdown', e => e.stopPropagation());
     btn.onclick = () => { quickReport(rt.type, rt.emoji, rt.label); closeRadialMenu(); };
-    menu.appendChild(btn);
-
-    requestAnimationFrame(() => requestAnimationFrame(() => btn.classList.add('visible')));
+    panel.appendChild(btn);
   });
+
+  menu.appendChild(panel);
+  requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add('rr-panel-visible')));
 }
 
 function closeRadialMenu() {
@@ -20262,10 +20278,11 @@ function closeRadialMenu() {
   if (fab) { fab.textContent = '🚨'; fab.classList.remove('open-state'); }
   const menu = document.getElementById('reportRadialMenu');
   if (!menu) return;
-  menu.querySelectorAll('.rr-item').forEach(el => { el.style.transitionDelay = '0ms'; el.classList.remove('visible'); });
+  const panel = menu.querySelector('.rr-panel');
+  if (panel) panel.classList.remove('rr-panel-visible');
   const bd = document.getElementById('reportRadialMenu-backdrop');
   if (bd) bd.style.opacity = '0';
-  setTimeout(() => { menu.classList.remove('open'); menu.innerHTML = ''; }, 300);
+  setTimeout(() => { menu.classList.remove('open'); menu.innerHTML = ''; }, 280);
 }
 
 function quickReport(type, emoji, label) {
