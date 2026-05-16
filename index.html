@@ -8742,7 +8742,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     background:rgba(15,20,35,0.97);border:1.5px solid rgba(239,68,68,0.7);border-radius:16px;
     padding:14px 14px 14px 16px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     box-shadow:0 4px 28px rgba(239,68,68,0.3),0 8px 32px rgba(0,0,0,0.7);
-    animation:stopAlertIn .3s cubic-bezier(.34,1.56,.64,1);">
+    animation:stopAlertIn .3s cubic-bezier(.34,1.56,.64,1);flex-direction:column;gap:10px;">
     <div style="display:flex;align-items:flex-start;gap:10px;">
       <span style="font-size:24px;flex-shrink:0;line-height:1.2">⚠️</span>
       <div style="flex:1;min-width:0;">
@@ -8753,6 +8753,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         border-radius:8px;color:#fff;font-size:18px;width:30px;height:30px;cursor:pointer;
         display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">✕</button>
     </div>
+    <!-- Lista de lugares cercanos (visible sólo cuando quedan <1h de manejo) -->
+    <div id="stopAlertPlaces" style="display:none;flex-direction:column;gap:6px;"></div>
   </div>
   <!-- ⑥ MINI MAPA GPS -->
   <div style="flex:1;min-height:0;position:relative;border-top:1px solid rgba(255,255,255,0.07);">
@@ -18056,6 +18058,7 @@ function updateDashRouteHoursRow() {
   const breakDue  = (typeof b30Complete !== 'undefined') && !b30Complete && (typeof b30Warned30m !== 'undefined') && b30Warned30m;
   const hoursGone = dLeft <= 0;
   const hoursLow  = dLeft > 0 && dLeft <= 2;
+  const hoursVeryLow = dLeft > 0 && dLeft < 1;
 
   if (breakDue) {
     if (!_hosBreakStopName && !_hosBreakStopFetching && typeof _fetchStopCityAhead === 'function') {
@@ -18067,7 +18070,7 @@ function updateDashRouteHoursRow() {
       });
     }
     const city = _hosBreakStopName || '...';
-    _showStopAlertPopup('Descanso de 30 min obligatorio', `Para en ${city}`, '#f59e0b');
+    _showStopAlertPopup('Descanso de 30 min obligatorio', `Para en ${city}`, '#f59e0b', false);
   } else if (hoursGone || hoursLow) {
     if (!_hosHoursStopName && !_hosHoursStopFetching && typeof _fetchStopCityAhead === 'function') {
       _hosHoursStopFetching = true;
@@ -18081,7 +18084,7 @@ function updateDashRouteHoursRow() {
     const city = _hosHoursStopName || '...';
     const title = hoursGone ? 'Horas de manejo agotadas' : 'Descanso 10 horas obligatorio';
     const body  = hoursGone ? `Detente en ${city} de inmediato` : `Para en ${city}`;
-    _showStopAlertPopup(title, body, '#ef4444');
+    _showStopAlertPopup(title, body, '#ef4444', hoursVeryLow);
   } else {
     _hideStopAlertPopup();
     _hosHoursStopName = null;
@@ -18091,18 +18094,22 @@ function updateDashRouteHoursRow() {
 let _stopAlertDismissed = false;
 let _stopAlertRepeatTimer = null;
 
-function _showStopAlertPopup(title, body, color) {
-  if (_stopAlertDismissed) return;          // usuario lo cerró — esperar timer
+function _showStopAlertPopup(title, body, color, fetchNearby) {
+  if (_stopAlertDismissed) return;
   const popup = document.getElementById('stopAlertPopup');
-  if (!popup || popup.style.display === 'flex') return;
+  if (!popup) return;
+  const alreadyVisible = popup.style.display === 'flex';
   document.getElementById('stopAlertTitle').textContent = title;
   document.getElementById('stopAlertTitle').style.color = color;
   document.getElementById('stopAlertBody').textContent  = body;
   popup.style.borderColor = color.replace(')', ',0.7)').replace('rgb', 'rgba');
   popup.style.boxShadow   = `0 4px 28px ${color.replace(')', ',0.25)').replace('rgb','rgba')},0 8px 32px rgba(0,0,0,0.7)`;
   popup.style.display = 'flex';
-  popup.style.animation = 'none';
-  requestAnimationFrame(() => { popup.style.animation = 'stopAlertIn .3s cubic-bezier(.34,1.56,.64,1)'; });
+  if (!alreadyVisible) {
+    popup.style.animation = 'none';
+    requestAnimationFrame(() => { popup.style.animation = 'stopAlertIn .3s cubic-bezier(.34,1.56,.64,1)'; });
+  }
+  if (fetchNearby) _fetchNearbyStopsForAlert();
 }
 
 function _hideStopAlertPopup() {
@@ -18124,11 +18131,113 @@ function dismissStopAlert() {
       _stopAlertDismissed = false;
       updateDashRouteHoursRow();
     } else {
-      _stopAlertDismissed = false; // detenido → resetear para la próxima vez
+      _stopAlertDismissed = false;
     }
     _stopAlertRepeatTimer = null;
   }, 10 * 60 * 1000);
 }
+
+let _nearbyStopsFetching = false;
+
+async function _fetchNearbyStopsForAlert() {
+  if (_nearbyStopsFetching) return;
+  const placesEl = document.getElementById('stopAlertPlaces');
+  if (!placesEl) return;
+
+  // Use current GPS position or fall back to origin
+  const lat = window.lastFixFm?.lat || origin?.lat;
+  const lon = window.lastFixFm?.lon || origin?.lon;
+  if (!lat || !lon) return;
+
+  // Show loading state
+  placesEl.style.display = 'flex';
+  placesEl.innerHTML = `<div style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;padding:4px 0;">Buscando lugares cercanos…</div>`;
+
+  _nearbyStopsFetching = true;
+  const R = 50000; // 50 km (~30 mi)
+  const query = `[out:json][timeout:25];(
+    node["amenity"="truck_stop"](around:${R},${lat},${lon});
+    node["name"~"Pilot|Flying J|Love's|TA Travel|Petro|Sapp Bros|Kwik Trip",i](around:${R},${lat},${lon});
+    node["highway"="rest_area"](around:${R},${lat},${lon});
+    node["amenity"="rest_area"](around:${R},${lat},${lon});
+    node["amenity"="parking"]["hgv"="yes"](around:${R},${lat},${lon});
+    node["amenity"="parking"]["truck"="yes"](around:${R},${lat},${lon});
+  );out center qt;`;
+
+  try {
+    const data = await overpassFetch(query, 22000);
+    const seen = new Set();
+    const results = (data.elements || [])
+      .map(el => {
+        const elLat = el.lat ?? el.center?.lat;
+        const elLon = el.lon ?? el.center?.lon;
+        if (!elLat || !elLon) return null;
+        const name = el.tags?.name ||
+          (el.tags?.['amenity'] === 'truck_stop' ? 'Truck Stop' :
+           el.tags?.['highway'] === 'rest_area' || el.tags?.['amenity'] === 'rest_area' ? 'Rest Area' :
+           'Truck Parking');
+        const key = name + '|' + elLat.toFixed(3) + '|' + elLon.toFixed(3);
+        if (seen.has(key)) return null;
+        seen.add(key);
+        const isTruck = el.tags?.amenity === 'truck_stop' || /Pilot|Flying J|Love's|TA Travel|Petro|Sapp Bros|Kwik Trip/i.test(name);
+        const isRest  = el.tags?.highway === 'rest_area' || el.tags?.amenity === 'rest_area';
+        const emoji   = isTruck ? '⛽' : isRest ? '🏁' : '🅿️';
+        const dist    = haversine(lat, lon, elLat, elLon);
+        return { name, lat: elLat, lon: elLon, emoji, dist };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 5);
+
+    if (!results.length) {
+      placesEl.innerHTML = `<div style="font-size:11px;color:rgba(255,255,255,0.4);text-align:center;padding:4px 0;">No se encontraron lugares cercanos</div>`;
+      _nearbyStopsFetching = false;
+      return;
+    }
+
+    placesEl.innerHTML = `<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.5px;margin-bottom:2px;">LUGARES CERCANOS</div>` +
+      results.map(p =>
+        `<button onclick="_selectNearbyStop(${JSON.stringify(p.name)},${p.lat},${p.lon})" style="
+          display:flex;align-items:center;gap:8px;width:100%;
+          background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;
+          padding:8px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:left;">
+          <span style="font-size:18px;flex-shrink:0">${p.emoji}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:800;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:600;">${p.dist.toFixed(1)} mi</div>
+          </div>
+          <span style="font-size:16px;color:rgba(255,255,255,0.4)">›</span>
+        </button>`
+      ).join('');
+  } catch {
+    placesEl.innerHTML = `<div style="font-size:11px;color:rgba(255,255,255,0.4);text-align:center;padding:4px 0;">No se pudo obtener lugares</div>`;
+  }
+  _nearbyStopsFetching = false;
+}
+
+function _selectNearbyStop(name, lat, lon) {
+  // Set as destination
+  destination = { name, lat, lon };
+  const destIn = document.getElementById('destInput');
+  if (destIn) destIn.value = name;
+  const destSugg = document.getElementById('destSugg');
+  if (destSugg) destSugg.style.display = 'none';
+
+  // Update destination card immediately
+  updateDashDestCard();
+
+  // Calculate route if origin is set
+  if (origin && typeof calculateRoute === 'function') {
+    setTimeout(() => calculateRoute(), 200);
+  }
+
+  // Close popup
+  const popup = document.getElementById('stopAlertPopup');
+  if (popup) popup.style.display = 'none';
+  _stopAlertDismissed = true;
+  if (_stopAlertRepeatTimer) { clearTimeout(_stopAlertRepeatTimer); _stopAlertRepeatTimer = null; }
+}
+
 
 function _openDashSpeedLimitEditor() {
   const sheet = document.getElementById('dashSpeedSheet');
