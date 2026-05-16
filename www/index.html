@@ -6424,6 +6424,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           </div>
 
           <!-- Destination -->
+          <div id="planFormInputs">
           <div style="position:relative;margin-bottom:8px">
             <div class="stop-row-mobile" id="stopRowDest">
               <span class="stop-icon">🏁</span>
@@ -6434,6 +6435,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
           <!-- Dynamic waypoints -->
           <div id="waypointsArea"></div>
+          </div><!-- /planFormInputs -->
         </div>
 
         <!-- Add stop button -->
@@ -6442,6 +6444,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           Agregar Parada
         </button>
 
+        <!-- Cancelar ruta — sólo visible con ruta activa -->
+        <button id="cancelActiveRouteBtn" onclick="cancelActiveRoute()" style="display:none;width:100%;margin-top:8px;padding:14px;border-radius:14px;border:1.5px solid rgba(239,68,68,0.5);background:rgba(239,68,68,0.1);color:#f87171;font-size:15px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;letter-spacing:0.2px;">
+          🛑 Cancelar ruta
+        </button>
+
+        <div id="planDepartureSection">
         <div class="form-section-label">📅 Día y Hora de Salida</div>
         <div class="trip-params-grid">
           <div class="param-box full-width">
@@ -6454,6 +6462,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
         <input type="number" id="speedInput" value="60" style="display:none" />
         <input type="number" id="dailyHoursInput" value="11" style="display:none" />
+        </div><!-- /planDepartureSection -->
 
         <div class="error" id="errorBox" style="display:none;margin-top:10px"></div>
 
@@ -16810,6 +16819,7 @@ function fmStartTracking() {
 
   fmIsTracking  = true;
   syncActiveRouteFab();
+  syncPlanCardActiveRoute();
   fmTripStart    = new Date();
   fmLastMoveTime = null;
   fmLastGeocode = 0;
@@ -17306,6 +17316,7 @@ function fmStopTracking() {
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
   syncActiveRouteFab();
+  syncPlanCardActiveRoute();
   _fmClearActiveRoute();
   b30Reset(); // limpiar sistema de pausa al detener rastreo
   _autoStopSecs   = 0;
@@ -20629,6 +20640,37 @@ function hideError() {
   document.getElementById('errorBox').style.display = 'none';
 }
 
+function syncPlanCardActiveRoute() {
+  const tracking = !!fmIsTracking;
+  const planFormInputs      = document.getElementById('planFormInputs');
+  const planDepartureSection = document.getElementById('planDepartureSection');
+  const calcBtn             = document.getElementById('calcBtn');
+  const cancelBtn           = document.getElementById('cancelActiveRouteBtn');
+  const errorBox            = document.getElementById('errorBox');
+
+  if (planFormInputs)       planFormInputs.style.display       = tracking ? 'none' : '';
+  if (planDepartureSection) planDepartureSection.style.display  = tracking ? 'none' : '';
+  if (calcBtn)              calcBtn.style.display               = tracking ? 'none' : '';
+  if (errorBox)             errorBox.style.display              = tracking ? 'none' : (errorBox._visible ? '' : 'none');
+  if (cancelBtn)            cancelBtn.style.display             = tracking ? '' : 'none';
+
+  if (tracking) {
+    const altRoutes = document.getElementById('altRoutesCard');
+    const results   = document.getElementById('resultsCard');
+    const shareBtns = document.getElementById('shareTrackBtns');
+    if (altRoutes) altRoutes.style.display = 'none';
+    if (results)   results.style.display   = 'none';
+    if (shareBtns) shareBtns.style.display = 'none';
+  }
+}
+
+function cancelActiveRoute() {
+  fmStopTracking();
+  resetForm();
+  syncPlanCardActiveRoute();
+  syncActiveRouteFab();
+}
+
 function syncActiveRouteFab() {
   const fab = document.getElementById('activeRouteFab');
   if (!fab) return;
@@ -20648,7 +20690,7 @@ function switchTab(tab) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
   if (tab === 'summary') { fetchEIAPrice(); searchFuelNearby(null); }
-  if (tab === 'plan') { const dep = document.getElementById('departureInput'); if (dep && !dep.value) setDepartureNow(); else updateDepartureDisplay(); }
+  if (tab === 'plan') { const dep = document.getElementById('departureInput'); if (dep && !dep.value) setDepartureNow(); else updateDepartureDisplay(); syncPlanCardActiveRoute(); }
   if (tab === 'settings') {
     // Recargar foto y nombre cada vez que se abre settings
     try { loadDriverProfile(); } catch(e) {}
