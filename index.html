@@ -16852,6 +16852,8 @@ function fmStartTracking() {
   }
 
   fmIsTracking  = true;
+  // El GPS de ruta toma el control del tracker — pausar GPS interno para evitar conflicto
+  window._hosTracker?.pauseInternalGps?.();
   syncActiveRouteFab();
   syncPlanCardActiveRoute();
   fmTripStart    = new Date();
@@ -17349,6 +17351,9 @@ function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
+  // Asegurar que el tracker sepa que nos detuvimos antes de restaurar GPS interno
+  window._hosTracker?.reportMoving?.(false, 0);
+  window._hosTracker?.resumeInternalGps?.();
   syncActiveRouteFab();
   syncPlanCardActiveRoute();
   _fmClearActiveRoute();
@@ -17644,8 +17649,8 @@ function showHosDashboard() {
     _dashGpsWatchId = navigator.geolocation.watchPosition(pos => {
       const rawSpeed = pos.coords.speed;
       const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
-      autoUpdateDashStatus(gpsSpeed > 3);
-      if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(gpsSpeed > 3, gpsSpeed);
+      autoUpdateDashStatus(gpsSpeed >= 5);
+      if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(gpsSpeed >= 5, gpsSpeed);
     }, () => {}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
   }
 
@@ -29332,8 +29337,8 @@ window._hosAutoRecalc = false;
       pos => {
         const raw = pos.coords.speed;
         const mph = (raw != null && raw >= 0) ? raw * 0.621371 : 0;
-        if (mph > 2) _onEldMoving(Math.round(mph));
-        else         _onEldStopped();
+        if (mph >= 5) _onEldMoving(Math.round(mph));
+        else          _onEldStopped();
       },
       () => {
         _gpsActive = false;
@@ -29610,7 +29615,10 @@ window._hosAutoRecalc = false;
     reportMoving: function(moving, speedMph) {
       if (moving) _onEldMoving(speedMph || 0);
       else        _onEldStopped();
-    }
+    },
+    // Pausa el GPS interno cuando el rastreo de ruta toma el control
+    pauseInternalGps: function() { _stopGpsMode(); },
+    resumeInternalGps: function() { _startGpsMode(); }
   };
 })();
 </script>
