@@ -1717,11 +1717,12 @@
     opacity: 1;
   }
   .rr-item {
-    width: 68px; height: 68px;
+    width: 72px; height: 72px;
     border-radius: 50%;
     border: 2.5px solid rgba(255,255,255,.75);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
+    justify-self: center; align-self: center;
     gap: 4px;
     color: #fff;
     cursor: pointer;
@@ -20238,31 +20239,34 @@ function _openRadialMenu() {
   menu.appendChild(bd);
   requestAnimationFrame(() => bd.style.opacity = '1');
 
-  /* Panel en cuadrícula 3×3 anclado sobre el FAB */
+  /* Panel cuadrícula 3×3 */
   const W = window.innerWidth, H = window.innerHeight;
-  const COLS = 3, ITEM = 68, GAP = 10;
+  const COLS = 3, ITEM = 72, GAP = 12, PAD = 14;
   const ROWS = Math.ceil(REPORT_ITEMS.length / COLS);
-  const PW = COLS * ITEM + (COLS + 1) * GAP;
-  const PH = ROWS * ITEM + (ROWS + 1) * GAP;
+  const PW = PAD * 2 + COLS * ITEM + (COLS - 1) * GAP;
+  const PH = PAD * 2 + ROWS * ITEM + (ROWS - 1) * GAP;
 
-  /* Anclar arriba del FAB o abajo si está muy alto */
   const goUp = _fabPos.y > H * 0.4;
   let px = _fabPos.x - PW / 2;
-  let py = goUp ? _fabPos.y - PH - 16 : _fabPos.y + 40;
+  let py = goUp ? _fabPos.y - PH - 14 : _fabPos.y + 44;
   px = Math.max(8, Math.min(W - PW - 8, px));
   py = Math.max(8, Math.min(H - PH - 8, py));
 
   const panel = document.createElement('div');
   panel.className = 'rr-panel';
-  panel.style.cssText = `left:${px}px;top:${py}px;width:${PW}px;
-    grid-template-columns:repeat(${COLS},${ITEM}px);gap:${GAP}px;padding:${GAP}px;
-    transform-origin:${_fabPos.x - px}px ${goUp ? PH : 0}px;`;
+  panel.style.left   = px + 'px';
+  panel.style.top    = py + 'px';
+  panel.style.width  = PW + 'px';
+  panel.style.gridTemplateColumns = 'repeat(' + COLS + ',' + ITEM + 'px)';
+  panel.style.gap    = GAP + 'px';
+  panel.style.padding = PAD + 'px';
+  panel.style.transformOrigin = (_fabPos.x - px) + 'px ' + (goUp ? PH : 0) + 'px';
 
   REPORT_ITEMS.forEach(rt => {
     const btn = document.createElement('button');
-    btn.className = 'rr-item rr-grid-item';
+    btn.className = 'rr-item';
     btn.style.background = rt.bg;
-    btn.innerHTML = `<span class="rr-emoji">${rt.emoji}</span><span class="rr-label">${rt.label}</span>`;
+    btn.innerHTML = '<span class="rr-emoji">' + rt.emoji + '</span><span class="rr-label">' + rt.label + '</span>';
     btn.addEventListener('pointerdown', e => e.stopPropagation());
     btn.onclick = () => { quickReport(rt.type, rt.emoji, rt.label); closeRadialMenu(); };
     panel.appendChild(btn);
