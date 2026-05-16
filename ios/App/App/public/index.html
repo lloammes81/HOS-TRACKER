@@ -6511,7 +6511,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     </div>
 
     <!-- ACTIVE ROUTE RETURN FAB — solo aparece en esta página cuando hay rastreo activo -->
-    <button id="activeRouteFab" onclick="showHosDashboard()" style="display:none">
+    <button id="activeRouteFab" onclick="showHosDashboard()">
       <span style="font-size:22px;line-height:1">🚛</span>
       <div style="display:flex;flex-direction:column;align-items:flex-start;gap:1px;flex:1;min-width:0;">
         <span style="font-size:13px;font-weight:900;color:#10b981;letter-spacing:-.1px;white-space:nowrap;">Ruta activa</span>
@@ -13135,6 +13135,8 @@ function init() {
   if (shLbl) shLbl.textContent = showInterstateShields ? 'Highway shields: On' : 'Highway shields: Off';
   // If shields were off, mark hash as disabled to prevent auto-re-add
   if (!showInterstateShields) fmLastStepsHash = 'disabled';
+  // Show return-to-route FAB if tracking was already active on load
+  setTimeout(syncActiveRouteFab, 500);
 }
 
 function changeMapStyle(styleKey) {
