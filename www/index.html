@@ -8713,10 +8713,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <div id="dashRouteDriveBarFill" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width 1s ease;"></div>
         </div>
       </div>
-      <!-- Parada obligatoria (aparece cuando se necesita) -->
-      <div id="dashRouteStopRow" style="display:none;margin-top:7px;border-radius:8px;padding:5px 9px;">
-        <div id="dashRouteStopCity" style="font-size:13px;font-weight:800;line-height:1.4;"></div>
-      </div>
+      <!-- dashRouteStopRow/City stubs ocultos para compatibilidad JS -->
+      <div id="dashRouteStopRow" style="display:none!important"></div>
+      <div id="dashRouteStopCity" style="display:none!important"></div>
     </div>
   </div>
 
@@ -8738,7 +8737,23 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   </div><!-- /tarjeta principal -->
 
-
+  <!-- POPUP ALERTA PARADA OBLIGATORIA -->
+  <div id="stopAlertPopup" style="display:none;position:absolute;bottom:14px;left:12px;right:12px;z-index:50;
+    background:rgba(15,20,35,0.97);border:1.5px solid rgba(239,68,68,0.7);border-radius:16px;
+    padding:14px 14px 14px 16px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    box-shadow:0 4px 28px rgba(239,68,68,0.3),0 8px 32px rgba(0,0,0,0.7);
+    animation:stopAlertIn .3s cubic-bezier(.34,1.56,.64,1);">
+    <div style="display:flex;align-items:flex-start;gap:10px;">
+      <span style="font-size:24px;flex-shrink:0;line-height:1.2">⚠️</span>
+      <div style="flex:1;min-width:0;">
+        <div id="stopAlertTitle" style="font-size:14px;font-weight:900;color:#ef4444;line-height:1.3;margin-bottom:3px;">Descanso obligatorio</div>
+        <div id="stopAlertBody" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);line-height:1.4;"></div>
+      </div>
+      <button onclick="dismissStopAlert()" style="flex-shrink:0;background:rgba(255,255,255,0.1);border:none;
+        border-radius:8px;color:#fff;font-size:18px;width:30px;height:30px;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">✕</button>
+    </div>
+  </div>
   <!-- ⑥ MINI MAPA GPS -->
   <div style="flex:1;min-height:0;position:relative;border-top:1px solid rgba(255,255,255,0.07);">
     <div id="hosMiniMap" style="width:100%;height:100%;background:#0f1c2e;"></div>
@@ -8809,6 +8824,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   50%      { background:#ea6010; }
 }
 #hosNavCard .hnc-orange { animation: hnc-pulse 2s ease-in-out infinite; }
+@keyframes stopAlertIn {
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
+}
 @keyframes hnc-marquee {
   0%,15%  { transform:translateX(0); }
   75%,90% { transform:translateX(var(--hnc-scroll,0px)); }
@@ -18034,17 +18053,11 @@ function updateDashRouteHoursRow() {
     barFill.style.background = col;
   }
 
-  if (!stopRow || !stopCityEl) return;
-
   const breakDue  = (typeof b30Complete !== 'undefined') && !b30Complete && (typeof b30Warned30m !== 'undefined') && b30Warned30m;
   const hoursGone = dLeft <= 0;
   const hoursLow  = dLeft > 0 && dLeft <= 2;
 
   if (breakDue) {
-    stopRow.style.display = 'block';
-    stopRow.style.background = 'rgba(245,158,11,0.12)';
-    stopRow.style.border = '1px solid rgba(245,158,11,0.4)';
-    stopCityEl.style.color = '#f59e0b';
     if (!_hosBreakStopName && !_hosBreakStopFetching && typeof _fetchStopCityAhead === 'function') {
       _hosBreakStopFetching = true;
       _fetchStopCityAhead(10, name => {
@@ -18054,12 +18067,8 @@ function updateDashRouteHoursRow() {
       });
     }
     const city = _hosBreakStopName || '...';
-    stopCityEl.textContent = `⏸ Para en ${city} — Descanso obligatorio 30 min`;
+    _showStopAlertPopup('Descanso de 30 min obligatorio', `Para en ${city}`, '#f59e0b');
   } else if (hoursGone || hoursLow) {
-    stopRow.style.display = 'block';
-    stopRow.style.background = 'rgba(239,68,68,0.12)';
-    stopRow.style.border = '1px solid rgba(239,68,68,0.4)';
-    stopCityEl.style.color = '#ef4444';
     if (!_hosHoursStopName && !_hosHoursStopFetching && typeof _fetchStopCityAhead === 'function') {
       _hosHoursStopFetching = true;
       const distMi = hoursGone ? 5 : Math.max(5, Math.round(dLeft * ((typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55)));
@@ -18070,13 +18079,55 @@ function updateDashRouteHoursRow() {
       });
     }
     const city = _hosHoursStopName || '...';
-    stopCityEl.textContent = hoursGone
-      ? `🛑 Para en ${city} — Horas de manejo agotadas`
-      : `⚠️ Para en ${city} — Descanso 10 horas obligatorio`;
+    const title = hoursGone ? 'Horas de manejo agotadas' : 'Descanso 10 horas obligatorio';
+    const body  = hoursGone ? `Detente en ${city} de inmediato` : `Para en ${city}`;
+    _showStopAlertPopup(title, body, '#ef4444');
   } else {
-    stopRow.style.display = 'none';
+    _hideStopAlertPopup();
     _hosHoursStopName = null;
   }
+}
+
+let _stopAlertDismissed = false;
+let _stopAlertRepeatTimer = null;
+
+function _showStopAlertPopup(title, body, color) {
+  if (_stopAlertDismissed) return;          // usuario lo cerró — esperar timer
+  const popup = document.getElementById('stopAlertPopup');
+  if (!popup || popup.style.display === 'flex') return;
+  document.getElementById('stopAlertTitle').textContent = title;
+  document.getElementById('stopAlertTitle').style.color = color;
+  document.getElementById('stopAlertBody').textContent  = body;
+  popup.style.borderColor = color.replace(')', ',0.7)').replace('rgb', 'rgba');
+  popup.style.boxShadow   = `0 4px 28px ${color.replace(')', ',0.25)').replace('rgb','rgba')},0 8px 32px rgba(0,0,0,0.7)`;
+  popup.style.display = 'flex';
+  popup.style.animation = 'none';
+  requestAnimationFrame(() => { popup.style.animation = 'stopAlertIn .3s cubic-bezier(.34,1.56,.64,1)'; });
+}
+
+function _hideStopAlertPopup() {
+  const popup = document.getElementById('stopAlertPopup');
+  if (popup) popup.style.display = 'none';
+  _stopAlertDismissed = false;
+  if (_stopAlertRepeatTimer) { clearTimeout(_stopAlertRepeatTimer); _stopAlertRepeatTimer = null; }
+}
+
+function dismissStopAlert() {
+  const popup = document.getElementById('stopAlertPopup');
+  if (popup) popup.style.display = 'none';
+  _stopAlertDismissed = true;
+  if (_stopAlertRepeatTimer) clearTimeout(_stopAlertRepeatTimer);
+  // Si el vehículo sigue en movimiento, reaparecer en 10 min
+  _stopAlertRepeatTimer = setTimeout(() => {
+    const moving = (typeof fmCurrentSpeed !== 'undefined') && fmCurrentSpeed >= 5;
+    if (moving) {
+      _stopAlertDismissed = false;
+      updateDashRouteHoursRow();
+    } else {
+      _stopAlertDismissed = false; // detenido → resetear para la próxima vez
+    }
+    _stopAlertRepeatTimer = null;
+  }, 10 * 60 * 1000);
 }
 
 function _openDashSpeedLimitEditor() {
