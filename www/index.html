@@ -5336,6 +5336,37 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 #hudManejoCell.critical { filter:drop-shadow(0 0 10px rgba(239,68,68,.65)); animation:hudDhPulse 1.3s ease-in-out infinite; }
 @keyframes hudDhPulse { 0%,100%{filter:drop-shadow(0 0 8px rgba(239,68,68,.5))} 50%{filter:drop-shadow(0 0 18px rgba(239,68,68,.85))} }
 
+/* ── ACTIVE ROUTE RETURN FAB ─────────────────────────────── */
+#activeRouteFab {
+  position: fixed;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 450;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px 12px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(16,185,129,.55);
+  background: rgba(10,16,30,.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 4px 28px rgba(0,0,0,.65), 0 0 0 0 rgba(16,185,129,.45);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  animation: arfPulse 2.8s ease-in-out infinite;
+  white-space: nowrap;
+  min-width: 0;
+}
+#activeRouteFab.arf-visible { display: flex; }
+#activeRouteFab:active { transform: translateX(-50%) scale(.96); }
+@keyframes arfPulse {
+  0%,100% { box-shadow: 0 4px 28px rgba(0,0,0,.65), 0 0 0 0 rgba(16,185,129,.45); border-color: rgba(16,185,129,.55); }
+  50%     { box-shadow: 0 4px 28px rgba(0,0,0,.65), 0 0 0 6px rgba(16,185,129,0);  border-color: rgba(16,185,129,.9); }
+}
+
 </style>
 
 <style id="fmHudCompactStyles">
@@ -6062,6 +6093,16 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <span style="top:84%;left:6%;font-size:60px;opacity:.09">🚚</span>
   <span style="top:88%;right:24%;font-size:34px;opacity:.07">🕙</span>
 </div>
+
+<!-- ACTIVE ROUTE RETURN FAB — visible only on plan tab while tracking -->
+<button id="activeRouteFab" onclick="showHosDashboard()" style="display:none">
+  <span id="arfIcon" style="font-size:22px;line-height:1">🚛</span>
+  <div style="display:flex;flex-direction:column;align-items:flex-start;gap:1px;flex:1;min-width:0;">
+    <span id="arfTitle" style="font-size:13px;font-weight:900;color:#10b981;letter-spacing:-.1px;white-space:nowrap;">Ruta activa</span>
+    <span id="arfSub" style="font-size:11px;font-weight:600;color:rgba(255,255,255,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">Toca para ver detalles</span>
+  </div>
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+</button>
 
 <div class="App" data-scroll>
   <!-- TAB BAR -->
@@ -16744,6 +16785,7 @@ function fmStartTracking() {
   }
 
   fmIsTracking  = true;
+  syncActiveRouteFab();
   fmTripStart    = new Date();
   fmLastMoveTime = null;
   fmLastGeocode = 0;
@@ -17239,6 +17281,7 @@ function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
+  syncActiveRouteFab();
   _fmClearActiveRoute();
   b30Reset(); // limpiar sistema de pausa al detener rastreo
   _autoStopSecs   = 0;
@@ -20421,6 +20464,18 @@ function hideError() {
   document.getElementById('errorBox').style.display = 'none';
 }
 
+function syncActiveRouteFab() {
+  const fab = document.getElementById('activeRouteFab');
+  if (!fab) return;
+  const show = !!fmIsTracking && currentTab === 'plan';
+  fab.classList.toggle('arf-visible', show);
+  if (show) {
+    // Update subtitle with destination if available
+    const sub = document.getElementById('arfSub');
+    if (sub && destination) sub.textContent = '→ ' + (destination.name || 'Ver detalles').split(',')[0];
+  }
+}
+
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
@@ -20435,6 +20490,7 @@ function switchTab(tab) {
   }
   const fab = document.getElementById('chatFab');
   if (fab) fab.style.display = tab === 'community' ? 'none' : 'flex';
+  syncActiveRouteFab();
 }
 
 function bindEvents() {
