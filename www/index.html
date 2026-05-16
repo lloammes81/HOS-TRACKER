@@ -10260,6 +10260,27 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           set(presenceRef, { name: displayName, ts: Date.now() });
         }
       });
+    },
+
+    /* ── Community reports (shared across all users) ── */
+    sendReport: async (report) => {
+      if (!firebaseReady) return false;
+      try {
+        await push(ref(db, 'reports/active'), { ...report, serverTs: serverTimestamp() });
+        return true;
+      } catch(e) { console.warn('[Reports] send failed', e.message); return false; }
+    },
+    listenReports: (cb) => {
+      if (!firebaseReady) return () => {};
+      const cutoff = Date.now() - 2 * 60 * 60 * 1000;
+      const q = query(ref(db, 'reports/active'), limitToLast(60));
+      const unsub = onChildAdded(q, snap => {
+        const r = snap.val();
+        const ts = r.ts || r.serverTs || 0;
+        if (typeof ts === 'number' && ts < cutoff) return;
+        cb(r, snap.key);
+      });
+      return unsub;
     }
   };
 
@@ -20323,11 +20344,14 @@ function quickReport(type, emoji, label) {
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
 
   addReportMarker(report);
-  // Incident bubble auto-dismisses from screen after 2 seconds
   addIncidentBubble(report, 2000);
   incrementUserReports();
 
-  // Fly map briefly to confirm placement
+  // Publish to Firebase so all other users see it
+  if (window._chatFirebase?.ready()) {
+    window._chatFirebase.sendReport(report).catch(() => {});
+  }
+
   if (fmMapInst) {
     fmMapInst.flyTo([lat, lon], Math.max(fmMapInst.getZoom(), 15), { duration: 0.8 });
   }
@@ -26603,6 +26627,54 @@ async function sendScanEmail() {
     setTimeout(tryPatchFirebase, 3000);
   });
 
+})();
+
+/* ── Escuchar reportes de otros conductores en tiempo real ── */
+(function _initReportListener() {
+  let _reportListening = false;
+
+  function startListening() {
+    if (_reportListening || !window._chatFirebase?.ready()) return;
+    _reportListening = true;
+
+    window._chatFirebase.listenReports((report) => {
+      // Ignorar propios
+      if (window.currentUser && report.reportedBy === window.currentUser.id) return;
+      // Ignorar duplicados
+      if (window.communityReports && window.communityReports.find(r => String(r.id) === String(report.id))) return;
+
+      // Guardar localmente
+      if (window.communityReports) {
+        window.communityReports.push(report);
+        window.communityReports = window.communityReports.filter(r => Date.now() - r.ts < 7200000);
+        try { localStorage.setItem('hos_reports', JSON.stringify(window.communityReports)); } catch {}
+      }
+
+      // Marcar en el mapa
+      if (typeof addReportMarker === 'function' && window.fmMapInst) {
+        addReportMarker(report);
+      }
+
+      // Notificación push vía Service Worker
+      if (navigator.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SCHEDULE_NOTIFICATION',
+          delay: 0,
+          tag: 'rpt-' + report.id,
+          title: '🚛 ' + (report.emoji || '⚠️') + ' ' + (report.label || 'Alerta en ruta'),
+          body: 'Reportado por ' + (report.reportedByName || 'otro conductor') + ' · Ahora'
+        });
+      }
+
+      // Toast en pantalla
+      if (typeof showReportAlert === 'function') {
+        showReportAlert(report.emoji || '⚠️', report.label || 'Alerta', report.reportedByName || 'Otro conductor');
+      }
+    });
+  }
+
+  document.addEventListener('chatFirebaseReady', startListening);
+  setTimeout(startListening, 4000);
 })();
 
 
