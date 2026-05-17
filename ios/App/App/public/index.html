@@ -17743,17 +17743,20 @@ function updateHosDashboard(driveLeft, driveMax) {
 }
 
 function showFullMapFromDash() {
-  // Ocultar dashboard, dejar fullMapScreen visible (sigue activo detrás)
-  const screen = document.getElementById('hosDashScreen');
-  if (screen) screen.style.display = 'none';
-  // Restaurar widgets de mapa que showHosDashboard() ocultó con display:none !important
-  if (fmIsTracking) {
-    ['driveHoursWidget','speedometerWidget'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.removeProperty('display');
-    });
+  const dash = document.getElementById('hosDashScreen');
+  if (dash) dash.style.display = 'none';
+  // Abrir el mapa completo si aún no está visible
+  const mapScreen = document.getElementById('fullMapScreen');
+  const mapVisible = mapScreen && mapScreen.style.display !== 'none' && mapScreen.style.display !== '';
+  if (!mapVisible) {
+    openFullMapScreen();
   }
-  // Invalidar tamaño del mapa principal para que se redibuje correctamente
+  // Restaurar widgets de mapa que showHosDashboard() ocultó con display:none !important
+  ['driveHoursWidget','speedometerWidget','fuelWidget','speedLimitWidget','mapSpeedSign','incidentPanel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.removeProperty('display');
+  });
+  // Invalidar tamaño del mapa para que se redibuje correctamente
   setTimeout(() => { if (typeof fmMapInst !== 'undefined' && fmMapInst) fmMapInst.invalidateSize(); }, 150);
 }
 
@@ -18166,7 +18169,9 @@ async function showServiceOnMap(type, radiusMiles, _btn) {
   }
   if (btn) btn.innerHTML = `<div class="svc-btn-icon" style="background:rgba(16,185,129,.15)">${cfg.emoji}</div><div class="svc-btn-name">Buscando…</div><div class="svc-btn-range">${radiusMiles} mi</div>`;
 
-  // 2. Open fullscreen map
+  // 2. Close any open drawer/panel and open fullscreen map
+  if (typeof closeDrawer === 'function') closeDrawer();
+  if (typeof closeSideMenu === 'function') closeSideMenu();
   openFullMapScreen();
 
   // 3. After map initializes, load data
