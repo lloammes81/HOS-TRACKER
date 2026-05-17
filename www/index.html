@@ -14659,6 +14659,8 @@ let fmLastHeading   = null;   // last GPS heading for truck rotation
 let fmPrevLat       = null;   // for calculating heading when GPS doesn't provide it
 let fmPrevLon       = null;
 let fmLastStablePos = null;   // last accepted position (jitter filter)
+let _lastPanLat     = null;   // last position we panned to (pan-threshold filter)
+let _lastPanLon     = null;
 
 // POI layers
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
@@ -15969,12 +15971,13 @@ function _scheduleAutoResumeFollow() {
     if (fb) fb.classList.add('active');
     if (fmGpsMarker && fmMapInst) {
       const ll = fmGpsMarker.getLatLng();
+      _lastPanLat = null; _lastPanLon = null; // force immediate re-pan on next GPS tick
       window._fmProgrammaticMove = true;
-      fmMapInst.setView(calcFollowCenter(ll.lat, ll.lng, fmLastHeading), fmCurrentZoom, { animate: true, duration: 0.9 });
+      fmMapInst.setView(calcFollowCenter(ll.lat, ll.lng, fmLastHeading), fmCurrentZoom, { animate: true, duration: 1.0 });
       if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
-      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
+      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1500);
     }
-  }, 1000); // reanuda seguimiento 1s después de que el usuario deja de tocar el mapa
+  }, 5000); // reanuda seguimiento 5s después de que el usuario deja de tocar el mapa
 }
 
 // ── Auto-resume bearing after user manually rotates ───────────────────────
@@ -16432,29 +16435,39 @@ function fmStartTracking() {
 
     // ── AUTO-ZOOM & FOLLOW (pan to snapped position) ────────
     if (fmFollowing && fmMapInst) {
-      // Dynamic zoom: <20 mph or stopped → zoom 17 (tight); ≥20 mph → zoom 13 (wider)
-      if (!fmUserZoomed) {
-        const targetZoom = gpsSpeed < 20 ? 17 : 13;
-        if (Math.abs(fmCurrentZoom - targetZoom) >= 1) {
-          fmCurrentZoom = targetZoom;
+      // Only re-pan when truck has moved more than 20m from last pan position
+      const _movedM = (_lastPanLat != null)
+        ? haversine(snapLat, snapLon, _lastPanLat, _lastPanLon) * 1609.34
+        : 99999;
+      const _zoomChanged = !fmUserZoomed && (() => {
+        const tz = gpsSpeed < 20 ? 17 : 13;
+        return Math.abs(fmCurrentZoom - tz) >= 1;
+      })();
+
+      if (_movedM > 20 || _zoomChanged) {
+        _lastPanLat = snapLat; _lastPanLon = snapLon;
+
+        if (!fmUserZoomed) {
+          const targetZoom = gpsSpeed < 20 ? 17 : 13;
+          if (Math.abs(fmCurrentZoom - targetZoom) >= 1) fmCurrentZoom = targetZoom;
         }
-      }
-      window._fmProgrammaticMove = true;
-      // Rotate BEFORE pan — flag as programmatic so rotatestart doesn't
-      // set fmUserRotated and block future GPS-driven rotations
-      if (!fmUserRotated && typeof fmMapInst.setBearing === 'function') {
-        window._fmProgrammaticBearing = true;
-        if (fmHeadingUpMode && heading != null && heading >= 0) {
-          fmMapInst.setBearing(heading);
-        } else if (!fmHeadingUpMode) {
-          fmMapInst.setBearing(0);
+        window._fmProgrammaticMove = true;
+        // Rotate BEFORE pan — flag as programmatic so rotatestart doesn't
+        // set fmUserRotated and block future GPS-driven rotations
+        if (!fmUserRotated && typeof fmMapInst.setBearing === 'function') {
+          window._fmProgrammaticBearing = true;
+          if (fmHeadingUpMode && heading != null && heading >= 0) {
+            fmMapInst.setBearing(heading);
+          } else if (!fmHeadingUpMode) {
+            fmMapInst.setBearing(0);
+          }
+          setTimeout(() => { window._fmProgrammaticBearing = false; }, 300);
         }
-        setTimeout(() => { window._fmProgrammaticBearing = false; }, 300);
+        const followCenter = calcFollowCenter(snapLat, snapLon, heading);
+        fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 1.0, noMoveStart: true });
+        if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
+        window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1300);
       }
-      const followCenter = calcFollowCenter(snapLat, snapLon, heading);
-      fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.5, noMoveStart: true });
-      if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
-      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 800);
     }
 
     
