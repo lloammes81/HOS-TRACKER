@@ -1111,6 +1111,137 @@
     50%    { transform:rotate(8deg); }
   }
 
+  /* ══════════════════════════════════════
+     📷  CAMERA WIDGET — floating preview
+  ══════════════════════════════════════ */
+  #cameraWidget {
+    position: fixed;
+    bottom: calc(var(--tab-h,60px) + 88px);
+    right: calc(12px + env(safe-area-inset-right,0px));
+    z-index: 30000;
+    display: none;
+    flex-direction: column;
+    width: 188px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 36px rgba(0,0,0,.80), 0 0 0 1.5px rgba(255,255,255,.10);
+    cursor: grab;
+    touch-action: none;
+    background: #060b18;
+    user-select: none;
+  }
+  #cameraWidget.visible  { display: flex; }
+  #cameraWidget.cam-drag { cursor: grabbing; }
+  #cameraWidget.minimized .cam-body,
+  #cameraWidget.minimized .cam-footer { display: none; }
+  .cam-header {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 10px;
+    background: rgba(10,16,30,.98);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    flex-shrink: 0;
+  }
+  .cam-live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #6b7280; flex-shrink: 0; transition: background .3s;
+  }
+  .cam-live-dot.live { background: #22c55e; box-shadow: 0 0 6px #22c55e; animation: camBlink 1.5s infinite; }
+  .cam-live-dot.rec  { background: #ef4444; box-shadow: 0 0 6px #ef4444; animation: camBlink .7s infinite; }
+  @keyframes camBlink { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .cam-title {
+    flex: 1; font-size: 10px; font-weight: 800;
+    letter-spacing: .8px; color: rgba(255,255,255,.8); text-transform: uppercase;
+  }
+  .cam-hbtn {
+    width: 24px; height: 24px; border-radius: 6px; border: none;
+    background: rgba(255,255,255,.07); color: rgba(255,255,255,.7);
+    font-size: 12px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent; transition: background .15s;
+  }
+  .cam-hbtn:active { background: rgba(255,255,255,.18); }
+  .cam-body {
+    position: relative; width: 188px; height: 126px;
+    background: #000; overflow: hidden; flex-shrink: 0;
+  }
+  #camVideo, #camImg { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .cam-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; background: rgba(6,11,24,.92);
+    font-size: 11px; font-weight: 700; color: rgba(255,255,255,.45);
+    flex-direction: column; gap: 6px; pointer-events: none;
+  }
+  .cam-footer {
+    display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+    background: rgba(10,16,30,.98);
+    border-top: 1px solid rgba(255,255,255,.08); flex-shrink: 0;
+  }
+  .cam-rec-btn {
+    flex: 1; padding: 5px 8px; border-radius: 8px;
+    border: 1.5px solid rgba(239,68,68,.5); background: rgba(239,68,68,.12);
+    color: #f87171; font-size: 10px; font-weight: 800; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; letter-spacing: .5px;
+    font-family: 'DM Sans', sans-serif; transition: background .15s;
+  }
+  .cam-rec-btn.recording { background: rgba(239,68,68,.32); border-color: #ef4444; color: #fff; }
+  .cam-snap-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,.18); background: rgba(255,255,255,.07);
+    color: rgba(255,255,255,.8); font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Camera settings section */
+  .cam-type-tabs {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 6px; margin: 12px 16px 0;
+  }
+  .cam-type-tab {
+    padding: 9px 4px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    color: var(--muted); font-size: 11px; font-weight: 700; cursor: pointer;
+    text-align: center; font-family: 'DM Sans',sans-serif;
+    transition: background .15s, border-color .15s, color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cam-type-tab.active { border-color: #3b82f6; background: rgba(59,130,246,.12); color: #3b82f6; }
+  .cam-connect-area { padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .cam-ip-input {
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    color: var(--text); font-family: 'DM Sans',sans-serif;
+    font-size: 14px; font-weight: 600; box-sizing: border-box; outline: none;
+  }
+  .cam-ip-input:focus { border-color: #3b82f6; }
+  .cam-connect-btn {
+    width: 100%; padding: 12px; border-radius: 10px; border: none;
+    background: #3b82f6; color: #fff; font-family: 'DM Sans',sans-serif;
+    font-size: 14px; font-weight: 800; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; transition: opacity .15s;
+  }
+  .cam-connect-btn:active { opacity: .8; }
+  .cam-connect-btn.cam-danger  { background: #ef4444; }
+  .cam-connect-btn.cam-success { background: #10b981; }
+  .cam-status-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px 12px;
+  }
+  .cam-status-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #6b7280; flex-shrink: 0;
+  }
+  .cam-status-dot.connected { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,.5); }
+  .cam-status-txt { font-size: 13px; font-weight: 600; color: var(--muted); flex: 1; }
+  .cam-bt-list { display: flex; flex-direction: column; gap: 6px; margin: 0 16px 12px; max-height: 160px; overflow-y: auto; }
+  .cam-bt-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface2);
+    cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color .15s;
+  }
+  .cam-bt-item:active { border-color: #3b82f6; }
+  .cam-bt-item-name { flex: 1; font-size: 13px; font-weight: 700; color: var(--text); }
+  .cam-bt-item-id   { font-size: 10px; color: var(--muted); }
+
   /* ── POLICE ALERT ──────────────────────── */
   @keyframes policeFlash {
     0%,100%{ background:rgba(30,0,0,0.96); }
@@ -1305,8 +1436,6 @@
   #fullMapScreen.bridge-mode #fmFollowBtn,
   #fullMapScreen.bridge-mode #mapRightControls,
   #fullMapScreen.bridge-mode #mapLeftControls,
-  #fullMapScreen.bridge-mode #reportFab,
-  #fullMapScreen.bridge-mode #reportSheet,
   #fullMapScreen.bridge-mode #incidentPanel {
     opacity: 0 !important;
     pointer-events: none !important;
@@ -1448,8 +1577,7 @@
     to   { transform: scale(1); opacity: 1; }
   }
 
-  /* Keep report panel CSS but hide the FAB */
-  #reportFab { display: none !important; }
+  /* reportFab display controlled by .visible class and drag system */
 
   /* Report panel */
   #reportPanel {
@@ -1514,66 +1642,105 @@
   .fm-zoom-btn:active { transform:scale(.92); }
 
   /* ── QUICK REPORT FAB + SHEET ─────────────────────────── */
+  /* ── DRAGGABLE REPORT FAB ─────────────────────────────── */
   #reportFab {
-    position: absolute;
+    position: fixed;
     bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-    left: calc(10px + env(safe-area-inset-left, 0px));
-    z-index: 710;
-    width: 52px; height: 52px;
-    border-radius: 50%; border: 2.5px solid #fff;
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #fff; font-size: 22px;
+    right: calc(14px + env(safe-area-inset-right, 0px));
+    left: auto;
+    z-index: 25200;
+    width: 56px; height: 56px;
+    border-radius: 50%; border: 2.5px solid rgba(255,255,255,0.9);
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff; font-size: 24px;
     display: none; align-items: center; justify-content: center;
-    box-shadow: 0 4px 20px rgba(239,68,68,.55);
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 24px rgba(245,158,11,.65), 0 0 0 0 rgba(245,158,11,.4);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: box-shadow .2s, transform .15s;
     -webkit-tap-highlight-color: transparent;
+    animation: fabPulse 3s ease-in-out infinite;
+  }
+  @keyframes fabPulse {
+    0%, 100% { box-shadow: 0 4px 24px rgba(245,158,11,.65), 0 0 0 0 rgba(245,158,11,.35); }
+    50%       { box-shadow: 0 4px 24px rgba(245,158,11,.65), 0 0 0 10px rgba(245,158,11,0); }
   }
   #reportFab.visible { display: flex; }
-  #reportFab:active  { transform: scale(.92); }
-  #reportFab.spinning { animation: reportFabSpin .3s ease; }
+  #reportFab.dragging { cursor: grabbing; animation: none; transform: scale(1.12); box-shadow: 0 8px 32px rgba(245,158,11,.8); }
+  #reportFab.open-state { background: linear-gradient(135deg, #ef4444, #dc2626); animation: none; box-shadow: 0 4px 24px rgba(239,68,68,.7); }
+  #reportFab.spinning { animation: reportFabSpin .35s ease; }
   @keyframes reportFabSpin {
     from { transform: rotate(0deg) scale(1); }
-    50%  { transform: rotate(180deg) scale(.85); }
+    50%  { transform: rotate(180deg) scale(.8); }
     to   { transform: rotate(360deg) scale(1); }
   }
 
-  #reportSheet {
-    position: absolute;
-    bottom: calc(148px + env(safe-area-inset-bottom, 0px));
-    right: calc(14px + env(safe-area-inset-right, 0px));
-    z-index: 709;
+  /* ── RADIAL REPORT MENU ───────────────────────────────── */
+  #reportRadialMenu {
+    position: fixed;
+    inset: 0;
+    z-index: 25199;
     display: none;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-end;
+    pointer-events: none;
   }
-  #reportSheet.open { display: flex; animation: sheetSlideIn .25s cubic-bezier(.34,1.56,.64,1); }
-  @keyframes sheetSlideIn {
-    from { opacity: 0; transform: translateY(24px) scale(.85); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+  #reportRadialMenu.open { display: block; }
+  #reportRadialMenu-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.35);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    pointer-events: all;
+    opacity: 0;
+    transition: opacity .25s ease;
   }
-  .rs-btn {
-    display: flex; align-items: center; gap: 8px;
-    padding: 9px 14px 9px 10px;
-    border-radius: 999px; border: none;
-    background: rgba(10,16,30,.93);
-    backdrop-filter: blur(14px);
-    color: #fff; cursor: pointer;
-    touch-action: manipulation;
-    box-shadow: 0 4px 16px rgba(0,0,0,.45);
-    transition: transform .12s;
-    white-space: nowrap;
+  #reportRadialMenu.open #reportRadialMenu-backdrop { opacity: 1; }
+  /* ── REPORT GRID PANEL ───────────────────────────────── */
+  .rr-panel {
+    position: fixed;
+    display: grid;
+    background: rgba(8, 14, 26, 0.97);
+    border: 1.5px solid rgba(255,255,255,.13);
+    border-radius: 22px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 12px 48px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.06);
+    pointer-events: all;
+    z-index: 1;
+    transform: scale(0.75);
+    opacity: 0;
+    transition: transform .28s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
+  }
+  .rr-panel.rr-panel-visible {
+    transform: scale(1);
+    opacity: 1;
+  }
+  .rr-item {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(255,255,255,.75);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    justify-self: center; align-self: center;
+    gap: 4px;
+    color: #fff;
+    cursor: pointer;
+    pointer-events: all;
+    box-shadow: 0 4px 16px rgba(0,0,0,.5);
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: transform .12s ease, box-shadow .12s ease;
   }
-  .rs-btn:active { transform: scale(.95); }
-  .rs-icon {
-    width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
+  .rr-item:active { transform: scale(.88); box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+  .rr-emoji { font-size: 24px; line-height: 1; }
+  .rr-label {
+    font-size: 8px; font-weight: 800; letter-spacing: .3px; line-height: 1;
+    text-align: center; color: rgba(255,255,255,.92);
+    font-family: 'DM Sans', sans-serif;
+    max-width: 60px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
   }
-  .rs-label { font-size: 15px; font-weight: 800; letter-spacing: .2px; }
 
   /* ── TOP BAR ROUND REPORT BUTTONS ────────────────────── */
   .top-rpt-btn {
@@ -2015,51 +2182,38 @@
     margin-top: 5px; text-align: center;
     white-space: nowrap;
   }
-  .speedo-ring {
-    width: 110px; height: 110px;
-    border-radius: 50%;
-    background: rgba(10,16,30,0.95);
-    border: 3px solid #10b981;
-    box-shadow: 0 0 0 2px rgba(16,185,129,0.15), 0 0 24px rgba(16,185,129,0.25), 0 8px 32px rgba(0,0,0,0.6);
+  /* Speed-limit-sign style speedometer */
+  .speedo-sign {
+    width: 72px; height: 88px;
+    background: #fff;
+    border: 5px solid #000;
+    border-radius: 6px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
+    box-shadow: 0 4px 18px rgba(0,0,0,.65);
     position: relative;
-    backdrop-filter: blur(16px);
+    transition: border-color .3s, background .3s;
   }
-  .speedo-ring.moving {
-    border-color: #10b981;
-    box-shadow: 0 0 0 2px rgba(16,185,129,0.3), 0 0 30px rgba(16,185,129,0.4), 0 8px 32px rgba(0,0,0,0.6);
-  }
-  .speedo-ring.stopped {
-    border-color: #6b7280;
-    box-shadow: 0 0 0 2px rgba(107,114,128,0.15), 0 8px 32px rgba(0,0,0,0.6);
-  }
-  .speedo-svg {
-    position: absolute; top: -5px; left: -5px;
-    width: 120px; height: 120px;
-    pointer-events: none;
+  .speedo-sign-top {
+    font-size: 8px; font-weight: 900;
+    letter-spacing: .5px;
+    text-align: center;
+    line-height: 1.15;
+    color: #000;
+    margin-bottom: 1px;
   }
   .speedo-num {
     font-family: "Bebas Neue", sans-serif;
-    font-size: 42px; line-height: 1;
-    color: #10b981;
+    font-size: 38px; line-height: 1;
+    color: #000;
     letter-spacing: 1px;
     z-index: 1;
   }
-  .speedo-num.stopped { color: #6b7280; }
   .speedo-unit {
-    font-size: 10px; font-weight: 800;
-    color: rgba(255,255,255,0.45);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    z-index: 1;
-    margin-top: -4px;
-  }
-  .speedo-label {
-    font-size: 9px; font-weight: 700;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: .8px;
-    margin-top: 3px;
+    font-size: 8px; font-weight: 900;
+    color: #6b7280;
+    letter-spacing: .3px;
+    margin-top: 1px;
   }
   .speedo-status {
     margin-top: 5px;
@@ -2943,9 +3097,9 @@ body.map-active #driveHoursWidget{
 
 
 /* Speedometer turns red when over state truck limit */
-#speedometerWidget.over-limit .speedo-ring{ border-color:#ef4444 !important; box-shadow:0 0 0 2px rgba(239,68,68,.25), 0 0 18px rgba(239,68,68,.35), 0 4px 18px rgba(0,0,0,.6) !important; }
+#speedometerWidget.over-limit .speedo-sign{ border-color:#ef4444 !important; background:#fef2f2 !important; box-shadow:0 0 0 2px rgba(239,68,68,.25), 0 4px 18px rgba(0,0,0,.6) !important; }
 #speedometerWidget.over-limit .speedo-num{ color:#ef4444 !important; }
-#speedometerWidget.over-limit .speedo-label{ color:rgba(255,255,255,.85) !important; }
+#speedometerWidget.over-limit .speedo-sign-top{ color:#ef4444 !important; }
 
 /* Drive hours: subtle highlight when driving */
 #driveHoursWidget.boost{ opacity:1 !important; }
@@ -3017,18 +3171,80 @@ body:not(.map-active) #speedToast {
 /* ── MAP TILE CLARITY — brighter, more contrast, sharper on mobile ── */
 #miniMap .leaflet-tile-pane,
 #fullMap .leaflet-tile-pane {
-  filter: brightness(1.18) contrast(1.12) saturate(1.08);
+  filter: brightness(0.9) contrast(1.22) saturate(0.82) hue-rotate(3deg);
 }
 
-/* Night mode: don't over-brighten dark tiles */
+/* Night mode */
 body.dark #miniMap .leaflet-tile-pane,
 body.dark #fullMap .leaflet-tile-pane {
-  filter: brightness(1.05) contrast(1.1) saturate(0.95);
+  filter: brightness(0.88) contrast(1.20) saturate(0.72) hue-rotate(5deg);
 }
-/* Satellite/hybrid: boost saturation more */
+/* Satellite/hybrid: richer saturation */
 #miniMap.satellite-style .leaflet-tile-pane,
 #fullMap.satellite-style .leaflet-tile-pane {
-  filter: brightness(1.1) contrast(1.15) saturate(1.25);
+  filter: brightness(0.92) contrast(1.18) saturate(1.15);
+}
+
+/* Professional map atmosphere — top gradient fade */
+#fullMap::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 90px;
+  background: linear-gradient(to bottom, rgba(4,8,20,0.55) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 450;
+}
+
+/* Professional HUD override */
+#fmHud {
+  background: rgba(5,9,20,0.97) !important;
+  border-top: 1px solid rgba(99,179,237,0.14) !important;
+  box-shadow: 0 -6px 40px rgba(0,0,0,0.7), 0 -1px 0 rgba(99,179,237,0.08) !important;
+}
+
+/* ── Professional ELD ring cards ─────────────────────── */
+.hud-rings-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 5px;
+  margin-bottom: 14px;
+  justify-items: stretch;
+}
+.hud-ring-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.hud-ring-lbl {
+  font-size: 7.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .65px;
+  line-height: 1;
+  margin-bottom: 1px;
+}
+.hud-ring-val {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  color: #f0f6ff;
+  line-height: 1.1;
+  margin-top: 2px;
+  letter-spacing: -.3px;
+}
+.hud-ring-card.warn     { border-color: rgba(245,158,11,.22); box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 14px rgba(245,158,11,.12), inset 0 1px 0 rgba(255,255,255,0.05); }
+.hud-ring-card.critical { border-color: rgba(239,68,68,.28);  box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 18px rgba(239,68,68,.18), inset 0 1px 0 rgba(255,255,255,0.05); animation: hudCardPulse 1.4s ease-in-out infinite; }
+@keyframes hudCardPulse {
+  0%,100% { box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 14px rgba(239,68,68,.15), inset 0 1px 0 rgba(255,255,255,0.05); }
+  50%     { box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 28px rgba(239,68,68,.40), inset 0 1px 0 rgba(255,255,255,0.05); }
 }
 
 
@@ -3190,115 +3406,6 @@ body.dark #fullMap .leaflet-tile-pane {
   /* ════════════════════════════════════════════════════════════
      🗺️  COMMUNITY REPORTS PANEL (mejorado)
   ════════════════════════════════════════════════════════════ */
-  /* ── DRIVER CHAT PANEL (floating window) ── */
-  #chatPanel {
-    position:fixed;z-index:26000;
-    display:none;
-    inset:0;
-    width:100%;
-    background:rgba(0,0,0,.45);
-    backdrop-filter:blur(4px);
-  }
-  #chatPanel.open{display:flex;flex-direction:column;animation:tcFadeIn .22s ease;}
-  #chatSheet{
-    width:100%;
-    flex:1;
-    background:var(--surface);
-    border-radius:0;
-    display:flex;flex-direction:column;
-    overflow:hidden;
-  }
-  /* Minimised state: collapse to just the header */
-  #chatPanel.minimised #chatSheet { height:56px; }
-  #chatPanel.minimised #chatChannelBar,
-  #chatPanel.minimised #chatMessages,
-  #chatPanel.minimised #chatInputWrap { display:none; }
-  /* Drag handle: desactivado en pantalla completa */
-  #chatDragHandle { display:none; }
-  #chatChannelBar{
-    display:flex;gap:6px;padding:8px 16px 4px;flex-shrink:0;
-    overflow-x:auto;-webkit-overflow-scrolling:touch;
-    border-bottom:1px solid rgba(255,255,255,.06);
-  }
-  .chat-ch-btn{
-    border:none;border-radius:20px;padding:5px 14px;font-size:14px;font-weight:700;cursor:pointer;
-    background:rgba(255,255,255,.08);color:var(--muted);transition:.15s;white-space:nowrap;
-  }
-  .chat-ch-btn.active{background:var(--accent);color:#fff;}
-  #chatMessages{
-    flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;
-    -webkit-overflow-scrolling:touch;
-  }
-  .chat-msg{display:flex;gap:8px;align-items:flex-start;}
-  .chat-msg.mine{flex-direction:row-reverse;}
-  .chat-avatar{
-    width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#6d28d9);
-    display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
-  }
-  .chat-bubble{
-    max-width:72%;background:rgba(255,255,255,.08);border-radius:16px 16px 16px 4px;
-    padding:8px 12px;
-  }
-  .chat-msg.mine .chat-bubble{
-    background:linear-gradient(135deg,var(--accent),#6d28d9);border-radius:16px 16px 4px 16px;
-  }
-  .chat-name{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:3px;}
-  .chat-msg.mine .chat-name{color:rgba(255,255,255,.7);text-align:right;}
-  .chat-text{font-size:16px;line-height:1.4;color:var(--text);word-break:break-word;}
-  .chat-msg.mine .chat-text{color:#fff;}
-  .chat-time{font-size:12px;color:var(--muted);margin-top:3px;}
-  .chat-msg.mine .chat-time{text-align:right;}
-  #chatInputWrap{
-    display:flex;gap:8px;padding:10px 14px 14px;border-top:1px solid rgba(255,255,255,.06);
-    flex-shrink:0;background:var(--surface);
-    padding-bottom:calc(14px + env(safe-area-inset-bottom));
-  }
-  #panelChatInput{
-    flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
-    border-radius:22px;padding:10px 16px;color:var(--text);font-size:16px;outline:none;
-    font-family:inherit;resize:none;max-height:80px;
-  }
-  #panelSendBtn{
-    width:42px;height:42px;border-radius:50%;border:none;
-    background:linear-gradient(135deg,var(--accent),#6d28d9);
-    color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;align-self:flex-end;
-    display:flex;align-items:center;justify-content:center;
-  }
-  #panelSendBtn:disabled{opacity:.4;cursor:not-allowed;}
-  .chat-setup-msg{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:12px;padding:24px;text-align:center;color:var(--muted);
-  }
-  .chat-setup-msg h3{color:var(--text);margin:0;}
-  .chat-setup-msg pre{
-    background:rgba(255,255,255,.06);border-radius:10px;padding:12px;
-    font-size:11px;text-align:left;color:#86efac;overflow-x:auto;
-    max-width:100%;white-space:pre-wrap;word-break:break-all;
-  }
-  .chat-fab{
-    position:fixed;bottom:calc(var(--tab-h) + 16px);right:16px;z-index:800;
-    width:50px;height:50px;border-radius:50%;border:none;
-    background:linear-gradient(135deg,var(--accent),#6d28d9);
-    color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 18px rgba(124,58,237,.5);
-    display:none;align-items:center;justify-content:center;
-    transition:transform .2s;
-  }
-  .chat-fab:active{transform:scale(.92);}
-  .chat-fab-badge{
-    position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;
-    border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:900;
-    display:flex;align-items:center;justify-content:center;
-    border:2px solid var(--bg);
-  }
-  .chat-empty{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    color:var(--muted);gap:8px;font-size:14px;
-  }
-  .chat-loading{
-    display:flex;align-items:center;justify-content:center;gap:6px;
-    color:var(--muted);font-size:13px;padding:20px;
-  }
-
   #communityPanel {
     position: fixed; inset: 0; z-index: 8500;
     background: rgba(0,0,0,.78);
@@ -4000,12 +4107,12 @@ body.dark #fullMap .leaflet-tile-pane {
   .kpi-track {
     fill: none;
     stroke: rgba(0,0,0,0.12);
-    stroke-width: 5;
+    stroke-width: 3;
   }
   .kpi-arc {
     fill: none;
     stroke: #1a1a1a;
-    stroke-width: 5;
+    stroke-width: 3;
     stroke-linecap: round;
     stroke-dasharray: 251.3;
     stroke-dashoffset: 0;
@@ -5132,6 +5239,37 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 #hudManejoCell.critical { filter:drop-shadow(0 0 10px rgba(239,68,68,.65)); animation:hudDhPulse 1.3s ease-in-out infinite; }
 @keyframes hudDhPulse { 0%,100%{filter:drop-shadow(0 0 8px rgba(239,68,68,.5))} 50%{filter:drop-shadow(0 0 18px rgba(239,68,68,.85))} }
 
+/* ── ACTIVE ROUTE RETURN FAB (dentro de #page-plan) ─────── */
+#activeRouteFab {
+  position: fixed;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99;          /* por debajo del tab-bar (100) — SOLO visible en page-plan */
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px 12px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(16,185,129,.6);
+  background: rgba(10,16,30,.95);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 4px 28px rgba(0,0,0,.7), 0 0 0 0 rgba(16,185,129,.4);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  animation: arfPulse 2.8s ease-in-out infinite;
+  white-space: nowrap;
+  min-width: 0;
+}
+#activeRouteFab.arf-visible { display: flex; }
+#activeRouteFab:active { transform: translateX(-50%) scale(.96); }
+@keyframes arfPulse {
+  0%,100% { box-shadow: 0 4px 28px rgba(0,0,0,.7), 0 0 0 0 rgba(16,185,129,.4); border-color: rgba(16,185,129,.6); }
+  50%     { box-shadow: 0 4px 28px rgba(0,0,0,.7), 0 0 0 7px rgba(16,185,129,0); border-color: rgba(16,185,129,1); }
+}
+
 </style>
 
 <style id="fmHudCompactStyles">
@@ -5407,379 +5545,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   #fullMapScreen:not([style*="display:none"]) ~ #sideMenuToggle,
   #fullMapScreen:not([style*="display: none"]) ~ #sideMenuToggle { display: none; }
 
-  /* Hide chatFab — replaced by side tab */
-  #chatFab { display: none !important; }
-
-     💬  CARRIERCHAT — channels + rooms + side drawer
-  ════════════════════════════════════════════════════════════ */
-
-  /* FAB */
-  #chatFab {
-    position: fixed;
-    bottom: calc(74px + env(safe-area-inset-bottom,0px) + 14px);
-    right: 16px;
-    width: 54px; height: 54px; border-radius: 50%;
-    background: linear-gradient(135deg,#4f46e5,#7c3aed);
-    color: #fff; font-size: 24px;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 6px 24px rgba(79,70,229,.55);
-    cursor: pointer; touch-action: manipulation;
-    z-index: 7000; border: none;
-    transition: transform .15s;
-  }
-  #chatFab:active { transform: scale(.9); }
-  #chatFabBadge {
-    position: absolute; top: -3px; right: -3px;
-    background: #ef4444; color: #fff;
-    font-size: 10px; font-weight: 900;
-    border-radius: 999px; padding: 2px 6px;
-    min-width: 16px; text-align: center; display: none;
-  }
-
-  /* Hamburger */
-  #drawerHamburger {
-    position: fixed;
-    top: calc(env(safe-area-inset-top,0px) + 12px);
-    left: 14px;
-    width: 42px; height: 42px; border-radius: 12px;
-    background: rgba(20,20,40,.82);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,.12);
-    color: #fff; font-size: 20px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; touch-action: manipulation;
-    z-index: 7000; transition: transform .12s;
-  }
-  #drawerHamburger:active { transform: scale(.9); }
-
-  /* ── SIDE DRAWER ─────────────────────────────────────────── */
-  #drawerBackdrop {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.6);
-    z-index: 11000; display: none;
-  }
-  #drawerBackdrop.open { display: block; animation: tcFadeIn .22s ease; }
-  #sideDrawer {
-    position: fixed; top: 0; left: 0; bottom: 0;
-    width: min(300px, 82vw);
-    background: #1a1b2e;
-    z-index: 11001;
-    display: flex; flex-direction: column;
-    transform: translateX(-100%);
-    transition: transform .32s cubic-bezier(.16,1,.3,1);
-    overflow-y: auto; overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: calc(env(safe-area-inset-bottom,0px) + 24px);
-    scrollbar-width: none;
-  }
-  #sideDrawer::-webkit-scrollbar { display: none; }
-  #sideDrawer.open { transform: translateX(0); }
-  .drawer-profile {
-    padding: calc(env(safe-area-inset-top,0px) + 20px) 20px 16px;
-    border-bottom: 1px solid rgba(255,255,255,.08);
-  }
-  .drawer-profile-row { display: flex; align-items: center; gap: 14px; }
-  .drawer-avatar {
-    width: 56px; height: 56px; border-radius: 50%;
-    background: linear-gradient(135deg,#7c3aed,#6d28d9);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 900; color: #fff; flex-shrink: 0;
-    border: 2px solid rgba(255,255,255,.15);
-  }
-  .drawer-profile-name { font-size: 17px; font-weight: 800; color: #fff; }
-  .drawer-online-status {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 600; color: #10b981; margin-top: 3px;
-  }
-  .drawer-online-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,.25);
-  }
-  .drawer-section { padding: 8px 0; }
-  .drawer-section-title {
-    font-size: 10px; font-weight: 800; color: rgba(255,255,255,.3);
-    text-transform: uppercase; letter-spacing: .8px;
-    padding: 8px 20px 4px;
-  }
-  .drawer-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 12px 20px; cursor: pointer; touch-action: manipulation;
-    transition: background .15s;
-  }
-  .drawer-item:active { background: rgba(255,255,255,.07); }
-  .drawer-item-icon {
-    width: 36px; height: 36px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; flex-shrink: 0;
-  }
-  .drawer-item-name { font-size: 15px; font-weight: 700; color: #fff; }
-  .drawer-divider { height: 1px; background: rgba(255,255,255,.07); margin: 4px 0; }
-
-  /* ── CHAT FULL-SCREEN OVERLAY ────────────────────────────── */
-  #chatOverlay {
-    position: fixed; inset: 0;
-    z-index: 26000; background: #12131e;
-    display: none; flex-direction: column; overflow: hidden;
-  }
-  #chatOverlay.open { display: flex; animation: tcFadeIn .18s ease; }
-
-  /* Channels list */
-  #chatChannelsList {
-    flex: 1; display: flex; flex-direction: column; overflow: hidden;
-  }
-  .cc-header {
-    padding: calc(env(safe-area-inset-top,0px) + 22px) 20px 10px;
-    flex-shrink: 0;
-  }
-  .cc-header-top {
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .cc-title {
-    font-size: 34px; font-weight: 900; color: #fff; letter-spacing: -.5px;
-  }
-  .cc-close-btn {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: rgba(255,255,255,.1); border: none;
-    color: #fff; font-size: 22px; font-weight: 300;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; touch-action: manipulation;
-  }
-  .cc-divider { height: 1px; background: rgba(255,255,255,.1); margin-top: 10px; }
-  .cc-channels-scroll {
-    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .cc-channels-scroll::-webkit-scrollbar { display: none; }
-  .cc-channel-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 14px 20px; cursor: pointer; touch-action: manipulation;
-    transition: background .15s;
-  }
-  .cc-channel-item:active { background: rgba(255,255,255,.06); }
-  .cc-channel-item + .cc-channel-item { border-top: 1px solid rgba(255,255,255,.05); }
-  .cc-channel-icon {
-    width: 52px; height: 52px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px; flex-shrink: 0;
-  }
-  .cc-channel-info { flex: 1; min-width: 0; }
-  .cc-channel-name { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 2px; }
-  .cc-channel-preview {
-    font-size: 13px; color: rgba(255,255,255,.45);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .cc-channel-right {
-    display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0;
-  }
-  .cc-channel-time { font-size: 12px; color: rgba(255,255,255,.35); font-weight: 600; }
-  .cc-channel-badge {
-    background: #4f46e5; color: #fff;
-    font-size: 11px; font-weight: 900;
-    border-radius: 999px; padding: 2px 8px;
-    min-width: 22px; text-align: center;
-  }
-
-  /* Chat room */
-  #chatRoom {
-    flex: 1; display: none; flex-direction: column;
-    background: #0b141a;
-    overflow: hidden;
-  }
-  #chatRoom.active { display: flex; }
-  .room-header {
-    display: flex; align-items: center; gap: 10px;
-    padding: calc(env(safe-area-inset-top,0px) + 12px) 12px 12px;
-    background: #1f2c34;
-    border-bottom: 1px solid rgba(255,255,255,.06); flex-shrink: 0;
-  }
-  .room-back-btn {
-    width: 34px; height: 34px; border-radius: 50%;
-    background: transparent; border: none;
-    color: #aebac1; font-size: 26px; font-weight: 300; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; touch-action: manipulation; flex-shrink: 0;
-    padding: 0;
-  }
-  .room-icon {
-    width: 44px; height: 44px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px; flex-shrink: 0;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,.4);
-  }
-  .room-header-info { flex: 1; min-width: 0; }
-  .room-title {
-    font-size: 16px; font-weight: 700; color: #e9edef;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .room-subtitle {
-    font-size: 12px; color: #8696a0; margin-top: 1px;
-  }
-  #roomMessages {
-    flex: 1; overflow-y: auto;
-    padding: 10px 0 6px;
-    display: flex; flex-direction: column; gap: 2px;
-    -webkit-overflow-scrolling: touch; scrollbar-width: none;
-    background: #0b141a;
-  }
-  #roomMessages::-webkit-scrollbar { display: none; }
-
-  /* WhatsApp-style message row */
-  .room-msg {
-    display: flex; align-items: flex-end; gap: 6px;
-    padding: 1px 8px;
-    animation: commPop .25s cubic-bezier(.16,1,.3,1);
-  }
-  .room-msg.own { flex-direction: row-reverse; }
-  .room-msg.own .room-avatar { display: none; }
-
-  /* Avatar circle — shows photo or emoji */
-  .room-avatar {
-    width: 34px; height: 34px; border-radius: 50%;
-    flex-shrink: 0; align-self: flex-end;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; overflow: hidden;
-    border: 2px solid rgba(255,255,255,.1);
-  }
-
-  /* Bubble wrapper */
-  .room-bubble-wrap {
-    max-width: 75%; display: flex; flex-direction: column;
-  }
-
-  /* Sender name (only for others) */
-  .room-bubble-name {
-    font-size: 12px; font-weight: 700;
-    margin-bottom: 2px; padding-left: 10px;
-    /* color set inline via nameColor() */
-  }
-  .room-msg.own .room-bubble-name { display: none; }
-
-  /* Bubble body */
-  .room-bubble {
-    position: relative;
-    padding: 7px 12px 20px 10px;
-    border-radius: 0px 8px 8px 8px;   /* received: flat top-left */
-    background: #202c33;
-    color: #e9edef; font-size: 14.5px;
-    line-height: 1.45; word-break: break-word;
-    box-shadow: 0 1px 2px rgba(0,0,0,.35);
-  }
-  /* tail for received */
-  .room-bubble::before {
-    content: '';
-    position: absolute; left: -7px; top: 0px;
-    border-width: 0 8px 8px 0;
-    border-style: solid;
-    border-color: transparent #202c33 transparent transparent;
-  }
-
-  /* Own message bubble */
-  .room-msg.own .room-bubble {
-    border-radius: 8px 0px 8px 8px;   /* flat top-right */
-    background: #005c4b;
-  }
-  /* tail for sent */
-  .room-msg.own .room-bubble::before {
-    left: auto; right: -7px; top: 0px;
-    border-width: 0 0 8px 8px;
-    border-color: transparent transparent transparent #005c4b;
-  }
-
-  /* Timestamp inside bubble */
-  .room-bubble-time {
-    font-size: 10px; color: rgba(255,255,255,.4);
-    position: absolute; bottom: 4px; right: 8px;
-    white-space: nowrap;
-  }
-  .room-empty {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 8px;
-  }
-  .room-empty-icon { font-size: 44px; opacity: .45; }
-  .room-empty-text { font-size: 13px; color: rgba(255,255,255,.35); font-weight: 600; }
-  .room-quick-alerts {
-    display: flex; gap: 6px; padding: 8px 10px 4px;
-    background: #1f2c34; overflow-x: auto; flex-shrink: 0;
-    scrollbar-width: none;
-  }
-  .room-quick-alerts::-webkit-scrollbar { display: none; }
-  .rqa-btn {
-    white-space: nowrap; border: none; border-radius: 16px;
-    padding: 6px 12px; font-size: 13px; font-weight: 600;
-    background: #2a3942; color: #aebac1; cursor: pointer;
-    touch-action: manipulation; flex-shrink: 0;
-    transition: background .15s, color .15s;
-  }
-  .rqa-btn:active { background: #00a884; color: #fff; }
-  .rqa-btn.rqa-alert { background: rgba(239,68,68,.15); color: #f87171; }
-  .rqa-btn.rqa-alert:active { background: #ef4444; color: #fff; }
-  .room-input-row {
-    display: flex; gap: 8px; align-items: flex-end;
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom,0px));
-    background: #1f2c34; flex-shrink: 0;
-  }
-  #chatInput {
-    flex: 1;
-    background: #2a3942;
-    border: none;
-    border-radius: 22px; padding: 13px 18px;
-    font-size: 16px; color: #e9edef;
-    font-family: 'DM Sans', sans-serif;
-    resize: none; max-height: 120px; min-height: 48px;
-    -webkit-appearance: none; outline: none; line-height: 1.4;
-  }
-  #chatInput::placeholder { color: rgba(233,237,239,.35); }
-  #chatSendBtn {
-    width: 48px; height: 48px; border-radius: 50%;
-    background: #00a884; border: none; color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px; cursor: pointer; touch-action: manipulation;
-    flex-shrink: 0; transition: transform .12s, opacity .12s;
-  }
-  #chatSendBtn:active { transform: scale(.9); }
-  #chatSendBtn:disabled { opacity: .4; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- Firebase SDK (Driver Chat) -->
-<script type="module">
-  // ══════════════════════════════════════════════════════════
-  //  FIREBASE CONFIG — reemplaza con los datos de tu proyecto
-  //  https://console.firebase.google.com → Configuración del proyecto
-  // ══════════════════════════════════════════════════════════
-  const FIREBASE_CONFIG = {
-    apiKey:            "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
-    authDomain:        "hos-tracker-chat.firebaseapp.com",
-    databaseURL:       "https://hos-tracker-chat-default-rtdb.firebaseio.com",
-    projectId:         "hos-tracker-chat",
-    storageBucket:     "hos-tracker-chat.firebasestorage.app",
-    messagingSenderId: "390077980024",
-    appId:             "1:390077980024:web:65d312be4c52809de43c8d"
-  };
-  const CHAT_CONFIGURED = FIREBASE_CONFIG.apiKey !== "TU_API_KEY";
-
-  if (CHAT_CONFIGURED) {
-    const { initializeApp }      = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-    const { getDatabase, ref, push, query, orderByChild, limitToLast, onValue, serverTimestamp }
-                                  = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
-    const app = initializeApp(FIREBASE_CONFIG);
-    const db  = getDatabase(app);
-
-    // Expose to global scope for the chat functions
-    window._chatDB              = db;
-    window._chatRef             = (ch) => ref(db, `chat/${ch}/messages`);
-    window._chatPush            = push;
-    window._chatQuery           = query;
-    window._chatOrderByChild    = orderByChild;
-    window._chatLimitToLast     = limitToLast;
-    window._chatOnValue         = onValue;
-    window._chatServerTimestamp = serverTimestamp;
-    window._chatReady           = true;
-  } else {
-    window._chatReady = false;
-  }
-</script>
-</head>
 
 <body>
 
@@ -5859,6 +5626,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <span style="top:88%;right:24%;font-size:34px;opacity:.07">🕙</span>
 </div>
 
+
 <div class="App" data-scroll>
   <!-- TAB BAR -->
   <div class="tab-bar">
@@ -5897,9 +5665,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- FLOATING CHAT BUTTON (hidden — replaced by side tab) -->
-  <button id="chatFab" onclick="openChatChannel('general')" aria-label="Driver Chat" style="display:none">
-    💬<span id="chatFabBadge"></span>
-  </button>
 
   <!-- COMMUNITY QUICK PANEL OVERLAY -->
   <div id="commQuickOverlay" onclick="closeCommQuickPanel()"></div>
@@ -6189,6 +5954,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           </div>
 
           <!-- Destination -->
+          <div id="planFormInputs">
           <div style="position:relative;margin-bottom:8px">
             <div class="stop-row-mobile" id="stopRowDest">
               <span class="stop-icon">🏁</span>
@@ -6196,8 +5962,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
             </div>
             <div class="suggestions" id="destSugg" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999"></div>
           </div>
+          </div><!-- /planFormInputs -->
 
-          <!-- Dynamic waypoints -->
+          <!-- Dynamic waypoints — siempre visible (también con ruta activa) -->
           <div id="waypointsArea"></div>
         </div>
 
@@ -6207,6 +5974,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           Agregar Parada
         </button>
 
+        <!-- Cancelar ruta — sólo visible con ruta activa -->
+        <button id="cancelActiveRouteBtn" onclick="cancelActiveRoute()" style="display:none;width:100%;margin-top:8px;padding:14px;border-radius:14px;border:1.5px solid rgba(239,68,68,0.5);background:rgba(239,68,68,0.1);color:#f87171;font-size:15px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;letter-spacing:0.2px;">
+          🛑 Cancelar ruta
+        </button>
+
+        <div id="planDepartureSection">
         <div class="form-section-label">📅 Día y Hora de Salida</div>
         <div class="trip-params-grid">
           <div class="param-box full-width">
@@ -6219,6 +5992,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
         <input type="number" id="speedInput" value="60" style="display:none" />
         <input type="number" id="dailyHoursInput" value="11" style="display:none" />
+        </div><!-- /planDepartureSection -->
 
         <div class="error" id="errorBox" style="display:none;margin-top:10px"></div>
 
@@ -6273,6 +6047,16 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 
     </div>
+
+    <!-- ACTIVE ROUTE RETURN FAB — solo aparece en esta página cuando hay rastreo activo -->
+    <button id="activeRouteFab" onclick="showHosDashboard()">
+      <span style="font-size:22px;line-height:1">🚛</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:1px;flex:1;min-width:0;">
+        <span style="font-size:13px;font-weight:900;color:#10b981;letter-spacing:-.1px;white-space:nowrap;">Ruta activa</span>
+        <span id="arfSub" style="font-size:11px;font-weight:600;color:rgba(255,255,255,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">Toca para ver detalles</span>
+      </div>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
   </div>
 
   <!-- DRIVES PAGE -->
@@ -6575,85 +6359,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
           <input type="hidden" id="trailerHeightInput" value="13.6">
 
-          <!-- ─── INCIDENT REPORTS (inside same Safety group) ─── -->
-          <div style="padding:12px 16px 6px;border-top:1px solid var(--border)">
-            <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">🚨 Reportar Incidentes</div>
-            <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:12px;line-height:1.4">
-              Activa el tipo de incidente que quieras reportar. Aparece como ícono en el mapa al activarlo.
-            </div>
 
-            <!-- Incident toggles grid -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-
-              <!-- Police -->
-              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
-                <div style="width:32px;height:32px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🚔</div>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:13px;font-weight:700;color:var(--text)">Policía</div>
-                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incPoliceStatus">Off</div>
-                </div>
-                <button class="sett-toggle" id="incPoliceToggle" onclick="toggleIncidentType('police',this)" style="transform:scale(0.85);flex-shrink:0"></button>
-              </div>
-
-              <!-- Accident -->
-              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
-                <div style="width:32px;height:32px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">💥</div>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:13px;font-weight:700;color:var(--text)">Accidente</div>
-                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incAccidentStatus">Off</div>
-                </div>
-                <button class="sett-toggle" id="incAccidentToggle" onclick="toggleIncidentType('accident',this)" style="transform:scale(0.85);flex-shrink:0"></button>
-              </div>
-
-              <!-- Traffic -->
-              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
-                <div style="width:32px;height:32px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🚦</div>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:13px;font-weight:700;color:var(--text)">Tráfico</div>
-                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incTrafficStatus">Off</div>
-                </div>
-                <button class="sett-toggle" id="incTrafficToggle" onclick="toggleIncidentType('traffic',this)" style="transform:scale(0.85);flex-shrink:0"></button>
-              </div>
-
-              <!-- Hazard -->
-              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
-                <div style="width:32px;height:32px;border-radius:50%;background:#ffedd5;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">⚠️</div>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:13px;font-weight:700;color:var(--text)">Peligro</div>
-                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incHazardStatus">Off</div>
-                </div>
-                <button class="sett-toggle" id="incHazardToggle" onclick="toggleIncidentType('hazard',this)" style="transform:scale(0.85);flex-shrink:0"></button>
-              </div>
-
-              <!-- Construction -->
-              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
-                <div style="width:32px;height:32px;border-radius:50%;background:#fef9c3;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🚧</div>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:13px;font-weight:700;color:var(--text)">Construcción</div>
-                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incConstructionStatus">Off</div>
-                </div>
-                <button class="sett-toggle" id="incConstructionToggle" onclick="toggleIncidentType('construction',this)" style="transform:scale(0.85);flex-shrink:0"></button>
-              </div>
-
-              <!-- Closure -->
-              <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
-                <div style="width:32px;height:32px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🛑</div>
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:13px;font-weight:700;color:var(--text)">Vía Cerrada</div>
-                  <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:1px" id="incClosureStatus">Off</div>
-                </div>
-                <button class="sett-toggle" id="incClosureToggle" onclick="toggleIncidentType('closure',this)" style="transform:scale(0.85);flex-shrink:0"></button>
-              </div>
-
-            </div>
-
-            <!-- Active incident mini icons -->
-            <div id="activeIncidentIcons" style="display:none;padding:8px 0 4px">
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Activos:</div>
-              <div id="activeIconsRow" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-            </div>
-
-          </div>
 
         </div><!-- end sett-group -->
       </div><!-- end safety sett-section -->
@@ -6697,7 +6403,62 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
       </div>
 
+      <!-- ── DASH CAM SECTION ── -->
+      <div class="sett-section" id="settCamSection">
+        <div class="sett-section-title">🎥 Dash Cam</div>
+        <div class="sett-group" style="overflow:visible">
 
+          <!-- Type tabs -->
+          <div class="cam-type-tabs">
+            <button class="cam-type-tab active" id="camTab_wifi" onclick="selectCamType('wifi')">🌐 WiFi / IP</button>
+            <button class="cam-type-tab"        id="camTab_bt"   onclick="selectCamType('bt')">📶 Bluetooth</button>
+          </div>
+
+          <!-- Status row -->
+          <div class="cam-status-row">
+            <div class="cam-status-dot" id="camStatusDot"></div>
+            <div class="cam-status-txt" id="camStatusTxt">Sin dash cam conectada</div>
+          </div>
+
+          <!-- Panel: WiFi/IP dash cam -->
+          <div id="camPanel_wifi" class="cam-connect-area">
+            <div style="font-size:12px;color:var(--muted);line-height:1.55">
+              Conéctate al hotspot WiFi de tu dash cam e ingresa su IP.<br>
+              <span style="font-size:11px;opacity:.7">Viofo: 192.168.1.254 · BlackVue: 192.168.1.1 · Nextbase: 192.168.0.1</span>
+            </div>
+            <input class="cam-ip-input" id="camIpInput" type="text"
+              placeholder="Ej: 192.168.1.254"
+              oninput="saveCamIp()" />
+            <select class="cam-ip-input" id="camProtoSelect" onchange="saveCamIp()" style="margin-top:-4px">
+              <option value="mjpeg">MJPEG stream (Viofo, DDPai, IP Cam)</option>
+              <option value="hls">HLS / m3u8  (BlackVue, Thinkware)</option>
+              <option value="jpg">JPEG snapshot</option>
+            </select>
+            <button class="cam-connect-btn" id="camWifiBtn" onclick="connectWifiCamera()">🌐 Conectar dash cam</button>
+          </div>
+
+          <!-- Panel: Bluetooth scan -->
+          <div id="camPanel_bt" class="cam-connect-area" style="display:none">
+            <div style="font-size:12px;color:var(--muted);line-height:1.55">
+              Escanea tu dash cam Bluetooth. Tras vincularla ingresa su IP para ver el video.
+            </div>
+            <button class="cam-connect-btn" id="camBtScanBtn" onclick="startCamBtScan()">📶 Escanear dash cams</button>
+            <div class="cam-bt-list" id="camBtList" style="display:none"></div>
+          </div>
+
+          <!-- Preview toggle -->
+          <div class="sett-row" style="cursor:default;border-top:1px solid var(--border)">
+            <div class="sett-icon" style="background:#dbeafe">👁️</div>
+            <div style="flex:1">
+              <div class="sett-label" style="margin:0">Mostrar preview</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">Ventana flotante de la dash cam durante el viaje</div>
+            </div>
+            <button class="sett-toggle" id="camPreviewToggle" onclick="toggleCamPreviewSetting(this)"></button>
+          </div>
+
+        </div>
+      </div>
+      <!-- END DASH CAM SECTION -->
 
 
 <div class="sett-section" style="display:none">
@@ -6941,6 +6702,16 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="tpb-arrow">›</div>
       </button>
 
+      <!-- Dash Cam -->
+      <button class="tool-page-btn" onclick="openCameraFromTools()" style="--tclr:#22d3ee;--tcbg:rgba(34,211,238,.1);--tcbdr:rgba(34,211,238,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">🎥</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Dash Cam</div>
+          <div class="tpb-sub" id="camToolSubtxt">Ver la dash cam en vivo — WiFi o Bluetooth</div>
+        </div>
+        <div class="tpb-arrow" id="camToolArrow">›</div>
+      </button>
+
     </div>
   </div>
 
@@ -6991,6 +6762,69 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 .axle-bar { height:100%;border-radius:4px;transition:width .5s; }
 .axle-val { font-size:13px;font-weight:800;width:80px;text-align:right;flex-shrink:0; }
 .axle-limit { font-size:10px;color:rgba(255,255,255,.35);width:60px;text-align:right;flex-shrink:0; }
+
+  /* ── Side Drawer ─────────────────────────────────────── */
+  #drawerBackdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 11000; display: none;
+  }
+  #drawerBackdrop.open { display: block; animation: tcFadeIn .22s ease; }
+  #sideDrawer {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: min(300px, 82vw);
+    background: #1a1b2e;
+    z-index: 11001;
+    display: flex; flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform .32s cubic-bezier(.16,1,.3,1);
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(env(safe-area-inset-bottom,0px) + 24px);
+    scrollbar-width: none;
+  }
+  #sideDrawer::-webkit-scrollbar { display: none; }
+  #sideDrawer.open { transform: translateX(0); }
+  .drawer-profile {
+    padding: calc(env(safe-area-inset-top,0px) + 20px) 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .drawer-profile-row { display: flex; align-items: center; gap: 14px; }
+  .drawer-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg,#7c3aed,#6d28d9);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 900; color: #fff; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,.15);
+  }
+  .drawer-profile-name { font-size: 17px; font-weight: 800; color: #fff; }
+  .drawer-online-status {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: #10b981; margin-top: 3px;
+  }
+  .drawer-online-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,.25);
+  }
+  .drawer-section { padding: 8px 0; }
+  .drawer-section-title {
+    font-size: 10px; font-weight: 800; color: rgba(255,255,255,.3);
+    text-transform: uppercase; letter-spacing: .8px;
+    padding: 8px 20px 4px;
+  }
+  .drawer-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 20px; cursor: pointer; touch-action: manipulation;
+    transition: background .15s;
+  }
+  .drawer-item:active { background: rgba(255,255,255,.07); }
+  .drawer-item-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .drawer-item-name { font-size: 15px; font-weight: 700; color: #fff; }
+  .drawer-divider { height: 1px; background: rgba(255,255,255,.07); margin: 4px 0; }
 </style>
 
 <!-- Bridge/Weight Restrictions Sheet -->
@@ -7417,97 +7251,41 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="drawer-item-name">My Profile</div>
     </div>
   </div>
-
-  <div class="drawer-divider"></div>
-
-  <div class="drawer-section">
-    <div class="drawer-section-title">Truck Services</div>
-    <div class="drawer-item" onclick="openChatChannel('weighstation');closeDrawer()">
-      <div class="drawer-item-icon" style="background:rgba(234,88,12,.2)">🚛</div>
-      <div class="drawer-item-name">DOT Weigh Stations</div>
-    </div>
-    <div class="drawer-item" onclick="openChatChannel('mechanics');closeDrawer()">
-      <div class="drawer-item-icon" style="background:rgba(124,58,237,.2)">🔧</div>
-      <div class="drawer-item-name">Mechanics</div>
-    </div>
-    <div class="drawer-item" onclick="openChatChannel('parts');closeDrawer()">
-      <div class="drawer-item-icon" style="background:rgba(59,130,246,.2)">⚙️</div>
-      <div class="drawer-item-name">Parts</div>
-    </div>
-    <div class="drawer-item" onclick="openChatChannel('tires');closeDrawer()">
-      <div class="drawer-item-icon" style="background:rgba(139,92,246,.2)">🔄</div>
-      <div class="drawer-item-name">Tires</div>
-    </div>
-    <div class="drawer-item" onclick="openChatChannel('truckwash');closeDrawer()">
-      <div class="drawer-item-icon" style="background:rgba(14,165,233,.2)">🚿</div>
-      <div class="drawer-item-name">Truck Wash</div>
-    </div>
-    <div class="drawer-item" onclick="openChatChannel('restarea');closeDrawer()">
-      <div class="drawer-item-icon" style="background:rgba(99,102,241,.2)">🛌</div>
-      <div class="drawer-item-name">Rest Area</div>
-    </div>
-    <div class="drawer-item" onclick="openChatChannel('parking');closeDrawer()">
-      <div class="drawer-item-icon" style="background:rgba(59,130,246,.2)">🅿️</div>
-      <div class="drawer-item-name">Parking paid/free</div>
-    </div>
-    <div class="drawer-item" onclick="openChatChannel('towing');closeDrawer()">
-      <div class="drawer-item-icon" style="background:rgba(234,88,12,.2)">🏗️</div>
-      <div class="drawer-item-name">Towing / Grúa</div>
-    </div>
-  </div>
 </div>
 
-<!-- Chat full-screen overlay -->
-<div id="chatOverlay">
+<script>
+(function(){
+  function _nameColor(name) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+    return 'hsl(' + (Math.abs(h) % 360) + ',55%,45%)';
+  }
+  function openDrawer() {
+    var dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
+    var nameEl = document.getElementById('drawerName');
+    var avatarEl = document.getElementById('drawerAvatar');
+    if (nameEl) nameEl.textContent = dp.name || 'Conductor';
+    if (avatarEl) {
+      var map = {'18wheeler':'🚛','box':'📦','tanker':'🛢️','flatbed':'🚚','refer':'❄️','local':'🚐'};
+      avatarEl.textContent = map[dp.truckType] || '🚛';
+      avatarEl.style.fontSize = '26px';
+    }
+    document.getElementById('drawerBackdrop').classList.add('open');
+    document.getElementById('sideDrawer').classList.add('open');
+  }
+  function closeDrawer() {
+    document.getElementById('drawerBackdrop').classList.remove('open');
+    document.getElementById('sideDrawer').classList.remove('open');
+  }
+  function openProfileFromDrawer() {
+    if (typeof openProfileModal === 'function') openProfileModal();
+  }
+  window.openDrawer = openDrawer;
+  window.closeDrawer = closeDrawer;
+  window.openProfileFromDrawer = openProfileFromDrawer;
+})();
+</script>
 
-  <!-- View 1: Channels list -->
-  <div id="chatChannelsList">
-    <div class="cc-header">
-      <div class="cc-header-top">
-        <div class="cc-title">CarrierChat</div>
-        <button class="cc-close-btn" onclick="closeChat()">×</button>
-      </div>
-      <div class="cc-divider"></div>
-    </div>
-    <div class="cc-channels-scroll" id="ccChannelsList"></div>
-  </div>
-
-  <!-- View 2: Chat room -->
-  <div id="chatRoom">
-    <div class="room-header">
-      <button class="room-back-btn" onclick="backToChannels()">‹</button>
-      <div class="room-icon" id="roomIcon">💬</div>
-      <div class="room-header-info">
-        <div class="room-title" id="roomTitle">General</div>
-        <div class="room-subtitle" id="roomSubtitle">Canal de truckers</div>
-      </div>
-    </div>
-    <div id="roomMessages">
-      <div class="room-empty" id="roomEmpty">
-        <div class="room-empty-icon">💬</div>
-        <div class="room-empty-text">No messages yet</div>
-      </div>
-    </div>
-    <div class="room-quick-alerts" id="roomQuickAlerts">
-      <button class="rqa-btn" onclick="sendQuickAlert('🚔 Policía en área — precaución')">🚔 Policía</button>
-      <button class="rqa-btn" onclick="sendQuickAlert('📋 Inspección DOT activa — adelante')">📋 DOT</button>
-      <button class="rqa-btn" onclick="sendQuickAlert('🔍 Inspección de vehículo en progreso')">🔍 Inspección</button>
-      <button class="rqa-btn rqa-alert" onclick="sendQuickAlert('🚨 Accidente en la vía — tener cuidado')">🚨 Accidente</button>
-    </div>
-    <div class="room-input-row">
-      <textarea
-        id="chatInput"
-        placeholder="Write a message..."
-        maxlength="300"
-        rows="1"
-        onkeydown="handleChatKey(event)"
-        oninput="autoresizeChatInput(this)"
-      ></textarea>
-      <button id="chatSendBtn" onclick="sendChatMessage()" disabled>➤</button>
-    </div>
-  </div>
-
-</div>
 
 <!-- ============================================================
      FULLSCREEN MAP VIEW  (Google Maps style)
@@ -7851,10 +7629,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <span class="side-tab-icon">👥</span>
     <span class="side-tab-label">Comunidad</span>
   </button>
-  <button class="side-tab-btn" onclick="closeSideTabMenu();openChatChannel('general')">
-    <span class="side-tab-icon">💬</span>
-    <span class="side-tab-label">Live Chat</span>
-  </button>
 </div>
 
 <div id="fullMapScreen" style="
@@ -7914,44 +7688,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button onclick="document.getElementById('reportAlertPopup').classList.remove('show')" style="margin-top:4px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;color:#f1f5f9;font-size:11px;font-weight:700;padding:4px 12px;cursor:pointer">✕ Cerrar</button>
   </div>
 
-  <!-- QUICK REPORT FAB (direct child — positioned correctly) -->
-  <button id="reportFab" onclick="toggleReportSheet()" title="Reportar incidente">⚠️</button>
-
-  <!-- QUICK REPORT ACTION SHEET -->
-  <div id="reportSheet">
-    <button class="rs-btn" onclick="quickReport('police','🚔','Policía')">
-      <div class="rs-icon" style="background:#1d3a8a">🚔</div>
-      <span class="rs-label">Policía</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('accident','🚗','Accidente')">
-      <div class="rs-icon" style="background:#7f1d1d">💥</div>
-      <span class="rs-label">Accidente</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('hazard','⚠️','Peligro en vía')">
-      <div class="rs-icon" style="background:#7c2d12">⚠️</div>
-      <span class="rs-label">Peligro en vía</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('traffic','🚦','Tráfico lento')">
-      <div class="rs-icon" style="background:#78350f">🚦</div>
-      <span class="rs-label">Tráfico lento</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('construction','🚧','Construcción')">
-      <div class="rs-icon" style="background:#713f12">🚧</div>
-      <span class="rs-label">Construcción</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('closure','🚫','Vía cerrada')">
-      <div class="rs-icon" style="background:#450a0a">🚫</div>
-      <span class="rs-label">Vía cerrada</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('dot_police','🚛','DOT Police')">
-      <div class="rs-icon" style="background:#1e3a5f">🚛</div>
-      <span class="rs-label">DOT Police</span>
-    </button>
-    <button class="rs-btn" onclick="quickReport('inspection','🔍','Inspección DOT')">
-      <div class="rs-icon" style="background:#312e81">🔍</div>
-      <span class="rs-label">Inspección DOT</span>
-    </button>
-  </div>
 
   <!-- LEFT PANEL TOGGLE TAB -->
   <button id="mapLeftPanelBtn" onclick="toggleMapLeftPanel()" title="Controles del mapa">›</button>
@@ -7975,6 +7711,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomIn()">+</button>
     <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
     <div class="map-ctrl-sep"></div>
+    <button id="trafficBtn" onclick="toggleTrafficLayer()" title="Tráfico en tiempo real" style="font-size:17px">🚦</button>
     <button id="mapSearchBtn" onclick="toggleMapSearch()" title="Buscar destino" style="font-size:18px">🔍</button>
   </div>
 
@@ -8165,61 +7902,61 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- 4 ELD-style stat circles -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:12px;justify-items:center;">
+    <!-- 4 ELD-style stat circles — professional glass cards -->
+    <div class="hud-rings-grid">
 
       <!-- LLEGADA -->
-      <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(6,182,212,.2)" stroke-width="5"/>
-            <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(34,211,238,.14)" stroke-width="5.5"/>
+            <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#22d3ee" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#06b6d4;line-height:1;" id="fmEtaLbl">LLEGADA</div>
-            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmEta">--</div>
+            <div class="hud-ring-lbl" style="color:#22d3ee" id="fmEtaLbl">LLEGADA</div>
+            <div class="hud-ring-val" id="fmEta">--</div>
           </div>
         </div>
       </div>
 
       <!-- MANEJO -->
-      <div id="hudManejoCell" style="display:flex;flex-direction:column;align-items:center;">
+      <div id="hudManejoCell" class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(16,185,129,.2)" stroke-width="5"/>
-            <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(52,211,153,.14)" stroke-width="5.5"/>
+            <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#34d399" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#10b981;line-height:1;" id="fmDriveLbl">MANEJO</div>
-            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmDriveLeft">11h</div>
+            <div class="hud-ring-lbl" style="color:#34d399" id="fmDriveLbl">MANEJO</div>
+            <div class="hud-ring-val" id="fmDriveLeft">11h</div>
           </div>
         </div>
       </div>
 
       <!-- RESTANTE -->
-      <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(59,130,246,.2)" stroke-width="5"/>
-            <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(96,165,250,.14)" stroke-width="5.5"/>
+            <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#60a5fa" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="226 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#3b82f6;line-height:1;" id="fmRemLbl">RESTANTE</div>
-            <div style="font-size:11px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fmRem">--</div>
+            <div class="hud-ring-lbl" style="color:#60a5fa" id="fmRemLbl">RESTANTE</div>
+            <div class="hud-ring-val" style="font-size:12px" id="fmRem">--</div>
           </div>
         </div>
       </div>
 
       <!-- 70 HRS -->
-      <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="hud-ring-card">
         <div style="position:relative;width:78px;height:78px;">
           <svg width="78" height="78" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(0,0,0,0.55)" stroke="rgba(139,92,246,.2)" stroke-width="5"/>
-            <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round" stroke-dasharray="226 226"/>
+            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(167,139,250,.14)" stroke-width="5.5"/>
+            <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#a78bfa" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="226 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#8b5cf6;line-height:1;" id="fm70Lbl">70 HRS</div>
-            <div style="font-size:13px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px;" id="fm70Left">70h</div>
+            <div class="hud-ring-lbl" style="color:#a78bfa" id="fm70Lbl">70 HRS</div>
+            <div class="hud-ring-val" id="fm70Left">70h</div>
           </div>
         </div>
       </div>
@@ -8272,14 +8009,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- Stop button (only when tracking) -->
-    <button id="fmStopBtn" onclick="fmStopTracking()" style="
-      display:none;width:100%;margin-top:12px;padding:14px;
-      background:#ef4444;color:#fff;border:none;border-radius:12px;
-      font-family:'DM Sans',sans-serif;font-size:16px;font-weight:800;cursor:pointer;
-      touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-      box-shadow:0 4px 16px rgba(239,68,68,0.4);
-    ">🛑 Detener Seguimiento</button>
   </div>
 </div>
 
@@ -8295,18 +8024,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div style="position:absolute;inset:0;border-radius:26px;background:radial-gradient(ellipse 85% 70% at 50% 100%,rgba(16,185,129,0.28) 0%,rgba(59,130,246,0.12) 55%,transparent 100%);filter:blur(12px);pointer-events:none;z-index:0;"></div>
     <div style="display:flex;align-items:center;gap:14px;background:rgba(15,20,35,0.60);border:1px solid rgba(16,185,129,0.30);border-radius:18px;padding:5px 12px;box-shadow:0 0 0 1px rgba(16,185,129,0.10),0 8px 32px rgba(0,0,0,0.65),0 0 28px rgba(16,185,129,0.18),0 0 60px rgba(59,130,246,0.10),inset 0 1px 0 rgba(255,255,255,0.10);overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);position:relative;z-index:1;">
       <!-- Botón volver -->
-      <button onclick="backToMainFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:20px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
+      <button onclick="backToMainFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:24px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
 
       <!-- Foto + nombre -->
-      <div id="dashProfilePhoto" style="width:68px;height:68px;border-radius:50%;flex-shrink:0;background:#1e293b;border:3px solid rgba(16,185,129,0.7);box-shadow:0 0 0 2px rgba(16,185,129,0.25),0 0 18px rgba(16,185,129,0.55),0 0 36px rgba(16,185,129,0.2),0 6px 20px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;margin:-14px 0;position:relative;z-index:2;transform:scale(1.08);"></div>
+      <div id="dashProfilePhoto" style="width:68px;height:68px;border-radius:50%;flex-shrink:0;background:#1e293b;border:3px solid rgba(16,185,129,0.7);box-shadow:0 0 0 2px rgba(16,185,129,0.25),0 0 18px rgba(16,185,129,0.55),0 0 36px rgba(16,185,129,0.2),0 6px 20px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;margin:-14px 0;position:relative;z-index:2;transform:scale(1.08);"></div>
       <div style="flex:1;min-width:0;">
-        <div id="dashProfileName" style="font-size:19px;font-weight:900;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;">Driver</div>
+        <div id="dashProfileName" style="font-size:24px;font-weight:900;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;">Driver</div>
       </div>
 
       <!-- Botón campana notificaciones -->
-      <button id="notifBellBtn" onclick="openNotifPanel()" style="position:relative;background:rgba(16,185,129,0.13);border:1.5px solid rgba(16,185,129,0.35);border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">
+      <button id="notifBellBtn" onclick="openNotifPanel()" style="position:relative;background:rgba(16,185,129,0.13);border:1.5px solid rgba(16,185,129,0.35);border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">
         🔔
-        <span id="notifBellBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;border-radius:999px;min-width:18px;padding:2px 5px;text-align:center;border:2px solid #181d2c;line-height:1.2;pointer-events:none"></span>
+        <span id="notifBellBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:13px;font-weight:900;border-radius:999px;min-width:18px;padding:2px 5px;text-align:center;border:2px solid #181d2c;line-height:1.2;pointer-events:none"></span>
       </button>
     </div>
   </div>
@@ -8318,7 +8047,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div style="flex:0 0 auto;padding:0 14px 6px;">
     <div id="dashStatusPillWrap" style="display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,0.08);border:1px solid #10b981;border-radius:999px;padding:4px 12px;">
       <span id="dashStatusDot" style="width:6px;height:6px;border-radius:50%;background:#10b981;flex-shrink:0;"></span>
-      <span id="dashMainStatusLabel" style="font-size:10px;font-weight:900;letter-spacing:1px;color:#10b981;text-transform:uppercase;">CONDUCIENDO</span>
+      <span id="dashMainStatusLabel" style="font-size:13px;font-weight:900;letter-spacing:1px;color:#10b981;text-transform:uppercase;">CONDUCIENDO</span>
     </div>
   </div>
 
@@ -8329,38 +8058,38 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
       <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
         <svg viewBox="0 0 90 90" style="width:100%;height:100%;position:absolute;inset:0;">
-          <circle cx="45" cy="45" r="36" fill="url(#grayGrad1)" stroke="rgba(0,0,0,0.10)" stroke-width="7"/>
+          <circle cx="45" cy="45" r="36" fill="url(#grayGrad1)" stroke="rgba(0,0,0,0.10)" stroke-width="4"/>
           <defs><radialGradient id="grayGrad1" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
-          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#1a1a1a" stroke-width="7" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;">
-          <div id="dash14hTime" style="font-family:'Share Tech Mono',monospace;font-size:12px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">--:--</div>
-          <div style="font-family:'Share Tech Mono',monospace;font-size:6px;color:rgba(0,0,0,0.45);margin-top:1px;letter-spacing:1px;">INICIO</div>
+          <div id="dash14hTime" style="font-family:'Share Tech Mono',monospace;font-size:15px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">--:--</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,0,0,0.45);margin-top:1px;letter-spacing:1px;">INICIO</div>
           <div style="width:20px;height:0.5px;background:rgba(0,0,0,0.18);margin:2px 0;"></div>
-          <div id="dash14hLabel" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,0,0,0.5);line-height:1;letter-spacing:1px;">--:--</div>
-          <div id="dashBtStatus" style="font-family:'Share Tech Mono',monospace;font-size:6px;color:rgba(0,0,0,0.4);margin-top:1px;letter-spacing:0.5px;">BT ○</div>
+          <div id="dash14hLabel" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:rgba(0,0,0,0.5);line-height:1;letter-spacing:1px;">--:--</div>
+          <div id="dashBtStatus" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,0,0,0.4);margin-top:1px;letter-spacing:0.5px;">BT ○</div>
         </div>
       </div>
-      <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">TURNO</div>
+      <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,0.78);letter-spacing:2px;text-transform:uppercase;">TURNO</div>
     </div>
 
     <!-- DISPONIBLES ring — GRANDE -->
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto;">
-      <div id="dashRingWrap" style="position:relative;width:230px;height:230px;filter:drop-shadow(0 6px 20px rgba(0,0,0,0.5));transition:filter 0.6s ease;">
+      <div id="dashRingWrap" style="position:relative;width:230px;height:230px;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.5));transition:filter 0.6s ease;">
         <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
           <defs><radialGradient id="grayGrad2" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
           <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
           <circle cx="130" cy="130" r="99" fill="url(#grayGrad2)"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(0,0,0,0.10)" stroke-width="16" id="dashRingTrack"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="#1a1a1a" stroke-width="16" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(0,0,0,0.10)" stroke-width="9" id="dashRingTrack"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="#1a1a1a" stroke-width="9" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;">
-          <div id="dashHosTime" style="font-family:'Share Tech Mono',monospace;font-size:40px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">11h 0m</div>
-          <div id="dashHosLabel" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,0,0,0.45);text-align:center;margin-top:7px;line-height:1.4;max-width:130px;letter-spacing:0.5px;">de 11h límite</div>
-          <div id="dashSecondsClock" style="font-family:'Share Tech Mono',monospace;font-size:18px;font-weight:900;color:#0a0a0a;letter-spacing:4px;text-shadow:none;margin-top:10px;">00</div>
+          <div id="dashHosTime" style="font-family:'Share Tech Mono',monospace;font-size:50px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">11h 0m</div>
+          <div id="dashHosLabel" style="font-family:'Share Tech Mono',monospace;font-size:13px;color:rgba(0,0,0,0.45);text-align:center;margin-top:7px;line-height:1.4;max-width:130px;letter-spacing:0.5px;">de 11h límite</div>
+          <div id="dashSecondsClock" style="font-family:'Share Tech Mono',monospace;font-size:22px;font-weight:900;color:#0a0a0a;letter-spacing:4px;text-shadow:none;margin-top:10px;">00</div>
         </div>
       </div>
-      <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">DISPONIBLES</div>
+      <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,0.78);letter-spacing:2px;text-transform:uppercase;">DISPONIBLES</div>
     </div>
 
     <!-- CICLO 70H ring -->
@@ -8368,15 +8097,15 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
         <svg viewBox="0 0 94 94" style="width:100%;height:100%;position:absolute;inset:0;">
           <defs><radialGradient id="grayGrad3" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
-          <circle cx="47" cy="47" r="40" fill="url(#grayGrad3)" stroke="rgba(0,0,0,0.10)" stroke-width="7"/>
-          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#1a1a1a" stroke-width="7" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
+          <circle cx="47" cy="47" r="40" fill="url(#grayGrad3)" stroke="rgba(0,0,0,0.10)" stroke-width="4"/>
+          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div id="dashWeekHours" style="font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">70H</div>
-          <div id="dashCicloUsed" style="font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(0,0,0,0.45);margin-top:3px;letter-spacing:0.5px;">0h usadas</div>
+          <div id="dashWeekHours" style="font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">70H</div>
+          <div id="dashCicloUsed" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,0,0,0.45);margin-top:3px;letter-spacing:0.5px;">0h usadas</div>
         </div>
       </div>
-      <div style="font-size:8px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;">CICLO 70H</div>
+      <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,0.78);letter-spacing:2px;text-transform:uppercase;">CICLO 70H</div>
     </div>
   </div>
 
@@ -8392,15 +8121,15 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- ⑤ TARJETA DESTINO -->
   <div id="dashDestCard" style="flex:0 0 auto;padding:0 10px 8px;">
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:12px;min-height:0;">
-      <div style="font-size:20px;flex-shrink:0;line-height:1;">📍</div>
+      <div style="font-size:24px;flex-shrink:0;line-height:1;">📍</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px;">DESTINO</div>
-        <div id="dashDestName" style="font-size:13px;font-weight:900;color:#f1f5f9;letter-spacing:-0.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;">Sin destino asignado</div>
+        <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.78);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px;">DESTINO</div>
+        <div id="dashDestName" style="font-size:16px;font-weight:900;color:#f1f5f9;letter-spacing:-0.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;">Sin destino asignado</div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:2px;">LLEGADA</div>
-        <div id="dashDestArrival" style="font-size:13px;font-weight:800;color:#10b981;letter-spacing:-0.2px;line-height:1;">--</div>
-        <div id="dashDestDate" style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);margin-top:2px;">--</div>
+        <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.78);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:2px;">LLEGADA</div>
+        <div id="dashDestArrival" style="font-size:16px;font-weight:800;color:#10b981;letter-spacing:-0.2px;line-height:1;">--</div>
+        <div id="dashDestDate" style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.80);margin-top:2px;">--</div>
       </div>
     </div>
   </div>
@@ -8414,38 +8143,37 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <!-- Origen → Destino -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,0.30);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">ORIGEN</div>
-          <div id="dashRouteOrigin" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.55);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">--</div>
+          <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.70);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">ORIGEN</div>
+          <div id="dashRouteOrigin" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">--</div>
         </div>
-        <div style="font-size:14px;color:rgba(255,255,255,0.20);flex-shrink:0;">→</div>
+        <div style="font-size:18px;color:rgba(255,255,255,0.60);flex-shrink:0;">→</div>
         <div style="flex:1;min-width:0;text-align:right;">
-          <div style="font-size:7px;font-weight:800;color:rgba(16,185,129,0.55);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">DESTINO</div>
-          <div id="dashRouteDest" style="font-size:10px;font-weight:700;color:#10b981;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;">--</div>
+          <div style="font-size:10px;font-weight:800;color:rgba(16,185,129,0.90);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">DESTINO</div>
+          <div id="dashRouteDest" style="font-size:13px;font-weight:700;color:#10b981;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;">--</div>
         </div>
       </div>
       <!-- Barra de progreso con camión -->
       <div style="position:relative;height:8px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:visible;margin-bottom:7px;">
         <div id="dashRouteProg" style="height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:999px;width:0%;transition:width 1.2s ease;position:relative;">
-          <div id="dashRouteTruck" style="position:absolute;right:-9px;top:50%;transform:translateY(-50%);font-size:14px;line-height:1;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));">🚛</div>
+          <div id="dashRouteTruck" style="position:absolute;right:-9px;top:50%;transform:translateY(-50%);font-size:18px;line-height:1;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));">🚛</div>
         </div>
       </div>
       <!-- Millas restantes y porcentaje -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div id="dashRouteRemaining" style="font-size:12px;font-weight:800;color:#f1f5f9;letter-spacing:-0.3px;">-- mi restantes</div>
-        <div id="dashRoutePct" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);">0%</div>
+        <div id="dashRouteRemaining" style="font-size:15px;font-weight:800;color:#f1f5f9;letter-spacing:-0.3px;">-- mi restantes</div>
+        <div id="dashRoutePct" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.78);">0%</div>
       </div>
       <!-- Horas de manejo restantes -->
       <div style="display:flex;align-items:center;gap:7px;">
-        <span style="font-size:11px;flex-shrink:0;">🕐</span>
-        <div id="dashRouteDriveLeft" style="font-size:11px;font-weight:800;color:#10b981;flex-shrink:0;min-width:70px;">-- h manejo</div>
+        <span style="font-size:14px;flex-shrink:0;">🕐</span>
+        <div id="dashRouteDriveLeft" style="font-size:14px;font-weight:800;color:#10b981;flex-shrink:0;min-width:70px;">-- h manejo</div>
         <div style="flex:1;height:3px;background:rgba(255,255,255,0.10);border-radius:999px;overflow:hidden;">
           <div id="dashRouteDriveBarFill" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width 1s ease;"></div>
         </div>
       </div>
-      <!-- Parada obligatoria (aparece cuando se necesita) -->
-      <div id="dashRouteStopRow" style="display:none;margin-top:7px;border-radius:8px;padding:5px 9px;">
-        <div id="dashRouteStopCity" style="font-size:10px;font-weight:800;line-height:1.4;"></div>
-      </div>
+      <!-- dashRouteStopRow/City stubs ocultos para compatibilidad JS -->
+      <div id="dashRouteStopRow" style="display:none!important"></div>
+      <div id="dashRouteStopCity" style="display:none!important"></div>
     </div>
   </div>
 
@@ -8467,7 +8195,25 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   </div><!-- /tarjeta principal -->
 
-
+  <!-- POPUP ALERTA PARADA OBLIGATORIA -->
+  <div id="stopAlertPopup" style="display:none;position:absolute;bottom:14px;left:12px;right:12px;z-index:50;
+    background:rgba(15,20,35,0.97);border:1.5px solid rgba(239,68,68,0.7);border-radius:16px;
+    padding:14px 14px 14px 16px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    box-shadow:0 4px 28px rgba(239,68,68,0.3),0 8px 32px rgba(0,0,0,0.7);
+    animation:stopAlertIn .3s cubic-bezier(.34,1.56,.64,1);flex-direction:column;gap:10px;">
+    <div style="display:flex;align-items:flex-start;gap:10px;">
+      <span style="font-size:24px;flex-shrink:0;line-height:1.2">⚠️</span>
+      <div style="flex:1;min-width:0;">
+        <div id="stopAlertTitle" style="font-size:14px;font-weight:900;color:#ef4444;line-height:1.3;margin-bottom:3px;">Descanso obligatorio</div>
+        <div id="stopAlertBody" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);line-height:1.4;"></div>
+      </div>
+      <button onclick="dismissStopAlert()" style="flex-shrink:0;background:rgba(255,255,255,0.1);border:none;
+        border-radius:8px;color:#fff;font-size:18px;width:30px;height:30px;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">✕</button>
+    </div>
+    <!-- Lista de lugares cercanos (visible sólo cuando quedan <1h de manejo) -->
+    <div id="stopAlertPlaces" style="display:none;flex-direction:column;gap:6px;"></div>
+  </div>
   <!-- ⑥ MINI MAPA GPS -->
   <div style="flex:1;min-height:0;position:relative;border-top:1px solid rgba(255,255,255,0.07);">
     <div id="hosMiniMap" style="width:100%;height:100%;background:#0f1c2e;"></div>
@@ -8477,12 +8223,17 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       background:rgba(10,16,30,0.85);backdrop-filter:blur(10px);
       border:1px solid rgba(16,185,129,0.5);border-radius:12px;
       padding:7px 12px;display:flex;align-items:center;gap:6px;
-      color:#f1f5f9;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:800;
+      color:#f1f5f9;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;
       cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 10px rgba(16,185,129,0.2);
       -webkit-tap-highlight-color:transparent;letter-spacing:0.3px;">
-      <span style="font-size:14px;">🗺️</span> Mapa completo
+      <span style="font-size:18px;">🗺️</span> Mapa completo
     </button>
   </div>
+
+  <!-- DRAGGABLE REPORT FAB — dentro del dashboard de seguimiento -->
+  <button id="reportFab" title="Reportar — arrastra para mover">🚨</button>
+  <!-- RADIAL REPORT MENU (populated by JS) -->
+  <div id="reportRadialMenu"></div>
 
 </div>
 
@@ -8494,7 +8245,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   border:1px solid rgba(255,255,255,0.12);
   background:rgba(255,255,255,0.07);
   color:rgba(255,255,255,0.95);
-  font-size:10px!important;font-weight:800;cursor:pointer;
+  font-size:13px!important;font-weight:800;cursor:pointer;
   font-family:'DM Sans',sans-serif;
   letter-spacing:0.1px;
   text-shadow:0 1px 4px rgba(0,0,0,0.7);
@@ -8538,6 +8289,10 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   50%      { background:#ea6010; }
 }
 #hosNavCard .hnc-orange { animation: hnc-pulse 2s ease-in-out infinite; }
+@keyframes stopAlertIn {
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
+}
 @keyframes hnc-marquee {
   0%,15%  { transform:translateX(0); }
   75%,90% { transform:translateX(var(--hnc-scroll,0px)); }
@@ -8549,7 +8304,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 .dash-side-tab-badge {
   position:absolute;top:5px;left:5px;
   background:#ef4444;color:#fff;
-  font-size:9px;font-weight:900;border-radius:999px;
+  font-size:12px;font-weight:900;border-radius:999px;
   padding:1px 4px;min-width:14px;text-align:center;
   display:none;
 }
@@ -8604,7 +8359,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   border:1px solid rgba(255,255,255,0.12)!important;
   color:#f1f5f9!important;
   font-family:'DM Sans',sans-serif!important;
-  font-size:11px!important;
+  font-size:14px!important;
   font-weight:700!important;
   border-radius:8px!important;
   padding:4px 8px!important;
@@ -9701,18 +9456,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
      CIRCULAR SPEEDOMETER WIDGET
 ══════════════════════════════════════ -->
 <div id="speedometerWidget">
-  <div class="speedo-ring stopped" id="speedoRing">
-    <svg class="speedo-svg" id="speedoSvg" viewBox="0 0 120 120">
-      <circle cx="60" cy="60" r="55" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="6"/>
-      <circle cx="60" cy="60" r="55" fill="none" stroke="#10b981" stroke-width="6"
-              stroke-linecap="round" stroke-dasharray="0 345" id="speedoArc"
-              transform="rotate(-220 60 60)" style="transition:stroke-dasharray .5s ease"/>
-    </svg>
-    <div class="speedo-num stopped" id="speedoNum">0</div>
+  <div class="speedo-sign" id="speedoSign">
+    <div class="speedo-sign-top">YOUR<br>SPEED</div>
+    <div class="speedo-num" id="speedoNum">0</div>
     <div class="speedo-unit">MPH</div>
   </div>
-  <div class="speedo-label" id="speedoLabel">GPS SPEED</div>
-  <div class="speedo-status" id="speedoStatus">DETENIDO</div>
+  <div class="speedo-status" id="speedoStatus">⏸ DETENIDO</div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -9743,6 +9492,27 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <div id="mrVal">--</div>
   <div id="mrUnit">mi restantes</div>
   <div id="mrLabel">AL DESTINO</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     📷 CAMERA PREVIEW WIDGET
+══════════════════════════════════════ -->
+<div id="cameraWidget">
+  <div class="cam-header">
+    <div class="cam-live-dot" id="camLiveDot"></div>
+    <div class="cam-title" id="camWidgetTitle">DASH CAM</div>
+    <button class="cam-hbtn" onclick="toggleCamMinimize()" title="Minimizar">—</button>
+    <button class="cam-hbtn" onclick="closeCamWidget()" title="Cerrar">✕</button>
+  </div>
+  <div class="cam-body" id="camBody">
+    <video id="camVideo" autoplay muted playsinline></video>
+    <img id="camImg" alt="cam" />
+    <div class="cam-overlay" id="camOverlay"><span style="font-size:24px">📷</span><span>Sin señal</span></div>
+  </div>
+  <div class="cam-footer">
+    <button class="cam-rec-btn" id="camRecBtn" onclick="toggleCamRecord()">⏺ REC</button>
+    <button class="cam-snap-btn" onclick="takeCamSnapshot()" title="Captura">📸</button>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -9825,120 +9595,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
-
-<!-- Firebase SDK (Realtime Database for cross-device chat) -->
-<script type="module">
-  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded, serverTimestamp, query, limitToLast, onValue, set, onDisconnect, remove, get, orderByChild, endAt }
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-  /* ─── FIREBASE CONFIG ─────────────────────────────────────── */
-  const firebaseConfig = {
-    apiKey: "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
-    authDomain: "hos-tracker-chat.firebaseapp.com",
-    databaseURL: "https://hos-tracker-chat-default-rtdb.firebaseio.com",
-    projectId: "hos-tracker-chat",
-    storageBucket: "hos-tracker-chat.firebasestorage.app",
-    messagingSenderId: "390077980024",
-    appId: "1:390077980024:web:65d312be4c52809de43c8d"
-  };
-
-  const MSG_TTL = 60 * 60 * 1000; // 1 hour in ms
-
-  let firebaseReady = false;
-  let db, messagesRef, presenceRef, connectedRef;
-
-  try {
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    db = getDatabase(app);
-    messagesRef = ref(db, 'chat/messages');
-    connectedRef = ref(db, '.info/connected');
-    firebaseReady = true;
-  } catch(e) {
-    console.warn('[Chat] Firebase init failed – running in local-only mode.', e.message);
-  }
-
-  // Delete messages older than 1 hour for a given channel
-  async function cleanupChannel(channelId) {
-    if (!firebaseReady) return;
-    try {
-      const cutoff = Date.now() - MSG_TTL;
-      const chRef = ref(db, `chat/channels/${channelId}/messages`);
-      const oldQ = query(chRef, orderByChild('clientTs'), endAt(cutoff));
-      const snap = await get(oldQ);
-      const removes = [];
-      snap.forEach(child => removes.push(remove(child.ref)));
-      if (removes.length) await Promise.all(removes);
-    } catch(e) {
-      console.warn('[Chat] Cleanup failed for', channelId, e.message);
-    }
-  }
-
-  // Run cleanup every 10 minutes for all channels
-  const CHANNEL_IDS = ['general','northeast','southeast','midwest','southwest','northwest','canada','hazmat'];
-  function scheduleCleanup() {
-    CHANNEL_IDS.forEach(id => cleanupChannel(id));
-    setTimeout(scheduleCleanup, 10 * 60 * 1000);
-  }
-  if (firebaseReady) setTimeout(scheduleCleanup, 5000); // first run 5s after load
-
-  // Expose to global scope so non-module code can use these
-  window._chatFirebase = {
-    ready: () => firebaseReady,
-    // Send to a specific channel path
-    sendToChannel: async (channelId, msgData) => {
-      if (!firebaseReady) return false;
-      const chRef = ref(db, `chat/channels/${channelId}/messages`);
-      await push(chRef, { ...msgData, ts: serverTimestamp() });
-      return true;
-    },
-    // Listen to a specific channel — only messages from last hour
-    listenChannel: (channelId, cb) => {
-      if (!firebaseReady) return () => {};
-      const chRef = ref(db, `chat/channels/${channelId}/messages`);
-      const recentQ = query(chRef, limitToLast(80));
-      const cutoff = Date.now() - MSG_TTL;
-      const unsub = onChildAdded(recentQ, snap => {
-        const msg = snap.val();
-        const msgTs = msg.ts || msg.clientTs || 0;
-        if (msgTs && msgTs < cutoff) return; // skip messages older than 1 hour
-        cb(msg, snap.key);
-      });
-      return unsub;
-    },
-    // Legacy compat
-    sendMessage: async (msgData) => {
-      if (!firebaseReady) return false;
-      await push(ref(db, 'chat/channels/general/messages'), { ...msgData, ts: serverTimestamp() });
-      return true;
-    },
-    listenMessages: (cb) => {
-      if (!firebaseReady) return;
-      const cutoff = Date.now() - MSG_TTL;
-      const recentQ = query(ref(db, 'chat/channels/general/messages'), limitToLast(80));
-      onChildAdded(recentQ, snap => {
-        const msg = snap.val();
-        const msgTs = msg.ts || msg.clientTs || 0;
-        if (msgTs && msgTs < cutoff) return;
-        cb(msg, snap.key);
-      });
-    },
-    trackPresence: (userId, displayName) => {
-      if (!firebaseReady) return;
-      presenceRef = ref(db, `chat/presence/${userId}`);
-      onValue(connectedRef, snap => {
-        if (snap.val() === true) {
-          onDisconnect(presenceRef).remove();
-          set(presenceRef, { name: displayName, ts: Date.now() });
-        }
-      });
-    }
-  };
-
-  // Signal to the main script that Firebase module is loaded
-  window._chatFirebaseLoaded = true;
-  document.dispatchEvent(new Event('chatFirebaseReady'));
-</script>
 
 <script>
 const T = {
@@ -10036,6 +9692,45 @@ const MAP_STYLES = {
 };
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 let fmTileLayer = null;
+let fmTrafficLayer = null;
+let fmTrafficEnabled = localStorage.getItem('hos_traffic') === 'true';
+
+function toggleTrafficLayer() {
+  fmTrafficEnabled = !fmTrafficEnabled;
+  localStorage.setItem('hos_traffic', fmTrafficEnabled);
+  const btn = document.getElementById('trafficBtn');
+  if (btn) {
+    btn.style.background = fmTrafficEnabled ? 'rgba(239,68,68,0.28)' : '';
+    btn.style.borderColor = fmTrafficEnabled ? 'rgba(239,68,68,0.6)' : '';
+    btn.title = fmTrafficEnabled ? 'Tráfico ACTIVO — toca para desactivar' : 'Tráfico en tiempo real';
+  }
+  if (fmTrafficEnabled) {
+    _addTrafficLayer();
+  } else {
+    if (fmTrafficLayer && fmMapInst) {
+      try { fmMapInst.removeLayer(fmTrafficLayer); } catch {}
+      fmTrafficLayer = null;
+    }
+  }
+}
+
+function _addTrafficLayer() {
+  if (!fmMapInst) return;
+  if (fmTrafficLayer) { try { fmMapInst.removeLayer(fmTrafficLayer); } catch {} fmTrafficLayer = null; }
+  fmTrafficLayer = L.tileLayer(
+    'https://mt{s}.google.com/vt/lyrs=h,traffic&x={x}&y={y}&z={z}',
+    { subdomains: '0123', maxZoom: 20, opacity: 0.82, attribution: '© Google Maps Traffic' }
+  ).addTo(fmMapInst);
+}
+
+// Restore traffic state on map open
+function _restoreTrafficState() {
+  const btn = document.getElementById('trafficBtn');
+  if (fmTrafficEnabled) {
+    if (btn) { btn.style.background = 'rgba(239,68,68,0.28)'; btn.style.borderColor = 'rgba(239,68,68,0.6)'; }
+    if (fmMapInst && !fmTrafficLayer) _addTrafficLayer();
+  }
+}
 
 // Tono base del dashboard según estilo del mapa (sutil, el color real lo da el mapa de fondo)
 const DASH_BG_MAP = {
@@ -10223,6 +9918,355 @@ function flashDanger(ms = 2000) {
   f.style.display = 'block';
   setTimeout(() => f.style.display = 'none', ms);
 }
+
+/* ════════════════════════════════════════════════════════════
+   📷  VEHICLE CAMERA SYSTEM
+   Supports: device (getUserMedia), WiFi/IP (MJPEG/JPEG/HLS),
+   Bluetooth (BLE scan + WiFi video).
+════════════════════════════════════════════════════════════ */
+let _camType          = localStorage.getItem('cam_type') || 'wifi';
+let _camConnected     = false;
+let _camStream        = null;
+let _camRecording     = false;
+let _camMediaRecorder = null;
+let _camRecChunks     = [];
+let _camMinimized     = false;
+let _camPreviewOn     = localStorage.getItem('cam_preview') === 'true';
+let _camIpUrl         = localStorage.getItem('cam_ip_url') || '';
+let _camProto         = localStorage.getItem('cam_proto') || 'mjpeg';
+let _camBtScanActive  = false;
+let _camBtScanTimer   = null;
+
+/* ── helpers ─────────────────────────────────────────────── */
+function _camEl(id) { return document.getElementById(id); }
+
+function _camShowOverlay(show, msg) {
+  const ov = _camEl('camOverlay');
+  if (!ov) return;
+  ov.style.display = show ? 'flex' : 'none';
+  if (msg) ov.innerHTML = `<span style="font-size:22px">📷</span><span>${msg}</span>`;
+}
+
+function _camSetLive(live) {
+  const dot  = _camEl('camLiveDot');
+  const wdot = _camEl('camStatusDot');
+  const txt  = _camEl('camStatusTxt');
+  if (dot)  { dot.className  = 'cam-live-dot' + (live ? ' live' : ''); }
+  if (wdot) { wdot.className = 'cam-status-dot' + (live ? ' connected' : ''); }
+  if (txt)  txt.textContent  = live ? '● Dash cam conectada y activa' : 'Sin dash cam conectada';
+  _camConnected = live;
+  _updateCamToolBtn();
+}
+
+function updateCamWidget() {
+  const w = _camEl('cameraWidget');
+  if (!w) return;
+  if (_camPreviewOn && _camConnected) {
+    w.classList.add('visible');
+  } else {
+    w.classList.remove('visible');
+  }
+}
+
+/* ── Settings: select camera type ──────────────────────── */
+function selectCamType(type) {
+  _camType = type;
+  localStorage.setItem('cam_type', type);
+  ['wifi','bt'].forEach(t => {
+    const tab = _camEl('camTab_' + t);
+    const pan = _camEl('camPanel_' + t);
+    if (tab) tab.classList.toggle('active', t === type);
+    if (pan) pan.style.display = t === type ? 'flex' : 'none';
+  });
+}
+
+/* ── Settings: save IP / protocol ──────────────────────── */
+function saveCamIp() {
+  const v = (_camEl('camIpInput') || {}).value || '';
+  const p = (_camEl('camProtoSelect') || {}).value || 'mjpeg';
+  _camIpUrl = v; _camProto = p;
+  localStorage.setItem('cam_ip_url', v);
+  localStorage.setItem('cam_proto', p);
+}
+
+/* ── Settings: preview toggle ──────────────────────────── */
+function toggleCamPreviewSetting(btn) {
+  _camPreviewOn = !_camPreviewOn;
+  localStorage.setItem('cam_preview', _camPreviewOn);
+  if (btn) btn.classList.toggle('on', _camPreviewOn);
+  updateCamWidget();
+}
+
+/* ── Device camera removed — dash cam only (WiFi/BT) ───── */
+
+/* ── WiFi / IP camera ───────────────────────────────────── */
+function connectWifiCamera() {
+  const ip    = (_camEl('camIpInput') || {}).value?.trim();
+  const proto = (_camEl('camProtoSelect') || {}).value || 'mjpeg';
+  if (!ip) { showToast && showToast('warning','🌐','IP requerida','Ingresa la dirección IP de tu cámara.'); return; }
+
+  let url;
+  if (proto === 'mjpeg')     url = `http://${ip}/?action=stream`;
+  else if (proto === 'jpg')  url = `http://${ip}/?action=snapshot`;
+  else                       url = `http://${ip}`;  // HLS — video src
+
+  const imgEl = _camEl('camImg');
+  const vidEl = _camEl('camVideo');
+  const btn   = _camEl('camWifiBtn');
+
+  if (_camConnected) { disconnectCamera(); return; }
+
+  if (proto === 'hls' || proto === 'mjpeg_vid') {
+    if (vidEl) { vidEl.src = url; vidEl.style.display = 'block'; vidEl.play().catch(()=>{}); }
+    if (imgEl) imgEl.style.display = 'none';
+  } else if (proto === 'jpg') {
+    // poll JPEG every 500ms
+    if (imgEl) { imgEl.style.display = 'block'; imgEl.src = url + '&_=' + Date.now(); }
+    if (vidEl) vidEl.style.display = 'none';
+    window._camJpgPoll = setInterval(() => {
+      if (imgEl && _camConnected) imgEl.src = url + '&_=' + Date.now();
+    }, 500);
+  } else {
+    // MJPEG: browser renders directly from img src
+    if (imgEl) { imgEl.style.display = 'block'; imgEl.src = url; }
+    if (vidEl) vidEl.style.display = 'none';
+  }
+
+  imgEl && (imgEl.onerror = () => { _camShowOverlay(true,'Sin señal · verifica IP'); _camSetLive(false); });
+  imgEl && (imgEl.onload  = () => { _camShowOverlay(false); _camSetLive(true); });
+  _camShowOverlay(false);
+  _camSetLive(true);
+  updateCamWidget();
+  if (btn) { btn.textContent = '⏹ Desconectar'; btn.classList.add('cam-danger'); }
+  const title = _camEl('camWidgetTitle');
+  if (title) title.textContent = 'DASH CAM · ' + ip.split(':')[0];
+}
+
+/* ── Bluetooth scan for cameras ────────────────────────── */
+async function startCamBtScan() {
+  const btn  = _camEl('camBtScanBtn');
+  const list = _camEl('camBtList');
+  if (_camBtScanActive) return;
+  _camBtScanActive = true;
+  if (btn)  { btn.textContent = '⏳ Escaneando...'; btn.disabled = true; }
+  if (list) { list.innerHTML = ''; list.style.display = 'flex'; }
+
+  const devices = [];
+  const addDevice = (id, name) => {
+    if (devices.find(d => d.id === id)) return;
+    devices.push({ id, name });
+    const item = document.createElement('div');
+    item.className = 'cam-bt-item';
+    item.innerHTML = `<span style="font-size:18px">📷</span>
+      <div class="cam-bt-item-name">${name || 'Dispositivo BT'}</div>
+      <div class="cam-bt-item-id">${id.substring(0,12)}...</div>`;
+    item.onclick = () => connectCamBtDevice(id, name);
+    if (list) list.appendChild(item);
+  };
+
+  // Native Capacitor BLE
+  const ble = await (typeof loadNativeBlePlugin === 'function' ? loadNativeBlePlugin() : Promise.resolve(null));
+  if (ble) {
+    try {
+      await ble.initialize({ androidNeverForLocation: false });
+      await ble.requestLEScan({ allowDuplicates: false }, r => {
+        const n = r.device?.name || r.localName || '';
+        if (n) addDevice(r.device?.deviceId || n, n);
+      });
+      _camBtScanTimer = setTimeout(async () => {
+        try { await ble.stopLEScan(); } catch {}
+        _camBtScanActive = false;
+        if (btn) { btn.textContent = '📶 Escanear de nuevo'; btn.disabled = false; }
+        if (!devices.length && list) list.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:4px 8px">No se encontraron dispositivos</div>';
+      }, 12000);
+    } catch(e) {
+      _camBtScanActive = false;
+      if (btn) { btn.textContent = '📶 Escanear dispositivos'; btn.disabled = false; }
+      showToast && showToast('warning','📶','Bluetooth','Activa Bluetooth para escanear cámaras.');
+    }
+  } else {
+    // Web Bluetooth API fallback
+    try {
+      const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
+      addDevice(dev.id || dev.name, dev.name || 'Cámara BT');
+    } catch(e) { /* user cancelled */ }
+    _camBtScanActive = false;
+    if (btn) { btn.textContent = '📶 Escanear de nuevo'; btn.disabled = false; }
+  }
+}
+
+function connectCamBtDevice(id, name) {
+  // BT pairing done — prompt user to connect via WiFi for video
+  const btn = _camEl('camBtScanBtn');
+  if (btn) btn.textContent = `✓ ${name} vinculado`;
+  _camSetLive(false);
+  const txt = _camEl('camStatusTxt');
+  if (txt) txt.textContent = `${name} vinculado — ingresa IP para video`;
+  // Switch to WiFi panel to finish connection
+  selectCamType('wifi');
+  showToast && showToast('success','📷',`${name} vinculado`,'Ingresa la IP de la cámara en el panel WiFi.');
+}
+
+/* ── Disconnect all ─────────────────────────────────────── */
+function disconnectCamera() {
+  if (_camStream) { _camStream.getTracks().forEach(t => t.stop()); _camStream = null; }
+  if (_camMediaRecorder && _camRecording) { try { _camMediaRecorder.stop(); } catch {} }
+  if (window._camJpgPoll) { clearInterval(window._camJpgPoll); window._camJpgPoll = null; }
+  const vid = _camEl('camVideo'); if (vid) { vid.srcObject = null; vid.src = ''; vid.style.display = 'none'; }
+  const img = _camEl('camImg');   if (img) { img.src = ''; img.style.display = 'none'; }
+  _camShowOverlay(true, 'Sin señal');
+  _camSetLive(false);
+  _camRecording = false;
+  updateCamWidget();
+  // Reset buttons
+  const db = _camEl('camDeviceBtn'); if (db) { db.textContent = '📷 Activar cámara'; db.classList.remove('cam-danger'); db.disabled = false; }
+  const wb = _camEl('camWifiBtn');   if (wb) { wb.textContent = '🌐 Conectar cámara'; wb.classList.remove('cam-danger'); }
+  const rb = _camEl('camRecBtn');    if (rb) { rb.textContent = '⏺ REC'; rb.classList.remove('recording'); }
+  const title = _camEl('camWidgetTitle'); if (title) title.textContent = 'DASH CAM';
+}
+
+/* ── Widget controls ────────────────────────────────────── */
+function toggleCamMinimize() {
+  const w = _camEl('cameraWidget');
+  if (!w) return;
+  _camMinimized = !_camMinimized;
+  w.classList.toggle('minimized', _camMinimized);
+  const btn = w.querySelector('.cam-hbtn');
+  if (btn) btn.textContent = _camMinimized ? '▢' : '—';
+}
+
+function closeCamWidget() {
+  _camPreviewOn = false;
+  localStorage.setItem('cam_preview', 'false');
+  const t = _camEl('camPreviewToggle'); if (t) t.classList.remove('on');
+  updateCamWidget();
+}
+
+function openCameraFromTools() {
+  _camPreviewOn = true;
+  localStorage.setItem('cam_preview', 'true');
+  const t = _camEl('camPreviewToggle'); if (t) t.classList.add('on');
+  _camMinimized = false;
+  updateCamWidget();
+  if (!_camConnected && _camType === 'wifi' && _camIpUrl) {
+    connectWifiCamera();
+  }
+  _updateCamToolBtn();
+}
+
+function _updateCamToolBtn() {
+  const sub = document.getElementById('camToolSubtxt');
+  const arrow = document.getElementById('camToolArrow');
+  if (!sub || !arrow) return;
+  if (_camConnected) {
+    sub.textContent = '● En vivo — toca para ver la ventana';
+    arrow.textContent = '◉';
+    arrow.style.color = '#22d3ee';
+  } else {
+    sub.textContent = 'Ver la dash cam en vivo — WiFi o Bluetooth';
+    arrow.textContent = '›';
+    arrow.style.color = '';
+  }
+}
+
+/* ── Recording ──────────────────────────────────────────── */
+function toggleCamRecord() {
+  if (!_camConnected || !_camStream) {
+    showToast && showToast('warning','📷','Sin cámara','Conecta una cámara antes de grabar.');
+    return;
+  }
+  const btn = _camEl('camRecBtn');
+  const dot = _camEl('camLiveDot');
+  if (!_camRecording) {
+    _camRecChunks = [];
+    try {
+      _camMediaRecorder = new MediaRecorder(_camStream, { mimeType: 'video/webm;codecs=vp8' });
+    } catch { _camMediaRecorder = new MediaRecorder(_camStream); }
+    _camMediaRecorder.ondataavailable = e => { if (e.data.size > 0) _camRecChunks.push(e.data); };
+    _camMediaRecorder.onstop = () => {
+      const blob = new Blob(_camRecChunks, { type: 'video/webm' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = `cam_${Date.now()}.webm`; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    };
+    _camMediaRecorder.start(1000);
+    _camRecording = true;
+    if (btn) { btn.textContent = '⏹ STOP'; btn.classList.add('recording'); }
+    if (dot) dot.className = 'cam-live-dot rec';
+  } else {
+    if (_camMediaRecorder) { try { _camMediaRecorder.stop(); } catch {} }
+    _camRecording = false;
+    if (btn) { btn.textContent = '⏺ REC'; btn.classList.remove('recording'); }
+    if (dot) dot.className = 'cam-live-dot live';
+  }
+}
+
+/* ── Snapshot ───────────────────────────────────────────── */
+function takeCamSnapshot() {
+  const vid = _camEl('camVideo');
+  const img = _camEl('camImg');
+  const src = (vid && vid.style.display !== 'none') ? vid : null;
+  const cvs = document.createElement('canvas');
+  if (src) {
+    cvs.width = src.videoWidth || 640; cvs.height = src.videoHeight || 480;
+    cvs.getContext('2d').drawImage(src, 0, 0);
+  } else if (img && img.src) {
+    cvs.width = 640; cvs.height = 480;
+    cvs.getContext('2d').drawImage(img, 0, 0, 640, 480);
+  } else { showToast && showToast('warning','📷','Sin imagen','No hay video activo.'); return; }
+  const a = document.createElement('a');
+  a.href = cvs.toDataURL('image/jpeg', 0.92);
+  a.download = `snap_${Date.now()}.jpg`; a.click();
+}
+
+/* ── Drag widget ────────────────────────────────────────── */
+function initCamWidgetDrag() {
+  const w = _camEl('cameraWidget');
+  if (!w || w._camDragBound) return;
+  w._camDragBound = true;
+  let dx = 0, dy = 0, sx = 0, sy = 0, dragging = false;
+  const down = e => {
+    if (e.target.tagName === 'BUTTON') return;
+    dragging = true; w.classList.add('cam-drag');
+    const t = e.touches ? e.touches[0] : e;
+    sx = t.clientX - w.offsetLeft; sy = t.clientY - w.offsetTop;
+    e.preventDefault();
+  };
+  const move = e => {
+    if (!dragging) return;
+    const t = e.touches ? e.touches[0] : e;
+    const nx = t.clientX - sx, ny = t.clientY - sy;
+    w.style.left = Math.max(0, Math.min(window.innerWidth - w.offsetWidth, nx)) + 'px';
+    w.style.top  = Math.max(0, Math.min(window.innerHeight - w.offsetHeight, ny)) + 'px';
+    w.style.right = 'auto'; w.style.bottom = 'auto';
+  };
+  const up = () => { dragging = false; w.classList.remove('cam-drag'); };
+  const hdr = w.querySelector('.cam-header');
+  if (hdr) {
+    hdr.addEventListener('mousedown',  down, { passive: false });
+    hdr.addEventListener('touchstart', down, { passive: false });
+  }
+  window.addEventListener('mousemove', move);
+  window.addEventListener('touchmove', move, { passive: false });
+  window.addEventListener('mouseup',   up);
+  window.addEventListener('touchend',  up);
+}
+
+/* ── Init on page load ──────────────────────────────────── */
+(function initCameraSystem() {
+  // Restore settings UI state
+  document.addEventListener('DOMContentLoaded', () => {
+    selectCamType(_camType);
+    const ipEl = _camEl('camIpInput');
+    if (ipEl) ipEl.value = _camIpUrl;
+    const prEl = _camEl('camProtoSelect');
+    if (prEl) prEl.value = _camProto;
+    const pt = _camEl('camPreviewToggle');
+    if (pt) pt.classList.toggle('on', _camPreviewOn);
+    initCamWidgetDrag();
+  });
+})();
 
 /* ════════════════════════════════════════════════════════════
    😴  FATIGUE DETECTOR
@@ -11132,7 +11176,7 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   hrs.className   = 'dh-hrs'  + (isCritical ? ' critical' : isWarn ? ' warn' : '');
 
   // Arc color
-  const arcColor = isCritical ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981';
+  const arcColor = isCritical ? '#ef4444' : isWarn ? '#f59e0b' : '#34d399';
   arc.style.stroke = arcColor;
 
   // Track: tinted version of arc color
@@ -11260,11 +11304,11 @@ function updateDashRingGlow(mph, isOver) {
   if (!wrap) return;
   const moving = mph >= 8;
   if (isOver) {
-    wrap.style.filter = 'drop-shadow(0 0 22px rgba(239,68,68,0.80)) drop-shadow(0 0 44px rgba(239,68,68,0.40)) drop-shadow(0 6px 18px rgba(0,0,0,0.70))';
+    wrap.style.filter = 'drop-shadow(0 0 10px rgba(239,68,68,0.70)) drop-shadow(0 6px 14px rgba(0,0,0,0.65))';
   } else if (moving) {
-    wrap.style.filter = 'drop-shadow(0 0 22px rgba(59,130,246,0.75)) drop-shadow(0 0 44px rgba(59,130,246,0.35)) drop-shadow(0 6px 18px rgba(0,0,0,0.70))';
+    wrap.style.filter = 'drop-shadow(0 0 10px rgba(59,130,246,0.60)) drop-shadow(0 6px 14px rgba(0,0,0,0.65))';
   } else {
-    wrap.style.filter = 'drop-shadow(0 12px 32px rgba(16,185,129,0.45)) drop-shadow(0 6px 18px rgba(0,0,0,0.70))';
+    wrap.style.filter = 'drop-shadow(0 6px 14px rgba(16,185,129,0.30)) drop-shadow(0 4px 12px rgba(0,0,0,0.60))';
   }
 }
 
@@ -11308,17 +11352,6 @@ function updateSpeedometer(mph) {
   if (_dashSpdoEl) _dashSpdoEl.classList.toggle('over', !!over);
   updateDashRingGlow(mph, !!over);
 
-  if (!speedoVisible) return;
-  const num = document.getElementById('speedoNum');
-  const ring = document.getElementById('speedoRing');
-  const arc = document.getElementById('speedoArc');
-  const label = document.getElementById('speedoLabel');
-  const statusBadge = document.getElementById('speedoStatus');
-
-  num.textContent = Math.round(mph);
-  const moving = mph >= 8;
-
-
   // Over-limit based on state truck speed limit (if available)
   const spw = document.getElementById('speedometerWidget');
   if (spw) spw.classList.toggle('over-limit', !!over);
@@ -11332,6 +11365,13 @@ function updateSpeedometer(mph) {
     }
   }
 
+  if (!speedoVisible) return;
+  const num = document.getElementById('speedoNum');
+  const statusBadge = document.getElementById('speedoStatus');
+
+  num.textContent = Math.round(mph);
+  const moving = mph >= 8;
+
   // Drive-hours widget: scale up when driving, scale down when stopped
   const dhwSpd = document.getElementById('driveHoursWidget');
   if (dhwSpd && moving && !wasMoving) {
@@ -11339,32 +11379,21 @@ function updateSpeedometer(mph) {
     setTimeout(() => dhwSpd.classList.remove('boost'), 1200);
   }
   wasMoving = moving;
-if (moving) {
-    num.className = 'speedo-num';
-    ring.className = 'speedo-ring moving';
-    arc.style.stroke = mph > 75 ? '#ef4444' : mph > 55 ? '#f59e0b' : '#10b981';
-    label.textContent = 'GPS SPEED';
+
+  if (moving) {
+    num.style.color = over ? '#ef4444' : '#000';
     if (statusBadge) {
       statusBadge.textContent = over ? (lang === 'es' ? '⚠ EXCESO' : '⚠ OVER LIMIT')
                                      : (lang === 'es' ? '🚛 MANEJANDO' : '🚛 DRIVING');
       statusBadge.className = 'speedo-status ' + (over ? 'over-speed' : 'moving');
     }
   } else {
-    num.className = 'speedo-num stopped';
-    ring.className = 'speedo-ring stopped';
-    arc.style.stroke = '#6b7280';
-    label.textContent = 'GPS SPEED';
+    num.style.color = '#6b7280';
     if (statusBadge) {
       statusBadge.textContent = lang === 'es' ? '⏸ DETENIDO' : '⏸ STOPPED';
       statusBadge.className = 'speedo-status';
     }
   }
-
-  // Arc: max speed = 100mph = full circle (345 dasharray units)
-  const maxSpeed = 100;
-  const pct = Math.min(1, mph / maxSpeed);
-  const dashLen = pct * 295; // ~295 is ~85% of the circumference for the arc
-  arc.setAttribute('stroke-dasharray', `${dashLen} 345`);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -12476,6 +12505,8 @@ function init() {
   if (shLbl) shLbl.textContent = showInterstateShields ? 'Highway shields: On' : 'Highway shields: Off';
   // If shields were off, mark hash as disabled to prevent auto-re-add
   if (!showInterstateShields) fmLastStepsHash = 'disabled';
+  // Show return-to-route FAB if tracking was already active on load
+  setTimeout(syncActiveRouteFab, 500);
 }
 
 function changeMapStyle(styleKey) {
@@ -13702,6 +13733,7 @@ function updateNavInstruction(curLat, curLon){
   const box = document.getElementById('navNext');
   if (!box) return;
   if (!navSteps || !navSteps.length){ box.style.display='none'; return; }
+  if (!fmVehicleMoving){ box.style.display='none'; return; }
 
   // Advance step when within ~160 ft of maneuver
   for (let i = navStepIdx; i < navSteps.length; i++){
@@ -14600,7 +14632,7 @@ function openFullMapScreen() {
   screen.classList.toggle('bridge-mode', !!bridgeActive);
 
   document.getElementById('fmTrackBanner').style.display = 'block';
-  document.getElementById('fmStopBtn').style.display = 'none';
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'none'; }
   document.getElementById('poiLegend').classList.add('visible');
   document.getElementById('fmFollowBtn').classList.add('visible');
   // Sync chip visual state with fmPoiActive (all enabled by default)
@@ -14741,8 +14773,18 @@ function openFullMapScreen() {
       }
     }
     document.getElementById('fmHud').style.transform = 'translateY(0)';
+    // After HUD is visible and sized, position origin at bottom of screen
+    if (origin && fmMapInst && !fmIsTracking) {
+      setTimeout(() => {
+        const c = calcFollowCenter(origin.lat, origin.lon, 0);
+        window._fmProgrammaticMove = true;
+        fmMapInst.setView(c, fmMapInst.getZoom(), { animate: true, duration: 0.8 });
+        setTimeout(() => { window._fmProgrammaticMove = false; }, 1200);
+      }, 80);
+    }
   }, 200);
 
+  setTimeout(_restoreTrafficState, 300);
   fmTickClock();
   if (fmClockTimer) clearInterval(fmClockTimer);
   fmClockTimer = setInterval(fmTickClock, 1000);
@@ -15123,8 +15165,9 @@ function closeFullMapScreen() {
   if (fmIsTracking) {
     // Hay rastreo activo → volver al HOS Dashboard
     showHosDashboard();
+  } else {
+    syncActiveRouteFab();
   }
-  // Si no hay rastreo, la pantalla de planeación de ruta queda visible detrás
 }
 
 function minimizeMap() {
@@ -16071,7 +16114,7 @@ function fmStartTracking() {
   navStepIdx = 0;
   window._navVoiceKey = null;
   const navBox = document.getElementById('navNext');
-  if (navBox) navBox.style.display = navSteps.length ? 'flex' : 'none';
+  if (navBox) navBox.style.display = 'none'; // only shown when vehicle is moving
 
   if (fmMapInst) {
     fmRedrawRoute(roadGeometry);
@@ -16116,6 +16159,10 @@ function fmStartTracking() {
   }
 
   fmIsTracking  = true;
+  // El GPS de ruta toma el control del tracker — pausar GPS interno para evitar conflicto
+  window._hosTracker?.pauseInternalGps?.();
+  syncActiveRouteFab();
+  syncPlanCardActiveRoute();
   fmTripStart    = new Date();
   fmLastMoveTime = null;
   fmLastGeocode = 0;
@@ -16147,7 +16194,7 @@ function fmStartTracking() {
   _hosWarn30mFired = false;
   _hosWarnExpiredFired = false;
   b30Reset();             // reinicia sistema de pausa 30 min
-  document.getElementById('fmStopBtn').style.display = 'block';
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'block'; }
   showSpeedometer();
   showDriveHoursWidget();
   // Leer horas restantes del tracker (respeta lo que el driver ingresó en el popup)
@@ -16159,20 +16206,28 @@ function fmStartTracking() {
   updateHeroKPIs(_initDriveLeft, _initDriveMax, _initCycleLeft, 70);
   // Mostrar dashboard HOS en lugar del mapa completo
   showHosDashboard();
-  // Show speed sign immediately — will update with real state on first GPS fix
-  if (speedLimitActive) {
+  // Show speed signs immediately — always visible when tracking starts
+  {
     const initSign = document.getElementById('mapSpeedSign');
     if (initSign && !initSign.classList.contains('visible')) {
       const mssNum = document.getElementById('mssNum');
       const mssState = document.getElementById('mssState');
       const mssDiff = document.getElementById('mssDiff');
       if (mssNum) mssNum.textContent = '--';
-      if (mssState) mssState.textContent = '...';
+      if (mssState) mssState.textContent = '';
       if (mssDiff) mssDiff.textContent = '';
       initSign.classList.add('visible');
     }
+    // Also show the draggable speed limit widget
+    const slw = document.getElementById('speedLimitWidget');
+    if (slw) {
+      const slNum = slw.querySelector('.sl-num');
+      if (slNum) slNum.textContent = '--';
+      slw.classList.add('visible');
+    }
   }
   document.getElementById('reportFab').classList.add('visible');
+  setTimeout(initFabDrag, 100);
   const pfab = document.getElementById('profileFab');
   if (pfab) pfab.style.display = 'flex';
   const trb = document.getElementById('topReportBtns');
@@ -16486,10 +16541,10 @@ function fmStartTracking() {
       : Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
     const cyEl = document.getElementById('fm70Left');
     cyEl.textContent = fmtH(cycleLeft);
-    cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6';
+    cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#a78bfa';
     // Update outer-ring arc for 70 HRS
     const _70arcGps = document.getElementById('hud70Arc');
-    if (_70arcGps) { const cycMax = parseFloat(document.getElementById('hoursInput').value) || 70; const f = Math.max(0, cycleLeft / cycMax); const c = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#8b5cf6'; _70arcGps.setAttribute('stroke-dasharray', `${f * 226} 226`); _70arcGps.setAttribute('stroke', c); }
+    if (_70arcGps) { const cycMax = parseFloat(document.getElementById('hoursInput').value) || 70; const f = Math.max(0, cycleLeft / cycMax); const c = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#a78bfa'; _70arcGps.setAttribute('stroke-dasharray', `${f * 226} 226`); _70arcGps.setAttribute('stroke', c); }
     // Update hero KPI rings
     const _cycMax = parseFloat(document.getElementById('hoursInput').value) || 70;
     updateHeroKPIs(driveLeft, driveMax, cycleLeft, _cycMax);
@@ -16603,6 +16658,11 @@ function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
+  // Asegurar que el tracker sepa que nos detuvimos antes de restaurar GPS interno
+  window._hosTracker?.reportMoving?.(false, 0);
+  window._hosTracker?.resumeInternalGps?.();
+  syncActiveRouteFab();
+  syncPlanCardActiveRoute();
   _fmClearActiveRoute();
   b30Reset(); // limpiar sistema de pausa al detener rastreo
   _autoStopSecs   = 0;
@@ -16632,7 +16692,7 @@ function fmStopTracking() {
   const mrw = document.getElementById('milesRemainingWidget');
   if (mrw) { mrw.classList.remove('visible', 'moving'); }
   document.getElementById('reportFab').classList.remove('visible');
-  document.getElementById('reportSheet').classList.remove('open');
+  closeRadialMenu();
   const trbStop = document.getElementById('topReportBtns');
   if (trbStop) trbStop.style.display = 'none';
   // Hide overlays
@@ -16648,7 +16708,7 @@ function fmStopTracking() {
   fuelMarkers = [];
   fuelStations = [];
   currentStateCode = '';
-  document.getElementById('fmStopBtn').style.display = 'none';
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'none'; }
   document.getElementById('fmLiveDot').style.background = '#6b7280';
   document.getElementById('fmLiveDot').style.boxShadow = 'none';
   document.getElementById('fmLiveDot').style.animation = 'none';
@@ -16896,8 +16956,8 @@ function showHosDashboard() {
     _dashGpsWatchId = navigator.geolocation.watchPosition(pos => {
       const rawSpeed = pos.coords.speed;
       const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
-      autoUpdateDashStatus(gpsSpeed > 3);
-      if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(gpsSpeed > 3, gpsSpeed);
+      autoUpdateDashStatus(gpsSpeed >= 5);
+      if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(gpsSpeed >= 5, gpsSpeed);
     }, () => {}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
   }
 
@@ -17175,11 +17235,6 @@ function initHosMinimap() {
         <span class="side-tab-icon">👥</span>
         <span class="side-tab-label">Comunidad</span>
       </button>
-      <button class="dash-side-tab" aria-label="Live Chat"
-        onclick="closeDashSideMenu();openChatChannel('general')">
-        <span class="side-tab-icon">💬</span>
-        <span class="side-tab-label">Live Chat</span>
-      </button>`;
 
     _dashScreen.appendChild(_sideToggle);
     _dashScreen.appendChild(_sideStack);
@@ -17351,17 +17406,12 @@ function updateDashRouteHoursRow() {
     barFill.style.background = col;
   }
 
-  if (!stopRow || !stopCityEl) return;
-
   const breakDue  = (typeof b30Complete !== 'undefined') && !b30Complete && (typeof b30Warned30m !== 'undefined') && b30Warned30m;
   const hoursGone = dLeft <= 0;
   const hoursLow  = dLeft > 0 && dLeft <= 2;
+  const hoursVeryLow = dLeft > 0 && dLeft < 1;
 
   if (breakDue) {
-    stopRow.style.display = 'block';
-    stopRow.style.background = 'rgba(245,158,11,0.12)';
-    stopRow.style.border = '1px solid rgba(245,158,11,0.4)';
-    stopCityEl.style.color = '#f59e0b';
     if (!_hosBreakStopName && !_hosBreakStopFetching && typeof _fetchStopCityAhead === 'function') {
       _hosBreakStopFetching = true;
       _fetchStopCityAhead(10, name => {
@@ -17371,12 +17421,8 @@ function updateDashRouteHoursRow() {
       });
     }
     const city = _hosBreakStopName || '...';
-    stopCityEl.textContent = `⏸ Para en ${city} — Descanso obligatorio 30 min`;
+    _showStopAlertPopup('Descanso de 30 min obligatorio', `Para en ${city}`, '#f59e0b', false);
   } else if (hoursGone || hoursLow) {
-    stopRow.style.display = 'block';
-    stopRow.style.background = 'rgba(239,68,68,0.12)';
-    stopRow.style.border = '1px solid rgba(239,68,68,0.4)';
-    stopCityEl.style.color = '#ef4444';
     if (!_hosHoursStopName && !_hosHoursStopFetching && typeof _fetchStopCityAhead === 'function') {
       _hosHoursStopFetching = true;
       const distMi = hoursGone ? 5 : Math.max(5, Math.round(dLeft * ((typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55)));
@@ -17387,14 +17433,162 @@ function updateDashRouteHoursRow() {
       });
     }
     const city = _hosHoursStopName || '...';
-    stopCityEl.textContent = hoursGone
-      ? `🛑 Para en ${city} — Horas de manejo agotadas`
-      : `⚠️ Para en ${city} — Descanso 10 horas obligatorio`;
+    const title = hoursGone ? 'Horas de manejo agotadas' : 'Descanso 10 horas obligatorio';
+    const body  = hoursGone ? `Detente en ${city} de inmediato` : `Para en ${city}`;
+    _showStopAlertPopup(title, body, '#ef4444', hoursVeryLow);
   } else {
-    stopRow.style.display = 'none';
+    _hideStopAlertPopup();
     _hosHoursStopName = null;
   }
 }
+
+let _stopAlertDismissed = false;
+let _stopAlertRepeatTimer = null;
+
+function _showStopAlertPopup(title, body, color, fetchNearby) {
+  if (_stopAlertDismissed) return;
+  const popup = document.getElementById('stopAlertPopup');
+  if (!popup) return;
+  const alreadyVisible = popup.style.display === 'flex';
+  document.getElementById('stopAlertTitle').textContent = title;
+  document.getElementById('stopAlertTitle').style.color = color;
+  document.getElementById('stopAlertBody').textContent  = body;
+  popup.style.borderColor = color.replace(')', ',0.7)').replace('rgb', 'rgba');
+  popup.style.boxShadow   = `0 4px 28px ${color.replace(')', ',0.25)').replace('rgb','rgba')},0 8px 32px rgba(0,0,0,0.7)`;
+  popup.style.display = 'flex';
+  if (!alreadyVisible) {
+    popup.style.animation = 'none';
+    requestAnimationFrame(() => { popup.style.animation = 'stopAlertIn .3s cubic-bezier(.34,1.56,.64,1)'; });
+  }
+  if (fetchNearby) _fetchNearbyStopsForAlert();
+}
+
+function _hideStopAlertPopup() {
+  const popup = document.getElementById('stopAlertPopup');
+  if (popup) popup.style.display = 'none';
+  _stopAlertDismissed = false;
+  if (_stopAlertRepeatTimer) { clearTimeout(_stopAlertRepeatTimer); _stopAlertRepeatTimer = null; }
+}
+
+function dismissStopAlert() {
+  const popup = document.getElementById('stopAlertPopup');
+  if (popup) popup.style.display = 'none';
+  _stopAlertDismissed = true;
+  if (_stopAlertRepeatTimer) clearTimeout(_stopAlertRepeatTimer);
+  // Si el vehículo sigue en movimiento, reaparecer en 10 min
+  _stopAlertRepeatTimer = setTimeout(() => {
+    const moving = (typeof fmCurrentSpeed !== 'undefined') && fmCurrentSpeed >= 5;
+    if (moving) {
+      _stopAlertDismissed = false;
+      updateDashRouteHoursRow();
+    } else {
+      _stopAlertDismissed = false;
+    }
+    _stopAlertRepeatTimer = null;
+  }, 10 * 60 * 1000);
+}
+
+let _nearbyStopsFetching = false;
+
+async function _fetchNearbyStopsForAlert() {
+  if (_nearbyStopsFetching) return;
+  const placesEl = document.getElementById('stopAlertPlaces');
+  if (!placesEl) return;
+
+  // Use current GPS position or fall back to origin
+  const lat = window.lastFixFm?.lat || origin?.lat;
+  const lon = window.lastFixFm?.lon || origin?.lon;
+  if (!lat || !lon) return;
+
+  // Show loading state
+  placesEl.style.display = 'flex';
+  placesEl.innerHTML = `<div style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;padding:4px 0;">Buscando lugares cercanos…</div>`;
+
+  _nearbyStopsFetching = true;
+  const R = 50000; // 50 km (~30 mi)
+  const query = `[out:json][timeout:25];(
+    node["amenity"="truck_stop"](around:${R},${lat},${lon});
+    node["name"~"Pilot|Flying J|Love's|TA Travel|Petro|Sapp Bros|Kwik Trip",i](around:${R},${lat},${lon});
+    node["highway"="rest_area"](around:${R},${lat},${lon});
+    node["amenity"="rest_area"](around:${R},${lat},${lon});
+    node["amenity"="parking"]["hgv"="yes"](around:${R},${lat},${lon});
+    node["amenity"="parking"]["truck"="yes"](around:${R},${lat},${lon});
+  );out center qt;`;
+
+  try {
+    const data = await overpassFetch(query, 22000);
+    const seen = new Set();
+    const results = (data.elements || [])
+      .map(el => {
+        const elLat = el.lat ?? el.center?.lat;
+        const elLon = el.lon ?? el.center?.lon;
+        if (!elLat || !elLon) return null;
+        const name = el.tags?.name ||
+          (el.tags?.['amenity'] === 'truck_stop' ? 'Truck Stop' :
+           el.tags?.['highway'] === 'rest_area' || el.tags?.['amenity'] === 'rest_area' ? 'Rest Area' :
+           'Truck Parking');
+        const key = name + '|' + elLat.toFixed(3) + '|' + elLon.toFixed(3);
+        if (seen.has(key)) return null;
+        seen.add(key);
+        const isTruck = el.tags?.amenity === 'truck_stop' || /Pilot|Flying J|Love's|TA Travel|Petro|Sapp Bros|Kwik Trip/i.test(name);
+        const isRest  = el.tags?.highway === 'rest_area' || el.tags?.amenity === 'rest_area';
+        const emoji   = isTruck ? '⛽' : isRest ? '🏁' : '🅿️';
+        const dist    = haversine(lat, lon, elLat, elLon);
+        return { name, lat: elLat, lon: elLon, emoji, dist };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 5);
+
+    if (!results.length) {
+      placesEl.innerHTML = `<div style="font-size:11px;color:rgba(255,255,255,0.4);text-align:center;padding:4px 0;">No se encontraron lugares cercanos</div>`;
+      _nearbyStopsFetching = false;
+      return;
+    }
+
+    placesEl.innerHTML = `<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.5px;margin-bottom:2px;">LUGARES CERCANOS</div>` +
+      results.map(p =>
+        `<button onclick="_selectNearbyStop(${JSON.stringify(p.name)},${p.lat},${p.lon})" style="
+          display:flex;align-items:center;gap:8px;width:100%;
+          background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;
+          padding:8px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:left;">
+          <span style="font-size:18px;flex-shrink:0">${p.emoji}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:800;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:600;">${p.dist.toFixed(1)} mi</div>
+          </div>
+          <span style="font-size:16px;color:rgba(255,255,255,0.4)">›</span>
+        </button>`
+      ).join('');
+  } catch {
+    placesEl.innerHTML = `<div style="font-size:11px;color:rgba(255,255,255,0.4);text-align:center;padding:4px 0;">No se pudo obtener lugares</div>`;
+  }
+  _nearbyStopsFetching = false;
+}
+
+function _selectNearbyStop(name, lat, lon) {
+  // Set as destination
+  destination = { name, lat, lon };
+  const destIn = document.getElementById('destInput');
+  if (destIn) destIn.value = name;
+  const destSugg = document.getElementById('destSugg');
+  if (destSugg) destSugg.style.display = 'none';
+
+  // Update destination card immediately
+  updateDashDestCard();
+
+  // Calculate route if origin is set
+  if (origin && typeof calculateRoute === 'function') {
+    setTimeout(() => calculateRoute(), 200);
+  }
+
+  // Close popup
+  const popup = document.getElementById('stopAlertPopup');
+  if (popup) popup.style.display = 'none';
+  _stopAlertDismissed = true;
+  if (_stopAlertRepeatTimer) { clearTimeout(_stopAlertRepeatTimer); _stopAlertRepeatTimer = null; }
+}
+
 
 function _openDashSpeedLimitEditor() {
   const sheet = document.getElementById('dashSpeedSheet');
@@ -17576,6 +17770,8 @@ function backToMainFromDash() {
     const el = document.getElementById(id);
     if (el) el.style.removeProperty('display');
   });
+  // Mostrar el FAB de ruta activa si aplica
+  syncActiveRouteFab();
 }
 
 // Botón "Volver al Dashboard" que aparece en el mapa completo durante rastreo
@@ -19257,41 +19453,172 @@ function initIncidentToggles() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   ⚠️  QUICK REPORT FAB — tap to pin incident at GPS location
+   🚨  DRAGGABLE REPORT FAB — radial menu with DOT + incident reports
 ════════════════════════════════════════════════════════════ */
 let reportSheetOpen = false;
+let _fabPos = null;     // { x, y } fixed viewport center of FAB
+let _fabDragState = null;
 
-function toggleReportSheet() {
+const REPORT_ITEMS = [
+  { type: 'dot_police',   emoji: '🚛', label: 'DOT Police',  bg: 'linear-gradient(135deg,#1e3a5f,#1e40af)' },
+  { type: 'inspection',   emoji: '🔍', label: 'Inspección',  bg: 'linear-gradient(135deg,#312e81,#4c1d95)' },
+  { type: 'weigh_station',emoji: '⚖️', label: 'Báscula',     bg: 'linear-gradient(135deg,#164e63,#0e7490)' },
+  { type: 'police',       emoji: '🚔', label: 'Policía',     bg: 'linear-gradient(135deg,#1d3a8a,#2563eb)' },
+  { type: 'accident',     emoji: '💥', label: 'Accidente',   bg: 'linear-gradient(135deg,#7f1d1d,#dc2626)' },
+  { type: 'hazard',       emoji: '⚠️', label: 'Peligro',     bg: 'linear-gradient(135deg,#7c2d12,#ea580c)' },
+  { type: 'traffic',      emoji: '🚦', label: 'Tráfico',     bg: 'linear-gradient(135deg,#78350f,#d97706)' },
+  { type: 'construction', emoji: '🚧', label: 'Obras',       bg: 'linear-gradient(135deg,#713f12,#ca8a04)' },
+  { type: 'closure',      emoji: '🚫', label: 'Cerrado',     bg: 'linear-gradient(135deg,#450a0a,#991b1b)' },
+];
+
+/* Init drag on the FAB — called once when tracking starts */
+function initFabDrag() {
+  const fab = document.getElementById('reportFab');
+  if (!fab || fab._dragInited) return;
+  fab._dragInited = true;
+
+  /* Read initial CSS position and store as fixed coords */
+  const r = fab.getBoundingClientRect();
+  _fabPos = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+
+  let _startX, _startY, _moved;
+
+  fab.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    fab.setPointerCapture(e.pointerId);
+    _startX = e.clientX; _startY = e.clientY; _moved = false;
+    _fabDragState = { ox: e.clientX - _fabPos.x, oy: e.clientY - _fabPos.y };
+    fab.classList.add('dragging');
+  }, { passive: false });
+
+  fab.addEventListener('pointermove', e => {
+    if (!_fabDragState) return;
+    const dx = e.clientX - _startX, dy = e.clientY - _startY;
+    if (!_moved && Math.hypot(dx, dy) > 8) {
+      _moved = true;
+      if (reportSheetOpen) closeRadialMenu();
+    }
+    if (_moved) {
+      const W = window.innerWidth, H = window.innerHeight, R = 32;
+      _fabPos.x = Math.max(R, Math.min(W - R, e.clientX - _fabDragState.ox));
+      _fabPos.y = Math.max(R, Math.min(H - R, e.clientY - _fabDragState.oy));
+      _applyFabPos(false);
+    }
+  });
+
+  const _onUp = () => {
+    fab.classList.remove('dragging');
+    const wasMoved = _moved;
+    _fabDragState = null;
+    if (!wasMoved) _toggleRadialMenu();
+    else _snapFabToEdge();
+  };
+  fab.addEventListener('pointerup',     _onUp);
+  fab.addEventListener('pointercancel', () => { _fabDragState = null; fab.classList.remove('dragging'); });
+}
+
+function _applyFabPos(animate) {
+  const fab = document.getElementById('reportFab');
+  if (!fab || !_fabPos) return;
+  if (animate) {
+    fab.style.transition = 'left .3s cubic-bezier(.34,1.56,.64,1), top .3s cubic-bezier(.34,1.56,.64,1)';
+    setTimeout(() => { if (fab) fab.style.transition = ''; }, 360);
+  }
+  fab.style.left   = (_fabPos.x - 28) + 'px';
+  fab.style.top    = (_fabPos.y - 28) + 'px';
+  fab.style.bottom = 'unset';
+  fab.style.right  = 'unset';
+}
+
+function _snapFabToEdge() {
+  const W = window.innerWidth;
+  _fabPos.x = _fabPos.x < W / 2 ? 38 : W - 38;
+  _applyFabPos(true);
+}
+
+function _toggleRadialMenu() {
   reportSheetOpen = !reportSheetOpen;
-  const sheet = document.getElementById('reportSheet');
-  const fab   = document.getElementById('reportFab');
+  const fab = document.getElementById('reportFab');
   fab.classList.add('spinning');
-  setTimeout(() => fab.classList.remove('spinning'), 320);
-  fab.textContent = reportSheetOpen ? '✕' : '⚠️';
-  sheet.classList.toggle('open', reportSheetOpen);
-  // Close on outside tap
+  setTimeout(() => fab.classList.remove('spinning'), 360);
   if (reportSheetOpen) {
-    setTimeout(() => {
-      const close = (e) => {
-        if (!sheet.contains(e.target) && e.target !== fab) {
-          reportSheetOpen = false;
-          fab.textContent = '⚠️';
-          sheet.classList.remove('open');
-        }
-        document.removeEventListener('pointerdown', close, true);
-      };
-      document.addEventListener('pointerdown', close, true);
-    }, 100);
+    fab.textContent = '✕';
+    fab.classList.add('open-state');
+    _openRadialMenu();
+  } else {
+    closeRadialMenu();
   }
 }
 
-function quickReport(type, emoji, label) {
-  // Close FAB sheet if open
-  if (reportSheetOpen) {
-    reportSheetOpen = false;
-    document.getElementById('reportFab').textContent = '⚠️';
-    document.getElementById('reportSheet').classList.remove('open');
+function _openRadialMenu() {
+  if (!_fabPos) {
+    const r = document.getElementById('reportFab').getBoundingClientRect();
+    _fabPos = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
+
+  const menu = document.getElementById('reportRadialMenu');
+  menu.innerHTML = '';
+  menu.classList.add('open');
+
+  /* Backdrop */
+  const bd = document.createElement('div');
+  bd.id = 'reportRadialMenu-backdrop';
+  bd.onclick = () => closeRadialMenu();
+  menu.appendChild(bd);
+  requestAnimationFrame(() => bd.style.opacity = '1');
+
+  /* Panel cuadrícula 3×3 */
+  const W = window.innerWidth, H = window.innerHeight;
+  const COLS = 3, ITEM = 72, GAP = 12, PAD = 14;
+  const ROWS = Math.ceil(REPORT_ITEMS.length / COLS);
+  const PW = PAD * 2 + COLS * ITEM + (COLS - 1) * GAP;
+  const PH = PAD * 2 + ROWS * ITEM + (ROWS - 1) * GAP;
+
+  const goUp = _fabPos.y > H * 0.4;
+  let px = _fabPos.x - PW / 2;
+  let py = goUp ? _fabPos.y - PH - 14 : _fabPos.y + 44;
+  px = Math.max(8, Math.min(W - PW - 8, px));
+  py = Math.max(8, Math.min(H - PH - 8, py));
+
+  const panel = document.createElement('div');
+  panel.className = 'rr-panel';
+  panel.style.left   = px + 'px';
+  panel.style.top    = py + 'px';
+  panel.style.width  = PW + 'px';
+  panel.style.gridTemplateColumns = 'repeat(' + COLS + ',' + ITEM + 'px)';
+  panel.style.gap    = GAP + 'px';
+  panel.style.padding = PAD + 'px';
+  panel.style.transformOrigin = (_fabPos.x - px) + 'px ' + (goUp ? PH : 0) + 'px';
+
+  REPORT_ITEMS.forEach(rt => {
+    const btn = document.createElement('button');
+    btn.className = 'rr-item';
+    btn.style.background = rt.bg;
+    btn.innerHTML = '<span class="rr-emoji">' + rt.emoji + '</span><span class="rr-label">' + rt.label + '</span>';
+    btn.addEventListener('pointerdown', e => e.stopPropagation());
+    btn.onclick = () => { quickReport(rt.type, rt.emoji, rt.label); closeRadialMenu(); };
+    panel.appendChild(btn);
+  });
+
+  menu.appendChild(panel);
+  requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add('rr-panel-visible')));
+}
+
+function closeRadialMenu() {
+  reportSheetOpen = false;
+  const fab = document.getElementById('reportFab');
+  if (fab) { fab.textContent = '🚨'; fab.classList.remove('open-state'); }
+  const menu = document.getElementById('reportRadialMenu');
+  if (!menu) return;
+  const panel = menu.querySelector('.rr-panel');
+  if (panel) panel.classList.remove('rr-panel-visible');
+  const bd = document.getElementById('reportRadialMenu-backdrop');
+  if (bd) bd.style.opacity = '0';
+  setTimeout(() => { menu.classList.remove('open'); menu.innerHTML = ''; }, 280);
+}
+
+function quickReport(type, emoji, label) {
+  closeRadialMenu();
 
   // Get exact GPS location — prefer live GPS marker, else map center
   let lat, lon;
@@ -19324,11 +19651,14 @@ function quickReport(type, emoji, label) {
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
 
   addReportMarker(report);
-  // Incident bubble auto-dismisses from screen after 2 seconds
   addIncidentBubble(report, 2000);
   incrementUserReports();
 
-  // Fly map briefly to confirm placement
+  // Publish to Firebase so all other users see it
+  if (window._chatFirebase?.ready()) {
+    window._chatFirebase.sendReport(report).catch(() => {});
+  }
+
   if (fmMapInst) {
     fmMapInst.flyTo([lat, lon], Math.max(fmMapInst.getZoom(), 15), { duration: 0.8 });
   }
@@ -19662,20 +19992,63 @@ function hideError() {
   document.getElementById('errorBox').style.display = 'none';
 }
 
+function syncPlanCardActiveRoute() {
+  const tracking = !!fmIsTracking;
+  const planFormInputs      = document.getElementById('planFormInputs');
+  const planDepartureSection = document.getElementById('planDepartureSection');
+  const calcBtn             = document.getElementById('calcBtn');
+  const cancelBtn           = document.getElementById('cancelActiveRouteBtn');
+  const errorBox            = document.getElementById('errorBox');
+
+  if (planFormInputs)       planFormInputs.style.display       = tracking ? 'none' : '';
+  if (planDepartureSection) planDepartureSection.style.display  = tracking ? 'none' : '';
+  if (calcBtn)              calcBtn.style.display               = tracking ? 'none' : '';
+  if (errorBox)             errorBox.style.display              = tracking ? 'none' : (errorBox._visible ? '' : 'none');
+  if (cancelBtn)            cancelBtn.style.display             = tracking ? '' : 'none';
+
+  if (tracking) {
+    const altRoutes = document.getElementById('altRoutesCard');
+    const results   = document.getElementById('resultsCard');
+    const shareBtns = document.getElementById('shareTrackBtns');
+    if (altRoutes) altRoutes.style.display = 'none';
+    if (results)   results.style.display   = 'none';
+    if (shareBtns) shareBtns.style.display = 'none';
+  }
+}
+
+function cancelActiveRoute() {
+  fmStopTracking();
+  resetForm();
+  syncPlanCardActiveRoute();
+  syncActiveRouteFab();
+}
+
+function syncActiveRouteFab() {
+  const fab = document.getElementById('activeRouteFab');
+  if (!fab) return;
+  const dashOpen = document.getElementById('hosDashScreen')?.style.display !== 'none';
+  const mapOpen  = document.getElementById('fullMapScreen')?.style.display  !== 'none';
+  const show = !!fmIsTracking && currentTab === 'plan' && !dashOpen && !mapOpen;
+  fab.classList.toggle('arf-visible', show);
+  if (show && destination) {
+    const sub = document.getElementById('arfSub');
+    if (sub) sub.textContent = '→ ' + (destination.name || 'Ver detalles').split(',')[0];
+  }
+}
+
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
   if (tab === 'summary') { fetchEIAPrice(); searchFuelNearby(null); }
-  if (tab === 'plan') { const dep = document.getElementById('departureInput'); if (dep && !dep.value) setDepartureNow(); else updateDepartureDisplay(); }
+  if (tab === 'plan') { const dep = document.getElementById('departureInput'); if (dep && !dep.value) setDepartureNow(); else updateDepartureDisplay(); syncPlanCardActiveRoute(); }
   if (tab === 'settings') {
     // Recargar foto y nombre cada vez que se abre settings
     try { loadDriverProfile(); } catch(e) {}
     try { applyAllAvatars(); } catch(e) {}
   }
-  const fab = document.getElementById('chatFab');
-  if (fab) fab.style.display = tab === 'community' ? 'none' : 'flex';
+  syncActiveRouteFab();
 }
 
 function bindEvents() {
@@ -19742,7 +20115,7 @@ function bindEvents() {
     document.getElementById('fmTrackBanner').style.display = 'none';
     fmStartTracking();
   });
-  document.getElementById('fmStopBtn').addEventListener('click', fmStopTracking);
+  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.addEventListener('click', fmStopTracking); }
 
 
   // Safety feature toggles
@@ -23351,319 +23724,7 @@ function incrementUserReports() {
   const idx = allProfiles.findIndex(p => p.id === currentUser.id);
   if (idx >= 0) { allProfiles[idx].totalReports = currentUser.totalReports; localStorage.setItem('hos_profiles', JSON.stringify(allProfiles)); }
 }
-
-/* ══════════════════════════════════════════════════════════
-   💬  DRIVER CHAT
-══════════════════════════════════════════════════════════ */
-(function() {
-  const TRUCK_EMOJIS = {
-    '18wheeler':'🚛','dump':'🪨','flatbed':'📦','tanker':'⛽','reefer':'❄️',
-    'box':'📬','lowboy':'🏗️','stepdecks':'🚚','hotshot':'🔥','livestock':'🐄',
-    'tow':'🚔','concrete':'🪨','rv':'🚌'
-  };
-
-  let chatChannel    = 'general';
-  let chatUnsub      = null;   // Firebase listener unsubscribe
-  let chatUnread     = 0;
-  let chatOpen       = false;
-  let lastMsgId      = null;
-
-  /* ── Open / Close ──────────────────────────────────── */
-  window.openChatPanel = function() {
-    chatOpen = true;
-    chatUnread = 0;
-    const panel = document.getElementById('chatPanel');
-    panel.classList.add('open');
-    panel.classList.remove('minimised');
-    // Reset minimise button label
-    const minBtn = document.getElementById('chatMinBtn');
-    if (minBtn) minBtn.textContent = '—';
-    loadChannel(chatChannel);
-  };
-
-  window.closeChatPanel = function() {
-    chatOpen = false;
-    document.getElementById('chatPanel').classList.remove('open');
-    if (chatUnsub) { chatUnsub(); chatUnsub = null; }
-  };
-
-  window.toggleChatMinimise = function() {
-    const panel = document.getElementById('chatPanel');
-    const isMin = panel.classList.toggle('minimised');
-    const minBtn = document.getElementById('chatMinBtn');
-    if (minBtn) minBtn.textContent = isMin ? '▲' : '—';
-  };
-
-  /* ── Drag to move ──────────────────────────────────── */
-  (function initChatDrag() {
-    const handle = document.getElementById('chatDragHandle');
-    const panel  = document.getElementById('chatPanel');
-    if (!handle || !panel) return;
-
-    let dragging = false, ox = 0, oy = 0;
-
-    function onStart(e) {
-      dragging = true;
-      const touch = e.touches ? e.touches[0] : e;
-      ox = touch.clientX - panel.getBoundingClientRect().left;
-      oy = touch.clientY - panel.getBoundingClientRect().top;
-      panel.style.transition = 'none';
-      e.preventDefault();
-    }
-    function onMove(e) {
-      if (!dragging) return;
-      const touch = e.touches ? e.touches[0] : e;
-      let nx = touch.clientX - ox;
-      let ny = touch.clientY - oy;
-      // Clamp within viewport
-      nx = Math.max(0, Math.min(nx, window.innerWidth  - panel.offsetWidth));
-      ny = Math.max(0, Math.min(ny, window.innerHeight - panel.offsetHeight));
-      panel.style.right  = 'auto';
-      panel.style.bottom = 'auto';
-      panel.style.left   = nx + 'px';
-      panel.style.top    = ny + 'px';
-      e.preventDefault();
-    }
-    function onEnd() { dragging = false; }
-
-    handle.addEventListener('mousedown',  onStart, { passive: false });
-    handle.addEventListener('touchstart', onStart, { passive: false });
-    window.addEventListener('mousemove',  onMove,  { passive: false });
-    window.addEventListener('touchmove',  onMove,  { passive: false });
-    window.addEventListener('mouseup',    onEnd);
-    window.addEventListener('touchend',   onEnd);
-  })();
-
-  /* ── Channel switch ────────────────────────────────── */
-  window.switchChatChannel = function(ch, btn) {
-    chatChannel = ch;
-    document.querySelectorAll('.chat-ch-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    if (chatUnsub) { chatUnsub(); chatUnsub = null; }
-    document.getElementById('chatMessages').innerHTML =
-      '<div class="chat-loading" id="chatLoading">⏳ ' + (lang==='es'?'Conectando…':'Connecting…') + '</div>';
-    loadChannel(ch);
-  };
-
-  /* ── Load channel messages ─────────────────────────── */
-  function loadChannel(ch) {
-    const msgBox = document.getElementById('chatMessages');
-
-    if (!window._chatReady) {
-      msgBox.innerHTML = '';
-      const setupDiv = document.createElement('div');
-      setupDiv.className = 'chat-setup-msg';
-      setupDiv.innerHTML = `
-        <div style="font-size:48px">🔧</div>
-        <h3>${lang==='es'?'Configura Firebase':'Configure Firebase'}</h3>
-        <p style="font-size:13px;line-height:1.5">${lang==='es'
-          ? 'El chat en tiempo real requiere una base de datos Firebase gratuita. Edita el archivo <code>index.html</code> y completa la sección <strong>FIREBASE_CONFIG</strong> con los datos de tu proyecto.'
-          : 'Real-time chat requires a free Firebase database. Edit <code>index.html</code> and fill in the <strong>FIREBASE_CONFIG</strong> section with your project credentials.'
-        }</p>
-        <pre>// console.firebase.google.com
-// → Nuevo proyecto → Realtime DB
-FIREBASE_CONFIG = {
-  apiKey: "tu-api-key",
-  databaseURL: "https://...",
-  projectId: "tu-proyecto",
-  ...
-}</pre>
-      `;
-      msgBox.appendChild(setupDiv);
-      return;
-    }
-
-    const q = window._chatQuery(
-      window._chatRef(ch),
-      window._chatOrderByChild('ts'),
-      window._chatLimitToLast(80)
-    );
-
-    chatUnsub = window._chatOnValue(q, snap => {
-      const loading = document.getElementById('chatLoading');
-      if (loading) loading.remove();
-
-      const oneHourAgo = Date.now() - 3600000;
-      const msgs = [];
-      snap.forEach(child => {
-        const m = child.val();
-        if ((m.ts || 0) >= oneHourAgo) msgs.push({ id: child.key, ...m });
-      });
-
-      // Re-render only if there are new messages
-      const latestId = msgs.length ? msgs[msgs.length - 1].id : null;
-      if (latestId === lastMsgId) return;
-      lastMsgId = latestId;
-
-      msgBox.innerHTML = '';
-
-      if (!msgs.length) {
-        const empty = document.createElement('div');
-        empty.className = 'chat-empty';
-        empty.innerHTML = '<div style="font-size:40px">💬</div><span>'
-          + (lang==='es'?'Sé el primero en escribir':'Be the first to say something') + '</span>';
-        msgBox.appendChild(empty);
-      } else {
-        msgs.forEach(m => msgBox.appendChild(buildMsgEl(m)));
-      }
-      msgBox.scrollTop = msgBox.scrollHeight;
-
-      // Unread count (badge removed — chat accessible via map controls)
-      if (!chatOpen && msgs.length) {
-        chatUnread++;
-      }
-    });
-  }
-
-  /* ── Build a single message element ───────────────── */
-  function buildMsgEl(m) {
-    const isMe = currentUser && m.userId === currentUser.id;
-    const wrap = document.createElement('div');
-    wrap.className = 'chat-msg' + (isMe ? ' mine' : '');
-
-    const truckEmoji = TRUCK_EMOJIS[m.truckType] || '🚛';
-    const timeStr = m.ts ? new Date(m.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
-
-    wrap.innerHTML = `
-      <div class="chat-avatar">${truckEmoji}</div>
-      <div class="chat-bubble">
-        <div class="chat-name">${escapeHtml(m.name || 'Driver')}</div>
-        <div class="chat-text">${escapeHtml(m.text)}</div>
-        <div class="chat-time">${timeStr}</div>
-      </div>
-    `;
-    return wrap;
-  }
-
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-
-  /* ── Send message ──────────────────────────────────── */
-  window.sendPanelMessage = function() {
-    if (!window._chatReady) return;
-
-    const input = document.getElementById('panelChatInput');
-    const text  = input.value.trim();
-    if (!text) return;
-
-    // Use currentUser if available, otherwise fall back to driver profile
-    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
-    let senderId   = (currentUser && currentUser.id)        || localStorage.getItem('chat_uid') || ('u_' + Math.random().toString(36).slice(2,10));
-    let senderName = (currentUser && currentUser.name)      || dp.name || 'Driver';
-    let senderTruck= (currentUser && currentUser.truckType) || dp.truckType || '18wheeler';
-    // Persist uid for consistency
-    if (!localStorage.getItem('chat_uid')) localStorage.setItem('chat_uid', senderId);
-
-    document.getElementById('panelSendBtn').disabled = true;
-    input.value = '';
-    input.style.height = 'auto';
-
-    window._chatPush(window._chatRef(chatChannel), {
-      userId:    senderId,
-      name:      senderName,
-      truckType: senderTruck,
-      text:      text,
-      ts:        window._chatServerTimestamp()
-    }).then(() => {
-      document.getElementById('panelSendBtn').disabled = false;
-    }).catch(err => {
-      document.getElementById('panelSendBtn').disabled = false;
-      showToast('danger','⚠️','Chat error', err.message, 4000);
-    });
-  };
-
-  /* ── Show/hide FAB based on current tab ────────────── */
-})();
 </script>
-
-<!-- ══════════════════════════════════════════════════════════
-     💬  DRIVER CHAT PANEL
-══════════════════════════════════════════════════════════ -->
-<div id="chatPanel">
-  <!-- Invisible drag handle (covers header) -->
-  <div id="chatDragHandle"></div>
-  <div id="chatSheet">
-    <!-- Header -->
-    <div class="tool-hdr" style="padding:10px 14px 8px;flex-shrink:0;">
-      <div class="tool-hdr-left" style="gap:10px;">
-        <button onclick="closeChatPanel()" title="Volver" style="background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.35);border-radius:10px;width:32px;height:32px;color:#a78bfa;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700">←</button>
-        <div class="tool-hdr-icon" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);width:34px;height:34px;font-size:16px;">💬</div>
-        <div>
-          <div class="tool-hdr-title" id="chatPanelTitle" style="font-size:15px;">Driver Chat</div>
-          <div class="tool-hdr-sub" id="chatPanelSub" style="font-size:11px;">Talk with truckers on the road</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:4px;align-items:center;position:relative;z-index:2;">
-        <button id="chatMinBtn" onclick="toggleChatMinimise()" title="Minimizar"
-          style="display:none;">—</button>
-        <button class="tool-close" onclick="closeChatPanel()" style="width:28px;height:28px;font-size:20px;line-height:1;">×</button>
-      </div>
-    </div>
-
-    <!-- Report / Alert quick buttons -->
-    <div style="padding:8px 14px 4px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06)">
-      <div style="font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">⚠️ Reportar Incidente</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px">
-        <button onclick="quickReport('police','🚔','Policía')" style="background:rgba(29,58,138,.35);border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <span style="font-size:16px">🚔</span><span style="font-size:9px;color:#93c5fd;font-weight:700">Policía</span>
-        </button>
-        <button onclick="quickReport('accident','💥','Accidente')" style="background:rgba(127,29,29,.35);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <span style="font-size:16px">💥</span><span style="font-size:9px;color:#fca5a5;font-weight:700">Accidente</span>
-        </button>
-        <button onclick="quickReport('hazard','⚠️','Peligro en vía')" style="background:rgba(124,45,18,.35);border:1px solid rgba(249,115,22,.25);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <span style="font-size:16px">⚠️</span><span style="font-size:9px;color:#fdba74;font-weight:700">Peligro</span>
-        </button>
-        <button onclick="quickReport('traffic','🚦','Tráfico lento')" style="background:rgba(120,53,15,.35);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <span style="font-size:16px">🚦</span><span style="font-size:9px;color:#fcd34d;font-weight:700">Tráfico</span>
-        </button>
-        <button onclick="quickReport('construction','🚧','Construcción')" style="background:rgba(113,63,18,.35);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <span style="font-size:16px">🚧</span><span style="font-size:9px;color:#fcd34d;font-weight:700">Construc.</span>
-        </button>
-        <button onclick="quickReport('closure','🚫','Vía cerrada')" style="background:rgba(69,10,10,.35);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <span style="font-size:16px">🚫</span><span style="font-size:9px;color:#fca5a5;font-weight:700">Cerrada</span>
-        </button>
-        <button onclick="quickReport('dot_police','🚛','DOT Police')" style="background:rgba(30,58,95,.35);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <span style="font-size:16px">🚛</span><span style="font-size:9px;color:#93c5fd;font-weight:700">DOT Police</span>
-        </button>
-        <button onclick="quickReport('inspection','🔍','Inspección DOT')" style="background:rgba(49,46,129,.35);border:1px solid rgba(139,92,246,.25);border-radius:8px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <span style="font-size:16px">🔍</span><span style="font-size:9px;color:#c4b5fd;font-weight:700">Inspección</span>
-        </button>
-      </div>
-      <button onclick="closeChatPanel();openCommunityPanel()" style="width:100%;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:6px;cursor:pointer;color:#34d399;font-size:11px;font-weight:700">🚨 Ver Alertas de Reportes Cercanos</button>
-    </div>
-
-    <!-- Channel selector -->
-    <div id="chatChannelBar">
-      <button class="chat-ch-btn active" data-ch="general"  onclick="switchChatChannel('general',this)">🌐 General</button>
-      <button class="chat-ch-btn"        data-ch="route"    onclick="switchChatChannel('route',this)">🛣️ En Ruta</button>
-      <button class="chat-ch-btn"        data-ch="weather"  onclick="switchChatChannel('weather',this)">🌧️ Clima</button>
-      <button class="chat-ch-btn"        data-ch="rest"     onclick="switchChatChannel('rest',this)">😴 Descanso</button>
-    </div>
-
-    <!-- Messages list -->
-    <div id="chatMessages">
-      <div class="chat-loading" id="chatLoading">⏳ Conectando…</div>
-    </div>
-
-    <!-- Input row -->
-    <div id="chatInputWrap">
-      <textarea id="panelChatInput" rows="1"
-        placeholder="Escribe un mensaje…"
-        maxlength="300"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendPanelMessage();}"
-        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'">
-      </textarea>
-      <button id="panelSendBtn" onclick="sendPanelMessage()" title="Enviar">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-</div>
 
 
 <!-- ══════════════ PRO SUBSCRIBE MODAL ══════════════ -->
@@ -24652,9 +24713,9 @@ function startEldDataSimulation(){
     const cycleEl=document.getElementById('fm70Left');
     if(cycleEl) cycleEl.textContent=cycleHoursLeft.toFixed(1)+'h';
     const arc=document.getElementById('hudDhArc');
-    if(arc){ const pct=driveHoursLeft/11; arc.setAttribute('stroke-dasharray',`${pct*126} 126`); arc.setAttribute('stroke',driveHoursLeft<2?'#ef4444':driveHoursLeft<4?'#f59e0b':'#10b981'); }
+    if(arc){ const pct=driveHoursLeft/11; arc.setAttribute('stroke-dasharray',`${pct*226} 226`); arc.setAttribute('stroke',driveHoursLeft<2?'#ef4444':driveHoursLeft<4?'#f59e0b':'#34d399'); }
     const arc70=document.getElementById('hud70Arc');
-    if(arc70){ const f=Math.max(0,cycleHoursLeft/70); const c=cycleHoursLeft<10?'#ef4444':cycleHoursLeft<20?'#f59e0b':'#8b5cf6'; arc70.setAttribute('stroke-dasharray',`${f*226} 226`); arc70.setAttribute('stroke',c); }
+    if(arc70){ const f=Math.max(0,cycleHoursLeft/70); const c=cycleHoursLeft<10?'#ef4444':cycleHoursLeft<20?'#f59e0b':'#a78bfa'; arc70.setAttribute('stroke-dasharray',`${f*226} 226`); arc70.setAttribute('stroke',c); }
 
     // ── Logbook update ────────────────────────────────────
     const du=Math.min(driveHoursUsed,11);
@@ -25118,447 +25179,53 @@ async function sendScanEmail() {
 }
 
 
-/* ════════════════════════════════════════════════════════════════════
-   💬  CARRIERCHAT — multi-channel real-time chat + side drawer
-════════════════════════════════════════════════════════════════════ */
-(function() {
-  'use strict';
 
-  // ── Channel definitions ──────────────────────────────────────
-  const CHANNELS = [
-    { id:'general',      name:'General',              icon:'☕', color:'#3b82f6' },
-    { id:'sos',          name:'SOS',                  icon:'🔊', color:'#ef4444' },
-    { id:'warning',      name:'Warning',              icon:'⚠️', color:'#f59e0b' },
-    { id:'weighstation', name:'DOT Weigh Stations',   icon:'🚛', color:'#ea580c' },
-    { id:'mechanics',    name:'Mechanics',            icon:'🔧', color:'#7c3aed' },
-    { id:'parts',        name:'Parts',                icon:'⚙️', color:'#3b82f6' },
-    { id:'tires',        name:'Tires',                icon:'🔄', color:'#8b5cf6' },
-    { id:'truckwash',    name:'Truck Wash',           icon:'🚿', color:'#0ea5e9' },
-    { id:'restarea',     name:'Rest Area',            icon:'🛌', color:'#6366f1' },
-    { id:'parking',      name:'Parking paid/free',    icon:'🅿️', color:'#3b82f6' },
-    { id:'towing',       name:'Towing / Grúa',        icon:'🏗️', color:'#ea580c' },
-  ];
+/* ── Escuchar reportes de otros conductores en tiempo real ── */
+(function _initReportListener() {
+  let _reportListening = false;
 
-  // ── User ID ─────────────────────────────────────────────────
-  let myUserId = localStorage.getItem('chat_uid');
-  if (!myUserId) {
-    myUserId = 'u_' + Math.random().toString(36).slice(2,10);
-    localStorage.setItem('chat_uid', myUserId);
-  }
+  function startListening() {
+    if (_reportListening || !window._chatFirebase?.ready()) return;
+    _reportListening = true;
 
-  // ── State ────────────────────────────────────────────────────
-  let chatOpen = false;
-  let currentChannelId = null;
-  let channelListeners = {};   // channelId → unsubscribe fn (firebase)
-  let channelBc = {};          // channelId → BroadcastChannel
-  let unreadTotal = 0;
-  // channelMeta[id] = { lastMsg, lastTime, unread }
-  let channelMeta = JSON.parse(localStorage.getItem('chat_meta') || '{}');
+    window._chatFirebase.listenReports((report) => {
+      // Ignorar propios
+      if (window.currentUser && report.reportedBy === window.currentUser.id) return;
+      // Ignorar duplicados
+      if (window.communityReports && window.communityReports.find(r => String(r.id) === String(report.id))) return;
 
-  // ── Timestamp to ignore old messages on listener init ────────
-  const _chatStartTime = Date.now();
-
-  // ── Request notification permission immediately ───────────────
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-
-  // ── Show push notification for any chat message ───────────────
-  function showChatNotif(channelId, msg) {
-    if (msg.userId === myUserId) return; // no notificar mensajes propios
-    // Ignorar mensajes viejos (anteriores a que se abrió la app)
-    const msgTime = msg.ts || msg.clientTs || 0;
-    if (msgTime && msgTime < _chatStartTime - 5000) return;
-
-    const chInfo = CHANNELS.find(c => c.id === channelId) || { name: channelId, icon: '🔔' };
-    const title  = `${chInfo.icon} ${chInfo.name}`;
-    const body   = `${msg.name || 'Driver'}: ${msg.text}`;
-    const icon   = './HOS_Tracker_Version1.png';
-    const tag    = 'chat-' + channelId;
-    const notifOpts = { body, icon, tag, vibrate: [200, 100, 200], badge: './HOS_Tracker_Version1.png', data: { url: './' }, requireInteraction: false };
-
-    // Request permission if not yet decided
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then(perm => {
-        if (perm === 'granted') _fireNotif(title, notifOpts);
-      });
-      return;
-    }
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
-    _fireNotif(title, notifOpts);
-  }
-
-  function _fireNotif(title, opts) {
-    // Priority 1: ServiceWorkerRegistration.showNotification — works in background on mobile
-    const swReg = window._swReg;
-    if (swReg) {
-      const active = swReg.active || swReg.waiting || swReg.installing;
-      if (active) {
-        // Post message to SW so it shows a persistent notification
-        active.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body: opts.body, tag: opts.tag, icon: opts.icon });
-        return;
+      // Guardar localmente
+      if (window.communityReports) {
+        window.communityReports.push(report);
+        window.communityReports = window.communityReports.filter(r => Date.now() - r.ts < 7200000);
+        try { localStorage.setItem('hos_reports', JSON.stringify(window.communityReports)); } catch {}
       }
-      // If reg exists but no active worker yet, try showNotification directly
-      swReg.showNotification(title, opts).catch(() => {});
-      return;
-    }
-    // Priority 2: controller postMessage
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_NOTIFICATION', delay: 0, title, body: opts.body, tag: opts.tag, icon: opts.icon });
-      return;
-    }
-    // Priority 3: fallback in-tab notification
-    try { new Notification(title, opts); } catch(e) {}
-  }
 
-  // ── Helpers ──────────────────────────────────────────────────
-  function getEl(id) { return document.getElementById(id); }
+      // Marcar en el mapa
+      if (typeof addReportMarker === 'function' && window.fmMapInst) {
+        addReportMarker(report);
+      }
 
-  function getMyName() {
-    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
-    return dp.name || 'Driver';
-  }
+      // Notificación push vía Service Worker
+      if (navigator.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SCHEDULE_NOTIFICATION',
+          delay: 0,
+          tag: 'rpt-' + report.id,
+          title: '🚛 ' + (report.emoji || '⚠️') + ' ' + (report.label || 'Alerta en ruta'),
+          body: 'Reportado por ' + (report.reportedByName || 'otro conductor') + ' · Ahora'
+        });
+      }
 
-  function getMyEmoji() {
-    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
-    const map = { '18wheeler':'🚛','box':'📦','tanker':'🛢️','flatbed':'🚚','reefer':'❄️','local':'🚐','dump':'🪨','tow':'🚔','hotshot':'🔥','rv':'🚌','lowboy':'🏗️','concrete':'🪨','stepdecks':'🚚','livestock':'🐄' };
-    return map[dp.truckType] || '🚛';
-  }
-
-  function getMyPhoto() {
-    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
-    return dp.photo || null;
-  }
-
-  function getInitials(name) {
-    const parts = (name || 'D').trim().split(/\s+/);
-    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
-  }
-
-  // deterministic color from name
-  const AVATAR_COLORS = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899','#0ea5e9','#14b8a6'];
-  function nameColor(name) {
-    let h = 0;
-    for (let i = 0; i < (name||'').length; i++) h = (h*31 + name.charCodeAt(i)) & 0xffffffff;
-    return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-  }
-
-  function esc(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  function fmtTime(ts) {
-    if (!ts) return '';
-    const d = new Date(typeof ts === 'object' ? Date.now() : ts);
-    return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-  }
-
-  // ── Channels list rendering ──────────────────────────────────
-  function renderChannelsList() {
-    const list = getEl('ccChannelsList');
-    if (!list) return;
-    list.innerHTML = '';
-    CHANNELS.forEach(ch => {
-      const meta = channelMeta[ch.id] || {};
-      const item = document.createElement('div');
-      item.className = 'cc-channel-item';
-      item.onclick = () => openRoom(ch.id);
-      const unread = meta.unread || 0;
-      const rightHtml = unread > 0
-        ? `<div class="cc-channel-badge">${unread > 99 ? '99+' : unread}</div>`
-        : (meta.lastTime ? `<div class="cc-channel-time">${fmtTime(meta.lastTime)}</div>` : '');
-      item.innerHTML = `
-        <div class="cc-channel-icon" style="background:${ch.color}22">${ch.icon}</div>
-        <div class="cc-channel-info">
-          <div class="cc-channel-name">${esc(ch.name)}</div>
-          <div class="cc-channel-preview">${esc(meta.lastMsg || 'No messages yet')}</div>
-        </div>
-        <div class="cc-channel-right">${rightHtml}</div>`;
-      list.appendChild(item);
+      // Toast en pantalla
+      if (typeof showReportAlert === 'function') {
+        showReportAlert(report.emoji || '⚠️', report.label || 'Alerta', report.reportedByName || 'Otro conductor');
+      }
     });
   }
 
-  // ── Open/close chat ──────────────────────────────────────────
-  function openChat() {
-    chatOpen = true;
-    unreadTotal = 0;
-    const badge = getEl('chatFabBadge');
-    if (badge) badge.style.display = 'none';
-    getEl('chatOverlay').classList.add('open');
-    showChannelsList();
-    renderChannelsList();
-    updateDrawerProfile();
-  }
-  window.openChat = openChat;
-
-  function closeChat() {
-    chatOpen = false;
-    getEl('chatOverlay').classList.remove('open');
-    currentChannelId = null;
-    getEl('chatRoom').classList.remove('active');
-    getEl('chatChannelsList').style.display = '';
-  }
-  window.closeChat = closeChat;
-
-  function showChannelsList() {
-    getEl('chatChannelsList').style.display = '';
-    getEl('chatRoom').classList.remove('active');
-    currentChannelId = null;
-  }
-  window.backToChannels = showChannelsList;
-
-  // ── Open a room ──────────────────────────────────────────────
-  function openRoom(channelId) {
-    const ch = CHANNELS.find(c => c.id === channelId);
-    if (!ch) return;
-    currentChannelId = channelId;
-
-    // Clear unread for this channel
-    if (channelMeta[channelId]) { channelMeta[channelId].unread = 0; saveChannelMeta(); }
-
-    // Show room
-    getEl('chatChannelsList').style.display = 'none';
-    const room = getEl('chatRoom');
-    room.classList.add('active');
-
-    // Set header
-    const iconEl = getEl('roomIcon');
-    iconEl.textContent = ch.icon;
-    iconEl.style.background = ch.color + '44';
-    iconEl.style.border = `2px solid ${ch.color}66`;
-    getEl('roomTitle').textContent = ch.name;
-    const sub = getEl('roomSubtitle');
-    if (sub) sub.textContent = '🟢 Canal activo · truckers en línea';
-
-    // Clear messages
-    const msgs = getEl('roomMessages');
-    msgs.innerHTML = `<div class="room-empty" id="roomEmpty"><div class="room-empty-icon">${ch.icon}</div><div class="room-empty-text">No messages yet</div></div>`;
-
-    // Enable send
-    getEl('chatSendBtn').disabled = false;
-
-    // Load messages
-    initRoomMessages(channelId);
-
-    setTimeout(() => {
-      msgs.scrollTop = msgs.scrollHeight;
-      getEl('chatInput').focus();
-    }, 120);
-  }
-  window.openChatChannel = function(id) { openChat(); openRoom(id); };
-
-  // ── Load / listen messages for a room ─────────────────────────
-  function initRoomMessages(channelId) {
-    // Unsubscribe previous listener for this channel if any
-    if (channelListeners[channelId]) {
-      channelListeners[channelId]();
-      channelListeners[channelId] = null;
-    }
-
-    const fb = window._chatFirebase;
-    if (fb && fb.ready()) {
-      channelListeners[channelId] = fb.listenChannel(channelId, (msg, key) => {
-        if (currentChannelId === channelId) appendRoomMessage(msg, key);
-        updateChannelMeta(channelId, msg);
-        showChatNotif(channelId, msg);
-      });
-    } else {
-      // Local fallback
-      loadLocalMessages(channelId);
-      if (!channelBc[channelId] && typeof BroadcastChannel !== 'undefined') {
-        const bc = new BroadcastChannel('hos_chat_' + channelId);
-        bc.onmessage = e => {
-          if (currentChannelId === channelId && e.data?.userId !== myUserId)
-            appendRoomMessage(e.data, e.data.localKey);
-          updateChannelMeta(channelId, e.data);
-        };
-        channelBc[channelId] = bc;
-      }
-    }
-  }
-
-  function loadLocalMessages(channelId) {
-    const msgs = JSON.parse(localStorage.getItem('chat_ch_' + channelId) || '[]');
-    const cutoff = Date.now() - 3600000; // 1 hour
-    // Also prune and save back — remove expired messages from storage
-    const recent = msgs.filter(m => (m.clientTs||0) > cutoff);
-    if (recent.length < msgs.length) localStorage.setItem('chat_ch_' + channelId, JSON.stringify(recent));
-    recent.slice(-80).forEach(m => appendRoomMessage(m, m.localKey));
-  }
-
-  function saveLocalMsg(channelId, msg) {
-    const key = 'chat_ch_' + channelId;
-    const arr = JSON.parse(localStorage.getItem(key) || '[]');
-    arr.push(msg);
-    if (arr.length > 200) arr.splice(0, arr.length - 200);
-    localStorage.setItem(key, JSON.stringify(arr));
-    if (channelBc[channelId]) channelBc[channelId].postMessage(msg);
-  }
-
-  // ── Append a message bubble (WhatsApp style) ─────────────────
-  function appendRoomMessage(msg, key) {
-    const container = getEl('roomMessages');
-    if (!container) return;
-    const empty = getEl('roomEmpty');
-    if (empty) empty.remove();
-    if (key && container.querySelector(`[data-key="${CSS.escape(key)}"]`)) return;
-
-    const isOwn = msg.userId === myUserId;
-    const emoji = msg.emoji || '🚛';
-    const nameClr = nameColor(msg.name || '');
-    // Avatar: photo (circular img) or emoji on colored bg
-    const avatarInner = msg.photo
-      ? `<img src="${msg.photo}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`
-      : emoji;
-    const avatarBg = msg.photo ? 'transparent' : nameClr;
-
-    const div = document.createElement('div');
-    div.className = 'room-msg' + (isOwn ? ' own' : '');
-    if (key) div.dataset.key = key;
-    div.innerHTML = `
-      <div class="room-avatar" style="background:${avatarBg}">${avatarInner}</div>
-      <div class="room-bubble-wrap">
-        <div class="room-bubble-name" style="color:${nameClr}">${esc(msg.name || 'Driver')}</div>
-        <div class="room-bubble">
-          ${esc(msg.text)}
-          <span class="room-bubble-time">${fmtTime(msg.ts || msg.clientTs)}</span>
-        </div>
-      </div>`;
-    container.appendChild(div);
-
-    const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 130;
-    if (atBottom) container.scrollTop = container.scrollHeight;
-  }
-
-  // ── Channel meta (last msg, unread) ──────────────────────────
-  function updateChannelMeta(channelId, msg) {
-    if (!msg) return;
-    const existing = channelMeta[channelId] || {};
-    channelMeta[channelId] = {
-      lastMsg: (msg.name ? msg.name.split(' ')[0] + ': ' : '') + (msg.text || '').slice(0, 50),
-      lastTime: msg.ts || msg.clientTs || Date.now(),
-      unread: currentChannelId === channelId ? 0 : (existing.unread || 0) + (msg.userId !== myUserId ? 1 : 0)
-    };
-    saveChannelMeta();
-    if (chatOpen && currentChannelId !== channelId) renderChannelsList();
-    // Global unread badge
-    const totalUnread = Object.values(channelMeta).reduce((s, m) => s + (m.unread || 0), 0);
-    const badge = getEl('chatFabBadge');
-    if (badge) {
-      badge.textContent = totalUnread > 9 ? '9+' : totalUnread;
-      badge.style.display = totalUnread > 0 && !chatOpen ? 'block' : 'none';
-    }
-  }
-
-  function saveChannelMeta() {
-    try { localStorage.setItem('chat_meta', JSON.stringify(channelMeta)); } catch {}
-  }
-
-  // ── Send quick alert preset ───────────────────────────────────
-  async function sendQuickAlert(text) {
-    if (!currentChannelId) { window.openChatChannel('general'); await new Promise(r => setTimeout(r,300)); }
-    const input = getEl('chatInput');
-    input.value = text;
-    autoresizeChatInput(input);
-    await sendChatMessage();
-  }
-  window.sendQuickAlert = sendQuickAlert;
-
-  // ── Send message ─────────────────────────────────────────────
-  async function sendChatMessage() {
-    if (!currentChannelId) return;
-    const input = getEl('chatInput');
-    const text = input.value.trim();
-    if (!text) return;
-    const btn = getEl('chatSendBtn');
-    btn.disabled = true;
-    const photo = getMyPhoto();
-    const msg = { userId: myUserId, name: getMyName(), emoji: getMyEmoji(), photo: photo || undefined, text, clientTs: Date.now() };
-    input.value = ''; input.style.height = '';
-
-    const fb = window._chatFirebase;
-    if (fb && fb.ready()) {
-      try { await fb.sendToChannel(currentChannelId, msg); }
-      catch { appendRoomMessage({...msg, ts: msg.clientTs}, 'loc_'+msg.clientTs); saveLocalMsg(currentChannelId, {...msg, localKey:'loc_'+msg.clientTs}); }
-    } else {
-      const key = 'loc_' + msg.clientTs;
-      appendRoomMessage({...msg, ts: msg.clientTs}, key);
-      saveLocalMsg(currentChannelId, {...msg, localKey: key});
-      updateChannelMeta(currentChannelId, {...msg, ts: msg.clientTs});
-    }
-    btn.disabled = false;
-    setTimeout(() => { const c = getEl('roomMessages'); if(c) c.scrollTop = c.scrollHeight; }, 40);
-  }
-  window.sendChatMessage = sendChatMessage;
-
-  // ── Drawer ───────────────────────────────────────────────────
-  function openDrawer() {
-    updateDrawerProfile();
-    getEl('drawerBackdrop').classList.add('open');
-    getEl('sideDrawer').classList.add('open');
-  }
-  window.openDrawer = openDrawer;
-
-  function closeDrawer() {
-    getEl('drawerBackdrop').classList.remove('open');
-    getEl('sideDrawer').classList.remove('open');
-  }
-  window.closeDrawer = closeDrawer;
-
-  function updateDrawerProfile() {
-    const dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
-    const name = dp.name || 'Conductor';
-    const avatarEl = getEl('drawerAvatar');
-    const nameEl = getEl('drawerName');
-    if (nameEl) nameEl.textContent = name;
-    if (avatarEl) {
-      const map = { '18wheeler':'🚛','box':'📦','tanker':'🛢️','flatbed':'🚚','refer':'❄️','local':'🚐' };
-      const emoji = map[dp.truckType] || '🚛';
-      avatarEl.textContent = emoji;
-      avatarEl.style.background = `linear-gradient(135deg, ${nameColor(name)}, ${nameColor(name+'x')})`;
-      avatarEl.style.fontSize = '26px';
-    }
-  }
-  window.updateDrawerProfile = updateDrawerProfile;
-
-  function openProfileFromDrawer() {
-    if (typeof openProfileModal === 'function') openProfileModal();
-  }
-  window.openProfileFromDrawer = openProfileFromDrawer;
-
-  // ── Input helpers ─────────────────────────────────────────────
-  function handleChatKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
-  }
-  window.handleChatKey = handleChatKey;
-
-  function autoresizeChatInput(el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
-    getEl('chatSendBtn').disabled = el.value.trim().length === 0;
-  }
-  window.autoresizeChatInput = autoresizeChatInput;
-
-  // ── Init ──────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', () => {
-    updateDrawerProfile();
-    renderChannelsList();
-    // Patch firebase module to support per-channel
-    const tryPatchFirebase = () => {
-      const fb = window._chatFirebase;
-      if (!fb) return;
-      if (!fb.sendToChannel) {
-        fb.sendToChannel = (channelId, msg) => fb.sendMessage(msg, 'channels/' + channelId + '/messages');
-        fb.listenChannel = (channelId, cb) => {
-          fb.listenMessages(cb, 'channels/' + channelId + '/messages');
-          return () => {};
-        };
-      }
-    };
-    document.addEventListener('chatFirebaseReady', tryPatchFirebase);
-    setTimeout(tryPatchFirebase, 3000);
-  });
-
+  document.addEventListener('chatFirebaseReady', startListening);
+  setTimeout(startListening, 4000);
 })();
 
 
@@ -28216,8 +27883,8 @@ window._hosAutoRecalc = false;
       pos => {
         const raw = pos.coords.speed;
         const mph = (raw != null && raw >= 0) ? raw * 0.621371 : 0;
-        if (mph > 2) _onEldMoving(Math.round(mph));
-        else         _onEldStopped();
+        if (mph >= 5) _onEldMoving(Math.round(mph));
+        else          _onEldStopped();
       },
       () => {
         _gpsActive = false;
@@ -28494,7 +28161,10 @@ window._hosAutoRecalc = false;
     reportMoving: function(moving, speedMph) {
       if (moving) _onEldMoving(speedMph || 0);
       else        _onEldStopped();
-    }
+    },
+    // Pausa el GPS interno cuando el rastreo de ruta toma el control
+    pauseInternalGps: function() { _stopGpsMode(); },
+    resumeInternalGps: function() { _startGpsMode(); }
   };
 })();
 </script>
