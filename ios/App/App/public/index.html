@@ -3035,6 +3035,20 @@ body #mapSpeedGroup #sosFab {
   top: calc(var(--header-pt) + 4px) !important;
 }
 
+/* ── Compass rose on map ────────────────────────────────── */
+#mapCompassWidget {
+  position: fixed;
+  top: calc(68px + env(safe-area-inset-top, 0px));
+  left: calc(10px + env(safe-area-inset-left, 0px));
+  z-index: 640;
+  width: 56px; height: 56px;
+  display: none;
+  pointer-events: none;
+  transition: transform .5s ease;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.6));
+}
+body.map-active #mapCompassWidget { display: block; }
+
 /* Keep stack above other floating buttons if present */
 #driveHoursWidget, #sosFab, #weatherWidget{
   z-index: 900 !important;
@@ -7803,6 +7817,26 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- AUTO-FOLLOW button (bottom-left) -->
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
 
+  <!-- Compass rose — rotates to keep N pointing north while map is heading-up -->
+  <div id="mapCompassWidget">
+    <svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background -->
+      <circle cx="28" cy="28" r="27" fill="rgba(5,9,20,0.82)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+      <!-- Cardinal tick marks -->
+      <line x1="28" y1="3"  x2="28" y2="11" stroke="#f87171" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="53" y1="28" x2="45" y2="28" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="28" y1="53" x2="28" y2="45" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="3"  y1="28" x2="11" y2="28" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- N label -->
+      <text x="28" y="21" text-anchor="middle" dominant-baseline="middle" font-family="'DM Sans',sans-serif" font-size="9" font-weight="900" fill="#f87171" letter-spacing=".5">N</text>
+      <!-- Needle: red north half, white south half -->
+      <polygon points="28,5 25.5,27 28,30 30.5,27" fill="#ef4444"/>
+      <polygon points="28,51 25.5,29 28,26 30.5,29" fill="rgba(255,255,255,0.75)"/>
+      <!-- Center dot -->
+      <circle cx="28" cy="28" r="3.5" fill="rgba(10,18,36,0.95)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+    </svg>
+  </div>
+
   <!-- RIGHT SIDE CONTROL COLUMN: Community Reports -->
   <div id="mapRightControls" style="display:none!important">
     <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
@@ -7970,29 +8004,30 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
     </div>
 
-    <!-- Route header (full mode only) -->
-    <div class="fm-full-only" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px" id="fmLocLbl">UBICACIÓN ACTUAL</div>
-        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="fmLocVal">Localizando...</div>
+    <!-- Route header + old progress bar (full mode only) -->
+    <div class="fm-full-only">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px" id="fmLocLbl">UBICACIÓN ACTUAL</div>
+          <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="fmLocVal">Localizando...</div>
+        </div>
+        <div id="fmStatusChip" style="
+          margin-left:10px;padding:4px 10px;border-radius:999px;flex-shrink:0;
+          font-size:11px;font-weight:800;
+          background:rgba(107,114,128,0.25);color:#9ca3af;
+        ">⏸ Detenido</div>
       </div>
-      <div id="fmStatusChip" style="
-        margin-left:10px;padding:4px 10px;border-radius:999px;flex-shrink:0;
-        font-size:11px;font-weight:800;
-        background:rgba(107,114,128,0.25);color:#9ca3af;
-      ">⏸ Detenido</div>
-    </div>
 
-    <!-- Progress bar + pct -->
-    <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.4px" id="fmProgLbl">PROGRESO DE RUTA</span>
-        <span style="font-size:11px;font-weight:800;color:#10b981" id="fmPct">0%</span>
+      <!-- Progress bar + pct -->
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.4px" id="fmProgLbl">PROGRESO DE RUTA</span>
+          <span style="font-size:11px;font-weight:800;color:#10b981" id="fmPct">0%</span>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden">
+          <div id="fmBar" style="height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:999px;width:0%;transition:width .6s ease"></div>
+        </div>
       </div>
-      <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden">
-        <div id="fmBar" style="height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:999px;width:0%;transition:width .6s ease"></div>
-      </div>
-    </div>
     </div><!-- end .fm-full-only -->
 
     <!-- 4 ELD-style stat circles — professional glass cards -->
@@ -15088,6 +15123,12 @@ function updateFixedTruckIcon(isMoving, overLimit, heading) {
   if (hudArrow) {
     hudArrow.style.borderBottomColor = borderColor;
     if (heading != null && heading >= 0) hudArrow.style.transform = `rotate(${heading}deg)`;
+  }
+
+  // ── Rotate compass rose (counter-rotation keeps N pointing north) ─
+  const compassEl = document.getElementById('mapCompassWidget');
+  if (compassEl && heading != null && heading >= 0) {
+    compassEl.style.transform = `rotate(${-heading}deg)`;
   }
 }
 
