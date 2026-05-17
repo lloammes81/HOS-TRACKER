@@ -1,4 +1,4 @@
-const CACHE_NAME = 'truck-precision-v163';
+const CACHE_NAME = 'truck-precision-v164';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
@@ -32,10 +32,9 @@ const _notifTimers = {};
 self.addEventListener('message', event => {
   const d = event.data;
   if (!d || !d.type) return;
-
   if (d.type === 'SCHEDULE_NOTIFICATION') {
     const delay = Math.max(0, d.delay || 0);
-    const tag   = d.tag || 'hos-alert';
+    const tag = d.tag || 'hos-alert';
     if (_notifTimers[tag]) { clearTimeout(_notifTimers[tag]); delete _notifTimers[tag]; }
     if (delay === 0) {
       self.registration.showNotification(d.title || 'HOS Tracker', { body: d.body || '', icon: d.icon || './icon-192.png', badge: './icon-192.png', tag, vibrate: [200, 100, 200], requireInteraction: tag === 'rest-done', data: { url: '/' } });
@@ -46,11 +45,9 @@ self.addEventListener('message', event => {
       }, delay);
     }
   }
-
   if (d.type === 'HOS_ALERT') {
     self.registration.showNotification('🚛 HOS Tracker', { body: d.body || 'Alerta HOS', icon: './icon-192.png', badge: './icon-192.png', tag: 'hos-alert-now', vibrate: [300, 100, 300], requireInteraction: true, data: { url: '/' } });
   }
-
   if (d.type === 'CANCEL_REST_NOTIFICATIONS') {
     ['rest-1h','rest-30min','rest-10min','rest-done'].forEach(tag => {
       if (_notifTimers[tag]) { clearTimeout(_notifTimers[tag]); delete _notifTimers[tag]; }
@@ -68,7 +65,7 @@ self.addEventListener('push', event => {
 
 self.addEventListener('periodicsync', event => {
   if (event.tag === 'hos-news-check') {
-    event.waitUntil(self.registration.showNotification('🚛 HOS Tracker — Noticias DOT', { body: 'Hay actualizaciones de regulaciones y alertas disponibles.', icon: './icon-192.png', badge: './icon-192.png', tag: 'hos-periodic-news', vibrate: [150, 60, 150], data: { url: '/' } }));
+    event.waitUntil(self.registration.showNotification('🚛 HOS Tracker — Noticias DOT', { body: 'Hay actualizaciones disponibles.', icon: './icon-192.png', badge: './icon-192.png', tag: 'hos-periodic-news', vibrate: [150, 60, 150], data: { url: '/' } }));
   }
 });
 
