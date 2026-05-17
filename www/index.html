@@ -3098,6 +3098,55 @@ body.map-active #speedometerWidget {
   display: none !important;
 }
 
+/* ── Fixed truck icon — always center-bottom above HUD rings ── */
+#fixedTruckMarker {
+  position: fixed;
+  bottom: calc(102px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20020;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+body.map-active #fixedTruckMarker.visible {
+  display: flex;
+}
+#fixedTruckArrow {
+  width: 0; height: 0;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-bottom: 20px solid #3b82f6;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.55));
+  transition: border-bottom-color .3s;
+}
+#fixedTruckArrow.over { border-bottom-color: #ef4444; }
+#fixedTruckCircle {
+  width: 66px; height: 66px;
+  border-radius: 50%;
+  border: 3.5px solid #3b82f6;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(15,23,42,.95);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.20), 0 0 12px rgba(59,130,246,0.15);
+  transition: border-color .3s, box-shadow .3s;
+}
+#fixedTruckCircle.moving {
+  animation: glowGreen 1.6s ease-in-out infinite;
+}
+#fixedTruckCircle.over-limit {
+  border-color: #ef4444;
+  animation: glowRed 1.2s ease-in-out infinite;
+}
+#fixedTruckInner {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+}
+
 body.map-active #driveHoursWidget{
   position: fixed !important;
   top:    calc(var(--sl-y) + 44px + var(--sl-gap) + 52px + var(--sl-gap) + 56px + var(--sl-gap) + 88px + var(--sl-gap)) !important;
@@ -9476,6 +9525,16 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </div>
 
 <!-- ══════════════════════════════════════
+     FIXED TRUCK ICON — always center-bottom above HUD rings
+══════════════════════════════════════ -->
+<div id="fixedTruckMarker" style="display:none">
+  <div id="fixedTruckArrow"></div>
+  <div id="fixedTruckCircle">
+    <div id="fixedTruckInner">🚛</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
      SOS FAB BUTTON (on map)
 ══════════════════════════════════════ -->
 <!-- sosFab is inside #mapSpeedGroup (below speed signs) -->
@@ -14942,6 +15001,57 @@ function buildTruckIconHTML(heading, isMoving) {
     </div>`;
 }
 
+// ── Fixed truck icon overlay (always center-bottom above rings) ──────────────
+function updateFixedTruckIcon(isMoving, overLimit, heading) {
+  const marker = document.getElementById('fixedTruckMarker');
+  const circle = document.getElementById('fixedTruckCircle');
+  const arrow  = document.getElementById('fixedTruckArrow');
+  const inner  = document.getElementById('fixedTruckInner');
+  if (!marker || !circle || !arrow || !inner) return;
+
+  // Get user photo
+  const user = typeof currentUser !== 'undefined' ? currentUser : null;
+  const photoData =
+    (user && user.photoData) ||
+    (typeof driverProfile !== 'undefined' && driverProfile && driverProfile.photo ? driverProfile.photo : null) ||
+    localStorage.getItem('hos_profile_photo') || null;
+
+  if (photoData) {
+    inner.innerHTML = `<img src="${photoData}" style="width:66px;height:66px;border-radius:50%;object-fit:cover;display:block">`;
+  } else {
+    const name = (user && user.name) ||
+      (typeof driverProfile !== 'undefined' && driverProfile && driverProfile.name) || '';
+    if (name) {
+      const initials = name.trim().split(/\s+/).map(w => w[0] && w[0].toUpperCase()).filter(Boolean).slice(0,2).join('');
+      const palette = ['#1d4ed8','#7c3aed','#059669','#dc2626','#d97706','#0891b2'];
+      let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xFFFF;
+      const bg = palette[h % palette.length];
+      inner.innerHTML = `<div style="width:66px;height:66px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff">${initials||'?'}</div>`;
+    } else {
+      inner.innerHTML = `<span style="font-size:28px">🚛</span>`;
+    }
+  }
+
+  circle.className = overLimit ? 'over-limit' : (isMoving ? 'moving' : '');
+  arrow.className  = overLimit ? 'over' : '';
+
+  // Rotate arrow to point in heading direction
+  if (heading != null && heading >= 0) {
+    arrow.style.transform = `rotate(${heading}deg)`;
+  }
+}
+
+function showFixedTruckIcon() {
+  const el = document.getElementById('fixedTruckMarker');
+  if (el) el.classList.add('visible');
+  updateFixedTruckIcon(false, false, 0);
+}
+
+function hideFixedTruckIcon() {
+  const el = document.getElementById('fixedTruckMarker');
+  if (el) el.classList.remove('visible');
+}
+
 // Linear interpolation
 function lerp(a, b, t) { return a + (b - a) * t; }
 
@@ -16167,6 +16277,7 @@ function fmStartTracking() {
   }
 
   fmIsTracking  = true;
+  showFixedTruckIcon();
   // El GPS de ruta toma el control del tracker — pausar GPS interno para evitar conflicto
   window._hosTracker?.pauseInternalGps?.();
   syncActiveRouteFab();
@@ -16314,6 +16425,8 @@ function fmStartTracking() {
 
     // ── Update truck marker at snapped on-road position ─────
     fmUpdateTruckMarker(snapLat, snapLon, heading, isMoving);
+    // ── Update fixed overlay icon (always center-bottom above rings) ────
+    updateFixedTruckIcon(isMoving, typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded, heading);
     // Actualizar mini mapa del dashboard si está visible
     updateHosDashMinimap(snapLat, snapLon);
 
@@ -16666,6 +16779,7 @@ function fmStopTracking() {
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
+  hideFixedTruckIcon();
   // Asegurar que el tracker sepa que nos detuvimos antes de restaurar GPS interno
   window._hosTracker?.reportMoving?.(false, 0);
   window._hosTracker?.resumeInternalGps?.();
