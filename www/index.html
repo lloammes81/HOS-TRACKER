@@ -5945,22 +5945,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   }
   .room-empty-icon { font-size: 44px; opacity: .45; }
   .room-empty-text { font-size: 13px; color: rgba(255,255,255,.35); font-weight: 600; }
-  .room-quick-alerts {
-    display: flex; gap: 6px; padding: 8px 10px 4px;
-    background: #1f2c34; overflow-x: auto; flex-shrink: 0;
-    scrollbar-width: none;
-  }
-  .room-quick-alerts::-webkit-scrollbar { display: none; }
-  .rqa-btn {
-    white-space: nowrap; border: none; border-radius: 16px;
-    padding: 6px 12px; font-size: 13px; font-weight: 600;
-    background: #2a3942; color: #aebac1; cursor: pointer;
-    touch-action: manipulation; flex-shrink: 0;
-    transition: background .15s, color .15s;
-  }
-  .rqa-btn:active { background: #00a884; color: #fff; }
-  .rqa-btn.rqa-alert { background: rgba(239,68,68,.15); color: #f87171; }
-  .rqa-btn.rqa-alert:active { background: #ef4444; color: #fff; }
   .room-input-row {
     display: flex; gap: 8px; align-items: flex-end;
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom,0px));
@@ -7741,12 +7725,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="room-empty-icon">💬</div>
         <div class="room-empty-text">No messages yet</div>
       </div>
-    </div>
-    <div class="room-quick-alerts" id="roomQuickAlerts">
-      <button class="rqa-btn" onclick="sendQuickAlert('🚔 Policía en área — precaución')">🚔 Policía</button>
-      <button class="rqa-btn" onclick="sendQuickAlert('📋 Inspección DOT activa — adelante')">📋 DOT</button>
-      <button class="rqa-btn" onclick="sendQuickAlert('🔍 Inspección de vehículo en progreso')">🔍 Inspección</button>
-      <button class="rqa-btn rqa-alert" onclick="sendQuickAlert('🚨 Accidente en la vía — tener cuidado')">🚨 Accidente</button>
     </div>
     <div class="room-input-row">
       <textarea
@@ -26450,15 +26428,6 @@ async function sendScanEmail() {
   }
 
   // ── Send quick alert preset ───────────────────────────────────
-  async function sendQuickAlert(text) {
-    if (!currentChannelId) { window.openChatChannel('general'); await new Promise(r => setTimeout(r,300)); }
-    const input = getEl('chatInput');
-    input.value = text;
-    autoresizeChatInput(input);
-    await sendChatMessage();
-  }
-  window.sendQuickAlert = sendQuickAlert;
-
   // ── Send message ─────────────────────────────────────────────
   async function sendChatMessage() {
     if (!currentChannelId) return;
