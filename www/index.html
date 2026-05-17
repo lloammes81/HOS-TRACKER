@@ -3219,7 +3219,7 @@ body.dark #fullMap .leaflet-tile-pane {
   display: grid;
   grid-template-columns: repeat(4,1fr);
   gap: 5px;
-  margin-bottom: 14px;
+  margin-bottom: 0;
   justify-items: stretch;
 }
 .hud-ring-card {
@@ -5291,7 +5291,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     -webkit-backdrop-filter: none !important;
     border-top: none !important;
     box-shadow: none !important;
-    padding: 10px 10px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 4px 10px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
   }
   #fmHud.compact .fm-hide{ display:none !important; }
 
@@ -11087,13 +11087,10 @@ let wasMoving = false;
 
 
 function showSpeedometer() {
-  speedoVisible = true;
-  const w = document.getElementById('speedometerWidget');
-  if (w) { w.classList.add('visible'); applySpeedometerPos(); }
+  speedoVisible = false; // widget permanently removed
 }
 
 function hideSpeedometer() {
-  document.getElementById('speedometerWidget').classList.remove('visible');
   speedoVisible = false;
 }
 
@@ -12270,7 +12267,7 @@ function checkSpeedLimit(gpsSpeed) {
       // Rebuild truck marker immediately to show red border
       if (fmGpsMarker) {
         const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
-        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [28, 28], iconSize: [56, 56] }));
+        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [36, 56], iconSize: [72, 92] }));
       }
       toast.classList.add('show');
       toast.textContent = `🚨 ${gpsSpeed} mph — Límite: ${limit} mph`;
@@ -12288,7 +12285,7 @@ function checkSpeedLimit(gpsSpeed) {
       // Rebuild truck marker to restore blue border
       if (fmGpsMarker) {
         const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
-        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [28, 28], iconSize: [56, 56] }));
+        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [36, 56], iconSize: [72, 92] }));
       }
     }
   }
@@ -14908,15 +14905,15 @@ function buildTruckIconHTML(heading, isMoving) {
 
   let inner;
   if (photoData) {
-    inner = `<img src="${photoData}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;display:block">`;
+    inner = `<img src="${photoData}" style="width:66px;height:66px;border-radius:50%;object-fit:cover;display:block">`;
   } else {
     const name = (user && user.name) ||
       (typeof driverProfile !== 'undefined' && driverProfile && driverProfile.name) || '';
     if (name) {
       const initials = name.trim().split(/\s+/).map(w => w[0] && w[0].toUpperCase()).filter(Boolean).slice(0,2).join('');
-      inner = `<span style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.5px">${initials||'?'}</span>`;
+      inner = `<span style="font-size:24px;font-weight:900;color:#fff;letter-spacing:-0.5px">${initials||'?'}</span>`;
     } else {
-      inner = `<span style="font-size:24px;line-height:50px">🚛</span>`;
+      inner = `<span style="font-size:30px;line-height:66px">🚛</span>`;
     }
   }
 
@@ -14925,17 +14922,17 @@ function buildTruckIconHTML(heading, isMoving) {
       <!-- Arrow outside truckWrapper: rotates with map bearing → always points direction of travel -->
       <div style="
         width:0;height:0;
-        border-left:9px solid transparent;
-        border-right:9px solid transparent;
-        border-bottom:16px solid ${borderColor};
+        border-left:11px solid transparent;
+        border-right:11px solid transparent;
+        border-bottom:20px solid ${borderColor};
         filter:drop-shadow(0 2px 6px rgba(0,0,0,.55));
         flex-shrink:0;
       "></div>
       <div class="truck-smooth-wrapper${isMoving ? '' : ' stopped'}" id="truckWrapper"
            style="display:flex;align-items:center;justify-content:center;">
         <div style="
-          width:50px;height:50px;border-radius:50%;
-          border:3px solid ${borderColor};
+          width:66px;height:66px;border-radius:50%;
+          border:3.5px solid ${borderColor};
           overflow:hidden;display:flex;align-items:center;justify-content:center;
           background:rgba(15,23,42,.95);
           animation:${glowAnim};
@@ -14995,7 +14992,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   if (!truckFrom) truckFrom = { lat, lon, heading: heading ?? 0 };
 
   const html = buildTruckIconHTML(heading, isMoving);
-  const icon = L.divIcon({ className: '', html, iconAnchor: [28, 44], iconSize: [56, 72] });
+  const icon = L.divIcon({ className: '', html, iconAnchor: [36, 56], iconSize: [72, 92] });
   if (!fmGpsMarker) {
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
@@ -15281,12 +15278,12 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
     if (offsetFrac !== undefined) {
       offsetPx = size.y * offsetFrac;
     } else {
-      // Place truck just above the HUD circles
+      // Place truck just above the HUD circles (account for 92px icon height)
       const hudEl = document.getElementById('fmHud');
-      const hudH  = (hudEl && hudEl.offsetHeight) ? hudEl.offsetHeight : 130;
-      const truckTargetY = size.y - hudH - 20;  // 20px buffer above HUD
+      const hudH  = (hudEl && hudEl.offsetHeight) ? hudEl.offsetHeight : 100;
+      const truckTargetY = size.y - hudH - 8;  // 8px gap above HUD rings
       offsetPx = truckTargetY - size.y / 2;
-      offsetPx = Math.max(40, Math.min(offsetPx, size.y * 0.42)); // clamp
+      offsetPx = Math.max(40, Math.min(offsetPx, size.y * 0.45)); // clamp
     }
 
     // Project truck position to Mercator pixel space at current zoom
