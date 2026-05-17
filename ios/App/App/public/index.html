@@ -2222,15 +2222,31 @@
     color: #374151; letter-spacing: .3px;
     margin-top: 2px;
   }
-  /* over-limit: red speed number */
-  #speedometerWidget.over-limit .speedo-speed-box { border-color: #ef4444; }
-  #speedometerWidget.over-limit .speedo-speed-box .speedo-box-num { color: #ef4444; }
-  /* Kept for compat — no longer rendered but JS may reference */
-  .speedo-sign { display:none; }
-  .speedo-sign-top { display:none; }
-  .speedo-num { font-family:"Bebas Neue",sans-serif; font-size:36px; color:#000; }
-  .speedo-unit { display:none; }
-  .speedo-status { display:none; }
+  /* Speed-limit-sign style for speedometerWidget */
+  .speedo-sign {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 62px; background: #fff; border: 4px solid #000; border-radius: 5px;
+    padding: 4px 2px;
+    filter: drop-shadow(0 3px 10px rgba(0,0,0,.5));
+  }
+  .speedo-sign-top {
+    font-size: 7px; font-weight: 900; letter-spacing: .5px; line-height: 1.15;
+    text-align: center; color: #000;
+  }
+  .speedo-num {
+    font-family: "Bebas Neue", sans-serif; font-size: 36px; line-height: 0.95;
+    color: #000; letter-spacing: 1px; transition: color .3s;
+  }
+  .speedo-unit {
+    font-size: 7px; font-weight: 900; color: #374151; letter-spacing: .3px; margin-bottom: 2px;
+  }
+  .speedo-status {
+    font-size: 9px; font-weight: 800; color: rgba(255,255,255,.85);
+    text-align: center; margin-top: 3px; padding: 2px 6px;
+    border-radius: 4px; background: rgba(0,0,0,.5); white-space: nowrap;
+  }
+  .speedo-status.moving    { background: rgba(16,185,129,.7); }
+  .speedo-status.over-speed { background: rgba(239,68,68,.8); }
 
   /* ══════════════════════════════════════════
      INCIDENT BUBBLES PANEL (left side, stacked)
@@ -3011,9 +3027,9 @@ body #mapSpeedGroup #sosFab {
   margin: 0 !important;
 }
 
-/* Speed sign group positioned top-right */
+/* Speed sign group positioned bottom-right */
 #mapSpeedGroup{
-  display: none !important;
+  display: flex;
 }
 #speedLimitWidget{
   top: calc(var(--header-pt) + 4px) !important;
@@ -3094,8 +3110,8 @@ body.map-active #driveHoursWidget{
 
 
 /* Speedometer turns red when over state truck limit */
-#speedometerWidget.over-limit .speedo-speed-box{ border-color:#ef4444 !important; background:#fef2f2 !important; }
-#speedometerWidget.over-limit .speedo-speed-box .speedo-box-num{ color:#ef4444 !important; }
+#speedometerWidget.over-limit .speedo-sign{ border-color:#ef4444 !important; background:#fff5f5 !important; }
+#speedometerWidget.over-limit .speedo-num{ color:#ef4444 !important; }
 
 /* Drive hours: subtle highlight when driving */
 #driveHoursWidget.boost{ opacity:1 !important; }
@@ -9452,16 +9468,12 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
      CIRCULAR SPEEDOMETER WIDGET
 ══════════════════════════════════════ -->
 <div id="speedometerWidget">
-  <div class="speedo-dual">
-    <div class="speedo-box speedo-limit-box" id="speedoLimitBox">
-      <div class="speedo-box-lbl">LIMIT</div>
-      <div class="speedo-box-num" id="speedoLimitNum">--</div>
-    </div>
-    <div class="speedo-box speedo-speed-box">
-      <div class="speedo-box-num" id="speedoNum">0</div>
-      <div class="speedo-box-unit">mph</div>
-    </div>
+  <div class="speedo-sign" id="speedoSign">
+    <div class="speedo-sign-top">YOUR<br>SPEED</div>
+    <div class="speedo-num" id="speedoNum">0</div>
+    <div class="speedo-unit">MPH</div>
   </div>
+  <div class="speedo-status" id="speedoStatus">⏸ DETENIDO</div>
 </div>
 
 <!-- ══════════════════════════════════════
