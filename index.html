@@ -1825,9 +1825,10 @@
 
   /* ── MAP SPEED SIGN GROUP (sign + SOS below it) ── */
   #mapSpeedGroup {
-    position: absolute;
-    top: calc(70px + env(safe-area-inset-top, 0px));
+    position: fixed;
+    bottom: calc(264px + env(safe-area-inset-bottom, 0px));
     right: calc(10px + env(safe-area-inset-right, 0px));
+    top: auto;
     z-index: 650;
     display: flex;
     flex-direction: column;
@@ -2761,7 +2762,7 @@
     position:absolute;
     left: calc(14px + env(safe-area-inset-left,0px));
     right: calc(14px + env(safe-area-inset-right,0px));
-    top: calc(env(safe-area-inset-top,0px) + 8px);
+    top: calc(env(safe-area-inset-top,0px) + 72px);
     z-index: 9999;
     background:rgba(10,16,30,.93);
     color:#fff;
@@ -3007,14 +3008,15 @@ body #mapSpeedGroup #sosFab {
 #navNext, .nav-next{
   left: 12px !important;
   right: 12px !important;
-  top: calc(env(safe-area-inset-top,0px) + 8px) !important;
+  top: calc(env(safe-area-inset-top,0px) + 72px) !important;
   max-width: 520px !important;
   margin: 0 auto !important;
 }
 
 /* Speed sign group positioned top-right */
 #mapSpeedGroup{
-  top: calc(70px + env(safe-area-inset-top, 0px)) !important;
+  bottom: calc(264px + env(safe-area-inset-bottom, 0px)) !important;
+  top: auto !important;
   right: calc(10px + env(safe-area-inset-right, 0px)) !important;
   align-items: center !important;
 }
@@ -9676,7 +9678,8 @@ let savedDrives = JSON.parse(localStorage.getItem('hos_drives') || '[]');
 let truckIconMode = localStorage.getItem('hos_truck_icon') || 'emoji:🚛';
 let truckUploadData = localStorage.getItem('hos_truck_upload') || '';
 let speedWidgetPos = JSON.parse(localStorage.getItem('hos_speed_pos') || 'null');
-let speedometerPos   = JSON.parse(localStorage.getItem('hos_speedometer_pos')  || 'null');
+localStorage.removeItem('hos_speedometer_pos');
+let speedometerPos   = null;
 let driveHoursPos    = JSON.parse(localStorage.getItem('hos_drivehours_pos')   || 'null');
 let defaultSpeed = parseInt(localStorage.getItem('hos_speed') || '60');
 let currentTab = 'plan';
@@ -11316,15 +11319,9 @@ function updateSpeedometer(mph) {
   // ── Highway mode: change route color when speed > 40 mph ─────────
   const isHighway = mph > 40;
   if (fmLayer || fmGlowLayer || fmCasingLayer) {
-    if (isHighway) {
-      fmLayer      && fmLayer.setStyle({ color: '#f472b6', weight: 6, opacity: 0.97 });
-      fmGlowLayer  && fmGlowLayer.setStyle({ color: '#f472b6', weight: 24, opacity: 0.13 });
-      fmCasingLayer&& fmCasingLayer.setStyle({ color: '#831843', weight: 10, opacity: 0.65 });
-    } else {
-      fmLayer      && fmLayer.setStyle({ color: '#10b981', weight: 5, opacity: 0.97 });
-      fmGlowLayer  && fmGlowLayer.setStyle({ color: '#10b981', weight: 22, opacity: 0.11 });
-      fmCasingLayer&& fmCasingLayer.setStyle({ color: '#064e3b', weight: 9,  opacity: 0.60 });
-    }
+    fmLayer      && fmLayer.setStyle({ color: '#1A73E8', weight: 7, opacity: 0.97 });
+    fmGlowLayer  && fmGlowLayer.setStyle({ color: '#3b82f6', weight: 24, opacity: 0.14 });
+    fmCasingLayer&& fmCasingLayer.setStyle({ color: '#ffffff', weight: 11, opacity: 0.92 });
   }
 
   // Update the inline speed sign (below speed limit sign)
@@ -12861,11 +12858,9 @@ function initSpeedWidgetDrag() {
 function applySpeedometerPos() {
   const w = document.getElementById('speedometerWidget');
   if (!w) return;
-  // Default position: left stack, below miles remaining widget
-  const safeTop  = (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sl-y')) || 0);
-  const defaultX = 12 + (window.safeAreaLeft || 0);
-  // 52(weather) + 8(gap) + 56(miles) + 8(gap) = 124 — SOS ahora está en panel derecho
-  const defaultY = 12 + (window.safeAreaTop || 0) + 100;
+  // Default position: bottom-right, above HUD and speed limit sign
+  const defaultX = window.innerWidth  - 82 - (window.safeAreaRight  || 0) - 10;
+  const defaultY = window.innerHeight - 148 - (window.safeAreaBottom || 0);
 
   if (speedometerPos && typeof speedometerPos.x === 'number' && typeof speedometerPos.y === 'number') {
     w.style.cssText += ';position:fixed !important;left:' + speedometerPos.x + 'px !important;top:' + speedometerPos.y + 'px !important;right:auto !important;bottom:auto !important;transform:none !important';
@@ -14807,13 +14802,13 @@ function fmRedrawRoute(coords) {
   fmLastStepsHash = showInterstateShields ? '' : 'disabled'; // only re-add if shields on
 
   // ── Glow exterior (muy grueso, muy transparente)
-  fmGlowLayer   = L.polyline(routeCoords,{ color:'#10b981', weight:22, opacity:0.11, interactive:false }).addTo(fmMapInst);
+  fmGlowLayer   = L.polyline(routeCoords,{ color:'#3b82f6', weight:24, opacity:0.14, interactive:false }).addTo(fmMapInst);
   const glow    = fmGlowLayer;
-  // ── Casing oscuro (borde de la ruta)
-  fmCasingLayer = L.polyline(routeCoords,{ color:'#064e3b', weight:9,  opacity:0.60, interactive:false }).addTo(fmMapInst);
+  // ── Casing blanco (borde GPS)
+  fmCasingLayer = L.polyline(routeCoords,{ color:'#ffffff', weight:11, opacity:0.92, interactive:false }).addTo(fmMapInst);
   const casing  = fmCasingLayer;
-  // ── Ruta principal brillante
-  fmLayer = L.polyline(routeCoords,{ color:'#10b981', weight:5, opacity:0.97 }).addTo(fmMapInst);
+  // ── Ruta principal azul GPS
+  fmLayer = L.polyline(routeCoords,{ color:'#1A73E8', weight:7, opacity:0.97 }).addTo(fmMapInst);
 
   // ── Marcador origen (dot verde)
   const oIcon = L.divIcon({
