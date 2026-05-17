@@ -23532,6 +23532,8 @@ window.addEventListener('resize', () => {
 
     // Enable compact mode (transparent background, only circles visible)
     hud.classList.add('compact');
+    // Belt-and-suspenders: also explicitly hide full-only sections via fm-hide
+    hud.querySelectorAll('.fm-full-only').forEach(el => el.classList.add('fm-hide'));
     // Toggle zoom on floating widgets (tap to enlarge/shrink)
     ['driveHoursWidget','weatherWidget'].forEach((id)=>{
       const el = document.getElementById(id);
