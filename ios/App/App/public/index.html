@@ -12326,7 +12326,7 @@ function checkSpeedLimit(gpsSpeed) {
       // Rebuild truck marker immediately to show red border
       if (fmGpsMarker) {
         const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
-        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [36, 56], iconSize: [72, 92] }));
+        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [0, 0], iconSize: [1, 1] }));
       }
       toast.classList.add('show');
       toast.textContent = `🚨 ${gpsSpeed} mph — Límite: ${limit} mph`;
@@ -12344,7 +12344,7 @@ function checkSpeedLimit(gpsSpeed) {
       // Rebuild truck marker to restore blue border
       if (fmGpsMarker) {
         const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
-        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [36, 56], iconSize: [72, 92] }));
+        fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [0, 0], iconSize: [1, 1] }));
       }
     }
   }
@@ -14940,6 +14940,8 @@ const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 let fmTruckEl = null;  // the inner div element for rotation
 
 function buildTruckIconHTML(heading, isMoving) {
+  // Leaflet marker is invisible — the fixed #fixedTruckMarker div is the real display
+  return '<div style="width:1px;height:1px;opacity:0"></div>';
   const overLimit = typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded;
 
   // Glow: siempre azul (parado=suave, movimiento=brillante), rojo si sobrepasa límite
@@ -15045,13 +15047,19 @@ function updateFixedTruckIcon(isMoving, overLimit, heading) {
 
 function showFixedTruckIcon() {
   const el = document.getElementById('fixedTruckMarker');
-  if (el) el.classList.add('visible');
+  if (el) {
+    el.style.display = 'flex'; // override inline style="display:none"
+    el.classList.add('visible');
+  }
   updateFixedTruckIcon(false, false, 0);
 }
 
 function hideFixedTruckIcon() {
   const el = document.getElementById('fixedTruckMarker');
-  if (el) el.classList.remove('visible');
+  if (el) {
+    el.style.display = 'none';
+    el.classList.remove('visible');
+  }
 }
 
 // Linear interpolation
@@ -15104,7 +15112,7 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   if (!truckFrom) truckFrom = { lat, lon, heading: heading ?? 0 };
 
   const html = buildTruckIconHTML(heading, isMoving);
-  const icon = L.divIcon({ className: '', html, iconAnchor: [36, 56], iconSize: [72, 92] });
+  const icon = L.divIcon({ className: '', html, iconAnchor: [0, 0], iconSize: [1, 1] });
   if (!fmGpsMarker) {
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
