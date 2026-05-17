@@ -3092,11 +3092,10 @@ body.map-active #milesRemainingWidget{
   z-index: 20008 !important;
 }
 
-/* speedometerWidget position is managed entirely by drag JS — no CSS override */
-body.map-active #speedometerWidget{
-  z-index: 20007 !important;
-  right: auto !important;
-  bottom: auto !important;
+/* speedometerWidget removed — always hidden */
+#speedometerWidget,
+body.map-active #speedometerWidget {
+  display: none !important;
 }
 
 body.map-active #driveHoursWidget{
@@ -15868,7 +15867,7 @@ function _scheduleAutoResumeFollow() {
       if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
       window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 2200);
     }
-  }, 8000); // reanuda seguimiento 8s después de que el usuario deja de tocar el mapa
+  }, 3000); // reanuda seguimiento 3s después de que el usuario deja de tocar el mapa
 }
 
 // ── Auto-resume bearing after user manually rotates ───────────────────────
