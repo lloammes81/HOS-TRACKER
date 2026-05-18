@@ -8258,8 +8258,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <defs><radialGradient id="grayGrad2" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
           <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
           <circle cx="130" cy="130" r="99" fill="url(#grayGrad2)"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(0,0,0,0.10)" stroke-width="9" id="dashRingTrack"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="#1a1a1a" stroke-width="9" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(16,185,129,0.18)" stroke-width="9" id="dashRingTrack"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="#10b981" stroke-width="9" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;">
           <div id="dashHosTime" style="font-family:'Share Tech Mono',monospace;font-size:50px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">11h 0m</div>
@@ -8276,7 +8276,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <svg viewBox="0 0 94 94" style="width:100%;height:100%;position:absolute;inset:0;">
           <defs><radialGradient id="grayGrad3" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8e8e8"/><stop offset="100%" stop-color="#c0c0c0"/></radialGradient></defs>
           <circle cx="47" cy="47" r="40" fill="url(#grayGrad3)" stroke="rgba(0,0,0,0.10)" stroke-width="4"/>
-          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
+          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
           <div id="dashWeekHours" style="font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:900;color:#0a0a0a;letter-spacing:1px;line-height:1;">70H</div>
@@ -18209,9 +18209,9 @@ function updateHosDashboard(driveLeft, driveMax) {
   const glow = document.getElementById('dashGlowCircle');
   const glowColor = dashSpeedOver ? '#ef4444' : '#1e40af';
 
-  if (track) track.setAttribute('stroke', 'rgba(0,0,0,0.10)');
-  // Arc turns red when over speed limit OR when nearly out of drive time
-  const arcColor = (dashSpeedOver || driveLeft < 2) ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#1a1a1a';
+  if (track) track.setAttribute('stroke', 'rgba(16,185,129,0.18)');
+  // Arc turns red when over speed limit OR nearly out of drive time; green otherwise
+  const arcColor = (dashSpeedOver || driveLeft < 2) ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
   arc.setAttribute('stroke', arcColor);
   timeEl.style.color = (dashSpeedOver || driveLeft <= 0.5) ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#0a0a0a';
 
@@ -18271,12 +18271,13 @@ function updateHosDashboard(driveLeft, driveMax) {
       weekEl.textContent = ch > 0 ? `${ch}h` : `${cm}m`;
     }
   }
-  // CICLO ring arc (C = 2π×40 ≈ 251)
+  // CICLO ring arc (C = 2π×40 ≈ 251) — use real tracker value if available
   const cicloArc = document.getElementById('dashCicloArc');
   if (cicloArc) {
-    const pctC = Math.max(0, Math.min(1, cycLeft / cycMax));
+    const realCycLeft = (window._hosTracker ? window._hosTracker.cycleLeft() : cycLeft);
+    const pctC = Math.max(0, Math.min(1, realCycLeft / cycMax));
     cicloArc.setAttribute('stroke-dasharray', `${(pctC * 251).toFixed(1)} 251`);
-    cicloArc.setAttribute('stroke', cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#f59e0b' : '#10b981');
+    cicloArc.setAttribute('stroke', realCycLeft < 10 ? '#ef4444' : realCycLeft < 20 ? '#f59e0b' : '#10b981');
   }
   const cicloUsedEl = document.getElementById('dashCicloUsed');
   if (cicloUsedEl) {
