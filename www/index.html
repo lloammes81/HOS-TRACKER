@@ -5927,6 +5927,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div id="heroManejoInner" class="hero-kpi-inner" style="width:120px;height:120px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
           <div class="hero-kpi-val" id="heroValDrive" style="font-size:36px;">11H</div>
           <div class="hero-kpi-lbl" id="heroLblDrive">Manejo</div>
+          <div id="heroRestChronometer" style="display:none;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;color:#f97316;letter-spacing:1px;margin-top:3px;line-height:1;">00:00:00</div>
         </div>
       </div>
 
@@ -16250,6 +16251,22 @@ function _showRestInManejoCircle(restRemaining, restPct) {
     lblD.style.color = done ? '' : '#f97316';
   }
 
+  // Chronometer (elapsed rest time, counting up)
+  const chron = document.getElementById('heroRestChronometer');
+  if (chron) {
+    if (done) {
+      chron.style.display = 'none';
+    } else {
+      const elapsedSecs = Math.floor(_vehicleStopStartMs ? (Date.now() - _vehicleStopStartMs) / 1000 : 0);
+      const hh = Math.floor(elapsedSecs / 3600);
+      const mm = Math.floor((elapsedSecs % 3600) / 60);
+      const ss = elapsedSecs % 60;
+      chron.textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+      chron.style.display = 'block';
+      chron.style.color = '#f97316';
+    }
+  }
+
   // Map HUD MANEJO ring (during navigation)
   const fmDrLbl = document.getElementById('fmDriveLbl');
   if (fmDrLbl) { fmDrLbl.textContent = done ? 'MANEJO' : '😴 REST'; fmDrLbl.style.color = done ? '' : '#f97316'; }
@@ -16269,6 +16286,8 @@ function _restoreManejo() {
   if (valD) valD.style.fontSize = '36px';
   const fmDrLbl = document.getElementById('fmDriveLbl');
   if (fmDrLbl) { fmDrLbl.textContent = 'MANEJO'; fmDrLbl.style.color = '#34d399'; }
+  const chron = document.getElementById('heroRestChronometer');
+  if (chron) chron.style.display = 'none';
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
