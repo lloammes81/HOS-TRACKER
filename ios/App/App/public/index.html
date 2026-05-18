@@ -16859,7 +16859,7 @@ function fmStartTracking() {
         ? haversine(snapLat, snapLon, _lastPanLat, _lastPanLon) * 1609.34
         : 99999;
       const _zoomChanged = !fmUserZoomed && (() => {
-        const tz = gpsSpeed < 20 ? 17 : 13;
+        const tz = gpsSpeed < 20 ? 16 : gpsSpeed < 50 ? 13 : 11;
         return Math.abs(fmCurrentZoom - tz) >= 1;
       })();
 
@@ -16867,7 +16867,7 @@ function fmStartTracking() {
         _lastPanLat = snapLat; _lastPanLon = snapLon;
 
         if (!fmUserZoomed) {
-          const targetZoom = gpsSpeed < 20 ? 17 : 13;
+          const targetZoom = gpsSpeed < 20 ? 16 : gpsSpeed < 50 ? 13 : 11;
           if (Math.abs(fmCurrentZoom - targetZoom) >= 1) fmCurrentZoom = targetZoom;
         }
         window._fmProgrammaticMove = true;
@@ -17348,14 +17348,29 @@ function _fmCheckResumeRoute() {
   `;
   dlg.style.display = 'flex';
 
+  // Calculate drive time elapsed while app was closed
+  const closedSecs = saved.savedAt ? (Date.now() - saved.savedAt) / 1000 : 0;
+  const closedMins = Math.floor(closedSecs / 60);
+  const closedH = Math.floor(closedMins / 60), closedM = closedMins % 60;
+  const closedLbl = closedH > 0 ? `${closedH}h ${closedM}m` : `${closedM}m`;
+
   document.getElementById('fmResumeYes').onclick = () => {
     dlg.style.display = 'none';
+    // Add elapsed closed time to drive seconds (capped at 11h max addition)
+    if (closedSecs > 60 && closedSecs < 39600) {
+      fmDriveSeconds += closedSecs;
+      if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(false, 0);
+      setTimeout(() => showToast('info', '🕐',
+        isEs ? 'Tiempo de manejo restaurado' : 'Drive time restored',
+        isEs ? `+${closedLbl} agregados (app estuvo cerrada)` : `+${closedLbl} added while app was closed`,
+        5000), 1500);
+    }
     _fmRestoreRoute(saved);
   };
   document.getElementById('fmResumeNo').onclick = () => {
     dlg.style.display = 'none';
     _fmClearActiveRoute();
-    // El tiempo HOS ya acumulado (fmDriveSeconds / hos_fm_drive_secs) no se toca
+    localStorage.removeItem('hos_bg_state');
   };
 }
 
@@ -21411,19 +21426,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // When app returns to foreground, resume GPS so real-time position continues
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
+  if (document.visibilityState === 'hidden') {
+    // App going to background — save current state
     if (fmIsTracking) {
-      // Force one immediate GPS fix to wake up the chip after background pause
-      navigator.geolocation.getCurrentPosition(() => {}, () => {},
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
-      // Re-acquire wake lock if system released it while in background
-      if (!fmWakeLock && 'wakeLock' in navigator) {
-        navigator.wakeLock.request('screen').then(wl => { fmWakeLock = wl; }).catch(() => {});
-      }
-    } else if (_gpsWarmId == null) {
-      // Not tracking — restart warm cache if it died
-      startGPSWarm();
+      _fmSaveActiveRoute();
+      try {
+        localStorage.setItem('hos_bg_state', JSON.stringify({
+          bgAt: Date.now(),
+          driveSecs: fmDriveSeconds,
+          tracking: true
+        }));
+      } catch(e) {}
     }
+    return;
+  }
+
+  // App coming back to foreground
+  if (fmIsTracking) {
+    // Check if drive time elapsed while backgrounded/closed should be added
+    try {
+      const bg = JSON.parse(localStorage.getItem('hos_bg_state') || 'null');
+      if (bg && bg.tracking && bg.bgAt) {
+        const elapsedSecs = (Date.now() - bg.bgAt) / 1000;
+        // If away less than 4h AND more than 30s, offer to count as drive time
+        if (elapsedSecs > 30 && elapsedSecs < 14400) {
+          const em = Math.floor(elapsedSecs / 60);
+          const eh = Math.floor(em / 60), erm = em % 60;
+          const lbl = eh > 0 ? `${eh}h ${erm}m` : `${erm}m`;
+          fmDriveSeconds += elapsedSecs;
+          window._hosTracker?.reportMoving?.(false, 0); // flush accumulated
+          showToast('info', '🕐',
+            lang === 'es' ? 'Tiempo de manejo agregado' : 'Drive time added',
+            lang === 'es' ? `+${lbl} acumulados mientras la app estuvo en segundo plano` : `+${lbl} added from background tracking`,
+            5000);
+        }
+        localStorage.removeItem('hos_bg_state');
+      }
+    } catch(e) {}
+
+    // Force one immediate GPS fix to wake up the chip after background pause
+    navigator.geolocation.getCurrentPosition(() => {}, () => {},
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+    // Re-acquire wake lock if system released it while in background
+    if (!fmWakeLock && 'wakeLock' in navigator) {
+      navigator.wakeLock.request('screen').then(wl => { fmWakeLock = wl; }).catch(() => {});
+    }
+  } else if (_gpsWarmId == null) {
+    // Not tracking — restart warm cache if it died
+    startGPSWarm();
   }
 });
 
