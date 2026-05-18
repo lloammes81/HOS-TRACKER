@@ -3159,7 +3159,7 @@ body.map-active #speedometerWidget {
   pointer-events: none;
 }
 body.map-active #fixedTruckMarker.visible {
-  display: none; /* truck icon moved into HUD — see #mapHudTruck */
+  display: flex;
 }
 #fixedTruckArrow {
   width: 0; height: 0;
@@ -5446,7 +5446,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   }
 
   /* Compact HUD: show truck icon + location + progress; hide full-mode sections */
-  #fmHud.compact #mapHudTruck   { display: flex !important; }
+  #fmHud.compact #mapHudTruck   { display: none !important; }
   #fmHud.compact #mapHudLocRow  { display: block !important; }
   #fmHud.compact #mapHudProgress{ display: block !important; }
   #fmHud.compact .fm-full-only  { display: none !important; }
@@ -15222,12 +15222,14 @@ function updateFixedTruckIcon(isMoving, overLimit, heading) {
 }
 
 function showFixedTruckIcon() {
-  // Truck icon lives inside the HUD (#mapHudTruck) — shown via CSS in compact mode
+  const el = document.getElementById('fixedTruckMarker');
+  if (el) el.classList.add('visible');
   updateFixedTruckIcon(false, false, 0);
 }
 
 function hideFixedTruckIcon() {
-  // Nothing explicit needed — HUD truck is hidden when map is not active
+  const el = document.getElementById('fixedTruckMarker');
+  if (el) el.classList.remove('visible');
 }
 
 // Linear interpolation
@@ -15566,12 +15568,12 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
     if (offsetFrac !== undefined) {
       offsetPx = size.y * offsetFrac;
     } else {
-      // Place truck just above the HUD circles (account for 92px icon height)
-      const hudEl = document.getElementById('fmHud');
-      const hudH  = (hudEl && hudEl.offsetHeight) ? hudEl.offsetHeight : 100;
-      const truckTargetY = size.y - hudH - 8;  // 8px gap above HUD rings
+      // #fixedTruckMarker: bottom:102px, arrow(20)+gap(2)+circle(66) = 88px total
+      // Circle center is 102 + 33 = 135px from screen bottom
+      const TRUCK_CENTER_FROM_BOTTOM = 135;
+      const truckTargetY = size.y - TRUCK_CENTER_FROM_BOTTOM;
       offsetPx = truckTargetY - size.y / 2;
-      offsetPx = Math.max(40, Math.min(offsetPx, size.y * 0.45)); // clamp
+      offsetPx = Math.max(40, Math.min(offsetPx, size.y * 0.48));
     }
 
     // Project truck position to Mercator pixel space at current zoom
