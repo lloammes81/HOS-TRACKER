@@ -10004,6 +10004,25 @@ function startGPSWarm() {
         startWeatherMonitor();
       }
     }
+    // Feed movement into the HOS tracker when its internal GPS is paused (route active)
+    // coords.speed is often null on iOS — tracker's own delta-calc handles it via _startGpsMode,
+    // but during fmIsTracking the internal GPS is paused, so we feed from here instead.
+    if (typeof fmIsTracking !== 'undefined' && fmIsTracking && window._hosTracker?.reportMoving) {
+      const mph = (speed != null && speed >= 0) ? speed * 2.237 : 0;
+      // Fall back: if speed null and we have lastFixFm, derive from delta
+      let derivedMph = mph;
+      if (speed == null && window.lastFixFm && window.lastFixFm.lat != null) {
+        const dtSecs = (Date.now() - window.lastFixFm.ts) / 1000;
+        if (dtSecs > 0.5) {
+          const R = 3958.8;
+          const dLat = (lat - window.lastFixFm.lat) * Math.PI / 180;
+          const dLon = (lon - window.lastFixFm.lon) * Math.PI / 180;
+          const a = Math.sin(dLat/2)**2 + Math.cos(window.lastFixFm.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLon/2)**2;
+          derivedMph = (2 * R * Math.asin(Math.sqrt(a)) / dtSecs) * 3600;
+        }
+      }
+      window._hosTracker.reportMoving(derivedMph >= 5, Math.round(derivedMph));
+    }
   };
   if (IS_CAPACITOR) {
     // Native: use Capacitor Geolocation watchPosition
@@ -28431,6 +28450,20 @@ window._hosAutoRecalc = false;
 
   // ── GPS del dispositivo — siempre activo para detección de movimiento ────
   // (incluso cuando ELD está conectado; ELD solo se usa para identificación)
+  let _gpsLastPos = null; // {lat, lon, ts} — for delta-speed fallback when coords.speed is null
+  function _calcMphFromDelta(lat, lon, ts) {
+    if (!_gpsLastPos) { _gpsLastPos = { lat, lon, ts }; return 0; }
+    const dtSecs = (ts - _gpsLastPos.ts) / 1000;
+    if (dtSecs < 0.5) return 0; // too close in time, skip
+    const R = 3958.8; // Earth radius miles
+    const dLat = (lat - _gpsLastPos.lat) * Math.PI / 180;
+    const dLon = (lon - _gpsLastPos.lon) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(_gpsLastPos.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLon/2)**2;
+    const distMiles = 2 * R * Math.asin(Math.sqrt(a));
+    _gpsLastPos = { lat, lon, ts };
+    return (distMiles / dtSecs) * 3600; // mph
+  }
+
   function _startGpsMode() {
     if (_gpsWatchId != null || !navigator.geolocation) return;
     _gpsActive = true;
@@ -28439,7 +28472,9 @@ window._hosAutoRecalc = false;
     _gpsWatchId = navigator.geolocation.watchPosition(
       pos => {
         const raw = pos.coords.speed;
-        const mph = (raw != null && raw >= 0) ? raw * 0.621371 : 0;
+        // coords.speed is often null on iOS Safari/PWA — fall back to position delta
+        let mph = (raw != null && raw >= 0) ? raw * 0.621371
+                  : _calcMphFromDelta(pos.coords.latitude, pos.coords.longitude, pos.timestamp || Date.now());
         if (mph >= 5) _onEldMoving(Math.round(mph));
         else          _onEldStopped();
       },
