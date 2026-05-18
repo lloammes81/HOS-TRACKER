@@ -5924,7 +5924,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <circle class="kpi-track" cx="47" cy="47" r="40"/>
           <circle class="kpi-arc" id="heroArcDrive" cx="47" cy="47" r="40"/>
         </svg>
-        <div class="hero-kpi-inner" style="width:120px;height:120px;">
+        <div id="heroManejoInner" class="hero-kpi-inner" style="width:120px;height:120px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
           <div class="hero-kpi-val" id="heroValDrive" style="font-size:36px;">11H</div>
           <div class="hero-kpi-lbl" id="heroLblDrive">Manejo</div>
         </div>
@@ -16097,19 +16097,109 @@ const _AUTO_REST_RESET_HRS  = 10;    // 10 h parado → resetea ventana de 14h
 let _vehicleStopStartMs = null;      // timestamp del primer momento que el vehículo se detuvo
 
 // ── REST MODE: 10-hour mandatory rest countdown ───────────────────────────
-// If stopped > 1 h the MANEJO circle converts into a 10-hour rest countdown.
-// When 10 h complete, drive hours reset to the daily max (11 h).
-let _restModeActive = false;
-let _restResetDone  = false;
+// Auto: stopped > 5 min. Manual: tap the MANEJO circle center (vehicle must be stopped).
+// When 10 h complete, drive hours reset to the daily max (11 h) and alarm fires.
+let _restModeActive      = false;
+let _restResetDone       = false;
+let _manualRestActivated = false; // true when user tapped to start rest
+
+function _playRestAlarm() {
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    [[880, 0], [1100, 0.55], [880, 1.1]].forEach(([freq, t]) => {
+      const osc = ctx.createOscillator();
+      const g   = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.frequency.value = freq; osc.type = 'sine';
+      g.gain.setValueAtTime(0.7, ctx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.45);
+      osc.start(ctx.currentTime + t);
+      osc.stop(ctx.currentTime + t + 0.45);
+    });
+    setTimeout(() => ctx.close(), 2500);
+  } catch(e) {}
+  // SW notification (reaches lock screen)
+  navigator.serviceWorker?.ready.then(reg => {
+    reg.active?.postMessage({
+      type: 'SCHEDULE_NOTIFICATION',
+      title: lang === 'es' ? '⏰ ¡Descanso Completado!' : '⏰ Rest Complete!',
+      body:  lang === 'es'
+        ? '✅ Tus 10 horas de descanso concluyeron. ¡Tienes 11h de manejo disponibles!'
+        : '✅ Your 10-hour mandatory rest is done. 11 driving hours restored!',
+      tag: 'rest-done', delay: 0, icon: './icon-192.png'
+    });
+  }).catch(() => {});
+}
+
+function startManualRest() {
+  const moving = typeof fmVehicleMoving !== 'undefined' ? fmVehicleMoving : false;
+  if (moving) {
+    showToast('warning', '🚛',
+      lang === 'es' ? 'Vehículo en movimiento' : 'Vehicle Moving',
+      lang === 'es' ? 'Detén el vehículo antes de iniciar el descanso.' : 'Stop the vehicle before starting rest.',
+      3000
+    );
+    return;
+  }
+  if (!_vehicleStopStartMs) {
+    _vehicleStopStartMs = Date.now();
+    try { localStorage.setItem('hos_stop_start', _vehicleStopStartMs); } catch(e) {}
+  }
+  _manualRestActivated = true;
+  _restModeActive      = true;
+  _restResetDone       = false;
+
+  // Schedule SW notification for 10 h from stop start
+  const stopHrs      = (_vehicleStopStartMs ? (Date.now() - _vehicleStopStartMs) / 3600000 : 0);
+  const remainingMs  = Math.max(0, (10 - stopHrs) * 3600000);
+  navigator.serviceWorker?.ready.then(reg => {
+    reg.active?.postMessage({
+      type: 'SCHEDULE_NOTIFICATION',
+      title: lang === 'es' ? '⏰ ¡Descanso Completado!' : '⏰ Rest Complete!',
+      body:  lang === 'es'
+        ? '✅ Tus 10 horas de descanso concluyeron. ¡Tienes 11h de manejo disponibles!'
+        : '✅ Your 10-hour mandatory rest is done. 11 driving hours restored!',
+      tag: 'rest-done', delay: remainingMs, icon: './icon-192.png'
+    });
+  }).catch(() => {});
+
+  showToast('info', '😴',
+    lang === 'es' ? 'Descanso iniciado' : 'Rest Started',
+    lang === 'es'
+      ? `Iniciaste 10h de descanso. Te notificamos al terminar. ${remainingMs > 0 ? '¡Buenas noches!' : ''}`
+      : `10-hour rest started. You'll be notified when done. ${remainingMs > 0 ? 'Good night!' : ''}`,
+    5000
+  );
+  _updateRestMode();
+}
+
+// Wire tap on MANEJO inner circle (done after DOM ready)
+(function _wireManejTap() {
+  function _attach() {
+    const el = document.getElementById('heroManejoInner');
+    if (!el) return;
+    el.addEventListener('click',      () => startManualRest(), { passive: true });
+    el.addEventListener('touchstart', () => startManualRest(), { passive: true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _attach);
+  else _attach();
+})();
 
 function _updateRestMode() {
   if (!_vehicleStopStartMs) {
-    if (_restModeActive) { _restModeActive = false; _restResetDone = false; _restoreManejo(); }
+    if (_restModeActive) {
+      _restModeActive = false; _restResetDone = false; _manualRestActivated = false;
+      _restoreManejo();
+    }
     return;
   }
   const stopHrs = (Date.now() - _vehicleStopStartMs) / 3600000;
-  if (stopHrs < 5 / 60) { // 5 minutes
-    if (_restModeActive) { _restModeActive = false; _restResetDone = false; _restoreManejo(); }
+  // Auto threshold: 5 min. Manual activation bypasses the wait.
+  if (!_manualRestActivated && stopHrs < 5 / 60) {
+    if (_restModeActive) {
+      _restModeActive = false; _restResetDone = false;
+      _restoreManejo();
+    }
     return;
   }
 
@@ -16126,6 +16216,7 @@ function _updateRestMode() {
       const cycleLeft = Math.max(0, window._hosTracker.cycleLeft());
       window._hosTracker.setInitialHours(dailyMax, cycleLeft);
     }
+    _playRestAlarm();
     showToast('success', '✅',
       lang === 'es' ? '¡Descanso completado!' : 'Rest Complete!',
       lang === 'es'
