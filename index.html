@@ -9993,6 +9993,18 @@ let _gpsWarmId      = null;
 
 function startGPSWarm() {
   if (_gpsWarmId !== null) return;
+  const _onFix = (lat, lon, accuracy, speed, heading, timestamp, raw) => {
+    const firstFix = !_gpsCache;
+    _gpsCache = { lat, lon, accuracy, speed, heading, timestamp, raw };
+    // On first GPS fix, refresh weather if it hasn't loaded real coordinates yet
+    if (firstFix && typeof startWeatherMonitor === 'function') {
+      if (!lastWeatherLat || Math.abs(lastWeatherLat - lat) > 0.1) {
+        lastWeatherLat = null; lastWeatherLon = null; // force fresh fetch
+        if (weatherInterval) { clearInterval(weatherInterval); weatherInterval = null; }
+        startWeatherMonitor();
+      }
+    }
+  };
   if (IS_CAPACITOR) {
     // Native: use Capacitor Geolocation watchPosition
     const Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
@@ -10000,25 +10012,14 @@ function startGPSWarm() {
     Geo.watchPosition({ enableHighAccuracy: true, timeout: 20000 }, (pos, err) => {
       if (err || !pos) return;
       const c = pos.coords;
-      _gpsCache = {
-        lat: c.latitude, lon: c.longitude,
-        accuracy: c.accuracy, speed: c.speed, heading: c.heading,
-        timestamp: pos.timestamp, raw: pos
-      };
+      _onFix(c.latitude, c.longitude, c.accuracy, c.speed, c.heading, pos.timestamp, pos);
     }).then(id => { _gpsWarmId = id; }).catch(() => {});
   } else {
     if (!navigator.geolocation) return;
     _gpsWarmId = navigator.geolocation.watchPosition(
       pos => {
-        _gpsCache = {
-          lat:       pos.coords.latitude,
-          lon:       pos.coords.longitude,
-          accuracy:  pos.coords.accuracy,
-          speed:     pos.coords.speed,
-          heading:   pos.coords.heading,
-          timestamp: pos.timestamp,
-          raw:       pos
-        };
+        const c = pos.coords;
+        _onFix(c.latitude, c.longitude, c.accuracy, c.speed, c.heading, pos.timestamp, pos);
       },
       () => {},
       { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
@@ -11033,6 +11034,9 @@ async function startWeatherMonitor() {
     if (wx) updateWeatherWidget(wx);
   };
 
+  // Wait 3s on first load so the GPS warm-up can get an initial fix before fetching weather
+  const _initialDelay = (!lastWeatherLat && !_gpsCache && !window.lastFixFm) ? 3000 : 0;
+  await new Promise(r => setTimeout(r, _initialDelay));
   await updateNow();
   weatherInterval = setInterval(updateNow, 5 * 60 * 1000); // every 5 min
   document.getElementById('weatherToggle').classList.add('on');
@@ -16757,6 +16761,10 @@ function fmStartTracking() {
     const acc  = pos.coords.accuracy || 20;
     // save last GPS fix for center button
     window.lastFixFm = { lat, lon, acc, ts: Date.now() };
+    // Refresh weather when position moves more than ~6 miles from last weather fetch
+    if (lastWeatherLat == null || haversine(lat, lon, lastWeatherLat, lastWeatherLon) > 6) {
+      if (typeof fetchWeather === 'function') fetchWeather(lat, lon).then(wx => { if (wx) updateWeatherWidget(wx); });
+    }
     // Refresh upcoming stops list every ~2 miles of movement
     if (!window._lastStopsLat || haversine(lat, lon, window._lastStopsLat, window._lastStopsLon) > 2) {
       window._lastStopsLat = lat; window._lastStopsLon = lon;
