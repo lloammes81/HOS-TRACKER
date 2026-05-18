@@ -10998,23 +10998,25 @@ async function startWeatherMonitor() {
 
   const updateNow = async () => {
     let lat = null, lon = null;
-    // 1. Try GPS
-    try {
-      const pos = await getGPSPosition(8000, 5000);
-      lat = pos.coords.latitude;
-      lon = pos.coords.longitude;
-    } catch {}
-    // 2. Last known coords
-    if (lat == null && lastWeatherLat != null) {
-      lat = lastWeatherLat; lon = lastWeatherLon;
+    // 1. Best source: live tracker GPS fix (most accurate, already obtained)
+    if (window.lastFixFm && window.lastFixFm.lat != null) {
+      lat = window.lastFixFm.lat; lon = window.lastFixFm.lon;
     }
-    // 3. IP-based fallback
+    // 2. GPS cache from warm watcher
+    if (lat == null && _gpsCache && _gpsCache.lat != null) {
+      lat = _gpsCache.lat; lon = _gpsCache.lon;
+    }
+    // 3. Fresh GPS request (longer timeout to give it a real chance)
     if (lat == null) {
       try {
-        const r = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
-        const d = await r.json();
-        lat = d.latitude; lon = d.longitude;
+        const pos = await getGPSPosition(30000, 12000);
+        lat = pos.coords ? pos.coords.latitude  : pos.lat;
+        lon = pos.coords ? pos.coords.longitude : pos.lon;
       } catch {}
+    }
+    // 4. Last known weather coords
+    if (lat == null && lastWeatherLat != null) {
+      lat = lastWeatherLat; lon = lastWeatherLon;
     }
     if (lat == null) return;
     lastWeatherLat = lat; lastWeatherLon = lon;
