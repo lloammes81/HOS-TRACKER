@@ -16169,6 +16169,12 @@ let _restResetDone       = false;
 let _manualRestActivated = false; // true when user tapped to start rest
 let _sleepOverlayDismissed = false;
 
+// Global rest-mode watchdog — runs every 5s regardless of which screen is active
+setInterval(() => {
+  if (!_restModeActive && !_vehicleStopStartMs) return; // nothing to do
+  if (typeof _updateRestMode === 'function') _updateRestMode();
+}, 5000);
+
 function _showSleepOverlay() {
   if (_sleepOverlayDismissed) return;
   const ov = document.getElementById('restSleepOverlay');
@@ -16869,6 +16875,8 @@ function fmStartTracking() {
     updateNavInstruction(lat, lon);
     // ── Auto status buttons (Conduciendo / Descanso) ─────
     autoUpdateDashStatus(isMoving);
+    // ── Cancel rest mode as soon as vehicle moves ────────
+    if (isMoving && typeof _updateRestMode === 'function') _updateRestMode();
     // ── Reportar movimiento al tracker HOS (sin ELD) ─────
     if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(isMoving, gpsSpeed);
     // ── Próxima parada card ───────────────────────────────
@@ -17492,6 +17500,7 @@ function showHosDashboard() {
       const rawSpeed = pos.coords.speed;
       const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
       autoUpdateDashStatus(gpsSpeed >= 5);
+      if (gpsSpeed >= 5 && typeof _updateRestMode === 'function') _updateRestMode();
       if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(gpsSpeed >= 5, gpsSpeed);
     }, () => {}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
   }
