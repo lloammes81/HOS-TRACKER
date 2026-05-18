@@ -5926,7 +5926,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </svg>
         <div class="hero-kpi-inner" style="width:120px;height:120px;">
           <div class="hero-kpi-val" id="heroValDrive" style="font-size:36px;">11H</div>
-          <div class="hero-kpi-lbl">Manejo</div>
+          <div class="hero-kpi-lbl" id="heroLblDrive">Manejo</div>
         </div>
       </div>
 
@@ -11245,16 +11245,19 @@ function applyDriveHoursPos() {
 
 function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
   const C = 251.3; // 2π × 40
-  const arcD = document.getElementById('heroArcDrive');
-  const valD = document.getElementById('heroValDrive');
-  if (arcD && valD) {
-    const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
-    const h = Math.floor(driveLeft), m = Math.round((driveLeft - h) * 60);
-    valD.textContent = h > 0 ? `${h}H` : `${m}M`;
-    const arcCol = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
-    const txtCol = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#0a0a0a';
-    arcD.style.stroke = arcCol; arcD.style.strokeDashoffset = C * (1 - pct);
-    valD.style.color = txtCol;
+  // Skip MANEJO circle when rest mode is active (handled by _updateRestMode)
+  if (!(typeof _restModeActive !== 'undefined' && _restModeActive)) {
+    const arcD = document.getElementById('heroArcDrive');
+    const valD = document.getElementById('heroValDrive');
+    if (arcD && valD) {
+      const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
+      const h = Math.floor(driveLeft), m = Math.round((driveLeft - h) * 60);
+      valD.textContent = h > 0 ? `${h}H` : `${m}M`;
+      const arcCol = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+      const txtCol = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#0a0a0a';
+      arcD.style.stroke = arcCol; arcD.style.strokeDashoffset = C * (1 - pct);
+      valD.style.color = txtCol;
+    }
   }
   const arcC = document.getElementById('heroArcCycle');
   const valC = document.getElementById('heroValCycle');
@@ -16093,6 +16096,91 @@ const _AUTO_SLEEP_THRESHOLD = 1800;  // 30 min → Sleeper parpadea índigo
 const _AUTO_REST_RESET_HRS  = 10;    // 10 h parado → resetea ventana de 14h
 let _vehicleStopStartMs = null;      // timestamp del primer momento que el vehículo se detuvo
 
+// ── REST MODE: 10-hour mandatory rest countdown ───────────────────────────
+// If stopped > 1 h the MANEJO circle converts into a 10-hour rest countdown.
+// When 10 h complete, drive hours reset to the daily max (11 h).
+let _restModeActive = false;
+let _restResetDone  = false;
+
+function _updateRestMode() {
+  if (!_vehicleStopStartMs) {
+    if (_restModeActive) { _restModeActive = false; _restResetDone = false; _restoreManejo(); }
+    return;
+  }
+  const stopHrs = (Date.now() - _vehicleStopStartMs) / 3600000;
+  if (stopHrs < 1) {
+    if (_restModeActive) { _restModeActive = false; _restResetDone = false; _restoreManejo(); }
+    return;
+  }
+
+  _restModeActive = true;
+  const restRemaining = Math.max(0, 10 - stopHrs);
+  const restPct       = Math.min(1, stopHrs / 10);
+
+  if (restRemaining <= 0 && !_restResetDone) {
+    _restResetDone = true;
+    fmDriveSeconds = 0;
+    try { localStorage.removeItem('hos_fm_drive_secs'); } catch(e) {}
+    if (window._hosTracker) {
+      const dailyMax  = parseFloat(document.getElementById('dailyHoursInput')?.value) || 11;
+      const cycleLeft = Math.max(0, window._hosTracker.cycleLeft());
+      window._hosTracker.setInitialHours(dailyMax, cycleLeft);
+    }
+    showToast('success', '✅',
+      lang === 'es' ? '¡Descanso completado!' : 'Rest Complete!',
+      lang === 'es'
+        ? 'Completaste 10h de descanso obligatorio. ¡Tienes 11h de manejo disponibles!'
+        : '10-hour mandatory rest complete. You have 11 driving hours available!',
+      8000
+    );
+  }
+
+  _showRestInManejoCircle(restRemaining, restPct);
+}
+
+function _showRestInManejoCircle(restRemaining, restPct) {
+  const C    = 251.3; // 2π×40 hero circle circumference
+  const done = restRemaining <= 0;
+  const arcCol = done ? '#10b981' : '#f97316'; // green=done, orange=resting
+
+  // Hero MANEJO circle
+  const arcD = document.getElementById('heroArcDrive');
+  const valD = document.getElementById('heroValDrive');
+  const lblD = document.getElementById('heroLblDrive');
+  if (arcD) { arcD.style.stroke = arcCol; arcD.style.strokeDashoffset = C * (1 - restPct); }
+  if (valD) {
+    const h = Math.floor(restRemaining), m = Math.round((restRemaining - h) * 60);
+    valD.textContent  = done ? '11H' : (h > 0 ? `${h}h${m > 0 ? ' ' + m + 'm' : ''}` : `${m}m`);
+    valD.style.color  = done ? '#10b981' : '#0a0a0a';
+    valD.style.fontSize = '26px';
+  }
+  if (lblD) {
+    lblD.textContent = done ? (lang === 'es' ? 'Manejo' : 'Drive') : (lang === 'es' ? '😴 DESCANSO' : '😴 REST');
+    lblD.style.color = done ? '' : '#f97316';
+  }
+
+  // Map HUD MANEJO ring (during navigation)
+  const fmDrLbl = document.getElementById('fmDriveLbl');
+  if (fmDrLbl) { fmDrLbl.textContent = done ? 'MANEJO' : '😴 REST'; fmDrLbl.style.color = done ? '' : '#f97316'; }
+  const hudDhArcEl = document.getElementById('hudDhArc');
+  if (hudDhArcEl) { hudDhArcEl.setAttribute('stroke', arcCol); hudDhArcEl.setAttribute('stroke-dasharray', `${restPct * 226} 226`); }
+  const hudManVal = document.getElementById('fmDriveLeft');
+  if (hudManVal) {
+    const h = Math.floor(restRemaining), m = Math.round((restRemaining - h) * 60);
+    hudManVal.textContent = done ? '11h' : (h > 0 ? `${h}h` : `${m}m`);
+  }
+}
+
+function _restoreManejo() {
+  const lblD = document.getElementById('heroLblDrive');
+  if (lblD) { lblD.textContent = lang === 'es' ? 'Manejo' : 'Drive'; lblD.style.color = ''; }
+  const valD = document.getElementById('heroValDrive');
+  if (valD) valD.style.fontSize = '36px';
+  const fmDrLbl = document.getElementById('fmDriveLbl');
+  if (fmDrLbl) { fmDrLbl.textContent = 'MANEJO'; fmDrLbl.style.color = '#34d399'; }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function _clearAllAutoBlinkClasses() {
   document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
   document.getElementById('dashTabWait')?.classList.remove('dash-tab-wait-pulse');
@@ -17169,6 +17257,7 @@ function showHosDashboard() {
       ? Math.max(0, Math.min(window._hosTracker.driveLeft(), dMax))
       : Math.max(0, dMax);
     updateHosDashboard(dLeft, dMax);
+    if (typeof _updateRestMode === 'function') _updateRestMode();
   }, 1000);
 
   updateDashDestCard();
@@ -28298,17 +28387,19 @@ window._hosAutoRecalc = false;
     const valT2 = document.getElementById('heroValTurno2');
     if (valT2) valT2.textContent = _shiftStart ? _fmtElapsed(_shiftStart) : '--:--';
 
-    // Anillo 2: Manejo disponible
-    const dPct = dl / DRIVE_MAX;
-    const dArcCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#10b981';
-    const dTxtCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#0a0a0a';
-    const arcD = document.getElementById('heroArcDrive');
-    if (arcD){ arcD.style.strokeDashoffset = C * (1 - dPct); arcD.style.stroke = dArcCol; }
-    const valD = document.getElementById('heroValDrive');
-    if (valD){
-      const h = Math.floor(dl), m = Math.round((dl - h) * 60);
-      valD.textContent = h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`;
-      valD.style.color = dTxtCol;
+    // Anillo 2: Manejo disponible (skip when rest mode is handling it)
+    if (!(typeof _restModeActive !== 'undefined' && _restModeActive)) {
+      const dPct = dl / DRIVE_MAX;
+      const dArcCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#10b981';
+      const dTxtCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#0a0a0a';
+      const arcD = document.getElementById('heroArcDrive');
+      if (arcD){ arcD.style.strokeDashoffset = C * (1 - dPct); arcD.style.stroke = dArcCol; }
+      const valD = document.getElementById('heroValDrive');
+      if (valD){
+        const h = Math.floor(dl), m = Math.round((dl - h) * 60);
+        valD.textContent = h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`;
+        valD.style.color = dTxtCol;
+      }
     }
 
     // Anillo 3: Ciclo 70H disponible
