@@ -18213,7 +18213,8 @@ function updateHosDashboard(driveLeft, driveMax) {
   const wrap   = document.getElementById('dashRingWrap');
   if (!arc || !timeEl) return;
 
-  const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
+  const REG_DAILY = 11; // regulatory 11h daily drive limit
+  const pct = Math.max(0, Math.min(1, driveLeft / REG_DAILY));
   const circumference = 679; // 2π×108 ≈ 679
   arc.setAttribute('stroke-dasharray', `${(pct * circumference).toFixed(1)} ${circumference}`);
 
@@ -18239,8 +18240,8 @@ function updateHosDashboard(driveLeft, driveMax) {
   // Actualizar etiqueta del anillo DISPONIBLES
   const lblEl = document.getElementById('dashHosLabel');
   if (lblEl) {
-    const _usedMins = Math.round((driveMax - driveLeft) * 60);
-    lblEl.textContent = `de ${driveMax}h · usadas ${Math.floor(_usedMins/60)}h ${String(_usedMins%60).padStart(2,'0')}m`;
+    const _usedMins = Math.round((REG_DAILY - driveLeft) * 60);
+    lblEl.textContent = `de ${REG_DAILY}h · usadas ${Math.floor(_usedMins/60)}h ${String(_usedMins%60).padStart(2,'0')}m`;
   }
 
   // Hora estimada de llegada
@@ -18276,7 +18277,7 @@ function updateHosDashboard(driveLeft, driveMax) {
   // Horas restantes del ciclo 70h
   const weekEl = document.getElementById('dashWeekHours');
   const cycMax = parseFloat(document.getElementById('hoursInput')?.value) || 70;
-  const cycLeft = Math.max(0, cycMax - (driveMax - driveLeft));
+  const cycLeft = window._hosTracker ? window._hosTracker.cycleLeft() : Math.max(0, cycMax - (REG_DAILY - driveLeft));
   if (weekEl) {
     const fm70 = document.getElementById('fm70Left');
     if (fm70 && fm70.textContent && fm70.textContent !== '--') {
@@ -18305,7 +18306,7 @@ function updateHosDashboard(driveLeft, driveMax) {
   const manLabel = document.getElementById('dashManejoLabel');
   const cProg    = document.getElementById('dashCicloProg');
   const cLabel   = document.getElementById('dashCicloLabel');
-  const pctDrive = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
+  const pctDrive = Math.max(0, Math.min(1, driveLeft / REG_DAILY));
   if (manProg) {
     manProg.style.width = `${(pctDrive * 100).toFixed(1)}%`;
     manProg.style.background = pctDrive > 0.5 ? '#10b981' : pctDrive > 0.25 ? '#f59e0b' : '#ef4444';
