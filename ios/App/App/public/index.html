@@ -3049,6 +3049,39 @@ body #mapSpeedGroup #sosFab {
 }
 body.map-active #mapCompassWidget { display: block; }
 
+/* ── Rest sleep overlay ─────────────────────────────────── */
+#restSleepOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9900;
+  background: rgba(5,9,20,0.90);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+@keyframes floatZzz {
+  0%   { opacity:0; transform:translateY(0)      scale(0.7) rotate(-5deg); }
+  15%  { opacity:1; }
+  85%  { opacity:0.55; }
+  100% { opacity:0; transform:translateY(-150px)  scale(1.15) rotate(18deg); }
+}
+.zzz-bubble {
+  position: absolute;
+  font-weight: 900;
+  color: rgba(249,115,22,0.75);
+  animation: floatZzz linear infinite;
+  pointer-events: none;
+  font-family: 'DM Sans', sans-serif;
+  text-shadow: 0 0 14px rgba(249,115,22,0.45);
+}
+
 /* Keep stack above other floating buttons if present */
 #driveHoursWidget, #sosFab, #weatherWidget{
   z-index: 900 !important;
@@ -7836,6 +7869,22 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <!-- Center dot -->
       <circle cx="28" cy="28" r="3.5" fill="rgba(10,18,36,0.95)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
     </svg>
+  </div>
+
+  <!-- Rest sleep overlay — shown during 10h mandatory rest -->
+  <div id="restSleepOverlay" onclick="_hideSleepOverlay(true)">
+    <span class="zzz-bubble" style="left:12%;top:64%;font-size:26px;animation-duration:3.2s;animation-delay:0s;">z</span>
+    <span class="zzz-bubble" style="left:22%;top:58%;font-size:18px;animation-duration:2.7s;animation-delay:0.9s;">z</span>
+    <span class="zzz-bubble" style="left:38%;top:70%;font-size:38px;animation-duration:4.1s;animation-delay:1.6s;">Z</span>
+    <span class="zzz-bubble" style="left:50%;top:66%;font-size:22px;animation-duration:3.5s;animation-delay:0.3s;">z</span>
+    <span class="zzz-bubble" style="left:62%;top:72%;font-size:42px;animation-duration:3.9s;animation-delay:1.1s;">Z</span>
+    <span class="zzz-bubble" style="left:74%;top:60%;font-size:20px;animation-duration:2.9s;animation-delay:0.6s;">z</span>
+    <span class="zzz-bubble" style="left:83%;top:67%;font-size:30px;animation-duration:3.6s;animation-delay:2.0s;">Z</span>
+    <span class="zzz-bubble" style="left:28%;top:75%;font-size:16px;animation-duration:2.4s;animation-delay:1.4s;">z</span>
+    <div style="font-size:96px;line-height:1;margin-bottom:14px;filter:drop-shadow(0 6px 28px rgba(249,115,22,0.35));">😴</div>
+    <div id="restSleepDigital" style="font-family:'Share Tech Mono',monospace;font-size:54px;font-weight:700;color:#fff;letter-spacing:5px;text-shadow:0 0 40px rgba(255,255,255,0.15);">10:00:00</div>
+    <div style="color:rgba(255,255,255,0.38);font-size:12px;letter-spacing:5px;margin-top:10px;text-transform:uppercase;">Tiempo de descanso</div>
+    <div style="color:rgba(255,255,255,0.18);font-size:11px;margin-top:52px;letter-spacing:1px;">Toca para minimizar</div>
   </div>
 
   <!-- RIGHT SIDE CONTROL COLUMN: Community Reports -->
@@ -16103,6 +16152,30 @@ let _vehicleStopStartMs = null;      // timestamp del primer momento que el veh�
 let _restModeActive      = false;
 let _restResetDone       = false;
 let _manualRestActivated = false; // true when user tapped to start rest
+let _sleepOverlayDismissed = false;
+
+function _showSleepOverlay() {
+  if (_sleepOverlayDismissed) return;
+  const ov = document.getElementById('restSleepOverlay');
+  if (ov) ov.style.display = 'flex';
+  _updateSleepOverlayTime();
+}
+function _hideSleepOverlay(dismissed) {
+  const ov = document.getElementById('restSleepOverlay');
+  if (ov) ov.style.display = 'none';
+  if (dismissed) _sleepOverlayDismissed = true;
+}
+function _updateSleepOverlayTime() {
+  const ov = document.getElementById('restSleepOverlay');
+  if (!ov || ov.style.display !== 'flex') return;
+  const stopHrs = _vehicleStopStartMs ? (Date.now() - _vehicleStopStartMs) / 3600000 : 0;
+  const rem = Math.max(0, 10 - stopHrs);
+  const h = Math.floor(rem);
+  const m = Math.floor((rem - h) * 60);
+  const s = Math.floor(((rem - h) * 60 - m) * 60);
+  const dig = document.getElementById('restSleepDigital');
+  if (dig) dig.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
 
 function _playRestAlarm() {
   try {
@@ -16171,6 +16244,8 @@ function startManualRest() {
       : `10-hour rest started. You'll be notified when done. ${remainingMs > 0 ? 'Good night!' : ''}`,
     5000
   );
+  _sleepOverlayDismissed = false;
+  _showSleepOverlay();
   _updateRestMode();
 }
 
@@ -16267,6 +16342,14 @@ function _showRestInManejoCircle(restRemaining, restPct) {
     }
   }
 
+  // Sleep overlay
+  if (done) {
+    _hideSleepOverlay(false);
+    _sleepOverlayDismissed = false;
+  } else {
+    _updateSleepOverlayTime();
+  }
+
   // Map HUD MANEJO ring (during navigation)
   const fmDrLbl = document.getElementById('fmDriveLbl');
   if (fmDrLbl) { fmDrLbl.textContent = done ? 'MANEJO' : '😴 REST'; fmDrLbl.style.color = done ? '' : '#f97316'; }
@@ -16288,6 +16371,8 @@ function _restoreManejo() {
   if (fmDrLbl) { fmDrLbl.textContent = 'MANEJO'; fmDrLbl.style.color = '#34d399'; }
   const chron = document.getElementById('heroRestChronometer');
   if (chron) chron.style.display = 'none';
+  _hideSleepOverlay(false);
+  _sleepOverlayDismissed = false;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
