@@ -4180,12 +4180,12 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .kpi-track {
     fill: none;
-    stroke: rgba(0,0,0,0.12);
+    stroke: rgba(16,185,129,0.15);
     stroke-width: 3;
   }
   .kpi-arc {
     fill: none;
-    stroke: #1a1a1a;
+    stroke: #10b981;
     stroke-width: 3;
     stroke-linecap: round;
     stroke-dasharray: 251.3;
@@ -11251,9 +11251,10 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
     const h = Math.floor(driveLeft), m = Math.round((driveLeft - h) * 60);
     valD.textContent = h > 0 ? `${h}H` : `${m}M`;
-    const col = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#1a1a1a';
-    arcD.style.stroke = col; arcD.style.strokeDashoffset = C * (1 - pct);
-    valD.style.color = col;
+    const arcCol = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+    const txtCol = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#0a0a0a';
+    arcD.style.stroke = arcCol; arcD.style.strokeDashoffset = C * (1 - pct);
+    valD.style.color = txtCol;
   }
   const arcC = document.getElementById('heroArcCycle');
   const valC = document.getElementById('heroValCycle');
@@ -11261,9 +11262,10 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     const pct = Math.max(0, Math.min(1, cycleLeft / Math.max(1, cycleMax)));
     const h = Math.floor(cycleLeft);
     valC.textContent = `${h}H`;
-    const col = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#1a1a1a';
-    arcC.style.stroke = col; arcC.style.strokeDashoffset = C * (1 - pct);
-    valC.style.color = col;
+    const arcCol = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#10b981';
+    const txtCol = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#0a0a0a';
+    arcC.style.stroke = arcCol; arcC.style.strokeDashoffset = C * (1 - pct);
+    valC.style.color = txtCol;
   }
   const arcDot = document.getElementById('heroArcDot');
   const valDot = document.getElementById('heroValDot');
@@ -28298,23 +28300,25 @@ window._hosAutoRecalc = false;
 
     // Anillo 2: Manejo disponible
     const dPct = dl / DRIVE_MAX;
-    const dCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#1a1a1a';
+    const dArcCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#10b981';
+    const dTxtCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#0a0a0a';
     const arcD = document.getElementById('heroArcDrive');
-    if (arcD){ arcD.style.strokeDashoffset = C * (1 - dPct); arcD.style.stroke = dCol; }
+    if (arcD){ arcD.style.strokeDashoffset = C * (1 - dPct); arcD.style.stroke = dArcCol; }
     const valD = document.getElementById('heroValDrive');
     if (valD){
       const h = Math.floor(dl), m = Math.round((dl - h) * 60);
       valD.textContent = h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`;
-      valD.style.color = dCol;
+      valD.style.color = dTxtCol;
     }
 
     // Anillo 3: Ciclo 70H disponible
     const cPct = cl / CYCLE_MAX;
-    const cCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#1a1a1a';
+    const cArcCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#10b981';
+    const cTxtCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#0a0a0a';
     const arcC = document.getElementById('heroArcCycle');
-    if (arcC){ arcC.style.strokeDashoffset = C * (1 - cPct); arcC.style.stroke = cCol; }
+    if (arcC){ arcC.style.strokeDashoffset = C * (1 - cPct); arcC.style.stroke = cArcCol; }
     const valC = document.getElementById('heroValCycle');
-    if (valC){ valC.textContent = `${Math.round(cl)}H`; valC.style.color = cCol; }
+    if (valC){ valC.textContent = `${Math.round(cl)}H`; valC.style.color = cTxtCol; }
 
     // DOT violation badge
     const viol = document.getElementById('heroDutyViol');
