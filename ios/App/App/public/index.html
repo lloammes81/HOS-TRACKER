@@ -10705,18 +10705,19 @@ const WX_ICONS_NIGHT = {
 async function fetchWeather(lat, lon) {
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&current=temperature_2m,weathercode,windspeed_10m,precipitation,is_day&wind_speed_unit=mph` +
+      `&current=temperature_2m,weather_code,windspeed_10m,precipitation,is_day&wind_speed_unit=mph` +
       `&temperature_unit=fahrenheit&timezone=auto`;
     const r = await fetch(url);
     const d = await r.json();
     const c = d.current;
+    const code = c.weather_code ?? c.weathercode ?? 0;
     return {
-      code  : c.weathercode,
+      code  : code,
       temp  : Math.round(c.temperature_2m),
       wind  : Math.round(c.windspeed_10m),
       precip: c.precipitation,
       isDay : c.is_day !== 0,
-      desc  : WX_DESC[c.weathercode] || 'Unknown'
+      desc  : WX_DESC[code] || 'Unknown'
     };
   } catch { return null; }
 }
@@ -11017,6 +11018,14 @@ async function startWeatherMonitor() {
     // 4. Last known weather coords
     if (lat == null && lastWeatherLat != null) {
       lat = lastWeatherLat; lon = lastWeatherLon;
+    }
+    // 5. IP-based fallback (last resort — may be imprecise)
+    if (lat == null) {
+      try {
+        const r = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
+        const d = await r.json();
+        if (d.latitude) { lat = d.latitude; lon = d.longitude; }
+      } catch {}
     }
     if (lat == null) return;
     lastWeatherLat = lat; lastWeatherLon = lon;
@@ -23625,6 +23634,11 @@ init();
       }
     })
     .catch(err => console.warn('[HOS] SW error:', err));
+
+  // Auto-reload when a new SW takes over (ensures latest version is always shown)
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
 
   // Función global para programar notificación local
   window.scheduleNotification = function(delayMs, title, body, tag) {
