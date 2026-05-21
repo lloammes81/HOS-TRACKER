@@ -503,13 +503,13 @@
   /* ── TRUCK DRAG SLIDER ── */
   .calc-slider-wrap {
     position: relative; width: 100%; height: 68px;
-    margin-top: 14px; border-radius: 34px;
-    clip-path: inset(0 round 34px);
+    margin-top: 14px; border-radius: 34px; overflow: hidden;
     background: linear-gradient(135deg, #0a1f0e, #0f2d14);
     border: 1.5px solid rgba(21,128,61,.45);
     box-shadow: 0 4px 22px rgba(21,128,61,.3);
     user-select: none; -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+    cursor: grab;
   }
   .calc-slider-fill {
     position: absolute; left: 0; top: 0; bottom: 0; width: 0;
@@ -530,8 +530,7 @@
     background: linear-gradient(135deg, #15803d, #16a34a);
     display: flex; align-items: center; justify-content: center;
     font-size: 28px; box-shadow: 0 2px 14px rgba(21,128,61,.6);
-    pointer-events: none;
-    z-index: 2;
+    pointer-events: none; z-index: 2;
   }
   .calc-slider-thumb.snapping { transition: transform .25s ease; }
   .calc-slider-wrap.calc-disabled { opacity: .45; pointer-events: none; }
@@ -6128,7 +6127,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <div class="error" id="errorBox" style="display:none;margin-top:10px"></div>
 
-        <div class="calc-slider-wrap" id="calcSlider">
+        <div class="calc-slider-wrap" id="calcSlider"
+          ontouchstart="csStart(event)" ontouchmove="csMove(event)" ontouchend="csEnd(event)" ontouchcancel="csEnd(event)"
+          onmousedown="csStart(event)">
           <div class="calc-slider-fill" id="calcSliderFill"></div>
           <div class="calc-slider-label" id="calcSliderLabel">DESLIZA PARA CALCULAR RUTA</div>
           <div class="calc-slider-thumb" id="calcSliderThumb">🚛</div>
@@ -23725,81 +23726,51 @@ function toggleInterstateShields(on) {
 
 init();
 
-/* ── CALC SLIDER ── */
-(function() {
-  function initCalcSlider() {
-    var wrap  = document.getElementById('calcSlider');
-    var thumb = document.getElementById('calcSliderThumb');
-    var fill  = document.getElementById('calcSliderFill');
-    var lbl   = document.getElementById('calcSliderLabel');
-    if (!wrap || !thumb) return;
-
-    var sx = 0, curX = 0, active = false, busy = false;
-
-    function mx() { return Math.max(50, (wrap.offsetWidth || wrap.getBoundingClientRect().width) - 68); }
-
-    function setX(raw) {
-      var m = mx();
-      curX = raw < 0 ? 0 : raw > m ? m : raw;
-      thumb.style.transform = 'translateX(' + curX + 'px)';
-      var pct = curX / m;
-      fill.style.width  = (curX + 62) + 'px';
-      lbl.style.opacity = pct > 0.67 ? '0' : String(1 - pct * 1.5);
-    }
-
-    function reset() {
-      thumb.classList.add('snapping');
-      setX(0);
-      setTimeout(function() { thumb.classList.remove('snapping'); }, 260);
-    }
-
-    function fire() {
-      busy = true;
-      setX(mx());
-      lbl.style.opacity = '0';
-      setTimeout(function() {
-        reset();
-        busy = false;
-        if (typeof calculateRoute === 'function') calculateRoute();
-      }, 260);
-    }
-
-    function onStart(e) {
-      if (busy || wrap.classList.contains('calc-disabled')) return;
-      e.preventDefault();
-      active = true;
-      var t = e.touches ? e.touches[0] : e;
-      sx = t.clientX - curX;
-      thumb.classList.remove('snapping');
-    }
-
-    function onMove(e) {
-      if (!active) return;
-      e.preventDefault();
-      var t = e.touches ? e.touches[0] : e;
-      setX(t.clientX - sx);
-    }
-
-    function onEnd() {
-      if (!active) return;
-      active = false;
-      if (!busy) {
-        if (curX / mx() >= 0.72) { fire(); } else { reset(); }
-      }
-    }
-
-    wrap.addEventListener('touchstart', onStart, { passive: false });
-    wrap.addEventListener('touchmove',  onMove,  { passive: false });
-    wrap.addEventListener('touchend',   onEnd,   { passive: false });
-    wrap.addEventListener('touchcancel',onEnd,   { passive: false });
-    wrap.addEventListener('mousedown', onStart);
-    document.addEventListener('mousemove', function(e) { onMove(e); });
-    document.addEventListener('mouseup',   function()  { onEnd(); });
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initCalcSlider);
-  else initCalcSlider();
-})();
+/* ── CALC SLIDER global handlers (called from inline ontouchstart/ontouchmove etc.) ── */
+var _cs = { sx:0, curX:0, on:false, busy:false };
+function csMx() { var w=document.getElementById('calcSlider'); return w ? Math.max(50,w.offsetWidth-68) : 250; }
+function csSetX(raw) {
+  var m=csMx(), x=raw<0?0:raw>m?m:raw;
+  _cs.curX=x;
+  var t=document.getElementById('calcSliderThumb'),
+      f=document.getElementById('calcSliderFill'),
+      l=document.getElementById('calcSliderLabel');
+  if(t) t.style.transform='translateX('+x+'px)';
+  if(f) f.style.width=(x+62)+'px';
+  if(l) l.style.opacity=x/m>0.67?'0':String(1-x/m*1.5);
+}
+function csReset() {
+  var t=document.getElementById('calcSliderThumb'),f=document.getElementById('calcSliderFill'),l=document.getElementById('calcSliderLabel');
+  if(t){t.style.transition='transform .25s';t.style.transform='';setTimeout(function(){t.style.transition='';},260);}
+  if(f) f.style.width='0';
+  if(l) l.style.opacity='1';
+  _cs.curX=0;
+}
+function csStart(e) {
+  var w=document.getElementById('calcSlider');
+  if(!w||_cs.busy||w.classList.contains('calc-disabled')) return;
+  e.preventDefault();
+  _cs.on=true;
+  _cs.sx=(e.touches?e.touches[0].clientX:e.clientX)-_cs.curX;
+  var t=document.getElementById('calcSliderThumb');
+  if(t) t.style.transition='';
+}
+function csMove(e) {
+  if(!_cs.on) return;
+  e.preventDefault();
+  csSetX((e.touches?e.touches[0].clientX:e.clientX)-_cs.sx);
+}
+function csEnd(e) {
+  if(!_cs.on||_cs.busy) return;
+  _cs.on=false;
+  if(_cs.curX/csMx()>=0.70) {
+    _cs.busy=true;
+    csSetX(csMx());
+    setTimeout(function(){ csReset(); _cs.busy=false; if(typeof calculateRoute==='function') calculateRoute(); },260);
+  } else { csReset(); }
+}
+document.addEventListener('mousemove',function(e){csMove(e);});
+document.addEventListener('mouseup',function(){csEnd();});
 
 /* ═══════════════════════════════════════════════════════════
    SERVICE WORKER + PUSH NOTIFICATIONS (background)
