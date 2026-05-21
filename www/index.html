@@ -509,7 +509,7 @@
     box-shadow: 0 4px 22px rgba(21,128,61,.3);
     user-select: none; -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    touch-action: none;
     cursor: grab;
   }
   .calc-slider-fill {
@@ -23728,7 +23728,7 @@ function toggleInterstateShields(on) {
 init();
 
 /* ── CALC SLIDER global handlers (called from inline ontouchstart/ontouchmove etc.) ── */
-var _cs = { sx:0, sy:0, curX:0, on:false, busy:false, decided:false };
+var _cs = { sx:0, sy:0, curX:0, on:false, busy:false, scrolling:false };
 function csMx() { var w=document.getElementById('calcSlider'); return w ? Math.max(50,w.offsetWidth-68) : 250; }
 function csSetX(raw) {
   var m=csMx(), x=raw<0?0:raw>m?m:raw;
@@ -23750,30 +23750,40 @@ function csReset() {
 function csStart(e) {
   var w=document.getElementById('calcSlider');
   if(!w||_cs.busy||w.classList.contains('calc-disabled')) return;
-  if(!e.touches) e.preventDefault(); // mouse only — touch lets browser detect direction first
-  _cs.on=true;
-  _cs.decided=!e.touches; // mouse is always decided immediately
+  e.preventDefault();
+  _cs.on=true; _cs.scrolling=false;
   var cx=e.touches?e.touches[0].clientX:e.clientX;
-  var cy=e.touches?e.touches[0].clientY:e.clientY;
   _cs.sx=cx-_cs.curX;
-  _cs.sy=cy;
+  if(e.touches) _cs.sy=e.touches[0].clientY;
   var t=document.getElementById('calcSliderThumb');
   if(t) t.style.transition='';
 }
 function csMove(e) {
-  if(!_cs.on) return;
-  var cx=e.touches?e.touches[0].clientX:e.clientX;
-  if(!_cs.decided && e.touches) {
-    var dx=Math.abs(cx-(_cs.sx+_cs.curX));
-    var dy=Math.abs(e.touches[0].clientY-_cs.sy);
-    if(dx+dy<5) return; // wait for meaningful movement
-    if(dy>dx*1.5 && dy>8){ _cs.on=false; return; } // clearly vertical — let page scroll
-    _cs.decided=true;
-  }
+  if(!_cs.on && !_cs.scrolling) return;
   e.preventDefault();
+  var cx=e.touches?e.touches[0].clientX:e.clientX;
+  if(_cs.scrolling && e.touches) {
+    var dy=e.touches[0].clientY-_cs.sy;
+    window.scrollBy(0,dy);
+    _cs.sy=e.touches[0].clientY;
+    return;
+  }
+  if(e.touches && _cs.on) {
+    var dx=Math.abs(cx-(_cs.sx+_cs.curX));
+    var sdy=e.touches[0].clientY-_cs.sy;
+    var ady=Math.abs(sdy);
+    if(dx+ady<5) return;
+    if(ady>dx*1.5 && ady>8) {
+      _cs.on=false; _cs.scrolling=true;
+      window.scrollBy(0,sdy);
+      _cs.sy=e.touches[0].clientY;
+      return;
+    }
+  }
   csSetX(cx-_cs.sx);
 }
 function csEnd(e) {
+  _cs.scrolling=false;
   if(!_cs.on||_cs.busy) return;
   _cs.on=false;
   if(_cs.curX/csMx()>=0.70) {
