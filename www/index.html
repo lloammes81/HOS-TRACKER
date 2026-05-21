@@ -9800,7 +9800,7 @@ const T = {
     driving:'Driving',stopped:'Stopped',gpsDenied:'Allow location access in your browser',arrived:'🎉 Arrived!',
     sourceRoad:'Road route source',sourceOsrm:'OSRM',sourceFallback:'Direct line fallback',
     menuTitle:'Settings',menuLang:'Language',menuTheme:'Theme',menuCountry:'Country search',light:'Light',dark:'Dark',
-    tabLblPlan:'Plan Route',tabLblDrives:'All Drives',tabLblSummary:'Fuel',tabLblSettings:'Settings',
+    tabLblPlan:'Plan Route',tabLblDrives:'Routes',tabLblSummary:'Fuel',tabLblSettings:'Settings',
     drivesTitle:'All Drives',summaryTitle:'Summaries',settingsPageTitle:'Settings',settSecGeneral:'General',
     settSecAppear:'Appearance',settSecHOS:'HOS Rules',settSecAbout:'About',settSecDanger:'Data & Privacy',settLangRow:'Language',
     settClearMemoryRow:'Clear All Memory',settClearMemorySub:'Erase all app data & reset to factory defaults',
@@ -9826,8 +9826,8 @@ const T = {
     driving:'Manejando',stopped:'Detenido',gpsDenied:'Permite el acceso a ubicación en tu navegador',arrived:'🎉 ¡Llegaste!',
     sourceRoad:'Fuente de ruta',sourceOsrm:'OSRM',sourceFallback:'Línea directa (respaldo)',
     menuTitle:'Ajustes',menuLang:'Idioma',menuTheme:'Tema',menuCountry:'País de búsqueda',light:'Claro',dark:'Oscuro',
-    tabLblPlan:'Planear Ruta',tabLblDrives:'Todos los Viajes',tabLblSummary:'Fuel',tabLblSettings:'Ajustes',
-    drivesTitle:'Todos los Viajes',summaryTitle:'Resúmenes',settingsPageTitle:'Ajustes',settSecGeneral:'General',
+    tabLblPlan:'Planear Ruta',tabLblDrives:'Rutas',tabLblSummary:'Fuel',tabLblSettings:'Ajustes',
+    drivesTitle:'Rutas',summaryTitle:'Resúmenes',settingsPageTitle:'Ajustes',settSecGeneral:'General',
     settSecAppear:'Apariencia',settSecHOS:'Reglas HOS',settSecAbout:'Acerca de',settSecDanger:'Datos y Privacidad',settLangRow:'Idioma',
     settClearMemoryRow:'Limpiar Toda la Memoria',settClearMemorySub:'Borrar todos los datos de la app y restaurar valores de fábrica',
     settCountryRow:'Filtro de País',settLightRow:'Modo Claro',settDarkRow:'Modo Oscuro',settBreakRow:'Regla de Pausa 30 min',
@@ -14411,7 +14411,8 @@ function _applyRouteResult(road, depart, hours, speed, isInitialLoad) {
       origin: origin.name, destination: destination.name,
       distance: routeDistance,
       value: (routeDistance * 0.73).toFixed(2),
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      endDate: arrivalTime ? arrivalTime.toISOString() : null
     };
     savedDrives.push(drive);
     localStorage.setItem('hos_drives', JSON.stringify(savedDrives));
@@ -14650,17 +14651,22 @@ function renderDrives() {
   const total = savedDrives.reduce((a,d) => a + parseFloat(d.value||0), 0);
   let html = `<div class="drives-header"><div style="font-size:13px;color:var(--muted)">${lang==='es'?'Valor total':'Classified value'}: $${total.toFixed(2)}</div></div>`;
   [...savedDrives].reverse().forEach(d => {
-    const dt = new Date(d.date);
-    const dateStr = dt.toLocaleDateString(lang==='es'?'es-ES':'en-US',{weekday:'long',day:'numeric',month:'long'});
-    html += `<div><div style="padding:6px 14px 2px;font-size:13px;font-weight:700">${dateStr}</div>
-    <div class="drive-item">
+    const startDt = new Date(d.date);
+    const fmtDate = (dt) => dt.toLocaleDateString(lang==='es'?'es-ES':'en-US',{month:'short',day:'numeric',year:'numeric'});
+    const fmtTime2 = (dt) => dt.toLocaleTimeString(lang==='es'?'es-ES':'en-US',{hour:'2-digit',minute:'2-digit'});
+    const startStr = `${fmtDate(startDt)} ${fmtTime2(startDt)}`;
+    const endStr = d.endDate ? `${fmtDate(new Date(d.endDate))} ${fmtTime2(new Date(d.endDate))}` : '—';
+    html += `<div class="drive-item">
       <div class="drive-thumb">🗺️</div>
       <div class="drive-info">
         <div class="drive-route">${d.origin.split(',')[0]} → ${d.destination.split(',')[0]}</div>
-        <div class="drive-meta">${d.distance.toLocaleString()} mi · ${fmtDateTime(d.date)}</div>
-        <div class="drive-amount">$${d.value}</div>
+        <div class="drive-meta" style="display:flex;flex-direction:column;gap:2px;margin-top:4px">
+          <span>📅 <b>${lang==='es'?'Inicio':'Start'}:</b> ${startStr}</span>
+          <span>🏁 <b>${lang==='es'?'Fin':'End'}:</b> ${endStr}</span>
+          <span>📍 <b>${lang==='es'?'Distancia':'Distance'}:</b> ${d.distance.toLocaleString()} mi</span>
+        </div>
       </div>
-    </div></div>`;
+    </div>`;
   });
   el.innerHTML = html;
 }
@@ -21975,7 +21981,8 @@ calculateRoute = async function() {
       origin: origin.name, destination: destination.name,
       distance: routeDistance,
       value: (routeDistance * 0.73).toFixed(2),
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      endDate: arrivalTime ? arrivalTime.toISOString() : null
     };
     savedDrives.push(drive);
     localStorage.setItem('hos_drives', JSON.stringify(savedDrives));
