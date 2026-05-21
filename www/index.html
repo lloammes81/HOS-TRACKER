@@ -509,7 +509,7 @@
     box-shadow: 0 4px 22px rgba(21,128,61,.3);
     user-select: none; -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
-    touch-action: pan-y;
+    touch-action: manipulation;
     cursor: grab;
   }
   .calc-slider-fill {
@@ -23763,11 +23763,11 @@ function csStart(e) {
 function csMove(e) {
   if(!_cs.on) return;
   var cx=e.touches?e.touches[0].clientX:e.clientX;
-  var cy=e.touches?e.touches[0].clientY:e.clientY;
-  if(!_cs.decided) {
-    var dx=Math.abs(cx-(_cs.sx+_cs.curX)), dy=Math.abs(cy-_cs.sy);
-    if(dx+dy<4) return; // not enough movement to determine direction
-    if(dy>=dx){ _cs.on=false; return; } // vertical dominates — cancel drag, let page scroll
+  if(!_cs.decided && e.touches) {
+    var dx=Math.abs(cx-(_cs.sx+_cs.curX));
+    var dy=Math.abs(e.touches[0].clientY-_cs.sy);
+    if(dx+dy<5) return; // wait for meaningful movement
+    if(dy>dx*1.5 && dy>8){ _cs.on=false; return; } // clearly vertical — let page scroll
     _cs.decided=true;
   }
   e.preventDefault();
