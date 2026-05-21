@@ -537,6 +537,12 @@
   .calc-slider-thumb:active { cursor: grabbing; box-shadow: 0 4px 20px rgba(21,128,61,.8); }
   .calc-slider-thumb { touch-action: none; }
   .calc-slider-wrap.calc-disabled { opacity: .45; pointer-events: none; }
+  .calc-slider-input {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; margin: 0; padding: 0; z-index: 10;
+    -webkit-appearance: none; appearance: none; cursor: grab;
+    touch-action: pan-x;
+  }
   .results-card-mobile {
     background: var(--surface);
     border-radius: 20px; padding: 20px;
@@ -6133,7 +6139,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="calc-slider-wrap" id="calcSlider">
           <div class="calc-slider-fill" id="calcSliderFill"></div>
           <div class="calc-slider-label" id="calcSliderLabel">DESLIZA PARA CALCULAR RUTA</div>
-          <div class="calc-slider-thumb" id="calcSliderThumb">🚛</div>
+          <div class="calc-slider-thumb" id="calcSliderThumb" aria-hidden="true">🚛</div>
+          <input type="range" id="calcSliderInput" class="calc-slider-input" min="0" max="100" value="0">
         </div>
 
         <div class="grid2" id="shareTrackBtns" style="display:none;margin-top:10px">
@@ -23727,77 +23734,57 @@ function toggleInterstateShields(on) {
 
 init();
 
-/* ── CALC SLIDER DRAG ── */
+/* ── CALC SLIDER (native range input drives visual truck) ── */
 (function() {
   function initCalcSlider() {
     const wrap  = document.getElementById('calcSlider');
+    const input = document.getElementById('calcSliderInput');
     const thumb = document.getElementById('calcSliderThumb');
     const fill  = document.getElementById('calcSliderFill');
     const lbl   = document.getElementById('calcSliderLabel');
-    if (!wrap || !thumb) return;
+    if (!wrap || !input || !thumb) return;
 
-    let startX = 0, curX = 0;
+    var triggered = false;
 
-    function maxX() { return Math.max(10, wrap.getBoundingClientRect().width - thumb.getBoundingClientRect().width - 12); }
+    function getMaxPx() {
+      return Math.max(10, wrap.getBoundingClientRect().width - 68);
+    }
 
-    function updatePos(x) {
-      const mx = maxX();
-      curX = Math.max(0, Math.min(x - startX, mx));
-      thumb.style.transform = 'translateX(' + curX + 'px)';
-      const pct = curX / mx;
-      if (fill) fill.style.width = (curX + 62) + 'px';
+    function updateVisual(pct) {
+      var pos = pct * getMaxPx();
+      thumb.style.transform = 'translateX(' + pos + 'px)';
+      if (fill) fill.style.width = (pos + 62) + 'px';
       if (lbl)  lbl.style.opacity = String(Math.max(0, 1 - pct * 1.5));
     }
 
     function snapBack() {
+      input.value = '0';
       thumb.classList.add('snap');
-      thumb.style.transform = '';
-      curX = 0;
-      if (fill) fill.style.width = '0';
-      if (lbl)  lbl.style.opacity = '1';
+      updateVisual(0);
       setTimeout(function() { thumb.classList.remove('snap'); }, 300);
     }
 
-    function trigger() {
-      thumb.classList.add('snap');
-      const mx = maxX();
-      thumb.style.transform = 'translateX(' + mx + 'px)';
+    function doTrigger() {
+      triggered = true;
+      updateVisual(1);
       if (lbl) lbl.style.opacity = '0';
       setTimeout(function() {
-        thumb.classList.remove('snap');
-        thumb.style.transform = '';
-        curX = 0;
-        if (fill) fill.style.width = '0';
-        if (lbl)  lbl.style.opacity = '1';
+        snapBack();
+        triggered = false;
         if (typeof calculateRoute === 'function') calculateRoute();
       }, 300);
     }
 
-    // ── Pointer Events (works on iOS Safari 13+ and all modern browsers) ──
-    thumb.addEventListener('pointerdown', function(e) {
-      if (wrap.classList.contains('calc-disabled')) return;
-      e.preventDefault();
-      thumb.setPointerCapture(e.pointerId);
-      startX = e.clientX - curX;
-      thumb.classList.remove('snap');
-    }, { passive: false });
-
-    thumb.addEventListener('pointermove', function(e) {
-      if (!thumb.hasPointerCapture(e.pointerId)) return;
-      e.preventDefault();
-      updatePos(e.clientX);
-    }, { passive: false });
-
-    thumb.addEventListener('pointerup', function(e) {
-      if (!thumb.hasPointerCapture(e.pointerId)) return;
-      thumb.releasePointerCapture(e.pointerId);
-      if (curX / maxX() >= 0.80) { trigger(); } else { snapBack(); }
+    input.addEventListener('input', function() {
+      if (triggered) return;
+      var pct = parseFloat(this.value) / 100;
+      updateVisual(pct);
+      if (pct >= 0.80) doTrigger();
     });
 
-    thumb.addEventListener('pointercancel', function(e) {
-      if (!thumb.hasPointerCapture(e.pointerId)) return;
-      thumb.releasePointerCapture(e.pointerId);
-      snapBack();
+    input.addEventListener('change', function() {
+      if (triggered) return;
+      if (parseFloat(this.value) < 80) snapBack();
     });
   }
 
