@@ -534,6 +534,7 @@
   }
   .calc-slider-thumb.snap { transition: transform .28s cubic-bezier(.25,.8,.25,1); }
   .calc-slider-thumb:active { cursor: grabbing; box-shadow: 0 4px 20px rgba(21,128,61,.8); }
+  .calc-slider-thumb { touch-action: none; }
   .calc-slider-wrap.calc-disabled { opacity: .45; pointer-events: none; }
   .results-card-mobile {
     background: var(--surface);
@@ -23734,36 +23735,29 @@ init();
     const lbl   = document.getElementById('calcSliderLabel');
     if (!wrap || !thumb) return;
 
-    let startX = 0, curX = 0, dragging = false;
+    let startX = 0, curX = 0;
 
-    function maxX() { return wrap.offsetWidth - thumb.offsetWidth - 12; }
-
-    function onStart(e) {
-      if (wrap.classList.contains('calc-disabled')) return;
-      dragging = true;
-      const cx = e.touches ? e.touches[0].clientX : e.clientX;
-      startX = cx - curX;
-      thumb.classList.remove('snap');
-      e.preventDefault();
-    }
+    function maxX() { return Math.max(1, wrap.offsetWidth - thumb.offsetWidth - 12); }
 
     function onMove(e) {
-      if (!dragging) return;
+      e.preventDefault();
       const cx = e.touches ? e.touches[0].clientX : e.clientX;
       curX = Math.max(0, Math.min(cx - startX, maxX()));
       thumb.style.transform = 'translateX(' + curX + 'px)';
       const pct = curX / maxX();
       if (fill) fill.style.width = (curX + 62) + 'px';
-      if (lbl)  lbl.style.opacity = Math.max(0, 1 - pct * 1.5);
+      if (lbl)  lbl.style.opacity = String(Math.max(0, 1 - pct * 1.5));
     }
 
     function onEnd() {
-      if (!dragging) return;
-      dragging = false;
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend',  onEnd);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onEnd);
+
       thumb.classList.add('snap');
       const mx = maxX();
-      if (curX / mx >= 0.82) {
-        curX = mx;
+      if (curX / mx >= 0.80) {
         thumb.style.transform = 'translateX(' + mx + 'px)';
         if (lbl) lbl.style.opacity = '0';
         setTimeout(function() {
@@ -23771,23 +23765,34 @@ init();
           thumb.style.transform = '';
           curX = 0;
           if (fill) fill.style.width = '0';
-          if (lbl)  { lbl.style.opacity = '1'; }
+          if (lbl)  lbl.style.opacity = '1';
           if (typeof calculateRoute === 'function') calculateRoute();
-        }, 320);
+        }, 300);
       } else {
         thumb.style.transform = '';
         curX = 0;
         if (fill) fill.style.width = '0';
         if (lbl)  lbl.style.opacity = '1';
+        setTimeout(function() { thumb.classList.remove('snap'); }, 300);
       }
+    }
+
+    function onStart(e) {
+      if (wrap.classList.contains('calc-disabled')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      startX = cx - curX;
+      thumb.classList.remove('snap');
+      // Attach move+end only for the duration of this drag
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend',  onEnd,  { passive: false });
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onEnd);
     }
 
     thumb.addEventListener('touchstart', onStart, { passive: false });
     thumb.addEventListener('mousedown',  onStart);
-    window.addEventListener('touchmove', onMove,  { passive: true });
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('touchend',  onEnd);
-    window.addEventListener('mouseup',   onEnd);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initCalcSlider);
