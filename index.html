@@ -23705,9 +23705,10 @@ init();
   if (!('serviceWorker' in navigator)) return;
 
   // Registrar Service Worker
-  navigator.serviceWorker.register('./sw.js', { scope: './' })
+  navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' })
     .then(reg => {
       window._swReg = reg;
+      reg.update(); // force SW update check on every app open (bypasses iOS HTTP cache)
       console.log('[HOS] SW registrado:', reg.scope);
 
       // Solicitar permiso de notificaciones
