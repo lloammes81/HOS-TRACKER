@@ -509,6 +509,7 @@
     box-shadow: 0 4px 22px rgba(21,128,61,.3);
     user-select: none; -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+    touch-action: pan-y;
     cursor: grab;
   }
   .calc-slider-fill {
@@ -23727,7 +23728,7 @@ function toggleInterstateShields(on) {
 init();
 
 /* ── CALC SLIDER global handlers (called from inline ontouchstart/ontouchmove etc.) ── */
-var _cs = { sx:0, curX:0, on:false, busy:false };
+var _cs = { sx:0, sy:0, curX:0, on:false, busy:false, decided:false };
 function csMx() { var w=document.getElementById('calcSlider'); return w ? Math.max(50,w.offsetWidth-68) : 250; }
 function csSetX(raw) {
   var m=csMx(), x=raw<0?0:raw>m?m:raw;
@@ -23749,16 +23750,28 @@ function csReset() {
 function csStart(e) {
   var w=document.getElementById('calcSlider');
   if(!w||_cs.busy||w.classList.contains('calc-disabled')) return;
-  e.preventDefault();
+  if(!e.touches) e.preventDefault(); // mouse only — touch lets browser detect direction first
   _cs.on=true;
-  _cs.sx=(e.touches?e.touches[0].clientX:e.clientX)-_cs.curX;
+  _cs.decided=!e.touches; // mouse is always decided immediately
+  var cx=e.touches?e.touches[0].clientX:e.clientX;
+  var cy=e.touches?e.touches[0].clientY:e.clientY;
+  _cs.sx=cx-_cs.curX;
+  _cs.sy=cy;
   var t=document.getElementById('calcSliderThumb');
   if(t) t.style.transition='';
 }
 function csMove(e) {
   if(!_cs.on) return;
+  var cx=e.touches?e.touches[0].clientX:e.clientX;
+  var cy=e.touches?e.touches[0].clientY:e.clientY;
+  if(!_cs.decided) {
+    var dx=Math.abs(cx-(_cs.sx+_cs.curX)), dy=Math.abs(cy-_cs.sy);
+    if(dy>dx){ _cs.on=false; return; } // vertical scroll — cancel drag
+    if(dx<6) return; // not enough movement yet to decide
+    _cs.decided=true;
+  }
   e.preventDefault();
-  csSetX((e.touches?e.touches[0].clientX:e.clientX)-_cs.sx);
+  csSetX(cx-_cs.sx);
 }
 function csEnd(e) {
   if(!_cs.on||_cs.busy) return;
