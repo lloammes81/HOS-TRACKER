@@ -494,20 +494,41 @@
     padding-top: 3px !important;
     padding-bottom: 3px !important;
   }
-  .btn-calc-mobile {
-    width: 100%; padding: 18px;
-    background: linear-gradient(135deg, #166534, #15803d);
-    border: none; border-radius: 16px;
-    font-family: "DM Sans", sans-serif;
-    font-size: 20px; font-weight: 800; color: #fff;
-    letter-spacing: .3px; cursor: pointer;
-    touch-action: manipulation;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    box-shadow: 0 4px 20px rgba(21,128,61,.35);
-    transition: transform .12s, opacity .12s;
-    margin-top: 14px;
+  /* ── TRUCK DRAG SLIDER ── */
+  .calc-slider-wrap {
+    position: relative; width: 100%; height: 68px;
+    margin-top: 14px; border-radius: 34px; overflow: hidden;
+    background: linear-gradient(135deg, #0a1f0e, #0f2d14);
+    border: 1.5px solid rgba(21,128,61,.45);
+    box-shadow: 0 4px 22px rgba(21,128,61,.3);
+    touch-action: none; user-select: none; -webkit-user-select: none;
   }
-  .btn-calc-mobile:active { transform: scale(0.97); opacity: 0.9; }
+  .calc-slider-fill {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+    background: linear-gradient(90deg, rgba(21,128,61,.35), transparent);
+    pointer-events: none;
+  }
+  .calc-slider-label {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding-left: 72px; padding-right: 12px;
+    font-family: 'Bebas Neue', 'Share Tech Mono', monospace;
+    font-size: 18px; letter-spacing: 3px; color: rgba(255,255,255,.55);
+    pointer-events: none; white-space: nowrap;
+  }
+  .calc-slider-thumb {
+    position: absolute; left: 6px; top: 6px;
+    width: 56px; height: 56px; border-radius: 28px;
+    background: linear-gradient(135deg, #15803d, #16a34a);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; box-shadow: 0 2px 14px rgba(21,128,61,.6);
+    cursor: grab; will-change: transform;
+    transition: box-shadow .15s;
+    z-index: 2;
+  }
+  .calc-slider-thumb.snap { transition: transform .28s cubic-bezier(.25,.8,.25,1); }
+  .calc-slider-thumb:active { cursor: grabbing; box-shadow: 0 4px 20px rgba(21,128,61,.8); }
+  .calc-slider-wrap.calc-disabled { opacity: .45; pointer-events: none; }
   .results-card-mobile {
     background: var(--surface);
     border-radius: 20px; padding: 20px;
@@ -582,8 +603,8 @@
     display: flex; align-items: center; justify-content: center; gap: 6px;
     width: 100%; padding: 15px 16px;
     border-radius: var(--radius-sm); border: none;
-    font-family: "DM Sans", sans-serif; font-size: 15px; font-weight: 800;
-    cursor: pointer; letter-spacing: .3px;
+    font-family: 'Bebas Neue', 'Share Tech Mono', monospace; font-size: 17px; font-weight: 400;
+    cursor: pointer; letter-spacing: 2px; text-transform: uppercase;
     transition: transform .12s, opacity .12s;
     min-height: 50px;
     -webkit-user-select: none; user-select: none;
@@ -6101,9 +6122,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <div class="error" id="errorBox" style="display:none;margin-top:10px"></div>
 
-        <button class="btn-calc-mobile" id="calcBtn" onclick="calculateRoute()">
-          <span style="font-size:22px">🚛</span> Calcular Ruta
-        </button>
+        <div class="calc-slider-wrap" id="calcSlider">
+          <div class="calc-slider-fill" id="calcSliderFill"></div>
+          <div class="calc-slider-label" id="calcSliderLabel">DESLIZA PARA CALCULAR RUTA</div>
+          <div class="calc-slider-thumb" id="calcSliderThumb">🚛</div>
+        </div>
 
         <div class="grid2" id="shareTrackBtns" style="display:none;margin-top:10px">
           <button class="btn btn-blue" id="shareBtn" onclick="shareRoute()">📤 Compartir</button>
@@ -14445,8 +14468,10 @@ async function calculateRoute() {
     return;
   }
 
-  const calcBtn = document.getElementById('calcBtn');
-  calcBtn.disabled = true;
+  const _calcSl = document.getElementById('calcSlider');
+  const _calcLbl = document.getElementById('calcSliderLabel');
+  if (_calcSl) _calcSl.classList.add('calc-disabled');
+  if (_calcLbl) _calcLbl.textContent = lang === 'es' ? '🔄 CALCULANDO RUTA…' : '🔄 FETCHING ROUTE…';
 
   const depart = new Date(document.getElementById('departureInput').value || new Date());
 
@@ -14461,7 +14486,6 @@ async function calculateRoute() {
     fallbackReason: lang === 'es' ? 'buscando ruta por carretera…' : 'fetching road route…'
   };
   _applyRouteResult(aerialRoute, depart, hours, speed, true);
-  calcBtn.textContent = lang === 'es' ? '🔄 Calculando ruta…' : '🔄 Fetching route…';
   setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 150);
 
   // ── Paso 2: buscar ruta por carretera en segundo plano; actualizar cuando llegue ──
@@ -14480,24 +14504,22 @@ async function calculateRoute() {
         'Verifica tu conexión a internet y toca Reintentar.', 10000);
     }
   } finally {
-    calcBtn.textContent = t('btnCalc');
-    calcBtn.disabled = false;
+    if (_calcSl) _calcSl.classList.remove('calc-disabled');
+    if (_calcLbl) _calcLbl.textContent = lang === 'es' ? 'DESLIZA PARA CALCULAR RUTA' : 'SLIDE TO CALCULATE ROUTE';
   }
 }
 
 async function retryRoute() {
   if (!origin || !destination) return;
-  // Clear cached bad fallback route
   try { sessionStorage.removeItem(_routeCacheKey(origin, destination)); } catch {}
-  const calcBtn = document.getElementById('calcBtn');
-  if (calcBtn) calcBtn.click();
+  if (typeof calculateRoute === 'function') calculateRoute();
 }
 
 function renderResults(hours, speed, depart) {
   document.getElementById('resultsCard').style.display = 'block';
   document.getElementById('shareTrackBtns').style.display = 'grid';
-  // Hide "Calcular Ruta" button while results are visible
-  const _cb = document.getElementById('calcBtn');
+  // Hide slider while results are visible
+  const _cb = document.getElementById('calcSlider');
   if (_cb) _cb.style.display = 'none';
 
   const driveHours = routeDistance / speed;
@@ -20550,10 +20572,11 @@ function resetForm() {
   routeDistance = 0; schedule = []; arrivalTime = null; totalTime = 0;
   roadGeometry = null; routeSource = null;
   _fmClearActiveRoute();
-  // Restore "Calcular Ruta" button
-  const _cb = document.getElementById('calcBtn');
-  if (_cb) { _cb.style.display = ''; _cb.disabled = false; _cb.textContent = ''; }
-  if (_cb) { _cb.innerHTML = '<span style="font-size:22px">🚛</span> Calcular Ruta'; }
+  // Restore calc slider
+  const _cb = document.getElementById('calcSlider');
+  const _cbl = document.getElementById('calcSliderLabel');
+  if (_cb) { _cb.style.display = ''; _cb.classList.remove('calc-disabled'); }
+  if (_cbl) _cbl.textContent = lang === 'es' ? 'DESLIZA PARA CALCULAR RUTA' : 'SLIDE TO CALCULATE ROUTE';
   // Clear mini-map POI markers
   ['truck','rest','restrict','weigh','checkpoint'].forEach(type => {
     miniPoiMarkers[type]?.forEach(m => { try { if(miniMap) miniMap.removeLayer(m); } catch {} });
@@ -20583,7 +20606,7 @@ function syncPlanCardActiveRoute() {
   const tracking = !!fmIsTracking;
   const planFormInputs      = document.getElementById('planFormInputs');
   const planDepartureSection = document.getElementById('planDepartureSection');
-  const calcBtn             = document.getElementById('calcBtn');
+  const calcBtn             = document.getElementById('calcSlider');
   const cancelBtn           = document.getElementById('cancelActiveRouteBtn');
   const errorBox            = document.getElementById('errorBox');
 
@@ -21924,9 +21947,10 @@ calculateRoute = async function() {
     return;
   }
 
-  const calcBtn2 = document.getElementById('calcBtn');
-  calcBtn2.textContent = '⏳ Calculating...';
-  calcBtn2.disabled = true;
+  const calcBtn2 = document.getElementById('calcSlider');
+  const calcLbl2 = document.getElementById('calcSliderLabel');
+  if (calcBtn2) calcBtn2.classList.add('calc-disabled');
+  if (calcLbl2) calcLbl2.textContent = lang === 'es' ? '⏳ CALCULANDO…' : '⏳ CALCULATING…';
 
   try {
     const depart = new Date(document.getElementById('departureInput').value || new Date());
@@ -22019,13 +22043,12 @@ calculateRoute = async function() {
     showError(msg);
   } finally {
     if (calcBtn2) {
-      calcBtn2.textContent = t('btnCalc');
-      calcBtn2.disabled = false;
-      // Mantener oculto si los resultados ya están visibles (ruta calculada)
+      calcBtn2.classList.remove('calc-disabled');
       if (document.getElementById('resultsCard')?.style.display === 'block') {
         calcBtn2.style.display = 'none';
       }
     }
+    if (calcLbl2) calcLbl2.textContent = lang === 'es' ? 'DESLIZA PARA CALCULAR RUTA' : 'SLIDE TO CALCULATE ROUTE';
   }
 };
 
@@ -23695,6 +23718,75 @@ function toggleInterstateShields(on) {
 }
 
 init();
+
+/* ── CALC SLIDER DRAG ── */
+(function() {
+  function initCalcSlider() {
+    const wrap  = document.getElementById('calcSlider');
+    const thumb = document.getElementById('calcSliderThumb');
+    const fill  = document.getElementById('calcSliderFill');
+    const lbl   = document.getElementById('calcSliderLabel');
+    if (!wrap || !thumb) return;
+
+    let startX = 0, curX = 0, dragging = false;
+
+    function maxX() { return wrap.offsetWidth - thumb.offsetWidth - 12; }
+
+    function onStart(e) {
+      if (wrap.classList.contains('calc-disabled')) return;
+      dragging = true;
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      startX = cx - curX;
+      thumb.classList.remove('snap');
+      e.preventDefault();
+    }
+
+    function onMove(e) {
+      if (!dragging) return;
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      curX = Math.max(0, Math.min(cx - startX, maxX()));
+      thumb.style.transform = 'translateX(' + curX + 'px)';
+      const pct = curX / maxX();
+      if (fill) fill.style.width = (curX + 62) + 'px';
+      if (lbl)  lbl.style.opacity = Math.max(0, 1 - pct * 1.5);
+    }
+
+    function onEnd() {
+      if (!dragging) return;
+      dragging = false;
+      thumb.classList.add('snap');
+      const mx = maxX();
+      if (curX / mx >= 0.82) {
+        curX = mx;
+        thumb.style.transform = 'translateX(' + mx + 'px)';
+        if (lbl) lbl.style.opacity = '0';
+        setTimeout(function() {
+          thumb.classList.remove('snap');
+          thumb.style.transform = '';
+          curX = 0;
+          if (fill) fill.style.width = '0';
+          if (lbl)  { lbl.style.opacity = '1'; }
+          if (typeof calculateRoute === 'function') calculateRoute();
+        }, 320);
+      } else {
+        thumb.style.transform = '';
+        curX = 0;
+        if (fill) fill.style.width = '0';
+        if (lbl)  lbl.style.opacity = '1';
+      }
+    }
+
+    thumb.addEventListener('touchstart', onStart, { passive: false });
+    thumb.addEventListener('mousedown',  onStart);
+    window.addEventListener('touchmove', onMove,  { passive: true });
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchend',  onEnd);
+    window.addEventListener('mouseup',   onEnd);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initCalcSlider);
+  else initCalcSlider();
+})();
 
 /* ═══════════════════════════════════════════════════════════
    SERVICE WORKER + PUSH NOTIFICATIONS (background)
