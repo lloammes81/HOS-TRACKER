@@ -23810,6 +23810,13 @@ init();
     window.location.reload();
   });
 
+  // Reload when SW broadcasts SW_UPDATED (covers iOS where controllerchange may not fire)
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SW_UPDATED') {
+      window.location.reload();
+    }
+  });
+
   // Función global para programar notificación local
   window.scheduleNotification = function(delayMs, title, body, tag) {
     if (!window._swReg) return;

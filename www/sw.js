@@ -1,4 +1,5 @@
-const CACHE_NAME = 'truck-precision-v203';
+const CACHE_NAME = 'truck-precision-v204';
+const APP_VERSION = 'v204';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
@@ -11,7 +12,10 @@ self.addEventListener('activate', event => {
     ).then(() => {
       self.clients.claim();
       return self.clients.matchAll({ type: 'window' }).then(clients => {
-        clients.forEach(client => client.navigate(client.url));
+        clients.forEach(client => {
+          client.postMessage({ type: 'SW_UPDATED', version: APP_VERSION });
+          client.navigate(client.url);
+        });
       });
     })
   );
@@ -32,6 +36,9 @@ const _notifTimers = {};
 self.addEventListener('message', event => {
   const d = event.data;
   if (!d || !d.type) return;
+  if (d.type === 'GET_VERSION') {
+    event.source && event.source.postMessage({ type: 'VERSION', version: APP_VERSION });
+  }
   if (d.type === 'SCHEDULE_NOTIFICATION') {
     const delay = Math.max(0, d.delay || 0);
     const tag = d.tag || 'hos-alert';
