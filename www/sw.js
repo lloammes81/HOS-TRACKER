@@ -1,4 +1,4 @@
-const CACHE_NAME = 'truck-precision-v201';
+const CACHE_NAME = 'truck-precision-v202';
 
 self.addEventListener('install', event => {
   self.skipWaiting();

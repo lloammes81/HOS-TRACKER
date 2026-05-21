@@ -11342,27 +11342,45 @@ function _syncHeroArcStatus() {
   const isEld = window._hosTracker?.eldConnected?.() === true;
   const isOff = (typeof _dashCurrentStatus !== 'undefined' && (_dashCurrentStatus === 'off' || _dashCurrentStatus === 'rest'));
   const arcColor = isOff ? '#ef4444' : isEld ? '#10b981' : '#f59e0b';
-  const C = 251.3;
-  ['heroArcDrive','heroArcTurno','heroArcCycle'].forEach(id => {
-    const arc = document.getElementById(id);
-    if (arc) { arc.style.stroke = arcColor; arc.style.strokeDashoffset = '0'; }
-  });
+  const arc = document.getElementById('heroArcTurno');
+  if (arc) { arc.style.stroke = arcColor; arc.style.strokeDashoffset = '0'; }
 }
 
 function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
   const C = 251.3; // 2π × 40
   // Skip MANEJO circle when rest mode is active (handled by _updateRestMode)
   if (!(typeof _restModeActive !== 'undefined' && _restModeActive)) {
+    const arcD = document.getElementById('heroArcDrive');
     const valD = document.getElementById('heroValDrive');
-    if (valD) {
+    if (arcD && valD) {
+      const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
       const h = Math.floor(driveLeft), m = Math.round((driveLeft - h) * 60);
       valD.textContent = h > 0 ? `${h}H` : `${m}M`;
-      valD.style.color = '';
+      const arcCol = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+      arcD.style.stroke = arcCol; arcD.style.strokeDashoffset = C * (1 - pct);
+      valD.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#0a0a0a';
     }
   }
+  const arcC = document.getElementById('heroArcCycle');
   const valC = document.getElementById('heroValCycle');
-  if (valC) { valC.textContent = `${Math.floor(cycleLeft)}H`; valC.style.color = ''; }
-  // Arc colors and fill driven by connection status, not time remaining
+  if (arcC && valC) {
+    const pct = Math.max(0, Math.min(1, cycleLeft / Math.max(1, cycleMax)));
+    const h = Math.floor(cycleLeft);
+    valC.textContent = `${h}H`;
+    const arcCol = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#10b981';
+    arcC.style.stroke = arcCol; arcC.style.strokeDashoffset = C * (1 - pct);
+    valC.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#0a0a0a';
+  }
+  const arcDot = document.getElementById('heroArcDot');
+  const valDot = document.getElementById('heroValDot');
+  const lblDot = document.getElementById('heroLblDot');
+  if (arcDot) {
+    const ok = driveLeft > 0 && cycleLeft > 0;
+    arcDot.style.stroke = ok ? '#10b981' : '#ef4444';
+    arcDot.style.strokeDashoffset = ok ? 0 : C * 0.25;
+    if (valDot) valDot.style.color = ok ? '#10b981' : '#ef4444';
+    if (lblDot) lblDot.textContent = ok ? 'Compliant' : 'At Limit';
+  }
   _syncHeroArcStatus();
 }
 
@@ -16414,7 +16432,7 @@ function _showRestInManejoCircle(restRemaining, restPct) {
   const arcD = document.getElementById('heroArcDrive');
   const valD = document.getElementById('heroValDrive');
   const lblD = document.getElementById('heroLblDrive');
-  if (arcD) { arcD.style.strokeDashoffset = '0'; if (typeof _syncHeroArcStatus === 'function') _syncHeroArcStatus(); }
+  if (arcD) { arcD.style.stroke = arcCol; arcD.style.strokeDashoffset = C * (1 - restPct); }
   if (valD) {
     const h = Math.floor(restRemaining), m = Math.round((restRemaining - h) * 60);
     valD.textContent  = done ? '11H' : (h > 0 ? `${h}h${m > 0 ? ' ' + m + 'm' : ''}` : `${m}m`);
@@ -28763,25 +28781,31 @@ window._hosAutoRecalc = false;
     const valT2 = document.getElementById('heroValTurno2');
     if (valT2) valT2.textContent = _shiftStart ? _fmtElapsed(_shiftStart) : '--:--';
 
-    // Anillo 2: Manejo disponible — full circle, color by status
+    // Anillo 2: Manejo disponible
     if (!(typeof _restModeActive !== 'undefined' && _restModeActive)) {
+      const dPct = dl / DRIVE_MAX;
+      const dArcCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#10b981';
+      const dTxtCol = dl < 2 ? '#ef4444' : dl < 4 ? '#f59e0b' : '#0a0a0a';
       const arcD = document.getElementById('heroArcDrive');
-      if (arcD) arcD.style.strokeDashoffset = '0';
+      if (arcD){ arcD.style.strokeDashoffset = C * (1 - dPct); arcD.style.stroke = dArcCol; }
       const valD = document.getElementById('heroValDrive');
       if (valD){
         const h = Math.floor(dl), m = Math.round((dl - h) * 60);
         valD.textContent = h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`;
-        valD.style.color = '';
+        valD.style.color = dTxtCol;
       }
     }
 
-    // Anillo 3: Ciclo 70H disponible — full circle, color by status
+    // Anillo 3: Ciclo 70H disponible
+    const cPct = cl / CYCLE_MAX;
+    const cArcCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#10b981';
+    const cTxtCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#0a0a0a';
     const arcC = document.getElementById('heroArcCycle');
-    if (arcC) arcC.style.strokeDashoffset = '0';
+    if (arcC){ arcC.style.strokeDashoffset = C * (1 - cPct); arcC.style.stroke = cArcCol; }
     const valC = document.getElementById('heroValCycle');
-    if (valC){ valC.textContent = `${Math.round(cl)}H`; valC.style.color = ''; }
+    if (valC){ valC.textContent = `${Math.round(cl)}H`; valC.style.color = cTxtCol; }
 
-    // Sync all arc colors by connection status
+    // Solo el anillo izquierdo (TURNO) usa color por estado de conexión
     if (typeof _syncHeroArcStatus === 'function') _syncHeroArcStatus();
 
     // DOT violation badge
