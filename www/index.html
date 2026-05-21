@@ -23766,8 +23766,8 @@ function csMove(e) {
   var cy=e.touches?e.touches[0].clientY:e.clientY;
   if(!_cs.decided) {
     var dx=Math.abs(cx-(_cs.sx+_cs.curX)), dy=Math.abs(cy-_cs.sy);
-    if(dy>dx){ _cs.on=false; return; } // vertical scroll — cancel drag
-    if(dx<6) return; // not enough movement yet to decide
+    if(dy>dx*2 && dy>5){ _cs.on=false; return; } // clearly vertical — cancel drag
+    if(dx<2 && dy<2) return; // haven't moved enough to decide yet
     _cs.decided=true;
   }
   e.preventDefault();
