@@ -857,6 +857,7 @@
     margin-bottom: 10px; box-shadow: var(--shadow);
     border: 1px solid var(--border);
     transition: transform .12s;
+    cursor: pointer;
   }
   .drive-item:active { transform: scale(0.99); }
   .drive-thumb { font-size: 30px; display: flex; align-items: center; }
@@ -6189,6 +6190,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
       <div id="drivesList"></div>
     </div>
+  </div>
+
+  <!-- Route detail modal -->
+  <div id="routeDetailOverlay" onclick="closeRouteDetail()" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)"></div>
+  <div id="routeDetailPanel" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:8001;background:var(--surface,#1a2035);border-radius:24px 24px 0 0;border-top:1px solid rgba(255,255,255,0.1);padding:24px 20px calc(32px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 40px rgba(0,0,0,0.6)">
+    <div style="width:40px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin:0 auto 20px"></div>
+    <div id="routeDetailContent"></div>
+    <button onclick="closeRouteDetail()" style="width:100%;margin-top:20px;padding:14px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:14px;color:var(--text,#f1f5f9);font-size:15px;font-weight:700;cursor:pointer">Cerrar</button>
   </div>
 
   <!-- FUEL PAGE -->
@@ -14650,13 +14659,15 @@ function renderDrives() {
   }
   const total = savedDrives.reduce((a,d) => a + parseFloat(d.value||0), 0);
   let html = `<div class="drives-header"><div style="font-size:13px;color:var(--muted)">${lang==='es'?'Valor total':'Classified value'}: $${total.toFixed(2)}</div></div>`;
-  [...savedDrives].reverse().forEach(d => {
+  const reversed = [...savedDrives].reverse();
+  reversed.forEach((d, i) => {
+    const realIdx = savedDrives.length - 1 - i;
     const startDt = new Date(d.date);
     const fmtDate = (dt) => dt.toLocaleDateString(lang==='es'?'es-ES':'en-US',{month:'short',day:'numeric',year:'numeric'});
     const fmtTime2 = (dt) => dt.toLocaleTimeString(lang==='es'?'es-ES':'en-US',{hour:'2-digit',minute:'2-digit'});
     const startStr = `${fmtDate(startDt)} ${fmtTime2(startDt)}`;
     const endStr = d.endDate ? `${fmtDate(new Date(d.endDate))} ${fmtTime2(new Date(d.endDate))}` : '—';
-    html += `<div class="drive-item">
+    html += `<div class="drive-item" onclick="openRouteDetail(${realIdx})">
       <div class="drive-thumb">🗺️</div>
       <div class="drive-info">
         <div class="drive-route">${d.origin.split(',')[0]} → ${d.destination.split(',')[0]}</div>
@@ -14666,9 +14677,59 @@ function renderDrives() {
           <span>📍 <b>${lang==='es'?'Distancia':'Distance'}:</b> ${d.distance.toLocaleString()} mi</span>
         </div>
       </div>
+      <div style="display:flex;align-items:center;color:rgba(255,255,255,0.3);font-size:18px">›</div>
     </div>`;
   });
   el.innerHTML = html;
+}
+
+function markLastRouteCompleted() {
+  if (!savedDrives.length) return;
+  const last = savedDrives[savedDrives.length - 1];
+  if (last && !last.completed) {
+    last.completed = true;
+    last.endDate = last.endDate || new Date().toISOString();
+    localStorage.setItem('hos_drives', JSON.stringify(savedDrives));
+    renderDrives();
+  }
+}
+
+function openRouteDetail(idx) {
+  const d = savedDrives[idx];
+  if (!d) return;
+  const isEs = lang === 'es';
+  const fmtFull = (iso) => {
+    if (!iso) return '—';
+    const dt = new Date(iso);
+    return dt.toLocaleDateString(isEs?'es-ES':'en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
+      + ' ' + dt.toLocaleTimeString(isEs?'es-ES':'en-US',{hour:'2-digit',minute:'2-digit'});
+  };
+  const statusBadge = d.completed
+    ? '<span style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800">✅ ' + (isEs?'Completada':'Completed') + '</span>'
+    : '<span style="background:rgba(251,191,36,0.15);color:#f59e0b;border:1px solid rgba(251,191,36,0.3);padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800">🔄 ' + (isEs?'En progreso':'In progress') + '</span>';
+  const row = (icon, label, val) =>
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06)">'
+    + '<span style="font-size:13px;color:rgba(255,255,255,0.45);display:flex;gap:8px;align-items:center">' + icon + ' ' + label + '</span>'
+    + '<span style="font-size:13px;font-weight:700;color:#f1f5f9;text-align:right;max-width:65%">' + val + '</span>'
+    + '</div>';
+  document.getElementById('routeDetailContent').innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
+    + '<div style="font-size:18px;font-weight:900;color:#f1f5f9;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + d.origin.split(',')[0] + ' → ' + d.destination.split(',')[0] + '</div>'
+    + '<div style="margin-left:10px">' + statusBadge + '</div>'
+    + '</div>'
+    + row('📍', isEs?'Origen':'Origin', d.origin)
+    + row('🏁', isEs?'Destino':'Destination', d.destination)
+    + row('📅', isEs?'Fecha inicio':'Start date', fmtFull(d.date))
+    + row('🕐', isEs?'Fecha fin':'End date', fmtFull(d.endDate))
+    + row('📏', isEs?'Distancia':'Distance', d.distance.toLocaleString() + ' mi')
+    + row('💰', isEs?'Valor estimado':'Est. value', '$' + d.value);
+  document.getElementById('routeDetailOverlay').style.display = 'block';
+  document.getElementById('routeDetailPanel').style.display   = 'block';
+}
+
+function closeRouteDetail() {
+  document.getElementById('routeDetailOverlay').style.display = 'none';
+  document.getElementById('routeDetailPanel').style.display   = 'none';
 }
 
 function renderSummary() {
@@ -17173,7 +17234,7 @@ function fmStartTracking() {
     fetchCheapFuel(lat, lon);
 
     // ── Arrival ─────────────────────────────────────────────
-    if (remaining <= 3) { alert(t('arrived')); fmStopTracking(); }
+    if (remaining <= 3) { markLastRouteCompleted(); alert(t('arrived')); fmStopTracking(); }
 
   }, () => {
     document.getElementById('fmLocVal').textContent = '⚠️ Weak GPS signal';
