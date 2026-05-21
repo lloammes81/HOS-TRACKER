@@ -528,6 +528,7 @@
     background: linear-gradient(135deg, #15803d, #16a34a);
     display: flex; align-items: center; justify-content: center;
     font-size: 28px; box-shadow: 0 2px 14px rgba(21,128,61,.6);
+    touch-action: none; user-select: none; -webkit-user-select: none;
     cursor: grab; will-change: transform;
     transition: box-shadow .15s;
     z-index: 2;
@@ -23737,62 +23738,67 @@ init();
 
     let startX = 0, curX = 0;
 
-    function maxX() { return Math.max(1, wrap.offsetWidth - thumb.offsetWidth - 12); }
+    function maxX() { return Math.max(10, wrap.getBoundingClientRect().width - thumb.getBoundingClientRect().width - 12); }
 
-    function onMove(e) {
-      e.preventDefault();
-      const cx = e.touches ? e.touches[0].clientX : e.clientX;
-      curX = Math.max(0, Math.min(cx - startX, maxX()));
+    function updatePos(x) {
+      const mx = maxX();
+      curX = Math.max(0, Math.min(x - startX, mx));
       thumb.style.transform = 'translateX(' + curX + 'px)';
-      const pct = curX / maxX();
+      const pct = curX / mx;
       if (fill) fill.style.width = (curX + 62) + 'px';
       if (lbl)  lbl.style.opacity = String(Math.max(0, 1 - pct * 1.5));
     }
 
-    function onEnd() {
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend',  onEnd);
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup',   onEnd);
+    function snapBack() {
+      thumb.classList.add('snap');
+      thumb.style.transform = '';
+      curX = 0;
+      if (fill) fill.style.width = '0';
+      if (lbl)  lbl.style.opacity = '1';
+      setTimeout(function() { thumb.classList.remove('snap'); }, 300);
+    }
 
+    function trigger() {
       thumb.classList.add('snap');
       const mx = maxX();
-      if (curX / mx >= 0.80) {
-        thumb.style.transform = 'translateX(' + mx + 'px)';
-        if (lbl) lbl.style.opacity = '0';
-        setTimeout(function() {
-          thumb.classList.remove('snap');
-          thumb.style.transform = '';
-          curX = 0;
-          if (fill) fill.style.width = '0';
-          if (lbl)  lbl.style.opacity = '1';
-          if (typeof calculateRoute === 'function') calculateRoute();
-        }, 300);
-      } else {
+      thumb.style.transform = 'translateX(' + mx + 'px)';
+      if (lbl) lbl.style.opacity = '0';
+      setTimeout(function() {
+        thumb.classList.remove('snap');
         thumb.style.transform = '';
         curX = 0;
         if (fill) fill.style.width = '0';
         if (lbl)  lbl.style.opacity = '1';
-        setTimeout(function() { thumb.classList.remove('snap'); }, 300);
-      }
+        if (typeof calculateRoute === 'function') calculateRoute();
+      }, 300);
     }
 
-    function onStart(e) {
+    // ── Pointer Events (works on iOS Safari 13+ and all modern browsers) ──
+    thumb.addEventListener('pointerdown', function(e) {
       if (wrap.classList.contains('calc-disabled')) return;
       e.preventDefault();
-      e.stopPropagation();
-      const cx = e.touches ? e.touches[0].clientX : e.clientX;
-      startX = cx - curX;
+      thumb.setPointerCapture(e.pointerId);
+      startX = e.clientX - curX;
       thumb.classList.remove('snap');
-      // Attach move+end only for the duration of this drag
-      document.addEventListener('touchmove', onMove, { passive: false });
-      document.addEventListener('touchend',  onEnd,  { passive: false });
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup',   onEnd);
-    }
+    }, { passive: false });
 
-    thumb.addEventListener('touchstart', onStart, { passive: false });
-    thumb.addEventListener('mousedown',  onStart);
+    thumb.addEventListener('pointermove', function(e) {
+      if (!thumb.hasPointerCapture(e.pointerId)) return;
+      e.preventDefault();
+      updatePos(e.clientX);
+    }, { passive: false });
+
+    thumb.addEventListener('pointerup', function(e) {
+      if (!thumb.hasPointerCapture(e.pointerId)) return;
+      thumb.releasePointerCapture(e.pointerId);
+      if (curX / maxX() >= 0.80) { trigger(); } else { snapBack(); }
+    });
+
+    thumb.addEventListener('pointercancel', function(e) {
+      if (!thumb.hasPointerCapture(e.pointerId)) return;
+      thumb.releasePointerCapture(e.pointerId);
+      snapBack();
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initCalcSlider);
