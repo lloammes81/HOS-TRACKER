@@ -6101,7 +6101,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         </div>
 
         <!-- Add stop button -->
-        <button class="add-stop-btn" id="addStopBtn" onclick="addWaypoint()">
+        <button class="add-stop-btn" id="addStopBtn" onclick="addWaypoint()" style="display:none">
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Agregar Parada
         </button>
@@ -6128,9 +6128,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <div class="error" id="errorBox" style="display:none;margin-top:10px"></div>
 
-        <div class="calc-slider-wrap" id="calcSlider"
-          ontouchstart="csStart(event)" ontouchmove="csMove(event)" ontouchend="csEnd(event)" ontouchcancel="csEnd(event)"
-          onmousedown="csStart(event)">
+        <div class="calc-slider-wrap" id="calcSlider">
           <div class="calc-slider-fill" id="calcSliderFill"></div>
           <div class="calc-slider-label" id="calcSliderLabel">DESLIZA PARA CALCULAR RUTA</div>
           <div class="calc-slider-thumb" id="calcSliderThumb">🚛</div>
@@ -20580,6 +20578,7 @@ function resetForm() {
   routeDistance = 0; schedule = []; arrivalTime = null; totalTime = 0;
   roadGeometry = null; routeSource = null;
   _fmClearActiveRoute();
+  document.getElementById('addStopBtn').style.display = 'none';
   // Restore calc slider
   const _cb = document.getElementById('calcSlider');
   const _cbl = document.getElementById('calcSliderLabel');
@@ -23358,6 +23357,7 @@ function setDestinationWithLocalCheck(it) {
   destination = it;
   document.getElementById('destInput').value = it.name;
   document.getElementById('destSugg').style.display = 'none';
+  document.getElementById('addStopBtn').style.display = '';
 }
 
 function extractStateFromName(name) {
@@ -23416,6 +23416,7 @@ function forceSetDest() {
   destination = it;
   document.getElementById('destInput').value = it.name;
   document.getElementById('destSugg').style.display = 'none';
+  document.getElementById('addStopBtn').style.display = '';
   dismissLocalWarning();
 }
 
@@ -23436,6 +23437,7 @@ function changeJobTypeFromWarning() {
     destination = it;
     document.getElementById('destInput').value = it.name;
     document.getElementById('destSugg').style.display = 'none';
+    document.getElementById('addStopBtn').style.display = '';
   }
   showToast('info', '🛣️', 'Switched to Interstate', 'You can now route to any state', 3000);
 }
@@ -23794,6 +23796,16 @@ function csEnd(e) {
 }
 document.addEventListener('mousemove',function(e){csMove(e);});
 document.addEventListener('mouseup',function(){csEnd();});
+(function(){
+  var sl=document.getElementById('calcSlider');
+  if(sl){
+    sl.addEventListener('touchstart',csStart,{passive:false});
+    sl.addEventListener('touchmove',csMove,{passive:false});
+    sl.addEventListener('touchend',csEnd);
+    sl.addEventListener('touchcancel',csEnd);
+    sl.addEventListener('mousedown',csStart);
+  }
+})();
 
 /* ═══════════════════════════════════════════════════════════
    SERVICE WORKER + PUSH NOTIFICATIONS (background)
