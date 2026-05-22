@@ -510,7 +510,7 @@
     user-select: none; -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
     touch-action: none;
-    cursor: grab;
+    cursor: pointer;
   }
   .calc-slider-fill {
     position: absolute; left: 0; top: 0; bottom: 0; width: 0;
@@ -23786,6 +23786,15 @@ init();
 
   sl.addEventListener('pointercancel', function(e) {
     csReset();
+  });
+
+  // Fallback: tap/click triggers calculation directly (covers iOS quirks)
+  sl.addEventListener('click', function() {
+    if(_cs.busy || sl.classList.contains('calc-disabled')) return;
+    if(_cs.curX > 20) return; // drag already handled it
+    _cs.busy = true;
+    csSetX(csMx());
+    setTimeout(function(){ csReset(); _cs.busy=false; if(typeof calculateRoute==='function') calculateRoute(); }, 300);
   });
 })();
 
