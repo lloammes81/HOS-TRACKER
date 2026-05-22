@@ -1827,9 +1827,11 @@
             <div><div class="set-name">Estilo del mapa</div></div>
           </div>
           <div class="set-map-styles">
-            <button class="set-map-btn active" data-mstyle="streets"  onclick="setMapStyle('streets',this)">Calles</button>
-            <button class="set-map-btn"        data-mstyle="dark"     onclick="setMapStyle('dark',this)">Oscuro</button>
-            <button class="set-map-btn"        data-mstyle="satellite" onclick="setMapStyle('satellite',this)">Satélite</button>
+            <button class="set-map-btn active" data-mstyle="streets"   onclick="setMapStyle('streets',this)">🗺️ Calles</button>
+            <button class="set-map-btn"        data-mstyle="dark"      onclick="setMapStyle('dark',this)">🌙 Oscuro</button>
+            <button class="set-map-btn"        data-mstyle="light"     onclick="setMapStyle('light',this)">☀️ Claro</button>
+            <button class="set-map-btn"        data-mstyle="satellite" onclick="setMapStyle('satellite',this)">🛰️ Satélite</button>
+            <button class="set-map-btn"        data-mstyle="topo"      onclick="setMapStyle('topo',this)">⛰️ Terreno</button>
           </div>
         </div>
         <div class="set-row">
@@ -2092,7 +2094,9 @@
       <div class="map-style-switch" id="mapStyleSwitch">
         <button data-style="streets" class="active" title="Calles">🗺️ Calles</button>
         <button data-style="dark" title="Modo oscuro">🌙 Oscuro</button>
+        <button data-style="light" title="Claro">☀️ Claro</button>
         <button data-style="satellite" title="Satélite">🛰️ Satélite</button>
+        <button data-style="topo" title="Terreno">⛰️ Terreno</button>
       </div>
       <div class="legend">
         <div class="row"><span class="dot" style="background:#10b981"></span> En movimiento</div>
@@ -3468,8 +3472,9 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
 // MAPA Y ESTADO (MapLibre GL — vectorial, rápido)
 // ════════════════════════════════════════════════════
 const MAP_STYLES = {
-  streets: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
-  dark:    'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  streets:   'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+  dark:      'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  light:     'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
   satellite: {
     version: 8,
     sources: {
@@ -3491,14 +3496,30 @@ const MAP_STYLES = {
       { id: 'sat',    type:'raster', source:'sat-raster' },
       { id: 'labels', type:'raster', source:'labels-raster' }
     ]
+  },
+  topo: {
+    version: 8,
+    sources: {
+      'topo-raster': {
+        type: 'raster',
+        tiles: ['https://mt0.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'],
+        tileSize: 256,
+        maxzoom: 20,
+        attribution: '© Google Maps'
+      }
+    },
+    layers: [
+      { id: 'topo', type:'raster', source:'topo-raster' }
+    ]
   }
 };
 
-let currentMapStyle = 'streets';
+let currentMapStyle = localStorage.getItem('app_mapStyle') || 'streets';
+if (!MAP_STYLES[currentMapStyle]) { currentMapStyle = 'streets'; }
 
 const map = new maplibregl.Map({
   container: 'map',
-  style: MAP_STYLES.streets,
+  style: MAP_STYLES[currentMapStyle],
   center: [-98.5795, 39.8283],   // ⚠️ MapLibre usa [lon, lat]
   zoom: 3.6,
   attributionControl: false
@@ -8229,12 +8250,9 @@ window.openLoadSearch = function(){
 (function initAppSettings(){
   // Dark mode
   if(localStorage.getItem('app_darkMode') === 'true') applyDarkMode(true);
-  // Map style
-  const ms = localStorage.getItem('app_mapStyle');
-  if(ms && MAP_STYLES[ms] && ms !== 'streets'){
-    map.setStyle(MAP_STYLES[ms]);
-    currentMapStyle = ms;
-  }
+  // Map style — sync UI buttons (style already applied at map init)
+  document.querySelectorAll('.set-map-btn').forEach(b => b.classList.toggle('active', b.dataset.mstyle === currentMapStyle));
+  document.querySelectorAll('.map-style-switch button').forEach(b => b.classList.toggle('active', b.dataset.style === currentMapStyle));
   // Weather
   if(localStorage.getItem('app_weather') === 'true'){
     map.once('load', ()=> toggleWeatherWidget(true));

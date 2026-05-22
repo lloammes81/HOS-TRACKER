@@ -9839,13 +9839,13 @@ let currentTab = 'plan';
 // ── MAP STYLE ────────────────────────────────────────────────
 const MAP_STYLES = {
   dark:     { label:'Night',   emoji:'🌙',  url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',            options:{ maxZoom:19, attribution:'© CARTO' } },
-  nav:      { label:'Nav',     emoji:'🛣️',  url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', options:{ maxZoom:19, attribution:'© CARTO' } },
+  streets:  { label:'Nav',     emoji:'🛣️',  url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', options:{ maxZoom:19, attribution:'© CARTO' } },
   light:    { label:'Light',   emoji:'☀️',  url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',           options:{ maxZoom:19, attribution:'© CARTO' } },
   satellite:{ label:'Hybrid',  emoji:'🛰️',  url:'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',                   options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
   topo:     { label:'Terrain', emoji:'⛰️',  url:'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',                   options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
-  voyager:  { label:'Road',    emoji:'📍',  url:'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',                   options:{ subdomains:'0123', maxZoom:20, attribution:'© Google Maps' } },
 };
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
+if (!MAP_STYLES[currentMapStyle]) { currentMapStyle = 'dark'; localStorage.setItem('hos_map_style', 'dark'); }
 let fmTileLayer = null;
 let fmTrafficLayer = null;
 let fmTrafficEnabled = localStorage.getItem('hos_traffic') === 'true';
@@ -9890,11 +9890,10 @@ function _restoreTrafficState() {
 // Tono base del dashboard según estilo del mapa (sutil, el color real lo da el mapa de fondo)
 const DASH_BG_MAP = {
   dark:      'rgba(4,8,16,0.68)',
-  nav:       'rgba(4,9,14,0.68)',
+  streets:   'rgba(4,9,14,0.68)',
   light:     'rgba(5,9,18,0.68)',
   satellite: 'rgba(4,9,10,0.68)',
   topo:      'rgba(10,7,4,0.68)',
-  voyager:   'rgba(5,5,14,0.68)',
 };
 
 let origin = null, destination = null;
@@ -13437,7 +13436,7 @@ function refreshTruckMarkers() {
 
 function initMap(containerId) {
   const map = L.map(containerId, { zoomControl: true }).setView([39.5, -98.35], 4);
-  const styleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
+  const styleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.streets;
   L.tileLayer(styleConf.url, styleConf.options || { maxZoom: 19 }).addTo(map);
   return map;
 }
@@ -14950,7 +14949,7 @@ function openFullMapScreen() {
       }, () => {}, { timeout: 5000, enableHighAccuracy: true });
     }
 
-    const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
+    const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.streets;
     fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
 
     // Load US state boundary lines (always visible)
