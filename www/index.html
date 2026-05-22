@@ -23729,14 +23729,14 @@ function toggleInterstateShields(on) {
 
 init();
 
-/* ── CALC SLIDER — Pointer Events + setPointerCapture ── */
+/* ── CALC SLIDER — drag state flag + Pointer & Touch fallbacks ── */
 (function(){
-  var _cs = { sx:0, curX:0, busy:false };
+  var sl = document.getElementById('calcSlider');
+  if (!sl) return;
 
-  function csMx() {
-    var w=document.getElementById('calcSlider');
-    return w ? Math.max(50, w.offsetWidth-68) : 250;
-  }
+  var _cs = { sx:0, curX:0, busy:false, dragging:false, pid:null, moved:false };
+
+  function csMx() { return Math.max(50, sl.offsetWidth - 68); }
   function csSetX(raw) {
     var m=csMx(), x=raw<0?0:raw>m?m:raw;
     _cs.curX=x;
@@ -23754,47 +23754,90 @@ init();
     if(t){t.style.transition='transform .25s';t.style.transform='';setTimeout(function(){t.style.transition='';},260);}
     if(f) f.style.width='0';
     if(l) l.style.opacity='1';
-    _cs.curX=0;
+    _cs.curX=0; _cs.moved=false;
+  }
+  function csTrigger() {
+    _cs.busy = true;
+    csSetX(csMx());
+    setTimeout(function(){
+      csReset();
+      _cs.busy = false;
+      if (typeof calculateRoute === 'function') calculateRoute();
+    }, 260);
+  }
+  function csBegin(clientX, pointerId) {
+    if (_cs.busy || sl.classList.contains('calc-disabled')) return false;
+    _cs.dragging = true;
+    _cs.pid = (pointerId == null ? -1 : pointerId);
+    _cs.sx = clientX - _cs.curX;
+    _cs.moved = false;
+    var t = document.getElementById('calcSliderThumb');
+    if (t) t.style.transition = '';
+    return true;
+  }
+  function csUpdate(clientX) {
+    if (!_cs.dragging) return;
+    var nx = clientX - _cs.sx;
+    if (Math.abs(nx - _cs.curX) > 2) _cs.moved = true;
+    csSetX(nx);
+  }
+  function csFinish() {
+    if (!_cs.dragging) return;
+    _cs.dragging = false;
+    if (_cs.busy) return;
+    if (_cs.curX / csMx() >= 0.70) csTrigger();
+    else csReset();
   }
 
-  var sl=document.getElementById('calcSlider');
-  if(!sl) return;
-
+  // Pointer Events (modern path; falls back gracefully when unsupported)
   sl.addEventListener('pointerdown', function(e) {
-    if(_cs.busy || sl.classList.contains('calc-disabled')) return;
+    if (!csBegin(e.clientX, e.pointerId)) return;
     e.preventDefault();
-    sl.setPointerCapture(e.pointerId);
-    _cs.sx = e.clientX - _cs.curX;
-    var t=document.getElementById('calcSliderThumb');
-    if(t) t.style.transition='';
-  }, {passive:false});
+    try { sl.setPointerCapture(e.pointerId); } catch(_) {}
+  }, { passive: false });
 
   sl.addEventListener('pointermove', function(e) {
-    if(!sl.hasPointerCapture(e.pointerId)) return;
-    csSetX(e.clientX - _cs.sx);
+    if (!_cs.dragging) return;
+    csUpdate(e.clientX);
   });
 
   sl.addEventListener('pointerup', function(e) {
-    if(!sl.hasPointerCapture(e.pointerId) || _cs.busy) return;
-    sl.releasePointerCapture(e.pointerId);
-    if(_cs.curX/csMx()>=0.70) {
-      _cs.busy=true;
-      csSetX(csMx());
-      setTimeout(function(){ csReset(); _cs.busy=false; if(typeof calculateRoute==='function') calculateRoute(); },260);
-    } else { csReset(); }
+    if (!_cs.dragging) return;
+    try { sl.releasePointerCapture(e.pointerId); } catch(_) {}
+    csFinish();
   });
 
-  sl.addEventListener('pointercancel', function(e) {
+  sl.addEventListener('pointercancel', function() {
+    _cs.dragging = false;
     csReset();
   });
 
-  // Fallback: tap/click triggers calculation directly (covers iOS quirks)
+  // Touch Events fallback (iOS WKWebView can drop pointermove mid-gesture)
+  sl.addEventListener('touchstart', function(e) {
+    var t = e.touches && e.touches[0];
+    if (!t) return;
+    if (!csBegin(t.clientX, null)) return;
+    e.preventDefault();
+  }, { passive: false });
+
+  sl.addEventListener('touchmove', function(e) {
+    var t = e.touches && e.touches[0];
+    if (!t || !_cs.dragging) return;
+    e.preventDefault();
+    csUpdate(t.clientX);
+  }, { passive: false });
+
+  sl.addEventListener('touchend', function() { csFinish(); });
+  sl.addEventListener('touchcancel', function() {
+    _cs.dragging = false;
+    csReset();
+  });
+
+  // Tap fallback (covers any device where neither drag completes)
   sl.addEventListener('click', function() {
-    if(_cs.busy || sl.classList.contains('calc-disabled')) return;
-    if(_cs.curX > 20) return; // drag already handled it
-    _cs.busy = true;
-    csSetX(csMx());
-    setTimeout(function(){ csReset(); _cs.busy=false; if(typeof calculateRoute==='function') calculateRoute(); }, 300);
+    if (_cs.busy || sl.classList.contains('calc-disabled')) return;
+    if (_cs.moved || _cs.curX > 20) return; // drag already handled it
+    csTrigger();
   });
 })();
 
