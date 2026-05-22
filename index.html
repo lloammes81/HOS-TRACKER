@@ -20087,12 +20087,7 @@ const REPORT_ITEMS = [
   { type: 'dot_police',   emoji: '🚛', label: 'DOT Police',  bg: 'linear-gradient(135deg,#1e3a5f,#1e40af)' },
   { type: 'inspection',   emoji: '🔍', label: 'Inspección',  bg: 'linear-gradient(135deg,#312e81,#4c1d95)' },
   { type: 'weigh_station',emoji: '⚖️', label: 'Báscula',     bg: 'linear-gradient(135deg,#164e63,#0e7490)' },
-  { type: 'police',       emoji: '🚔', label: 'Policía',     bg: 'linear-gradient(135deg,#1d3a8a,#2563eb)' },
   { type: 'accident',     emoji: '💥', label: 'Accidente',   bg: 'linear-gradient(135deg,#7f1d1d,#dc2626)' },
-  { type: 'hazard',       emoji: '⚠️', label: 'Peligro',     bg: 'linear-gradient(135deg,#7c2d12,#ea580c)' },
-  { type: 'traffic',      emoji: '🚦', label: 'Tráfico',     bg: 'linear-gradient(135deg,#78350f,#d97706)' },
-  { type: 'construction', emoji: '🚧', label: 'Obras',       bg: 'linear-gradient(135deg,#713f12,#ca8a04)' },
-  { type: 'closure',      emoji: '🚫', label: 'Cerrado',     bg: 'linear-gradient(135deg,#450a0a,#991b1b)' },
 ];
 
 /* Init drag on the FAB — called once when tracking starts */
@@ -20191,9 +20186,10 @@ function _openRadialMenu() {
   menu.appendChild(bd);
   requestAnimationFrame(() => bd.style.opacity = '1');
 
-  /* Panel cuadrícula 3×3 */
+  /* Panel cuadrícula — 2 cols si ≤4 items, si no 3 cols */
   const W = window.innerWidth, H = window.innerHeight;
-  const COLS = 3, ITEM = 72, GAP = 12, PAD = 14;
+  const COLS = REPORT_ITEMS.length <= 4 ? 2 : 3;
+  const ITEM = 72, GAP = 12, PAD = 14;
   const ROWS = Math.ceil(REPORT_ITEMS.length / COLS);
   const PW = PAD * 2 + COLS * ITEM + (COLS - 1) * GAP;
   const PH = PAD * 2 + ROWS * ITEM + (ROWS - 1) * GAP;
