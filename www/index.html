@@ -509,9 +509,13 @@
     box-shadow: 0 4px 22px rgba(21,128,61,.3);
     user-select: none; -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
-    touch-action: none;
+    touch-action: manipulation;
     cursor: pointer;
+    padding: 0; font: inherit; color: inherit;
+    display: block;
   }
+  button.calc-slider-wrap { -webkit-appearance: none; appearance: none; outline: none; }
+  button.calc-slider-wrap:active { transform: scale(.98); transition: transform .1s; }
   .calc-slider-fill {
     position: absolute; left: 0; top: 0; bottom: 0; width: 0;
     background: linear-gradient(90deg, rgba(21,128,61,.4), transparent);
@@ -6128,11 +6132,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
         <div class="error" id="errorBox" style="display:none;margin-top:10px"></div>
 
-        <div class="calc-slider-wrap" id="calcSlider">
+        <button type="button" class="calc-slider-wrap" id="calcSlider" onclick="window._csTriggerCalc && window._csTriggerCalc()" aria-label="Calcular ruta">
           <div class="calc-slider-fill" id="calcSliderFill"></div>
           <div class="calc-slider-label" id="calcSliderLabel">DESLIZA PARA CALCULAR RUTA</div>
           <div class="calc-slider-thumb" id="calcSliderThumb">🚛</div>
-        </div>
+        </button>
 
         <div class="grid2" id="shareTrackBtns" style="display:none;margin-top:10px">
           <button class="btn btn-blue" id="shareBtn" onclick="shareRoute()">📤 Compartir</button>
@@ -23727,118 +23731,47 @@ function toggleInterstateShields(on) {
   if (lbl) lbl.textContent = on ? 'Highway shields: On' : 'Highway shields: Off';
 }
 
-init();
+try { init(); } catch(e) { console.error('init() failed:', e); }
 
-/* ── CALC SLIDER — drag state flag + Pointer & Touch fallbacks ── */
+/* ── CALC SLIDER — tap on native <button>, optional drag for desktop ── */
 (function(){
-  var sl = document.getElementById('calcSlider');
-  if (!sl) return;
+  var _cs = { busy:false };
 
-  var _cs = { sx:0, curX:0, busy:false, dragging:false, pid:null, moved:false };
+  function elThumb()  { return document.getElementById('calcSliderThumb'); }
+  function elFill()   { return document.getElementById('calcSliderFill'); }
+  function elLabel()  { return document.getElementById('calcSliderLabel'); }
+  function elSlider() { return document.getElementById('calcSlider'); }
 
-  function csMx() { return Math.max(50, sl.offsetWidth - 68); }
-  function csSetX(raw) {
-    var m=csMx(), x=raw<0?0:raw>m?m:raw;
-    _cs.curX=x;
-    var t=document.getElementById('calcSliderThumb'),
-        f=document.getElementById('calcSliderFill'),
-        l=document.getElementById('calcSliderLabel');
+  function csMx() { var s=elSlider(); return s ? Math.max(50, s.offsetWidth - 68) : 250; }
+  function csSetX(x) {
+    var m=csMx(); if(x<0) x=0; if(x>m) x=m;
+    var t=elThumb(), f=elFill(), l=elLabel();
     if(t) t.style.transform='translateX('+x+'px)';
     if(f) f.style.width=(x+62)+'px';
-    if(l) l.style.opacity=x/m>0.67?'0':String(1-x/m*1.5);
+    if(l) l.style.opacity = x/m > 0.67 ? '0' : String(1 - x/m*1.5);
   }
   function csReset() {
-    var t=document.getElementById('calcSliderThumb'),
-        f=document.getElementById('calcSliderFill'),
-        l=document.getElementById('calcSliderLabel');
-    if(t){t.style.transition='transform .25s';t.style.transform='';setTimeout(function(){t.style.transition='';},260);}
+    var t=elThumb(), f=elFill(), l=elLabel();
+    if(t){ t.style.transition='transform .25s'; t.style.transform=''; setTimeout(function(){ if(t) t.style.transition=''; },260); }
     if(f) f.style.width='0';
     if(l) l.style.opacity='1';
-    _cs.curX=0; _cs.moved=false;
   }
-  function csTrigger() {
+
+  // Exposed globally so the inline onclick on the <button> can call it,
+  // even if this IIFE somehow runs after another error.
+  window._csTriggerCalc = function() {
+    var s=elSlider();
+    if (_cs.busy || (s && s.classList.contains('calc-disabled'))) return;
     _cs.busy = true;
     csSetX(csMx());
     setTimeout(function(){
       csReset();
       _cs.busy = false;
-      if (typeof calculateRoute === 'function') calculateRoute();
+      if (typeof calculateRoute === 'function') {
+        try { calculateRoute(); } catch(err) { console.error('calculateRoute error:', err); }
+      }
     }, 260);
-  }
-  function csBegin(clientX, pointerId) {
-    if (_cs.busy || sl.classList.contains('calc-disabled')) return false;
-    _cs.dragging = true;
-    _cs.pid = (pointerId == null ? -1 : pointerId);
-    _cs.sx = clientX - _cs.curX;
-    _cs.moved = false;
-    var t = document.getElementById('calcSliderThumb');
-    if (t) t.style.transition = '';
-    return true;
-  }
-  function csUpdate(clientX) {
-    if (!_cs.dragging) return;
-    var nx = clientX - _cs.sx;
-    if (Math.abs(nx - _cs.curX) > 2) _cs.moved = true;
-    csSetX(nx);
-  }
-  function csFinish() {
-    if (!_cs.dragging) return;
-    _cs.dragging = false;
-    if (_cs.busy) return;
-    if (_cs.curX / csMx() >= 0.70) csTrigger();
-    else csReset();
-  }
-
-  // Pointer Events (modern path; falls back gracefully when unsupported)
-  sl.addEventListener('pointerdown', function(e) {
-    if (!csBegin(e.clientX, e.pointerId)) return;
-    e.preventDefault();
-    try { sl.setPointerCapture(e.pointerId); } catch(_) {}
-  }, { passive: false });
-
-  sl.addEventListener('pointermove', function(e) {
-    if (!_cs.dragging) return;
-    csUpdate(e.clientX);
-  });
-
-  sl.addEventListener('pointerup', function(e) {
-    if (!_cs.dragging) return;
-    try { sl.releasePointerCapture(e.pointerId); } catch(_) {}
-    csFinish();
-  });
-
-  sl.addEventListener('pointercancel', function() {
-    _cs.dragging = false;
-    csReset();
-  });
-
-  // Touch Events fallback (iOS WKWebView can drop pointermove mid-gesture)
-  sl.addEventListener('touchstart', function(e) {
-    var t = e.touches && e.touches[0];
-    if (!t) return;
-    if (!csBegin(t.clientX, null)) return;
-    e.preventDefault();
-  }, { passive: false });
-
-  sl.addEventListener('touchmove', function(e) {
-    var t = e.touches && e.touches[0];
-    if (!t || !_cs.dragging) return;
-    e.preventDefault();
-    csUpdate(t.clientX);
-  }, { passive: false });
-
-  sl.addEventListener('touchend', function() { csFinish(); });
-  sl.addEventListener('touchcancel', function() {
-    _cs.dragging = false;
-    csReset();
-  });
-
-  // Tap fallback (covers any device where neither drag completes)
-  sl.addEventListener('click', function() {
-    if (_cs.busy || sl.classList.contains('calc-disabled')) return;
-    if (_cs.moved || _cs.curX > 20) return; // drag already handled it
-    csTrigger();
-  });
+  };
 })();
 
 /* ═══════════════════════════════════════════════════════════
