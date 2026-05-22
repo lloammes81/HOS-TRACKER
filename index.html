@@ -13141,6 +13141,12 @@ function handleDestInput(val) {
   clearTimeout(destDebounce);
   const sugg = document.getElementById('destSugg');
   const q = (val || '').trim();
+  // If user cleared the input, also clear the picked destination so the
+  // calc slider goes back to disabled state.
+  if (!q && destination) {
+    destination = null;
+    if (typeof window._syncCalcSlider === 'function') window._syncCalcSlider();
+  }
   if (q.length < 3) { sugg.style.display = 'none'; return; }
   sugg.innerHTML = '<div style="padding:12px 14px;font-size:14px;color:var(--muted);display:flex;align-items:center;gap:8px"><span style="animation:spin 1s linear infinite;display:inline-block">⏳</span> Buscando dirección...</div>';
   sugg.style.display = 'block';
@@ -14514,8 +14520,7 @@ async function calculateRoute() {
         'Verifica tu conexión a internet y toca Reintentar.', 10000);
     }
   } finally {
-    if (_calcSl) _calcSl.classList.remove('calc-disabled');
-    if (_calcLbl) _calcLbl.textContent = lang === 'es' ? 'DESLIZA PARA CALCULAR RUTA' : 'SLIDE TO CALCULATE ROUTE';
+    if (typeof window._syncCalcSlider === 'function') window._syncCalcSlider();
   }
 }
 
@@ -20585,9 +20590,8 @@ function resetForm() {
   document.getElementById('addStopBtn').style.display = 'none';
   // Restore calc slider
   const _cb = document.getElementById('calcSlider');
-  const _cbl = document.getElementById('calcSliderLabel');
-  if (_cb) { _cb.style.display = ''; _cb.classList.remove('calc-disabled'); }
-  if (_cbl) _cbl.textContent = lang === 'es' ? 'DESLIZA PARA CALCULAR RUTA' : 'SLIDE TO CALCULATE ROUTE';
+  if (_cb) _cb.style.display = '';
+  if (typeof window._syncCalcSlider === 'function') window._syncCalcSlider();
   // Clear mini-map POI markers
   ['truck','rest','restrict','weigh','checkpoint'].forEach(type => {
     miniPoiMarkers[type]?.forEach(m => { try { if(miniMap) miniMap.removeLayer(m); } catch {} });
@@ -22053,13 +22057,10 @@ calculateRoute = async function() {
       : (isNetwork ? 'No internet connection. Check your network and try again.' : 'Error calculating route. Check your origin and destination.');
     showError(msg);
   } finally {
-    if (calcBtn2) {
-      calcBtn2.classList.remove('calc-disabled');
-      if (document.getElementById('resultsCard')?.style.display === 'block') {
-        calcBtn2.style.display = 'none';
-      }
+    if (calcBtn2 && document.getElementById('resultsCard')?.style.display === 'block') {
+      calcBtn2.style.display = 'none';
     }
-    if (calcLbl2) calcLbl2.textContent = lang === 'es' ? 'DESLIZA PARA CALCULAR RUTA' : 'SLIDE TO CALCULATE ROUTE';
+    if (typeof window._syncCalcSlider === 'function') window._syncCalcSlider();
   }
 };
 
@@ -23362,6 +23363,7 @@ function setDestinationWithLocalCheck(it) {
   document.getElementById('destInput').value = it.name;
   document.getElementById('destSugg').style.display = 'none';
   document.getElementById('addStopBtn').style.display = '';
+  if (typeof window._syncCalcSlider === 'function') window._syncCalcSlider();
 }
 
 function extractStateFromName(name) {
@@ -23421,6 +23423,7 @@ function forceSetDest() {
   document.getElementById('destInput').value = it.name;
   document.getElementById('destSugg').style.display = 'none';
   document.getElementById('addStopBtn').style.display = '';
+  if (typeof window._syncCalcSlider === 'function') window._syncCalcSlider();
   dismissLocalWarning();
 }
 
@@ -23442,6 +23445,7 @@ function changeJobTypeFromWarning() {
     document.getElementById('destInput').value = it.name;
     document.getElementById('destSugg').style.display = 'none';
     document.getElementById('addStopBtn').style.display = '';
+    if (typeof window._syncCalcSlider === 'function') window._syncCalcSlider();
   }
   showToast('info', '🛣️', 'Switched to Interstate', 'You can now route to any state', 3000);
 }
@@ -23757,11 +23761,32 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
     if(l) l.style.opacity='1';
   }
 
+  // Toggle slider's disabled state based on whether a destination is set.
+  // Exposed globally so destination set/clear sites can call it.
+  window._syncCalcSlider = function() {
+    var s = elSlider(), l = elLabel();
+    if (!s) return;
+    var hasDest = typeof destination !== 'undefined' && destination != null;
+    s.classList.toggle('calc-disabled', !hasDest);
+    if (l) {
+      var es = (typeof lang !== 'undefined' && lang === 'es');
+      if (hasDest) {
+        l.textContent = es ? 'DESLIZA PARA CALCULAR RUTA' : 'SLIDE TO CALCULATE ROUTE';
+      } else {
+        l.textContent = es ? 'INGRESA UN DESTINO' : 'ENTER A DESTINATION';
+      }
+    }
+  };
+
   // Exposed globally so the inline onclick on the <button> can call it,
   // even if this IIFE somehow runs after another error.
   window._csTriggerCalc = function() {
     var s=elSlider();
     if (_cs.busy || (s && s.classList.contains('calc-disabled'))) return;
+    if (typeof destination === 'undefined' || destination == null) {
+      window._syncCalcSlider();
+      return;
+    }
     _cs.busy = true;
     csSetX(csMx());
     setTimeout(function(){
@@ -23772,6 +23797,9 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
       }
     }, 260);
   };
+
+  // Initial state on load
+  try { window._syncCalcSlider(); } catch(_) {}
 
   // Mobile: a drag/swipe over the button does NOT generate a click event,
   // so onclick alone misses the gesture the label invites ("DESLIZA").
