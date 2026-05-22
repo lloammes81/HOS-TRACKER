@@ -23735,7 +23735,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
 
 /* ── CALC SLIDER — tap on native <button>, optional drag for desktop ── */
 (function(){
-  var _cs = { busy:false };
+  var _cs = { busy:false, tStart:0, sx:0, sy:0 };
 
   function elThumb()  { return document.getElementById('calcSliderThumb'); }
   function elFill()   { return document.getElementById('calcSliderFill'); }
@@ -23772,6 +23772,39 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
       }
     }, 260);
   };
+
+  // Mobile: a drag/swipe over the button does NOT generate a click event,
+  // so onclick alone misses the gesture the label invites ("DESLIZA").
+  // We attach touch listeners that fire on touchend regardless of movement,
+  // as long as the gesture started on the button.
+  var sl = elSlider();
+  if (!sl) return;
+
+  sl.addEventListener('touchstart', function(e) {
+    var t = e.touches && e.touches[0];
+    if (!t) return;
+    _cs.tStart = Date.now();
+    _cs.sx = t.clientX;
+    _cs.sy = t.clientY;
+  }, { passive: true });
+
+  sl.addEventListener('touchend', function(e) {
+    if (!_cs.tStart) return;
+    var t = (e.changedTouches && e.changedTouches[0]) || null;
+    var dt = Date.now() - _cs.tStart;
+    _cs.tStart = 0;
+    if (!t) { window._csTriggerCalc(); return; }
+    var dx = t.clientX - _cs.sx;
+    var dy = Math.abs(t.clientY - _cs.sy);
+    // Trigger on: short tap, OR horizontal swipe (any distance to the right),
+    // but ignore mostly-vertical drags (likely a scroll attempt).
+    if (dt < 2000 && dy < 60 && (Math.abs(dx) < 8 || dx > 0)) {
+      e.preventDefault(); // suppress synthetic click that would double-fire
+      window._csTriggerCalc();
+    }
+  }, { passive: false });
+
+  sl.addEventListener('touchcancel', function() { _cs.tStart = 0; });
 })();
 
 /* ═══════════════════════════════════════════════════════════
