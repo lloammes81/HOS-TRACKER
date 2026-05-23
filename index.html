@@ -1394,7 +1394,7 @@
     border-radius: 24px; display: none; flex-direction: column;
     background: linear-gradient(175deg, #0b1e3e 0%, #112444 40%, #0d1a30 100%);
     overflow-y: auto; -webkit-overflow-scrolling: touch;
-    box-shadow: 0 24px 64px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.08);
+    box-shadow: 0 24px 64px rgba(0,0,0,.85), 0 0 0 1px rgba(56,189,248,.18), 0 0 40px rgba(56,189,248,.08);
   }
   #wxDetailPanel.open { display: flex; animation: panelModalIn .26s cubic-bezier(.34,1.56,.64,1); }
   @keyframes wxSlideDown { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(40px); } }
@@ -1427,12 +1427,14 @@
     padding: 0 16px 16px;
   }
   .wx-stat-card {
-    background: rgba(255,255,255,.07); border-radius: 16px; padding: 14px 16px;
-    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(56,189,248,.08); border-radius: 16px; padding: 14px 16px;
+    border: 1px solid rgba(56,189,248,.22);
+    box-shadow: 0 0 16px rgba(56,189,248,.12), inset 0 1px 0 rgba(255,255,255,.07);
   }
-  .wx-stat-label { font-size: 11px; color: rgba(255,255,255,.45); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; }
-  .wx-stat-val { font-size: 28px; font-family: 'Bebas Neue', sans-serif; color: #fff; margin-top: 4px; }
-  .wx-stat-unit { font-size: 13px; color: rgba(255,255,255,.5); }
+  .wx-stat-label { font-size: 11px; color: rgba(56,189,248,.7); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; }
+  .wx-stat-val { font-size: 28px; font-family: 'Bebas Neue', sans-serif; color: #fff; margin-top: 4px;
+    text-shadow: 0 0 18px rgba(56,189,248,.5); }
+  .wx-stat-unit { font-size: 13px; color: rgba(255,255,255,.45); }
   .wx-section-label {
     font-size: 12px; font-weight: 700; color: rgba(255,255,255,.4);
     text-transform: uppercase; letter-spacing: .8px;
@@ -1448,12 +1450,14 @@
   .wx-hourly-scroll::-webkit-scrollbar { display: none; }
   .wx-hour-card {
     flex-shrink: 0; width: 60px; border-radius: 14px; padding: 10px 4px;
-    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 2px 12px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06);
     display: flex; flex-direction: column; align-items: center; gap: 5px;
     font-size: 13px; color: rgba(255,255,255,.85);
   }
   .wx-hour-card.now {
-    background: rgba(56,189,248,.18); border-color: rgba(56,189,248,.4);
+    background: rgba(56,189,248,.18); border-color: rgba(56,189,248,.5);
+    box-shadow: 0 0 20px rgba(56,189,248,.3), inset 0 1px 0 rgba(255,255,255,.1);
   }
   .wx-hour-time { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 700; }
   .wx-hour-icon { font-size: 22px; line-height: 1; }
@@ -1461,13 +1465,16 @@
   .wx-hour-pop  { font-size: 10px; color: #38bdf8; }
   .wx-day-row {
     display: flex; align-items: center; padding: 12px 16px;
-    border-bottom: 1px solid rgba(255,255,255,.06);
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    transition: background .15s;
   }
+  .wx-day-row:last-child { border-bottom: none; }
   .wx-day-name { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.85); width: 44px; }
   .wx-day-icon { font-size: 22px; flex: 1; text-align: center; }
   .wx-day-temps { display: flex; gap: 8px; font-size: 15px; }
-  .wx-day-hi { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #fff; }
-  .wx-day-lo { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: rgba(255,255,255,.4); }
+  .wx-day-hi { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #fff;
+    text-shadow: 0 0 12px rgba(255,255,255,.25); }
+  .wx-day-lo { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: rgba(255,255,255,.35); }
   .wx-panel-refresh {
     text-align: center; padding: 16px;
     font-size: 12px; color: rgba(255,255,255,.3);
@@ -1480,7 +1487,7 @@
     border-radius: 24px; display: none; flex-direction: column;
     background: linear-gradient(175deg, #0b1e3e 0%, #0f1f3a 50%, #0a1628 100%);
     overflow-y: auto; -webkit-overflow-scrolling: touch;
-    box-shadow: 0 24px 64px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.08);
+    box-shadow: 0 24px 64px rgba(0,0,0,.85), 0 0 0 1px rgba(16,185,129,.2), 0 0 40px rgba(16,185,129,.08);
   }
   #calDetailPanel.open { display: flex; animation: panelModalIn .26s cubic-bezier(.34,1.56,.64,1); }
   .cal-panel-topbar {
@@ -1528,17 +1535,20 @@
   .cal-day-cell.other-month { color: rgba(255,255,255,.18); }
   .cal-day-cell.today {
     background: #10b981; color: #fff; font-weight: 900;
-    box-shadow: 0 0 0 2px rgba(16,185,129,.4);
+    box-shadow: 0 0 0 2px rgba(16,185,129,.5), 0 0 18px rgba(16,185,129,.55);
+    text-shadow: 0 0 8px rgba(255,255,255,.4);
   }
   .cal-day-cell.sunday { color: rgba(239,68,68,.7); }
   .cal-day-cell.sunday.today { color: #fff; }
   .cal-today-banner {
     margin: 4px 12px 0; padding: 14px 16px;
-    background: rgba(255,255,255,.05); border-radius: 16px;
-    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(16,185,129,.07); border-radius: 16px;
+    border: 1px solid rgba(16,185,129,.25);
+    box-shadow: 0 0 24px rgba(16,185,129,.12), inset 0 1px 0 rgba(255,255,255,.06);
   }
   .cal-today-day {
     font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: #fff; line-height: 1;
+    text-shadow: 0 0 24px rgba(16,185,129,.6);
   }
   .cal-today-full { font-size: 13px; color: rgba(255,255,255,.55); margin-top: 2px; }
   .cal-today-meta {
@@ -1546,26 +1556,29 @@
   }
   .cal-meta-chip {
     padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
-    background: rgba(255,255,255,.08); color: rgba(255,255,255,.7);
-    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(16,185,129,.1); color: rgba(16,185,129,.9);
+    border: 1px solid rgba(16,185,129,.3);
+    box-shadow: 0 0 10px rgba(16,185,129,.1);
   }
   .cal-hos-section {
     margin: 10px 12px 0; padding: 14px 16px;
-    background: rgba(16,185,129,.07); border-radius: 16px;
-    border: 1px solid rgba(16,185,129,.15);
+    background: rgba(16,185,129,.06); border-radius: 16px;
+    border: 1px solid rgba(16,185,129,.25);
+    box-shadow: 0 0 20px rgba(16,185,129,.1), inset 0 1px 0 rgba(255,255,255,.05);
   }
   .cal-hos-title {
-    font-size: 11px; font-weight: 700; color: rgba(16,185,129,.7);
+    font-size: 11px; font-weight: 700; color: rgba(16,185,129,.8);
     text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px;
   }
   .cal-hos-row {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.05);
-    font-size: 13px; color: rgba(255,255,255,.75);
+    padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+    font-size: 13px; color: rgba(255,255,255,.7);
   }
   .cal-hos-row:last-child { border-bottom: none; }
   .cal-hos-val {
-    font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #10b981;
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #10b981;
+    text-shadow: 0 0 14px rgba(16,185,129,.6);
   }
   .cal-spacer { height: 20px; }
 
