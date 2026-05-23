@@ -28901,10 +28901,6 @@ window._hosAutoRecalc = false;
           flToast('📨 Dispatcher: ' + n.text, urgent);
           state.unread++;
           updateBadge();
-          // Browser Notification API
-          if (window.Notification && Notification.permission === 'granted'){
-            new Notification('Truck Precision — Dispatcher', { body: n.text, icon: '/icon-192.png' });
-          }
         }
       });
       first = false;
@@ -28913,8 +28909,14 @@ window._hosAutoRecalc = false;
   }
 
   function updateBadge(){
-    if (state.unread > 0){ badge.style.display = 'block'; badge.textContent = state.unread; }
-    else badge.style.display = 'none';
+    if (state.unread > 0){
+      badge.style.display = 'block';
+      badge.textContent = state.unread;
+      if (navigator.setAppBadge) navigator.setAppBadge(state.unread).catch(()=>{});
+    } else {
+      badge.style.display = 'none';
+      if (navigator.clearAppBadge) navigator.clearAppBadge().catch(()=>{});
+    }
   }
   fab.addEventListener('click', ()=>{ state.unread = 0; updateBadge(); });
 
