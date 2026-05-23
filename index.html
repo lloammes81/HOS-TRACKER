@@ -5694,6 +5694,49 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   .poi-card-name { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .poi-card-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .poi-card-dist { font-size: 13px; font-weight: 800; color: #10b981; flex-shrink: 0; }
+
+  /* ── POI search loader — magnifying glass on map ─────────────── */
+  @keyframes poiMagMove {
+    0%   { top: 10px; left:  8px; transform: rotate(-12deg) scale(1);   }
+    18%  { top:  6px; left: 88px; transform: rotate(10deg)  scale(1.1); }
+    40%  { top: 52px; left:112px; transform: rotate(-8deg)  scale(1);   }
+    62%  { top: 72px; left: 28px; transform: rotate(14deg)  scale(1.05);}
+    82%  { top: 28px; left: 52px; transform: rotate(-5deg)  scale(1);   }
+    100% { top: 10px; left:  8px; transform: rotate(-12deg) scale(1);   }
+  }
+  @keyframes poiDotPop {
+    0%,100% { opacity: 0; transform: scale(0.2); }
+    35%,65% { opacity: 1; transform: scale(1);   }
+  }
+  @keyframes poiScanLine {
+    0%,100% { opacity: 0; }
+    10%,90% { opacity: 1; }
+    50%     { opacity: 0.6; }
+  }
+  @keyframes poiTextPulse {
+    0%,100% { opacity: 0.7; }
+    50%     { opacity: 1;   }
+  }
+  .poi-search-loader { padding: 20px 16px 24px; text-align: center; }
+  .poi-search-map {
+    position: relative; width: 160px; height: 110px;
+    margin: 0 auto 14px; border-radius: 16px; overflow: hidden;
+    background: #050d1a;
+    border: 1px solid rgba(16,185,129,0.2);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  }
+  .poi-search-mag {
+    position: absolute; font-size: 26px; line-height: 1;
+    animation: poiMagMove 2.6s ease-in-out infinite;
+    filter: drop-shadow(0 0 5px rgba(16,185,129,0.8));
+    z-index: 2;
+  }
+  .poi-search-dot {
+    position: absolute; width: 9px; height: 9px;
+    border-radius: 50%; z-index: 1;
+    animation: poiDotPop 2.6s ease-in-out infinite;
+    opacity: 0;
+  }
   #commQuickOverlay {
     display: none; position: fixed; inset: 0; z-index: 25999;
   }
@@ -22933,6 +22976,33 @@ function _addTruckStopToRoute(name, lat, lon) {
   }
 }
 
+function _poiSearchLoader(label, hint) {
+  const msg  = label || 'Buscando…';
+  const sub  = hint  || '';
+  return `<div class="poi-search-loader">
+    <div class="poi-search-map">
+      <svg width="160" height="110" style="position:absolute;inset:0;" xmlns="http://www.w3.org/2000/svg">
+        <rect width="160" height="110" fill="#050d1a"/>
+        <line x1="0" y1="37" x2="160" y2="37" stroke="rgba(16,185,129,0.08)" stroke-width="1"/>
+        <line x1="0" y1="73" x2="160" y2="73" stroke="rgba(16,185,129,0.08)" stroke-width="1"/>
+        <line x1="53" y1="0" x2="53" y2="110" stroke="rgba(16,185,129,0.08)" stroke-width="1"/>
+        <line x1="107" y1="0" x2="107" y2="110" stroke="rgba(16,185,129,0.08)" stroke-width="1"/>
+        <path d="M0,54 Q38,48 80,56 Q122,64 160,59" stroke="#1a2a3a" stroke-width="8" fill="none"/>
+        <path d="M0,54 Q38,48 80,56 Q122,64 160,59" stroke="#2d4057" stroke-width="3.5" fill="none" stroke-dasharray="9 5"/>
+        <path d="M73,0 Q69,36 76,55 Q82,74 76,110" stroke="#1a2a3a" stroke-width="8" fill="none"/>
+        <path d="M73,0 Q69,36 76,55 Q82,74 76,110" stroke="#2d4057" stroke-width="3.5" fill="none" stroke-dasharray="9 5"/>
+      </svg>
+      <div class="poi-search-dot" style="top:22px;left:18px;background:#10b981;box-shadow:0 0 7px #10b981;animation-delay:0s;"></div>
+      <div class="poi-search-dot" style="top:62px;left:108px;background:#10b981;box-shadow:0 0 7px #10b981;animation-delay:0.65s;"></div>
+      <div class="poi-search-dot" style="top:80px;left:36px;background:#f59e0b;box-shadow:0 0 7px #f59e0b;animation-delay:1.3s;"></div>
+      <div class="poi-search-dot" style="top:16px;left:120px;background:#10b981;box-shadow:0 0 7px #10b981;animation-delay:1.95s;"></div>
+      <div class="poi-search-mag">🔍</div>
+    </div>
+    <div style="font-size:14px;font-weight:700;color:#e2e8f0;letter-spacing:0.3px;animation:poiTextPulse 1.4s ease-in-out infinite;">${msg}</div>
+    ${sub ? `<div style="font-size:11px;color:#475569;margin-top:5px;">${sub}</div>` : ''}
+  </div>`;
+}
+
 // ── POI result cache (localStorage, 4-hour TTL) ────────────────────────────
 const _POI_CACHE_TTL = 4 * 60 * 60 * 1000;
 
@@ -23086,7 +23156,7 @@ async function searchNearbyPOI(type) {
   iconEl.style.background = poiGrad;
   titleEl.textContent     = poiTitle;
   subEl.textContent       = 'Obteniendo ubicación…';
-  list.innerHTML          = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">📍 Obteniendo ubicación…</div>';
+  list.innerHTML          = _poiSearchLoader('Obteniendo ubicación…');
   overlay.classList.add('open');
 
   let lat, lon;
@@ -23116,7 +23186,8 @@ async function searchNearbyPOI(type) {
   }
 
   // First-time search: fetch from Overpass and cache the result
-  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">⏳ Consultando base de datos…<br><span style="font-size:11px;display:block;margin-top:6px;opacity:.7">La próxima búsqueda será instantánea ⚡</span></div>';
+  const _searchLabel = isTruck ? 'Buscando Truck Stops…' : isScale ? 'Buscando Weigh Stations…' : 'Buscando Parqueos…';
+  list.innerHTML = _poiSearchLoader(_searchLabel, '⚡ La próxima búsqueda será instantánea');
   subEl.textContent = `Buscando a ${lat.toFixed(3)}, ${lon.toFixed(3)}…`;
 
   try {
