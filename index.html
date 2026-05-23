@@ -7185,9 +7185,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div class="comm-page-header">
         <div style="padding-top:calc(var(--header-pt) - 8px)"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <div class="comm-page-title">🛠️ Services</div>
+          <div class="comm-page-title">👥 Community</div>
+          <span id="commPageBtnBadge" style="display:none;background:#a78bfa;color:#fff;border-radius:999px;font-size:9px;font-weight:800;padding:2px 7px;min-width:16px;text-align:center;">0</span>
         </div>
-        <div class="comm-page-sub" id="commPageSub">Servicios y recursos para conductores de camión</div>
+        <div class="comm-page-sub" id="commPageSub">Reportes en tu área · servicios para conductores</div>
+        <div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:2px;" id="commBtnSub">See reports near you · add your own</div>
       </div>
 
       <!-- Route filter toggle -->
@@ -7203,7 +7205,49 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
 
 
-      <!-- TRUCK SERVICES -->
+      <!-- ── NUEVO REPORTE ── -->
+      <div class="comm-new-report-card">
+        <div class="comm-new-report-title"><span>📡</span> Post a Road Report</div>
+        <div class="comm-type-grid">
+          <button class="comm-type-btn selected" data-type="police"     onclick="selectCommType(this,'police')">    <span class="cbt-emoji">🚔</span>Police</button>
+          <button class="comm-type-btn"          data-type="dot_police" onclick="selectCommType(this,'dot_police')"><span class="cbt-emoji">🚛</span>DOT</button>
+          <button class="comm-type-btn"          data-type="inspection" onclick="selectCommType(this,'inspection')"><span class="cbt-emoji">🔍</span>Inspection</button>
+          <button class="comm-type-btn"          data-type="accident"   onclick="selectCommType(this,'accident')">  <span class="cbt-emoji">💥</span>Accident</button>
+          <button class="comm-type-btn"          data-type="hazard"     onclick="selectCommType(this,'hazard')">    <span class="cbt-emoji">⚠️</span>Hazard</button>
+          <button class="comm-type-btn"          data-type="traffic"    onclick="selectCommType(this,'traffic')">   <span class="cbt-emoji">🚦</span>Traffic</button>
+          <button class="comm-type-btn"          data-type="weather"    onclick="selectCommType(this,'weather')">   <span class="cbt-emoji">🌧️</span>Weather</button>
+          <button class="comm-type-btn"          data-type="road"       onclick="selectCommType(this,'road')">      <span class="cbt-emoji">🚧</span>Road Work</button>
+        </div>
+        <textarea class="comm-comment-input" id="commCommentInput" placeholder="Add details (optional)…" rows="2"></textarea>
+        <div class="comm-submit-row">
+          <div class="comm-user-tag">
+            <div class="comm-user-avatar" id="commUserAvatar">🚛</div>
+            <span id="commUserLabel">Anonymous</span>
+          </div>
+          <button class="comm-submit-btn" onclick="submitCommReport()">📡 Report</button>
+        </div>
+      </div>
+
+      <!-- ── LISTA DE REPORTES ── -->
+      <div class="comm-section-title">
+        📡 Reports Near You
+        <span class="comm-section-count" id="commPageCount">0</span>
+      </div>
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;-webkit-overflow-scrolling:touch;">
+        <button class="comm-filter-chip active" onclick="setCommFilter(this,'all')">All</button>
+        <button class="comm-filter-chip" onclick="setCommFilter(this,'police')">🚔 Police</button>
+        <button class="comm-filter-chip" onclick="setCommFilter(this,'dot_police')">🚛 DOT</button>
+        <button class="comm-filter-chip" onclick="setCommFilter(this,'inspection')">🔍 Inspection</button>
+        <button class="comm-filter-chip" onclick="setCommFilter(this,'accident')">💥 Accident</button>
+        <button class="comm-filter-chip" onclick="setCommFilter(this,'hazard')">⚠️ Hazard</button>
+        <button class="comm-filter-chip" onclick="setCommFilter(this,'traffic')">🚦 Traffic</button>
+        <button class="comm-filter-chip" onclick="setCommFilter(this,'weather')">🌧️ Weather</button>
+        <button class="comm-filter-chip" onclick="setCommFilter(this,'road')">🚧 Road Work</button>
+      </div>
+      <div id="commNoRouteBanner" style="display:none"></div>
+      <div id="commPageList"></div>
+
+      <!-- ── TRUCK SERVICES ── -->
       <div class="svc-section-title">🛠️ Truck Services Near You</div>
       <div class="svc-grid">
 
@@ -7302,7 +7346,6 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       </div>
 
       <div id="commAlertBanners" style="display:none"></div>
-      <div id="commPageList" style="display:none"></div>
 
     </div>
   </div>
@@ -22442,9 +22485,11 @@ function submitCommReport() {
   addReportMarker(report);
 
   // Clear form
-  document.getElementById('commCommentInput').value = '';
+  const _inp = document.getElementById('commCommentInput');
+  if (_inp) _inp.value = '';
   document.querySelectorAll('.comm-type-btn').forEach(b => b.classList.remove('selected'));
-  document.querySelector('.comm-type-btn[data-type="police"]').classList.add('selected');
+  const _first = document.querySelector('.comm-type-btn[data-type="police"]');
+  if (_first) _first.classList.add('selected');
   commSelectedType = 'police';
 
   updateCommBadge(communityReports.length);
@@ -22578,22 +22623,15 @@ function upvoteCommCard(id, el) {
 }
 
 function quickReportPage(type, emoji, label) {
-  // Select the type in the form
   const btn = document.querySelector('.comm-type-btn[data-type="' + type + '"]');
   if (btn) selectCommType(btn, type);
-  // Scroll to form
   document.querySelector('.comm-new-report-card')?.scrollIntoView({ behavior: 'smooth' });
+  setTimeout(renderCommPage, 300);
 }
-
 
 function upvoteReportPage(id, el) {
-  upvoteReport(id, el); // reuse existing function
+  upvoteReport(id, el);
   renderCommPage();
-}
-
-function quickReportPage(type, emoji, label) {
-  if (typeof quickReport === 'function') quickReport(type, emoji, label);
-  setTimeout(renderCommPage, 500);
 }
 
 /* ── Patch switchTab to refresh community page on tab switch ── */
