@@ -28928,7 +28928,7 @@ window._hosAutoRecalc = false;
     if (typeof _syncHeroArcStatus === 'function') _syncHeroArcStatus();
   }
 
-  function _fmt(d){ return d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}); }
+  function _fmt(d){ const h=d.getHours(),m=d.getMinutes(); return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
   function _fmtElapsed(from){
     const mins = Math.min(Math.floor((Date.now() - from.getTime()) / 60000), 14 * 60);
     return `${Math.floor(mins/60)}h ${mins%60}m`;
