@@ -22958,16 +22958,19 @@ async function searchNearbyPOI(type) {
     const pos = await getGPSPosition(4000, 10000);
     lat = pos.coords.latitude; lon = pos.coords.longitude;
   } catch {
-    if (window.origin && origin.lat) { lat = origin.lat; lon = origin.lon; }
+    // Fallback: last GPS fix from internal tracker, then route origin
+    const fix = window.lastFixFm;
+    if (fix && fix.lat) { lat = fix.lat; lon = fix.lon; }
+    else if (origin && origin.lat) { lat = origin.lat; lon = origin.lon; }
     else {
-      list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">📍 GPS necesario. Activa tu ubicación.</div>';
+      list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">📍 GPS necesario.<br><br><button onclick="searchNearbyPOI(\'' + type + '\')" style="margin-top:8px;padding:10px 20px;background:#10b981;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🔄 Reintentar</button></div>';
       subEl.textContent = 'GPS no disponible';
       return;
     }
   }
 
   list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">⏳ Consultando base de datos…</div>';
-  subEl.textContent = 'Consultando OpenStreetMap…';
+  subEl.textContent = `Buscando a ${lat.toFixed(3)}, ${lon.toFixed(3)}…`;
 
   const r = 160934; // 100 miles in meters
   let query;
@@ -23099,7 +23102,17 @@ out center qt;`;
       isTruck ? 'Toca uno para agregar a tu ruta' : 'Toca uno para navegar', 3500);
 
   } catch(e) {
-    list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">⚠️ Error de conexión. Verifica tu internet.</div>';
+    const gmQ = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
+    const gmFb = lat ? `https://www.google.com/maps/search/${gmQ}/@${lat},${lon},11z` : `https://www.google.com/maps/search/${gmQ}`;
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted)">
+      <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:6px">Sin conexión a la base de datos</div>
+      <div style="font-size:12px;margin-bottom:16px">Verifica tu internet e intenta de nuevo</div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:240px;margin:0 auto">
+        <button onclick="searchNearbyPOI('${type}')" style="padding:10px;background:#10b981;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🔄 Reintentar</button>
+        <a href="${gmFb}" target="_blank" style="display:block;padding:10px;background:rgba(66,133,244,.15);border:1px solid rgba(66,133,244,.3);border-radius:10px;color:#4285f4;font-size:13px;font-weight:700;text-decoration:none">🗺️ Buscar en Google Maps</a>
+      </div>
+    </div>`;
     subEl.textContent = 'Error de conexión';
   }
 }
