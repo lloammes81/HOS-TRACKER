@@ -1376,6 +1376,91 @@
   .wx-danger { color: #ef4444 !important; animation: blink 1s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
 
+  /* ── WEATHER DETAIL PANEL ──────────────────────────────────── */
+  #wxDetailPanel {
+    position: fixed; inset: 0; z-index: 29000;
+    display: none; flex-direction: column;
+    background: linear-gradient(175deg, #0b1e3e 0%, #112444 40%, #0d1a30 100%);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  #wxDetailPanel.open { display: flex; animation: wxSlideUp .28s cubic-bezier(.32,.72,0,1); }
+  @keyframes wxSlideUp   { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes wxSlideDown { from { transform: translateY(0); }    to { transform: translateY(100%); } }
+  .wx-panel-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 18px 0;
+  }
+  .wx-panel-close {
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,.1); color: #fff; font-size: 18px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .wx-panel-location { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.85); max-width: 200px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wx-panel-hero {
+    text-align: center; padding: 12px 24px 20px;
+  }
+  .wx-panel-icon-big { font-size: 72px; line-height: 1; margin-bottom: 4px; }
+  .wx-panel-temp-big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 96px; line-height: 1; color: #fff; letter-spacing: -2px;
+  }
+  .wx-panel-desc-big { font-size: 20px; color: rgba(255,255,255,.8); font-weight: 600; margin-top: 2px; }
+  .wx-panel-sub {
+    font-size: 14px; color: rgba(255,255,255,.55); margin-top: 10px;
+    display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+  }
+  .wx-panel-sub span { display: flex; align-items: center; gap: 4px; }
+  .wx-stat-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    padding: 0 16px 16px;
+  }
+  .wx-stat-card {
+    background: rgba(255,255,255,.07); border-radius: 16px; padding: 14px 16px;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .wx-stat-label { font-size: 11px; color: rgba(255,255,255,.45); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; }
+  .wx-stat-val { font-size: 28px; font-family: 'Bebas Neue', sans-serif; color: #fff; margin-top: 4px; }
+  .wx-stat-unit { font-size: 13px; color: rgba(255,255,255,.5); }
+  .wx-section-label {
+    font-size: 12px; font-weight: 700; color: rgba(255,255,255,.4);
+    text-transform: uppercase; letter-spacing: .8px;
+    padding: 0 16px 8px;
+  }
+  .wx-section-divider {
+    height: 1px; background: rgba(255,255,255,.08); margin: 4px 16px 14px;
+  }
+  .wx-hourly-scroll {
+    display: flex; overflow-x: auto; gap: 6px; padding: 0 16px 16px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .wx-hourly-scroll::-webkit-scrollbar { display: none; }
+  .wx-hour-card {
+    flex-shrink: 0; width: 60px; border-radius: 14px; padding: 10px 4px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08);
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    font-size: 13px; color: rgba(255,255,255,.85);
+  }
+  .wx-hour-card.now {
+    background: rgba(56,189,248,.18); border-color: rgba(56,189,248,.4);
+  }
+  .wx-hour-time { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 700; }
+  .wx-hour-icon { font-size: 22px; line-height: 1; }
+  .wx-hour-temp { font-family: 'Bebas Neue', sans-serif; font-size: 18px; }
+  .wx-hour-pop  { font-size: 10px; color: #38bdf8; }
+  .wx-day-row {
+    display: flex; align-items: center; padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .wx-day-name { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.85); width: 44px; }
+  .wx-day-icon { font-size: 22px; flex: 1; text-align: center; }
+  .wx-day-temps { display: flex; gap: 8px; font-size: 15px; }
+  .wx-day-hi { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #fff; }
+  .wx-day-lo { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: rgba(255,255,255,.4); }
+  .wx-panel-refresh {
+    text-align: center; padding: 16px;
+    font-size: 12px; color: rgba(255,255,255,.3);
+  }
+
   /* ── WEATHER SCREEN EFFECTS ────────────────────────────────── */
   #wxEffectsOverlay { position:fixed; inset:0; z-index:25500; pointer-events:none; overflow:hidden; display:none; }
   @keyframes wxRainDrop {
@@ -9251,6 +9336,49 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </div>
 
 <!-- ══ WEATHER SCREEN EFFECTS OVERLAY ══ -->
+<!-- ════ WEATHER DETAIL PANEL ════ -->
+<div id="wxDetailPanel">
+  <div class="wx-panel-topbar">
+    <button class="wx-panel-close" onclick="closeWeatherPanel()">✕</button>
+    <div class="wx-panel-location" id="wxPanelLoc">Mi ubicación</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="wx-panel-hero">
+    <div class="wx-panel-icon-big" id="wxPanelIconBig">🌤️</div>
+    <div class="wx-panel-temp-big" id="wxPanelTempBig">--°</div>
+    <div class="wx-panel-desc-big" id="wxPanelDescBig">--</div>
+    <div class="wx-panel-sub">
+      <span>🌡️ Sensación <b id="wxPanelFeels">--°</b></span>
+      <span>💨 <b id="wxPanelWind">--</b> mph</span>
+      <span>💧 <b id="wxPanelHumidity">--%</b></span>
+    </div>
+  </div>
+  <div class="wx-stat-row">
+    <div class="wx-stat-card">
+      <div class="wx-stat-label">Viento</div>
+      <div class="wx-stat-val" id="wxStatWind">--<span class="wx-stat-unit"> mph</span></div>
+    </div>
+    <div class="wx-stat-card">
+      <div class="wx-stat-label">Humedad</div>
+      <div class="wx-stat-val" id="wxStatHumidity">--<span class="wx-stat-unit">%</span></div>
+    </div>
+    <div class="wx-stat-card">
+      <div class="wx-stat-label">Precipitación</div>
+      <div class="wx-stat-val" id="wxStatPrecip">--<span class="wx-stat-unit"> in</span></div>
+    </div>
+    <div class="wx-stat-card">
+      <div class="wx-stat-label">Sensación</div>
+      <div class="wx-stat-val" id="wxStatFeels">--<span class="wx-stat-unit">°F</span></div>
+    </div>
+  </div>
+  <div class="wx-section-label">Próximas 24 horas</div>
+  <div class="wx-hourly-scroll" id="wxHourlyScroll"></div>
+  <div class="wx-section-divider"></div>
+  <div class="wx-section-label">Próximos 7 días</div>
+  <div id="wxDailyList"></div>
+  <div class="wx-panel-refresh" id="wxPanelRefreshTime"></div>
+</div>
+
 <div id="wxEffectsOverlay">
   <div id="wxEffectsCanvas"></div>
   <div class="wx-fx-banner" id="wxFxBanner" style="display:none">
@@ -10781,22 +10909,31 @@ const WX_ICONS_NIGHT = {
   0:'🌙', 1:'🌙', 2:'🌙⛅', 3:'☁️'
 };
 
+let lastWxData = null;
+
 async function fetchWeather(lat, lon) {
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&current=temperature_2m,weather_code,windspeed_10m,precipitation,is_day&wind_speed_unit=mph` +
-      `&temperature_unit=fahrenheit&timezone=auto`;
+      `&current=temperature_2m,weather_code,windspeed_10m,precipitation,is_day,apparent_temperature,relativehumidity_2m` +
+      `&hourly=temperature_2m,weather_code,precipitation_probability&forecast_hours=24` +
+      `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum&forecast_days=7` +
+      `&wind_speed_unit=mph&temperature_unit=fahrenheit&timezone=auto`;
     const r = await fetch(url);
     const d = await r.json();
     const c = d.current;
     const code = c.weather_code ?? c.weathercode ?? 0;
     return {
-      code  : code,
-      temp  : Math.round(c.temperature_2m),
-      wind  : Math.round(c.windspeed_10m),
-      precip: c.precipitation,
-      isDay : c.is_day !== 0,
-      desc  : WX_DESC[code] || 'Unknown'
+      code      : code,
+      temp      : Math.round(c.temperature_2m),
+      wind      : Math.round(c.windspeed_10m),
+      precip    : c.precipitation,
+      isDay     : c.is_day !== 0,
+      desc      : WX_DESC[code] || 'Unknown',
+      feelsLike : Math.round(c.apparent_temperature ?? c.temperature_2m),
+      humidity  : Math.round(c.relativehumidity_2m ?? 0),
+      hourly    : d.hourly || null,
+      daily     : d.daily  || null,
+      fetchedAt : Date.now()
     };
   } catch { return null; }
 }
@@ -10833,6 +10970,7 @@ function refreshDashWeather() {
 
 function updateWeatherWidget(wx) {
   if (!wx) return;
+  lastWxData = wx;
   const isDanger  = WX_DANGER_CODES.has(wx.code);
   const isWarning = WX_WARNING_CODES.has(wx.code);
   const wxIconTxt = (!wx.isDay && WX_ICONS_NIGHT[wx.code]) ? WX_ICONS_NIGHT[wx.code] : (WX_ICONS[wx.code] || '🌡️');
@@ -11134,10 +11272,109 @@ function toggleWeatherMonitor() {
 }
 
 function showWeatherDetail() {
-  if (!weatherActive) return;
-  const desc = document.getElementById('wxDesc').textContent;
-  const temp = document.getElementById('wxTemp').textContent;
-  showToast('info', '🌡️', 'Clima actual', `${desc} · ${temp}`, 6000);
+  openWeatherPanel();
+}
+
+function openWeatherPanel() {
+  const panel = document.getElementById('wxDetailPanel');
+  if (!panel) return;
+  panel.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  _renderWeatherPanel();
+}
+
+function closeWeatherPanel() {
+  const panel = document.getElementById('wxDetailPanel');
+  if (!panel) return;
+  panel.style.animation = 'wxSlideDown .22s cubic-bezier(.32,.72,0,1) forwards';
+  setTimeout(() => {
+    panel.classList.remove('open');
+    panel.style.animation = '';
+    document.body.style.overflow = '';
+  }, 220);
+}
+
+function _renderWeatherPanel() {
+  const wx = lastWxData;
+  const panel = document.getElementById('wxDetailPanel');
+  if (!panel) return;
+
+  // Location label
+  const locEl = document.getElementById('heroWxLoc');
+  document.getElementById('wxPanelLoc').textContent = (locEl && locEl.textContent) ? locEl.textContent : 'Mi ubicación';
+
+  if (!wx) {
+    // No data yet — show loading state then fetch
+    document.getElementById('wxPanelIconBig').textContent = '🌡️';
+    document.getElementById('wxPanelTempBig').textContent = '--°';
+    document.getElementById('wxPanelDescBig').textContent = 'Obteniendo clima…';
+    document.getElementById('wxHourlyScroll').innerHTML = '';
+    document.getElementById('wxDailyList').innerHTML = '';
+    if (weatherActive && !weatherInterval) startWeatherMonitor();
+    return;
+  }
+
+  const icon = (!wx.isDay && WX_ICONS_NIGHT[wx.code]) ? WX_ICONS_NIGHT[wx.code] : (WX_ICONS[wx.code] || '🌡️');
+  document.getElementById('wxPanelIconBig').textContent = icon;
+  document.getElementById('wxPanelTempBig').textContent = `${wx.temp}°`;
+  document.getElementById('wxPanelDescBig').textContent = wx.desc;
+  document.getElementById('wxPanelFeels').textContent   = `${wx.feelsLike}°F`;
+  document.getElementById('wxPanelWind').textContent    = wx.wind;
+  document.getElementById('wxPanelHumidity').textContent = `${wx.humidity}%`;
+
+  // Stat cards
+  document.getElementById('wxStatWind').innerHTML     = `${wx.wind}<span class="wx-stat-unit"> mph</span>`;
+  document.getElementById('wxStatHumidity').innerHTML = `${wx.humidity}<span class="wx-stat-unit">%</span>`;
+  document.getElementById('wxStatPrecip').innerHTML   = `${(wx.precip || 0).toFixed(2)}<span class="wx-stat-unit"> in</span>`;
+  document.getElementById('wxStatFeels').innerHTML    = `${wx.feelsLike}<span class="wx-stat-unit">°F</span>`;
+
+  // Hourly
+  const hourlyEl = document.getElementById('wxHourlyScroll');
+  hourlyEl.innerHTML = '';
+  if (wx.hourly && wx.hourly.time) {
+    const now = new Date();
+    const nowHour = now.getHours();
+    wx.hourly.time.slice(0, 24).forEach((t, i) => {
+      const dt = new Date(t);
+      const h = dt.getHours();
+      const isNow = (i === 0 || (dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth() && dt.getDate() === now.getDate() && h === nowHour));
+      const hCode = wx.hourly.weather_code[i] || 0;
+      const hIcon = (h >= 20 || h < 6) && WX_ICONS_NIGHT[hCode] ? WX_ICONS_NIGHT[hCode] : (WX_ICONS[hCode] || '🌡️');
+      const hTemp = Math.round(wx.hourly.temperature_2m[i]);
+      const pop   = wx.hourly.precipitation_probability ? wx.hourly.precipitation_probability[i] : 0;
+      const label = i === 0 ? 'Ahora' : dt.toLocaleTimeString([], {hour:'numeric',hour12:true});
+      const card = document.createElement('div');
+      card.className = 'wx-hour-card' + (isNow && i === 0 ? ' now' : '');
+      card.innerHTML = `<div class="wx-hour-time">${label}</div><div class="wx-hour-icon">${hIcon}</div><div class="wx-hour-temp">${hTemp}°</div>${pop > 20 ? `<div class="wx-hour-pop">💧${pop}%</div>` : ''}`;
+      hourlyEl.appendChild(card);
+    });
+  }
+
+  // Daily
+  const dailyEl = document.getElementById('wxDailyList');
+  dailyEl.innerHTML = '';
+  if (wx.daily && wx.daily.time) {
+    const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    wx.daily.time.forEach((t, i) => {
+      const dt = new Date(t + 'T12:00:00');
+      const dayLabel = i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : dayNames[dt.getDay()];
+      const dCode = wx.daily.weather_code[i] || 0;
+      const dIcon = WX_ICONS[dCode] || '🌡️';
+      const hi = Math.round(wx.daily.temperature_2m_max[i]);
+      const lo = Math.round(wx.daily.temperature_2m_min[i]);
+      const row = document.createElement('div');
+      row.className = 'wx-day-row';
+      row.innerHTML = `<div class="wx-day-name">${dayLabel}</div><div class="wx-day-icon">${dIcon}</div><div class="wx-day-temps"><span class="wx-day-hi">${hi}°</span><span class="wx-day-lo">${lo}°</span></div>`;
+      dailyEl.appendChild(row);
+    });
+  }
+
+  // Refresh timestamp
+  const rt = document.getElementById('wxPanelRefreshTime');
+  if (rt && wx.fetchedAt) {
+    const m = Math.round((Date.now() - wx.fetchedAt) / 60000);
+    rt.textContent = m < 2 ? 'Actualizado hace un momento' : `Actualizado hace ${m} min`;
+  }
 }
 
 function openNativeWeatherApp() {
