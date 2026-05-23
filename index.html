@@ -28630,6 +28630,12 @@ window._hosAutoRecalc = false;
       _isMoving     = true;
       _sessionStart = new Date();
       if (!_shiftStart){ _shiftStart = new Date(); }
+      // Iniciar ventana 14h sin necesidad de ruta activa
+      if (typeof hosShiftStartTime !== 'undefined' && !hosShiftStartTime) {
+        hosShiftStartTime = Date.now();
+        try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
+        if (typeof update14hCircle === 'function') update14hCircle();
+      }
       _setDuty('EN MOVIMIENTO · ELD', '#00e5a0');
     }
   }
@@ -28830,18 +28836,20 @@ window._hosAutoRecalc = false;
     const arcT = document.getElementById('heroArcTurno');
     if (arcT) arcT.style.strokeDashoffset = '0';
     const valT = document.getElementById('heroValTurno');
-    if (valT) valT.textContent = _connectedAt ? _fmt(_connectedAt) : '--:--';
+    // Mostrar hora de inicio de turno: ELD conectado o primer movimiento GPS
+    const shiftRef = _connectedAt || _shiftStart;
+    if (valT) valT.textContent = shiftRef ? _fmt(shiftRef) : '--:--';
     const subT = document.getElementById('heroTurnoSub');
     if (subT){
       if (_connected) {
         subT.textContent = _isMoving ? `${_eldSpeed} mph` : 'ELD ●';
-        subT.style.color = 'rgba(0,0,0,0.6)';
+        subT.style.color = 'rgba(170,190,210,0.65)';
       } else if (_gpsActive) {
         subT.textContent = _isMoving ? `${_eldSpeed} mph · GPS` : 'GPS ●';
-        subT.style.color = 'rgba(0,0,0,0.6)';
+        subT.style.color = 'rgba(170,190,210,0.65)';
       } else {
         subT.textContent = 'ELD ○';
-        subT.style.color = 'rgba(0,0,0,0.35)';
+        subT.style.color = 'rgba(170,190,210,0.35)';
       }
     }
     const valT2 = document.getElementById('heroValTurno2');
@@ -28928,6 +28936,12 @@ window._hosAutoRecalc = false;
 
   // ── Arranque ──────────────────────────────────────────────
   _load();
+  // Si el tracker interno tiene un turno activo pero hosShiftStartTime no está
+  // sincronizado (p.ej. app reiniciada), alinearlos para que el contador 14h funcione
+  if (_shiftStart && typeof hosShiftStartTime !== 'undefined' && !hosShiftStartTime) {
+    hosShiftStartTime = _shiftStart.getTime();
+    try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
+  }
   _setDuty('SIN ELD', '#6b7280');
   _updateRings();
 
@@ -28940,6 +28954,11 @@ window._hosAutoRecalc = false;
   // Loop: actualizar anillos cada segundo, guardar cada 30s
   setInterval(_updateRings, 1000);
   setInterval(_save, 30000);
+  // Contador de turno 14h siempre activo, con o sin ruta asignada
+  if (typeof update14hCircle === 'function') {
+    update14hCircle();
+    setInterval(update14hCircle, 30000);
+  }
 
   window._hosTracker = {
     driveLeft:     _driveLeft,
