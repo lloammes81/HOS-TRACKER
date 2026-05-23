@@ -16419,6 +16419,9 @@ function _updateRestMode() {
       const cycleLeft = Math.max(0, window._hosTracker.cycleLeft());
       window._hosTracker.setInitialHours(dailyMax, cycleLeft);
     }
+    // Clear the stop timer so the next app start doesn't re-trigger this reset
+    _vehicleStopStartMs = null;
+    try { localStorage.removeItem('hos_stop_start'); } catch(e) {}
     _playRestAlarm();
     showToast('success', '✅',
       lang === 'es' ? '¡Descanso completado!' : 'Rest Complete!',
@@ -28715,6 +28718,11 @@ window._hosAutoRecalc = false;
         hosShiftStartTime = Date.now();
         try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
         if (typeof update14hCircle === 'function') update14hCircle();
+      }
+      // Clear parked-vehicle timer — vehicle is moving so any prior rest period is over
+      if (typeof _vehicleStopStartMs !== 'undefined' && _vehicleStopStartMs) {
+        _vehicleStopStartMs = null;
+        try { localStorage.removeItem('hos_stop_start'); } catch(e) {}
       }
       _setDuty('EN MOVIMIENTO · ELD', '#00e5a0');
     }
