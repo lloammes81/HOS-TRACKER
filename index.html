@@ -1461,6 +1461,100 @@
     font-size: 12px; color: rgba(255,255,255,.3);
   }
 
+  /* ── CALENDAR DETAIL PANEL ─────────────────────────────────── */
+  #calDetailPanel {
+    position: fixed; inset: 0; z-index: 29000;
+    display: none; flex-direction: column;
+    background: linear-gradient(175deg, #0b1e3e 0%, #0f1f3a 50%, #0a1628 100%);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  #calDetailPanel.open { display: flex; animation: wxSlideUp .28s cubic-bezier(.32,.72,0,1); }
+  .cal-panel-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 18px 6px;
+  }
+  .cal-panel-close {
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,.1); color: #fff; font-size: 18px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .cal-month-nav {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .cal-nav-btn {
+    width: 34px; height: 34px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,.1); color: #fff; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .cal-month-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #fff;
+    letter-spacing: 1px; min-width: 160px; text-align: center;
+  }
+  .cal-grid-wrap { padding: 8px 12px 12px; }
+  .cal-dow-row {
+    display: grid; grid-template-columns: repeat(7,1fr);
+    margin-bottom: 4px;
+  }
+  .cal-dow-cell {
+    text-align: center; font-size: 11px; font-weight: 700;
+    color: rgba(255,255,255,.35); padding: 6px 0;
+    text-transform: uppercase; letter-spacing: .5px;
+  }
+  .cal-dow-cell.sun { color: rgba(239,68,68,.5); }
+  .cal-days-grid {
+    display: grid; grid-template-columns: repeat(7,1fr); gap: 3px;
+  }
+  .cal-day-cell {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: 15px; font-weight: 600;
+    color: rgba(255,255,255,.75); cursor: pointer; position: relative;
+    transition: background .15s;
+  }
+  .cal-day-cell:active { background: rgba(255,255,255,.1); }
+  .cal-day-cell.other-month { color: rgba(255,255,255,.18); }
+  .cal-day-cell.today {
+    background: #10b981; color: #fff; font-weight: 900;
+    box-shadow: 0 0 0 2px rgba(16,185,129,.4);
+  }
+  .cal-day-cell.sunday { color: rgba(239,68,68,.7); }
+  .cal-day-cell.sunday.today { color: #fff; }
+  .cal-today-banner {
+    margin: 4px 12px 0; padding: 14px 16px;
+    background: rgba(255,255,255,.05); border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .cal-today-day {
+    font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: #fff; line-height: 1;
+  }
+  .cal-today-full { font-size: 13px; color: rgba(255,255,255,.55); margin-top: 2px; }
+  .cal-today-meta {
+    display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;
+  }
+  .cal-meta-chip {
+    padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    background: rgba(255,255,255,.08); color: rgba(255,255,255,.7);
+    border: 1px solid rgba(255,255,255,.1);
+  }
+  .cal-hos-section {
+    margin: 10px 12px 0; padding: 14px 16px;
+    background: rgba(16,185,129,.07); border-radius: 16px;
+    border: 1px solid rgba(16,185,129,.15);
+  }
+  .cal-hos-title {
+    font-size: 11px; font-weight: 700; color: rgba(16,185,129,.7);
+    text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px;
+  }
+  .cal-hos-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+    font-size: 13px; color: rgba(255,255,255,.75);
+  }
+  .cal-hos-row:last-child { border-bottom: none; }
+  .cal-hos-val {
+    font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #10b981;
+  }
+  .cal-spacer { height: 20px; }
+
   /* ── WEATHER SCREEN EFFECTS ────────────────────────────────── */
   #wxEffectsOverlay { position:fixed; inset:0; z-index:25500; pointer-events:none; overflow:hidden; display:none; }
   @keyframes wxRainDrop {
@@ -6028,13 +6122,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <!-- Right: date card with weather circle outside right side, no top gap -->
       <div id="heroCalendarWrap" style="flex-shrink:0;position:relative;padding-right:30px;">
         <!-- Date card -->
-        <div style="
+        <div onclick="openCalendarPanel()" style="
           background:rgba(8,14,26,.82);
           backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
           border-radius:14px;overflow:hidden;
           border:1px solid rgba(255,255,255,.13);
           box-shadow:0 8px 28px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07);
           text-align:center;padding:10px 18px 10px;
+          cursor:pointer;-webkit-tap-highlight-color:transparent;
         ">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;font-weight:900;color:#fff;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,.9);" id="calDayNum">7</div>
           <div style="font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#10b981;margin-top:1px;" id="calMonthName">MAY</div>
@@ -9336,6 +9431,56 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </div>
 
 <!-- ══ WEATHER SCREEN EFFECTS OVERLAY ══ -->
+<!-- ════ CALENDAR DETAIL PANEL ════ -->
+<div id="calDetailPanel">
+  <div class="cal-panel-topbar">
+    <button class="cal-panel-close" onclick="closeCalendarPanel()">✕</button>
+    <div class="cal-month-nav">
+      <button class="cal-nav-btn" onclick="_calPrevMonth()">‹</button>
+      <div class="cal-month-title" id="calPanelTitle">MAY 2026</div>
+      <button class="cal-nav-btn" onclick="_calNextMonth()">›</button>
+    </div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="cal-grid-wrap">
+    <div class="cal-dow-row">
+      <div class="cal-dow-cell sun">Dom</div>
+      <div class="cal-dow-cell">Lun</div>
+      <div class="cal-dow-cell">Mar</div>
+      <div class="cal-dow-cell">Mié</div>
+      <div class="cal-dow-cell">Jue</div>
+      <div class="cal-dow-cell">Vie</div>
+      <div class="cal-dow-cell">Sáb</div>
+    </div>
+    <div class="cal-days-grid" id="calDaysGrid"></div>
+  </div>
+  <div class="cal-today-banner">
+    <div class="cal-today-day" id="calTodayNum">23</div>
+    <div class="cal-today-full" id="calTodayFull">viernes, 23 de mayo de 2026</div>
+    <div class="cal-today-meta" id="calTodayMeta"></div>
+  </div>
+  <div class="cal-hos-section">
+    <div class="cal-hos-title">⏱ Resumen HOS</div>
+    <div class="cal-hos-row">
+      <span>Horas conducción hoy</span>
+      <span class="cal-hos-val" id="calHosDrive">--h</span>
+    </div>
+    <div class="cal-hos-row">
+      <span>Horas restantes (11h)</span>
+      <span class="cal-hos-val" id="calHosLeft">--h</span>
+    </div>
+    <div class="cal-hos-row">
+      <span>Ciclo restante (70h/8d)</span>
+      <span class="cal-hos-val" id="calHosCycle">--h</span>
+    </div>
+    <div class="cal-hos-row">
+      <span>Inicio de turno</span>
+      <span class="cal-hos-val" id="calHosShift">--</span>
+    </div>
+  </div>
+  <div class="cal-spacer"></div>
+</div>
+
 <!-- ════ WEATHER DETAIL PANEL ════ -->
 <div id="wxDetailPanel">
   <div class="wx-panel-topbar">
@@ -11411,6 +11556,121 @@ function _renderWeatherPanel() {
 
 function openNativeWeatherApp() {
   openWeatherPanel();
+}
+
+/* ════════════════════════════════════════════════════════════
+   📅  CALENDAR PANEL
+════════════════════════════════════════════════════════════ */
+let _calViewYear  = null;
+let _calViewMonth = null;
+
+function openCalendarPanel() {
+  const now = new Date();
+  _calViewYear  = now.getFullYear();
+  _calViewMonth = now.getMonth();
+  const panel = document.getElementById('calDetailPanel');
+  if (!panel) return;
+  panel.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  _renderCalendarPanel();
+}
+
+function closeCalendarPanel() {
+  const panel = document.getElementById('calDetailPanel');
+  if (!panel) return;
+  panel.style.animation = 'wxSlideDown .22s cubic-bezier(.32,.72,0,1) forwards';
+  setTimeout(() => {
+    panel.classList.remove('open');
+    panel.style.animation = '';
+    document.body.style.overflow = '';
+  }, 220);
+}
+
+function _calPrevMonth() {
+  if (_calViewMonth === 0) { _calViewMonth = 11; _calViewYear--; }
+  else { _calViewMonth--; }
+  _renderCalendarPanel();
+}
+
+function _calNextMonth() {
+  if (_calViewMonth === 11) { _calViewMonth = 0; _calViewYear++; }
+  else { _calViewMonth++; }
+  _renderCalendarPanel();
+}
+
+function _renderCalendarPanel() {
+  const today = new Date();
+  const todayY = today.getFullYear(), todayM = today.getMonth(), todayD = today.getDate();
+  const viewY  = _calViewYear  ?? todayY;
+  const viewM  = _calViewMonth ?? todayM;
+
+  const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DAYS_ES   = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+  // Header
+  document.getElementById('calPanelTitle').textContent = `${MONTHS_ES[viewM].toUpperCase()} ${viewY}`;
+
+  // Calendar grid
+  const grid = document.getElementById('calDaysGrid');
+  grid.innerHTML = '';
+  const firstDay  = new Date(viewY, viewM, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
+  const daysInPrev  = new Date(viewY, viewM, 0).getDate();
+
+  // Previous month tail
+  for (let i = 0; i < firstDay; i++) {
+    const d = daysInPrev - firstDay + 1 + i;
+    const cell = document.createElement('div');
+    cell.className = 'cal-day-cell other-month';
+    cell.textContent = d;
+    grid.appendChild(cell);
+  }
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow  = new Date(viewY, viewM, d).getDay();
+    const isToday = (d === todayD && viewM === todayM && viewY === todayY);
+    const cell = document.createElement('div');
+    cell.className = 'cal-day-cell' + (isToday ? ' today' : '') + (dow === 0 && !isToday ? ' sunday' : '');
+    cell.textContent = d;
+    grid.appendChild(cell);
+  }
+  // Next month head
+  const total = firstDay + daysInMonth;
+  const remainder = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 1; i <= remainder; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-day-cell other-month';
+    cell.textContent = i;
+    grid.appendChild(cell);
+  }
+
+  // Today banner
+  document.getElementById('calTodayNum').textContent  = todayD;
+  document.getElementById('calTodayFull').textContent =
+    `${DAYS_ES[today.getDay()]}, ${todayD} de ${MONTHS_ES[todayM].toLowerCase()} de ${todayY}`;
+
+  // Meta chips
+  const weekNum = Math.ceil((todayD + new Date(todayY, todayM, 1).getDay()) / 7);
+  const startOfYear = new Date(todayY, 0, 0);
+  const dayOfYear = Math.floor((today - startOfYear) / 86400000);
+  const meta = document.getElementById('calTodayMeta');
+  meta.innerHTML = `
+    <div class="cal-meta-chip">Semana ${weekNum}</div>
+    <div class="cal-meta-chip">Día ${dayOfYear} del año</div>
+    <div class="cal-meta-chip">${daysInMonth - todayD} días restantes del mes</div>`;
+
+  // HOS data
+  const driveLeft  = window._hosTracker ? window._hosTracker.driveLeft()  : null;
+  const cycleLeft  = window._hosTracker ? window._hosTracker.cycleLeft()  : null;
+  const driveUsed  = (driveLeft != null) ? Math.max(0, 11 - driveLeft) : null;
+  const shiftStart = typeof hosShiftStartTime !== 'undefined' && hosShiftStartTime
+    ? new Date(hosShiftStartTime).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
+    : '--';
+
+  document.getElementById('calHosDrive').textContent = driveUsed != null ? `${driveUsed.toFixed(1)}h` : '--';
+  document.getElementById('calHosLeft').textContent  = driveLeft != null ? `${Math.max(0,driveLeft).toFixed(1)}h` : '--';
+  document.getElementById('calHosCycle').textContent = cycleLeft != null ? `${Math.max(0,cycleLeft).toFixed(0)}h` : '--';
+  document.getElementById('calHosShift').textContent = shiftStart;
 }
 
 /* ════════════════════════════════════════════════════════════
