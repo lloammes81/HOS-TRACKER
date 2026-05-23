@@ -22930,53 +22930,27 @@ function _addTruckStopToRoute(name, lat, lon) {
   }
 }
 
-async function searchNearbyPOI(type) {
-  const overlay  = document.getElementById('nearbyPoiOverlay');
-  const iconEl   = document.getElementById('nearbyPoiIcon');
-  const titleEl  = document.getElementById('nearbyPoiTitle');
-  const subEl    = document.getElementById('nearbyPoiSub');
-  const list     = document.getElementById('nearbyPoiList');
+// ── POI result cache (localStorage, 4-hour TTL) ────────────────────────────
+const _POI_CACHE_TTL = 4 * 60 * 60 * 1000;
 
-  const isTruck  = type === 'truck';
-  const isScale  = type === 'weighstation';
-  const poiIcon  = isTruck ? '🚛' : isScale ? '⚖️' : '🅿️';
-  const poiGrad  = isTruck
-    ? 'linear-gradient(135deg,#10b981,#059669)'
-    : isScale
-      ? 'linear-gradient(135deg,#ea580c,#c2410c)'
-      : 'linear-gradient(135deg,#6366f1,#4f46e5)';
-  const poiTitle = isTruck ? 'Truck Stops Cercanos' : isScale ? 'Weigh Stations Cercanas' : 'Parqueos Cercanos';
-  iconEl.textContent      = poiIcon;
-  iconEl.style.background = poiGrad;
-  titleEl.textContent     = poiTitle;
-  subEl.textContent   = 'Buscando…';
-  list.innerHTML      = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">⏳ Obteniendo ubicación…</div>';
-  overlay.classList.add('open');
-
-  let lat, lon;
+function _poiCacheKey(type, lat, lon) {
+  return `poi_v1_${type}_${(lat * 2).toFixed(0)}_${(lon * 2).toFixed(0)}`;
+}
+function _poiCacheGet(type, lat, lon) {
   try {
-    const pos = await getGPSPosition(4000, 10000);
-    lat = pos.coords.latitude; lon = pos.coords.longitude;
-  } catch {
-    // Fallback: last GPS fix from internal tracker, then route origin
-    const fix = window.lastFixFm;
-    if (fix && fix.lat) { lat = fix.lat; lon = fix.lon; }
-    else if (origin && origin.lat) { lat = origin.lat; lon = origin.lon; }
-    else {
-      list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">📍 GPS necesario.<br><br><button onclick="searchNearbyPOI(\'' + type + '\')" style="margin-top:8px;padding:10px 20px;background:#10b981;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🔄 Reintentar</button></div>';
-      subEl.textContent = 'GPS no disponible';
-      return;
-    }
-  }
+    const raw = localStorage.getItem(_poiCacheKey(type, lat, lon));
+    if (!raw) return null;
+    const c = JSON.parse(raw);
+    return Date.now() - c.ts > _POI_CACHE_TTL ? null : c;
+  } catch { return null; }
+}
+function _poiCacheSet(type, lat, lon, elements) {
+  try { localStorage.setItem(_poiCacheKey(type, lat, lon), JSON.stringify({ ts: Date.now(), elements })); } catch(e) {}
+}
 
-  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">⏳ Consultando base de datos…</div>';
-  subEl.textContent = `Buscando a ${lat.toFixed(3)}, ${lon.toFixed(3)}…`;
-
-  const r = 160934; // 100 miles in meters
-  let query;
-
-  if (isTruck) {
-    query = `[out:json][timeout:30];
+function _buildPoiQuery(type, lat, lon) {
+  const r = 160934;
+  if (type === 'truck') return `[out:json][timeout:30];
 (
   node["amenity"="truck_stop"](around:${r},${lat},${lon});
   node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
@@ -22986,8 +22960,7 @@ async function searchNearbyPOI(type) {
   way["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
 );
 out center qt;`;
-  } else if (isScale) {
-    query = `[out:json][timeout:30];
+  if (type === 'weighstation') return `[out:json][timeout:30];
 (
   node["amenity"="weigh_station"](around:${r},${lat},${lon});
   node["highway"="weigh_station"](around:${r},${lat},${lon});
@@ -22996,8 +22969,7 @@ out center qt;`;
   node["man_made"="weigh_scale"](around:${r},${lat},${lon});
 );
 out center qt;`;
-  } else {
-    query = `[out:json][timeout:30];
+  return `[out:json][timeout:30];
 (
   node["amenity"="parking"]["hgv"="yes"](around:${r},${lat},${lon});
   node["amenity"="parking"]["truck"="yes"](around:${r},${lat},${lon});
@@ -23008,101 +22980,153 @@ out center qt;`;
   node["name"~"rest area|rest stop|travel plaza|weigh station",i](around:${r},${lat},${lon});
 );
 out center qt;`;
+}
+
+function _renderPoiElements(list, subEl, type, lat, lon, rawEls, poiIcon, isTruck, isScale, cacheTs) {
+  const seen = new Set();
+  const els = (rawEls || []).filter(el => {
+    const elLat = el.lat ?? el.center?.lat;
+    const elLon = el.lon ?? el.center?.lon;
+    if (!elLat || !elLon) return false;
+    const k = `${elLat.toFixed(3)}_${elLon.toFixed(3)}_${el.tags?.name || ''}`;
+    if (seen.has(k)) return false; seen.add(k); return true;
+  });
+  els.sort((a, b) => {
+    const aLat = a.lat ?? a.center?.lat, aLon = a.lon ?? a.center?.lon;
+    const bLat = b.lat ?? b.center?.lat, bLon = b.lon ?? b.center?.lon;
+    return haversine(lat, lon, aLat, aLon) - haversine(lat, lon, bLat, bLon);
+  });
+
+  if (!els.length) {
+    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:48px;margin-bottom:12px">${poiIcon}</div>
+      <div style="font-size:15px;font-weight:700">Sin resultados en 100 millas</div>
+      <div style="font-size:12px;margin-top:6px">Verifica tu conexión o amplía la búsqueda</div>
+    </div>`;
+    subEl.textContent = 'Sin resultados';
+    return;
   }
 
+  const cacheLabel = cacheTs
+    ? (() => { const m = Math.round((Date.now() - cacheTs) / 60000); return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`; })()
+    : null;
+  subEl.textContent = `${els.length} encontrados · 100 mi${cacheLabel ? ` · 🗃️ ${cacheLabel} atrás` : ''}`;
+
+  const gmQuery = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
+  const gmUrl   = `https://www.google.com/maps/search/${gmQuery}/@${lat},${lon},12z`;
+  list.innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(66,133,244,.15);border:1px solid rgba(66,133,244,.3);border-radius:12px;color:#4285f4;font-size:13px;font-weight:700;text-decoration:none">
+        🗺️ Google Maps
+      </a>
+      <a href="https://truckerpath.com/" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
+        🚛 Trucker Path
+      </a>
+    </div>`;
+
+  els.forEach(el => {
+    const elLat  = el.lat ?? el.center?.lat;
+    const elLon  = el.lon ?? el.center?.lon;
+    const distMi = haversine(lat, lon, elLat, elLon).toFixed(1);
+    const distKm = (haversine(lat, lon, elLat, elLon) * 1.60934).toFixed(1);
+    const name   = el.tags?.name || el.tags?.operator || (isTruck ? 'Truck Stop' : isScale ? 'Weigh Station' : 'Parqueo');
+    const streetLn  = [el.tags?.['addr:housenumber'], el.tags?.['addr:street']].filter(Boolean).join(' ');
+    const addrParts = [streetLn, el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean);
+    const fullAddr  = addrParts.join(', ');
+    const cap       = el.tags?.['capacity:hgv'] || el.tags?.capacity || '';
+    const city      = [el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean).join(', ');
+    const meta      = fullAddr || city || (cap ? `Capacidad: ${cap} trucks` : (isTruck ? 'Parada de trucks' : isScale ? 'Báscula DOT' : 'Estacionamiento'));
+    const genericNames = ['Truck Stop','Weigh Station','Parqueo'];
+    let navDest;
+    if (addrParts.length >= 2) { navDest = encodeURIComponent(fullAddr); }
+    else if (name && !genericNames.includes(name)) { navDest = encodeURIComponent(city ? `${name}, ${city}` : name); }
+    else { navDest = `${elLat},${elLon}`; }
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${navDest}&travelmode=driving`;
+
+    const card = document.createElement('div');
+    card.className = 'poi-card';
+    if (isTruck) { card.onclick = () => _addTruckStopToRoute(name, elLat, elLon); }
+    else { card.onclick = () => window.open(mapsUrl, '_blank'); }
+    card.innerHTML = `
+      <div class="poi-card-icon">${poiIcon}</div>
+      <div class="poi-card-info">
+        <div class="poi-card-name">${name}</div>
+        <div class="poi-card-meta">${meta}</div>
+      </div>
+      <div class="poi-card-dist">${distMi} mi<div style="font-size:10px;color:var(--muted)">${distKm} km</div>${isTruck ? '<div style="font-size:10px;color:#10b981;font-weight:700;margin-top:2px">➕ A la ruta</div>' : ''}</div>`;
+    list.appendChild(card);
+  });
+}
+
+async function _refreshPoiBackground(type, lat, lon, poiIcon, isTruck, isScale, list, subEl) {
   try {
-    const data = await overpassFetch(query, 40000);
+    const data = await overpassFetch(_buildPoiQuery(type, lat, lon), 40000);
+    _poiCacheSet(type, lat, lon, data.elements || []);
+    _renderPoiElements(list, subEl, type, lat, lon, data.elements || [], poiIcon, isTruck, isScale, null);
+  } catch(e) { /* cached results stay visible */ }
+}
 
-    // Deduplicate
-    const seen = new Set();
-    const els = (data.elements || []).filter(el => {
-      const elLat = el.lat ?? el.center?.lat;
-      const elLon = el.lon ?? el.center?.lon;
-      if (!elLat || !elLon) return false;
-      const k = `${elLat.toFixed(3)}_${elLon.toFixed(3)}_${el.tags?.name || ''}`;
-      if (seen.has(k)) return false; seen.add(k); return true;
-    });
+async function searchNearbyPOI(type) {
+  const overlay = document.getElementById('nearbyPoiOverlay');
+  const iconEl  = document.getElementById('nearbyPoiIcon');
+  const titleEl = document.getElementById('nearbyPoiTitle');
+  const subEl   = document.getElementById('nearbyPoiSub');
+  const list    = document.getElementById('nearbyPoiList');
 
-    // Sort by distance
-    els.sort((a, b) => {
-      const aLat = a.lat ?? a.center?.lat, aLon = a.lon ?? a.center?.lon;
-      const bLat = b.lat ?? b.center?.lat, bLon = b.lon ?? b.center?.lon;
-      return haversine(lat, lon, aLat, aLon) - haversine(lat, lon, bLat, bLon);
-    });
+  const isTruck = type === 'truck';
+  const isScale = type === 'weighstation';
+  const poiIcon = isTruck ? '🚛' : isScale ? '⚖️' : '🅿️';
+  const poiGrad = isTruck ? 'linear-gradient(135deg,#10b981,#059669)' : isScale ? 'linear-gradient(135deg,#ea580c,#c2410c)' : 'linear-gradient(135deg,#6366f1,#4f46e5)';
+  const poiTitle = isTruck ? 'Truck Stops Cercanos' : isScale ? 'Weigh Stations Cercanas' : 'Parqueos Cercanos';
 
-    if (!els.length) {
-      list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
-        <div style="font-size:48px;margin-bottom:12px">${poiIcon}</div>
-        <div style="font-size:15px;font-weight:700">Sin resultados en 100 millas</div>
-        <div style="font-size:12px;margin-top:6px">Verifica tu conexión o amplía la búsqueda</div>
-      </div>`;
-      subEl.textContent = 'Sin resultados';
+  iconEl.textContent      = poiIcon;
+  iconEl.style.background = poiGrad;
+  titleEl.textContent     = poiTitle;
+  subEl.textContent       = 'Obteniendo ubicación…';
+  list.innerHTML          = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">📍 Obteniendo ubicación…</div>';
+  overlay.classList.add('open');
+
+  let lat, lon;
+  try {
+    const pos = await getGPSPosition(4000, 10000);
+    lat = pos.coords.latitude; lon = pos.coords.longitude;
+  } catch {
+    const fix = window.lastFixFm;
+    if (fix && fix.lat) { lat = fix.lat; lon = fix.lon; }
+    else if (origin && origin.lat) { lat = origin.lat; lon = origin.lon; }
+    else {
+      list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">📍 GPS necesario.<br><br><button onclick="searchNearbyPOI(\'' + type + '\')" style="margin-top:8px;padding:10px 20px;background:#10b981;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🔄 Reintentar</button></div>';
+      subEl.textContent = 'GPS no disponible';
       return;
     }
+  }
 
-    subEl.textContent = `${els.length} encontrados · 100 mi`;
+  // Serve from cache instantly if available
+  const cached = _poiCacheGet(type, lat, lon);
+  if (cached && cached.elements && cached.elements.length) {
+    _renderPoiElements(list, subEl, type, lat, lon, cached.elements, poiIcon, isTruck, isScale, cached.ts);
+    // Silently refresh in background when cache is over 1 hour old
+    if (Date.now() - cached.ts > 60 * 60 * 1000) {
+      _refreshPoiBackground(type, lat, lon, poiIcon, isTruck, isScale, list, subEl);
+    }
+    return;
+  }
 
-    const gmQuery = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
-    const gmUrl   = `https://www.google.com/maps/search/${gmQuery}/@${lat},${lon},12z`;
-    list.innerHTML = `
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(66,133,244,.15);border:1px solid rgba(66,133,244,.3);border-radius:12px;color:#4285f4;font-size:13px;font-weight:700;text-decoration:none">
-          🗺️ Google Maps
-        </a>
-        <a href="https://truckerpath.com/" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
-          🚛 Trucker Path
-        </a>
-      </div>`;
+  // First-time search: fetch from Overpass and cache the result
+  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">⏳ Consultando base de datos…<br><span style="font-size:11px;display:block;margin-top:6px;opacity:.7">La próxima búsqueda será instantánea ⚡</span></div>';
+  subEl.textContent = `Buscando a ${lat.toFixed(3)}, ${lon.toFixed(3)}…`;
 
-    els.forEach(el => {
-      const elLat  = el.lat ?? el.center?.lat;
-      const elLon  = el.lon ?? el.center?.lon;
-      const distMi = haversine(lat, lon, elLat, elLon).toFixed(1);
-      const distKm = (haversine(lat, lon, elLat, elLon) * 1.60934).toFixed(1);
-      const name   = el.tags?.name || el.tags?.operator || (isTruck ? 'Truck Stop' : isScale ? 'Weigh Station' : 'Parqueo');
-      const city   = [el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean).join(', ');
-      const cap      = el.tags?.['capacity:hgv'] || el.tags?.capacity || '';
-      const streetLn = [el.tags?.['addr:housenumber'], el.tags?.['addr:street']].filter(Boolean).join(' ');
-      const addrParts = [streetLn, el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean);
-      const fullAddr  = addrParts.join(', ');
-      const meta      = fullAddr || city || (cap ? `Capacidad: ${cap} trucks` : (isTruck ? 'Parada de trucks' : isScale ? 'Báscula DOT' : 'Estacionamiento'));
-
-      // Navigate by address when available, otherwise by name+city, fallback to coords
-      const genericNames = ['Truck Stop','Weigh Station','Parqueo'];
-      let navDest;
-      if (addrParts.length >= 2) {
-        navDest = encodeURIComponent(fullAddr);
-      } else if (name && !genericNames.includes(name)) {
-        navDest = encodeURIComponent(city ? `${name}, ${city}` : name);
-      } else {
-        navDest = `${elLat},${elLon}`;
-      }
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${navDest}&travelmode=driving`;
-      const icon   = poiIcon;
-
-      const card = document.createElement('div');
-      card.className = 'poi-card';
-      if (isTruck) {
-        card.onclick = () => _addTruckStopToRoute(name, elLat, elLon);
-      } else {
-        card.onclick = () => window.open(mapsUrl, '_blank');
-      }
-      card.innerHTML = `
-        <div class="poi-card-icon">${icon}</div>
-        <div class="poi-card-info">
-          <div class="poi-card-name">${name}</div>
-          <div class="poi-card-meta">${meta}</div>
-        </div>
-        <div class="poi-card-dist">${distMi} mi<div style="font-size:10px;color:var(--muted)">${distKm} km</div>${isTruck ? '<div style="font-size:10px;color:#10b981;font-weight:700;margin-top:2px">➕ A la ruta</div>' : ''}</div>`;
-      list.appendChild(card);
-    });
-
-    showToast('success', poiIcon,
-      `${els.length} ${isTruck ? 'truck stops' : isScale ? 'weigh stations' : 'parqueos'}`,
-      isTruck ? 'Toca uno para agregar a tu ruta' : 'Toca uno para navegar', 3500);
-
+  try {
+    const data = await overpassFetch(_buildPoiQuery(type, lat, lon), 40000);
+    _poiCacheSet(type, lat, lon, data.elements || []);
+    _renderPoiElements(list, subEl, type, lat, lon, data.elements || [], poiIcon, isTruck, isScale, null);
+    if ((data.elements || []).length) {
+      showToast('success', poiIcon,
+        `${(data.elements || []).length} ${isTruck ? 'truck stops' : isScale ? 'weigh stations' : 'parqueos'}`,
+        isTruck ? 'Toca uno para agregar a tu ruta' : 'Toca uno para navegar', 3500);
+    }
   } catch(e) {
-    const gmQ = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
+    const gmQ  = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
     const gmFb = lat ? `https://www.google.com/maps/search/${gmQ}/@${lat},${lon},11z` : `https://www.google.com/maps/search/${gmQ}`;
     list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted)">
       <div style="font-size:36px;margin-bottom:12px">⚠️</div>
