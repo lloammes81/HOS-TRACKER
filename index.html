@@ -5689,7 +5689,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
     -webkit-tap-highlight-color: transparent;
   }
   .poi-card:active { background: rgba(255,255,255,.07); }
-  .poi-card-icon { font-size: 26px; flex-shrink: 0; }
+  .poi-card-icon { font-size: 26px; flex-shrink: 0; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; }
   .poi-card-info { flex: 1; min-width: 0; }
   .poi-card-name { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .poi-card-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
@@ -23055,6 +23055,46 @@ out center qt;`;
 out center qt;`;
 }
 
+function _poiBrandBadge(name, operator, brand) {
+  const src = [name, operator, brand].filter(Boolean).join(' ').toLowerCase();
+  const BRANDS = [
+    [/pilot|flying\s*j|pfj/,                         'PFJ',   '#E31837', '#fff'   ],
+    [/love'?s|loves\s*travel/,                        'LVS',   '#D81E2C', '#fff'   ],
+    [/\bta[\s-]petro\b|\bta\s*travel|\btravelcenter/, 'TA',    '#003087', '#fff'   ],
+    [/\bpetro\s*(stopping|station)?\b/,               'PETRO', '#C8102E', '#fff'   ],
+    [/sapp\s*bros?/,                                  'SAPP',  '#2E7D32', '#fff'   ],
+    [/kwik[\s-]?trip|kwik[\s-]?star/,                 'KT',    '#D32F2F', '#fff'   ],
+    [/casey'?s/,                                      'CAS',   '#B71C1C', '#fff'   ],
+    [/sheetz/,                                        'SHZ',   '#C8102E', '#fff'   ],
+    [/\bwawa\b/,                                      'WAWA',  '#E2231A', '#fff'   ],
+    [/ambest/,                                        'AMB',   '#E65100', '#fff'   ],
+    [/roady'?s/,                                      'ROD',   '#1565C0', '#fff'   ],
+    [/sinclair/,                                      'SNC',   '#2E7D32', '#fff'   ],
+    [/\bvalero\b/,                                    'VAL',   '#003087', '#FFD700'],
+    [/\bmarathon\b/,                                  'MARA',  '#003087', '#FFD700'],
+    [/circle[\s-]?k/,                                 'CK',    '#C8102E', '#fff'   ],
+    [/\bshell\b/,                                     'SHEL',  '#FFD700', '#E31837'],
+    [/\bchevron\b/,                                   'CVX',   '#003087', '#E31837'],
+    [/\bbp\b/,                                        'BP',    '#009900', '#FFD700'],
+    [/speedway/,                                      'SPD',   '#D32F2F', '#fff'   ],
+    [/truck[\s-]?world/,                              'TW',    '#F57C00', '#fff'   ],
+    [/i[\s-]?travel|itravel/,                         'ITR',   '#6A1B9A', '#fff'   ],
+    [/blue\s*beacon/,                                 'BB',    '#1565C0', '#fff'   ],
+    [/\bironman\b/,                                   'IRM',   '#B71C1C', '#fff'   ],
+    [/\bdairy\s*mart\b/,                              'DM',    '#1B5E20', '#fff'   ],
+    [/\bcomfort[\s-]?inn|days\s*inn|holiday\s*inn/,   '🏨',    null,      null     ],
+  ];
+  for (const [re, abbr, bg, fg] of BRANDS) {
+    if (re.test(src)) {
+      if (!bg) return null;
+      const fs = abbr.length <= 2 ? 22 : abbr.length === 3 ? 16 : 12;
+      const cy = abbr.length <= 2 ? 31 : abbr.length === 3 ? 30 : 29;
+      return `<svg width="46" height="46" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect width="46" height="46" rx="10" fill="${bg}"/><text x="23" y="${cy}" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="${fs}" fill="${fg}">${abbr}</text></svg>`;
+    }
+  }
+  return null;
+}
+
 function _renderPoiElements(list, subEl, type, lat, lon, rawEls, poiIcon, isTruck, isScale, cacheTs) {
   const seen = new Set();
   const els = (rawEls || []).filter(el => {
@@ -23120,8 +23160,9 @@ function _renderPoiElements(list, subEl, type, lat, lon, rawEls, poiIcon, isTruc
     card.className = 'poi-card';
     if (isTruck) { card.onclick = () => _addTruckStopToRoute(name, elLat, elLon); }
     else { card.onclick = () => window.open(mapsUrl, '_blank'); }
+    const cardIcon = isTruck ? (_poiBrandBadge(name, el.tags?.operator, el.tags?.brand) || poiIcon) : poiIcon;
     card.innerHTML = `
-      <div class="poi-card-icon">${poiIcon}</div>
+      <div class="poi-card-icon">${cardIcon}</div>
       <div class="poi-card-info">
         <div class="poi-card-name">${name}</div>
         <div class="poi-card-meta">${meta}</div>
