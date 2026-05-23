@@ -26529,16 +26529,33 @@ window._hosAutoRecalc = false;
     const inp     = document.getElementById('hosStep2Input');
     const err     = document.getElementById('hosStep2Error');
     if (err) err.style.display = 'none';
-    // Pre-llenar con valor actual del tracker (si existe), sino 70
+
+    // Siempre usar el valor actual del anillo CICLO como valor por defecto
     const tCycle = window._hosTracker?.cycleLeft?.();
-    const preVal = (tCycle != null && tCycle > 0 && tCycle < 70)
+    const preVal = (tCycle != null && tCycle >= 0)
       ? Math.max(1, Math.min(70, Math.round(tCycle)))
       : 70;
+    window._hosPopup2Default = preVal; // guardado para detectar cambios
+
     if (inp) inp.value = preVal;
     const d2 = document.getElementById('hosStep2Display');
     if (d2) d2.textContent = preVal;
     _hosUpdateWeeklyBar(preVal);
     _hosUpdateStepperBtns(2, preVal);
+
+    // Indicador de origen del valor (anillo CICLO)
+    let ringBadge2 = document.getElementById('hosRingBadge2');
+    if (!ringBadge2) {
+      ringBadge2 = document.createElement('div');
+      ringBadge2.id = 'hosRingBadge2';
+      ringBadge2.style.cssText = 'margin:10px 0 0;padding:7px 12px;background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.3);border-radius:10px;font-size:11px;color:#a78bfa;text-align:center;line-height:1.4;';
+      const card = document.querySelector('#hosPopup2 .hos-popup-card');
+      const btn = card?.querySelector('.hos-popup-btn');
+      if (btn) card.insertBefore(ringBadge2, btn);
+    }
+    ringBadge2.textContent = `📊 Anillo CICLO: ${preVal}h restantes — cambia solo si es diferente`;
+    ringBadge2.style.display = 'block';
+
     if (overlay) overlay.classList.add('active');
   }
 
@@ -26594,6 +26611,18 @@ window._hosAutoRecalc = false;
       return;
     }
     err.style.display = 'none';
+
+    // Notificar si el conductor cambió el valor del anillo
+    const def2 = window._hosPopup2Default;
+    if (def2 != null && Math.abs(val - def2) >= 1 && typeof showToast === 'function') {
+      showToast('info', '✏️',
+        lang === 'es' ? 'Ciclo ajustado manualmente' : 'Cycle manually adjusted',
+        lang === 'es'
+          ? `Anillo CICLO mostraba ${def2}h · ingresaste ${val}h`
+          : `CYCLE ring showed ${def2}h · you entered ${val}h`,
+        5000);
+    }
+
     document.getElementById('hoursInput').value = val;
     document.getElementById('hosPopup2').classList.remove('active');
     _hosOpenPopup3();
@@ -26804,22 +26833,39 @@ window._hosAutoRecalc = false;
     const inp = document.getElementById('hosStep1Input');
     const err = document.getElementById('hosStep1Error');
     if (err) err.style.display = 'none';
+
+    // Siempre usar el valor actual del anillo MANEJO como valor por defecto
+    const tDrive = window._hosTracker?.driveLeft?.();
+    const preVal = (tDrive != null && tDrive >= 0)
+      ? Math.min(11, Math.max(0.5, Math.round(tDrive * 10) / 10))
+      : 11;
+    window._hosPopup1Default = preVal; // guardado para detectar cambios
+
     if (inp) {
-      // Pre-llenar con valor actual del tracker (si existe), sino 11
-      const tDrive = window._hosTracker?.driveLeft?.();
-      const preVal = (tDrive != null && tDrive > 0 && tDrive < 11)
-        ? (Math.round(tDrive * 10) / 10)
-        : 11;
       inp.value = preVal;
       const d1 = document.getElementById('hosStep1Display');
       if (d1) d1.textContent = preVal;
       if (typeof _hosUpdateStepperBtns === 'function') _hosUpdateStepperBtns(1, preVal);
       setTimeout(() => inp.select(), 80);
     }
+
+    // Indicador de origen del valor (anillo MANEJO)
+    let ringBadge1 = document.getElementById('hosRingBadge1');
+    if (!ringBadge1) {
+      ringBadge1 = document.createElement('div');
+      ringBadge1.id = 'hosRingBadge1';
+      ringBadge1.style.cssText = 'margin:10px 0 0;padding:7px 12px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:10px;font-size:11px;color:#10b981;text-align:center;line-height:1.4;';
+      const card = document.querySelector('#hosPopup1 .hos-popup-card');
+      const btn = card?.querySelector('.hos-popup-btn');
+      if (btn) card.insertBefore(ringBadge1, btn);
+    }
+    ringBadge1.textContent = `📊 Anillo MANEJO: ${preVal}h disponibles — cambia solo si es diferente`;
+    ringBadge1.style.display = 'block';
+
     if (overlay) overlay.classList.add('active');
   };
 
-  // ── Override step1Submit para saltar popup 2 si ciclo guardado ─
+  // ── Override step1Submit — notificar si el conductor cambió el valor ─
   window._hosStep1Submit = function() {
     const inp = document.getElementById('hosStep1Input');
     const err = document.getElementById('hosStep1Error');
@@ -26828,6 +26874,18 @@ window._hosAutoRecalc = false;
       err.style.display = 'block'; inp.focus(); return;
     }
     err.style.display = 'none';
+
+    // Notificar si el conductor cambió el valor del anillo
+    const def1 = window._hosPopup1Default;
+    if (def1 != null && Math.abs(val - def1) >= 0.5 && typeof showToast === 'function') {
+      showToast('info', '✏️',
+        lang === 'es' ? 'Horas ajustadas manualmente' : 'Hours manually adjusted',
+        lang === 'es'
+          ? `Anillo MANEJO mostraba ${def1}h · ingresaste ${val}h`
+          : `DRIVE ring showed ${def1}h · you entered ${val}h`,
+        5000);
+    }
+
     document.getElementById('dailyHoursInput').value = val;
     document.getElementById('hosPopup1').classList.remove('active');
     const saved = _hosLoadCycleState();
