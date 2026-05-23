@@ -1377,15 +1377,27 @@
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
 
   /* ── WEATHER DETAIL PANEL ──────────────────────────────────── */
+  /* ── SHARED PANEL BACKDROP ────────────────────────────────── */
+  #panelBackdrop {
+    display: none; position: fixed; inset: 0; z-index: 28998;
+    background: rgba(0,0,0,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  #panelBackdrop.show { display: block; animation: panelFadeIn .22s ease; }
+  @keyframes panelFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes panelFadeOut { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes panelModalIn  { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes panelModalOut { from { opacity: 1; transform: translateY(0) scale(1); }       to { opacity: 0; transform: translateY(24px) scale(.96); } }
+
   #wxDetailPanel {
-    position: fixed; inset: 0; z-index: 29000;
-    display: none; flex-direction: column;
+    position: fixed; inset: 0; margin: auto; z-index: 29000;
+    width: min(92vw, 420px); max-height: 82vh; height: fit-content;
+    border-radius: 24px; display: none; flex-direction: column;
     background: linear-gradient(175deg, #0b1e3e 0%, #112444 40%, #0d1a30 100%);
     overflow-y: auto; -webkit-overflow-scrolling: touch;
+    box-shadow: 0 24px 64px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.08);
   }
-  #wxDetailPanel.open { display: flex; animation: wxSlideUp .28s cubic-bezier(.32,.72,0,1); }
-  @keyframes wxSlideUp   { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  @keyframes wxSlideDown { from { transform: translateY(0); }    to { transform: translateY(100%); } }
+  #wxDetailPanel.open { display: flex; animation: panelModalIn .26s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes wxSlideDown { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(40px); } }
   .wx-panel-topbar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 18px 18px 0;
@@ -1463,12 +1475,14 @@
 
   /* ── CALENDAR DETAIL PANEL ─────────────────────────────────── */
   #calDetailPanel {
-    position: fixed; inset: 0; z-index: 29000;
-    display: none; flex-direction: column;
+    position: fixed; inset: 0; margin: auto; z-index: 29000;
+    width: min(92vw, 420px); max-height: 82vh; height: fit-content;
+    border-radius: 24px; display: none; flex-direction: column;
     background: linear-gradient(175deg, #0b1e3e 0%, #0f1f3a 50%, #0a1628 100%);
     overflow-y: auto; -webkit-overflow-scrolling: touch;
+    box-shadow: 0 24px 64px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.08);
   }
-  #calDetailPanel.open { display: flex; animation: wxSlideUp .28s cubic-bezier(.32,.72,0,1); }
+  #calDetailPanel.open { display: flex; animation: panelModalIn .26s cubic-bezier(.34,1.56,.64,1); }
   .cal-panel-topbar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 18px 18px 6px;
@@ -9431,6 +9445,8 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 </div>
 
 <!-- ══ WEATHER SCREEN EFFECTS OVERLAY ══ -->
+<div id="panelBackdrop" onclick="_closeActivePanel()"></div>
+
 <!-- ════ CALENDAR DETAIL PANEL ════ -->
 <div id="calDetailPanel">
   <div class="cal-panel-topbar">
@@ -11420,28 +11436,46 @@ function showWeatherDetail() {
   openWeatherPanel();
 }
 
+let _activePanel = null;
+
+function _showBackdrop() {
+  const bd = document.getElementById('panelBackdrop');
+  if (bd) { bd.style.animation = ''; bd.classList.add('show'); }
+}
+
+function _hideBackdrop(instant) {
+  const bd = document.getElementById('panelBackdrop');
+  if (!bd) return;
+  if (instant) { bd.classList.remove('show'); return; }
+  bd.style.animation = 'panelFadeOut .2s ease forwards';
+  setTimeout(() => { bd.classList.remove('show'); bd.style.animation = ''; }, 200);
+}
+
+function _closeActivePanel() {
+  if (_activePanel === 'wx')  closeWeatherPanel();
+  if (_activePanel === 'cal') closeCalendarPanel();
+}
+
 function _initSwipeToDismiss(panel, closeFn) {
   if (!panel || panel._swipeInit) return;
   panel._swipeInit = true;
-  let startY = 0, startScrollTop = 0, dragging = false, moved = 0;
-  const THRESHOLD = 100;
+  let startY = 0, dragging = false, moved = 0;
+  const THRESHOLD = 80;
 
   panel.addEventListener('touchstart', e => {
-    startY         = e.touches[0].clientY;
-    startScrollTop = panel.scrollTop;
-    dragging       = true;
-    moved          = 0;
+    startY   = e.touches[0].clientY;
+    dragging = true;
+    moved    = 0;
     panel.style.transition = 'none';
   }, { passive: true });
 
   panel.addEventListener('touchmove', e => {
     if (!dragging) return;
     const dy = e.touches[0].clientY - startY;
-    // Only intercept downward drag when already at the top of scroll
     if (dy > 0 && panel.scrollTop <= 0) {
       moved = dy;
       panel.style.transform = `translateY(${moved}px)`;
-      panel.style.opacity   = `${Math.max(0, 1 - moved / 400)}`;
+      panel.style.opacity   = `${Math.max(0, 1 - moved / 300)}`;
     } else {
       moved = 0;
     }
@@ -11451,15 +11485,14 @@ function _initSwipeToDismiss(panel, closeFn) {
     if (!dragging) return;
     dragging = false;
     if (moved > THRESHOLD) {
-      panel.style.transition = '';
-      panel.style.transform  = '';
-      panel.style.opacity    = '';
+      panel.style.transform = '';
+      panel.style.opacity   = '';
       closeFn();
     } else {
-      panel.style.transition = 'transform .25s ease, opacity .25s ease';
+      panel.style.transition = 'transform .22s ease, opacity .22s ease';
       panel.style.transform  = '';
       panel.style.opacity    = '';
-      setTimeout(() => { panel.style.transition = ''; }, 260);
+      setTimeout(() => { panel.style.transition = ''; }, 240);
     }
     moved = 0;
   }, { passive: true });
@@ -11468,8 +11501,9 @@ function _initSwipeToDismiss(panel, closeFn) {
 function openWeatherPanel() {
   const panel = document.getElementById('wxDetailPanel');
   if (!panel) return;
+  _activePanel = 'wx';
+  _showBackdrop();
   panel.classList.add('open');
-  document.body.style.overflow = 'hidden';
   _initSwipeToDismiss(panel, closeWeatherPanel);
   _renderWeatherPanel();
 }
@@ -11477,12 +11511,15 @@ function openWeatherPanel() {
 function closeWeatherPanel() {
   const panel = document.getElementById('wxDetailPanel');
   if (!panel) return;
-  panel.style.animation = 'wxSlideDown .22s cubic-bezier(.32,.72,0,1) forwards';
+  _activePanel = null;
+  _hideBackdrop();
+  panel.style.animation = 'panelModalOut .2s ease forwards';
   setTimeout(() => {
     panel.classList.remove('open');
     panel.style.animation = '';
-    document.body.style.overflow = '';
-  }, 220);
+    panel.style.transform = '';
+    panel.style.opacity   = '';
+  }, 200);
 }
 
 async function _wxGetCurrentCity() {
@@ -11616,8 +11653,9 @@ function openCalendarPanel() {
   _calViewMonth = now.getMonth();
   const panel = document.getElementById('calDetailPanel');
   if (!panel) return;
+  _activePanel = 'cal';
+  _showBackdrop();
   panel.classList.add('open');
-  document.body.style.overflow = 'hidden';
   _initSwipeToDismiss(panel, closeCalendarPanel);
   _renderCalendarPanel();
 }
@@ -11625,12 +11663,15 @@ function openCalendarPanel() {
 function closeCalendarPanel() {
   const panel = document.getElementById('calDetailPanel');
   if (!panel) return;
-  panel.style.animation = 'wxSlideDown .22s cubic-bezier(.32,.72,0,1) forwards';
+  _activePanel = null;
+  _hideBackdrop();
+  panel.style.animation = 'panelModalOut .2s ease forwards';
   setTimeout(() => {
     panel.classList.remove('open');
     panel.style.animation = '';
-    document.body.style.overflow = '';
-  }, 220);
+    panel.style.transform = '';
+    panel.style.opacity   = '';
+  }, 200);
 }
 
 function _calPrevMonth() {
