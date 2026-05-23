@@ -28877,6 +28877,8 @@ window._hosAutoRecalc = false;
       items.forEach(([id, n]) => {
         if (seen.has(id)) return;
         seen.add(id);
+        // Marcar como leído en Firebase para que el dashboard lo refleje
+        try { update(ref(db, `fleets/${state.fleetId}/notifications/${MY_ID}/${id}`), { read: true }); } catch(e){}
         // ── Si el dispatcher expulsa al conductor, salir automáticamente ──
         if (n && n.type === 'kicked'){
           try {

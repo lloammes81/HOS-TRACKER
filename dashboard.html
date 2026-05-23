@@ -419,8 +419,12 @@
   .send-btn{width:100%;margin-top:10px;padding:12px;background:linear-gradient(135deg,var(--brand),#059669);color:#06211a;border:0;border-radius:8px;font-weight:800;cursor:pointer}
   .send-btn:disabled{opacity:.5;cursor:not-allowed}
   .notif-log{margin-top:16px}
-  .notif-item{background:#0c1430;border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;font-size:13px}
-  .notif-item .meta{color:var(--muted);font-size:11px;margin-bottom:4px;display:flex;justify-content:space-between}
+  .notif-item{background:#0c1430;border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;font-size:13px;transition:border-color .2s}
+  .notif-item.unread{border-left:3px solid #f59e0b;background:#0f1a35}
+  .notif-item .meta{color:var(--muted);font-size:11px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px}
+  .notif-read-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap}
+  .notif-read-badge.unread{background:#78350f;color:#fcd34d}
+  .notif-read-badge.read{background:#052e1a;color:#86efac}
 
   .event{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
   .event .ico{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:16px;flex-shrink:0}
@@ -3541,6 +3545,7 @@ let showTrail             = false;
 let allEvents             = [];
 let selectedRouteSrcId    = null;
 let selectedHistoryUnsub  = null;
+let _notifLogUnsub        = null;
 let mapLoaded             = false;
 const pendingTrailOps     = [];  // ops pendientes hasta que map.on('load')
 
@@ -4159,7 +4164,7 @@ function selectDriver(uid){
   const nm = markers.get(uid);
   if(nm) nm.getElement().classList.add('selected');
 
-  renderList(); renderDetail(); renderEvents();
+  renderList(); renderDetail(); renderEvents(); listenNotifLog(uid);
   document.getElementById('sendNotifBtn').disabled = false;
   document.getElementById('notifTarget').innerHTML = `Enviando a: <b>${escapeHtml((drivers.get(uid)||{}).name||uid)}</b>`;
   const loc = locations.get(uid);
@@ -5300,6 +5305,36 @@ async function sendNotification(userId, type, text){
   if(!text||!text.trim()||!window.FLEET_ID) return;
   const data = { from:'dispatcher', type:type||'info', text:text.trim(), ts:Date.now(), read:false };
   await push(ref(db, `fleets/${window.FLEET_ID}/notifications/${userId}`), data);
+}
+
+function listenNotifLog(uid){
+  if(_notifLogUnsub){ _notifLogUnsub(); _notifLogUnsub = null; }
+  const log = document.getElementById('notifLog');
+  if(!uid || !window.FLEET_ID){
+    log.innerHTML = '<div class="empty">Selecciona un conductor.</div>';
+    return;
+  }
+  log.innerHTML = '<div class="empty" style="opacity:.5">Cargando…</div>';
+  const q = query(ref(db, `fleets/${window.FLEET_ID}/notifications/${uid}`), orderByChild('ts'), limitToLast(30));
+  const typeIcon  = { info:'ℹ️', warn:'⚠️', urgent:'🚨', route:'🗺️', sos:'📢', warning:'⚠️', kicked:'🚪' };
+  const typeLabel = { info:'Información', warn:'Advertencia', urgent:'Urgente', route:'Ruta', sos:'Broadcast', warning:'Advertencia', kicked:'Expulsado' };
+  _notifLogUnsub = onValue(q, snap => {
+    const val = snap.val() || {};
+    const items = Object.entries(val).sort((a,b) => b[1].ts - a[1].ts);
+    if(!items.length){ log.innerHTML = '<div class="empty">Sin notificaciones enviadas.</div>'; return; }
+    log.innerHTML = items.map(([, n]) => {
+      const icon  = typeIcon[n.type]  || 'ℹ️';
+      const label = typeLabel[n.type] || n.type;
+      const time  = new Date(n.ts).toLocaleString('es-MX', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+      const readBadge = n.read
+        ? '<span class="notif-read-badge read">✓ Leído</span>'
+        : '<span class="notif-read-badge unread">● No leído</span>';
+      return `<div class="notif-item${n.read ? '' : ' unread'}">
+        <div class="meta"><span>${icon} ${label}</span><span style="display:flex;align-items:center;gap:6px">${readBadge}<span>${time}</span></span></div>
+        <div>${escapeHtml(n.text || '')}</div>
+      </div>`;
+    }).join('');
+  });
 }
 
 document.getElementById('sendNotifBtn').addEventListener('click', async ()=>{
