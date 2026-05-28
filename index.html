@@ -8523,7 +8523,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
     <!-- DISPONIBLES ring — GRANDE -->
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto;">
-      <div id="dashRingWrap" style="position:relative;width:230px;height:230px;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.5));transition:filter 0.6s ease;">
+      <div id="dashRingWrap" style="position:relative;width:230px;height:230px;filter:drop-shadow(0 0 22px rgba(59,130,246,0.80)) drop-shadow(0 0 44px rgba(59,130,246,0.40));transition:filter 0.5s ease;">
         <svg viewBox="0 0 260 260" style="width:100%;height:100%;position:absolute;inset:0;">
           <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
           <circle cx="130" cy="130" r="99" fill="#0e1f35"/>
@@ -13231,6 +13231,9 @@ function checkSpeedLimit(gpsSpeed) {
       speedToastTimer = setTimeout(() => {
         toast.classList.remove('show');
       }, 6000);
+      // Center ring: red glow when over speed limit
+      const _rw = document.getElementById('dashRingWrap');
+      if (_rw) _rw.style.filter = 'drop-shadow(0 0 22px rgba(239,68,68,0.90)) drop-shadow(0 0 44px rgba(239,68,68,0.55))';
     }
   } else {
     sign?.classList.remove('over-limit');
@@ -13242,6 +13245,9 @@ function checkSpeedLimit(gpsSpeed) {
         const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
         fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [0, 0], iconSize: [1, 1] }));
       }
+      // Center ring: restore blue glow
+      const _rw = document.getElementById('dashRingWrap');
+      if (_rw) _rw.style.filter = 'drop-shadow(0 0 22px rgba(59,130,246,0.80)) drop-shadow(0 0 44px rgba(59,130,246,0.40))';
     }
   }
 }
