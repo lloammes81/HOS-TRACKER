@@ -8510,14 +8510,14 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;">
-          <div id="dash14hTime" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:13px;font-weight:normal;color:#ffffff;letter-spacing:1px;line-height:1;text-align:center;width:100%;">--:--</div>
-          <div style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:7px;color:rgba(255,255,255,0.80);margin-top:1px;letter-spacing:1px;text-align:center;width:100%;">INICIO</div>
+          <div id="dash14hTime" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:13px;font-weight:normal;color:#ffffff;letter-spacing:1px;line-height:1;text-align:center;width:100%;">14h 0m</div>
+          <div id="dash14hSub" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:7px;color:rgba(255,255,255,0.80);margin-top:1px;letter-spacing:1px;text-align:center;width:100%;">ON DUTY</div>
           <div style="width:20px;height:0.5px;background:rgba(255,255,255,0.18);margin:2px 0;"></div>
-          <div id="dash14hLabel" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,0.80);line-height:1;letter-spacing:1px;text-align:center;width:100%;">--:--</div>
+          <div id="dash14hLabel" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.80);line-height:1;letter-spacing:0.8px;text-align:center;width:100%;">de 14h</div>
           <div id="dashBtStatus" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:7px;color:rgba(255,255,255,0.70);margin-top:1px;letter-spacing:0.5px;text-align:center;width:100%;">BT ○</div>
         </div>
       </div>
-      <div style="font-size:13px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.90);letter-spacing:3px;text-transform:uppercase;">TURNO</div>
+      <div style="font-size:13px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.90);letter-spacing:3px;text-transform:uppercase;">14H DUTY</div>
     </div>
 
     <!-- DISPONIBLES ring — GRANDE -->
@@ -18212,7 +18212,19 @@ let hosMinimapGlow    = null;  // polyline glow de ruta en mini mapa
 let hosMinimapTileLayer = null; // tile layer actual del mini mapa
 let dashSpeedOver     = false; // true cuando el camión supera el límite de velocidad
 let _dashCurrentStatus = 'driving';
-let hosShiftStartTime   = parseInt(localStorage.getItem('hos_shift_start') || '0') || null;
+let hosShiftStartTime = (() => {
+  const raw  = parseInt(localStorage.getItem('hos_shift_start') || '0') || null;
+  if (!raw) return null;
+  const ageH  = (Date.now() - raw) / 3600000;
+  const stopTs = parseInt(localStorage.getItem('hos_stop_start') || '0') || null;
+  const stopH  = stopTs ? (Date.now() - stopTs) / 3600000 : 0;
+  // Clear if older than 24h OR vehicle has been parked 10h+ (driver rested)
+  if (ageH > 24 || stopH >= 10) {
+    localStorage.removeItem('hos_shift_start');
+    return null;
+  }
+  return raw;
+})();
 let _offDutyStartMs     = parseInt(localStorage.getItem('hos_off_start')  || '0') || null;
 _vehicleStopStartMs     = parseInt(localStorage.getItem('hos_stop_start') || '0') || null;
 let _dash14hInterval  = null;
@@ -18324,6 +18336,8 @@ function showHosDashboard() {
     if (window._hosTracker?.reportMoving && typeof fmCurrentSpeed !== 'undefined') {
       window._hosTracker.reportMoving(fmCurrentSpeed >= 5, fmCurrentSpeed || 0);
     }
+    // Anillo 14h ON DUTY — actualizar cada segundo (no esperar el intervalo de 30s)
+    if (typeof update14hCircle === 'function') update14hCircle();
     // Leer horas restantes directamente del tracker
     const dLeft = window._hosTracker
       ? Math.max(0, Math.min(window._hosTracker.driveLeft(), dMax))
@@ -19207,8 +19221,9 @@ function update14hCircle() {
   const arc    = document.getElementById('dash14hArc');
   const timeEl = document.getElementById('dash14hTime');
   const label  = document.getElementById('dash14hLabel');
+  const subLbl = document.getElementById('dash14hSub');
   if (!arc || !timeEl) return;
-  const C = 226; // circunferencia 2π×36
+  const C = 226; // 2π×36
   let remaining = 14;
   if (hosShiftStartTime) {
     const elapsedH = (Date.now() - hosShiftStartTime) / 3600000;
@@ -19216,24 +19231,37 @@ function update14hCircle() {
   }
   const pct = remaining / 14;
   arc.setAttribute('stroke-dasharray', `${(pct * C).toFixed(1)} ${C}`);
-  if (remaining < 2) {
-    arc.setAttribute('stroke', '#ef4444');
-  } else if (remaining < 4) {
-    arc.setAttribute('stroke', '#f59e0b');
-  } else {
-    arc.setAttribute('stroke', '#10b981');
-  }
+  arc.setAttribute('stroke', remaining <= 0 ? '#ef4444' : remaining < 2 ? '#ef4444' : remaining < 4 ? '#f59e0b' : '#10b981');
+
   const mins = Math.round(remaining * 60);
   const h = Math.floor(mins / 60), m = mins % 60;
-  timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
-  timeEl.style.color = remaining <= 0 ? '#ef4444' : remaining <= 1 ? '#f59e0b' : '#ffffff';
-  if (label) {
+  timeEl.textContent = remaining <= 0 ? '0h 0m' : h > 0 ? `${h}h ${m}m` : `${m}m`;
+  timeEl.style.color = remaining <= 0 ? '#ef4444' : remaining < 2 ? '#ef4444' : remaining < 4 ? '#f59e0b' : '#ffffff';
+
+  // Sub-label: shift start time or "sin turno"
+  if (subLbl) {
     if (hosShiftStartTime) {
+      const d = new Date(hosShiftStartTime);
+      const hh = String(d.getHours()).padStart(2,'0'), mm = String(d.getMinutes()).padStart(2,'0');
+      subLbl.textContent = `INI ${hh}:${mm}`;
+    } else {
+      subLbl.textContent = 'ON DUTY';
+    }
+  }
+
+  // Bottom label: hours used / needs rest
+  if (label) {
+    if (remaining <= 0) {
+      label.textContent = '¡Descansa 10h!';
+      label.style.color = '#ef4444';
+    } else if (hosShiftStartTime) {
       const used = 14 - remaining;
-      const uh = Math.floor(used), um = Math.round((used - uh) * 60);
-      label.textContent = `usadas: ${uh}h ${String(um).padStart(2,'0')}m`;
+      const uh = Math.floor(used), um2 = Math.round((used - uh) * 60);
+      label.textContent = `usadas ${uh}h ${String(um2).padStart(2,'0')}m`;
+      label.style.color = 'rgba(255,255,255,0.80)';
     } else {
       label.textContent = 'de 14h';
+      label.style.color = 'rgba(255,255,255,0.80)';
     }
   }
 }
