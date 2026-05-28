@@ -22260,11 +22260,44 @@ document.addEventListener('visibilitychange', () => {
           tracking: true
         }));
       } catch(e) {}
+
+      // Persistent route widget notification while app is minimized
+      if (window._localNotif) {
+        try {
+          const _destName = window.destination?.name?.split(',')[0]?.trim() || 'Destino';
+          const _mrVal    = document.getElementById('mrVal')?.textContent?.trim() || '--';
+          const _hosLeft  = (typeof _hosCurrentDriveLeft !== 'undefined') ? _hosCurrentDriveLeft : null;
+          const _hosH     = _hosLeft !== null ? Math.floor(Math.max(0, _hosLeft)) : 0;
+          const _hosM     = _hosLeft !== null ? Math.round((Math.max(0, _hosLeft) - _hosH) * 60) : 0;
+          let _etaStr = '';
+          if (typeof arrivalTime !== 'undefined' && arrivalTime instanceof Date) {
+            _etaStr = ' · ETA ' + arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+          const _hosStr = _hosLeft !== null
+            ? ' · HOS: ' + (_hosH > 0 ? _hosH + 'h ' : '') + _hosM + 'min'
+            : '';
+          window._localNotif.cancel({ notifications: [{ id: 9001 }] }).catch(() => {});
+          window._localNotif.schedule({ notifications: [{
+            id:         9001,
+            title:      '🚛 En ruta → ' + _destName,
+            body:       _mrVal + ' mi' + _etaStr + _hosStr,
+            schedule:   { at: new Date(Date.now() + 600) },
+            smallIcon:  'ic_stat_icon_config_sample',
+            channelId:  'hos_alerts',
+            ongoing:    true,
+            autoCancel: false
+          }]}).catch(() => {});
+        } catch(e) {}
+      }
     }
     return;
   }
 
-  // App coming back to foreground
+  // App coming back to foreground — cancel route widget notification
+  if (window._localNotif) {
+    window._localNotif.cancel({ notifications: [{ id: 9001 }] }).catch(() => {});
+  }
+
   if (fmIsTracking) {
     // Check if drive time elapsed while backgrounded/closed should be added
     try {
