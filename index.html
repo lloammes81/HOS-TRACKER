@@ -8583,7 +8583,9 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
   <!-- RUTA PROGRESO LINE -->
   <div id="dashRouteProgress" style="display:block;flex:0 0 auto;padding:0 10px 10px;">
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(16,185,129,0.22);border-radius:14px;padding:11px 14px;
+
+    <!-- ── PANEL NORMAL: progreso de ruta ── -->
+    <div id="dashRouteNormalPanel" style="background:rgba(255,255,255,0.04);border:1px solid rgba(16,185,129,0.22);border-radius:14px;padding:11px 14px;
                 box-shadow:0 0 0 1px rgba(16,185,129,0.10),0 0 18px rgba(16,185,129,0.22),0 0 36px rgba(59,130,246,0.12),0 4px 18px rgba(0,0,0,0.5);">
       <!-- Origen → Destino -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
@@ -8620,6 +8622,32 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
       <div id="dashRouteStopRow" style="display:none!important"></div>
       <div id="dashRouteStopCity" style="display:none!important"></div>
     </div>
+
+    <!-- ── PANEL PRÓXIMA PARADA: pausa 30 min / límite HOS ── -->
+    <div id="dashNextStopPanel" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(245,158,11,0.45);border-radius:14px;padding:12px 14px;box-shadow:0 0 0 1px rgba(245,158,11,0.15),0 0 20px rgba(245,158,11,0.28),0 4px 18px rgba(0,0,0,0.55);transition:border-color .4s,box-shadow .4s;">
+      <!-- Fila superior: icono + ciudad + tipo/distancia -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div id="dashNsIcon" style="font-size:28px;flex-shrink:0;line-height:1;">⏸</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:rgba(255,255,255,0.68);margin-bottom:2px;">PRÓXIMA PARADA</div>
+          <div id="dashNsCity" style="font-size:16px;font-weight:900;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">--</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div id="dashNsKind" style="font-size:12px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:#f59e0b;margin-bottom:3px;">30 MIN BREAK</div>
+          <div id="dashNsDist" style="font-size:13px;font-weight:800;color:rgba(255,255,255,0.85);">--</div>
+        </div>
+      </div>
+      <!-- Separador -->
+      <div style="height:1px;background:rgba(255,255,255,0.09);margin-bottom:9px;"></div>
+      <!-- Barra de progreso + descripción -->
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="flex:1;height:4px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;">
+          <div id="dashNsBarFill" style="height:100%;width:75%;background:#f59e0b;border-radius:999px;transition:width 1s ease,background .4s ease;"></div>
+        </div>
+        <div id="dashNsDesc" style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.82);flex-shrink:0;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">DOT §395.3</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- hosNavCard removed — JS compat stubs kept hidden in document -->
@@ -18731,10 +18759,8 @@ function updateDashRouteProgress(pct, remaining) {
 }
 
 function updateDashRouteHoursRow() {
-  const driveLeftEl  = document.getElementById('dashRouteDriveLeft');
-  const barFill      = document.getElementById('dashRouteDriveBarFill');
-  const stopRow      = document.getElementById('dashRouteStopRow');
-  const stopCityEl   = document.getElementById('dashRouteStopCity');
+  const driveLeftEl = document.getElementById('dashRouteDriveLeft');
+  const barFill     = document.getElementById('dashRouteDriveBarFill');
   if (!driveLeftEl) return;
 
   const dLeft = (typeof _hosCurrentDriveLeft !== 'undefined') ? _hosCurrentDriveLeft : 11;
@@ -18750,37 +18776,68 @@ function updateDashRouteHoursRow() {
     barFill.style.background = col;
   }
 
-  const breakDue  = (typeof b30Complete !== 'undefined') && !b30Complete && (typeof b30Warned30m !== 'undefined') && b30Warned30m;
-  const hoursGone = dLeft <= 0;
-  const hoursLow  = dLeft > 0 && dLeft <= 2;
+  const breakDue     = (typeof b30Complete !== 'undefined') && !b30Complete && (typeof b30Warned30m !== 'undefined') && b30Warned30m;
+  const hoursGone    = dLeft <= 0;
+  const hoursLow     = dLeft > 0 && dLeft <= 2;
   const hoursVeryLow = dLeft > 0 && dLeft < 1;
+  const needStop     = breakDue || hoursGone || hoursLow;
 
-  if (breakDue) {
-    if (!_hosBreakStopName && !_hosBreakStopFetching && typeof _fetchStopCityAhead === 'function') {
-      _hosBreakStopFetching = true;
-      _fetchStopCityAhead(10, name => {
-        _hosBreakStopName = name || 'próxima ciudad';
-        _hosBreakStopFetching = false;
-        updateDashRouteHoursRow();
-      });
-    }
-    const city = _hosBreakStopName || '...';
-    _showStopAlertPopup('Descanso de 30 min obligatorio', `Para en ${city}`, '#f59e0b', false);
-  } else if (hoursGone || hoursLow) {
-    if (!_hosHoursStopName && !_hosHoursStopFetching && typeof _fetchStopCityAhead === 'function') {
-      _hosHoursStopFetching = true;
+  // Alternar paneles
+  const normalPanel = document.getElementById('dashRouteNormalPanel');
+  const stopPanel   = document.getElementById('dashNextStopPanel');
+  if (normalPanel) normalPanel.style.display = needStop ? 'none' : 'block';
+  if (stopPanel)   stopPanel.style.display   = needStop ? 'block' : 'none';
+
+  if (needStop && stopPanel) {
+    const iconEl = document.getElementById('dashNsIcon');
+    const cityEl = document.getElementById('dashNsCity');
+    const kindEl = document.getElementById('dashNsKind');
+    const distEl = document.getElementById('dashNsDist');
+    const descEl = document.getElementById('dashNsDesc');
+    const barEl  = document.getElementById('dashNsBarFill');
+
+    if (breakDue) {
+      // ── Prioridad 1: descanso 30 min ──
+      if (!_hosBreakStopName && !_hosBreakStopFetching && typeof _fetchStopCityAhead === 'function') {
+        _hosBreakStopFetching = true;
+        _fetchStopCityAhead(10, name => { _hosBreakStopName = name || 'próxima ciudad'; _hosBreakStopFetching = false; updateDashRouteHoursRow(); });
+      }
+      const acol = '#f59e0b';
+      if (iconEl) iconEl.textContent = '⏸';
+      if (cityEl) cityEl.textContent = _hosBreakStopName || '...';
+      if (kindEl) { kindEl.textContent = '30 MIN BREAK'; kindEl.style.color = acol; }
+      if (distEl) distEl.textContent = 'En ~10 mi';
+      if (descEl) descEl.textContent = 'DOT §395.3';
+      if (barEl)  { barEl.style.width = Math.min(100, ((b30DriveSecs || 0) / (8*3600)) * 100) + '%'; barEl.style.background = acol; }
+      stopPanel.style.borderColor = 'rgba(245,158,11,0.50)';
+      stopPanel.style.boxShadow   = '0 0 0 1px rgba(245,158,11,0.18),0 0 22px rgba(245,158,11,0.32),0 4px 18px rgba(0,0,0,0.55)';
+      _showStopAlertPopup('Descanso de 30 min obligatorio', `Para en ${_hosBreakStopName || '...'}`, acol, false);
+
+    } else {
+      // ── Prioridad 2: horas de manejo agotadas o bajas ──
+      if (!_hosHoursStopName && !_hosHoursStopFetching && typeof _fetchStopCityAhead === 'function') {
+        _hosHoursStopFetching = true;
+        const distMi = hoursGone ? 5 : Math.max(5, Math.round(dLeft * ((typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55)));
+        _fetchStopCityAhead(distMi, name => { _hosHoursStopName = name || 'próxima ciudad'; _hosHoursStopFetching = false; updateDashRouteHoursRow(); });
+      }
       const distMi = hoursGone ? 5 : Math.max(5, Math.round(dLeft * ((typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55)));
-      _fetchStopCityAhead(distMi, name => {
-        _hosHoursStopName = name || 'próxima ciudad';
-        _hosHoursStopFetching = false;
-        updateDashRouteHoursRow();
-      });
+      const acol = hoursGone ? '#ef4444' : '#f59e0b';
+      if (iconEl) iconEl.textContent = hoursGone ? '🛑' : '⚠️';
+      if (cityEl) cityEl.textContent = _hosHoursStopName || '...';
+      if (kindEl) { kindEl.textContent = hoursGone ? 'HORAS AGOTADAS' : 'DESCANSO 10H'; kindEl.style.color = acol; }
+      if (distEl) distEl.textContent = hoursGone ? 'Detente AHORA' : `En ~${distMi} mi`;
+      if (descEl) descEl.textContent = hoursGone ? '¡Para el vehículo!' : (h > 0 ? h+'h ' : '') + m + 'min restantes';
+      if (barEl)  { barEl.style.width = Math.max(0, Math.min(100, (dLeft / dMax) * 100)) + '%'; barEl.style.background = acol; }
+      const rBorder = hoursGone ? 'rgba(239,68,68,0.55)' : 'rgba(245,158,11,0.45)';
+      const rShadow = hoursGone ? '0 0 0 1px rgba(239,68,68,0.22),0 0 22px rgba(239,68,68,0.38),0 4px 18px rgba(0,0,0,0.55)' : '0 0 0 1px rgba(245,158,11,0.18),0 0 22px rgba(245,158,11,0.30),0 4px 18px rgba(0,0,0,0.55)';
+      stopPanel.style.borderColor = rBorder;
+      stopPanel.style.boxShadow   = rShadow;
+      _showStopAlertPopup(hoursGone ? 'Horas de manejo agotadas' : 'Descanso 10 horas obligatorio',
+                          hoursGone ? `Detente en ${_hosHoursStopName || '...'} de inmediato` : `Para en ${_hosHoursStopName || '...'}`,
+                          acol, hoursVeryLow);
     }
-    const city = _hosHoursStopName || '...';
-    const title = hoursGone ? 'Horas de manejo agotadas' : 'Descanso 10 horas obligatorio';
-    const body  = hoursGone ? `Detente en ${city} de inmediato` : `Para en ${city}`;
-    _showStopAlertPopup(title, body, '#ef4444', hoursVeryLow);
   } else {
+    // ── Prioridad 3: normal, sin paradas obligatorias ──
     _hideStopAlertPopup();
     _hosHoursStopName = null;
   }
