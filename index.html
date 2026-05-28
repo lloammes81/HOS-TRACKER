@@ -12247,9 +12247,9 @@ function updateDashRingGlow(mph, isOver) {
   if (!wrap) return;
   const moving = mph >= 8;
   if (isOver) {
-    wrap.style.filter = 'drop-shadow(0 0 10px rgba(239,68,68,0.70)) drop-shadow(0 6px 14px rgba(0,0,0,0.65))';
+    wrap.style.filter = 'drop-shadow(0 0 22px rgba(239,68,68,0.90)) drop-shadow(0 0 44px rgba(239,68,68,0.55))';
   } else if (moving) {
-    wrap.style.filter = 'drop-shadow(0 0 10px rgba(59,130,246,0.60)) drop-shadow(0 6px 14px rgba(0,0,0,0.65))';
+    wrap.style.filter = 'drop-shadow(0 0 22px rgba(59,130,246,0.80)) drop-shadow(0 0 44px rgba(59,130,246,0.40))';
   } else {
     wrap.style.filter = 'drop-shadow(0 6px 14px rgba(16,185,129,0.30)) drop-shadow(0 4px 12px rgba(0,0,0,0.60))';
   }
@@ -13180,10 +13180,13 @@ function hideMapSpeedSign() {
 
 function showPoliceAlert(gpsSpeed, limit) {
   if (policeAlertCooldown) return;
-  policeAlertCooldown = true;
   const el = document.getElementById('policeAlert');
-  document.getElementById('paSpeedTxt').textContent  = `${Math.round(gpsSpeed)} mph`;
-  document.getElementById('paLimitTxt').textContent  = `Límite: ${limit} mph`;
+  const spTxt = document.getElementById('paSpeedTxt');
+  const limTxt = document.getElementById('paLimitTxt');
+  if (!el || !spTxt || !limTxt) return;
+  policeAlertCooldown = true;
+  spTxt.textContent  = `${Math.round(gpsSpeed)} mph`;
+  limTxt.textContent = `Límite: ${limit} mph`;
   el.classList.add('show');
   vibrate([300,100,300,100,600]);
   // Auto-dismiss after 8 seconds
@@ -13191,7 +13194,7 @@ function showPoliceAlert(gpsSpeed, limit) {
   policeAlertTimer = setTimeout(() => dismissPoliceAlert(false), 8000);
 }
 function dismissPoliceAlert(resetCooldown = true) {
-  document.getElementById('policeAlert').classList.remove('show');
+  document.getElementById('policeAlert')?.classList.remove('show');
   if (policeAlertTimer) { clearTimeout(policeAlertTimer); policeAlertTimer = null; }
   // Cooldown: don't re-show for 90 seconds after dismiss
   if (resetCooldown) {
@@ -13224,16 +13227,13 @@ function checkSpeedLimit(gpsSpeed) {
         const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
         fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [0, 0], iconSize: [1, 1] }));
       }
-      toast.classList.add('show');
-      toast.textContent = `🚨 ${gpsSpeed} mph — Límite: ${limit} mph`;
-      vibrate([200,100,200]);
-      if (speedToastTimer) clearTimeout(speedToastTimer);
-      speedToastTimer = setTimeout(() => {
-        toast.classList.remove('show');
-      }, 6000);
-      // Center ring: red glow when over speed limit
-      const _rw = document.getElementById('dashRingWrap');
-      if (_rw) _rw.style.filter = 'drop-shadow(0 0 22px rgba(239,68,68,0.90)) drop-shadow(0 0 44px rgba(239,68,68,0.55))';
+      if (toast) {
+        toast.classList.add('show');
+        toast.textContent = `🚨 ${gpsSpeed} mph — Límite: ${limit} mph`;
+        vibrate([200,100,200]);
+        if (speedToastTimer) clearTimeout(speedToastTimer);
+        speedToastTimer = setTimeout(() => { toast.classList.remove('show'); }, 6000);
+      }
     }
   } else {
     sign?.classList.remove('over-limit');
@@ -13245,9 +13245,6 @@ function checkSpeedLimit(gpsSpeed) {
         const _h = buildTruckIconHTML(truckTo?.heading ?? truckFrom?.heading ?? 0, true);
         fmGpsMarker.setIcon(L.divIcon({ className: '', html: _h, iconAnchor: [0, 0], iconSize: [1, 1] }));
       }
-      // Center ring: restore blue glow
-      const _rw = document.getElementById('dashRingWrap');
-      if (_rw) _rw.style.filter = 'drop-shadow(0 0 22px rgba(59,130,246,0.80)) drop-shadow(0 0 44px rgba(59,130,246,0.40))';
     }
   }
 }
@@ -16126,7 +16123,8 @@ function snapToRoute(rawLat, rawLon) {
 // remaining segment lengths — far more accurate than straight-line haversine.
 function roadRemainingMiles(curLat, curLon) {
   if (!roadGeometry || roadGeometry.length < 2) {
-    return destination ? haversine(curLat, curLon, destination.lat, destination.lon) : 0;
+    if (!destination) return routeDistance || 9999;
+    return haversine(curLat, curLon, destination.lat, destination.lon);
   }
   // Coarse scan — sample every N points for speed
   var step = Math.max(1, Math.floor(roadGeometry.length / 300));
@@ -17776,25 +17774,27 @@ function fmStartTracking() {
     const avgSpeed  = parseFloat(document.getElementById('speedInput').value) || defaultSpeed;
     const etaH      = remaining / Math.max(1, avgSpeed);
 
-    document.getElementById('fmSpeedVal').textContent = gpsSpeed;
-    document.getElementById('fmSpeedVal').style.color = isMoving ? '#10b981' : '#9ca3af';
+    const _sv = document.getElementById('fmSpeedVal');
+    if (_sv) { _sv.textContent = gpsSpeed; _sv.style.color = isMoving ? '#10b981' : '#9ca3af'; }
     updateSpeedometer(gpsSpeed);
 
     const chip = document.getElementById('fmStatusChip');
-    chip.textContent  = isMoving ? '🚛 ' + (lang==='es'?'Manejando':'Driving') : '⏸ ' + (lang==='es'?'Detenido':'Stopped');
-    chip.style.background = isMoving ? 'rgba(16,185,129,0.2)' : 'rgba(107,114,128,0.2)';
-    chip.style.color      = isMoving ? '#10b981' : '#9ca3af';
+    if (chip) {
+      chip.textContent  = isMoving ? '🚛 ' + (lang==='es'?'Manejando':'Driving') : '⏸ ' + (lang==='es'?'Detenido':'Stopped');
+      chip.style.background = isMoving ? 'rgba(16,185,129,0.2)' : 'rgba(107,114,128,0.2)';
+      chip.style.color      = isMoving ? '#10b981' : '#9ca3af';
+    }
 
     // HUD MANEJO ring — scale up when truck is moving
     const _hudCell = document.getElementById('hudManejoCell');
     if (_hudCell) _hudCell.classList.toggle('driving', isMoving);
 
-    document.getElementById('fmPct').textContent = pct + '%';
-    document.getElementById('fmBar').style.width = pct + '%';
+    { const _el = document.getElementById('fmPct'); if (_el) _el.textContent = pct + '%'; }
+    { const _el = document.getElementById('fmBar'); if (_el) _el.style.width = pct + '%'; }
     { const _hp = document.getElementById('mapHudPct'); if (_hp) _hp.textContent = pct + '%'; }
     { const _hb = document.getElementById('mapHudBar'); if (_hb) _hb.style.width = pct + '%'; }
-    document.getElementById('fmEta').textContent = fmtH(etaH);
-    document.getElementById('fmRem').textContent = remaining.toFixed(1) + ' mi';
+    { const _el = document.getElementById('fmEta'); if (_el) _el.textContent = fmtH(etaH); }
+    { const _el = document.getElementById('fmRem'); if (_el) _el.textContent = remaining.toFixed(1) + ' mi'; }
     // Update outer-ring arcs for LLEGADA and RESTANTE
     const _etaArc = document.getElementById('hudEtaArc');
     if (_etaArc) { const f = pct / 100; _etaArc.setAttribute('stroke-dasharray', `${f * 226} 226`); }
@@ -18012,7 +18012,7 @@ function fmStartTracking() {
     fetchCheapFuel(lat, lon);
 
     // ── Arrival ─────────────────────────────────────────────
-    if (remaining <= 3) { markLastRouteCompleted(); alert(t('arrived')); fmStopTracking(); }
+    if (destination && remaining <= 3) { markLastRouteCompleted(); alert(t('arrived')); fmStopTracking(); }
 
   }, () => {
     document.getElementById('fmLocVal').textContent = '⚠️ Weak GPS signal';
