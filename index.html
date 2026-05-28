@@ -18176,9 +18176,16 @@ let _hosWarnExpiredFired = false;
 // Centra el mini-mapa con el icono del camión en la zona inferior (≈25% desde abajo)
 function _hosMinimapFollow(lat, lon) {
   if (!hosMinimapInst) return;
-  // Dynamic zoom by speed — matches full map logic
-  const _miniTargetZoom = fmCurrentSpeed < 20 ? 17 : 13;
-  hosMinimapInst.setView([lat, lon], _miniTargetZoom, { animate: false });
+  // Dynamic zoom by speed — at >60 mph zoom reduces ~50% to show more route
+  let _miniTargetZoom;
+  if (fmCurrentSpeed > 60) {
+    _miniTargetZoom = 10;           // ~50% of zoom 13 → muestra ~30 mi de ruta
+  } else if (fmCurrentSpeed < 20) {
+    _miniTargetZoom = 17;
+  } else {
+    _miniTargetZoom = 13;
+  }
+  hosMinimapInst.setView([lat, lon], _miniTargetZoom, { animate: true });
   const sz = hosMinimapInst.getSize();
   hosMinimapInst.panBy([0, -Math.round(sz.y * 0.28)], { animate: false });
 }
