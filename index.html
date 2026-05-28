@@ -16114,6 +16114,43 @@ function snapToRoute(rawLat, rawLon) {
   return { lat: sn ? bestLat : rawLat, lon: sn ? bestLon : rawLon, snapped: sn, dist: bestDist };
 }
 
+// Returns actual road miles remaining from current GPS position to end of roadGeometry.
+// Uses a 2-pass (coarse + fine) scan to locate the closest segment, then sums all
+// remaining segment lengths — far more accurate than straight-line haversine.
+function roadRemainingMiles(curLat, curLon) {
+  if (!roadGeometry || roadGeometry.length < 2) {
+    return destination ? haversine(curLat, curLon, destination.lat, destination.lon) : 0;
+  }
+  // Coarse scan — sample every N points for speed
+  var step = Math.max(1, Math.floor(roadGeometry.length / 300));
+  var coarseIdx = 0, coarseDist = Infinity;
+  for (var i = 0; i < roadGeometry.length; i += step) {
+    var d = haversine(curLat, curLon, roadGeometry[i][0], roadGeometry[i][1]);
+    if (d < coarseDist) { coarseDist = d; coarseIdx = i; }
+  }
+  // Fine scan — search only the neighborhood around the coarse hit
+  var lo = Math.max(0, coarseIdx - step * 2);
+  var hi = Math.min(roadGeometry.length - 2, coarseIdx + step * 2);
+  var bestIdx = lo, bestT = 0, bestDist = Infinity;
+  for (var j = lo; j <= hi; j++) {
+    var ax = roadGeometry[j][0], ay = roadGeometry[j][1];
+    var bx = roadGeometry[j+1][0], by = roadGeometry[j+1][1];
+    var dx = bx - ax, dy = by - ay, ls = dx*dx + dy*dy;
+    var t = ls > 0 ? Math.max(0, Math.min(1, ((curLat-ax)*dx + (curLon-ay)*dy) / ls)) : 0;
+    var px = ax + t*dx, py = ay + t*dy;
+    var dt = haversine(curLat, curLon, px, py);
+    if (dt < bestDist) { bestDist = dt; bestIdx = j; bestT = t; }
+  }
+  // Sum from projection point on segment bestIdx to the last point of the route
+  var pLat = roadGeometry[bestIdx][0] + bestT * (roadGeometry[bestIdx+1][0] - roadGeometry[bestIdx][0]);
+  var pLon = roadGeometry[bestIdx][1] + bestT * (roadGeometry[bestIdx+1][1] - roadGeometry[bestIdx][1]);
+  var rem = haversine(pLat, pLon, roadGeometry[bestIdx+1][0], roadGeometry[bestIdx+1][1]);
+  for (var k = bestIdx + 1; k < roadGeometry.length - 1; k++) {
+    rem += haversine(roadGeometry[k][0], roadGeometry[k][1], roadGeometry[k+1][0], roadGeometry[k+1][1]);
+  }
+  return Math.max(0, rem);
+}
+
 var _orc = 0, _lrr = 0;
 async function handleOffRoute(rl, ro) {
   _orc++;
@@ -17712,7 +17749,7 @@ function fmStartTracking() {
     // ── 30-min break rule check ────────────────────────────
     b30Check(isMoving);
 // ── HUD stats ────────────────────────────────────────────
-    const remaining = haversine(lat, lon, destination.lat, destination.lon);
+    const remaining = roadRemainingMiles(lat, lon);
     const traveled  = Math.max(0, routeDistance - remaining);
     const pct       = Math.min(100, Math.round(traveled / Math.max(1, routeDistance) * 100));
 
@@ -17730,7 +17767,7 @@ function fmStartTracking() {
     const elapsed  = fmDriveSeconds / 3600; // hours actually driven
 
     const avgSpeed  = parseFloat(document.getElementById('speedInput').value) || defaultSpeed;
-    const etaH      = remaining / Math.max(1, isMoving ? gpsSpeed : avgSpeed);
+    const etaH      = remaining / Math.max(1, avgSpeed);
 
     document.getElementById('fmSpeedVal').textContent = gpsSpeed;
     document.getElementById('fmSpeedVal').style.color = isMoving ? '#10b981' : '#9ca3af';
