@@ -18230,6 +18230,59 @@ let _offDutyStartMs     = parseInt(localStorage.getItem('hos_off_start')  || '0'
 _vehicleStopStartMs     = parseInt(localStorage.getItem('hos_stop_start') || '0') || null;
 let _dash14hInterval  = null;
 let _dashRingInterval = null;
+let _dashHeaderTickerInt = null;
+let _dashHeaderTickerIdx = 0;
+let _dashHeaderDriverName = 'Driver';
+
+function _startDashHeaderTicker(name) {
+  _dashHeaderDriverName = name || 'Driver';
+  _dashHeaderTickerIdx  = 0;
+  if (_dashHeaderTickerInt) clearInterval(_dashHeaderTickerInt);
+  _dashHeaderTick(); // show name immediately
+  _dashHeaderTickerInt = setInterval(_dashHeaderTick, 3500);
+}
+function _stopDashHeaderTicker() {
+  if (_dashHeaderTickerInt) { clearInterval(_dashHeaderTickerInt); _dashHeaderTickerInt = null; }
+  // Restore plain name
+  const el = document.getElementById('dashProfileName');
+  if (el) { el.style.opacity = '1'; el.textContent = _dashHeaderDriverName; }
+}
+function _dashHeaderTick() {
+  const el = document.getElementById('dashProfileName');
+  if (!el) return;
+
+  // Build slide items: always name first, then route info if active
+  const slides = [{ text: _dashHeaderDriverName, sub: false }];
+
+  if (typeof fmIsTracking !== 'undefined' && fmIsTracking) {
+    // Time to destination
+    if (typeof arrivalTime !== 'undefined' && arrivalTime instanceof Date) {
+      const diffMs = arrivalTime - Date.now();
+      if (diffMs > 60000) {
+        const dh = Math.floor(diffMs / 3600000);
+        const dm = Math.floor((diffMs % 3600000) / 60000);
+        slides.push({ text: dh > 0 ? `🕐 ${dh}h ${dm}m al destino` : `🕐 ${dm}m al destino`, sub: true });
+      }
+    }
+    // Miles remaining
+    const mrv = document.getElementById('mrVal')?.textContent?.trim();
+    if (mrv && mrv !== '--') {
+      slides.push({ text: `🛣️ ${mrv} mi restantes`, sub: true });
+    }
+  }
+
+  const slide = slides[_dashHeaderTickerIdx % slides.length];
+  _dashHeaderTickerIdx = (_dashHeaderTickerIdx + 1) % slides.length;
+
+  // Fade out → swap text → fade in
+  el.style.transition = 'opacity 0.25s ease';
+  el.style.opacity = '0';
+  setTimeout(() => {
+    el.textContent  = slide.text;
+    el.style.fontSize = slide.sub ? '17px' : '24px';
+    el.style.opacity = '1';
+  }, 260);
+}
 // Flags de sesión para alertas de horas de manejo (se reinician al iniciar viaje)
 let _hosWarn1hFired  = false;
 let _hosWarn30mFired = false;
@@ -18295,6 +18348,8 @@ function showHosDashboard() {
   const nameEl  = document.getElementById('dashProfileName');
   const photoEl = document.getElementById('dashProfilePhoto');
   if (nameEl)  nameEl.textContent = name;
+  // Start rotating ticker: name → ETA → miles remaining
+  _startDashHeaderTicker(name);
   if (photoEl) {
     if (photo) {
       photoEl.innerHTML = `<img src="${photo}" alt="foto" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`;
@@ -18381,6 +18436,7 @@ let _dashGpsWatchId = null;
 function hideHosDashboard() {
   if (_dash14hInterval)  { clearInterval(_dash14hInterval);  _dash14hInterval  = null; }
   if (_dashRingInterval) { clearInterval(_dashRingInterval); _dashRingInterval = null; }
+  _stopDashHeaderTicker();
   if (_dashGpsWatchId != null) { navigator.geolocation.clearWatch(_dashGpsWatchId); _dashGpsWatchId = null; }
   const screen = document.getElementById('hosDashScreen');
   if (screen) screen.style.display = 'none';
