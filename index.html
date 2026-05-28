@@ -18298,6 +18298,8 @@ function showHosDashboard() {
 
   // Iniciar mini mapa después de un tick para que el div sea visible
   setTimeout(initHosMinimap, 120);
+  // Forzar re-render de Leaflet una vez el flex layout esté establecido
+  setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 350);
 }
 
 let _dashGpsWatchId = null;
