@@ -12711,18 +12711,19 @@ function toggleRestNotifications() {
    🚦  SPEED LIMITS BY STATE (US)
 ════════════════════════════════════════════════════════════ */
 const STATE_SPEED_LIMITS = {
-  // state abbr: { truck: mph, car: mph }
+  // state abbr: { truck: mph, car: mph } — highway/interstate limits
+  // City/urban streets are auto-derived by road type in fetchRoadSpeedLimit
   AL:{truck:70,car:70}, AK:{truck:65,car:65}, AZ:{truck:75,car:75}, AR:{truck:65,car:70},
-  CA:{truck:55,car:70}, CO:{truck:65,car:75}, CT:{truck:65,car:65}, DE:{truck:65,car:65},
+  CA:{truck:55,car:70}, CO:{truck:65,car:75}, CT:{truck:65,car:65}, DE:{truck:55,car:65},
   FL:{truck:70,car:70}, GA:{truck:70,car:70}, HI:{truck:55,car:60}, ID:{truck:70,car:80},
   IL:{truck:65,car:70}, IN:{truck:65,car:70}, IA:{truck:70,car:70}, KS:{truck:70,car:75},
   KY:{truck:65,car:70}, LA:{truck:65,car:75}, ME:{truck:65,car:70}, MD:{truck:65,car:70},
   MA:{truck:65,car:65}, MI:{truck:65,car:75}, MN:{truck:70,car:70}, MS:{truck:70,car:70},
   MO:{truck:70,car:70}, MT:{truck:65,car:80}, NE:{truck:75,car:75}, NV:{truck:70,car:80},
-  NH:{truck:65,car:70}, NJ:{truck:65,car:65}, NM:{truck:65,car:75}, NY:{truck:65,car:65},
+  NH:{truck:65,car:70}, NJ:{truck:65,car:65}, NM:{truck:65,car:75}, NY:{truck:55,car:65},
   NC:{truck:70,car:70}, ND:{truck:75,car:75}, OH:{truck:65,car:70}, OK:{truck:70,car:75},
-  OR:{truck:55,car:65}, PA:{truck:65,car:70}, RI:{truck:65,car:65}, SC:{truck:70,car:70},
-  SD:{truck:80,car:80}, TN:{truck:70,car:70}, TX:{truck:70,car:80}, UT:{truck:70,car:80},
+  OR:{truck:55,car:65}, PA:{truck:65,car:70}, RI:{truck:55,car:65}, SC:{truck:70,car:70},
+  SD:{truck:75,car:80}, TN:{truck:70,car:70}, TX:{truck:70,car:80}, UT:{truck:65,car:80},
   VT:{truck:65,car:65}, VA:{truck:70,car:70}, WA:{truck:60,car:70}, WV:{truck:65,car:70},
   WI:{truck:65,car:70}, WY:{truck:75,car:80},
   // Mexico
@@ -13080,7 +13081,11 @@ async function fetchRoadSpeedLimit(lat, lon) {
 
     for (const el of els) {
       // Prefer truck-specific limits, then fall back to general maxspeed
-      const raw = el.tags?.['maxspeed:hgv'] || el.tags?.['maxspeed:goods'] || el.tags?.maxspeed;
+      const raw = el.tags?.['maxspeed:hgv']
+               || el.tags?.['maxspeed:hgv:forward']
+               || el.tags?.['maxspeed:goods']
+               || el.tags?.['maxspeed:truck']
+               || el.tags?.maxspeed;
       if (!raw) continue;
       const mph = parseOsmMaxspeed(raw, isMetric);
       if (mph && mph >= 5 && mph <= 120) {
@@ -13098,7 +13103,6 @@ async function fetchRoadSpeedLimit(lat, lon) {
           if (mssSign) { mssSign.classList.remove('new'); void mssSign.offsetWidth; mssSign.classList.add('new'); }
           document.getElementById('mapSpeedSign')?.classList.add('visible');
           document.getElementById('speedLimitWidget')?.classList.add('visible');
-          // Sync minimap dashboard speed limit panel immediately
           const _dl = document.getElementById('dashLimitNum');
           if (_dl) _dl.textContent = mph;
         }
@@ -13106,12 +13110,29 @@ async function fetchRoadSpeedLimit(lat, lon) {
       }
     }
 
-    // No road-level maxspeed found → fall back to state-based limit
+    // No road-level maxspeed found — derive limit from road type for trucks
     const stateLimits = STATE_SPEED_LIMITS[currentStateCode];
-    if (stateLimits && currentTruckSpeedLimit !== stateLimits.truck) {
-      updateMapSpeedSign(stateLimits.truck, stateLimits.car, currentStateCode, currentStateCode);
+    const topType = els[0]?.tags?.highway || '';
+    let fallbackMph;
+    if (!topType || ['motorway','motorway_link','trunk','trunk_link'].includes(topType)) {
+      // Interstate / highway → state truck limit
+      fallbackMph = stateLimits?.truck;
+    } else if (['primary','primary_link'].includes(topType)) {
+      // Arterial road → lower of state limit or 55 mph
+      fallbackMph = Math.min(stateLimits?.truck || 65, 55);
+    } else if (['secondary','secondary_link'].includes(topType)) {
+      // Suburban / collector road
+      fallbackMph = 45;
+    } else if (['tertiary','tertiary_link'].includes(topType)) {
+      // Urban arterial
+      fallbackMph = 35;
+    } else {
+      // Residential / unclassified — trucks typically 25 mph in cities
+      fallbackMph = 25;
+    }
+    if (fallbackMph && currentTruckSpeedLimit !== fallbackMph) {
+      updateMapSpeedSign(fallbackMph, stateLimits?.car || fallbackMph, currentStateCode, currentStateCode);
     } else if (!currentStateCode) {
-      // State not detected yet — reset timer to retry sooner (next GPS tick)
       lastRoadSpeedCheck = 0;
     }
   } catch(e) {
