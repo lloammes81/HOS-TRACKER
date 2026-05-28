@@ -18257,19 +18257,15 @@ function _dashHeaderTick() {
   const _moving = typeof fmIsTracking !== 'undefined' && fmIsTracking
                 && typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving;
   if (_moving) {
-    // Time to destination
-    if (typeof arrivalTime !== 'undefined' && arrivalTime instanceof Date) {
-      const diffMs = arrivalTime - Date.now();
-      if (diffMs > 60000) {
-        const dh = Math.floor(diffMs / 3600000);
-        const dm = Math.floor((diffMs % 3600000) / 60000);
-        slides.push({ text: dh > 0 ? `🕐 ${dh}h ${dm}m al destino` : `🕐 ${dm}m al destino`, sub: true });
-      }
+    // Time remaining — use fmEta element (already formatted live by GPS loop)
+    const etaVal = document.getElementById('fmEta')?.textContent?.trim();
+    if (etaVal && etaVal !== '--') {
+      slides.push({ text: `🕐 ${etaVal} al destino`, sub: true });
     }
-    // Miles remaining
-    const mrv = document.getElementById('mrVal')?.textContent?.trim();
-    if (mrv && mrv !== '--') {
-      slides.push({ text: `🛣️ ${mrv} mi restantes`, sub: true });
+    // Miles remaining — use fmRem element (updated live by GPS loop)
+    const remVal = document.getElementById('fmRem')?.textContent?.trim();
+    if (remVal && remVal !== '--') {
+      slides.push({ text: `🛣️ ${remVal} restantes`, sub: true });
     }
   }
 
