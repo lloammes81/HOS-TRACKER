@@ -18250,23 +18250,19 @@ function _dashHeaderTick() {
   const el = document.getElementById('dashProfileName');
   if (!el) return;
 
-  // Build slide items: always name first, then route info if active
-  const slides = [{ text: _dashHeaderDriverName, sub: false }];
-
   const _moving = typeof fmIsTracking !== 'undefined' && fmIsTracking
                 && typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving;
+
+  // Moving: only ETA and miles — name hidden while driving
+  // Stopped: only the driver name
+  const slides = [];
   if (_moving) {
-    // Time remaining — use fmEta element (already formatted live by GPS loop)
     const etaVal = document.getElementById('fmEta')?.textContent?.trim();
-    if (etaVal && etaVal !== '--') {
-      slides.push({ text: `🕐 ${etaVal} al destino`, sub: true });
-    }
-    // Miles remaining — use fmRem element (updated live by GPS loop)
+    if (etaVal && etaVal !== '--') slides.push({ text: `🕐 ${etaVal} al destino`, sub: true });
     const remVal = document.getElementById('fmRem')?.textContent?.trim();
-    if (remVal && remVal !== '--') {
-      slides.push({ text: `🛣️ ${remVal} restantes`, sub: true });
-    }
+    if (remVal && remVal !== '--') slides.push({ text: `🛣️ ${remVal} restantes`, sub: true });
   }
+  if (slides.length === 0) slides.push({ text: _dashHeaderDriverName, sub: false });
 
   const slide = slides[_dashHeaderTickerIdx % slides.length];
   _dashHeaderTickerIdx = (_dashHeaderTickerIdx + 1) % slides.length;
