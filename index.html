@@ -18012,7 +18012,12 @@ function fmStartTracking() {
     fetchCheapFuel(lat, lon);
 
     // ── Arrival ─────────────────────────────────────────────
-    if (destination && remaining <= 3) { markLastRouteCompleted(); alert(t('arrived')); fmStopTracking(); }
+    // Use straight-line haversine to destination (not road projection) to avoid
+    // false triggers from roadRemainingMiles GPS drift / geometry mismatches.
+    if (destination) {
+      const _distToDest = haversine(lat, lon, destination.lat, destination.lon);
+      if (_distToDest <= 0.25) { markLastRouteCompleted(); alert(t('arrived')); fmStopTracking(); }
+    }
 
   }, () => {
     document.getElementById('fmLocVal').textContent = '⚠️ Weak GPS signal';
