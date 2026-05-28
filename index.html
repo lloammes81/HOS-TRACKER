@@ -14192,10 +14192,10 @@ function drawRoute(map, coords, markersRef, layerRef) {
   markersRef.list.forEach(m => { try{ map.removeLayer(m); }catch{} });
   markersRef.list = [];
 
-  const glow   = L.polyline(coords,{ color:'#10b981', weight:14, opacity:0.12, interactive:false }).addTo(map);
+  const glow   = L.polyline(coords,{ color:'#3b82f6', weight:14, opacity:0.12, interactive:false }).addTo(map);
   glow.bringToBack();
-  const casing = L.polyline(coords,{ color:'#064e3b', weight:8,  opacity:0.45, interactive:false }).addTo(map);
-  const layer  = L.polyline(coords,{ color:'#10b981', weight:5,  opacity:0.95 }).addTo(map);
+  const casing = L.polyline(coords,{ color:'#1e3a5f', weight:8,  opacity:0.45, interactive:false }).addTo(map);
+  const layer  = L.polyline(coords,{ color:'#3b82f6', weight:5,  opacity:0.95 }).addTo(map);
   layerRef.layer = layer;
 
   const o = L.marker([origin.lat, origin.lon]).addTo(map).bindPopup('Origin: ' + origin.name);
@@ -15812,13 +15812,13 @@ function fmRedrawRoute(coords) {
   fmLastStepsHash = showInterstateShields ? '' : 'disabled'; // only re-add if shields on
 
   // ── Glow exterior (muy grueso, muy transparente)
-  fmGlowLayer   = L.polyline(routeCoords,{ color:'#00E5FF', weight:32, opacity:0.18, interactive:false }).addTo(fmMapInst);
+  fmGlowLayer   = L.polyline(routeCoords,{ color:'#3b82f6', weight:32, opacity:0.18, interactive:false }).addTo(fmMapInst);
   const glow    = fmGlowLayer;
-  // ── Casing oscuro cian (borde GPS estilo Google Maps)
-  fmCasingLayer = L.polyline(routeCoords,{ color:'#004D60', weight:14, opacity:0.80, interactive:false }).addTo(fmMapInst);
+  // ── Casing oscuro azul (borde GPS estilo Google Maps)
+  fmCasingLayer = L.polyline(routeCoords,{ color:'#1e3a5f', weight:14, opacity:0.80, interactive:false }).addTo(fmMapInst);
   const casing  = fmCasingLayer;
-  // ── Ruta principal cian brillante
-  fmLayer = L.polyline(routeCoords,{ color:'#00C8E0', weight:10, opacity:0.97 }).addTo(fmMapInst);
+  // ── Ruta principal azul brillante
+  fmLayer = L.polyline(routeCoords,{ color:'#3b82f6', weight:10, opacity:0.97 }).addTo(fmMapInst);
 
   // ── Marcador origen (dot verde)
   const oIcon = L.divIcon({
@@ -18398,8 +18398,8 @@ function initHosMinimap() {
     if (!hosMinimapInst) return;
     if (hosMinimapGlow)  { hosMinimapInst.removeLayer(hosMinimapGlow);  hosMinimapGlow  = null; }
     if (hosMinimapRoute) { hosMinimapInst.removeLayer(hosMinimapRoute); hosMinimapRoute = null; }
-    hosMinimapGlow  = L.polyline(coords, { color: '#10b981', weight: 14, opacity: 0.13 }).addTo(hosMinimapInst);
-    hosMinimapRoute = L.polyline(coords, { color: '#10b981', weight: 4,  opacity: 0.95 }).addTo(hosMinimapInst);
+    hosMinimapGlow  = L.polyline(coords, { color: '#3b82f6', weight: 14, opacity: 0.13 }).addTo(hosMinimapInst);
+    hosMinimapRoute = L.polyline(coords, { color: '#3b82f6', weight: 4,  opacity: 0.95 }).addTo(hosMinimapInst);
     hosMinimapInst.fitBounds(hosMinimapRoute.getBounds(), { padding: [30, 30], animate: false });
   }
 
