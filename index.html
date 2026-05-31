@@ -10286,11 +10286,11 @@ let currentTab = 'plan';
 // ── MAP STYLE ────────────────────────────────────────────────
 const HERE_API_KEY = 'Nwtr6kwsU5smVYvhJCRUshCw_awISD0p2WwQlzijF7Y';
 const MAP_STYLES = {
-  dark:     { label:'Truck Noche',  emoji:'🌙',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ maxZoom:20 } },
-  streets:  { label:'Truck Día',    emoji:'🚛',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20 } },
-  light:    { label:'Truck Claro',  emoji:'☀️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20 } },
-  satellite:{ label:'Satélite',     emoji:'🛰️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=satellite.day`, options:{ maxZoom:20 } },
-  topo:     { label:'Truck Terreno',emoji:'⛰️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20 } },
+  dark:     { label:'Truck Noche',  emoji:'🌙',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
+  streets:  { label:'Truck Día',    emoji:'🚛',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
+  light:    { label:'Truck Claro',  emoji:'☀️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
+  satellite:{ label:'Satélite',     emoji:'🛰️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=satellite.day`, options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
+  topo:     { label:'Truck Terreno',emoji:'⛰️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
 };
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 if (!MAP_STYLES[currentMapStyle]) { currentMapStyle = 'dark'; localStorage.setItem('hos_map_style', 'dark'); }
@@ -15746,6 +15746,9 @@ function openFullMapScreen() {
 
     const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.streets;
     fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
+    fmTileLayer.on('tileerror', function(e) {
+      console.error('[HERE Tiles] Error cargando tile:', e.tile && e.tile.src ? e.tile.src.split('?')[0] : 'unknown');
+    });
 
     // HERE Maps attribution (required by terms of use)
     L.control.attribution({ prefix: false, position: 'bottomright' })
@@ -18546,6 +18549,9 @@ function initHosMinimap() {
   // Tiles usando el estilo activo del mapa principal
   const _miniStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.dark;
   hosMinimapTileLayer = L.tileLayer(_miniStyleConf.url, _miniStyleConf.options || { maxZoom: 19 }).addTo(hosMinimapInst);
+  hosMinimapTileLayer.on('tileerror', function(e) {
+    console.error('[HERE MiniMap] Error cargando tile:', e.tile && e.tile.src ? e.tile.src.split('?')[0] : 'unknown');
+  });
 
   // HERE Maps attribution
   L.control.attribution({ prefix: false, position: 'bottomright' })
