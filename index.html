@@ -8621,9 +8621,15 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
           </div>
         </div>
       </div>
-      <!-- dashRouteStopRow/City stubs ocultos para compatibilidad JS -->
-      <div id="dashRouteStopRow" style="display:none!important"></div>
-      <div id="dashRouteStopCity" style="display:none!important"></div>
+      <!-- PRÓXIMA PARADA (ciudad donde tomar el descanso obligatorio) -->
+      <div id="dashRouteStopRow" style="display:none;align-items:center;gap:9px;margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,0.10);">
+        <span style="font-size:16px;flex-shrink:0;line-height:1;">📍</span>
+        <div style="flex:1;min-width:0;">
+          <div id="dashRouteStopLabel" style="font-size:9px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:#f59e0b;text-transform:uppercase;line-height:1;margin-bottom:2px;">PRÓXIMA PARADA · PAUSA 30 MIN</div>
+          <div id="dashRouteStopCity" style="font-size:15px;font-family:'Bebas Neue',sans-serif;font-weight:400;letter-spacing:1.5px;color:#f1f5f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;line-height:1;">--</div>
+        </div>
+        <div id="dashRouteStopDist" style="font-size:13px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:rgba(255,255,255,0.85);flex-shrink:0;text-transform:uppercase;">--</div>
+      </div>
     </div>
 
     <!-- ── PANEL PRÓXIMA PARADA: pausa 30 min / límite HOS ── -->
@@ -19038,7 +19044,75 @@ function updateDashRouteHoursRow() {
     // ── Prioridad 3: normal, sin paradas obligatorias ──
     _hideStopAlertPopup();
     _hosHoursStopName = null;
+    _refreshDashRouteNextStop();
   }
+}
+
+// ── Próxima parada en el panel normal ─────────────────────────────
+// Calcula cuál llega antes (pausa 30 min vs descanso 10h) y muestra
+// la ciudad sugerida + millas restantes en una fila del panel normal.
+let _dashStopCache = { key:null, name:null, fetching:false };
+function _refreshDashRouteNextStop() {
+  const row     = document.getElementById('dashRouteStopRow');
+  const cityEl  = document.getElementById('dashRouteStopCity');
+  const lblEl   = document.getElementById('dashRouteStopLabel');
+  const distEl  = document.getElementById('dashRouteStopDist');
+  if (!row || !cityEl) return;
+
+  const hasDest = typeof destination !== 'undefined' && !!destination;
+  if (!hasDest) { row.style.display = 'none'; return; }
+
+  const b30Done   = (typeof b30Complete !== 'undefined') && b30Complete;
+  const b30HrsTo  = b30Done ? Infinity
+                            : Math.max(0, (B30_DRIVE_LIMIT - (typeof b30DriveSecs !== 'undefined' ? b30DriveSecs : 0)) / 3600);
+  const restHrsTo = (typeof _hosCurrentDriveLeft !== 'undefined') ? _hosCurrentDriveLeft : 11;
+  const spd       = (typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55;
+
+  let kind, miles, label, color;
+  if (b30HrsTo < restHrsTo) {
+    kind  = 'break';
+    miles = Math.max(1, Math.round(b30HrsTo * spd));
+    label = 'PRÓXIMA PARADA · PAUSA 30 MIN';
+    color = '#f59e0b';
+  } else {
+    kind  = 'rest';
+    miles = Math.max(1, Math.round(restHrsTo * spd));
+    label = 'PRÓXIMA PARADA · DESCANSO 10H';
+    color = '#3b82f6';
+  }
+
+  row.style.display = 'flex';
+  if (lblEl)  { lblEl.textContent = label; lblEl.style.color = color; }
+  if (distEl) distEl.textContent  = 'EN ' + miles.toLocaleString() + ' MI';
+
+  // Cache key: tipo + paso actual + distancia redondeada a 25 mi
+  const key = kind + ':' + (typeof navStepIdx !== 'undefined' ? navStepIdx : 0) + ':' + Math.round(miles / 25);
+  if (_dashStopCache.key === key && _dashStopCache.name) {
+    cityEl.textContent = _dashStopCache.name.toUpperCase();
+    cityEl.style.color = color;
+    return;
+  }
+
+  const hasRoute = Array.isArray(navSteps) && navSteps.length > 0;
+  if (!hasRoute) {
+    cityEl.textContent = 'INICIA RUTA';
+    cityEl.style.color = 'rgba(255,255,255,0.55)';
+    return;
+  }
+
+  if (_dashStopCache.fetching) return;
+  cityEl.textContent = 'CALCULANDO...';
+  cityEl.style.color = 'rgba(255,255,255,0.55)';
+  _dashStopCache.fetching = true;
+  _fetchStopCityAhead(miles, name => {
+    _dashStopCache.fetching = false;
+    _dashStopCache.key  = key;
+    _dashStopCache.name = name || 'próxima ciudad';
+    if (cityEl) {
+      cityEl.textContent = _dashStopCache.name.toUpperCase();
+      cityEl.style.color = color;
+    }
+  });
 }
 
 let _stopAlertDismissed = false;
