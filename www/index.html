@@ -14956,6 +14956,11 @@ function openFullMapScreen() {
     const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.voyager;
     fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
 
+    // HERE Maps attribution (required by terms of use)
+    L.control.attribution({ prefix: false, position: 'bottomright' })
+      .addAttribution('<a href="https://legal.here.com/en-gb/terms/serviceterms" target="_blank" style="color:#4ade80;font-weight:600">© HERE Maps</a> · <a href="https://legal.here.com/en-gb/terms/serviceterms" target="_blank" style="color:#94a3b8">Terms of Use</a>')
+      .addTo(fmMapInst);
+
     // Load US state boundary lines (always visible)
     loadStateBoundaries();
 
@@ -17587,6 +17592,11 @@ function initHosMinimap() {
   // Tiles usando el estilo activo del mapa principal
   const _miniStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.dark;
   hosMinimapTileLayer = L.tileLayer(_miniStyleConf.url, _miniStyleConf.options || { maxZoom: 19 }).addTo(hosMinimapInst);
+
+  // HERE Maps attribution
+  L.control.attribution({ prefix: false, position: 'bottomright' })
+    .addAttribution('<a href="https://legal.here.com/en-gb/terms/serviceterms" target="_blank" style="color:#4ade80;font-weight:600">© HERE Maps</a> · <a href="https://legal.here.com/en-gb/terms/serviceterms" target="_blank" style="color:#94a3b8">Terms</a>')
+    .addTo(hosMinimapInst);
 
   // Helper: crea el HTML de un marcador círculo verde con punto blanco interior
   function _greenDotHtml(size) {
