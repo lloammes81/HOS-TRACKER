@@ -15759,8 +15759,16 @@ function openFullMapScreen() {
 
     const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.streets;
     fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
-    fmTileLayer.on('tileerror', function(e) {
-      console.error('[HERE Tiles] Error cargando tile:', e.tile && e.tile.src ? e.tile.src.split('?')[0] : 'unknown');
+    let _hereFailed = false;
+    fmTileLayer.on('tileerror', function() {
+      if (_hereFailed) return;
+      _hereFailed = true;
+      console.error('[HERE Tiles] Tiles no cargaron — API key sin Map Tiles habilitado. Usando fallback.');
+      try { fmMapInst.removeLayer(fmTileLayer); } catch {}
+      fmTileLayer = L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        { subdomains:'abcd', maxZoom:19, r: window.devicePixelRatio > 1 ? '@2x' : '' }
+      ).addTo(fmMapInst);
     });
 
     // HERE Maps attribution (required by terms of use)
@@ -18562,8 +18570,15 @@ function initHosMinimap() {
   // Tiles usando el estilo activo del mapa principal
   const _miniStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.dark;
   hosMinimapTileLayer = L.tileLayer(_miniStyleConf.url, _miniStyleConf.options || { maxZoom: 19 }).addTo(hosMinimapInst);
-  hosMinimapTileLayer.on('tileerror', function(e) {
-    console.error('[HERE MiniMap] Error cargando tile:', e.tile && e.tile.src ? e.tile.src.split('?')[0] : 'unknown');
+  let _miniHereFailed = false;
+  hosMinimapTileLayer.on('tileerror', function() {
+    if (_miniHereFailed) return;
+    _miniHereFailed = true;
+    try { hosMinimapInst.removeLayer(hosMinimapTileLayer); } catch {}
+    hosMinimapTileLayer = L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      { subdomains:'abcd', maxZoom:19, r: window.devicePixelRatio > 1 ? '@2x' : '' }
+    ).addTo(hosMinimapInst);
   });
 
   // HERE Maps attribution
