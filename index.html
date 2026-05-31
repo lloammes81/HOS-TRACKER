@@ -17658,6 +17658,18 @@ function fmStartTracking() {
     const isMoving = gpsSpeed >= 8;
     // Expose globally so calculateRoute can check
     fmCurrentSpeed = gpsSpeed;
+    // ── Pausa de relojes HOS cuando el vehículo se detiene ──
+    if (typeof window._stopPauseStart === 'undefined') window._stopPauseStart = null;
+    const _wasMoving = fmVehicleMoving;
+    if (_wasMoving && !isMoving) {
+      // Acaba de detenerse — marca inicio de pausa
+      window._stopPauseStart = Date.now();
+    } else if (!_wasMoving && isMoving && window._stopPauseStart) {
+      // Acaba de moverse — desplaza hosShiftStartTime para descontar la pausa
+      const pauseMs = Date.now() - window._stopPauseStart;
+      if (hosShiftStartTime) hosShiftStartTime += pauseMs;
+      window._stopPauseStart = null;
+    }
     fmVehicleMoving = isMoving;
     const _mi = document.getElementById('dashMovingInfo');
     if (_mi) _mi.style.display = isMoving ? 'flex' : 'none';
