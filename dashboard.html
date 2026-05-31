@@ -2908,7 +2908,7 @@
       <div class="mb-ico">🛣️</div>
       <div style="flex:1">
         <div class="mb-num" id="nrMilesNum">— mi</div>
-        <div class="mb-lbl">Distancia por carretera (OSRM)</div>
+        <div class="mb-lbl">Distancia por carretera (HERE)</div>
         <div class="mb-time" id="nrMilesTime">Ingresa ambas direcciones y presiona Calcular</div>
       </div>
     </div>
@@ -4220,15 +4220,25 @@ function showActiveDispatchedRoute(uid){
   // Línea recta inmediata (feedback rápido)
   drawLine([[pLon, pLat], [dLon, dLat]]);
 
-  // Fetch OSRM in background para trazo real por carreteras
-  const url = `https://router.project-osrm.org/route/v1/driving/${pLon},${pLat};${dLon},${dLat}?overview=full&geometries=geojson`;
-  fetch(url).then(r => r.json()).then(j => {
-    if (j.code !== 'Ok' || !j.routes?.[0]?.geometry?.coordinates) return;
-    const coords = j.routes[0].geometry.coordinates; // [[lon,lat], ...]
+  // Fetch HERE Routing en background para trazo real por carreteras
+  const hereRouteUrl = `https://router.hereapi.com/v8/routes?transportMode=truck&origin=${pLat},${pLon}&destination=${dLat},${dLon}&return=polyline&apiKey=${HERE_API_KEY}`;
+  fetch(hereRouteUrl).then(r => r.json()).then(j => {
+    if (!j.routes?.[0]?.sections?.[0]?.polyline) return;
+    const encoded = j.routes[0].sections[0].polyline;
+    // Decode HERE FlexPolyline to [lon, lat] pairs for MapLibre
+    const TABLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    const DEC = {}; for (let i = 0; i < TABLE.length; i++) DEC[TABLE[i]] = i;
+    let ci = 0;
+    function ru() { let v=0,s=0,c; do{c=DEC[encoded[ci++]];v|=(c&0x1F)<<s;s+=5;}while(c>=32);return v;}
+    function rs() { const u=ru(); return (u&1)?-(u>>1)-1:(u>>1); }
+    const ver = DEC[encoded[ci++]]; if (ver !== 1) return;
+    const hdr = ru(); const prec = hdr & 0xF; const dim3 = (hdr>>4)&0xF;
+    const fac = Math.pow(10, prec);
+    const coords = []; let la=0, lo=0;
+    while (ci < encoded.length) { la+=rs(); lo+=rs(); if(dim3)rs(); coords.push([lo/fac, la/fac]); }
     _dispatchedRouteCache.set(active.id, coords);
-    // Solo dibujar si este driver sigue seleccionado
     if (selectedId === uid) drawLine(coords);
-  }).catch(err => console.warn('OSRM dispatched route', err));
+  }).catch(err => console.warn('HERE dispatched route', err));
 }
 
 function renderDetail(){
@@ -7578,14 +7588,14 @@ async function fetchWeather(lat, lon){
     const temp = Math.round(cur.temperature_2m);
     const icon = WX_CODES[code] || '🌡️';
     const desc = WX_DESC[code]  || 'Variable';
-    // Reverse-geocode city via Nominatim
+    // Reverse-geocode city via HERE
     let city = '';
     try{
-      const gr = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=6&addressdetails=1`);
+      const gr = await fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat},${lon}&limit=1&apiKey=${HERE_API_KEY}`);
       if(gr.ok){
         const gd = await gr.json();
-        const a = gd.address || {};
-        city = a.city || a.county || a.state_district || a.state || '';
+        const a = gd.items?.[0]?.address || {};
+        city = a.city || a.district || a.county || a.state || '';
       }
     }catch(_){}
     document.getElementById('mwIcon').textContent = icon;
