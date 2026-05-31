@@ -10285,26 +10285,17 @@ let currentTab = 'plan';
 
 // ── MAP STYLE ────────────────────────────────────────────────
 const HERE_API_KEY = 'Nwtr6kwsU5smVYvhJCRUshCw_awISD0p2WwQlzijF7Y';
+// Tiles: CartoDB (gratis, sin auth). HERE usado para routing/geocoding/navigation.
+const _CARTO = 'https://{s}.basemaps.cartocdn.com';
+const _R = window.devicePixelRatio > 1 ? '@2x' : '';
 const MAP_STYLES = {
-  dark:     { label:'Truck Noche',   emoji:'🌙',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,          options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
-  streets:  { label:'Truck Día',     emoji:'🚛',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,            options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
-  logistics:{ label:'Logística',     emoji:'📦',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=logistics.day`,        options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
-  satellite:{ label:'Satélite',      emoji:'🛰️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=satellite.day`,        options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
-  explore:  { label:'Explorar Día',  emoji:'🗺️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=explore.day`,          options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
-  explorengt:{ label:'Explorar Noche',emoji:'🌃', url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=explore.night`,         options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
-  terrain:  { label:'Terreno',       emoji:'⛰️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=terrain.day`,          options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
-  lite:     { label:'Lite Claro',    emoji:'☀️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=lite.day`,             options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
-  litengt:  { label:'Lite Noche',    emoji:'🔅',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=lite.night`,           options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  dark:     { label:'Noche Oscuro',  emoji:'🌙',  url:`${_CARTO}/dark_all/{z}/{x}/{y}${_R}.png`,        options:{ subdomains:'abcd', maxZoom:20, attribution:'© <a href="https://carto.com/">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OSM</a>' } },
+  streets:  { label:'Calles Día',    emoji:'🗺️',  url:`${_CARTO}/rastertiles/voyager/{z}/{x}/{y}${_R}.png`, options:{ subdomains:'abcd', maxZoom:20, attribution:'© <a href="https://carto.com/">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OSM</a>' } },
+  light:    { label:'Claro',         emoji:'☀️',  url:`${_CARTO}/light_all/{z}/{x}/{y}${_R}.png`,       options:{ subdomains:'abcd', maxZoom:20, attribution:'© <a href="https://carto.com/">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OSM</a>' } },
+  satellite:{ label:'Satélite',      emoji:'🛰️',  url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', options:{ maxZoom:19, attribution:'© Esri' } },
+  terrain:  { label:'Terreno',       emoji:'⛰️',  url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', options:{ subdomains:'abc', maxZoom:17, attribution:'© <a href="https://opentopomap.org">OpenTopoMap</a>' } },
+  midnight: { label:'Medianoche',    emoji:'🌃',  url:`${_CARTO}/dark_nolabels/{z}/{x}/{y}${_R}.png`,   options:{ subdomains:'abcd', maxZoom:20, attribution:'© <a href="https://carto.com/">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OSM</a>' } },
 };
-// Diagnostic: test HERE tile API access once on load
-(function() {
-  fetch(`https://1.maps.hereapi.com/v3/base/mc/4/4/5/png8?apiKey=${HERE_API_KEY}&style=truck.night`)
-    .then(r => {
-      if (r.ok) { console.log('[HERE Tiles] API OK - status:', r.status); }
-      else { console.error('[HERE Tiles] API ERROR - status:', r.status, '- El API key puede no tener Map Tiles habilitado en platform.here.com'); }
-    })
-    .catch(e => console.error('[HERE Tiles] Network error:', e.message));
-})();
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 if (!MAP_STYLES[currentMapStyle]) { currentMapStyle = 'dark'; localStorage.setItem('hos_map_style', 'dark'); }
 let fmTileLayer = null;
@@ -15759,21 +15750,10 @@ function openFullMapScreen() {
 
     const _fmStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.streets;
     fmTileLayer = L.tileLayer(_fmStyleConf.url, _fmStyleConf.options || { maxZoom: 19 }).addTo(fmMapInst);
-    let _hereFailed = false;
-    fmTileLayer.on('tileerror', function() {
-      if (_hereFailed) return;
-      _hereFailed = true;
-      console.error('[HERE Tiles] Tiles no cargaron — API key sin Map Tiles habilitado. Usando fallback.');
-      try { fmMapInst.removeLayer(fmTileLayer); } catch {}
-      fmTileLayer = L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        { subdomains:'abcd', maxZoom:19, r: window.devicePixelRatio > 1 ? '@2x' : '' }
-      ).addTo(fmMapInst);
-    });
 
     // HERE Maps attribution (required by terms of use)
     L.control.attribution({ prefix: false, position: 'bottomright' })
-      .addAttribution('<a href="https://legal.here.com/en-gb/terms/serviceterms" target="_blank" style="color:#4ade80;font-weight:600">© HERE Maps</a> · <a href="https://legal.here.com/en-gb/terms/serviceterms" target="_blank" style="color:#94a3b8">Terms of Use</a>')
+      .addAttribution('© <a href="https://carto.com/" target="_blank">CARTO</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>')
       .addTo(fmMapInst);
 
     // Load US state boundary lines (always visible)
@@ -18570,20 +18550,10 @@ function initHosMinimap() {
   // Tiles usando el estilo activo del mapa principal
   const _miniStyleConf = MAP_STYLES[currentMapStyle] || MAP_STYLES.dark;
   hosMinimapTileLayer = L.tileLayer(_miniStyleConf.url, _miniStyleConf.options || { maxZoom: 19 }).addTo(hosMinimapInst);
-  let _miniHereFailed = false;
-  hosMinimapTileLayer.on('tileerror', function() {
-    if (_miniHereFailed) return;
-    _miniHereFailed = true;
-    try { hosMinimapInst.removeLayer(hosMinimapTileLayer); } catch {}
-    hosMinimapTileLayer = L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      { subdomains:'abcd', maxZoom:19, r: window.devicePixelRatio > 1 ? '@2x' : '' }
-    ).addTo(hosMinimapInst);
-  });
 
-  // HERE Maps attribution
+  // Map attribution
   L.control.attribution({ prefix: false, position: 'bottomright' })
-    .addAttribution('<a href="https://legal.here.com/en-gb/terms/serviceterms" target="_blank" style="color:#4ade80;font-weight:600">© HERE Maps</a> · <a href="https://legal.here.com/en-gb/terms/serviceterms" target="_blank" style="color:#94a3b8">Terms</a>')
+    .addAttribution('© <a href="https://carto.com/" target="_blank">CARTO</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>')
     .addTo(hosMinimapInst);
 
   // Helper: crea el HTML de un marcador círculo verde con punto blanco interior
