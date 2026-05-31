@@ -8530,7 +8530,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- ③ TRES ANILLOS KPI — centro más grande -->
-  <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px 10px;">
+  <div id="dashGaugesRow" style="display:none;flex:0 0 auto;align-items:center;justify-content:center;gap:6px;padding:0 8px 10px;">
 
     <!-- TURNO ring -->
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
@@ -17661,6 +17661,8 @@ function fmStartTracking() {
     fmVehicleMoving = isMoving;
     const _mi = document.getElementById('dashMovingInfo');
     if (_mi) _mi.style.display = isMoving ? 'flex' : 'none';
+    const _gr = document.getElementById('dashGaugesRow');
+    if (_gr) _gr.style.display = isMoving ? 'flex' : 'none';
 
     // ── Heading: prefer GPS bearing ─────────────────────────
     let heading = pos.coords.heading;
@@ -18118,6 +18120,8 @@ function fmStopTracking() {
   fmPrevLat = null; fmPrevLon = null;
   const _miStop = document.getElementById('dashMovingInfo');
   if (_miStop) _miStop.style.display = 'none';
+  const _grStop = document.getElementById('dashGaugesRow');
+  if (_grStop) _grStop.style.display = 'none';
   // Stop smooth animation
   if (truckAnimFrame) { cancelAnimationFrame(truckAnimFrame); truckAnimFrame = null; }
   truckFrom = null; truckTo = null;
