@@ -2908,7 +2908,7 @@
       <div class="mb-ico">🛣️</div>
       <div style="flex:1">
         <div class="mb-num" id="nrMilesNum">— mi</div>
-        <div class="mb-lbl">Distancia por carretera (HERE)</div>
+        <div class="mb-lbl">Distancia por carretera (TomTom)</div>
         <div class="mb-time" id="nrMilesTime">Ingresa ambas direcciones y presiona Calcular</div>
       </div>
     </div>
@@ -3475,40 +3475,37 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
 // ════════════════════════════════════════════════════
 // MAPA Y ESTADO (MapLibre GL — vectorial, rápido)
 // ════════════════════════════════════════════════════
-const HERE_API_KEY = 'Nwtr6kwsU5smVYvhJCRUshCw_awISD0p2WwQlzijF7Y';
-// HERE FlexPolyline decoder — returns [[lon, lat], ...] for MapLibre GL
-function _decodeHereFlexPolyline(encoded) {
-  const TABLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-  const DEC = new Array(128).fill(-1);
-  for (let i = 0; i < TABLE.length; i++) DEC[TABLE.charCodeAt(i)] = i;
-  let ci = 0;
-  function ru() {
-    let v = 0, s = 0, c;
-    do { c = DEC[encoded.charCodeAt(ci++)]; if (c < 0) throw new Error('invalid char'); v |= (c & 0x1F) << s; s += 5; } while (c >= 32);
-    return v;
-  }
-  function rs() { const u = ru(); return (u & 1) ? -(u >> 1) - 1 : (u >> 1); }
-  const ver = DEC[encoded.charCodeAt(ci++)];
-  if (ver !== 1) throw new Error('Unsupported FlexPolyline version: ' + ver);
-  const hdr = ru(); const prec = hdr & 0xF; const dim3 = (hdr >> 4) & 0xF;
-  const fac = Math.pow(10, prec);
-  const coords = []; let la = 0, lo = 0;
-  while (ci < encoded.length) { la += rs(); lo += rs(); if (dim3) rs(); coords.push([lo / fac, la / fac]); }
-  return coords;
+const TOMTOM_API_KEY = 'N5xmJcA6AMxr5FELvpHRiE4HOj9LqqVy';
+// TomTom route → [[lon, lat], ...] for MapLibre GL
+function _tomTomPointsToCoords(legs) {
+  return (legs || []).flatMap(leg =>
+    (leg.points || []).map(p => [p.longitude, p.latitude])
+  );
 }
 
-// HERE Vector Tile API v2 only has explore/lite/satellite/terrain base styles.
-// Truck restrictions are added as a separate raster overlay after map load.
+// TomTom raster tiles as MapLibre GL inline raster styles
+const _TT_BASE = 'https://api.tomtom.com/map/1/tile';
+function _mkMapStyle(tileUrl, maxzoom) {
+  return {
+    version: 8,
+    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sources: { 'tt': { type: 'raster', tiles: [tileUrl], tileSize: 256, maxzoom: maxzoom || 22 } },
+    layers: [
+      { id: 'tt-bg', type: 'background', paint: { 'background-color': '#e8e0d8' } },
+      { id: 'tt-raster', type: 'raster', source: 'tt' }
+    ]
+  };
+}
 const MAP_STYLES = {
-  streets:   `https://vector.hereapi.com/v2/vectortiles/base/mc/style/explore.day.json?apiKey=${HERE_API_KEY}`,
-  dark:      `https://vector.hereapi.com/v2/vectortiles/base/mc/style/explore.night.json?apiKey=${HERE_API_KEY}`,
-  light:     `https://vector.hereapi.com/v2/vectortiles/base/mc/style/lite.day.json?apiKey=${HERE_API_KEY}`,
-  satellite: `https://vector.hereapi.com/v2/vectortiles/base/mc/style/satellite.day.json?apiKey=${HERE_API_KEY}`,
-  topo:      `https://vector.hereapi.com/v2/vectortiles/base/mc/style/terrain.day.json?apiKey=${HERE_API_KEY}`,
+  streets:   _mkMapStyle(`${_TT_BASE}/basic/main/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`),
+  dark:      _mkMapStyle(`${_TT_BASE}/basic/night/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`),
+  light:     _mkMapStyle(`${_TT_BASE}/basic/main/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`),
+  satellite: _mkMapStyle(`${_TT_BASE}/sat/main/{z}/{x}/{y}.jpg?key=${TOMTOM_API_KEY}&tileSize=256`, 19),
+  topo:      _mkMapStyle(`${_TT_BASE}/hybrid/main/{z}/{x}/{y}.jpg?key=${TOMTOM_API_KEY}&tileSize=256`, 19),
 };
-// Truck restrictions overlay (HERE Truck Restrictions raster tiles)
-const TRUCK_OVERLAY_SOURCE = 'here-truck-overlay';
-const TRUCK_OVERLAY_URL = `https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day&features=vehicle_restrictions:active_and_inactive`;
+// TomTom traffic flow overlay
+const TRUCK_OVERLAY_SOURCE = 'tt-traffic-overlay';
+const TRUCK_OVERLAY_URL = `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}`;
 
 let currentMapStyle = localStorage.getItem('app_mapStyle') || 'streets';
 if (!MAP_STYLES[currentMapStyle]) { currentMapStyle = 'streets'; }
@@ -3524,7 +3521,7 @@ map.addControl(new maplibregl.NavigationControl({ showCompass:false }), 'top-rig
 map.addControl(new maplibregl.ScaleControl({ maxWidth:120, unit:'imperial' }), 'bottom-right');
 map.addControl(new maplibregl.AttributionControl({
   compact: true,
-  customAttribution: '<a href="https://legal.here.com/en-gb/terms/serviceterms" target="_blank">© HERE Maps · Terms of Use</a>'
+  customAttribution: '<a href="https://legal.tomtom.com/terms-of-use" target="_blank">© TomTom Maps · Terms of Use</a>'
 }), 'bottom-right');
 
 const drivers   = new Map();
@@ -3555,7 +3552,7 @@ function _addTruckOverlay() {
       type: 'raster',
       tiles: [TRUCK_OVERLAY_URL],
       tileSize: 256,
-      attribution: '© HERE Truck Restrictions'
+      attribution: '© TomTom Traffic'
     });
     map.addLayer({ id: TRUCK_OVERLAY_SOURCE, type: 'raster', source: TRUCK_OVERLAY_SOURCE, paint: { 'raster-opacity': 0.85 } });
   } catch(e) { console.warn('truck overlay', e); }
@@ -3705,17 +3702,17 @@ async function reverseGeocode(lat, lon){
   if(cached && Date.now() - cached.timestamp < GEO_CACHE_TTL) return cached;
   try{
     const r = await fetch(
-      `https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat},${lon}&limit=1&lang=es&apiKey=${HERE_API_KEY}`
+      `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lon}.json?key=${TOMTOM_API_KEY}`
     );
     if(!r.ok) throw new Error('geo fail');
     const j = await r.json();
-    const a = (j.items && j.items[0] && j.items[0].address) || {};
-    const city  = a.city || a.district || a.county || '—';
-    const state = a.state || '—';
-    const stateCode = a.stateCode || STATE_CODES[state] || state;
+    const a = (j.addresses && j.addresses[0] && j.addresses[0].address) || {};
+    const city  = a.municipality || a.municipalitySubdivision || a.countrySecondarySubdivision || '—';
+    const state = a.countrySubdivision || '—';
+    const stateCode = a.countrySubdivisionCode || STATE_CODES[state] || state;
     const country = a.countryCode || '';
-    const road = a.street || '';
-    const result = { city, state, stateCode, country, road, display: a.label || '', timestamp: Date.now() };
+    const road = a.streetName || '';
+    const result = { city, state, stateCode, country, road, display: a.freeformAddress || '', timestamp: Date.now() };
     geoCache.set(key, result);
     return result;
   }catch(e){
@@ -4264,14 +4261,14 @@ function showActiveDispatchedRoute(uid){
   // Línea recta inmediata (feedback rápido)
   drawLine([[pLon, pLat], [dLon, dLat]]);
 
-  // Fetch HERE Routing en background para trazo real por carreteras
-  const hereRouteUrl = `https://router.hereapi.com/v8/routes?transportMode=truck&origin=${pLat},${pLon}&destination=${dLat},${dLon}&return=polyline&apiKey=${HERE_API_KEY}`;
-  fetch(hereRouteUrl).then(r => r.json()).then(j => {
-    if (!j.routes?.[0]?.sections?.[0]?.polyline) return;
-    const coords = _decodeHereFlexPolyline(j.routes[0].sections[0].polyline);
+  // Fetch TomTom Routing en background para trazo real por carreteras
+  const ttRouteUrl = `https://api.tomtom.com/routing/1/calculateRoute/${pLat},${pLon}:${dLat},${dLon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=9072&vehicleLength=22.9&vehicleWidth=2.59&vehicleHeight=4.11&vehicleNumberOfAxles=5&vehicleCommercial=true&routeType=fastest`;
+  fetch(ttRouteUrl).then(r => r.json()).then(j => {
+    if (!j.routes?.[0]?.legs?.length) return;
+    const coords = _tomTomPointsToCoords(j.routes[0].legs);
     _dispatchedRouteCache.set(active.id, coords);
     if (selectedId === uid) drawLine(coords);
-  }).catch(err => console.warn('HERE dispatched route', err));
+  }).catch(err => console.warn('TomTom dispatched route', err));
 }
 
 function renderDetail(){
@@ -5736,17 +5733,17 @@ const routeState = {
   unsubscribeRoutes: null,
 };
 
-// ── HERE Routing API v8 ────────────────────────────────
+// ── TomTom Routing API (truck, 18 wheels) ───────────────
 async function osrmRoute(fromLat, fromLon, toLat, toLon){
-  const url = `https://router.hereapi.com/v8/routes?transportMode=truck&origin=${fromLat},${fromLon}&destination=${toLat},${toLon}&return=summary&apiKey=${HERE_API_KEY}`;
+  const url = `https://api.tomtom.com/routing/1/calculateRoute/${fromLat},${fromLon}:${toLat},${toLon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=9072&vehicleLength=22.9&vehicleWidth=2.59&vehicleHeight=4.11&vehicleNumberOfAxles=5&vehicleCommercial=true&routeType=fastest`;
   const r = await fetch(url);
-  if(!r.ok) throw new Error('HERE Routing request failed: ' + r.status);
+  if(!r.ok) throw new Error('TomTom Routing request failed: ' + r.status);
   const j = await r.json();
   if(!j.routes?.length) throw new Error('Sin ruta disponible');
-  const summary = j.routes[0].sections[0].summary;
+  const summary = j.routes[0].summary;
   return {
-    miles:   summary.length / 1609.344,   // metros → millas
-    minutes: summary.duration / 60,        // segundos → minutos
+    miles:   summary.lengthInMeters / 1609.344,
+    minutes: summary.travelTimeInSeconds / 60,
   };
 }
 
@@ -5773,18 +5770,18 @@ function attachAddressAutocomplete(inputId, suggestId, onSelect, labelFn){
     _addrTimer = setTimeout(async () => {
       try{
         const r = await fetch(
-          `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(q)}&limit=6&in=countryCode:USA&lang=es&apiKey=${HERE_API_KEY}`
+          `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(q)}.json?key=${TOMTOM_API_KEY}&limit=6&countrySet=US&language=es-US`
         );
         if(!r.ok) return;
         const j = await r.json();
-        const data = j.items || [];
+        const data = j.results || [];
         _positionBox();
         if(!data.length){ box.innerHTML = '<div class="addr-suggest-item" style="color:var(--muted);cursor:default">Sin resultados</div>'; box.classList.add('show'); return; }
         box.innerHTML = data.map((d, idx) => {
           const a = d.address || {};
-          const main = [a.street ? `${a.houseNumber||''} ${a.street}`.trim() : '', a.city || a.district || a.county || ''].filter(Boolean).join(', ');
-          const sub  = [a.state, a.postalCode, a.countryName].filter(Boolean).join(', ');
-          return `<div class="addr-suggest-item" data-idx="${idx}"><div class="main">${escapeHtml(main || a.label || d.title)}</div><div class="sub">${escapeHtml(sub)}</div></div>`;
+          const main = [a.streetNumber&&a.streetName ? `${a.streetNumber} ${a.streetName}` : (a.streetName||''), a.municipality || a.municipalitySubdivision || ''].filter(Boolean).join(', ');
+          const sub  = [a.countrySubdivision, a.postalCode, a.country].filter(Boolean).join(', ');
+          return `<div class="addr-suggest-item" data-idx="${idx}"><div class="main">${escapeHtml(main || a.freeformAddress || '')}</div><div class="sub">${escapeHtml(sub)}</div></div>`;
         }).join('');
         box.classList.add('show');
         box.querySelectorAll('.addr-suggest-item').forEach((item, idx) => {
@@ -5792,17 +5789,17 @@ function attachAddressAutocomplete(inputId, suggestId, onSelect, labelFn){
             const d = data[idx];
             if(!d) return;
             const a = d.address || {};
-            const city = a.city || a.district || a.county || '';
-            const state = a.state || '';
-            const stateCode = a.stateCode || STATE_CODES[state] || state;
+            const city = a.municipality || a.municipalitySubdivision || a.countrySecondarySubdivision || '';
+            const state = a.countrySubdivision || '';
+            const stateCode = a.countrySubdivisionCode || STATE_CODES[state] || state;
             const result = {
-              address: a.label || d.title,
+              address: a.freeformAddress || '',
               lat: d.position.lat,
-              lon: d.position.lng,
+              lon: d.position.lon,
               city, state, stateCode,
               postcode: a.postalCode || '',
             };
-            input.value = labelFn ? labelFn(result) : (a.label || d.title);
+            input.value = labelFn ? labelFn(result) : (a.freeformAddress || '');
             box.classList.remove('show');
             onSelect(result);
           });
@@ -7621,14 +7618,14 @@ async function fetchWeather(lat, lon){
     const temp = Math.round(cur.temperature_2m);
     const icon = WX_CODES[code] || '🌡️';
     const desc = WX_DESC[code]  || 'Variable';
-    // Reverse-geocode city via HERE
+    // Reverse-geocode city via TomTom
     let city = '';
     try{
-      const gr = await fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat},${lon}&limit=1&apiKey=${HERE_API_KEY}`);
+      const gr = await fetch(`https://api.tomtom.com/search/2/reverseGeocode/${lat},${lon}.json?key=${TOMTOM_API_KEY}`);
       if(gr.ok){
         const gd = await gr.json();
-        const a = gd.items?.[0]?.address || {};
-        city = a.city || a.district || a.county || a.state || '';
+        const a = gd.addresses?.[0]?.address || {};
+        city = a.municipality || a.municipalitySubdivision || a.countrySecondarySubdivision || a.countrySubdivision || '';
       }
     }catch(_){}
     document.getElementById('mwIcon').textContent = icon;
