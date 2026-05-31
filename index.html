@@ -13426,7 +13426,7 @@ function triggerSOS() {
     else alert('Agrega un número de emergencia en Ajustes.');
   };
   document.getElementById('sosSmsBtn').onclick = () => {
-    const coordsStr = (sosLat != null && sosLon != null) ? `https://maps.google.com/?q=${sosLat},${sosLon}` : 'Ubicación no disponible';
+    const coordsStr = (sosLat != null && sosLon != null) ? `https://maps.here.com/?q=${sosLat},${sosLon}` : 'Ubicación no disponible';
     const msg = encodeURIComponent(
       `🆘 EMERGENCIA - Truck Precision\n📍 ${coordsStr}\n\nNecesito ayuda en esta ubicación.`
     );
@@ -20400,7 +20400,7 @@ async function runNearbySearch() {
           .setContent(`<div style="font-family:'DM Sans',sans-serif;font-weight:800;font-size:13px">${brand ? brand.logo : cfg.emoji} ${displayName}</div><div style="font-size:11px;color:#6b7280;margin-top:3px">${distLabel} de tu ubicación</div>`)
           .openOn(fmMapInst);
       } else {
-        window.open(`https://maps.google.com/?q=${res.elLat},${res.elLon}`, '_blank');
+        window.open(`https://maps.here.com/?q=${res.elLat},${res.elLon}`, '_blank');
       }
     });
 
@@ -20504,13 +20504,13 @@ function addNearbyStopToMap(res, displayName, cfg, brand) {
       <button onclick="
         if(fmMapInst && this.dataset.lat) {
           navigator.clipboard?.writeText(this.dataset.lat+','+this.dataset.lon);
-          window.open('https://maps.google.com/?q='+this.dataset.lat+','+this.dataset.lon,'_blank');
+          window.open('https://maps.here.com/?q='+this.dataset.lat+','+this.dataset.lon,'_blank');
         }
       " data-lat="${res.elLat}" data-lon="${res.elLon}" style="
         margin-top:10px;width:100%;padding:8px;border-radius:8px;
         background:#10b981;color:#fff;border:none;font-size:12px;
         font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;
-      ">🗺️ Abrir en Google Maps</button>
+      ">🗺️ Abrir en HERE Maps</button>
     </div>`;
 
   const m = L.marker([res.elLat, res.elLon], { icon })
@@ -23888,13 +23888,13 @@ out center qt;`;
       return;
     }
 
-    const gmUrl = `https://www.google.com/maps/search/truck+stop/@${lat},${lon},11z`;
+    const gmUrl = `https://maps.here.com/?q=truck+stop&map=${lat},${lon},11z`;
     const tpUrl = `https://truckerpath.com/`;
     list.innerHTML = `
       <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">⛽ ${els.length} truck stops · 100 km</div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
-        <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(66,133,244,.15);border:1px solid rgba(66,133,244,.3);border-radius:12px;color:#4285f4;font-size:13px;font-weight:700;text-decoration:none">
-          🗺️ Google Maps
+        <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:12px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">
+          🗺️ HERE Maps
         </a>
         <a href="${tpUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
           🚛 Trucker Path
@@ -23921,7 +23921,7 @@ out center qt;`;
       else if (/shell/i.test(n))             { emoji = '🐚'; bgColor = 'rgba(245,158,11,.15)'; }
       else if (/chevron/i.test(n))           { emoji = '💙'; bgColor = 'rgba(59,130,246,.15)'; }
 
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${elLat},${elLon}&travelmode=driving`;
+      const mapsUrl = `https://maps.here.com/directions/drive//${elLat},${elLon}`;
 
       const card = document.createElement('div');
       card.className = 'fuel-station-card';
@@ -24122,11 +24122,11 @@ function _renderPoiElements(list, subEl, type, lat, lon, rawEls, poiIcon, isTruc
   subEl.textContent = `${els.length} encontrados · 100 mi${cacheLabel ? ` · 🗃️ ${cacheLabel} atrás` : ''}`;
 
   const gmQuery = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
-  const gmUrl   = `https://www.google.com/maps/search/${gmQuery}/@${lat},${lon},12z`;
+  const gmUrl   = `https://maps.here.com/?q=${gmQuery}&map=${lat},${lon},12z`;
   list.innerHTML = `
     <div style="display:flex;gap:8px;margin-bottom:12px">
-      <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(66,133,244,.15);border:1px solid rgba(66,133,244,.3);border-radius:12px;color:#4285f4;font-size:13px;font-weight:700;text-decoration:none">
-        🗺️ Google Maps
+      <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:12px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">
+        🗺️ HERE Maps
       </a>
       <a href="https://truckerpath.com/" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
         🚛 Trucker Path
@@ -24150,7 +24150,7 @@ function _renderPoiElements(list, subEl, type, lat, lon, rawEls, poiIcon, isTruc
     if (addrParts.length >= 2) { navDest = encodeURIComponent(fullAddr); }
     else if (name && !genericNames.includes(name)) { navDest = encodeURIComponent(city ? `${name}, ${city}` : name); }
     else { navDest = `${elLat},${elLon}`; }
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${navDest}&travelmode=driving`;
+    const mapsUrl = `https://maps.here.com/directions/drive//${navDest}`;
 
     const card = document.createElement('div');
     card.className = 'poi-card';
@@ -24238,14 +24238,14 @@ async function searchNearbyPOI(type) {
     }
   } catch(e) {
     const gmQ  = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
-    const gmFb = lat ? `https://www.google.com/maps/search/${gmQ}/@${lat},${lon},11z` : `https://www.google.com/maps/search/${gmQ}`;
+    const gmFb = lat ? `https://maps.here.com/?q=${gmQ}&map=${lat},${lon},11z` : `https://maps.here.com/?q=${gmQ}`;
     list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted)">
       <div style="font-size:36px;margin-bottom:12px">⚠️</div>
       <div style="font-size:14px;font-weight:700;margin-bottom:6px">Sin conexión a la base de datos</div>
       <div style="font-size:12px;margin-bottom:16px">Verifica tu internet e intenta de nuevo</div>
       <div style="display:flex;flex-direction:column;gap:8px;max-width:240px;margin:0 auto">
         <button onclick="searchNearbyPOI('${type}')" style="padding:10px;background:#10b981;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🔄 Reintentar</button>
-        <a href="${gmFb}" target="_blank" style="display:block;padding:10px;background:rgba(66,133,244,.15);border:1px solid rgba(66,133,244,.3);border-radius:10px;color:#4285f4;font-size:13px;font-weight:700;text-decoration:none">🗺️ Buscar en Google Maps</a>
+        <a href="${gmFb}" target="_blank" style="display:block;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:10px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">🗺️ Buscar en HERE Maps</a>
       </div>
     </div>`;
     subEl.textContent = 'Error de conexión';
@@ -24259,9 +24259,9 @@ async function openGoogleMapsTruckStops() {
     lat = pos.coords.latitude; lon = pos.coords.longitude;
   } catch {
     if (origin) { lat = origin.lat; lon = origin.lon; }
-    else { window.open('https://www.google.com/maps/search/truck+stop+near+me', '_blank'); return; }
+    else { window.open('https://maps.here.com/?q=truck+stop', '_blank'); return; }
   }
-  window.open(`https://www.google.com/maps/search/truck+stop/@${lat},${lon},11z`, '_blank');
+  window.open(`https://maps.here.com/?q=truck+stop&map=${lat},${lon},11z`, '_blank');
 }
 
 function showFuelOnMap(lat, lon, name, emoji) {
@@ -29702,7 +29702,7 @@ window._hosAutoRecalc = false;
     if (!r || !r.pickup || !r.delivery) return alert('Coordenadas no disponibles');
     const from = (r.pickup.lat != null && r.pickup.lon != null) ? `${r.pickup.lat},${r.pickup.lon}` : encodeURIComponent(r.pickup.address||'');
     const to   = (r.delivery.lat != null && r.delivery.lon != null) ? `${r.delivery.lat},${r.delivery.lon}` : encodeURIComponent(r.delivery.address||'');
-    const url  = `https://www.google.com/maps/dir/?api=1&origin=${from}&destination=${to}&travelmode=driving`;
+    const url  = `https://maps.here.com/directions/drive/${from}/${to}`;
     window.open(url, '_blank', 'noopener');
   }
 
