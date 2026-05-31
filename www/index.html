@@ -12120,12 +12120,11 @@ async function checkStateBorderAhead(lat, lon, heading) {
   try {
     lastBorderWarnCheck = now; // stamp only on attempt (reset on error)
     const ahead = destPointMiles(lat, lon, heading ?? 0, 5);
-    const r = await fetch(`https://photon.komoot.io/reverse?lat=${ahead.lat}&lon=${ahead.lon}`,
+    const r = await fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${ahead.lat},${ahead.lon}&limit=1&apiKey=${HERE_API_KEY}`,
       { signal: AbortSignal.timeout(6000) });
     const d = await r.json();
-    const p = d.features?.[0]?.properties || {};
-    const stateRaw = p.state || p.region || '';
-    const code = _STATE_MAP[stateRaw] || stateRaw.slice(0,2).toUpperCase();
+    const stateRaw = d.items?.[0]?.address?.state || '';
+    const code = _STATE_MAP[stateRaw] || d.items?.[0]?.address?.stateCode || stateRaw.slice(0,2).toUpperCase();
     if (code && code !== currentStateCode && code !== lastBorderWarnState) {
       lastBorderWarnState = code;
       const _uName = (typeof currentUser !== 'undefined' && currentUser?.name) ||
@@ -13189,18 +13188,16 @@ async function fetchAutocomplete(q) {
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 7000);
-    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10`, { signal: ctrl.signal });
+    const r = await fetch(`https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(q)}&limit=10&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`, { signal: ctrl.signal });
     const data = await r.json();
-    (data.features||[]).forEach(f => {
-      const p = f.properties;
-      const cc = (p.countrycode||'').toLowerCase();
-      if (cc !== 'us') return;
-      const street = p.housenumber&&p.street?`${p.housenumber} ${p.street}`:(p.street||'');
-      const city = p.city||p.town||p.village||p.name||'';
-      const parts = [street,city,p.state,p.country].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
-      const name = parts.join(', ');
-      if (name) items.push({ name, lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0],
-        state:(p.state||'').trim(), country_code:'US', isAddress:!!(p.housenumber||p.street) });
+    (data.items||[]).forEach(d => {
+      const a = d.address || {};
+      const street = a.houseNumber&&a.street?`${a.houseNumber} ${a.street}`:(a.street||'');
+      const city = a.city||a.district||a.county||'';
+      const parts = [street,city,a.state,'USA'].filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i);
+      const name = parts.join(', ') || a.label || '';
+      if (name) items.push({ name, lat:d.position.lat, lon:d.position.lng,
+        state:(a.state||'').trim(), country_code:'US', isAddress:!!(a.houseNumber||a.street) });
     });
   } catch {}
   return items;
@@ -15925,11 +15922,10 @@ async function _fetchStopCityAhead(targetMiles, onResult) {
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 6000);
-    const r = await fetch(`https://photon.komoot.io/reverse?lat=${stopLat}&lon=${stopLon}`, { signal: ctrl.signal });
+    const r = await fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${stopLat},${stopLon}&limit=1&apiKey=${HERE_API_KEY}`, { signal: ctrl.signal });
     const d = await r.json();
-    const p = d.features?.[0]?.properties || {};
-    const city = p.city || p.town || p.village || p.county || '';
-    const state = p.state || '';
+    const city = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
+    const state = d.items?.[0]?.address?.state || '';
     onResult(city ? city + (state ? ', ' + state : '') : null);
   } catch { onResult(null); }
 }
@@ -17130,34 +17126,24 @@ function fmStartTracking() {
         const _setLoc = t => { if (locEl) locEl.textContent = t; if (hudLocEl) hudLocEl.textContent = t; };
         if (!locEl) return;
 
-        // 1️⃣ Photon reverse PRIMARY
-        try {
-          const rP = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&lang=en`);
-          const dP = await rP.json();
-          const p  = dP.features?.[0]?.properties || {};
-          const addr = [p.name, p.city || p.town || p.village, p.state].filter(Boolean).join(', ');
-          if (addr) { _setLoc(addr); return; }
-        } catch(eP) { console.warn('Photon reverse failed:', eP.message); }
-
-        // 2️⃣ Nominatim reverse FALLBACK
+        // HERE reverse geocode
         try {
           const ctrl = new AbortController();
           const t = setTimeout(() => ctrl.abort(), 8000);
-          const rN = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&zoom=14&addressdetails=1`,
+          const rH = await fetch(
+            `https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat.toFixed(5)},${lon.toFixed(5)}&limit=1&apiKey=${HERE_API_KEY}`,
             { signal: ctrl.signal, headers: { 'Accept-Language': 'en' } }
           );
           clearTimeout(t);
-          const dN = await rN.json();
-          const a  = dN.address || {};
-          const city  = a.city || a.town || a.village || a.suburb || a.county || '';
-          const state = a.state || '';
-          const road  = a.road || a.pedestrian || '';
-          const addr2 = [road, city, state].filter(Boolean).join(', ') || dN.display_name?.split(',').slice(0,3).join(',').trim();
-          if (addr2) { _setLoc(addr2); return; }
-        } catch(eN) { console.warn('Nominatim reverse failed:', eN.message); }
+          const dH = await rH.json();
+          const street = dH.items?.[0]?.address?.street || '';
+          const city   = dH.items?.[0]?.address?.city || dH.items?.[0]?.address?.district || dH.items?.[0]?.address?.county || '';
+          const state  = dH.items?.[0]?.address?.state || '';
+          const addr   = [street, city, state].filter(Boolean).join(', ');
+          if (addr) { _setLoc(addr); return; }
+        } catch(eH) { console.warn('HERE reverse failed:', eH.message); }
 
-        // 3️⃣ Last resort: coordinates
+        // Last resort: coordinates
         _setLoc(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
       })();
     }
@@ -17632,30 +17618,31 @@ function initHosMinimap() {
         typeof origin !== 'undefined' && origin?.lat &&
         typeof destination !== 'undefined' && destination?.lat) {
 
-      const _coords = `${origin.lon},${origin.lat};${destination.lon},${destination.lat}`;
-      const _qs     = '?overview=full&geometries=geojson&steps=false&alternatives=false';
-      const _servers = [
-        `https://router.project-osrm.org/route/v1/driving/${_coords}${_qs}`
-      ];
-
-      // Lanzar ambos servidores en paralelo — usar el que responda primero con ruta válida
-      Promise.any(_servers.map(url => {
-        const ctrl = new AbortController();
-        setTimeout(() => ctrl.abort(), 9000);
-        return fetch(url, { signal: ctrl.signal })
-          .then(r => r.ok ? r.json() : Promise.reject('http'))
-          .then(data => {
-            if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates?.length > 2)
-              return data.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]);
-            throw new Error('no route');
-          });
-      }))
-      .then(coords => {
-        if (!hosMinimapInst) return;
-        roadGeometry = coords;
-        _drawHostRoute(coords);
-      })
-      .catch(() => {}); // Ambos fallaron, se queda la línea recta
+      // Try HERE routing for minimap geometry
+      _fetchHereRoute(origin, destination)
+        .then(result => {
+          if (!hosMinimapInst || !result?.coords?.length) return;
+          roadGeometry = result.coords;
+          _drawHostRoute(result.coords);
+        })
+        .catch(() => {
+          // Fallback to OSRM
+          const _coords = `${origin.lon},${origin.lat};${destination.lon},${destination.lat}`;
+          const _qs     = '?overview=full&geometries=geojson&steps=false&alternatives=false';
+          const ctrl = new AbortController();
+          setTimeout(() => ctrl.abort(), 9000);
+          fetch(`https://router.project-osrm.org/route/v1/driving/${_coords}${_qs}`, { signal: ctrl.signal })
+            .then(r => r.ok ? r.json() : Promise.reject('http'))
+            .then(data => {
+              if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates?.length > 2) {
+                const coords = data.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]);
+                if (!hosMinimapInst) return;
+                roadGeometry = coords;
+                _drawHostRoute(coords);
+              }
+            })
+            .catch(() => {}); // Both failed, keep straight line
+        });
     }
   }
 
@@ -17940,11 +17927,10 @@ async function _updateHosCityBar(lat, lon, force) {
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 7000);
-    const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`, { signal: ctrl.signal });
+    const r = await fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat},${lon}&limit=1&apiKey=${HERE_API_KEY}`, { signal: ctrl.signal });
     const d = await r.json();
-    const p = d.features?.[0]?.properties || {};
-    const city  = p.city || p.town || p.village || p.county || '';
-    const state = p.state || '';
+    const city  = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
+    const state = d.items?.[0]?.address?.state || '';
     if (city || state) txt.textContent = [city, state].filter(Boolean).join(', ');
   } catch(e) {}
 }
@@ -21511,12 +21497,13 @@ function setupWaypointInput(inputId, suggId, index) {
     if (q.length < 3) { sugg.style.display='none'; return; }
     debounceT = setTimeout(async () => {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=4&addressdetails=1&accept-language=en&countrycodes=us`);
+        const res = await fetch(`https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(q)}&limit=4&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`);
         const data = await res.json();
-        if (!data.length) { sugg.style.display='none'; return; }
-        sugg.innerHTML = data.map(d => {
-          const label = d.display_name.split(',').slice(0,3).join(',');
-          return `<div class="sugg-item" data-lat="${d.lat}" data-lon="${d.lon}" data-name="${label}">${label}</div>`;
+        if (!data.items?.length) { sugg.style.display='none'; return; }
+        sugg.innerHTML = data.items.map(d => {
+          const a = d.address || {};
+          const label = a.label || [a.street, a.city, a.state].filter(Boolean).join(', ');
+          return `<div class="sugg-item" data-lat="${d.position.lat}" data-lon="${d.position.lng}" data-name="${label}">${label}</div>`;
         }).join('');
         sugg.style.display='block';
         sugg.querySelectorAll('.sugg-item').forEach(item => {
@@ -21594,21 +21581,7 @@ async function fetchMultiLegRoute(points) {
   // points = [{lat,lon,name}, ...]  at least 2
   if (points.length < 2) return null;
 
-  // Try OSRM with all waypoints in one call
-  const coords = points.map(p => `${p.lon},${p.lat}`).join(';');
-  try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true&alternatives=false`;
-    const res  = await fetch(url);
-    const data = await res.json();
-    if (data.code === 'Ok' && data.routes?.[0]) {
-      const route = data.routes[0];
-      const coords2d = route.geometry.coordinates.map(c => [c[1], c[0]]);
-      const miles = Math.round(route.distance / 1609.344);
-      const steps = route.legs.flatMap(l => l.steps || []);
-      return { coords: coords2d, miles, steps, source: 'OSRM' };
-    }
-  } catch {}
-
+  // Try HERE routing (chain via fetchRoadRoute which uses HERE as primary)
   // Fallback: chain individual fetchRoadRoute calls
   let allCoords = [], totalMiles = 0, allSteps = [];
   for (let i = 0; i < points.length - 1; i++) {
@@ -21629,35 +21602,29 @@ let selectedAltIdx = 0;
 async function fetchAlternativeRoutes(orig, dest) {
   altRoutes = [];
   try {
-    const profile = 'driving';
-    let excludeParam = '';
-    if (truckOptions.routeType === 'avoid_highways') excludeParam = '&exclude=motorway';
-    else if (truckOptions.routeType === 'avoid_tolls') excludeParam = '&exclude=toll';
-    const qs = `?overview=full&geometries=geojson&steps=true&alternatives=3${excludeParam}`;
-    const coordStr = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
-    // Race both servers — use whichever replies first with a valid route
-    const altServers = [
-      `https://router.project-osrm.org/route/v1/${profile}/${coordStr}${qs}`
-    ];
-    function _tryAltServer(url) {
+    // Use HERE routing as primary
+    const result = await _fetchHereRoute(orig, dest);
+    altRoutes = [{ coords: result.coords, miles: result.miles, hours: (result.miles/60).toFixed(1), steps: result.steps, source: result.source }];
+  } catch {
+    // Fallback to OSRM
+    try {
+      const coordStr = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
+      const qs = '?overview=full&geometries=geojson&steps=true&alternatives=3';
       const ctrl = new AbortController();
-      setTimeout(() => ctrl.abort(), 10000); // 10s timeout (was 20s, single-server)
-      return fetch(url, { signal: ctrl.signal })
-        .then(r => r.ok ? r.json() : Promise.reject('http-' + r.status))
-        .then(data => {
-          if (data.code === 'Ok' && data.routes?.length) return data;
-          throw new Error('no-route');
-        });
-    }
-    const data = await Promise.any(altServers.map(url => _tryAltServer(url)));
-    altRoutes = data.routes.map((r) => ({
-      coords: r.geometry.coordinates.map(c => [c[1], c[0]]),
-      miles:  Math.round(r.distance / 1609.344),
-      hours:  (r.duration / 3600).toFixed(1),
-      steps:  r.legs.flatMap(l => l.steps || []),
-      source: 'OSRM',
-    }));
-  } catch {}
+      setTimeout(() => ctrl.abort(), 10000);
+      const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordStr}${qs}`, { signal: ctrl.signal });
+      const data = await r.json();
+      if (data.code === 'Ok' && data.routes?.length) {
+        altRoutes = data.routes.map((rt) => ({
+          coords: rt.geometry.coordinates.map(c => [c[1], c[0]]),
+          miles:  Math.round(rt.distance / 1609.344),
+          hours:  (rt.duration / 3600).toFixed(1),
+          steps:  rt.legs.flatMap(l => l.steps || []),
+          source: 'OSRM',
+        }));
+      }
+    } catch {}
+  }
 
   // Always ensure at least 1 route (fetchRoadRoute has its own cache + retry)
   if (!altRoutes.length) {
@@ -21880,10 +21847,10 @@ function loadHistoryRoute(idx) {
 
 async function geocodeAndSet(name, field) {
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}&limit=1&countrycodes=us`);
+    const res = await fetch(`https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(name)}&limit=1&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`);
     const data = await res.json();
-    if (data[0]) {
-      const loc = { name, lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    if (data.items?.[0]) {
+      const loc = { name, lat: data.items[0].position.lat, lon: data.items[0].position.lng };
       if (field === 'origin') { origin = loc; const lbl = document.getElementById('originLabelText'); if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; } }
       else { destination = loc; document.getElementById('destInput').value = name; }
     }
@@ -21892,10 +21859,10 @@ async function geocodeAndSet(name, field) {
 
 async function geocodeAndSetWP(name, idx2) {
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}&limit=1&countrycodes=us`);
+    const res = await fetch(`https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(name)}&limit=1&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`);
     const data = await res.json();
-    if (data[0]) {
-      waypoints[idx2] = { name, lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    if (data.items?.[0]) {
+      waypoints[idx2] = { name, lat: data.items[0].position.lat, lon: data.items[0].position.lng };
     }
   } catch {}
 }
@@ -25759,10 +25726,10 @@ function getScanLocation() {
   if (window.fmLastLat && window.fmLastLon) {
     el.textContent = window.fmLastLat.toFixed(5) + ', ' + window.fmLastLon.toFixed(5);
     // Try reverse geocode
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${window.fmLastLat}&lon=${window.fmLastLon}&format=json`)
+    fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${window.fmLastLat},${window.fmLastLon}&limit=1&apiKey=${HERE_API_KEY}`)
       .then(r=>r.json()).then(d=>{
-        const city = d.address.city || d.address.town || d.address.county || '';
-        const state = d.address.state || '';
+        const city = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
+        const state = d.items?.[0]?.address?.state || '';
         if (city || state) el.textContent = city + (city&&state?', ':'') + state;
       }).catch(()=>{});
     scanLocation = { lat: window.fmLastLat, lon: window.fmLastLon };
@@ -25770,10 +25737,10 @@ function getScanLocation() {
     navigator.geolocation.getCurrentPosition(pos => {
       scanLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
       el.textContent = pos.coords.latitude.toFixed(5) + ', ' + pos.coords.longitude.toFixed(5);
-      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${scanLocation.lat}&lon=${scanLocation.lon}&format=json`)
+      fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${scanLocation.lat},${scanLocation.lon}&limit=1&apiKey=${HERE_API_KEY}`)
         .then(r=>r.json()).then(d=>{
-          const city = d.address.city||d.address.town||d.address.county||'';
-          const state = d.address.state||'';
+          const city = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
+          const state = d.items?.[0]?.address?.state || '';
           if(city||state) el.textContent=city+(city&&state?', ':'')+state;
         }).catch(()=>{});
     }, () => { el.textContent = 'No disponible'; });
@@ -26158,13 +26125,12 @@ const _stateAbbr = {Alabama:'AL',Alaska:'AK',Arizona:'AZ',Arkansas:'AR',Californ
 async function _reverseGeocodeCity(lat, lon) {
   try {
     const r = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&zoom=10&addressdetails=1`,
+      `https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat.toFixed(5)},${lon.toFixed(5)}&limit=1&apiKey=${HERE_API_KEY}`,
       { headers: { 'Accept-Language': 'en' } }
     );
     const d = await r.json();
-    const a = d.address || {};
-    const city  = a.city || a.town || a.village || a.hamlet || a.county || '';
-    const state = a.state || '';
+    const city  = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
+    const state = d.items?.[0]?.address?.state || '';
     const sa    = _stateAbbr[state] || (state.length <= 3 ? state.toUpperCase() : '');
     return city && sa ? `${city}, ${sa}` : city || (lang==='es' ? 'Ubicación desconocida' : 'Unknown location');
   } catch {
