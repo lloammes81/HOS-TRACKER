@@ -3476,13 +3476,39 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
 // MAPA Y ESTADO (MapLibre GL — vectorial, rápido)
 // ════════════════════════════════════════════════════
 const HERE_API_KEY = 'Nwtr6kwsU5smVYvhJCRUshCw_awISD0p2WwQlzijF7Y';
+// HERE FlexPolyline decoder — returns [[lon, lat], ...] for MapLibre GL
+function _decodeHereFlexPolyline(encoded) {
+  const TABLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  const DEC = new Array(128).fill(-1);
+  for (let i = 0; i < TABLE.length; i++) DEC[TABLE.charCodeAt(i)] = i;
+  let ci = 0;
+  function ru() {
+    let v = 0, s = 0, c;
+    do { c = DEC[encoded.charCodeAt(ci++)]; if (c < 0) throw new Error('invalid char'); v |= (c & 0x1F) << s; s += 5; } while (c >= 32);
+    return v;
+  }
+  function rs() { const u = ru(); return (u & 1) ? -(u >> 1) - 1 : (u >> 1); }
+  const ver = DEC[encoded.charCodeAt(ci++)];
+  if (ver !== 1) throw new Error('Unsupported FlexPolyline version: ' + ver);
+  const hdr = ru(); const prec = hdr & 0xF; const dim3 = (hdr >> 4) & 0xF;
+  const fac = Math.pow(10, prec);
+  const coords = []; let la = 0, lo = 0;
+  while (ci < encoded.length) { la += rs(); lo += rs(); if (dim3) rs(); coords.push([lo / fac, la / fac]); }
+  return coords;
+}
+
+// HERE Vector Tile API v2 only has explore/lite/satellite/terrain base styles.
+// Truck restrictions are added as a separate raster overlay after map load.
 const MAP_STYLES = {
-  streets:   `https://vector.hereapi.com/v2/vectortiles/base/mc/style/truck.day.json?apiKey=${HERE_API_KEY}`,
-  dark:      `https://vector.hereapi.com/v2/vectortiles/base/mc/style/truck.night.json?apiKey=${HERE_API_KEY}`,
-  light:     `https://vector.hereapi.com/v2/vectortiles/base/mc/style/truck.day.json?apiKey=${HERE_API_KEY}`,
+  streets:   `https://vector.hereapi.com/v2/vectortiles/base/mc/style/explore.day.json?apiKey=${HERE_API_KEY}`,
+  dark:      `https://vector.hereapi.com/v2/vectortiles/base/mc/style/explore.night.json?apiKey=${HERE_API_KEY}`,
+  light:     `https://vector.hereapi.com/v2/vectortiles/base/mc/style/lite.day.json?apiKey=${HERE_API_KEY}`,
   satellite: `https://vector.hereapi.com/v2/vectortiles/base/mc/style/satellite.day.json?apiKey=${HERE_API_KEY}`,
-  topo:      `https://vector.hereapi.com/v2/vectortiles/base/mc/style/truck.day.json?apiKey=${HERE_API_KEY}`,
+  topo:      `https://vector.hereapi.com/v2/vectortiles/base/mc/style/terrain.day.json?apiKey=${HERE_API_KEY}`,
 };
+// Truck restrictions overlay (HERE Truck Restrictions raster tiles)
+const TRUCK_OVERLAY_SOURCE = 'here-truck-overlay';
+const TRUCK_OVERLAY_URL = `https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day&features=vehicle_restrictions:active_and_inactive`;
 
 let currentMapStyle = localStorage.getItem('app_mapStyle') || 'streets';
 if (!MAP_STYLES[currentMapStyle]) { currentMapStyle = 'streets'; }
@@ -3519,14 +3545,29 @@ const prevOnlineStatus = new Map(); // uid → boolean
 const driverTripActive = new Set(); // UIDs con viaje iniciado esta sesión
 const tripNotified     = new Set(); // UIDs ya notificados (evitar spam)
 
+function _addTruckOverlay() {
+  try {
+    if (map.getSource(TRUCK_OVERLAY_SOURCE)) return;
+    map.addSource(TRUCK_OVERLAY_SOURCE, {
+      type: 'raster',
+      tiles: [TRUCK_OVERLAY_URL],
+      tileSize: 256,
+      attribution: '© HERE Truck Restrictions'
+    });
+    map.addLayer({ id: TRUCK_OVERLAY_SOURCE, type: 'raster', source: TRUCK_OVERLAY_SOURCE, paint: { 'raster-opacity': 0.85 } });
+  } catch(e) { console.warn('truck overlay', e); }
+}
+
 map.on('load', ()=>{
   mapLoaded = true;
+  _addTruckOverlay();
   pendingTrailOps.splice(0).forEach(fn => { try{ fn(); }catch(e){ console.warn(e); } });
 });
 
 // Re-aplicar fuentes/capas cuando cambia el estilo
 map.on('styledata', ()=>{
   if(!mapLoaded) return;
+  _addTruckOverlay();
   // Reconstruir todas las rutas activas
   polylines.forEach((srcId, uid) => {
     const pts = (trails.get(uid)||[]).map(p=>[p[1], p[0]]); // lon,lat
@@ -3550,7 +3591,7 @@ document.getElementById('mapStyleSwitch').addEventListener('click', (e)=>{
   currentMapStyle = st;
   mapLoaded = false;
   map.setStyle(MAP_STYLES[st]);
-  map.once('idle', ()=> mapLoaded = true);
+  map.once('idle', ()=>{ mapLoaded = true; _addTruckOverlay(); });
 });
 
 // ── Marker HTML element ────────────────────────────────
@@ -4224,18 +4265,7 @@ function showActiveDispatchedRoute(uid){
   const hereRouteUrl = `https://router.hereapi.com/v8/routes?transportMode=truck&origin=${pLat},${pLon}&destination=${dLat},${dLon}&return=polyline&apiKey=${HERE_API_KEY}`;
   fetch(hereRouteUrl).then(r => r.json()).then(j => {
     if (!j.routes?.[0]?.sections?.[0]?.polyline) return;
-    const encoded = j.routes[0].sections[0].polyline;
-    // Decode HERE FlexPolyline to [lon, lat] pairs for MapLibre
-    const TABLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-    const DEC = {}; for (let i = 0; i < TABLE.length; i++) DEC[TABLE[i]] = i;
-    let ci = 0;
-    function ru() { let v=0,s=0,c; do{c=DEC[encoded[ci++]];v|=(c&0x1F)<<s;s+=5;}while(c>=32);return v;}
-    function rs() { const u=ru(); return (u&1)?-(u>>1)-1:(u>>1); }
-    const ver = DEC[encoded[ci++]]; if (ver !== 1) return;
-    const hdr = ru(); const prec = hdr & 0xF; const dim3 = (hdr>>4)&0xF;
-    const fac = Math.pow(10, prec);
-    const coords = []; let la=0, lo=0;
-    while (ci < encoded.length) { la+=rs(); lo+=rs(); if(dim3)rs(); coords.push([lo/fac, la/fac]); }
+    const coords = _decodeHereFlexPolyline(j.routes[0].sections[0].polyline);
     _dispatchedRouteCache.set(active.id, coords);
     if (selectedId === uid) drawLine(coords);
   }).catch(err => console.warn('HERE dispatched route', err));
