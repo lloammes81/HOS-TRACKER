@@ -8530,7 +8530,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   </div>
 
   <!-- ③ TRES ANILLOS KPI — centro más grande -->
-  <div id="dashGaugesRow" style="display:none;flex:0 0 auto;align-items:center;justify-content:center;gap:6px;padding:0 8px 10px;">
+  <div id="dashGaugesRow" style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px 10px;">
 
     <!-- TURNO ring -->
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
@@ -17661,8 +17661,6 @@ function fmStartTracking() {
     fmVehicleMoving = isMoving;
     const _mi = document.getElementById('dashMovingInfo');
     if (_mi) _mi.style.display = isMoving ? 'flex' : 'none';
-    const _gr = document.getElementById('dashGaugesRow');
-    if (_gr) _gr.style.display = isMoving ? 'flex' : 'none';
 
     // ── Heading: prefer GPS bearing ─────────────────────────
     let heading = pos.coords.heading;
@@ -18120,8 +18118,6 @@ function fmStopTracking() {
   fmPrevLat = null; fmPrevLon = null;
   const _miStop = document.getElementById('dashMovingInfo');
   if (_miStop) _miStop.style.display = 'none';
-  const _grStop = document.getElementById('dashGaugesRow');
-  if (_grStop) _grStop.style.display = 'none';
   // Stop smooth animation
   if (truckAnimFrame) { cancelAnimationFrame(truckAnimFrame); truckAnimFrame = null; }
   truckFrom = null; truckTo = null;
@@ -18467,17 +18463,20 @@ function showHosDashboard() {
       Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11),
       Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70)
     );
-    // Informar movimiento al tracker para que extra se acumule en tiempo real
+    // Solo contar horas de conducción cuando el vehículo está en movimiento
+    const _isMovingNow = typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving;
     if (window._hosTracker?.reportMoving && typeof fmCurrentSpeed !== 'undefined') {
-      window._hosTracker.reportMoving(fmCurrentSpeed >= 5, fmCurrentSpeed || 0);
+      window._hosTracker.reportMoving(_isMovingNow, fmCurrentSpeed || 0);
     }
-    // Anillo 14h ON DUTY — actualizar cada segundo (no esperar el intervalo de 30s)
-    if (typeof update14hCircle === 'function') update14hCircle();
-    // Leer horas restantes directamente del tracker
-    const dLeft = window._hosTracker
-      ? Math.max(0, Math.min(window._hosTracker.driveLeft(), dMax))
-      : Math.max(0, dMax);
-    updateHosDashboard(dLeft, dMax);
+    if (_isMovingNow) {
+      // Anillo 14h ON DUTY — solo actualiza mientras conduce
+      if (typeof update14hCircle === 'function') update14hCircle();
+      // Leer horas restantes directamente del tracker
+      const dLeft = window._hosTracker
+        ? Math.max(0, Math.min(window._hosTracker.driveLeft(), dMax))
+        : Math.max(0, dMax);
+      updateHosDashboard(dLeft, dMax);
+    }
     if (typeof _updateRestMode === 'function') _updateRestMode();
     // Refrescar ETA + porcentaje + millas en el panel de ruta
     if (typeof updateDashRouteProgress === 'function') {
