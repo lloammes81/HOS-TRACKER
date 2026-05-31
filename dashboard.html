@@ -3475,47 +3475,13 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
 // ════════════════════════════════════════════════════
 // MAPA Y ESTADO (MapLibre GL — vectorial, rápido)
 // ════════════════════════════════════════════════════
+const HERE_API_KEY = 'Nwtr6kwsU5smVYvhJCRUshCw_awISD0p2WwQlzijF7Y';
 const MAP_STYLES = {
-  streets:   'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
-  dark:      'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-  light:     'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  satellite: {
-    version: 8,
-    sources: {
-      'sat-raster': {
-        type: 'raster',
-        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-        tileSize: 256,
-        maxzoom: 19,
-        attribution: '© ESRI World Imagery'
-      },
-      'labels-raster': {
-        type: 'raster',
-        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'],
-        tileSize: 256,
-        maxzoom: 19
-      }
-    },
-    layers: [
-      { id: 'sat',    type:'raster', source:'sat-raster' },
-      { id: 'labels', type:'raster', source:'labels-raster' }
-    ]
-  },
-  topo: {
-    version: 8,
-    sources: {
-      'topo-raster': {
-        type: 'raster',
-        tiles: ['https://mt0.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'],
-        tileSize: 256,
-        maxzoom: 20,
-        attribution: '© Google Maps'
-      }
-    },
-    layers: [
-      { id: 'topo', type:'raster', source:'topo-raster' }
-    ]
-  }
+  streets:   `https://vector.hereapi.com/v2/vectortiles/base/mc/style/explore.day.json?apiKey=${HERE_API_KEY}`,
+  dark:      `https://vector.hereapi.com/v2/vectortiles/base/mc/style/lite.night.json?apiKey=${HERE_API_KEY}`,
+  light:     `https://vector.hereapi.com/v2/vectortiles/base/mc/style/lite.day.json?apiKey=${HERE_API_KEY}`,
+  satellite: `https://vector.hereapi.com/v2/vectortiles/base/mc/style/satellite.day.json?apiKey=${HERE_API_KEY}`,
+  topo:      `https://vector.hereapi.com/v2/vectortiles/base/mc/style/terrain.day.json?apiKey=${HERE_API_KEY}`,
 };
 
 let currentMapStyle = localStorage.getItem('app_mapStyle') || 'streets';
@@ -3695,18 +3661,17 @@ async function reverseGeocode(lat, lon){
   if(cached && Date.now() - cached.timestamp < GEO_CACHE_TTL) return cached;
   try{
     const r = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
-      { headers:{ 'Accept-Language':'es' } }
+      `https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat},${lon}&limit=1&lang=es&apiKey=${HERE_API_KEY}`
     );
     if(!r.ok) throw new Error('geo fail');
     const j = await r.json();
-    const a = j.address || {};
-    const city  = a.city || a.town || a.village || a.hamlet || a.municipality || a.suburb || a.county || '—';
-    const state = a.state || a.region || a.state_district || '—';
-    const stateCode = STATE_CODES[state] || (state.length === 2 ? state : state);
-    const country = (a.country_code||'').toUpperCase();
-    const road = a.road || '';
-    const result = { city, state, stateCode, country, road, display: j.display_name || '', timestamp: Date.now() };
+    const a = (j.items && j.items[0] && j.items[0].address) || {};
+    const city  = a.city || a.district || a.county || '—';
+    const state = a.state || '—';
+    const stateCode = a.stateCode || STATE_CODES[state] || state;
+    const country = a.countryCode || '';
+    const road = a.street || '';
+    const result = { city, state, stateCode, country, road, display: a.label || '', timestamp: Date.now() };
     geoCache.set(key, result);
     return result;
   }catch(e){
@@ -5728,17 +5693,17 @@ const routeState = {
   unsubscribeRoutes: null,
 };
 
-// ── OSRM: ruta real por carretera (gratis, público) ────
+// ── HERE Routing API v8 ────────────────────────────────
 async function osrmRoute(fromLat, fromLon, toLat, toLon){
-  const url = `https://router.project-osrm.org/route/v1/driving/${fromLon},${fromLat};${toLon},${toLat}?overview=false&alternatives=false&steps=false`;
+  const url = `https://router.hereapi.com/v8/routes?transportMode=truck&origin=${fromLat},${fromLon}&destination=${toLat},${toLon}&return=summary&apiKey=${HERE_API_KEY}`;
   const r = await fetch(url);
-  if(!r.ok) throw new Error('OSRM request failed: ' + r.status);
+  if(!r.ok) throw new Error('HERE Routing request failed: ' + r.status);
   const j = await r.json();
-  if(j.code !== 'Ok' || !j.routes?.length) throw new Error('Sin ruta disponible');
-  const route = j.routes[0];
+  if(!j.routes?.length) throw new Error('Sin ruta disponible');
+  const summary = j.routes[0].sections[0].summary;
   return {
-    miles:   route.distance / 1609.344,   // metros → millas
-    minutes: route.duration / 60,          // segundos → minutos
+    miles:   summary.length / 1609.344,   // metros → millas
+    minutes: summary.duration / 60,        // segundos → minutos
   };
 }
 
@@ -5765,18 +5730,18 @@ function attachAddressAutocomplete(inputId, suggestId, onSelect, labelFn){
     _addrTimer = setTimeout(async () => {
       try{
         const r = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1&countrycodes=us&accept-language=es`,
-          { headers:{ 'Accept-Language':'es' } }
+          `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(q)}&limit=6&in=countryCode:USA&lang=es&apiKey=${HERE_API_KEY}`
         );
         if(!r.ok) return;
-        const data = await r.json();
+        const j = await r.json();
+        const data = j.items || [];
         _positionBox();
         if(!data.length){ box.innerHTML = '<div class="addr-suggest-item" style="color:var(--muted);cursor:default">Sin resultados</div>'; box.classList.add('show'); return; }
         box.innerHTML = data.map((d, idx) => {
           const a = d.address || {};
-          const main = [a.road ? `${a.house_number||''} ${a.road}`.trim() : (a.name||'') , a.city || a.town || a.village || a.hamlet || a.county].filter(Boolean).join(', ');
-          const sub  = [a.state, a.postcode, a.country].filter(Boolean).join(', ');
-          return `<div class="addr-suggest-item" data-idx="${idx}"><div class="main">${escapeHtml(main || d.display_name)}</div><div class="sub">${escapeHtml(sub)}</div></div>`;
+          const main = [a.street ? `${a.houseNumber||''} ${a.street}`.trim() : '', a.city || a.district || a.county || ''].filter(Boolean).join(', ');
+          const sub  = [a.state, a.postalCode, a.countryName].filter(Boolean).join(', ');
+          return `<div class="addr-suggest-item" data-idx="${idx}"><div class="main">${escapeHtml(main || a.label || d.title)}</div><div class="sub">${escapeHtml(sub)}</div></div>`;
         }).join('');
         box.classList.add('show');
         box.querySelectorAll('.addr-suggest-item').forEach((item, idx) => {
@@ -5784,17 +5749,17 @@ function attachAddressAutocomplete(inputId, suggestId, onSelect, labelFn){
             const d = data[idx];
             if(!d) return;
             const a = d.address || {};
-            const city = a.city || a.town || a.village || a.hamlet || a.county || '';
+            const city = a.city || a.district || a.county || '';
             const state = a.state || '';
-            const stateCode = STATE_CODES[state] || state;
+            const stateCode = a.stateCode || STATE_CODES[state] || state;
             const result = {
-              address: d.display_name,
-              lat: parseFloat(d.lat),
-              lon: parseFloat(d.lon),
+              address: a.label || d.title,
+              lat: d.position.lat,
+              lon: d.position.lng,
               city, state, stateCode,
-              postcode: a.postcode || '',
+              postcode: a.postalCode || '',
             };
-            input.value = labelFn ? labelFn(result) : d.display_name;
+            input.value = labelFn ? labelFn(result) : (a.label || d.title);
             box.classList.remove('show');
             onSelect(result);
           });
