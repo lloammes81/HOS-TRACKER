@@ -9853,13 +9853,28 @@ let currentTab = 'plan';
 // ── MAP STYLE ────────────────────────────────────────────────
 const HERE_API_KEY = 'Nwtr6kwsU5smVYvhJCRUshCw_awISD0p2WwQlzijF7Y';
 const MAP_STYLES = {
-  dark:     { label:'Truck Noche',  emoji:'🌙',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
-  nav:      { label:'Truck Día',    emoji:'🚛',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
-  light:    { label:'Truck Claro',  emoji:'☀️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
-  satellite:{ label:'Satélite',     emoji:'🛰️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=satellite.day`, options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
-  topo:     { label:'Truck Terreno',emoji:'⛰️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
-  voyager:  { label:'Truck Oscuro', emoji:'🌃',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ subdomains:['1','2','3','4'], maxZoom:20, crossOrigin:'' } },
+  dark:     { label:'Truck Noche',  emoji:'🌙',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  nav:      { label:'Truck Día',    emoji:'🚛',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  light:    { label:'Truck Claro',  emoji:'☀️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  satellite:{ label:'Satélite',     emoji:'🛰️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=satellite.day`, options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  topo:     { label:'Truck Terreno',emoji:'⛰️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  voyager:  { label:'Truck Oscuro', emoji:'🌃',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  explore:  { label:'Explorar Día',  emoji:'🗺️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=explore.day`,   options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  explorengt:{ label:'Explorar Noche',emoji:'🌃', url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=explore.night`, options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  terrain:  { label:'Terreno',       emoji:'⛰️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=terrain.day`,   options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  logistics:{ label:'Logística',     emoji:'📦',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=logistics.day`,  options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  lite:     { label:'Lite Claro',    emoji:'☀️',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=lite.day`,      options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
+  litengt:  { label:'Lite Noche',    emoji:'🔅',  url:`https://{s}.maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=lite.night`,    options:{ subdomains:['1','2','3','4'], maxZoom:20 } },
 };
+// Diagnostic: test HERE tile API access once on load
+(function() {
+  fetch(`https://1.maps.hereapi.com/v3/base/mc/4/4/5/png8?apiKey=${HERE_API_KEY}&style=truck.night`)
+    .then(r => {
+      if (r.ok) { console.log('[HERE Tiles] API OK - status:', r.status); }
+      else { console.error('[HERE Tiles] API ERROR - status:', r.status, '- El API key puede no tener Map Tiles habilitado en platform.here.com'); }
+    })
+    .catch(e => console.error('[HERE Tiles] Network error:', e.message));
+})();
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 let fmTileLayer = null;
 let fmTrafficLayer = null;
