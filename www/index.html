@@ -14343,53 +14343,6 @@ function addInterstateMarkers(map, steps, isFull){
 }
 
 
-// ── Valhalla polyline6 decoder ───────────────────────────────
-function _decodePolyline6(encoded) {
-  const pts = []; let idx = 0, lat = 0, lng = 0;
-  while (idx < encoded.length) {
-    let b, shift = 0, result = 0;
-    do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
-    shift = 0; result = 0;
-    do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
-    pts.push([lat / 1e6, lng / 1e6]);
-  }
-  return pts;
-}
-async function _fetchValhallaRoute(orig, dest) {
-  // Intenta los 4 servidores Valhalla en paralelo — el primero en responder gana
-  const _valhallaServers = [
-    'https://valhalla1.openstreetmap.de/route',
-    'https://valhalla2.openstreetmap.de/route',
-    'https://valhalla3.openstreetmap.de/route',
-    'https://valhalla4.openstreetmap.de/route',
-  ];
-  const _body = JSON.stringify({
-    locations: [
-      { lon: orig.lon, lat: orig.lat, type: 'break' },
-      { lon: dest.lon, lat: dest.lat, type: 'break' }
-    ],
-    costing: 'truck',
-    directions_options: { units: 'miles' },
-    shape_format: 'polyline6'
-  });
-  return Promise.any(_valhallaServers.map(url => {
-    const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 8000);
-    return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal, body: _body })
-      .then(r => r.json())
-      .then(data => {
-        const leg = data?.trip?.legs?.[0];
-        if (!leg?.shape) throw new Error('no-shape');
-        const coords = _decodePolyline6(leg.shape);
-        const miles = Math.round(leg.summary?.length || 0);
-        console.log(`✅ Route: Valhalla-truck (${url.replace('https://','')}) | ${miles} mi | ${coords.length} pts`);
-        return { coords, miles, steps: [], source: 'Valhalla' };
-      });
-  }));
-}
-
 // ── Route cache helpers ──────────────────────────────────────
 function _routeCacheKey(orig, dest) {
   const r = v => Math.round(v * 1000) / 1000; // round to 3 decimals (~111m precision)
@@ -14469,31 +14422,8 @@ async function fetchOsrmStepsOnly(orig, dest){
   }catch{ return []; }
 }
 async function fetchRoadRoute(orig, dest) {
-  // Return cached route if available (avoids redundant network requests)
   const cached = _routeCacheGet(orig, dest);
   if (cached) return cached;
-
-  async function _tryOsrm() {
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${orig.lon},${orig.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson&steps=true`;
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 8000);
-    try {
-      const r = await fetch(osrmUrl, { signal: ctrl.signal });
-      clearTimeout(t);
-      if (!r.ok) throw new Error('http-' + r.status);
-      const data = await r.json();
-      if (data.code !== 'Ok' || !data.routes?.length) throw new Error('no-route');
-      const best = data.routes[0];
-      const routeCoords = (best.geometry.coordinates || []).map(([lon, lat]) => [lat, lon]);
-      const miles = Math.round((best.distance || 0) / 1609.344);
-      const steps = best.legs?.[0]?.steps || [];
-      console.log(`✅ Route: OSRM-fallback | ${miles} mi | ${routeCoords.length} pts`);
-      return { coords: routeCoords, miles, steps, source: 'OSRM-fallback' };
-    } catch (e) {
-      clearTimeout(t);
-      throw e;
-    }
-  }
 
   const _errLabel = e => {
     if (!e) return 'desconocido';
@@ -14503,38 +14433,23 @@ async function fetchRoadRoute(orig, dest) {
     return m.slice(0, 60);
   };
 
-  // Primer intento: TomTom primary
-  let _lastErr = '';
   try {
     const result = await _fetchTomTomRoute(orig, dest);
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
-    _lastErr = _errLabel(e);
-    console.warn('⚠️ TomTom Routing falló, intentando OSRM/Valhalla:', _lastErr);
+    const _lastErr = _errLabel(e);
+    console.warn('⚠️ TomTom Routing falló, usando ruta aérea:', _lastErr);
+    try { showToast('warning','🛰️','Sin ruta disponible', `Error: ${_lastErr}`, 4000); } catch {}
   }
 
-  try {
-    const result = await Promise.any([
-      _tryOsrm(),
-      _fetchValhallaRoute(orig, dest)
-    ]);
-    _routeCacheSet(orig, dest, result);
-    return result;
-  } catch (e) {
-    _lastErr = _errLabel(e);
-    console.warn('⚠️ Todos los servidores fallaron — usando ruta aérea:', _lastErr);
-    try { showToast('warning','🛰️','Servidores sin respuesta', `Error: ${_lastErr}`, 4000); } catch {}
-  }
-
-  // Fallback final: línea recta
+  // Fallback: línea recta
   const straight = haversine(orig.lat, orig.lon, dest.lat, dest.lon);
   return {
     coords: [[orig.lat, orig.lon], [dest.lat, dest.lon]],
     miles: Math.round(straight * 1.35),
     steps: [],
     source: 'Fallback',
-    fallbackReason: _lastErr
   };
 }
 // ── Road-name markers (labels) ──────────────────────────────
@@ -15764,7 +15679,7 @@ function openFullMapScreen() {
     fmTileLayer.bringToBack();
 
     L.control.attribution({ prefix: false, position: 'bottomright' })
-      .addAttribution('© <a href="https://carto.com" target="_blank">CARTO</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank">OSM</a>')
+      .addAttribution('© <a href="https://legal.tomtom.com/terms-of-use" target="_blank">TomTom Maps</a>')
       .addTo(fmMapInst);
 
     // Load US state boundary lines (always visible)
@@ -18582,7 +18497,7 @@ function initHosMinimap() {
   hosMinimapTileLayer.bringToBack();
 
   L.control.attribution({ prefix: false, position: 'bottomright' })
-    .addAttribution('© <a href="https://carto.com" target="_blank">CARTO</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank">OSM</a>')
+    .addAttribution('© <a href="https://legal.tomtom.com/terms-of-use" target="_blank">TomTom Maps</a>')
     .addTo(hosMinimapInst);
 
   // Helper: crea el HTML de un marcador círculo verde con punto blanco interior
@@ -18615,31 +18530,13 @@ function initHosMinimap() {
         typeof origin !== 'undefined' && origin?.lat &&
         typeof destination !== 'undefined' && destination?.lat) {
 
-      // Try HERE routing for minimap geometry
-      _fetchHereRoute(origin, destination)
+      _fetchTomTomRoute(origin, destination)
         .then(result => {
           if (!hosMinimapInst || !result?.coords?.length) return;
           roadGeometry = result.coords;
           _drawHostRoute(result.coords);
         })
-        .catch(() => {
-          // Fallback to OSRM
-          const _coords = `${origin.lon},${origin.lat};${destination.lon},${destination.lat}`;
-          const _qs     = '?overview=full&geometries=geojson&steps=false&alternatives=false';
-          const ctrl = new AbortController();
-          setTimeout(() => ctrl.abort(), 9000);
-          fetch(`https://router.project-osrm.org/route/v1/driving/${_coords}${_qs}`, { signal: ctrl.signal })
-            .then(r => r.ok ? r.json() : Promise.reject('http'))
-            .then(data => {
-              if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates?.length > 2) {
-                const coords = data.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]);
-                if (!hosMinimapInst) return;
-                roadGeometry = coords;
-                _drawHostRoute(coords);
-              }
-            })
-            .catch(() => {}); // Both failed, keep straight line
-        });
+        .catch(() => {}); // TomTom failed, keep straight line
     }
   }
 
@@ -22752,29 +22649,9 @@ let selectedAltIdx = 0;
 async function fetchAlternativeRoutes(orig, dest) {
   altRoutes = [];
   try {
-    // Use HERE routing as primary
-    const result = await _fetchHereRoute(orig, dest);
+    const result = await _fetchTomTomRoute(orig, dest);
     altRoutes = [{ coords: result.coords, miles: result.miles, hours: (result.miles/60).toFixed(1), steps: result.steps, source: result.source }];
-  } catch {
-    // Fallback to OSRM
-    try {
-      const coordStr = `${orig.lon},${orig.lat};${dest.lon},${dest.lat}`;
-      const qs = '?overview=full&geometries=geojson&steps=true&alternatives=3';
-      const ctrl = new AbortController();
-      setTimeout(() => ctrl.abort(), 10000);
-      const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordStr}${qs}`, { signal: ctrl.signal });
-      const data = await r.json();
-      if (data.code === 'Ok' && data.routes?.length) {
-        altRoutes = data.routes.map((rt) => ({
-          coords: rt.geometry.coordinates.map(c => [c[1], c[0]]),
-          miles:  Math.round(rt.distance / 1609.344),
-          hours:  (rt.duration / 3600).toFixed(1),
-          steps:  rt.legs.flatMap(l => l.steps || []),
-          source: 'OSRM',
-        }));
-      }
-    } catch {}
-  }
+  } catch {}
 
   // Always ensure at least 1 route (fetchRoadRoute has its own cache + retry)
   if (!altRoutes.length) {
