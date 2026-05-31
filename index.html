@@ -18105,7 +18105,9 @@ function fmStopTracking() {
     localStorage.setItem('hos_stop_start', _vehicleStopStartMs);
   }
   _clearAllAutoBlinkClasses();
-  setDashStatus('driving'); // volver a estado inicial
+  // Al detener el rastreo el vehículo está parado: no volver a CONDUCIENDO.
+  // Mantener turno activo si existe (EN SERVICIO), o FUERA si no hay turno.
+  setDashStatus(hosShiftStartTime ? 'wait' : 'off');
   // Release Wake Lock
   if (fmWakeLock) { fmWakeLock.release().catch(() => {}); fmWakeLock = null; }
   // Restart warm-cache watcher now that tracking is stopped
@@ -18277,7 +18279,7 @@ let hosMinimapRoute   = null;  // polyline de ruta en mini mapa
 let hosMinimapGlow    = null;  // polyline glow de ruta en mini mapa
 let hosMinimapTileLayer = null; // tile layer actual del mini mapa
 let dashSpeedOver     = false; // true cuando el camión supera el límite de velocidad
-let _dashCurrentStatus = 'driving';
+let _dashCurrentStatus = 'off';
 let hosShiftStartTime = (() => {
   const raw  = parseInt(localStorage.getItem('hos_shift_start') || '0') || null;
   if (!raw) return null;
@@ -18419,8 +18421,19 @@ function showHosDashboard() {
 
   updateDashBackground();
 
-  // Estado inicial: Conduciendo
-  setDashStatus('driving');
+  // Estado inicial: basado en movimiento real del vehículo
+  // - En movimiento  → CONDUCIENDO
+  // - Turno activo previo y parado → EN SERVICIO (mantiene 14h en marcha)
+  // - Sin turno y parado → FUERA (no arranca el reloj 14h hasta que se mueva)
+  const _movingNow = (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving)
+    || (typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed >= 8);
+  if (_movingNow) {
+    setDashStatus('driving');
+  } else if (hosShiftStartTime) {
+    setDashStatus('wait');
+  } else {
+    setDashStatus('off');
+  }
 
   // Iniciar intervalo de actualización del círculo 14H (cada 30 segundos)
   if (_dash14hInterval) clearInterval(_dash14hInterval);
