@@ -713,6 +713,20 @@
     height: 240px; border-radius: var(--radius-sm);
     overflow: hidden; margin-top: 12px;
   }
+  /* HERE Maps attribution — compact single line, bottom-right of every map */
+  .leaflet-control-attribution {
+    background: rgba(0,0,0,0.55) !important;
+    backdrop-filter: blur(4px);
+    color: #94a3b8 !important;
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+    border-radius: 4px 0 0 0 !important;
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .leaflet-control-attribution a { color: #4ade80 !important; text-decoration: none; }
   .poi-legend-bar {
     display: flex; gap: 6px; flex-wrap: wrap;
     margin-top: 8px;
@@ -9839,12 +9853,12 @@ let currentTab = 'plan';
 // ── MAP STYLE ────────────────────────────────────────────────
 const HERE_API_KEY = 'Nwtr6kwsU5smVYvhJCRUshCw_awISD0p2WwQlzijF7Y';
 const MAP_STYLES = {
-  dark:     { label:'Truck Noche',  emoji:'🌙',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ maxZoom:20, attribution:'© HERE Maps' } },
-  nav:      { label:'Truck Día',    emoji:'🚛',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20, attribution:'© HERE Maps' } },
-  light:    { label:'Truck Claro',  emoji:'☀️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20, attribution:'© HERE Maps' } },
-  satellite:{ label:'Satélite',     emoji:'🛰️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=satellite.day`, options:{ maxZoom:20, attribution:'© HERE Maps' } },
-  topo:     { label:'Truck Terreno',emoji:'⛰️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20, attribution:'© HERE Maps' } },
-  voyager:  { label:'Truck Oscuro', emoji:'🌃',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ maxZoom:20, attribution:'© HERE Maps' } },
+  dark:     { label:'Truck Noche',  emoji:'🌙',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ maxZoom:20 } },
+  nav:      { label:'Truck Día',    emoji:'🚛',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20 } },
+  light:    { label:'Truck Claro',  emoji:'☀️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20 } },
+  satellite:{ label:'Satélite',     emoji:'🛰️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=satellite.day`, options:{ maxZoom:20 } },
+  topo:     { label:'Truck Terreno',emoji:'⛰️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20 } },
+  voyager:  { label:'Truck Oscuro', emoji:'🌃',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ maxZoom:20 } },
 };
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 let fmTileLayer = null;
@@ -9875,7 +9889,7 @@ function _addTrafficLayer() {
   if (fmTrafficLayer) { try { fmMapInst.removeLayer(fmTrafficLayer); } catch {} fmTrafficLayer = null; }
   fmTrafficLayer = L.tileLayer(
     `https://traffic.maps.hereapi.com/v3/flow/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}`,
-    { maxZoom: 20, opacity: 0.82, attribution: '© HERE Maps Traffic' }
+    { maxZoom: 20, opacity: 0.82 }
   ).addTo(fmMapInst);
 }
 
