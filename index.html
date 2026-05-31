@@ -10372,7 +10372,7 @@ let miniMarkersList = [], fullMarkersList = [];
 
 // Mini-map POI state
 let miniPoiMarkers = { truck: [], rest: [], restrict: [], weigh: [], checkpoint: [] };
-let miniPoiActive  = { truck: true, rest: true, restrict: true, weigh: true, checkpoint: true, parking: true };
+let miniPoiActive  = { truck: false, rest: false, restrict: false, weigh: false, checkpoint: false, parking: false };
 
 let watchId = null;
 let tripStart = null;
@@ -15181,7 +15181,7 @@ function resetMiniBadges() {
   document.getElementById('miniRestrictCnt').textContent   = '…';
   document.getElementById('miniWeighCnt').textContent      = '…';
   document.getElementById('miniCheckpointCnt').textContent = '…';
-  miniPoiActive = { truck: true, rest: true, restrict: true, weigh: true, checkpoint: true, parking: true };
+  miniPoiActive = { truck: false, rest: false, restrict: false, weigh: false, checkpoint: false, parking: false };
 }
 
 // ── Apply a route result to all UI elements ─────────────────
@@ -15412,19 +15412,51 @@ function renderResults(hours, speed, depart) {
   // Reset stored cities for new route
   _nextBreakCity = null;
   _nextRestCity  = null;
+  // Limpia marcadores previos de paradas obligatorias
+  if (window._restStopMarkers) {
+    window._restStopMarkers.forEach(m => {
+      try { fmMapInst && fmMapInst.removeLayer(m); } catch {}
+      try { miniMap && miniMap.removeLayer(m); } catch {}
+    });
+  }
+  window._restStopMarkers = [];
+
   if (restStops.length && roadGeometry && roadGeometry.length > 1) {
     restStops.forEach((stop, i) => {
       setTimeout(() => {
         const pos = _getPositionAtMiles(stop.miles);
         if (!pos) return;
+        const sType = schedule[stop.idx]?.type;
+        const isBreak = sType === 'break30';
+        const isReset = sType === 'reset';
+        const emoji = isBreak ? '☕' : isReset ? '🔄' : '😴';
+        const color = isBreak ? '#f59e0b' : isReset ? '#a855f7' : '#3b82f6';
+        const label = isBreak ? 'Pausa 30 min' : isReset ? 'Reset 34h' : 'Descanso 10h';
+
+        const icon = L.divIcon({
+          className: 'rest-stop-marker',
+          html: `<div style="width:34px;height:34px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 0 0 2px ${color}66,0 4px 12px rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;font-size:18px;">${emoji}</div>`,
+          iconSize: [34, 34],
+          iconAnchor: [17, 17],
+        });
+
         _reverseGeocodeCity(pos[0], pos[1]).then(city => {
           const el = document.getElementById('schedCity' + stop.idx);
           if (el) { el.textContent = '📍 ' + city; el.classList.remove('loading'); el.classList.add('loaded'); }
-          // Store in dedicated vars: first break30 and first rest found
-          const sType = schedule[stop.idx]?.type;
           if (sType === 'break30' && !_nextBreakCity) _nextBreakCity = city;
           if ((sType === 'rest' || sType === 'reset') && !_nextRestCity) _nextRestCity = city;
           updateFmToDisplay();
+
+          // Marca la ciudad de descanso en ambos mapas
+          const popupHtml = `<b>${emoji} ${label}</b><br>📍 ${city}<br><span style="color:#94a3b8;font-size:11px;">Milla ${Math.round(stop.miles)}</span>`;
+          if (fmMapInst) {
+            const m1 = L.marker([pos[0], pos[1]], { icon }).addTo(fmMapInst).bindPopup(popupHtml);
+            window._restStopMarkers.push(m1);
+          }
+          if (miniMap) {
+            const m2 = L.marker([pos[0], pos[1]], { icon }).addTo(miniMap).bindPopup(popupHtml);
+            window._restStopMarkers.push(m2);
+          }
         });
       }, i * 1100);
     });
@@ -15660,7 +15692,7 @@ let _lastPanLon     = null;
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
 const fmPoiGroups = {};  // LayerGroup per type for batch rendering
 // scale/truck/rest all start ON — loaded automatically when route opens
-const fmPoiActive = { scale: true, truck: true, rest: true, reports: true, restrict: true, parking: false };
+const fmPoiActive = { scale: false, truck: false, rest: false, reports: false, restrict: false, parking: false };
 let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false };
 
 // Community reports (stored in localStorage, shared within session)
