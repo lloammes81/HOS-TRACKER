@@ -2446,7 +2446,7 @@
     white-space: nowrap;
   }
   /* Speed-limit-sign style speedometer */
-  /* ── Google Maps–style two-box speed widget ── */
+  /* ── TomTom Maps–style two-box speed widget ── */
   .speedo-dual {
     display: flex;
     align-items: stretch;
@@ -3032,7 +3032,7 @@
     letter-spacing: -1px;
   }
 
-  /* ── Google Maps–style navigation banner ── */
+  /* ── TomTom Maps–style navigation banner ── */
   .nav-next{
     position:absolute;
     left:0; right:0;
@@ -3353,7 +3353,7 @@ body.map-active #mapCompassWidget { display: block; }
 
   /* ==== UI OVERRIDES — positions handled by the main left-stack CSS ==== */
 
-  /* Nav banner — full width Google Maps style */
+  /* Nav banner — full width TomTom Maps style */
   .nav-next{
     left: 0 !important;
     right: 0 !important;
@@ -7688,7 +7688,7 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
 
 
 <!-- ============================================================
-     FULLSCREEN MAP VIEW  (Google Maps style)
+     FULLSCREEN MAP VIEW  (TomTom Maps style)
      ============================================================ -->
 
 <!-- ══════════════════════════════════════════════════════════
@@ -13438,7 +13438,7 @@ function triggerSOS() {
     else alert('Agrega un número de emergencia en Ajustes.');
   };
   document.getElementById('sosSmsBtn').onclick = () => {
-    const coordsStr = (sosLat != null && sosLon != null) ? `https://maps.google.com/?q=${sosLat},${sosLon}` : 'Ubicación no disponible';
+    const coordsStr = (sosLat != null && sosLon != null) ? `https://maps.tomtom.com/search/${sosLat},${sosLon}` : 'Ubicación no disponible';
     const msg = encodeURIComponent(
       `🆘 EMERGENCIA - Truck Precision\n📍 ${coordsStr}\n\nNecesito ayuda en esta ubicación.`
     );
@@ -13844,7 +13844,7 @@ function initSpeedWidgetDrag() {
 function applySpeedometerPos() {
   const w = document.getElementById('speedometerWidget');
   if (!w) return;
-  // Default position: bottom-left, above HUD (Google Maps style)
+  // Default position: bottom-left, above HUD (TomTom Maps style)
   const defaultX = 12 + (window.safeAreaLeft || 0);
   const defaultY = window.innerHeight - 148 - (window.safeAreaBottom || 0);
 
@@ -14437,7 +14437,7 @@ function _tomTomInstructionsToSteps(instructions) {
 }
 
 async function _fetchTomTomRoute(orig, dest) {
-  const url = `https://api.tomtom.com/routing/1/calculateRoute/${orig.lat},${orig.lon}:${dest.lat},${dest.lon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=8165&vehicleLength=22&vehicleWidth=2.6&vehicleHeight=4.1&routeType=fastest&traffic=true&instructionsType=text&language=en-US`;
+  const url = `https://api.tomtom.com/routing/1/calculateRoute/${orig.lat},${orig.lon}:${dest.lat},${dest.lon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=9072&vehicleLength=22.9&vehicleWidth=2.59&vehicleHeight=4.11&vehicleNumberOfAxles=5&vehicleCommercial=true&routeType=fastest&traffic=true&instructionsType=text&language=en-US`;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 15000);
   try {
@@ -14461,7 +14461,7 @@ async function _fetchTomTomRoute(orig, dest) {
 
 async function fetchOsrmStepsOnly(orig, dest){
   try{
-    const url = `https://api.tomtom.com/routing/1/calculateRoute/${orig.lat},${orig.lon}:${dest.lat},${dest.lon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=8165&vehicleLength=22&vehicleWidth=2.6&vehicleHeight=4.1&routeType=fastest&instructionsType=text&language=en-US`;
+    const url = `https://api.tomtom.com/routing/1/calculateRoute/${orig.lat},${orig.lon}:${dest.lat},${dest.lon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=9072&vehicleLength=22.9&vehicleWidth=2.59&vehicleHeight=4.11&vehicleNumberOfAxles=5&vehicleCommercial=true&routeType=fastest&instructionsType=text&language=en-US`;
     const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
     const j = await r.json();
     if (!j.routes?.length) return [];
@@ -15603,7 +15603,7 @@ async function shareRoute() {
 }
 
 /* ============================================================
-   FULLSCREEN MAP + LIVE TRACKING  (Google Maps style)
+   FULLSCREEN MAP + LIVE TRACKING  (TomTom Maps style)
    ============================================================ */
 let fmMapInst    = null;
 let fmMarkers    = [];
@@ -15884,7 +15884,7 @@ function fmRedrawRoute(coords) {
   // ── Glow exterior (muy grueso, muy transparente)
   fmGlowLayer   = L.polyline(routeCoords,{ color:'#3b82f6', weight:32, opacity:0.18, interactive:false }).addTo(fmMapInst);
   const glow    = fmGlowLayer;
-  // ── Casing oscuro azul (borde GPS estilo Google Maps)
+  // ── Casing oscuro azul (borde GPS estilo TomTom Maps)
   fmCasingLayer = L.polyline(routeCoords,{ color:'#1e3a5f', weight:14, opacity:0.80, interactive:false }).addTo(fmMapInst);
   const casing  = fmCasingLayer;
   // ── Ruta principal azul brillante
@@ -15932,7 +15932,7 @@ function fmRedrawRoute(coords) {
 
 // Make/update the truck marker with rotation based on heading
 /* ════════════════════════════════════════════════════════════
-   🚛  SMOOTH TRUCK MARKER — Google Maps style
+   🚛  SMOOTH TRUCK MARKER — TomTom Maps style
    Interpolates 60fps between GPS fixes
 ════════════════════════════════════════════════════════════ */
 let truckAnimFrame = null;       // requestAnimationFrame handle
@@ -20421,7 +20421,7 @@ async function runNearbySearch() {
           .setContent(`<div style="font-family:'DM Sans',sans-serif;font-weight:800;font-size:13px">${brand ? brand.logo : cfg.emoji} ${displayName}</div><div style="font-size:11px;color:#6b7280;margin-top:3px">${distLabel} de tu ubicación</div>`)
           .openOn(fmMapInst);
       } else {
-        window.open(`https://maps.google.com/?q=${res.elLat},${res.elLon}`, '_blank');
+        window.open(`https://maps.tomtom.com/search/${res.elLat},${res.elLon}`, '_blank');
       }
     });
 
@@ -20525,13 +20525,13 @@ function addNearbyStopToMap(res, displayName, cfg, brand) {
       <button onclick="
         if(fmMapInst && this.dataset.lat) {
           navigator.clipboard?.writeText(this.dataset.lat+','+this.dataset.lon);
-          window.open('https://maps.google.com/?q='+this.dataset.lat+','+this.dataset.lon,'_blank');
+          window.open('https://maps.tomtom.com/search/'+this.dataset.lat+','+this.dataset.lon,'_blank');
         }
       " data-lat="${res.elLat}" data-lon="${res.elLon}" style="
         margin-top:10px;width:100%;padding:8px;border-radius:8px;
         background:#10b981;color:#fff;border:none;font-size:12px;
         font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;
-      ">🗺️ Abrir en Google Maps</button>
+      ">🗺️ Abrir en TomTom Maps</button>
     </div>`;
 
   const m = L.marker([res.elLat, res.elLon], { icon })
@@ -23890,13 +23890,13 @@ out center qt;`;
       return;
     }
 
-    const gmUrl = `https://maps.google.com/?q=truck+stop&map=${lat},${lon},11z`;
+    const gmUrl = `https://maps.tomtom.com/search/truck+stop`;
     const tpUrl = `https://truckerpath.com/`;
     list.innerHTML = `
       <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">⛽ ${els.length} truck stops · 100 km</div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:12px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">
-          🗺️ Google Maps
+          🗺️ TomTom Maps
         </a>
         <a href="${tpUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
           🚛 Trucker Path
@@ -23923,7 +23923,7 @@ out center qt;`;
       else if (/shell/i.test(n))             { emoji = '🐚'; bgColor = 'rgba(245,158,11,.15)'; }
       else if (/chevron/i.test(n))           { emoji = '💙'; bgColor = 'rgba(59,130,246,.15)'; }
 
-      const mapsUrl = `https://www.google.com/maps/dir//${elLat},${elLon}`;
+      const mapsUrl = `https://maps.tomtom.com/directions/to/${elLat},${elLon}`;
 
       const card = document.createElement('div');
       card.className = 'fuel-station-card';
@@ -24124,11 +24124,11 @@ function _renderPoiElements(list, subEl, type, lat, lon, rawEls, poiIcon, isTruc
   subEl.textContent = `${els.length} encontrados · 100 mi${cacheLabel ? ` · 🗃️ ${cacheLabel} atrás` : ''}`;
 
   const gmQuery = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
-  const gmUrl   = `https://maps.google.com/?q=${gmQuery}&map=${lat},${lon},12z`;
+  const gmUrl   = `https://maps.tomtom.com/search/${gmQuery}`;
   list.innerHTML = `
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:12px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">
-        🗺️ Google Maps
+        🗺️ TomTom Maps
       </a>
       <a href="https://truckerpath.com/" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
         🚛 Trucker Path
@@ -24152,7 +24152,7 @@ function _renderPoiElements(list, subEl, type, lat, lon, rawEls, poiIcon, isTruc
     if (addrParts.length >= 2) { navDest = encodeURIComponent(fullAddr); }
     else if (name && !genericNames.includes(name)) { navDest = encodeURIComponent(city ? `${name}, ${city}` : name); }
     else { navDest = `${elLat},${elLon}`; }
-    const mapsUrl = `https://www.google.com/maps/dir//${navDest}`;
+    const mapsUrl = `https://maps.tomtom.com/directions/to/${navDest}`;
 
     const card = document.createElement('div');
     card.className = 'poi-card';
@@ -24240,14 +24240,14 @@ async function searchNearbyPOI(type) {
     }
   } catch(e) {
     const gmQ  = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
-    const gmFb = lat ? `https://maps.google.com/?q=${gmQ}&map=${lat},${lon},11z` : `https://maps.google.com/?q=${gmQ}`;
+    const gmFb = lat ? `https://maps.tomtom.com/search/${gmQ}` : `https://maps.tomtom.com/search/${gmQ}`;
     list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted)">
       <div style="font-size:36px;margin-bottom:12px">⚠️</div>
       <div style="font-size:14px;font-weight:700;margin-bottom:6px">Sin conexión a la base de datos</div>
       <div style="font-size:12px;margin-bottom:16px">Verifica tu internet e intenta de nuevo</div>
       <div style="display:flex;flex-direction:column;gap:8px;max-width:240px;margin:0 auto">
         <button onclick="searchNearbyPOI('${type}')" style="padding:10px;background:#10b981;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🔄 Reintentar</button>
-        <a href="${gmFb}" target="_blank" style="display:block;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:10px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">🗺️ Buscar en Google Maps</a>
+        <a href="${gmFb}" target="_blank" style="display:block;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:10px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">🗺️ Buscar en TomTom Maps</a>
       </div>
     </div>`;
     subEl.textContent = 'Error de conexión';
@@ -24261,9 +24261,9 @@ async function openGoogleMapsTruckStops() {
     lat = pos.coords.latitude; lon = pos.coords.longitude;
   } catch {
     if (origin) { lat = origin.lat; lon = origin.lon; }
-    else { window.open('https://maps.google.com/?q=truck+stop', '_blank'); return; }
+    else { window.open('https://maps.tomtom.com/search/truck+stop', '_blank'); return; }
   }
-  window.open(`https://maps.google.com/?q=truck+stop&map=${lat},${lon},11z`, '_blank');
+  window.open(`https://maps.tomtom.com/search/truck+stop`, '_blank');
 }
 
 function showFuelOnMap(lat, lon, name, emoji) {
@@ -29703,7 +29703,7 @@ window._hosAutoRecalc = false;
     if (!r || !r.pickup || !r.delivery) return alert('Coordenadas no disponibles');
     const from = (r.pickup.lat != null && r.pickup.lon != null) ? `${r.pickup.lat},${r.pickup.lon}` : encodeURIComponent(r.pickup.address||'');
     const to   = (r.delivery.lat != null && r.delivery.lon != null) ? `${r.delivery.lat},${r.delivery.lon}` : encodeURIComponent(r.delivery.address||'');
-    const url  = `https://www.google.com/maps/dir/${from}/${to}`;
+    const url  = `https://maps.tomtom.com/directions/to/${from}/${to}`;
     window.open(url, '_blank', 'noopener');
   }
 
