@@ -10290,16 +10290,16 @@ let defaultSpeed = parseInt(localStorage.getItem('hos_speed') || '60');
 let currentTab = 'plan';
 
 // ── MAP STYLE ────────────────────────────────────────────────
-const HERE_API_KEY = 'Nwtr6kwsU5smVYvhJCRUshCw_awISD0p2WwQlzijF7Y';
-// Tiles: CartoDB (gratis, sin auth). Routing/geocoding usan HERE.
-const _C = 'https://{s}.basemaps.cartocdn.com';
+const TOMTOM_API_KEY = 'N5xmJcA6AMxr5FELvpHRiE4HOj9LqqVy';
+// Tiles: TomTom raster tiles. Routing/geocoding también usan TomTom.
+const _TT = `https://api.tomtom.com/map/1/tile`;
 const MAP_STYLES = {
-  dark:     { label:'Noche',      emoji:'🌙', url:`${_C}/dark_all/{z}/{x}/{y}.png`,              opts:{ subdomains:'abcd', maxZoom:20 } },
-  streets:  { label:'Día',        emoji:'🗺️', url:`${_C}/rastertiles/voyager/{z}/{x}/{y}.png`,   opts:{ subdomains:'abcd', maxZoom:20 } },
-  light:    { label:'Claro',      emoji:'☀️', url:`${_C}/light_all/{z}/{x}/{y}.png`,             opts:{ subdomains:'abcd', maxZoom:20 } },
-  satellite:{ label:'Satélite',   emoji:'🛰️', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts:{ maxZoom:19 } },
-  terrain:  { label:'Terreno',    emoji:'⛰️', url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', opts:{ subdomains:'abc', maxZoom:17 } },
-  midnight: { label:'Medianoche', emoji:'🌃', url:`${_C}/dark_nolabels/{z}/{x}/{y}.png`,         opts:{ subdomains:'abcd', maxZoom:20 } },
+  dark:     { label:'Noche',      emoji:'🌙', url:`${_TT}/basic/night/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,  opts:{ maxZoom:22 } },
+  streets:  { label:'Día',        emoji:'🗺️', url:`${_TT}/basic/main/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,   opts:{ maxZoom:22 } },
+  light:    { label:'Claro',      emoji:'☀️', url:`${_TT}/basic/main/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,   opts:{ maxZoom:22 } },
+  satellite:{ label:'Satélite',   emoji:'🛰️', url:`${_TT}/sat/main/{z}/{x}/{y}.jpg?key=${TOMTOM_API_KEY}&tileSize=256`,    opts:{ maxZoom:19 } },
+  terrain:  { label:'Terreno',    emoji:'⛰️', url:`${_TT}/hybrid/main/{z}/{x}/{y}.jpg?key=${TOMTOM_API_KEY}&tileSize=256`, opts:{ maxZoom:19 } },
+  midnight: { label:'Medianoche', emoji:'🌃', url:`${_TT}/basic/night/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,  opts:{ maxZoom:22 } },
 };
 function _mkTile(styleKey) {
   const s = MAP_STYLES[styleKey] || MAP_STYLES.dark;
@@ -10334,8 +10334,8 @@ function _addTrafficLayer() {
   if (!fmMapInst) return;
   if (fmTrafficLayer) { try { fmMapInst.removeLayer(fmTrafficLayer); } catch {} fmTrafficLayer = null; }
   fmTrafficLayer = L.tileLayer(
-    `https://traffic.maps.hereapi.com/v3/flow/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}`,
-    { maxZoom: 20, opacity: 0.82 }
+    `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}`,
+    { maxZoom: 22, opacity: 0.82 }
   ).addTo(fmMapInst);
 }
 
@@ -11610,14 +11610,13 @@ async function _wxGetCurrentCity() {
   if (lat == null) return null;
   try {
     const r = await fetch(
-      `https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat.toFixed(5)},${lon.toFixed(5)}&limit=1&apiKey=${HERE_API_KEY}`,
+      `https://api.tomtom.com/search/2/reverseGeocode/${lat.toFixed(5)},${lon.toFixed(5)}.json?key=${TOMTOM_API_KEY}`,
       { headers: { 'Accept-Language': 'en' }, signal: AbortSignal.timeout(6000) }
     );
     const d = await r.json();
-    const city  = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
-    const state = d.items?.[0]?.address?.state || '';
-    const STATE_ABBR = {'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA','Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA','Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY'};
-    const sa = STATE_ABBR[state] || (state.length <= 3 ? state : '');
+    const city  = d.addresses?.[0]?.address?.municipality || d.addresses?.[0]?.address?.municipalitySubdivision || d.addresses?.[0]?.address?.countrySecondarySubdivision || '';
+    const state = d.addresses?.[0]?.address?.countrySubdivision || '';
+    const sa    = d.addresses?.[0]?.address?.countrySubdivisionCode || (state.length <= 3 ? state : '');
     if (city && sa) return `${city}, ${sa}`;
     if (city) return city;
     return null;
@@ -12900,10 +12899,10 @@ async function checkStateBorderAhead(lat, lon, heading) {
   try {
     lastBorderWarnCheck = now; // stamp only on attempt (reset on error)
     const ahead = destPointMiles(lat, lon, heading ?? 0, 5);
-    const r = await fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${ahead.lat},${ahead.lon}&limit=1&apiKey=${HERE_API_KEY}`,
+    const r = await fetch(`https://api.tomtom.com/search/2/reverseGeocode/${ahead.lat},${ahead.lon}.json?key=${TOMTOM_API_KEY}`,
       { signal: AbortSignal.timeout(6000) });
     const d = await r.json();
-    const stateRaw = d.items?.[0]?.address?.state || '';
+    const stateRaw = d.addresses?.[0]?.address?.countrySubdivision || '';
     const code = _STATE_MAP[stateRaw] || stateRaw.slice(0,2).toUpperCase();
     if (code && code !== currentStateCode && code !== lastBorderWarnState) {
       lastBorderWarnState = code;
@@ -12978,12 +12977,12 @@ function _coordToStateCode(lat, lon) {
 async function _geocodeState(lat, lon) {
   try {
     const r = await fetch(
-      `https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat},${lon}&limit=1&apiKey=${HERE_API_KEY}`,
+      `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lon}.json?key=${TOMTOM_API_KEY}`,
       { signal: AbortSignal.timeout(6000) }
     );
     const d = await r.json();
-    const raw = d.items?.[0]?.address?.state || '';
-    const stateCode = d.items?.[0]?.address?.stateCode || '';
+    const raw = d.addresses?.[0]?.address?.countrySubdivision || '';
+    const stateCode = d.addresses?.[0]?.address?.countrySubdivisionCode || '';
     return { raw, code: _STATE_MAP[raw] || stateCode || raw.slice(0,2).toUpperCase() };
   } catch(e) { /* failed */ }
   return null;
@@ -13439,7 +13438,7 @@ function triggerSOS() {
     else alert('Agrega un número de emergencia en Ajustes.');
   };
   document.getElementById('sosSmsBtn').onclick = () => {
-    const coordsStr = (sosLat != null && sosLon != null) ? `https://maps.here.com/?q=${sosLat},${sosLon}` : 'Ubicación no disponible';
+    const coordsStr = (sosLat != null && sosLon != null) ? `https://maps.google.com/?q=${sosLat},${sosLon}` : 'Ubicación no disponible';
     const msg = encodeURIComponent(
       `🆘 EMERGENCIA - Truck Precision\n📍 ${coordsStr}\n\nNecesito ayuda en esta ubicación.`
     );
@@ -13947,27 +13946,28 @@ async function runDestSearch(q) {
   const mkItem = (name, lat, lon, state, cc, isAddr) =>
     ({ name, lat, lon, state: (state||'').trim(), country_code: (cc||'').toUpperCase(), isAddress: !!isAddr });
 
-  // 1️⃣ HERE Geocode PRIMARY
+  // 1️⃣ TomTom Geocode PRIMARY
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 7000);
     const r = await fetch(
-      `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(q)}&limit=8&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`,
+      `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(q)}.json?key=${TOMTOM_API_KEY}&limit=8&countrySet=US&language=en-US`,
       { signal: ctrl.signal }
     );
     clearTimeout(t);
     const data = await r.json();
-    if (data && data.items && data.items.length) {
-      const items = data.items.map(d => {
+    if (data && data.results && data.results.length) {
+      const items = data.results.map(d => {
         const a = d.address || {};
-        const street = a.houseNumber && a.street
-          ? `${a.houseNumber} ${a.street}`
-          : (a.street || '');
-        const city = a.city || a.district || a.county || '';
-        const parts = [street, city, a.state, 'USA']
+        const street = a.streetNumber && a.streetName
+          ? `${a.streetNumber} ${a.streetName}`
+          : (a.streetName || '');
+        const city = a.municipality || a.municipalitySubdivision || a.countrySecondarySubdivision || '';
+        const state = a.countrySubdivision || '';
+        const parts = [street, city, state, 'USA']
           .filter(Boolean).filter((v,i,arr) => arr.indexOf(v) === i);
-        const name = parts.join(', ') || a.label || '';
-        return mkItem(name, d.position.lat, d.position.lng, a.state, 'us', !!(a.houseNumber || a.street));
+        const name = parts.join(', ') || a.freeformAddress || '';
+        return mkItem(name, d.position.lat, d.position.lon, state, 'us', !!(a.streetNumber || a.streetName));
       }).filter(x => x.name);
       items.sort((a, b) => {
         const scoreA = /^\d/.test(a.name) ? 2 : a.isAddress ? 1 : 0;
@@ -13989,16 +13989,17 @@ async function fetchAutocomplete(q) {
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 7000);
-    const r = await fetch(`https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(q)}&limit=10&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`, { signal: ctrl.signal });
+    const r = await fetch(`https://api.tomtom.com/search/2/geocode/${encodeURIComponent(q)}.json?key=${TOMTOM_API_KEY}&limit=10&countrySet=US&language=en-US`, { signal: ctrl.signal });
     const data = await r.json();
-    (data.items||[]).forEach(d => {
+    (data.results||[]).forEach(d => {
       const a = d.address || {};
-      const street = a.houseNumber&&a.street?`${a.houseNumber} ${a.street}`:(a.street||'');
-      const city = a.city||a.district||a.county||'';
-      const parts = [street,city,a.state,'USA'].filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i);
-      const name = parts.join(', ') || a.label || '';
-      if (name) items.push({ name, lat:d.position.lat, lon:d.position.lng,
-        state:(a.state||'').trim(), country_code:'US', isAddress:!!(a.houseNumber||a.street) });
+      const street = a.streetNumber&&a.streetName?`${a.streetNumber} ${a.streetName}`:(a.streetName||'');
+      const city = a.municipality||a.municipalitySubdivision||a.countrySecondarySubdivision||'';
+      const state = a.countrySubdivision || '';
+      const parts = [street,city,state,'USA'].filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i);
+      const name = parts.join(', ') || a.freeformAddress || '';
+      if (name) items.push({ name, lat:d.position.lat, lon:d.position.lon,
+        state: state.trim(), country_code:'US', isAddress:!!(a.streetNumber||a.streetName) });
     });
   } catch {}
   return items;
@@ -14406,75 +14407,52 @@ function _routeCacheSet(orig, dest, route) {
   try { sessionStorage.setItem(_routeCacheKey(orig, dest), JSON.stringify(route)); } catch {}
 }
 
-// HERE FlexPolyline decoder
-function _decodeHerePolyline(encoded) {
-  const TABLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-  const DEC = {};
-  for (let i = 0; i < TABLE.length; i++) DEC[TABLE[i]] = i;
-  let i = 0;
-  function readUnsigned() {
-    let val = 0, shift = 0, c;
-    do { c = DEC[encoded[i++]]; val |= (c & 0x1F) << shift; shift += 5; } while (c >= 32);
-    return val;
-  }
-  function readSigned() { const u = readUnsigned(); return (u & 1) ? -(u >> 1) - 1 : (u >> 1); }
-  const version = DEC[encoded[i++]];
-  if (version !== 1) throw new Error('Unsupported FlexPolyline version');
-  const header = readUnsigned();
-  const precision = header & 0xF;
-  const dim3 = (header >> 4) & 0xF;
-  const factor = Math.pow(10, precision);
-  const coords = [];
-  let lat = 0, lon = 0;
-  while (i < encoded.length) {
-    lat += readSigned(); lon += readSigned();
-    if (dim3) readSigned();
-    coords.push([lat / factor, lon / factor]);
-  }
-  return coords;
-}
-
-// Convert HERE action format to OSRM-compatible step format
-function _hereActionsToOsrmSteps(actions, polyCoords) {
-  const dirMap = { left:'left', right:'right', slightLeft:'slight_left', slightRight:'slight_right', sharpLeft:'sharp_left', sharpRight:'sharp_right', uTurn:'uturn', forward:'straight' };
-  return (actions || []).map(a => {
+// TomTom instruction maneuver → OSRM-compatible step
+function _tomTomInstructionsToSteps(instructions) {
+  return (instructions || []).map(inst => {
+    const m = inst.maneuver || '';
     let type = 'continue', mod = '';
-    if (a.action === 'arrive')          { type = 'arrive'; }
-    else if (a.action === 'roundaboutExit') { type = 'roundabout'; mod = ''; }
-    else if (a.action === 'turn')       { type = 'turn'; mod = dirMap[a.direction] || ''; }
-    else if (a.action === 'keepLeft')   { type = 'fork'; mod = 'left'; }
-    else if (a.action === 'keepRight')  { type = 'fork'; mod = 'right'; }
-    else if (a.action === 'merge')      { type = 'merge'; mod = dirMap[a.direction] || ''; }
-    else if (a.action === 'onRamp')     { type = 'on ramp'; mod = dirMap[a.direction] || ''; }
-    else if (a.action === 'offRamp')    { type = 'off ramp'; mod = dirMap[a.direction] || ''; }
-    else if (a.action === 'uturn')      { type = 'turn'; mod = 'uturn'; }
-    const pt = polyCoords[a.offset] || polyCoords[0] || [0, 0];
+    if (m.includes('ARRIVE'))                                  { type = 'arrive'; }
+    else if (m.includes('DEPART'))                             { type = 'depart'; }
+    else if (m === 'TURN_RIGHT' || m === 'BEAR_RIGHT')         { type = 'turn'; mod = 'right'; }
+    else if (m === 'TURN_LEFT'  || m === 'BEAR_LEFT')          { type = 'turn'; mod = 'left'; }
+    else if (m === 'SHARP_RIGHT')                              { type = 'turn'; mod = 'sharp right'; }
+    else if (m === 'SHARP_LEFT')                               { type = 'turn'; mod = 'sharp left'; }
+    else if (m === 'SLIGHT_RIGHT' || m === 'KEEP_RIGHT')       { type = 'fork'; mod = 'right'; }
+    else if (m === 'SLIGHT_LEFT'  || m === 'KEEP_LEFT')        { type = 'fork'; mod = 'left'; }
+    else if (m === 'MAKE_UTURN')                               { type = 'turn'; mod = 'uturn'; }
+    else if (m.includes('ROUNDABOUT'))                         { type = 'roundabout'; }
+    else if (m.includes('ENTER_MOTORWAY') || m.includes('RAMP_RIGHT') || m.includes('RAMP_LEFT')) { type = 'on ramp'; }
+    else if (m.includes('EXIT_MOTORWAY') || m.includes('MOTORWAY_EXIT')) { type = 'off ramp'; }
+    const pt = inst.point ? [inst.point.longitude, inst.point.latitude] : [0, 0];
     return {
-      maneuver: { type, modifier: mod, location: [pt[1], pt[0]] },
-      name: a.nextRoad?.name || a.currentRoad?.name || '',
-      ref:  a.nextRoad?.number || a.currentRoad?.number || '',
-      distance: a.length || 0,
-      duration: a.duration || 0,
+      maneuver: { type, modifier: mod, location: pt },
+      name: inst.street || '',
+      ref:  inst.signpostText || '',
+      distance: inst.routeOffsetInMeters || 0,
+      duration: inst.travelTimeInSeconds || 0,
+      instruction: inst.message || '',
     };
   });
 }
 
-async function _fetchHereRoute(orig, dest) {
-  const url = `https://router.hereapi.com/v8/routes?transportMode=truck&origin=${orig.lat},${orig.lon}&destination=${dest.lat},${dest.lon}&return=polyline,actions,summary&apiKey=${HERE_API_KEY}`;
+async function _fetchTomTomRoute(orig, dest) {
+  const url = `https://api.tomtom.com/routing/1/calculateRoute/${orig.lat},${orig.lon}:${dest.lat},${dest.lon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=8165&vehicleLength=22&vehicleWidth=2.6&vehicleHeight=4.1&routeType=fastest&traffic=true&instructionsType=text&language=en-US`;
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 10000);
+  const t = setTimeout(() => ctrl.abort(), 15000);
   try {
     const r = await fetch(url, { signal: ctrl.signal });
     clearTimeout(t);
     if (!r.ok) throw new Error('http-' + r.status);
     const j = await r.json();
     if (!j.routes?.length) throw new Error('no-route');
-    const section = j.routes[0].sections[0];
-    const polyCoords = _decodeHerePolyline(section.polyline);
-    const miles = Math.round((section.summary.length || 0) / 1609.344);
-    const steps = _hereActionsToOsrmSteps(section.actions, polyCoords);
-    console.log(`✅ Route: HERE | ${miles} mi | ${polyCoords.length} pts`);
-    return { coords: polyCoords, miles, steps, source: 'HERE-routing' };
+    const route = j.routes[0];
+    const points = route.legs.flatMap(leg => leg.points);
+    const polyCoords = points.map(p => [p.latitude, p.longitude]);
+    const miles = Math.round((route.summary.lengthInMeters || 0) / 1609.344);
+    const steps = _tomTomInstructionsToSteps(route.guidance?.instructions);
+    console.log(`✅ Route: TomTom | ${miles} mi | ${polyCoords.length} pts`);
+    return { coords: polyCoords, miles, steps, source: 'TomTom-routing' };
   } catch(e) {
     clearTimeout(t);
     throw e;
@@ -14483,13 +14461,11 @@ async function _fetchHereRoute(orig, dest) {
 
 async function fetchOsrmStepsOnly(orig, dest){
   try{
-    const url = `https://router.hereapi.com/v8/routes?transportMode=truck&origin=${orig.lat},${orig.lon}&destination=${dest.lat},${dest.lon}&return=polyline,actions&apiKey=${HERE_API_KEY}`;
-    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const url = `https://api.tomtom.com/routing/1/calculateRoute/${orig.lat},${orig.lon}:${dest.lat},${dest.lon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=8165&vehicleLength=22&vehicleWidth=2.6&vehicleHeight=4.1&routeType=fastest&instructionsType=text&language=en-US`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
     const j = await r.json();
     if (!j.routes?.length) return [];
-    const section = j.routes[0].sections[0];
-    const polyCoords = _decodeHerePolyline(section.polyline);
-    return _hereActionsToOsrmSteps(section.actions, polyCoords);
+    return _tomTomInstructionsToSteps(j.routes[0].guidance?.instructions);
   }catch{ return []; }
 }
 async function fetchRoadRoute(orig, dest) {
@@ -14527,15 +14503,15 @@ async function fetchRoadRoute(orig, dest) {
     return m.slice(0, 60);
   };
 
-  // Primer intento: HERE primary
+  // Primer intento: TomTom primary
   let _lastErr = '';
   try {
-    const result = await _fetchHereRoute(orig, dest);
+    const result = await _fetchTomTomRoute(orig, dest);
     _routeCacheSet(orig, dest, result);
     return result;
   } catch (e) {
     _lastErr = _errLabel(e);
-    console.warn('⚠️ HERE Routing falló, intentando OSRM/Valhalla:', _lastErr);
+    console.warn('⚠️ TomTom Routing falló, intentando OSRM/Valhalla:', _lastErr);
   }
 
   try {
@@ -15596,15 +15572,15 @@ function useGPS() {
 
     let name = '';
 
-    // Try HERE reverse geocode
+    // Try TomTom reverse geocode
     try {
       const r = await fetchWithTimeout(
-        `https://revgeocode.search.hereapi.com/v1/revgeocode?at=${latitude.toFixed(5)},${longitude.toFixed(5)}&limit=1&apiKey=${HERE_API_KEY}`,
+        `https://api.tomtom.com/search/2/reverseGeocode/${latitude.toFixed(5)},${longitude.toFixed(5)}.json?key=${TOMTOM_API_KEY}`,
         { headers: { 'Accept-Language': 'en' } }, 7000);
       const d = await r.json();
-      const city = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
-      const state = d.items?.[0]?.address?.state || '';
-      const sa = stateAbbr[state] || (state.length <= 3 ? state : '');
+      const city = d.addresses?.[0]?.address?.municipality || d.addresses?.[0]?.address?.municipalitySubdivision || d.addresses?.[0]?.address?.countrySecondarySubdivision || '';
+      const state = d.addresses?.[0]?.address?.countrySubdivision || '';
+      const sa = stateAbbr[state] || d.addresses?.[0]?.address?.countrySubdivisionCode || (state.length <= 3 ? state : '');
       if (city && sa) name = `${city}, ${sa}`;
       else if (city) name = city;
     } catch {}
@@ -16298,24 +16274,25 @@ function handleMapSearch(val) {
     const mkItem = (name, lat, lon, state, cc, isAddr) =>
       ({ name, lat, lon, state: (state||'').trim(), country_code: (cc||'').toUpperCase(), isAddress: !!isAddr });
 
-    // 1️⃣ HERE Geocode PRIMARY
+    // 1️⃣ TomTom Geocode PRIMARY
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 8000);
       const r = await fetch(
-        `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(q)}&limit=8&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`,
+        `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(q)}.json?key=${TOMTOM_API_KEY}&limit=8&countrySet=US&language=en-US`,
         { signal: ctrl.signal }
       );
       clearTimeout(t);
       const data = await r.json();
-      if (data && data.items && data.items.length) {
-        const items = data.items.map(d => {
+      if (data && data.results && data.results.length) {
+        const items = data.results.map(d => {
           const a = d.address || {};
-          const street = a.houseNumber && a.street ? `${a.houseNumber} ${a.street}` : (a.street || '');
-          const city   = a.city || a.district || a.county || '';
-          const parts  = [street, city, a.state, 'USA'].filter(Boolean).filter((v,i,arr) => arr.indexOf(v)===i);
-          const name   = parts.join(', ') || a.label || '';
-          return mkItem(name, d.position.lat, d.position.lng, a.state, 'us', !!(a.houseNumber || a.street));
+          const street = a.streetNumber && a.streetName ? `${a.streetNumber} ${a.streetName}` : (a.streetName || '');
+          const city   = a.municipality || a.municipalitySubdivision || a.countrySecondarySubdivision || '';
+          const state  = a.countrySubdivision || '';
+          const parts  = [street, city, state, 'USA'].filter(Boolean).filter((v,i,arr) => arr.indexOf(v)===i);
+          const name   = parts.join(', ') || a.freeformAddress || '';
+          return mkItem(name, d.position.lat, d.position.lon, state, 'us', !!(a.streetNumber || a.streetName));
         }).filter(x => x.name);
         items.sort((a,b) => {
           const sA = /^\d/.test(a.name)?2:a.isAddress?1:0;
@@ -16797,10 +16774,10 @@ async function _fetchStopCityAhead(targetMiles, onResult) {
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 6000);
-    const r = await fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${stopLat},${stopLon}&limit=1&apiKey=${HERE_API_KEY}`, { signal: ctrl.signal });
+    const r = await fetch(`https://api.tomtom.com/search/2/reverseGeocode/${stopLat},${stopLon}.json?key=${TOMTOM_API_KEY}`, { signal: ctrl.signal });
     const d = await r.json();
-    const city = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
-    const state = d.items?.[0]?.address?.state || '';
+    const city = d.addresses?.[0]?.address?.municipality || d.addresses?.[0]?.address?.municipalitySubdivision || d.addresses?.[0]?.address?.countrySecondarySubdivision || '';
+    const state = d.addresses?.[0]?.address?.countrySubdivision || '';
     onResult(city ? city + (state ? ', ' + state : '') : null);
   } catch { onResult(null); }
 }
@@ -18037,22 +18014,22 @@ function fmStartTracking() {
         const _setLoc = t => { if (locEl) locEl.textContent = t; if (hudLocEl) hudLocEl.textContent = t; };
         if (!locEl) return;
 
-        // HERE reverse geocode
+        // TomTom reverse geocode
         try {
           const ctrl = new AbortController();
           const t = setTimeout(() => ctrl.abort(), 8000);
           const rH = await fetch(
-            `https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat.toFixed(5)},${lon.toFixed(5)}&limit=1&apiKey=${HERE_API_KEY}`,
+            `https://api.tomtom.com/search/2/reverseGeocode/${lat.toFixed(5)},${lon.toFixed(5)}.json?key=${TOMTOM_API_KEY}`,
             { signal: ctrl.signal, headers: { 'Accept-Language': 'en' } }
           );
           clearTimeout(t);
           const dH = await rH.json();
-          const street = dH.items?.[0]?.address?.street || '';
-          const city   = dH.items?.[0]?.address?.city || dH.items?.[0]?.address?.district || dH.items?.[0]?.address?.county || '';
-          const state  = dH.items?.[0]?.address?.state || '';
+          const street = dH.addresses?.[0]?.address?.streetName || '';
+          const city   = dH.addresses?.[0]?.address?.municipality || dH.addresses?.[0]?.address?.municipalitySubdivision || dH.addresses?.[0]?.address?.countrySecondarySubdivision || '';
+          const state  = dH.addresses?.[0]?.address?.countrySubdivision || '';
           const addr   = [street, city, state].filter(Boolean).join(', ');
           if (addr) { _setLoc(addr); return; }
-        } catch(eH) { console.warn('HERE reverse failed:', eH.message); }
+        } catch(eH) { console.warn('TomTom reverse failed:', eH.message); }
 
         // Last resort: coordinates
         _setLoc(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
@@ -18947,10 +18924,10 @@ async function _updateHosCityBar(lat, lon, force) {
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 7000);
-    const r = await fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat},${lon}&limit=1&apiKey=${HERE_API_KEY}`, { signal: ctrl.signal });
+    const r = await fetch(`https://api.tomtom.com/search/2/reverseGeocode/${lat},${lon}.json?key=${TOMTOM_API_KEY}`, { signal: ctrl.signal });
     const d = await r.json();
-    const city  = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
-    const state = d.items?.[0]?.address?.state || '';
+    const city  = d.addresses?.[0]?.address?.municipality || d.addresses?.[0]?.address?.municipalitySubdivision || d.addresses?.[0]?.address?.countrySecondarySubdivision || '';
+    const state = d.addresses?.[0]?.address?.countrySubdivision || '';
     if (city || state) txt.textContent = [city, state].filter(Boolean).join(', ');
   } catch(e) {}
 }
@@ -20444,7 +20421,7 @@ async function runNearbySearch() {
           .setContent(`<div style="font-family:'DM Sans',sans-serif;font-weight:800;font-size:13px">${brand ? brand.logo : cfg.emoji} ${displayName}</div><div style="font-size:11px;color:#6b7280;margin-top:3px">${distLabel} de tu ubicación</div>`)
           .openOn(fmMapInst);
       } else {
-        window.open(`https://maps.here.com/?q=${res.elLat},${res.elLon}`, '_blank');
+        window.open(`https://maps.google.com/?q=${res.elLat},${res.elLon}`, '_blank');
       }
     });
 
@@ -20548,13 +20525,13 @@ function addNearbyStopToMap(res, displayName, cfg, brand) {
       <button onclick="
         if(fmMapInst && this.dataset.lat) {
           navigator.clipboard?.writeText(this.dataset.lat+','+this.dataset.lon);
-          window.open('https://maps.here.com/?q='+this.dataset.lat+','+this.dataset.lon,'_blank');
+          window.open('https://maps.google.com/?q='+this.dataset.lat+','+this.dataset.lon,'_blank');
         }
       " data-lat="${res.elLat}" data-lon="${res.elLon}" style="
         margin-top:10px;width:100%;padding:8px;border-radius:8px;
         background:#10b981;color:#fff;border:none;font-size:12px;
         font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;
-      ">🗺️ Abrir en HERE Maps</button>
+      ">🗺️ Abrir en Google Maps</button>
     </div>`;
 
   const m = L.marker([res.elLat, res.elLon], { icon })
@@ -22670,13 +22647,13 @@ function setupWaypointInput(inputId, suggId, index) {
     if (q.length < 3) { sugg.style.display='none'; return; }
     debounceT = setTimeout(async () => {
       try {
-        const res = await fetch(`https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(q)}&limit=4&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`);
+        const res = await fetch(`https://api.tomtom.com/search/2/geocode/${encodeURIComponent(q)}.json?key=${TOMTOM_API_KEY}&limit=4&countrySet=US&language=en-US`);
         const data = await res.json();
-        if (!data.items?.length) { sugg.style.display='none'; return; }
-        sugg.innerHTML = data.items.map(d => {
+        if (!data.results?.length) { sugg.style.display='none'; return; }
+        sugg.innerHTML = data.results.map(d => {
           const a = d.address || {};
-          const label = a.label || [a.street, a.city, a.state].filter(Boolean).join(', ');
-          return `<div class="sugg-item" data-lat="${d.position.lat}" data-lon="${d.position.lng}" data-name="${label}">${label}</div>`;
+          const label = a.freeformAddress || [a.streetName, a.municipality, a.countrySubdivision].filter(Boolean).join(', ');
+          return `<div class="sugg-item" data-lat="${d.position.lat}" data-lon="${d.position.lon}" data-name="${label}">${label}</div>`;
         }).join('');
         sugg.style.display='block';
         sugg.querySelectorAll('.sugg-item').forEach(item => {
@@ -23020,10 +22997,10 @@ function loadHistoryRoute(idx) {
 
 async function geocodeAndSet(name, field) {
   try {
-    const res = await fetch(`https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(name)}&limit=1&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`);
+    const res = await fetch(`https://api.tomtom.com/search/2/geocode/${encodeURIComponent(name)}.json?key=${TOMTOM_API_KEY}&limit=1&countrySet=US&language=en-US`);
     const data = await res.json();
-    if (data.items?.[0]) {
-      const loc = { name, lat: data.items[0].position.lat, lon: data.items[0].position.lng };
+    if (data.results?.[0]) {
+      const loc = { name, lat: data.results[0].position.lat, lon: data.results[0].position.lon };
       if (field === 'origin') { origin = loc; const lbl = document.getElementById('originLabelText'); if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; } }
       else { destination = loc; document.getElementById('destInput').value = name; }
     }
@@ -23032,10 +23009,10 @@ async function geocodeAndSet(name, field) {
 
 async function geocodeAndSetWP(name, idx2) {
   try {
-    const res = await fetch(`https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(name)}&limit=1&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`);
+    const res = await fetch(`https://api.tomtom.com/search/2/geocode/${encodeURIComponent(name)}.json?key=${TOMTOM_API_KEY}&limit=1&countrySet=US&language=en-US`);
     const data = await res.json();
-    if (data.items?.[0]) {
-      waypoints[idx2] = { name, lat: data.items[0].position.lat, lon: data.items[0].position.lng };
+    if (data.results?.[0]) {
+      waypoints[idx2] = { name, lat: data.results[0].position.lat, lon: data.results[0].position.lon };
     }
   } catch {}
 }
@@ -23913,13 +23890,13 @@ out center qt;`;
       return;
     }
 
-    const gmUrl = `https://maps.here.com/?q=truck+stop&map=${lat},${lon},11z`;
+    const gmUrl = `https://maps.google.com/?q=truck+stop&map=${lat},${lon},11z`;
     const tpUrl = `https://truckerpath.com/`;
     list.innerHTML = `
       <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">⛽ ${els.length} truck stops · 100 km</div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:12px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">
-          🗺️ HERE Maps
+          🗺️ Google Maps
         </a>
         <a href="${tpUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
           🚛 Trucker Path
@@ -23946,7 +23923,7 @@ out center qt;`;
       else if (/shell/i.test(n))             { emoji = '🐚'; bgColor = 'rgba(245,158,11,.15)'; }
       else if (/chevron/i.test(n))           { emoji = '💙'; bgColor = 'rgba(59,130,246,.15)'; }
 
-      const mapsUrl = `https://maps.here.com/directions/drive//${elLat},${elLon}`;
+      const mapsUrl = `https://www.google.com/maps/dir//${elLat},${elLon}`;
 
       const card = document.createElement('div');
       card.className = 'fuel-station-card';
@@ -24147,11 +24124,11 @@ function _renderPoiElements(list, subEl, type, lat, lon, rawEls, poiIcon, isTruc
   subEl.textContent = `${els.length} encontrados · 100 mi${cacheLabel ? ` · 🗃️ ${cacheLabel} atrás` : ''}`;
 
   const gmQuery = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
-  const gmUrl   = `https://maps.here.com/?q=${gmQuery}&map=${lat},${lon},12z`;
+  const gmUrl   = `https://maps.google.com/?q=${gmQuery}&map=${lat},${lon},12z`;
   list.innerHTML = `
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:12px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">
-        🗺️ HERE Maps
+        🗺️ Google Maps
       </a>
       <a href="https://truckerpath.com/" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
         🚛 Trucker Path
@@ -24175,7 +24152,7 @@ function _renderPoiElements(list, subEl, type, lat, lon, rawEls, poiIcon, isTruc
     if (addrParts.length >= 2) { navDest = encodeURIComponent(fullAddr); }
     else if (name && !genericNames.includes(name)) { navDest = encodeURIComponent(city ? `${name}, ${city}` : name); }
     else { navDest = `${elLat},${elLon}`; }
-    const mapsUrl = `https://maps.here.com/directions/drive//${navDest}`;
+    const mapsUrl = `https://www.google.com/maps/dir//${navDest}`;
 
     const card = document.createElement('div');
     card.className = 'poi-card';
@@ -24263,14 +24240,14 @@ async function searchNearbyPOI(type) {
     }
   } catch(e) {
     const gmQ  = isTruck ? 'truck+stop' : isScale ? 'weigh+station' : 'truck+parking';
-    const gmFb = lat ? `https://maps.here.com/?q=${gmQ}&map=${lat},${lon},11z` : `https://maps.here.com/?q=${gmQ}`;
+    const gmFb = lat ? `https://maps.google.com/?q=${gmQ}&map=${lat},${lon},11z` : `https://maps.google.com/?q=${gmQ}`;
     list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted)">
       <div style="font-size:36px;margin-bottom:12px">⚠️</div>
       <div style="font-size:14px;font-weight:700;margin-bottom:6px">Sin conexión a la base de datos</div>
       <div style="font-size:12px;margin-bottom:16px">Verifica tu internet e intenta de nuevo</div>
       <div style="display:flex;flex-direction:column;gap:8px;max-width:240px;margin:0 auto">
         <button onclick="searchNearbyPOI('${type}')" style="padding:10px;background:#10b981;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🔄 Reintentar</button>
-        <a href="${gmFb}" target="_blank" style="display:block;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:10px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">🗺️ Buscar en HERE Maps</a>
+        <a href="${gmFb}" target="_blank" style="display:block;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:10px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">🗺️ Buscar en Google Maps</a>
       </div>
     </div>`;
     subEl.textContent = 'Error de conexión';
@@ -24284,9 +24261,9 @@ async function openGoogleMapsTruckStops() {
     lat = pos.coords.latitude; lon = pos.coords.longitude;
   } catch {
     if (origin) { lat = origin.lat; lon = origin.lon; }
-    else { window.open('https://maps.here.com/?q=truck+stop', '_blank'); return; }
+    else { window.open('https://maps.google.com/?q=truck+stop', '_blank'); return; }
   }
-  window.open(`https://maps.here.com/?q=truck+stop&map=${lat},${lon},11z`, '_blank');
+  window.open(`https://maps.google.com/?q=truck+stop&map=${lat},${lon},11z`, '_blank');
 }
 
 function showFuelOnMap(lat, lon, name, emoji) {
@@ -27000,10 +26977,10 @@ function getScanLocation() {
   if (window.fmLastLat && window.fmLastLon) {
     el.textContent = window.fmLastLat.toFixed(5) + ', ' + window.fmLastLon.toFixed(5);
     // Try reverse geocode
-    fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${window.fmLastLat},${window.fmLastLon}&limit=1&apiKey=${HERE_API_KEY}`)
+    fetch(`https://api.tomtom.com/search/2/reverseGeocode/${window.fmLastLat},${window.fmLastLon}.json?key=${TOMTOM_API_KEY}`)
       .then(r=>r.json()).then(d=>{
-        const city = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
-        const state = d.items?.[0]?.address?.state || '';
+        const city = d.addresses?.[0]?.address?.municipality || d.addresses?.[0]?.address?.municipalitySubdivision || d.addresses?.[0]?.address?.countrySecondarySubdivision || '';
+        const state = d.addresses?.[0]?.address?.countrySubdivision || '';
         if (city || state) el.textContent = city + (city&&state?', ':'') + state;
       }).catch(()=>{});
     scanLocation = { lat: window.fmLastLat, lon: window.fmLastLon };
@@ -27011,10 +26988,10 @@ function getScanLocation() {
     navigator.geolocation.getCurrentPosition(pos => {
       scanLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
       el.textContent = pos.coords.latitude.toFixed(5) + ', ' + pos.coords.longitude.toFixed(5);
-      fetch(`https://revgeocode.search.hereapi.com/v1/revgeocode?at=${scanLocation.lat},${scanLocation.lon}&limit=1&apiKey=${HERE_API_KEY}`)
+      fetch(`https://api.tomtom.com/search/2/reverseGeocode/${scanLocation.lat},${scanLocation.lon}.json?key=${TOMTOM_API_KEY}`)
         .then(r=>r.json()).then(d=>{
-          const city = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
-          const state = d.items?.[0]?.address?.state || '';
+          const city = d.addresses?.[0]?.address?.municipality || d.addresses?.[0]?.address?.municipalitySubdivision || d.addresses?.[0]?.address?.countrySecondarySubdivision || '';
+          const state = d.addresses?.[0]?.address?.countrySubdivision || '';
           if(city||state) el.textContent=city+(city&&state?', ':'')+state;
         }).catch(()=>{});
     }, () => { el.textContent = 'No disponible'; });
@@ -27399,13 +27376,13 @@ const _stateAbbr = {Alabama:'AL',Alaska:'AK',Arizona:'AZ',Arkansas:'AR',Californ
 async function _reverseGeocodeCity(lat, lon) {
   try {
     const r = await fetch(
-      `https://revgeocode.search.hereapi.com/v1/revgeocode?at=${lat.toFixed(5)},${lon.toFixed(5)}&limit=1&apiKey=${HERE_API_KEY}`,
+      `https://api.tomtom.com/search/2/reverseGeocode/${lat.toFixed(5)},${lon.toFixed(5)}.json?key=${TOMTOM_API_KEY}`,
       { headers: { 'Accept-Language': 'en' } }
     );
     const d = await r.json();
-    const city  = d.items?.[0]?.address?.city || d.items?.[0]?.address?.district || d.items?.[0]?.address?.county || '';
-    const state = d.items?.[0]?.address?.state || '';
-    const sa    = _stateAbbr[state] || (state.length <= 3 ? state.toUpperCase() : '');
+    const city  = d.addresses?.[0]?.address?.municipality || d.addresses?.[0]?.address?.municipalitySubdivision || d.addresses?.[0]?.address?.countrySecondarySubdivision || '';
+    const state = d.addresses?.[0]?.address?.countrySubdivision || '';
+    const sa    = _stateAbbr[state] || d.addresses?.[0]?.address?.countrySubdivisionCode || (state.length <= 3 ? state.toUpperCase() : '');
     return city && sa ? `${city}, ${sa}` : city || (lang==='es' ? 'Ubicación desconocida' : 'Unknown location');
   } catch {
     return lang==='es' ? 'Sin conexión' : 'Unavailable';
@@ -29726,7 +29703,7 @@ window._hosAutoRecalc = false;
     if (!r || !r.pickup || !r.delivery) return alert('Coordenadas no disponibles');
     const from = (r.pickup.lat != null && r.pickup.lon != null) ? `${r.pickup.lat},${r.pickup.lon}` : encodeURIComponent(r.pickup.address||'');
     const to   = (r.delivery.lat != null && r.delivery.lon != null) ? `${r.delivery.lat},${r.delivery.lon}` : encodeURIComponent(r.delivery.address||'');
-    const url  = `https://maps.here.com/directions/drive/${from}/${to}`;
+    const url  = `https://www.google.com/maps/dir/${from}/${to}`;
     window.open(url, '_blank', 'noopener');
   }
 
