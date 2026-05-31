@@ -3493,7 +3493,8 @@ function _mkMapStyle(tileUrl, maxzoom) {
     layers: [
       { id: 'tt-bg', type: 'background', paint: { 'background-color': '#e8e0d8' } },
       { id: 'tt-raster', type: 'raster', source: 'tt' }
-    ]
+    ],
+    _tileUrl: tileUrl  // keep for hot-swap
   };
 }
 const MAP_STYLES = {
@@ -3589,9 +3590,7 @@ document.getElementById('mapStyleSwitch').addEventListener('click', (e)=>{
   document.querySelectorAll('#mapStyleSwitch button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   currentMapStyle = st;
-  mapLoaded = false;
-  map.setStyle(MAP_STYLES[st]);
-  map.once('idle', ()=>{ mapLoaded = true; _addTruckOverlay(); });
+  setMapStyle(st);
 });
 
 // ── Marker HTML element ────────────────────────────────
@@ -7526,9 +7525,23 @@ window.applyDarkMode = applyDarkMode;
 // ── Map style (unified between settings + map overlay) ─────
 function setMapStyle(style, btn){
   if(!MAP_STYLES[style]) return;
-  map.setStyle(MAP_STYLES[style]);
   currentMapStyle = style;
   localStorage.setItem('app_mapStyle', style);
+  // Hot-swap tile URL without clearing the map (prevents blank flash)
+  try {
+    const src = map.getSource('tt');
+    if (src) {
+      src.setTiles([MAP_STYLES[style]._tileUrl]);
+    } else {
+      mapLoaded = false;
+      map.setStyle(MAP_STYLES[style]);
+      map.once('idle', () => { mapLoaded = true; _addTruckOverlay(); });
+    }
+  } catch {
+    mapLoaded = false;
+    map.setStyle(MAP_STYLES[style]);
+    map.once('idle', () => { mapLoaded = true; _addTruckOverlay(); });
+  }
   // sync settings buttons
   document.querySelectorAll('.set-map-btn').forEach(b => b.classList.toggle('active', b.dataset.mstyle === style));
   // sync map overlay buttons

@@ -10293,13 +10293,15 @@ let currentTab = 'plan';
 const TOMTOM_API_KEY = 'N5xmJcA6AMxr5FELvpHRiE4HOj9LqqVy';
 // Tiles: TomTom raster tiles. Routing/geocoding también usan TomTom.
 const _TT = `https://api.tomtom.com/map/1/tile`;
+// Opciones base anti-parpadeo para todos los estilos TomTom
+const _TT_OPTS = { keepBuffer: 8, updateWhenZooming: false, updateWhenIdle: false };
 const MAP_STYLES = {
-  dark:     { label:'Noche',      emoji:'🌙', url:`${_TT}/basic/night/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,  opts:{ maxZoom:22 } },
-  streets:  { label:'Día',        emoji:'🗺️', url:`${_TT}/basic/main/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,   opts:{ maxZoom:22 } },
-  light:    { label:'Claro',      emoji:'☀️', url:`${_TT}/basic/main/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,   opts:{ maxZoom:22 } },
-  satellite:{ label:'Satélite',   emoji:'🛰️', url:`${_TT}/sat/main/{z}/{x}/{y}.jpg?key=${TOMTOM_API_KEY}&tileSize=256`,    opts:{ maxZoom:19 } },
-  terrain:  { label:'Terreno',    emoji:'⛰️', url:`${_TT}/hybrid/main/{z}/{x}/{y}.jpg?key=${TOMTOM_API_KEY}&tileSize=256`, opts:{ maxZoom:19 } },
-  midnight: { label:'Medianoche', emoji:'🌃', url:`${_TT}/basic/night/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,  opts:{ maxZoom:22 } },
+  dark:     { label:'Noche',      emoji:'🌙', url:`${_TT}/basic/night/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,  opts:{ ..._TT_OPTS, maxZoom:22 } },
+  streets:  { label:'Día',        emoji:'🗺️', url:`${_TT}/basic/main/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,   opts:{ ..._TT_OPTS, maxZoom:22 } },
+  light:    { label:'Claro',      emoji:'☀️', url:`${_TT}/basic/main/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,   opts:{ ..._TT_OPTS, maxZoom:22 } },
+  satellite:{ label:'Satélite',   emoji:'🛰️', url:`${_TT}/sat/main/{z}/{x}/{y}.jpg?key=${TOMTOM_API_KEY}&tileSize=256`,    opts:{ ..._TT_OPTS, maxZoom:19 } },
+  terrain:  { label:'Terreno',    emoji:'⛰️', url:`${_TT}/hybrid/main/{z}/{x}/{y}.jpg?key=${TOMTOM_API_KEY}&tileSize=256`, opts:{ ..._TT_OPTS, maxZoom:19 } },
+  midnight: { label:'Medianoche', emoji:'🌃', url:`${_TT}/basic/night/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`,  opts:{ ..._TT_OPTS, maxZoom:22 } },
 };
 function _mkTile(styleKey) {
   const s = MAP_STYLES[styleKey] || MAP_STYLES.dark;
@@ -13501,24 +13503,29 @@ function changeMapStyle(styleKey) {
   currentMapStyle = styleKey;
   localStorage.setItem('hos_map_style', styleKey);
 
-  // Update fullscreen map
+  // Update fullscreen map — add new first, remove old after load to avoid blank flash
   if (fmMapInst) {
-    if (fmTileLayer) { try { fmMapInst.removeLayer(fmTileLayer); } catch {} }
+    const _oldTile = fmTileLayer;
     fmTileLayer = _mkTile(styleKey).addTo(fmMapInst);
     fmTileLayer.bringToBack();
+    if (_oldTile) fmTileLayer.once('load', () => { try { fmMapInst.removeLayer(_oldTile); } catch {} });
   }
 
   // Update route minimap
   if (miniMap) {
-    miniMap.eachLayer(l => { if (l._url) { try { miniMap.removeLayer(l); } catch {} } });
-    _mkTile(styleKey).addTo(miniMap);
+    const _oldMini = [];
+    miniMap.eachLayer(l => { if (l._url) _oldMini.push(l); });
+    const _newMini = _mkTile(styleKey).addTo(miniMap);
+    _newMini.bringToBack();
+    _newMini.once('load', () => { _oldMini.forEach(l => { try { miniMap.removeLayer(l); } catch {} }); });
   }
 
   // Update HOS minimap
   if (hosMinimapInst) {
-    if (hosMinimapTileLayer) { try { hosMinimapInst.removeLayer(hosMinimapTileLayer); } catch {} }
+    const _oldHos = hosMinimapTileLayer;
     hosMinimapTileLayer = _mkTile(styleKey).addTo(hosMinimapInst);
     hosMinimapTileLayer.bringToBack();
+    if (_oldHos) hosMinimapTileLayer.once('load', () => { try { hosMinimapInst.removeLayer(_oldHos); } catch {} });
   }
 
   // Apply satellite class for CSS filter differentiation
