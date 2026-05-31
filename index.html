@@ -8585,38 +8585,40 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   <!-- RUTA PROGRESO LINE -->
   <div id="dashRouteProgress" style="display:block;flex:0 0 auto;padding:0 10px 10px;">
 
-    <!-- ── PANEL NORMAL: progreso de ruta ── -->
+    <!-- ── PANEL NORMAL: ETA + horas restantes de manejo ── -->
     <div id="dashRouteNormalPanel" style="background:rgba(255,255,255,0.04);border:1px solid rgba(16,185,129,0.22);border-radius:14px;padding:11px 14px;
                 box-shadow:0 0 0 1px rgba(16,185,129,0.10),0 0 18px rgba(16,185,129,0.22),0 0 36px rgba(59,130,246,0.12),0 4px 18px rgba(0,0,0,0.5);">
       <!-- Origen → Destino -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:11px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.85);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">ORIGEN</div>
-          <div id="dashRouteOrigin" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">--</div>
+          <div style="font-size:10px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.70);letter-spacing:2px;text-transform:uppercase;">ORIGEN</div>
+          <div id="dashRouteOrigin" style="font-size:13px;font-family:'Bebas Neue',sans-serif;font-weight:400;letter-spacing:1.5px;color:rgba(255,255,255,0.92);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;">--</div>
         </div>
-        <div style="font-size:18px;color:rgba(255,255,255,0.60);flex-shrink:0;">→</div>
+        <div style="font-size:16px;color:rgba(255,255,255,0.55);flex-shrink:0;">→</div>
         <div style="flex:1;min-width:0;text-align:right;">
-          <div style="font-size:11px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.85);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">DESTINO</div>
-          <div id="dashRouteDest" style="font-size:13px;font-weight:700;color:#10b981;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;">--</div>
+          <div style="font-size:10px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.70);letter-spacing:2px;text-transform:uppercase;">DESTINO</div>
+          <div id="dashRouteDest" style="font-size:13px;font-family:'Bebas Neue',sans-serif;font-weight:400;letter-spacing:1.5px;color:#10b981;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;text-transform:uppercase;">--</div>
         </div>
       </div>
       <!-- Barra de progreso con camión -->
-      <div style="position:relative;height:8px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:visible;margin-bottom:7px;">
+      <div style="position:relative;height:6px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:visible;margin-bottom:10px;">
         <div id="dashRouteProg" style="height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:999px;width:0%;transition:width 1.2s ease;position:relative;">
-          <div id="dashRouteTruck" style="position:absolute;right:-9px;top:50%;transform:translateY(-50%);font-size:18px;line-height:1;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));">🚛</div>
+          <div id="dashRouteTruck" style="position:absolute;right:-9px;top:50%;transform:translateY(-50%);font-size:16px;line-height:1;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));">🚛</div>
         </div>
       </div>
-      <!-- Millas restantes y porcentaje -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div id="dashRouteRemaining" style="font-size:15px;font-weight:800;color:#f1f5f9;letter-spacing:-0.3px;">-- mi restantes</div>
-        <div id="dashRoutePct" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.78);">0%</div>
-      </div>
-      <!-- Horas de manejo restantes -->
-      <div style="display:flex;align-items:center;gap:7px;">
-        <span style="font-size:14px;flex-shrink:0;">🕐</span>
-        <div id="dashRouteDriveLeft" style="font-size:14px;font-weight:800;color:#10b981;flex-shrink:0;min-width:70px;">-- h manejo</div>
-        <div style="flex:1;height:3px;background:rgba(255,255,255,0.10);border-radius:999px;overflow:hidden;">
-          <div id="dashRouteDriveBarFill" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width 1s ease;"></div>
+      <!-- LLEGADA · MANEJO en grande, estilo militar -->
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;color:rgba(255,255,255,0.72);text-transform:uppercase;line-height:1;margin-bottom:3px;">⏱ LLEGADA</div>
+          <div id="dashRouteEta" style="font-size:22px;font-family:'Bebas Neue',sans-serif;font-weight:400;letter-spacing:2px;color:#22d3ee;line-height:1;">--:--</div>
+          <div id="dashRouteRemaining" style="font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:rgba(255,255,255,0.78);margin-top:3px;text-transform:uppercase;">-- MI · <span id="dashRoutePct">0%</span></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;min-width:90px;">
+          <div style="font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:2.5px;color:rgba(255,255,255,0.72);text-transform:uppercase;line-height:1;margin-bottom:3px;">🕐 MANEJO</div>
+          <div id="dashRouteDriveLeft" style="font-size:22px;font-family:'Bebas Neue',sans-serif;font-weight:400;letter-spacing:2px;color:#10b981;line-height:1;">--H --M</div>
+          <div style="height:3px;background:rgba(255,255,255,0.10);border-radius:999px;overflow:hidden;margin-top:5px;">
+            <div id="dashRouteDriveBarFill" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width 1s ease;"></div>
+          </div>
         </div>
       </div>
       <!-- dashRouteStopRow/City stubs ocultos para compatibilidad JS -->
@@ -18472,6 +18474,12 @@ function showHosDashboard() {
       : Math.max(0, dMax);
     updateHosDashboard(dLeft, dMax);
     if (typeof _updateRestMode === 'function') _updateRestMode();
+    // Refrescar ETA + porcentaje + millas en el panel de ruta
+    if (typeof updateDashRouteProgress === 'function') {
+      const _curPct = parseInt(document.getElementById('fmPct')?.textContent) || 0;
+      const _curRem = parseFloat(document.getElementById('fmRem')?.textContent) || 0;
+      updateDashRouteProgress(_curPct, _curRem);
+    }
   }, 1000);
 
   updateDashDestCard();
@@ -18908,21 +18916,40 @@ function updateDashRouteProgress(pct, remaining) {
   const progEl   = document.getElementById('dashRouteProg');
   const remEl    = document.getElementById('dashRouteRemaining');
   const pctEl    = document.getElementById('dashRoutePct');
+  const etaEl    = document.getElementById('dashRouteEta');
 
   if (originEl) originEl.textContent = hasOrigin ? ((origin.name || '').split(',')[0].trim() || 'Origen') : 'Sin ruta';
   if (destEl)   destEl.textContent   = hasDest   ? ((destination.name || '').split(',')[0].trim() || 'Destino') : 'Sin destino';
 
   const hasRoute = hasDest && hasOrigin && pct > 0;
   if (progEl)   progEl.style.width = hasRoute ? Math.max(1, pct) + '%' : '0%';
-  if (remEl) {
-    if (hasRoute) {
-      const rem = typeof remaining === 'number' ? remaining : parseFloat(remaining) || 0;
-      remEl.textContent = rem < 10 ? rem.toFixed(1) + ' mi restantes' : Math.round(rem).toLocaleString() + ' mi restantes';
+
+  // Millas restantes y %  (formato militar: "120 MI · 35%")
+  const remMi = hasRoute
+    ? (typeof remaining === 'number' ? remaining : parseFloat(remaining) || 0)
+    : 0;
+  const remStr = !hasDest ? 'SIN DESTINO'
+    : !hasRoute ? 'RUTA NO INICIADA'
+    : (remMi < 10 ? remMi.toFixed(1) : Math.round(remMi).toLocaleString()) + ' MI';
+  const pctStr = hasRoute ? pct + '%' : '0%';
+  if (remEl) remEl.innerHTML = remStr + (hasRoute ? ' · <span id="dashRoutePct">' + pctStr + '</span>' : '');
+  else if (pctEl) pctEl.textContent = pctStr;
+
+  // ETA — leer del HUD del mapa (fmEta) cuando hay tracking,
+  // si no, calcular usando velocidad actual / promedio
+  if (etaEl) {
+    const fmEtaTxt = document.getElementById('fmEta')?.textContent?.trim();
+    if (hasRoute && fmEtaTxt && fmEtaTxt !== '--' && fmEtaTxt !== '--:--') {
+      etaEl.textContent = fmEtaTxt.toUpperCase();
+    } else if (hasDest && remMi > 0) {
+      const spd = (typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55;
+      const eta = new Date(Date.now() + (remMi / spd) * 3600000);
+      etaEl.textContent = eta.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}).toUpperCase();
     } else {
-      remEl.textContent = hasDest ? 'Ruta no iniciada' : 'Sin destino asignado';
+      etaEl.textContent = '--:--';
     }
   }
-  if (pctEl) pctEl.textContent = hasRoute ? pct + '%' : '0%';
+
   updateDashRouteHoursRow();
 }
 
@@ -18937,7 +18964,10 @@ function updateDashRouteHoursRow() {
 
   const h = Math.floor(Math.max(0, dLeft));
   const m = Math.round((Math.max(0, dLeft) - h) * 60);
-  driveLeftEl.textContent = dLeft <= 0 ? 'Horas agotadas' : (h > 0 ? h + 'h ' : '') + m + 'min manejo';
+  // Formato militar: "11H 00M"  /  "0H 30M"  /  "AGOTADO"
+  driveLeftEl.textContent = dLeft <= 0
+    ? 'AGOTADO'
+    : h + 'H ' + String(m).padStart(2,'0') + 'M';
   driveLeftEl.style.color = col;
   if (barFill) {
     barFill.style.width = Math.max(0, Math.min(100, (dLeft / dMax) * 100)) + '%';
