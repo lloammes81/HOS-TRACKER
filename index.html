@@ -10272,11 +10272,11 @@ let currentTab = 'plan';
 // ── MAP STYLE ────────────────────────────────────────────────
 const HERE_API_KEY = 'Nwtr6kwsU5smVYvhJCRUshCw_awISD0p2WwQlzijF7Y';
 const MAP_STYLES = {
-  dark:     { label:'Night',   emoji:'🌙',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=lite.night`,     options:{ maxZoom:20, attribution:'© HERE Maps' } },
-  streets:  { label:'Nav',     emoji:'🛣️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=explore.day`,    options:{ maxZoom:20, attribution:'© HERE Maps' } },
-  light:    { label:'Light',   emoji:'☀️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=lite.day`,        options:{ maxZoom:20, attribution:'© HERE Maps' } },
-  satellite:{ label:'Hybrid',  emoji:'🛰️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=satellite.day`,  options:{ maxZoom:20, attribution:'© HERE Maps' } },
-  topo:     { label:'Terrain', emoji:'⛰️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=terrain.day`,    options:{ maxZoom:20, attribution:'© HERE Maps' } },
+  dark:     { label:'Truck Noche',  emoji:'🌙',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.night`,   options:{ maxZoom:20, attribution:'© HERE Maps' } },
+  streets:  { label:'Truck Día',    emoji:'🚛',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20, attribution:'© HERE Maps' } },
+  light:    { label:'Truck Claro',  emoji:'☀️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20, attribution:'© HERE Maps' } },
+  satellite:{ label:'Satélite',     emoji:'🛰️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=satellite.day`, options:{ maxZoom:20, attribution:'© HERE Maps' } },
+  topo:     { label:'Truck Terreno',emoji:'⛰️',  url:`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?apiKey=${HERE_API_KEY}&style=truck.day`,     options:{ maxZoom:20, attribution:'© HERE Maps' } },
 };
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 if (!MAP_STYLES[currentMapStyle]) { currentMapStyle = 'dark'; localStorage.setItem('hos_map_style', 'dark'); }
@@ -13966,18 +13966,16 @@ async function fetchAutocomplete(q) {
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 7000);
-    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=10`, { signal: ctrl.signal });
+    const r = await fetch(`https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(q)}&limit=10&in=countryCode:USA&lang=en&apiKey=${HERE_API_KEY}`, { signal: ctrl.signal });
     const data = await r.json();
-    (data.features||[]).forEach(f => {
-      const p = f.properties;
-      const cc = (p.countrycode||'').toLowerCase();
-      if (cc !== 'us') return;
-      const street = p.housenumber&&p.street?`${p.housenumber} ${p.street}`:(p.street||'');
-      const city = p.city||p.town||p.village||p.name||'';
-      const parts = [street,city,p.state,p.country].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
-      const name = parts.join(', ');
-      if (name) items.push({ name, lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0],
-        state:(p.state||'').trim(), country_code:'US', isAddress:!!(p.housenumber||p.street) });
+    (data.items||[]).forEach(d => {
+      const a = d.address || {};
+      const street = a.houseNumber&&a.street?`${a.houseNumber} ${a.street}`:(a.street||'');
+      const city = a.city||a.district||a.county||'';
+      const parts = [street,city,a.state,'USA'].filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i);
+      const name = parts.join(', ') || a.label || '';
+      if (name) items.push({ name, lat:d.position.lat, lon:d.position.lng,
+        state:(a.state||'').trim(), country_code:'US', isAddress:!!(a.houseNumber||a.street) });
     });
   } catch {}
   return items;
