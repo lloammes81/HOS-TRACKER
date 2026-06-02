@@ -5,7 +5,19 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+
+  <!-- Hardware Permissions -->
+  <meta http-equiv="Permissions-Policy" content="geolocation=(self), bluetooth=(self), camera=(self), microphone=(self), accelerometer=(self), gyroscope=(self), magnetometer=(self)" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Truck Precision" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="msapplication-TileColor" content="#0b173a" />
+  <meta name="msapplication-TileImage" content="icon-144.png" />
+  <meta name="msapplication-config" content="browserconfig.xml" />
+
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Truck Precision" />
@@ -5315,12 +5327,10 @@ body.dark #fullMap .leaflet-tile-pane {
   }
   .comm-clear-btn.still.voted-still .comm-vote-cnt { color: #10b981; }
   .comm-clear-btn.clear { border-color: rgba(239,68,68,.2); }
-  .comm-clear-btn.clear:hover, .comm-clear-btn.clear.voted-clear {
+  .comm-clear-btn.clear:hover, .comm-clear-b
     background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.35);
   }
-  .comm-clear-btn.clear.voted-clear .comm-vote-cnt { color: #ef4444; }
-
-r.voted-clear .comm-vote-cnt { color: #ef4444; }
+  .comm-clear-btn.clea
 
 /* ══════════════════════════════════════════════════════════
    📡  ELD BLUETOOTH SHEET
@@ -5643,6 +5653,11 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
   50%     { box-shadow: 0 4px 28px rgba(0,0,0,.7), 0 0 0 7px rgba(16,185,129,0); border-color: rgba(16,185,129,1); }
 }
 
+
+/* Mobile touch optimizations */
+* { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+input, select, textarea { touch-action: manipulation; font-size: 16px; }
+button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 </style>
 
 <style id="fmHudCompactStyles">
@@ -6307,7 +6322,13 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="hint" id="roadHintTxt">Real road route when available</div>
         <div class="hint" id="routeSourceTxt"></div>
         <div class="mapbox" id="miniMap"></div>
-        <!-- POI legend under mini-map -->
+        <!-- Route Stops Timeline -->
+        <div class="route-stops-timeline" id="routeStopsTimeline" style="display:none">
+          <div class="route-stops-timeline-title">📍 ROUTE STOPS</div>
+          <div class="route-stops-list" id="routeStopsList"></div>
+        </div>
+
+      <!-- POI legend under mini-map -->
         <div class="poi-legend-bar" id="miniPoiLegend" style="display:none!important">
           <div class="poi-badge truck poi-loading" id="miniBadgeTruck" onclick="toggleMiniPOI('truck')">
             🚛 Truck Stops <span class="poi-cnt" id="miniTruckCnt">…</span>
@@ -7059,7 +7080,18 @@ r.voted-clear .comm-vote-cnt { color: #ef4444; }
         <div class="tpb-arrow">›</div>
       </button>
 
-      <!-- Dash Cam -->
+      
+      <!-- Digital Logbook -->
+      <button class="tool-page-btn" onclick="openLogbookSheet()" style="--tclr:#8b1e1e;--tcbg:rgba(139,30,30,.1);--tcbdr:rgba(139,30,30,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#6b1515,#8b1e1e)">📋</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Digital Logbook</div>
+          <div class="tpb-sub">HOS paper log replica · auto-calculate hours · DOT compliant</div>
+        </div>
+        <div class="tpb-arrow">›</div>
+      </button>
+
+<!-- Dash Cam -->
       <button class="tool-page-btn" onclick="openCameraFromTools()" style="--tclr:#22d3ee;--tcbg:rgba(34,211,238,.1);--tcbdr:rgba(34,211,238,.3)">
         <div class="tpb-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">🎥</div>
         <div class="tpb-info">
@@ -28613,7 +28645,7 @@ window._hosAutoRecalc = false;
     display:grid; place-items:center; cursor:pointer;
     transition: transform .15s, box-shadow .2s;
   }
-  #fleetLinkFab:active{ transform: scale(.94); }
+  #fleetLinkFab:active{ transform: scale(.94); } }
   #fleetLinkFab .badge{
     position:absolute; top:-5px; right:-5px;
     background:#ef4444; color:#fff; font-size:10px; font-weight:800;
@@ -28685,6 +28717,810 @@ window._hosAutoRecalc = false;
   #fleetLinkToast.show{ opacity:1; transform:translateX(-50%) translateY(6px); }
   #fleetLinkToast.urgent{ background:#dc2626; animation:flPulse .6s infinite; }
   @keyframes flPulse { 0%,100%{transform:translateX(-50%) scale(1);} 50%{transform:translateX(-50%) scale(1.05);} }
+
+
+/* ════════════════════════════════════════════════════════════
+   🛠️  MEJORAS DE ROBUSTEZ Y UX
+══════════════════════════════════════════════════════════ */
+
+/* Toast notifications */
+.app-toast {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(-120px);
+  z-index: 99999;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 12px 20px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transition: transform 0.35s cubic-bezier(.16,1,.3,1);
+  pointer-events: none;
+  max-width: 90vw;
+  text-align: center;
+}
+.app-toast.show { transform: translateX(-50%) translateY(0); }
+.app-toast.success { border-color: rgba(16,185,129,0.4); }
+.app-toast.error   { border-color: rgba(239,68,68,0.4); }
+.app-toast.warning { border-color: rgba(245,158,11,0.4); }
+
+/* Keyboard focus visible */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .tab-bar, .bg-icons, .hero-wrap { display: none !important; }
+  .card { break-inside: avoid; page-break-inside: avoid; }
+  body { background: white !important; color: black !important; }
+}
+
+/* Performance: lazy render off-screen pages */
+.page:not(.active) {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+
+
+/* ════════════════════════════════════════════════════════════
+   📋  DIGITAL LOGBOOK - HOS Paper Log Replica
+══════════════════════════════════════════════════════════ */
+
+#logbookSheet {
+  position: fixed; inset: 0; z-index: 9000;
+  background: #f5f0e8;
+  display: none; flex-direction: column;
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+}
+#logbookSheet.open { display: flex; animation: lbFadeIn 0.3s ease; }
+@keyframes lbFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.lb-topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: linear-gradient(135deg, #8b1e1e, #6b1515);
+  color: #fff;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.lb-topbar-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: 2px;
+  display: flex; align-items: center; gap: 10px;
+}
+.lb-close {
+  width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.15); color: #fff; font-size: 20px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.lb-close:active { background: rgba(255,255,255,0.3); transform: scale(0.95); }
+
+/* Paper texture background */
+.lb-paper {
+  background: #f5f0e8;
+  background-image: 
+    repeating-linear-gradient(0deg, rgba(139,69,19,0.03) 0px, rgba(139,69,19,0.03) 1px, transparent 1px, transparent 28px),
+    repeating-linear-gradient(90deg, rgba(139,69,19,0.03) 0px, rgba(139,69,19,0.03) 1px, transparent 1px, transparent 28px);
+  flex: 1; padding: 16px;
+}
+
+/* Header info section */
+.lb-header-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+}
+.lb-field {
+  border: 2px solid #8b1e1e; border-radius: 8px;
+  background: #fff; padding: 8px 10px;
+}
+.lb-field-label {
+  font-size: 9px; font-weight: 800; color: #8b1e1e;
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+}
+.lb-field-input {
+  width: 100%; border: none; background: transparent;
+  font-family: 'Share Tech Mono', monospace; font-size: 14px; color: #1a1a1a;
+  outline: none; padding: 0;
+}
+.lb-field-input::placeholder { color: #c4b5a0; }
+
+/* Date selector row */
+.lb-date-row {
+  display: flex; gap: 10px; margin-bottom: 16px; align-items: center;
+}
+.lb-date-btn {
+  padding: 8px 14px; border: 2px solid #8b1e1e; border-radius: 8px;
+  background: #fff; font-family: 'Share Tech Mono', monospace;
+  font-size: 13px; font-weight: 700; color: #8b1e1e; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.lb-date-btn:active { background: #8b1e1e; color: #fff; }
+.lb-date-btn.active { background: #8b1e1e; color: #fff; }
+
+/* The main grid - replica of paper log */
+.lb-grid-container {
+  background: #fff; border: 3px solid #8b1e1e; border-radius: 12px;
+  overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  margin-bottom: 16px;
+}
+.lb-grid-header {
+  background: #8b1e1e; color: #fff;
+  padding: 10px 12px; text-align: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px;
+}
+
+/* Status rows */
+.lb-status-row {
+  display: flex; border-bottom: 2px solid #d4c5b0;
+  min-height: 56px; position: relative;
+}
+.lb-status-row:last-child { border-bottom: none; }
+.lb-status-label {
+  width: 100px; flex-shrink: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 8px 10px; border-right: 2px solid #d4c5b0;
+  background: linear-gradient(135deg, #f5f0e8, #e8e0d0);
+}
+.lb-status-num {
+  font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #8b1e1e;
+  line-height: 1;
+}
+.lb-status-name {
+  font-size: 9px; font-weight: 800; color: #6b5b4f;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;
+}
+
+/* Hour grid - the main interactive area */
+.lb-hours-area {
+  flex: 1; position: relative; overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.lb-hours-grid {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  min-width: 720px; height: 100%;
+}
+.lb-hour-cell {
+  border-right: 1px solid #e0d5c5;
+  position: relative; cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.lb-hour-cell:last-child { border-right: none; }
+.lb-hour-cell:active { background: rgba(139,30,30,0.1); }
+.lb-hour-cell.filled-offduty { background: rgba(100,116,139,0.3); }
+.lb-hour-cell.filled-sleeper { background: rgba(99,102,241,0.3); }
+.lb-hour-cell.filled-driving { background: rgba(139,30,30,0.35); }
+.lb-hour-cell.filled-onduty { background: rgba(245,158,11,0.3); }
+
+/* Hour labels at top */
+.lb-hour-labels {
+  display: grid; grid-template-columns: repeat(24, 1fr);
+  min-width: 720px; border-bottom: 2px solid #8b1e1e;
+  background: #f5f0e8;
+}
+.lb-hour-label {
+  text-align: center; font-size: 10px; font-weight: 700;
+  color: #6b5b4f; padding: 4px 0; border-right: 1px solid #d4c5b0;
+}
+.lb-hour-label:last-child { border-right: none; }
+.lb-hour-label.midnight { color: #8b1e1e; font-weight: 900; }
+
+/* Time markers (noon/midnight) */
+.lb-time-marker {
+  position: absolute; top: 0; bottom: 0;
+  width: 2px; background: #8b1e1e; z-index: 2;
+}
+.lb-time-marker-label {
+  position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; font-weight: 900; color: #8b1e1e; background: #fff;
+  padding: 0 4px; border-radius: 2px;
+}
+
+/* Status selector bar */
+.lb-status-bar {
+  display: flex; gap: 8px; padding: 12px; background: #fff;
+  border-radius: 12px; margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  position: sticky; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 10;
+}
+.lb-status-pill {
+  flex: 1; padding: 10px 8px; border-radius: 10px;
+  border: 2px solid transparent; text-align: center;
+  cursor: pointer; transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.lb-status-pill:active { transform: scale(0.95); }
+.lb-status-pill.selected {
+  border-color: currentColor; box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+  transform: scale(1.05);
+}
+.lb-pill-offduty { background: rgba(100,116,139,0.15); color: #64748b; }
+.lb-pill-sleeper { background: rgba(99,102,241,0.15); color: #6366f1; }
+.lb-pill-driving { background: rgba(139,30,30,0.15); color: #8b1e1e; }
+.lb-pill-onduty  { background: rgba(245,158,11,0.15); color: #d97706; }
+.lb-pill-icon { font-size: 20px; }
+.lb-pill-text { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Summary section */
+.lb-summary {
+  background: #fff; border: 2px solid #8b1e1e; border-radius: 12px;
+  padding: 14px; margin-bottom: 16px;
+}
+.lb-summary-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
+  color: #8b1e1e; margin-bottom: 10px; text-align: center;
+}
+.lb-summary-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+}
+.lb-summary-item {
+  text-align: center; padding: 8px; border-radius: 8px;
+  background: #f5f0e8;
+}
+.lb-summary-val {
+  font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #1a1a1a;
+  line-height: 1;
+}
+.lb-summary-label {
+  font-size: 9px; font-weight: 800; color: #6b5b4f;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;
+}
+.lb-summary-item.warning { background: rgba(245,158,11,0.15); }
+.lb-summary-item.warning .lb-summary-val { color: #d97706; }
+.lb-summary-item.danger { background: rgba(239,68,68,0.15); }
+.lb-summary-item.danger .lb-summary-val { color: #dc2626; }
+
+/* Recap section (70 hour cycle) */
+.lb-recap {
+  background: #fff; border: 2px solid #8b1e1e; border-radius: 12px;
+  padding: 14px; margin-bottom: 16px;
+}
+.lb-recap-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
+  color: #8b1e1e; margin-bottom: 10px; text-align: center;
+}
+.lb-recap-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+}
+.lb-recap-day {
+  text-align: center; padding: 8px 4px; border-radius: 8px;
+  background: #f5f0e8; border: 1.5px solid transparent;
+}
+.lb-recap-day.active { border-color: #8b1e1e; background: rgba(139,30,30,0.08); }
+.lb-recap-day-total { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #1a1a1a; }
+.lb-recap-day-label { font-size: 9px; font-weight: 800; color: #6b5b4f; margin-top: 2px; }
+
+/* Action buttons */
+.lb-actions {
+  display: flex; gap: 10px; padding: 0 0 20px;
+}
+.lb-action-btn {
+  flex: 1; padding: 14px; border-radius: 12px; border: none;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 800;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.lb-action-btn:active { transform: scale(0.97); }
+.lb-btn-save { background: linear-gradient(135deg, #8b1e1e, #6b1515); color: #fff; }
+.lb-btn-share { background: #f5f0e8; border: 2px solid #8b1e1e; color: #8b1e1e; }
+.lb-btn-camera { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
+
+/* HOS Alert banner */
+.lb-hos-alert {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #fff; border-radius: 10px; padding: 12px 16px;
+  margin-bottom: 16px; display: none; align-items: center; gap: 10px;
+  animation: lbAlertPulse 2s ease-in-out infinite;
+}
+.lb-hos-alert.show { display: flex; }
+@keyframes lbAlertPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.4); } 50% { box-shadow: 0 0 0 8px rgba(220,38,38,0); } }
+.lb-hos-alert-icon { font-size: 24px; }
+.lb-hos-alert-text { font-size: 13px; font-weight: 700; line-height: 1.4; }
+
+/* Current time indicator */
+.lb-current-time {
+  position: absolute; top: 0; bottom: 0;
+  width: 3px; background: #10b981; z-index: 5;
+  box-shadow: 0 0 8px rgba(16,185,129,0.6);
+}
+.lb-current-time::after {
+  content: 'NOW'; position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+  font-size: 8px; font-weight: 900; color: #10b981; background: #fff;
+  padding: 1px 4px; border-radius: 2px; border: 1px solid #10b981;
+}
+
+/* Instructions overlay */
+.lb-help-btn {
+  position: fixed; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); right: 16px;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, #8b1e1e, #6b1515); color: #fff;
+  font-size: 20px; border: none; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.lb-help-btn:active { transform: scale(0.95); }
+
+
+
+/* ════════════════════════════════════════════════════════════
+   📍 LOCATION HISTORY IN GRID CELLS
+══════════════════════════════════════════════════════════ */
+
+.lb-hour-cell .lb-cell-location {
+  position: absolute;
+  bottom: 2px; left: 2px; right: 2px;
+  font-size: 7px; font-weight: 700; color: rgba(255,255,255,0.9);
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+  border-radius: 3px; padding: 1px 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  z-index: 3;
+}
+.lb-hour-cell.filled-offduty .lb-cell-location,
+.lb-hour-cell.filled-sleeper .lb-cell-location,
+.lb-hour-cell.filled-driving .lb-cell-location,
+.lb-hour-cell.filled-onduty .lb-cell-location {
+  opacity: 1;
+}
+
+/* Location timeline sidebar */
+.lb-location-timeline {
+  background: #fff; border: 2px solid #8b1e1e; border-radius: 12px;
+  padding: 14px; margin-bottom: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+}
+.lb-loc-timeline-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
+  color: #8b1e1e; margin-bottom: 10px; text-align: center;
+}
+.lb-loc-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; margin-bottom: 6px;
+  background: #f5f0e8; border-left: 3px solid transparent;
+  transition: all 0.2s;
+}
+.lb-loc-item:last-child { margin-bottom: 0; }
+.lb-loc-item.driving { border-left-color: #8b1e1e; background: rgba(139,30,30,0.08); }
+.lb-loc-item.onduty { border-left-color: #d97706; background: rgba(245,158,11,0.08); }
+.lb-loc-item.sleeper { border-left-color: #6366f1; background: rgba(99,102,241,0.08); }
+.lb-loc-item.offduty { border-left-color: #64748b; background: rgba(100,116,139,0.08); }
+.lb-loc-time {
+  font-family: 'Share Tech Mono', monospace; font-size: 12px; font-weight: 700;
+  color: #8b1e1e; min-width: 50px; flex-shrink: 0;
+}
+.lb-loc-status-icon { font-size: 16px; flex-shrink: 0; }
+.lb-loc-address {
+  flex: 1; font-size: 11px; font-weight: 700; color: #1a1a1a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lb-loc-coords {
+  font-size: 9px; color: #6b5b4f; font-family: 'Share Tech Mono', monospace;
+  flex-shrink: 0;
+}
+
+/* Current location big display */
+.lb-current-loc-card {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border-radius: 14px; padding: 16px; margin-bottom: 16px;
+  border: 1.5px solid rgba(16,185,129,0.3);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.lb-current-loc-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+}
+.lb-current-loc-label {
+  font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.5);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.lb-current-loc-live {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 800; color: #10b981;
+}
+.lb-current-loc-live::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: #10b981; animation: gpsPulse 1.5s ease-in-out infinite;
+}
+@keyframes gpsPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.lb-current-loc-address {
+  font-size: 16px; font-weight: 800; color: #fff; line-height: 1.3;
+  margin-bottom: 6px;
+}
+.lb-current-loc-coords {
+  font-family: 'Share Tech Mono', monospace; font-size: 11px;
+  color: rgba(255,255,255,0.5);
+}
+.lb-current-loc-updated {
+  font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 4px;
+}
+
+
+
+/* ════════════════════════════════════════════════════════════
+   📍 ROUTE STOP MARKERS ON MAP
+══════════════════════════════════════════════════════════ */
+
+/* Stop marker on map */
+.route-stop-marker {
+  position: relative;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  border: 3px solid #fff;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.5), 0 0 0 2px rgba(16,185,129,0.5);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 1000 !important;
+}
+.route-stop-marker:hover { transform: scale(1.2); }
+.route-stop-marker:active { transform: scale(0.95); }
+
+.route-stop-marker.offduty { background: linear-gradient(135deg, #64748b, #475569); }
+.route-stop-marker.sleeper { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.route-stop-marker.onduty { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.route-stop-marker.driving { background: linear-gradient(135deg, #10b981, #059669); }
+
+/* Pulse animation for current stop */
+.route-stop-marker.current::after {
+  content: '';
+  position: absolute; inset: -8px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  animation: stopPulse 2s ease-in-out infinite;
+  opacity: 0.6;
+}
+@keyframes stopPulse {
+  0%,100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.5); opacity: 0; }
+}
+
+/* Stop label popup */
+.stop-label-popup {
+  background: rgba(15,23,42,0.95) !important;
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255,255,255,0.2) !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  color: #fff !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+  white-space: nowrap;
+}
+.stop-label-popup::before { display: none !important; }
+.stop-label-city { font-size: 13px; font-weight: 800; color: #fff; }
+.stop-label-status { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+.stop-label-time { font-size: 9px; color: rgba(255,255,255,0.4); font-family: 'Share Tech Mono', monospace; }
+
+/* Route stops strip below map */
+.route-stops-timeline {
+  background: rgba(15,23,42,0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.route-stops-timeline-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
+  color: #10b981; margin-bottom: 10px; text-align: center;
+}
+.route-stops-list {
+  display: flex; gap: 8px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.route-stops-list::-webkit-scrollbar { display: none; }
+.route-stop-chip {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+  padding: 10px 12px; border-radius: 12px;
+  background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.1);
+  min-width: 80px; cursor: pointer; transition: all 0.2s;
+}
+.route-stop-chip:active { transform: scale(0.95); background: rgba(255,255,255,0.12); }
+.route-stop-chip.active { border-color: #10b981; background: rgba(16,185,129,0.15); }
+.route-stop-chip-icon { font-size: 20px; margin-bottom: 4px; }
+.route-stop-chip-city { font-size: 11px; font-weight: 800; color: #fff; text-align: center; line-height: 1.2; }
+.route-stop-chip-time { font-size: 9px; color: rgba(255,255,255,0.5); margin-top: 2px; font-family: 'Share Tech Mono', monospace; }
+.route-stop-chip-status { font-size: 8px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px; }
+
+/* Connection line between stops */
+.route-stop-connector {
+  position: absolute; top: 50%; left: 100%;
+  width: 20px; height: 2px;
+  background: linear-gradient(90deg, #10b981, transparent);
+  transform: translateY(-50%);
+}
+
+
+
+/* ════════════════════════════════════════════════════════════
+   🚛 TRUCK STOP COMPANY LOGOS & BRANDING
+══════════════════════════════════════════════════════════ */
+
+.poi-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px; border-radius: 14px;
+  background: var(--card); border: 1px solid var(--border);
+  margin-bottom: 8px; cursor: pointer;
+  transition: background .15s, transform .12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.poi-card:active { background: rgba(255,255,255,.07); transform: scale(.98); }
+
+/* REAL TRUCK STOP BRAND LOGOS */
+.poi-card-logo {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.15);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+  font-weight: 900;
+  letter-spacing: -1px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+/* PILOT FLYING J - Red/Yellow (Real colors) */
+.poi-card-logo.pilot {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #FFD700;
+  font-family: 'Arial Black', sans-serif;
+  font-size: 18px;
+}
+
+/* LOVES - Red Heart (Real colors) */
+.poi-card-logo.loves {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 28px;
+}
+
+/* TA TRAVEL CENTERS - Blue/White (Real colors) */
+.poi-card-logo.ta {
+  background: linear-gradient(135deg, #003DA5, #002D7A);
+  color: #fff;
+  font-family: 'Arial Black', sans-serif;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+/* PETRO - Red/White (Real colors) */
+.poi-card-logo.petro {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 20px;
+}
+
+/* SPEEDWAY - Red/White (Real colors) */
+.poi-card-logo.speedway {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #FFD700;
+  font-size: 20px;
+}
+
+/* SHELL - Yellow/Red (Real colors) */
+.poi-card-logo.shell {
+  background: linear-gradient(135deg, #FBCE07, #E5A800);
+  color: #E31837;
+  font-size: 24px;
+}
+
+/* BP - Green/Yellow (Real colors) */
+.poi-card-logo.bp {
+  background: linear-gradient(135deg, #009900, #007A00);
+  color: #FFD700;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+/* MOBIL/EXXON - Red/White (Real colors) */
+.poi-card-logo.mobil {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+/* CHEVRON - Blue/Red (Real colors) */
+.poi-card-logo.chevron {
+  background: linear-gradient(135deg, #003DA5, #002D7A);
+  color: #E31837;
+  font-size: 22px;
+}
+
+/* TEXACO - Red/White Star (Real colors) */
+.poi-card-logo.texaco {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 24px;
+}
+
+/* CIRCLE K - Red/White (Real colors) */
+.poi-card-logo.circlek {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+/* 7-ELEVEN - Orange/Green/Red (Real colors) */
+.poi-card-logo.seveneleven {
+  background: linear-gradient(135deg, #F4801F, #D96A0F);
+  color: #fff;
+  font-size: 20px;
+}
+
+/* WALMART - Blue/Spark (Real colors) */
+.poi-card-logo.walmart {
+  background: linear-gradient(135deg, #0071CE, #005BB5);
+  color: #FFC220;
+  font-size: 22px;
+}
+
+/* COSTCO - Red/White (Real colors) */
+.poi-card-logo.costco {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+/* SAM'S CLUB - Blue (Real colors) */
+.poi-card-logo.sams {
+  background: linear-gradient(135deg, #0071CE, #005BB5);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+/* PHILLIPS 66 - Red/White (Real colors) */
+.poi-card-logo.phillips66 {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 16px;
+}
+
+/* SINCLAIR - Green/Dino (Real colors) */
+.poi-card-logo.sinclair {
+  background: linear-gradient(135deg, #009900, #007A00);
+  color: #fff;
+  font-size: 24px;
+}
+
+/* VALERO - Blue/Red (Real colors) */
+.poi-card-logo.valero {
+  background: linear-gradient(135deg, #003DA5, #002D7A);
+  color: #fff;
+  font-size: 18px;
+}
+
+/* 76 - Orange/Blue (Real colors) */
+.poi-card-logo.seventysix {
+  background: linear-gradient(135deg, #FF6B35, #E55A2B);
+  color: #003DA5;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+/* RACE TRAC - Blue/Red (Real colors) */
+.poi-card-logo.racetrac {
+  background: linear-gradient(135deg, #003DA5, #002D7A);
+  color: #E31837;
+  font-size: 20px;
+}
+
+/* QUICK TRIP - Red/White (Real colors) */
+.poi-card-logo.quiktrip {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 16px;
+}
+
+/* SHEETZ - Red/White (Real colors) */
+.poi-card-logo.sheetz {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 20px;
+}
+
+/* WAWA - Red/White (Real colors) */
+.poi-card-logo.wawa {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 20px;
+}
+
+/* CASEY'S - Red/White (Real colors) */
+.poi-card-logo.caseys {
+  background: linear-gradient(135deg, #E31837, #B3122B);
+  color: #fff;
+  font-size: 18px;
+}
+
+/* BLUE BEACON - Blue/White (Real colors) */
+.poi-card-logo.bluebeacon {
+  background: linear-gradient(135deg, #003DA5, #002D7A);
+  color: #fff;
+  font-size: 20px;
+}
+
+/* DEFAULT */
+.poi-card-logo.default {
+  background: linear-gradient(135deg, #475569, #334155);
+  color: #fff;
+  font-size: 22px;
+}
+
+.poi-card-logo-img {
+  width: 100%; height: 100%; border-radius: 12px;
+  object-fit: cover;
+}
+
+.poi-card-info { flex: 1; min-width: 0; }
+.poi-card-name { font-size: 14px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.poi-card-brand { font-size: 11px; font-weight: 700; color: var(--accent); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+.poi-card-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.poi-card-amenities { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+.poi-amenity {
+  font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+  background: rgba(16,185,129,0.15); color: #059669; border: 1px solid rgba(16,185,129,0.3);
+}
+.poi-card-dist {
+  font-size: 13px; font-weight: 900; color: #10b981; flex-shrink: 0;
+  text-align: right;
+  display: flex; flex-direction: column; align-items: flex-end;
+}
+.poi-card-dist-miles { font-size: 16px; line-height: 1; }
+.poi-card-dist-label { font-size: 9px; color: var(--muted); font-weight: 600; }
+
+/* Pre-trip / Off-duty location detail in logbook */
+.lb-stop-detail {
+  background: linear-gradient(135deg, rgba(139,30,30,0.08), rgba(139,30,30,0.04));
+  border: 1.5px solid rgba(139,30,30,0.2);
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.lb-stop-detail-icon { font-size: 24px; flex-shrink: 0; }
+.lb-stop-detail-info { flex: 1; }
+.lb-stop-detail-title { font-size: 13px; font-weight: 800; color: #8b1e1e; margin-bottom: 2px; }
+.lb-stop-detail-address { font-size: 12px; color: #1a1a1a; line-height: 1.4; }
+.lb-stop-detail-coords { font-size: 10px; color: #6b5b4f; font-family: 'Share Tech Mono', monospace; margin-top: 2px; }
+.lb-stop-detail-time { font-size: 10px; color: #8b1e1e; font-weight: 700; margin-top: 4px; }
+
+/* Location badge for each status change */
+.lb-location-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 6px;
+  font-size: 10px; font-weight: 700;
+  background: rgba(16,185,129,0.15); color: #059669; border: 1px solid rgba(16,185,129,0.3);
+  margin-top: 4px;
+}
+
 </style>
 
 <div id="fleetLinkModal">
@@ -30178,5 +31014,1927 @@ window._hosAutoRecalc = false;
 })();
 </script>
 
+
+
+<script>
+/* ===== UTILIDADES DE LA APP ===== */
+
+// Safe localStorage
+const AppStorage = {
+  get: function(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e) { return d; } },
+  set: function(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e) { return false; } },
+  remove: function(k) { try { localStorage.removeItem(k); } catch(e) {} }
+};
+
+// Toast helper
+function showToast(msg, type, duration) {
+  type = type || 'info';
+  duration = duration || 3000;
+  var t = document.getElementById('appToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'appToast';
+    t.className = 'app-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.className = 'app-toast ' + type;
+  requestAnimationFrame(function() { t.classList.add('show'); });
+  setTimeout(function() { t.classList.remove('show'); }, duration);
+}
+
+// Safe GPS
+function safeGetLocation(onSuccess, onError) {
+  if (!navigator.geolocation) {
+    showToast('GPS no disponible', 'warning', 4000);
+    if (onError) onError({ code: 0, message: 'No GPS' });
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(onSuccess, function(err) {
+    console.warn('GPS error:', err);
+    showToast('Error GPS: ' + (err.message || 'Acceso denegado'), 'error', 4000);
+    if (onError) onError(err);
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+}
+
+// Debounce
+function debounce(fn, ms) {
+  var t;
+  return function() {
+    clearTimeout(t);
+    var args = arguments, self = this;
+    t = setTimeout(function() { fn.apply(self, args); }, ms);
+  };
+}
+
+// Global error handlers
+window.addEventListener('error', function(e) {
+  console.error('App error:', e.message);
+});
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('Promise error:', e.reason);
+  showToast('Error de red o datos', 'warning', 3000);
+});
+
+// Network status
+window.addEventListener('online', function() {
+  showToast('Conexión restaurada', 'success', 2000);
+});
+window.addEventListener('offline', function() {
+  showToast('Sin conexión', 'warning', 4000);
+});
+</script>
+
+
+
+<!-- Hardware Permissions & APIs -->
+<script src="hardware-permissions.js"></script>
+
+<script>
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(reg => console.log('SW registered:', reg.scope))
+    .catch(err => console.log('SW registration failed:', err));
+}
+
+// Request persistent storage for offline maps
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().then(granted => {
+    if (granted) console.log('Persistent storage granted');
+  });
+}
+
+// Wake Lock API - keep screen on while driving
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => {
+        console.log('Wake Lock released');
+      });
+      showToast('✅ Pantalla siempre activa', 'success');
+    }
+  } catch (err) {
+    console.log('Wake Lock error:', err);
+  }
+}
+
+// Release wake lock when app hidden
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && wakeLock) {
+    wakeLock.release();
+    wakeLock = null;
+  }
+});
+
+// Battery API - monitor battery while driving
+if ('getBattery' in navigator) {
+  navigator.getBattery().then(battery => {
+    console.log('Battery:', battery.level * 100 + '%');
+    battery.addEventListener('levelchange', () => {
+      if (battery.level < 0.2) {
+        showToast('🔋 Batería baja: ' + Math.round(battery.level * 100) + '%', 'warning');
+      }
+    });
+  });
+}
+
+// Vibration API - haptic feedback for alerts
+function hapticAlert(pattern) {
+  if ('vibrate' in navigator) {
+    navigator.vibrate(pattern || [200, 100, 200]);
+  }
+}
+
+// Network Information API - detect connection type
+if ('connection' in navigator) {
+  const conn = navigator.connection;
+  console.log('Network:', conn.effectiveType, conn.downlink + 'Mbps');
+  conn.addEventListener('change', () => {
+    if (conn.effectiveType === '2g') {
+      showToast('⚠️ Conexión lenta - modo ahorro', 'warning');
+    }
+  });
+}
+
+// Background Sync for GPS data
+async function registerGPSSync() {
+  if ('serviceWorker' in navigator && 'sync' in registration) {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.sync.register('gps-sync');
+  }
+}
+
+// File System Access API - save documents locally
+async function saveFileLocally(data, filename) {
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: filename,
+      types: [{ accept: { 'application/pdf': ['.pdf'] } }]
+    });
+    const writable = await handle.createWritable();
+    await writable.write(data);
+    await writable.close();
+    showToast('✅ Archivo guardado', 'success');
+  } catch (err) {
+    console.log('File save cancelled or failed:', err);
+  }
+}
+
+// Share API - share route via native share sheet
+async function nativeShare(data) {
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Truck Precision Route',
+        text: data.text,
+        url: data.url
+      });
+    } catch (err) {
+      console.log('Share cancelled:', err);
+    }
+  }
+}
+
+// Make functions globally available
+window.requestWakeLock = requestWakeLock;
+window.hapticAlert = hapticAlert;
+window.registerGPSSync = registerGPSSync;
+window.saveFileLocally = saveFileLocally;
+window.nativeShare = nativeShare;
+</script>
+
+
+
+<!-- ════════════════════════════════════════════════════════════
+     📋  DIGITAL LOGBOOK SHEET
+══════════════════════════════════════════════════════════ -->
+<div id="logbookSheet">
+  <div class="lb-topbar">
+    <div class="lb-topbar-title">📋 DRIVER'S DAILY LOG</div>
+    <button class="lb-close" onclick="closeLogbookSheet()">✕</button>
+  </div>
+
+  <div class="lb-paper">
+    <!-- HOS Alert -->
+    <div class="lb-hos-alert" id="lbHosAlert">
+      <span class="lb-hos-alert-icon">⚠️</span>
+      <span class="lb-hos-alert-text" id="lbHosAlertText">11 hours driving limit approaching</span>
+    </div>
+
+    <!-- Current Location Card -->
+    <div class="lb-current-loc-card">
+      <div class="lb-current-loc-header">
+        <div class="lb-current-loc-label">📍 CURRENT LOCATION</div>
+        <div class="lb-current-loc-live">LIVE GPS</div>
+      </div>
+      <div class="lb-current-loc-address" id="lbCurrentAddress">📡 Getting location...</div>
+      <div class="lb-current-loc-coords" id="lbCurrentCoords">--</div>
+      <div class="lb-current-loc-updated" id="lbLocUpdated">Updated: --</div>
+    </div>
+
+    <!-- Driver & Hours -->
+    <div class="lb-header-grid">
+      <div class="lb-field">
+        <div class="lb-field-label">🚛 DRIVER</div>
+        <div class="lb-field-input" id="lbDriverName" style="font-weight:800;color:#8b1e1e;">--</div>
+      </div>
+      <div class="lb-field" style="background:linear-gradient(135deg,#064e3b,#065f46); border-color:#10b981;">
+        <div class="lb-field-label" style="color:#6ee7b7;">⏱️ HOURS AVAILABLE</div>
+        <div style="display:flex; align-items:baseline; gap:8px; margin-top:4px;">
+          <span id="lbHoursAvailable" style="font-family:'Bebas Neue',sans-serif; font-size:32px; color:#fff; line-height:1; text-shadow:0 0 20px rgba(16,185,129,0.5);">11.0</span>
+          <span style="font-size:12px; color:#6ee7b7; font-weight:700;">HRS</span>
+        </div>
+      </div>
+      <div class="lb-field" style="grid-column:1 / -1;">
+        <div style="font-size:11px; color:#6b5b4f; font-weight:700;">
+          <span id="lbCycleHours">70h cycle: 70.0 remaining</span> · 
+          <span id="lbBreakStatus">30-min break: not needed</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Date Selector -->
+    <div class="lb-date-row">
+      <button class="lb-date-btn active" id="lbDateToday" onclick="setLogbookDate(0)">TODAY</button>
+      <button class="lb-date-btn" id="lbDateYesterday" onclick="setLogbookDate(-1)">YESTERDAY</button>
+      <button class="lb-date-btn" id="lbDateCustom" onclick="setLogbookDate('custom')">📅</button>
+      <span id="lbCurrentDate" style="font-family:'Share Tech Mono',monospace;font-size:14px;color:#6b5b4f;margin-left:auto;"></span>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="lb-grid-container">
+      <div class="lb-grid-header">24-HOUR DUTY STATUS GRAPH</div>
+
+      <!-- Hour labels -->
+      <div class="lb-hour-labels" id="lbHourLabels"></div>
+
+      <!-- Status rows -->
+      <div class="lb-status-row" data-status="offduty">
+        <div class="lb-status-label">
+          <div class="lb-status-num">1</div>
+          <div class="lb-status-name">OFF DUTY</div>
+        </div>
+        <div class="lb-hours-area">
+          <div class="lb-hours-grid" id="lbGridOffDuty"></div>
+          <div class="lb-current-time" id="lbTimeMarker" style="left:0%"></div>
+        </div>
+      </div>
+
+      <div class="lb-status-row" data-status="sleeper">
+        <div class="lb-status-label">
+          <div class="lb-status-num">2</div>
+          <div class="lb-status-name">SLEEPER</div>
+        </div>
+        <div class="lb-hours-area">
+          <div class="lb-hours-grid" id="lbGridSleeper"></div>
+        </div>
+      </div>
+
+      <div class="lb-status-row" data-status="driving">
+        <div class="lb-status-label">
+          <div class="lb-status-num">3</div>
+          <div class="lb-status-name">DRIVING</div>
+        </div>
+        <div class="lb-hours-area">
+          <div class="lb-hours-grid" id="lbGridDriving"></div>
+        </div>
+      </div>
+
+      <div class="lb-status-row" data-status="onduty">
+        <div class="lb-status-label">
+          <div class="lb-status-num">4</div>
+          <div class="lb-status-name">ON DUTY</div>
+        </div>
+        <div class="lb-hours-area">
+          <div class="lb-hours-grid" id="lbGridOnDuty"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location History Timeline -->
+    <div class="lb-location-timeline">
+      <div class="lb-loc-timeline-title">📍 LOCATION HISTORY</div>
+      <div id="lbLocationHistory">
+        <div class="lb-loc-item" style="text-align:center; color:#6b5b4f; font-size:12px; padding:20px;">
+          📡 GPS tracking active... Location history will appear here as you drive.
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-Status Detection -->
+    <div class="lb-auto-status" id="lbAutoStatus" style="
+      background: linear-gradient(135deg,#1e293b,#0f172a);
+      border-radius: 14px; padding: 14px 16px; margin-bottom: 16px;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    ">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <div style="font-size:11px; font-weight:800; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px;">🤖 AUTO-DETECT STATUS</div>
+        <div id="lbGpsIndicator" style="font-size:11px; color:#6ee7b7; font-weight:700;">● GPS Active</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <div id="lbStatusBadge" style="
+          display:flex; align-items:center; gap:6px;
+          padding: 8px 14px; border-radius: 10px;
+          background: rgba(16,185,129,0.2); border: 1.5px solid rgba(16,185,129,0.4);
+          color: #6ee7b7; font-size: 13px; font-weight: 800;
+        ">
+          <span id="lbStatusIcon">🚛</span>
+          <span id="lbStatusText">DRIVING</span>
+        </div>
+        <div id="lbSpeedBadge" style="
+          display:flex; align-items:center; gap:4px;
+          padding: 8px 12px; border-radius: 10px;
+          background: rgba(59,130,246,0.15); border: 1.5px solid rgba(59,130,246,0.3);
+          color: #93c5fd; font-size: 13px; font-weight: 700;
+        ">
+          <span>⚡</span>
+          <span id="lbSpeedText">45 MPH</span>
+        </div>
+        <div id="lbMotionBadge" style="
+          display:flex; align-items:center; gap:4px;
+          padding: 8px 12px; border-radius: 10px;
+          background: rgba(245,158,11,0.15); border: 1.5px solid rgba(245,158,11,0.3);
+          color: #fcd34d; font-size: 13px; font-weight: 700;
+        ">
+          <span>📳</span>
+          <span id="lbMotionText">Moving</span>
+        </div>
+      </div>
+      <div style="margin-top:10px; font-size:11px; color:rgba(255,255,255,0.4); line-height:1.5;">
+        <span id="lbAutoExplain">GPS speed > 5 MPH = DRIVING · Speed < 5 MPH + motion = ON DUTY · No motion = OFF DUTY</span>
+      </div>
+    </div>
+
+    <!-- Manual Override (hidden by default, swipe up to show) -->
+    <div id="lbManualToggle" style="text-align:center; margin-bottom:12px; cursor:pointer;" onclick="toggleManualStatus()">
+      <div style="font-size:11px; color:#8b1e1e; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
+        ▼ Manual Override
+      </div>
+    </div>
+
+    <div id="lbManualBar" style="display:none;">
+      <div class="lb-status-bar">
+        <div class="lb-status-pill lb-pill-offduty selected" data-status="offduty" onclick="selectLogbookStatus('offduty')">
+          <span class="lb-pill-icon">😴</span>
+          <span class="lb-pill-text">Off Duty</span>
+        </div>
+        <div class="lb-status-pill lb-pill-sleeper" data-status="sleeper" onclick="selectLogbookStatus('sleeper')">
+          <span class="lb-pill-icon">🛏️</span>
+          <span class="lb-pill-text">Sleeper</span>
+        </div>
+        <div class="lb-status-pill lb-pill-driving" data-status="driving" onclick="selectLogbookStatus('driving')">
+          <span class="lb-pill-icon">🚛</span>
+          <span class="lb-pill-text">Driving</span>
+        </div>
+        <div class="lb-status-pill lb-pill-onduty" data-status="onduty" onclick="selectLogbookStatus('onduty')">
+          <span class="lb-pill-icon">📋</span>
+          <span class="lb-pill-text">On Duty</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="lb-summary">
+      <div class="lb-summary-title">DAILY HOURS SUMMARY</div>
+      <div class="lb-summary-grid">
+        <div class="lb-summary-item" id="lbSumOffDuty">
+          <div class="lb-summary-val" id="lbValOffDuty">0.0</div>
+          <div class="lb-summary-label">Off Duty</div>
+        </div>
+        <div class="lb-summary-item" id="lbSumSleeper">
+          <div class="lb-summary-val" id="lbValSleeper">0.0</div>
+          <div class="lb-summary-label">Sleeper</div>
+        </div>
+        <div class="lb-summary-item" id="lbSumDriving">
+          <div class="lb-summary-val" id="lbValDriving">0.0</div>
+          <div class="lb-summary-label">Driving</div>
+        </div>
+        <div class="lb-summary-item" id="lbSumOnDuty">
+          <div class="lb-summary-val" id="lbValOnDuty">0.0</div>
+          <div class="lb-summary-label">On Duty</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 70-Hour Recap -->
+    <div class="lb-recap">
+      <div class="lb-recap-title">70-HOUR / 8-DAY RECAP</div>
+      <div class="lb-recap-grid" id="lbRecapGrid"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="lb-actions">
+      <button class="lb-action-btn lb-btn-save" onclick="saveLogbook()">
+        💾 Save Log
+      </button>
+      <button class="lb-action-btn lb-btn-share" onclick="shareLogbook()">
+        📤 Share
+      </button>
+      <button class="lb-action-btn lb-btn-camera" onclick="scanLogbook()">
+        📷 Scan Paper Log
+      </button>
+    </div>
+
+    <div style="height:40px"></div>
+  </div>
+
+  <button class="lb-help-btn" onclick="showLogbookHelp()">❓</button>
+</div>
+
+
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   📋  DIGITAL LOGBOOK - GPS Location Per Hour
+══════════════════════════════════════════════════════════ */
+
+let lbCurrentStatus = 'offduty';
+let lbData = {};
+let lbLocationData = {}; // Stores GPS per hour
+let lbCurrentDate = new Date();
+let lbAutoDetectInterval = null;
+let lbLastPosition = null;
+let lbMotionDetected = false;
+let lbCurrentSpeed = 0;
+let lbCurrentAddress = '';
+
+// Initialize logbook
+document.addEventListener('DOMContentLoaded', function() {
+  initLogbook();
+});
+
+function initLogbook() {
+  createHourGrid('lbGridOffDuty', 'offduty');
+  createHourGrid('lbGridSleeper', 'sleeper');
+  createHourGrid('lbGridDriving', 'driving');
+  createHourGrid('lbGridOnDuty', 'onduty');
+  createHourLabels();
+  createRecapGrid();
+  updateCurrentTimeMarker();
+  loadLogbookData();
+  loadDriverProfile();
+  startAutoDetection();
+  setInterval(updateCurrentTimeMarker, 60000);
+}
+
+function createHourGrid(gridId, status) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 0; i < 24; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'lb-hour-cell';
+    cell.dataset.hour = i;
+    cell.dataset.status = status;
+    cell.onclick = function() { toggleHourCell(this); };
+
+    // Add location label inside cell
+    const locLabel = document.createElement('div');
+    locLabel.className = 'lb-cell-location';
+    locLabel.id = 'lbLoc_' + status + '_' + i;
+    cell.appendChild(locLabel);
+
+    grid.appendChild(cell);
+  }
+}
+
+function createHourLabels() {
+  const labels = document.getElementById('lbHourLabels');
+  if (!labels) return;
+  labels.innerHTML = '';
+  const hours = ['12AM','1','2','3','4','5','6','7','8','9','10','11',
+                 '12PM','1','2','3','4','5','6','7','8','9','10','11'];
+  hours.forEach((h, i) => {
+    const label = document.createElement('div');
+    label.className = 'lb-hour-label' + (i === 0 || i === 12 ? ' midnight' : '');
+    label.textContent = h;
+    labels.appendChild(label);
+  });
+}
+
+function createRecapGrid() {
+  const grid = document.getElementById('lbRecapGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const today = new Date().getDay();
+  days.forEach((day, i) => {
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'lb-recap-day' + (i === today ? ' active' : '');
+    dayDiv.innerHTML = '<div class="lb-recap-day-total">0.0</div><div class="lb-recap-day-label">' + day + '</div>';
+    grid.appendChild(dayDiv);
+  });
+}
+
+// ========== GPS & LOCATION ENGINE ==========
+function startAutoDetection() {
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(
+      handleGPSUpdate,
+      handleGPSError,
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  }
+  if (window.DeviceMotionEvent) {
+    window.addEventListener('devicemotion', handleMotionUpdate);
+  }
+  lbAutoDetectInterval = setInterval(autoFillCurrentHour, 60000);
+  updateLocationDisplay();
+}
+
+function handleGPSUpdate(position) {
+  const coords = position.coords;
+  lbCurrentSpeed = coords.speed || 0;
+  const speedMPH = (lbCurrentSpeed * 2.237).toFixed(0);
+
+  const speedText = document.getElementById('lbSpeedText');
+  if (speedText) speedText.textContent = speedMPH + ' MPH';
+
+  if (coords.latitude && coords.longitude) {
+    lbLastPosition = { 
+      lat: coords.latitude, 
+      lng: coords.longitude,
+      accuracy: coords.accuracy,
+      timestamp: new Date().toISOString()
+    };
+    updateLocationDisplay();
+    reverseGeocode(coords.latitude, coords.longitude);
+  }
+
+  determineAutoStatus();
+}
+
+function handleGPSError(error) {
+  console.log('GPS error:', error);
+  const gpsIndicator = document.getElementById('lbGpsIndicator');
+  if (gpsIndicator) {
+    gpsIndicator.textContent = '○ GPS Limited';
+    gpsIndicator.style.color = '#f59e0b';
+  }
+}
+
+function handleMotionUpdate(event) {
+  const acc = event.accelerationIncludingGravity;
+  if (!acc) return;
+  const magnitude = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+  lbMotionDetected = magnitude > 10.5 || magnitude < 9.0;
+
+  const motionText = document.getElementById('lbMotionText');
+  if (motionText) motionText.textContent = lbMotionDetected ? 'Motion Detected' : 'Stationary';
+}
+
+// ========== REVERSE GEOCODING ==========
+function reverseGeocode(lat, lng) {
+  // Try OpenStreetMap Nominatim
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.display_name) {
+        const addr = data.address;
+        const city = addr.city || addr.town || addr.village || addr.hamlet || '';
+        const state = addr.state || '';
+        const road = addr.road || '';
+        const house = addr.house_number || '';
+
+        // Build address string
+        let address = '';
+        if (road) address += road;
+        if (house) address += ' ' + house;
+        if (city) address += (address ? ', ' : '') + city;
+        if (state) address += (address ? ', ' : '') + state;
+
+        lbCurrentAddress = address || data.display_name;
+
+        // Update current location display
+        const addrEl = document.getElementById('lbCurrentAddress');
+        if (addrEl) addrEl.textContent = lbCurrentAddress;
+
+        const coordsEl = document.getElementById('lbCurrentCoords');
+        if (coordsEl) coordsEl.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+
+        const updatedEl = document.getElementById('lbLocUpdated');
+        if (updatedEl) updatedEl.textContent = 'Updated: ' + new Date().toLocaleTimeString();
+      }
+    })
+    .catch(err => {
+      console.log('Geocoding error:', err);
+      // Fallback to coordinates only
+      lbCurrentAddress = lat.toFixed(4) + ', ' + lng.toFixed(4);
+      const addrEl = document.getElementById('lbCurrentAddress');
+      if (addrEl) addrEl.textContent = '📍 ' + lbCurrentAddress;
+    });
+}
+
+// ========== SAVE LOCATION PER HOUR ==========
+function saveLocationForHour(hour, status) {
+  const dateKey = getDateKey(lbCurrentDate);
+  if (!lbLocationData[dateKey]) lbLocationData[dateKey] = {};
+
+  // Get detailed address components
+  const now = new Date();
+  const timeStr = (hour % 12 || 12) + ':' + String(now.getMinutes()).padStart(2, '0') + (hour < 12 ? 'AM' : 'PM');
+
+  // Determine stop type label
+  let stopTypeLabel = '';
+  if (status === 'offduty') stopTypeLabel = 'OFF DUTY STOP';
+  else if (status === 'sleeper') stopTypeLabel = 'SLEEPER BERTH';
+  else if (status === 'onduty') stopTypeLabel = 'ON DUTY / PRE-TRIP';
+  else if (status === 'driving') stopTypeLabel = 'DRIVING';
+
+  lbLocationData[dateKey][hour] = {
+    status: status,
+    address: lbCurrentAddress || 'Unknown location',
+    coords: lbLastPosition ? { lat: lbLastPosition.lat, lng: lbLastPosition.lng, accuracy: lbLastPosition.accuracy } : null,
+    speed: lbCurrentSpeed,
+    speedMPH: (lbCurrentSpeed * 2.237).toFixed(1),
+    timestamp: now.toISOString(),
+    timeFormatted: timeStr,
+    stopType: stopTypeLabel,
+    // Additional geocoding data if available
+    city: lbCurrentAddress ? lbCurrentAddress.split(',')[0] : '',
+    state: lbCurrentAddress ? lbCurrentAddress.split(',')[1] : '',
+    rawCoords: lbLastPosition ? lbLastPosition.lat.toFixed(6) + ', ' + lbLastPosition.lng.toFixed(6) : '--'
+  };
+
+  // Update cell location label
+  updateCellLocationLabel(hour, status, lbCurrentAddress);
+
+  // Update location history timeline with full details
+  updateLocationHistory();
+
+  // Show toast for significant stops (offduty, sleeper, onduty)
+  if (status !== 'driving' && lbCurrentAddress) {
+    showToast('📍 ' + stopTypeLabel + ' at ' + lbCurrentAddress.split(',')[0], 'info', 3000);
+  }
+
+  // Save to storage
+  AppStorage.set('logbook_locations', lbLocationData);
+}
+
+function updateCellLocationLabel(hour, status, address) {
+  const labelId = 'lbLoc_' + status + '_' + hour;
+  const label = document.getElementById(labelId);
+  if (label && address) {
+    // Truncate address for cell display
+    const shortAddr = address.split(',')[0] || address;
+    label.textContent = shortAddr.substring(0, 15);
+  }
+}
+
+function updateLocationHistory() {
+  const historyEl = document.getElementById('lbLocationHistory');
+  if (!historyEl) return;
+
+  const dateKey = getDateKey(lbCurrentDate);
+  const locations = lbLocationData[dateKey] || {};
+
+  let html = '';
+  const statusIcons = { driving: '🚛', onduty: '📋', sleeper: '🛏️', offduty: '😴' };
+  const statusColors = { driving: '#10b981', onduty: '#f59e0b', sleeper: '#6366f1', offduty: '#64748b' };
+
+  // Sort by hour
+  const hours = Object.keys(locations).sort((a, b) => parseInt(a) - parseInt(b));
+
+  if (hours.length === 0) {
+    html = '<div style="text-align:center; padding:30px; color:#6b5b4f;">';
+    html += '<div style="font-size:32px; margin-bottom:10px;">📡</div>';
+    html += '<div style="font-size:13px; font-weight:700;">GPS Tracking Active</div>';
+    html += '<div style="font-size:11px; margin-top:6px; opacity:0.7;">Location history will appear as you change status (Off Duty, Sleeper, On Duty)</div>';
+    html += '</div>';
+  } else {
+    html += '<div style="font-size:10px; font-weight:800; color:#8b1e1e; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; padding:0 4px;">';
+    html += '📍 STOP DETAILS · ' + hours.length + ' stops recorded';
+    html += '</div>';
+
+    hours.forEach(hour => {
+      const loc = locations[hour];
+      const timeStr = loc.timeFormatted || ((parseInt(hour) % 12 || 12) + (parseInt(hour) < 12 ? 'AM' : 'PM'));
+      const address = loc.address || 'Unknown location';
+      const city = loc.city || address.split(',')[0] || 'Unknown';
+      const state = loc.state || (address.split(',')[1] || '').trim() || '';
+      const coords = loc.rawCoords || (loc.coords ? loc.coords.lat.toFixed(4) + ', ' + loc.coords.lng.toFixed(4) : '--');
+      const speed = loc.speedMPH ? loc.speedMPH + ' MPH' : '';
+      const stopType = loc.stopType || statusNames[loc.status] || loc.status.toUpperCase();
+
+      // Show detailed stop card for non-driving stops (these are the actual stops)
+      if (loc.status !== 'driving') {
+        html += '<div class="lb-stop-detail">';
+        html += '<div class="lb-stop-detail-icon">' + (statusIcons[loc.status] || '📍') + '</div>';
+        html += '<div class="lb-stop-detail-info">';
+        html += '<div class="lb-stop-detail-title">' + stopType + '</div>';
+        html += '<div class="lb-stop-detail-address">' + city + (state ? ', ' + state : '') + '</div>';
+        html += '<div class="lb-stop-detail-coords">📍 ' + coords + (loc.coords && loc.coords.accuracy ? ' (±' + Math.round(loc.coords.accuracy) + 'm)' : '') + '</div>';
+        html += '<div class="lb-stop-detail-time">🕐 ' + timeStr + (speed ? ' · ' + speed : '') + '</div>';
+        html += '</div>';
+        html += '</div>';
+      } else {
+        // Driving - simpler display
+        html += '<div class="lb-loc-item ' + loc.status + '">';
+        html += '<div class="lb-loc-time">' + timeStr + '</div>';
+        html += '<div class="lb-loc-status-icon">' + (statusIcons[loc.status] || '🚛') + '</div>';
+        html += '<div class="lb-loc-address">' + city + (state ? ', ' + state : '') + '</div>';
+        html += '<div class="lb-loc-coords">' + (speed || coords) + '</div>';
+        html += '</div>';
+      }
+    });
+  }
+
+  historyEl.innerHTML = html;
+}
+
+function updateLocationDisplay() {
+  if (!lbLastPosition) return;
+
+  const locEl = document.getElementById('lbLocation');
+  if (locEl) {
+    locEl.textContent = '📍 ' + lbLastPosition.lat.toFixed(4) + ', ' + lbLastPosition.lng.toFixed(4);
+  }
+}
+
+// ========== AUTO-STATUS DETECTION ==========
+function determineAutoStatus() {
+  const speedMPH = lbCurrentSpeed * 2.237;
+  let newStatus = lbCurrentStatus;
+  let statusIcon = '🚛';
+  let statusText = 'DRIVING';
+  let badgeColor = 'rgba(139,30,30,0.2)';
+  let borderColor = 'rgba(139,30,30,0.4)';
+  let textColor = '#fca5a5';
+
+  if (speedMPH > 5) {
+    newStatus = 'driving';
+    statusIcon = '🚛'; statusText = 'DRIVING';
+    badgeColor = 'rgba(139,30,30,0.2)'; borderColor = 'rgba(139,30,30,0.4)'; textColor = '#fca5a5';
+  } else if (speedMPH <= 5 && lbMotionDetected) {
+    newStatus = 'onduty';
+    statusIcon = '📋'; statusText = 'ON DUTY';
+    badgeColor = 'rgba(245,158,11,0.2)'; borderColor = 'rgba(245,158,11,0.4)'; textColor = '#fcd34d';
+  } else if (speedMPH <= 5 && !lbMotionDetected) {
+    newStatus = 'offduty';
+    statusIcon = '😴'; statusText = 'OFF DUTY';
+    badgeColor = 'rgba(100,116,139,0.2)'; borderColor = 'rgba(100,116,139,0.4)'; textColor = '#94a3b8';
+  }
+
+  if (newStatus !== lbCurrentStatus) {
+    lbCurrentStatus = newStatus;
+    updateAutoStatusUI(statusIcon, statusText, badgeColor, borderColor, textColor);
+
+    const currentHour = new Date().getHours();
+    const dateKey = getDateKey(lbCurrentDate);
+    if (!lbData[dateKey]) lbData[dateKey] = {};
+    if (!lbData[dateKey][currentHour]) {
+      autoFillHour(currentHour, newStatus);
+      // Save location when status changes!
+      saveLocationForHour(currentHour, newStatus);
+    }
+  }
+
+  updateAutoStatusUI(statusIcon, statusText, badgeColor, borderColor, textColor);
+}
+
+function updateAutoStatusUI(icon, text, bg, border, color) {
+  const badge = document.getElementById('lbStatusBadge');
+  const iconEl = document.getElementById('lbStatusIcon');
+  const textEl = document.getElementById('lbStatusText');
+
+  if (badge) { badge.style.background = bg; badge.style.borderColor = border; badge.style.color = color; }
+  if (iconEl) iconEl.textContent = icon;
+  if (textEl) textEl.textContent = text;
+}
+
+function autoFillCurrentHour() {
+  const currentHour = new Date().getHours();
+  const dateKey = getDateKey(lbCurrentDate);
+
+  if (!lbData[dateKey]) lbData[dateKey] = {};
+
+  if (!lbData[dateKey][currentHour]) {
+    autoFillHour(currentHour, lbCurrentStatus);
+    saveLocationForHour(currentHour, lbCurrentStatus);
+  }
+
+  updateSummary();
+  checkHOSRules();
+  updateHoursAvailable();
+  saveLogbookToStorage();
+}
+
+function autoFillHour(hour, status) {
+  clearHourFromAllStatuses(hour, getDateKey(lbCurrentDate));
+
+  const gridId = 'lbGrid' + status.charAt(0).toUpperCase() + status.slice(1);
+  const grid = document.getElementById(gridId);
+  if (grid) {
+    const cells = grid.querySelectorAll('.lb-hour-cell');
+    if (cells[hour]) {
+      cells[hour].className = 'lb-hour-cell filled-' + status;
+      lbData[getDateKey(lbCurrentDate)][hour] = status;
+    }
+  }
+}
+
+// ========== MANUAL OVERRIDE ==========
+function toggleManualStatus() {
+  const manualBar = document.getElementById('lbManualBar');
+  const toggle = document.getElementById('lbManualToggle');
+  if (manualBar.style.display === 'none') {
+    manualBar.style.display = 'block';
+    toggle.querySelector('div').textContent = '▲ Manual Override';
+  } else {
+    manualBar.style.display = 'none';
+    toggle.querySelector('div').textContent = '▼ Manual Override';
+  }
+}
+
+function selectLogbookStatus(status) {
+  lbCurrentStatus = status;
+  document.querySelectorAll('.lb-status-pill').forEach(pill => {
+    pill.classList.remove('selected');
+    if (pill.dataset.status === status) pill.classList.add('selected');
+  });
+
+  const currentHour = new Date().getHours();
+  autoFillHour(currentHour, status);
+  // Save location on manual change too!
+  saveLocationForHour(currentHour, status);
+
+  updateSummary();
+  checkHOSRules();
+  updateHoursAvailable();
+  saveLogbookToStorage();
+}
+
+// ========== GRID INTERACTION ==========
+function toggleHourCell(cell) {
+  const hour = parseInt(cell.dataset.hour);
+  const status = cell.dataset.status;
+  const dateKey = getDateKey(lbCurrentDate);
+
+  if (!lbData[dateKey]) lbData[dateKey] = {};
+
+  if (lbData[dateKey][hour] === status) {
+    lbData[dateKey][hour] = null;
+    cell.className = 'lb-hour-cell';
+    // Remove location for this hour
+    if (lbLocationData[dateKey]) delete lbLocationData[dateKey][hour];
+  } else {
+    clearHourFromAllStatuses(hour, dateKey);
+    lbData[dateKey][hour] = status;
+    cell.className = 'lb-hour-cell filled-' + status;
+    // Save location on manual toggle!
+    saveLocationForHour(hour, status);
+  }
+
+  updateSummary();
+  checkHOSRules();
+  updateHoursAvailable();
+  updateLocationHistory();
+  saveLogbookToStorage();
+}
+
+function clearHourFromAllStatuses(hour, dateKey) {
+  const statuses = ['offduty', 'sleeper', 'driving', 'onduty'];
+  statuses.forEach(s => {
+    const grid = document.getElementById('lbGrid' + s.charAt(0).toUpperCase() + s.slice(1));
+    if (grid) {
+      const cells = grid.querySelectorAll('.lb-hour-cell');
+      if (cells[hour]) cells[hour].className = 'lb-hour-cell';
+    }
+  });
+  if (lbData[dateKey]) lbData[dateKey][hour] = null;
+}
+
+// ========== SUMMARY & ALERTS ==========
+function updateSummary() {
+  const dateKey = getDateKey(lbCurrentDate);
+  const counts = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
+
+  if (lbData[dateKey]) {
+    for (let h = 0; h < 24; h++) {
+      const status = lbData[dateKey][h];
+      if (status && counts[status] !== undefined) counts[status]++;
+    }
+  }
+
+  document.getElementById('lbValOffDuty').textContent = counts.offduty.toFixed(1);
+  document.getElementById('lbValSleeper').textContent = counts.sleeper.toFixed(1);
+  document.getElementById('lbValDriving').textContent = counts.driving.toFixed(1);
+  document.getElementById('lbValOnDuty').textContent = counts.onduty.toFixed(1);
+
+  const drivingEl = document.getElementById('lbSumDriving');
+  if (counts.driving >= 11) drivingEl.className = 'lb-summary-item danger';
+  else if (counts.driving >= 10) drivingEl.className = 'lb-summary-item warning';
+  else drivingEl.className = 'lb-summary-item';
+
+  const ondutyEl = document.getElementById('lbSumOnDuty');
+  const totalOnDuty = counts.driving + counts.onduty;
+  if (totalOnDuty >= 14) ondutyEl.className = 'lb-summary-item danger';
+  else if (totalOnDuty >= 12) ondutyEl.className = 'lb-summary-item warning';
+  else ondutyEl.className = 'lb-summary-item';
+}
+
+function checkHOSRules() {
+  const dateKey = getDateKey(lbCurrentDate);
+  const counts = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
+
+  if (lbData[dateKey]) {
+    for (let h = 0; h < 24; h++) {
+      const status = lbData[dateKey][h];
+      if (status && counts[status] !== undefined) counts[status]++;
+    }
+  }
+
+  const alert = document.getElementById('lbHosAlert');
+  const alertText = document.getElementById('lbHosAlertText');
+  const totalOnDuty = counts.driving + counts.onduty;
+
+  let message = '';
+  let show = false;
+
+  if (counts.driving >= 11) {
+    message = '⛔ DRIVING LIMIT REACHED: 11 hours maximum!';
+    show = true;
+  } else if (counts.driving >= 10) {
+    message = '⚠️ Driving: ' + counts.driving + 'h / 11h limit approaching';
+    show = true;
+  } else if (totalOnDuty >= 14) {
+    message = '⛔ DUTY LIMIT REACHED: 14 hours maximum!';
+    show = true;
+  } else if (totalOnDuty >= 12) {
+    message = '⚠️ On Duty: ' + totalOnDuty + 'h / 14h limit approaching';
+    show = true;
+  } else if (counts.offduty + counts.sleeper < 10) {
+    message = '⚠️ Rest required: ' + (10 - counts.offduty - counts.sleeper) + 'h more needed';
+    show = true;
+  }
+
+  if (show) {
+    alert.classList.add('show');
+    alertText.textContent = message;
+    if (message.includes('⛔')) hapticAlert([500, 200, 500]);
+  } else {
+    alert.classList.remove('show');
+  }
+}
+
+function updateHoursAvailable() {
+  const dateKey = getDateKey(lbCurrentDate);
+  const counts = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
+
+  if (lbData[dateKey]) {
+    for (let h = 0; h < 24; h++) {
+      const s = lbData[dateKey][h];
+      if (s) counts[s]++;
+    }
+  }
+
+  const drivingUsed = counts.driving;
+  const onDutyUsed = counts.driving + counts.onduty;
+  const drivingRemaining = Math.max(0, 11 - drivingUsed).toFixed(1);
+
+  const hoursEl = document.getElementById('lbHoursAvailable');
+  if (hoursEl) {
+    hoursEl.textContent = drivingRemaining;
+    if (drivingRemaining <= 1) hoursEl.style.color = '#ef4444';
+    else if (drivingRemaining <= 2) hoursEl.style.color = '#f59e0b';
+    else hoursEl.style.color = '#fff';
+  }
+
+  const cycleEl = document.getElementById('lbCycleHours');
+  if (cycleEl) {
+    const cycleUsed = calculateCycleHours();
+    const cycleRemaining = Math.max(0, 70 - cycleUsed).toFixed(1);
+    cycleEl.textContent = '70h cycle: ' + cycleRemaining + ' remaining';
+  }
+
+  const breakEl = document.getElementById('lbBreakStatus');
+  if (breakEl) {
+    const needsBreak = drivingUsed >= 8 && counts.offduty + counts.sleeper < 0.5;
+    breakEl.textContent = needsBreak ? '30-min break: REQUIRED NOW!' : '30-min break: not needed';
+    breakEl.style.color = needsBreak ? '#ef4444' : '#6ee7b7';
+  }
+}
+
+function calculateCycleHours() {
+  let total = 0;
+  const today = new Date();
+  for (let i = 0; i < 8; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = getDateKey(d);
+    if (lbData[key]) {
+      for (let h = 0; h < 24; h++) {
+        if (lbData[key][h] === 'driving' || lbData[key][h] === 'onduty') total++;
+      }
+    }
+  }
+  return total;
+}
+
+function updateCurrentTimeMarker() {
+  const now = new Date();
+  const hour = now.getHours();
+  const minute = now.getMinutes();
+  const percent = ((hour + minute / 60) / 24) * 100;
+  const marker = document.getElementById('lbTimeMarker');
+  if (marker) marker.style.left = percent + '%';
+
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const dateEl = document.getElementById('lbCurrentDate');
+  if (dateEl) dateEl.textContent = dateStr;
+}
+
+// ========== DRIVER PROFILE ==========
+function loadDriverProfile() {
+  const profile = AppStorage.get('driver_profile', {});
+  const driverName = profile.name || document.getElementById('driverNameInput')?.value || 'Driver';
+
+  const nameEl = document.getElementById('lbDriverName');
+  if (nameEl) nameEl.textContent = driverName;
+}
+
+// ========== DATE NAVIGATION ==========
+function setLogbookDate(offset) {
+  if (offset === 'custom') {
+    const input = document.createElement('input');
+    input.type = 'date';
+    input.onchange = function() {
+      lbCurrentDate = new Date(this.value);
+      updateLogbookForDate();
+    };
+    input.click();
+    return;
+  }
+
+  lbCurrentDate = new Date();
+  lbCurrentDate.setDate(lbCurrentDate.getDate() + offset);
+  updateLogbookForDate();
+
+  document.querySelectorAll('.lb-date-btn').forEach(btn => btn.classList.remove('active'));
+  if (offset === 0) document.getElementById('lbDateToday').classList.add('active');
+  else if (offset === -1) document.getElementById('lbDateYesterday').classList.add('active');
+}
+
+function updateLogbookForDate() {
+  ['offduty', 'sleeper', 'driving', 'onduty'].forEach(status => {
+    const gridId = 'lbGrid' + status.charAt(0).toUpperCase() + status.slice(1);
+    const grid = document.getElementById(gridId);
+    if (grid) {
+      grid.querySelectorAll('.lb-hour-cell').forEach(cell => {
+        cell.className = 'lb-hour-cell';
+        // Clear location labels
+        const label = cell.querySelector('.lb-cell-location');
+        if (label) label.textContent = '';
+      });
+    }
+  });
+
+  const dateKey = getDateKey(lbCurrentDate);
+  if (lbData[dateKey]) {
+    for (let h = 0; h < 24; h++) {
+      const status = lbData[dateKey][h];
+      if (status) {
+        const gridId = 'lbGrid' + status.charAt(0).toUpperCase() + status.slice(1);
+        const grid = document.getElementById(gridId);
+        if (grid) {
+          const cells = grid.querySelectorAll('.lb-hour-cell');
+          if (cells[h]) {
+            cells[h].className = 'lb-hour-cell filled-' + status;
+            // Restore location label
+            if (lbLocationData[dateKey] && lbLocationData[dateKey][h]) {
+              const loc = lbLocationData[dateKey][h];
+              const label = cells[h].querySelector('.lb-cell-location');
+              if (label && loc.address) {
+                label.textContent = loc.address.split(',')[0].substring(0, 15);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  updateSummary();
+  checkHOSRules();
+  updateHoursAvailable();
+  updateLocationHistory();
+
+  const dateStr = lbCurrentDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const dateEl = document.getElementById('lbCurrentDate');
+  if (dateEl) dateEl.textContent = dateStr;
+}
+
+function getDateKey(date) {
+  return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+}
+
+// ========== STORAGE ==========
+function saveLogbookToStorage() {
+  AppStorage.set('logbook_data', lbData);
+  AppStorage.set('logbook_locations', lbLocationData);
+}
+
+function loadLogbookData() {
+  lbData = AppStorage.get('logbook_data', {});
+  lbLocationData = AppStorage.get('logbook_locations', {});
+  updateLogbookForDate();
+}
+
+// ========== ACTIONS ==========
+function saveLogbook() {
+  saveLogbookToStorage();
+
+  const logEntry = {
+    date: getDateKey(lbCurrentDate),
+    driver: document.getElementById('lbDriverName').textContent || 'Unknown',
+    location: document.getElementById('lbCurrentAddress').textContent || '',
+    hoursAvailable: document.getElementById('lbHoursAvailable').textContent || '0',
+    data: lbData[getDateKey(lbCurrentDate)] || {},
+    locations: lbLocationData[getDateKey(lbCurrentDate)] || {},
+    savedAt: new Date().toISOString()
+  };
+
+  let drives = AppStorage.get('drives_history', []);
+  drives.unshift(logEntry);
+  AppStorage.set('drives_history', drives.slice(0, 100));
+
+  showToast('✅ Logbook saved with GPS locations!', 'success');
+  hapticAlert([100, 50, 100]);
+}
+
+function shareLogbook() {
+  const dateKey = getDateKey(lbCurrentDate);
+  const counts = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
+  if (lbData[dateKey]) {
+    for (let h = 0; h < 24; h++) {
+      const s = lbData[dateKey][h];
+      if (s) counts[s]++;
+    }
+  }
+
+  // Build location summary
+  let locSummary = '';
+  if (lbLocationData[dateKey]) {
+    const locations = lbLocationData[dateKey];
+    const firstLoc = locations[Object.keys(locations)[0]];
+    const lastLoc = locations[Object.keys(locations)[Object.keys(locations).length - 1]];
+    if (firstLoc && lastLoc) {
+      locSummary = '\nFrom: ' + (firstLoc.address || 'Unknown') + '\nTo: ' + (lastLoc.address || 'Unknown');
+    }
+  }
+
+  const text = 'Truck Precision Logbook\n' +
+    'Date: ' + dateKey + '\n' +
+    'Driver: ' + (document.getElementById('lbDriverName').textContent || 'N/A') + '\n' +
+    'Current: ' + (document.getElementById('lbCurrentAddress').textContent || 'N/A') + '\n' +
+    'Hours Available: ' + (document.getElementById('lbHoursAvailable').textContent || '0') + '\n' +
+    'Driving: ' + counts.driving + 'h | On Duty: ' + counts.onduty + 'h | Sleeper: ' + counts.sleeper + 'h | Off Duty: ' + counts.offduty + 'h' +
+    locSummary;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Daily Logbook', text: text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('📋 Logbook with locations copied!', 'success');
+    });
+  }
+}
+
+function scanLogbook() {
+  showToast('📷 Position paper log in frame', 'info');
+
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(stream => {
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:99999;';
+        document.body.appendChild(video);
+        video.play();
+
+        const captureBtn = document.createElement('button');
+        captureBtn.textContent = '📸 CAPTURE';
+        captureBtn.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:99999;padding:16px 32px;background:#10b981;color:#fff;border:none;border-radius:50px;font-size:16px;font-weight:800;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+        captureBtn.onclick = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.getContext('2d').drawImage(video, 0, 0);
+
+          canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            AppStorage.set('scanned_log_' + Date.now(), url);
+            showToast('✅ Paper log scanned!', 'success');
+          }, 'image/jpeg');
+
+          stream.getTracks().forEach(t => t.stop());
+          video.remove();
+          captureBtn.remove();
+        };
+        document.body.appendChild(captureBtn);
+      })
+      .catch(err => showToast('❌ Camera error: ' + err.message, 'error'));
+  }
+}
+
+function showLogbookHelp() {
+  showToast('GPS auto-saves location every status change. Grid shows location per hour. Tap cells for manual override.', 'info', 6000);
+}
+
+// Sheet open/close
+function openLogbookSheet() {
+  document.getElementById('logbookSheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  updateLogbookForDate();
+  loadDriverProfile();
+  requestWakeLock();
+}
+
+function closeLogbookSheet() {
+  document.getElementById('logbookSheet').classList.remove('open');
+  document.body.style.overflow = '';
+  if (window.wakeLock) {
+    window.wakeLock.release().catch(() => {});
+    window.wakeLock = null;
+  }
+  if (lbAutoDetectInterval) {
+    clearInterval(lbAutoDetectInterval);
+    lbAutoDetectInterval = null;
+  }
+}
+
+// ========== ROUTE STOP MARKERS ON MAP ==========
+let routeStopMarkers = [];
+let routeStopPopups = [];
+
+function addRouteStopToMap(hour, status, location, coords) {
+  // Only add if we have valid coordinates
+  if (!coords || !coords.lat || !coords.lng) return;
+
+  // Check if marker already exists for this hour
+  const existingMarker = routeStopMarkers.find(m => m.hour === hour);
+  if (existingMarker) {
+    // Update existing marker
+    updateRouteStopMarker(existingMarker, hour, status, location);
+    return;
+  }
+
+  // Create marker icon
+  const iconEmoji = status === 'driving' ? '🚛' : status === 'onduty' ? '📋' : status === 'sleeper' ? '🛏️' : '😴';
+  const iconColor = status === 'driving' ? '#10b981' : status === 'onduty' ? '#f59e0b' : status === 'sleeper' ? '#6366f1' : '#64748b';
+
+  // Create custom HTML icon for Leaflet
+  const customIcon = L.divIcon({
+    className: 'route-stop-marker ' + status,
+    html: '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px;">' + iconEmoji + '</div>',
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -20]
+  });
+
+  // Create marker
+  const marker = L.marker([coords.lat, coords.lng], { icon: customIcon });
+
+  // Create popup content
+  const timeStr = (hour % 12 || 12) + (hour < 12 ? 'AM' : 'PM');
+  const statusText = status === 'driving' ? 'DRIVING' : status === 'onduty' ? 'ON DUTY' : status === 'sleeper' ? 'SLEEPER' : 'OFF DUTY';
+  const popupContent = '<div class="stop-label-popup">' +
+    '<div class="stop-label-city">' + (location || 'Unknown') + '</div>' +
+    '<div class="stop-label-status">' + iconEmoji + ' ' + statusText + '</div>' +
+    '<div class="stop-label-time">' + timeStr + ' · ' + coords.lat.toFixed(4) + ', ' + coords.lng.toFixed(4) + '</div>' +
+    '</div>';
+
+  marker.bindPopup(popupContent, { 
+    closeButton: false, 
+    offset: [0, -10],
+    className: 'stop-label-popup'
+  });
+
+  // Add to map if map exists
+  if (window.miniMap) {
+    marker.addTo(window.miniMap);
+  }
+  if (window.fullMap) {
+    marker.addTo(window.fullMap);
+  }
+
+  // Store marker reference
+  routeStopMarkers.push({ hour, status, marker, location, coords });
+
+  // Update stops timeline
+  updateRouteStopsTimeline();
+}
+
+function updateRouteStopMarker(markerObj, hour, status, location) {
+  const iconEmoji = status === 'driving' ? '🚛' : status === 'onduty' ? '📋' : status === 'sleeper' ? '🛏️' : '😴';
+  const statusText = status === 'driving' ? 'DRIVING' : status === 'onduty' ? 'ON DUTY' : status === 'sleeper' ? 'SLEEPER' : 'OFF DUTY';
+  const timeStr = (hour % 12 || 12) + (hour < 12 ? 'AM' : 'PM');
+
+  // Update popup
+  const popupContent = '<div class="stop-label-popup">' +
+    '<div class="stop-label-city">' + (location || 'Unknown') + '</div>' +
+    '<div class="stop-label-status">' + iconEmoji + ' ' + statusText + '</div>' +
+    '<div class="stop-label-time">' + timeStr + ' · Updated</div>' +
+    '</div>';
+
+  markerObj.marker.setPopupContent(popupContent);
+  markerObj.status = status;
+  markerObj.location = location;
+
+  updateRouteStopsTimeline();
+}
+
+function updateRouteStopsTimeline() {
+  const timelineEl = document.getElementById('routeStopsList');
+  const timelineContainer = document.getElementById('routeStopsTimeline');
+  if (!timelineEl) return;
+
+  // Sort by hour
+  const sortedStops = routeStopMarkers.sort((a, b) => a.hour - b.hour);
+
+  if (sortedStops.length === 0) {
+    timelineContainer.style.display = 'none';
+    return;
+  }
+
+  timelineContainer.style.display = 'block';
+
+  let html = '';
+  const statusIcons = { driving: '🚛', onduty: '📋', sleeper: '🛏️', offduty: '😴' };
+  const statusColors = { driving: '#10b981', onduty: '#f59e0b', sleeper: '#6366f1', offduty: '#64748b' };
+
+  sortedStops.forEach((stop, index) => {
+    const timeStr = (stop.hour % 12 || 12) + (stop.hour < 12 ? 'AM' : 'PM');
+    const city = stop.location ? stop.location.split(',')[0] : 'Stop ' + (index + 1);
+    const isActive = stop.hour === new Date().getHours();
+
+    html += '<div class="route-stop-chip ' + (isActive ? 'active' : '') + '" onclick="zoomToStop(' + stop.hour + ')" style="border-color:' + (isActive ? statusColors[stop.status] : '') + '">';
+    html += '<div class="route-stop-chip-icon">' + statusIcons[stop.status] + '</div>';
+    html += '<div class="route-stop-chip-city">' + city + '</div>';
+    html += '<div class="route-stop-chip-time">' + timeStr + '</div>';
+    html += '<div class="route-stop-chip-status">' + stop.status + '</div>';
+    html += '</div>';
+  });
+
+  timelineEl.innerHTML = html;
+}
+
+function zoomToStop(hour) {
+  const stop = routeStopMarkers.find(s => s.hour === hour);
+  if (!stop || !stop.coords) return;
+
+  // Zoom to marker on mini map
+  if (window.miniMap) {
+    window.miniMap.setView([stop.coords.lat, stop.coords.lng], 14);
+    stop.marker.openPopup();
+  }
+  // Or open full map
+  else if (window.fullMap) {
+    window.fullMap.setView([stop.coords.lat, stop.coords.lng], 14);
+    stop.marker.openPopup();
+  }
+}
+
+function clearRouteStopMarkers() {
+  routeStopMarkers.forEach(s => {
+    if (s.marker) {
+      if (window.miniMap) s.marker.removeFrom(window.miniMap);
+      if (window.fullMap) s.marker.removeFrom(window.fullMap);
+    }
+  });
+  routeStopMarkers = [];
+
+  const timelineContainer = document.getElementById('routeStopsTimeline');
+  if (timelineContainer) timelineContainer.style.display = 'none';
+}
+
+// Override saveLocationForHour to also add map marker
+const originalSaveLocation = saveLocationForHour;
+saveLocationForHour = function(hour, status) {
+  originalSaveLocation(hour, status);
+
+  const dateKey = getDateKey(lbCurrentDate);
+  if (lbLocationData[dateKey] && lbLocationData[dateKey][hour]) {
+    const loc = lbLocationData[dateKey][hour];
+    if (loc.coords) {
+      addRouteStopToMap(hour, status, loc.address, loc.coords);
+    }
+  }
+};
+
+// Override updateLogbookForDate to load markers
+const originalUpdateLogbook = updateLogbookForDate;
+updateLogbookForDate = function() {
+  // Clear existing markers
+  clearRouteStopMarkers();
+
+  // Call original
+  originalUpdateLogbook();
+
+  // Load markers for this date
+  const dateKey = getDateKey(lbCurrentDate);
+  if (lbLocationData[dateKey]) {
+    Object.keys(lbLocationData[dateKey]).forEach(hour => {
+      const loc = lbLocationData[dateKey][hour];
+      if (loc && loc.coords && lbData[dateKey] && lbData[dateKey][hour]) {
+        addRouteStopToMap(parseInt(hour), lbData[dateKey][hour], loc.address, loc.coords);
+      }
+    });
+  }
+};
+
+
+
+// ========== PRE-TRIP & STOP DETECTION ==========
+let lbFirstOnDutyToday = false;
+let lbLastStatusChange = null;
+
+function detectPreTrip(hour, status) {
+  const dateKey = getDateKey(lbCurrentDate);
+
+  // Detect first ON DUTY of the day as PRE-TRIP
+  if (status === 'onduty' && !lbFirstOnDutyToday) {
+    lbFirstOnDutyToday = true;
+
+    // Show special pre-trip notification
+    showToast('🔍 PRE-TRIP INSPECTION at ' + (lbCurrentAddress ? lbCurrentAddress.split(',')[0] : 'current location'), 'success', 4000);
+    hapticAlert([100, 50, 100, 50, 100]);
+
+    // Save as pre-trip location
+    if (!lbLocationData[dateKey]) lbLocationData[dateKey] = {};
+    if (!lbLocationData[dateKey][hour]) lbLocationData[dateKey][hour] = {};
+
+    lbLocationData[dateKey][hour].isPreTrip = true;
+    lbLocationData[dateKey][hour].preTripTime = new Date().toISOString();
+
+    return true;
+  }
+
+  // Detect OFF DUTY or SLEEPER as rest stops
+  if ((status === 'offduty' || status === 'sleeper') && lbLastStatusChange === 'driving') {
+    showToast('🛑 REST STOP at ' + (lbCurrentAddress ? lbCurrentAddress.split(',')[0] : 'current location'), 'info', 3000);
+  }
+
+  lbLastStatusChange = status;
+  return false;
+}
+
+// Override autoFillCurrentHour to include pre-trip detection
+const originalAutoFill = autoFillCurrentHour;
+autoFillCurrentHour = function() {
+  const currentHour = new Date().getHours();
+  const dateKey = getDateKey(lbCurrentDate);
+
+  if (!lbData[dateKey]) lbData[dateKey] = {};
+
+  if (!lbData[dateKey][currentHour]) {
+    autoFillHour(currentHour, lbCurrentStatus);
+    saveLocationForHour(currentHour, lbCurrentStatus);
+    detectPreTrip(currentHour, lbCurrentStatus);
+  }
+
+  updateSummary();
+  checkHOSRules();
+  updateHoursAvailable();
+  saveLogbookToStorage();
+};
+
+// Override selectLogbookStatus for manual pre-trip
+const originalSelectStatus = selectLogbookStatus;
+selectLogbookStatus = function(status) {
+  const currentHour = new Date().getHours();
+
+  // Detect if this is a pre-trip (first onduty of day)
+  if (status === 'onduty') {
+    detectPreTrip(currentHour, status);
+  }
+
+  originalSelectStatus(status);
+};
+
+// Export
+window.detectPreTrip = detectPreTrip;
+
+// Export for global access
+window.openLogbookSheet = openLogbookSheet;
+window.closeLogbookSheet = closeLogbookSheet;
+window.selectLogbookStatus = selectLogbookStatus;
+window.setLogbookDate = setLogbookDate;
+window.saveLogbook = saveLogbook;
+window.shareLogbook = shareLogbook;
+window.scanLogbook = scanLogbook;
+window.showLogbookHelp = showLogbookHelp;
+window.toggleManualStatus = toggleManualStatus;
+window.zoomToStop = zoomToStop;
+window.clearRouteStopMarkers = clearRouteStopMarkers;
+</script>
+
+<script>
+
+
+/* ════════════════════════════════════════════════════════════
+   🛠️ SERVICE BUTTONS - Truck Stops, Parking, Weigh Stations, Road Signs
+══════════════════════════════════════════════════════════ */
+
+// ========== NEARBY POI SEARCH (Truck Stops, Parking, Weigh Stations) ==========
+async function searchNearbyPOI(type) {
+  const overlay = document.getElementById('nearbyPoiOverlay');
+  const iconEl  = document.getElementById('nearbyPoiIcon');
+  const titleEl = document.getElementById('nearbyPoiTitle');
+  const subEl   = document.getElementById('nearbyPoiSub');
+  const list    = document.getElementById('nearbyPoiList');
+
+  const isTruck = type === 'truck';
+  const isScale = type === 'weighstation';
+  const isParking = type === 'parking';
+
+  const poiIcon = isTruck ? '🚛' : isScale ? '⚖️' : '🅿️';
+  const poiTitle = isTruck ? 'Truck Stops' : isScale ? 'Weigh Stations' : 'Parking';
+  const poiSub = isTruck ? 'Cercanos a tu ubicación' : isScale ? 'Básculas DOT cercanas' : 'Parking para trucks';
+
+  if (iconEl) iconEl.textContent = poiIcon;
+  if (titleEl) titleEl.textContent = poiTitle;
+  if (subEl) subEl.textContent = poiSub;
+  if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);"><div style="font-size:40px;margin-bottom:10px;">📡</div><div>Buscando ' + poiTitle + '...</div></div>';
+
+  if (overlay) overlay.classList.add('open');
+
+  try {
+    // Get current position
+    const position = await getGPSPosition(10000);
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
+
+    // Search using Overpass API (OpenStreetMap)
+    let query = '';
+    if (isTruck) {
+      query = '[out:json];(node["amenity"="fuel"]["hgv"="yes"](around:50000,' + lat + ',' + lon + ');node["amenity"="truck_stop"](around:50000,' + lat + ',' + lon + ');way["amenity"="truck_stop"](around:50000,' + lat + ',' + lon + '););out center 20;';
+    } else if (isScale) {
+      query = '[out:json];(node["amenity"="weighbridge"](around:50000,' + lat + ',' + lon + ');node["highway"="weigh_station"](around:50000,' + lat + ',' + lon + '););out center 20;';
+    } else {
+      query = '[out:json];(node["amenity"="parking"]["hgv"="yes"](around:50000,' + lat + ',' + lon + ');node["parking"="truck"](around:50000,' + lat + ',' + lon + ');way["amenity"="parking"]["hgv"="yes"](around:50000,' + lat + ',' + lon + '););out center 20;';
+    }
+
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: query
+    });
+
+    const data = await response.json();
+
+    if (data.elements && data.elements.length > 0) {
+      displayPOIResults(data.elements, lat, lon, type, list);
+    } else {
+      if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div>No se encontraron ' + poiTitle + ' en 50km</div><div style="font-size:12px;margin-top:8px;">Intenta ampliar la búsqueda</div></div>';
+    }
+  } catch (err) {
+    console.error('POI search error:', err);
+    if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);"><div style="font-size:40px;margin-bottom:10px;">❌</div><div>Error de conexión</div><div style="font-size:12px;margin-top:8px;">' + err.message + '</div></div>';
+  }
+}
+
+function displayPOIResults(elements, userLat, userLon, type, listEl) {
+  if (!listEl) return;
+
+  let html = '';
+  const isTruck = type === 'truck';
+  const isScale = type === 'weighstation';
+
+  // REAL BRAND LOGOS - Exact company branding
+  const brandLogos = {
+    // Major Truck Stop Chains
+    'pilot': '⛽', 'pilot flying j': '⛽', 'flying j': '⛽',
+    'loves': '❤️', 'ta': '🅃🄰', 'travelcenters of america': '🅃🄰',
+    'travelcenters': '🅃🄰', 'petro': '⛽', 'petro stopping': '⛽',
+    'speedway': '🏎️', 'racetrac': '🏁', 'quiktrip': '⚡',
+    'sheetz': '🥨', 'wawa': '🦆', 'caseys': '🍕',
+
+    // Fuel Brands
+    'shell': '🐚', 'bp': '☀️', 'mobil': '🚗', 'exxon': '🚗',
+    'chevron': '⛽', 'texaco': '⭐', 'phillips 66': '66',
+    'valero': 'V', 'citgo': 'CITGO', 'marathon': 'M',
+    'sinclair': '🦕', 'conoco': '🌟', '76': '76',
+
+    // Convenience / Retail
+    'circle k': 'Ⓚ', '7-eleven': '7️⃣', 'kum & go': 'K&G',
+    'walmart': '🏪', 'costco': 'C', 'sams': 'S',
+    'target': '🎯', 'kroger': 'K', 'meijer': 'M',
+
+    // Other Truck Services
+    'blue beacon': '💧', 'idleair': '💨', 'truckomat': '🚛',
+    'petro': '⛽', 'travel plaza': '🅿️', 'rest area': '🛣️'
+  };
+
+  // REAL BRAND COLORS
+  const brandColors = {
+    // Pilot Flying J - Red/Yellow
+    'pilot': 'pilot', 'pilot flying j': 'pilot', 'flying j': 'pilot',
+    // Loves - Heart/Red
+    'loves': 'loves',
+    // TA - Blue/White
+    'ta': 'ta', 'travelcenters of america': 'ta', 'travelcenters': 'ta',
+    // Petro - Red
+    'petro': 'petro', 'petro stopping': 'petro',
+    // Speedway - Red/White
+    'speedway': 'speedway',
+    // Shell - Yellow/Red
+    'shell': 'shell',
+    // BP - Green/Yellow
+    'bp': 'bp',
+    // Mobil - Red/White
+    'mobil': 'mobil', 'exxon': 'mobil',
+    // Chevron - Blue/Red
+    'chevron': 'chevron',
+    // Texaco - Red/White
+    'texaco': 'texaco',
+    // Circle K - Red/White
+    'circle k': 'circlek',
+    // 7-Eleven - Orange/Green
+    '7-eleven': 'seveneleven',
+    // Walmart - Blue
+    'walmart': 'walmart',
+    // Others
+    'default': 'default'
+  };
+
+  elements.slice(0, 15).forEach((el, i) => {
+    const lat = el.lat || (el.center && el.center.lat);
+    const lon = el.lon || (el.center && el.center.lon);
+    if (!lat || !lon) return;
+
+    const dist = calculateDistance(userLat, userLon, lat, lon);
+    const name = el.tags && el.tags.name ? el.tags.name : (isTruck ? 'Truck Stop ' + (i+1) : isScale ? 'Weigh Station ' + (i+1) : 'Parking ' + (i+1));
+    const brand = el.tags && el.tags.brand ? el.tags.brand.toLowerCase() : '';
+    const operator = el.tags && el.tags.operator ? el.tags.operator.toLowerCase() : '';
+    const address = [el.tags && el.tags['addr:street'], el.tags && el.tags['addr:city']].filter(Boolean).join(', ');
+
+    // Detect brand from name or operator - comprehensive matching
+    let detectedBrand = '';
+    const nameLower = name.toLowerCase();
+    const searchText = nameLower + ' ' + brand + ' ' + operator;
+
+    // Priority order - major chains first
+    const brandPatterns = [
+      // Pilot Flying J variations
+      { pattern: /pilot|flying\s*j|flyingj/, brand: 'pilot' },
+      // Loves variations
+      { pattern: /love['']?s|love\s*travel/, brand: 'loves' },
+      // TA variations
+      { pattern: /travel\s*centers|travelcenters|t\s*a\s*stopping|ta\s*travel/, brand: 'ta' },
+      // Petro variations
+      { pattern: /petro|petro\s*stopping/, brand: 'petro' },
+      // Speedway
+      { pattern: /speedway/, brand: 'speedway' },
+      // Shell
+      { pattern: /shell/, brand: 'shell' },
+      // BP
+      { pattern: /bp|british\s*petroleum/, brand: 'bp' },
+      // Mobil/Exxon
+      { pattern: /mobil|exxon|exxon\s*mobil/, brand: 'mobil' },
+      // Chevron
+      { pattern: /chevron/, brand: 'chevron' },
+      // Texaco
+      { pattern: /texaco/, brand: 'texaco' },
+      // Circle K
+      { pattern: /circle\s*k|circlek/, brand: 'circle k' },
+      // 7-Eleven
+      { pattern: /7\s*eleven|7-eleven|seven\s*eleven/, brand: '7-eleven' },
+      // Walmart
+      { pattern: /walmart/, brand: 'walmart' },
+      // Costco
+      { pattern: /costco/, brand: 'costco' },
+      // Sam's Club
+      { pattern: /sam['']?s\s*club|sams\s*club/, brand: 'sams' },
+      // Phillips 66
+      { pattern: /phillips\s*66|phillips66/, brand: 'phillips66' },
+      // Sinclair
+      { pattern: /sinclair/, brand: 'sinclair' },
+      // Valero
+      { pattern: /valero/, brand: 'valero' },
+      // 76
+      { pattern: /76|union\s*76/, brand: 'seventysix' },
+      // RaceTrac
+      { pattern: /racetrac|race\s*trac/, brand: 'racetrac' },
+      // QuikTrip
+      { pattern: /quik\s*trip|quiktrip/, brand: 'quiktrip' },
+      // Sheetz
+      { pattern: /sheetz/, brand: 'sheetz' },
+      // Wawa
+      { pattern: /wawa/, brand: 'wawa' },
+      // Casey's
+      { pattern: /casey['']?s|caseys/, brand: 'caseys' },
+      // Blue Beacon
+      { pattern: /blue\s*beacon/, brand: 'bluebeacon' },
+      // IdleAir
+      { pattern: /idle\s*air|idleair/, brand: 'idleair' },
+      // Truckomat
+      { pattern: /truckomat/, brand: 'truckomat' }
+    ];
+
+    for (const bp of brandPatterns) {
+      if (bp.pattern.test(searchText)) {
+        detectedBrand = bp.brand;
+        break;
+      }
+    }
+
+    const logoClass = brandColors[detectedBrand] || 'default';
+    const logoText = brandLogos[detectedBrand] || (isTruck ? '🚛' : isScale ? '⚖️' : '🅿️');
+
+    // Format brand name for display
+    let brandDisplay = '';
+    if (detectedBrand) {
+      const brandNames = {
+        'pilot': 'PILOT FLYING J',
+        'loves': "LOVE'S",
+        'ta': 'TA TRAVEL CENTER',
+        'petro': 'PETRO',
+        'speedway': 'SPEEDWAY',
+        'shell': 'SHELL',
+        'bp': 'BP',
+        'mobil': 'MOBIL',
+        'chevron': 'CHEVRON',
+        'texaco': 'TEXACO',
+        'circle k': 'CIRCLE K',
+        '7-eleven': '7-ELEVEN',
+        'walmart': 'WALMART',
+        'costco': 'COSTCO',
+        'sams': "SAM'S CLUB",
+        'phillips66': 'PHILLIPS 66',
+        'sinclair': 'SINCLAIR',
+        'valero': 'VALERO',
+        'seventysix': '76',
+        'racetrac': 'RACETRAC',
+        'quiktrip': 'QUIK TRIP',
+        'sheetz': 'SHEETZ',
+        'wawa': 'WAWA',
+        'caseys': "CASEY'S",
+        'bluebeacon': 'BLUE BEACON',
+        'idleair': 'IDLEAIR',
+        'truckomat': 'TRUCKOMAT'
+      };
+      brandDisplay = brandNames[detectedBrand] || detectedBrand.toUpperCase();
+    } else {
+      brandDisplay = (brand || operator || 'TRUCK STOP').toUpperCase();
+    }
+
+    // Amenities
+    let amenities = [];
+    if (el.tags) {
+      if (el.tags['fuel:diesel'] === 'yes') amenities.push('⛽ Diesel');
+      if (el.tags['shower'] === 'yes') amenities.push('🚿 Shower');
+      if (el.tags['restaurant'] === 'yes') amenities.push('🍔 Food');
+      if (el.tags['laundry'] === 'yes') amenities.push('👕 Laundry');
+      if (el.tags['wifi'] === 'yes') amenities.push('📶 WiFi');
+      if (el.tags['parking'] === 'yes') amenities.push('🅿️ Parking');
+    }
+
+    html += '<div class="poi-card" onclick="openPOIInMaps(' + lat + ',' + lon + ',\'' + name.replace(/\'/g, "\'") + '\')">';
+    html += '<div class="poi-card-logo ' + logoClass + '">' + logoText + '</div>';
+    html += '<div class="poi-card-info">';
+    html += '<div class="poi-card-name">' + name + '</div>';
+    html += '<div class="poi-card-brand">' + brandDisplay + '</div>';
+    html += '<div class="poi-card-meta">' + (address || 'Sin dirección') + '</div>';
+    if (amenities.length > 0) {
+      html += '<div class="poi-card-amenities">';
+      amenities.slice(0, 4).forEach(a => {
+        html += '<span class="poi-amenity">' + a + '</span>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div class="poi-card-dist"><span class="poi-card-dist-miles">' + dist.toFixed(1) + '</span><span class="poi-card-dist-label">mi</span></div>';
+    html += '</div>';
+  });
+
+  listEl.innerHTML = html;
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 3959; // Earth radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function openPOIInMaps(lat, lon, name) {
+  const url = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon + '&travelmode=driving';
+  window.open(url, '_blank');
+}
+
+function closeNearbyPoiOverlay() {
+  const overlay = document.getElementById('nearbyPoiOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+function getGPSPosition(timeout) {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('GPS no disponible'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: timeout || 10000,
+      maximumAge: 60000
+    });
+  });
+}
+
+// ========== ROAD SIGNS PANEL ==========
+function openRoadSignsPanel() {
+  const overlay = document.getElementById('roadSignsOverlay');
+  if (overlay) {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  loadRoadSigns();
+}
+
+function closeRoadSignsPanel() {
+  const overlay = document.getElementById('roadSignsOverlay');
+  if (overlay) {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+function loadRoadSigns() {
+  const grid = document.getElementById('roadSignsGrid');
+  if (!grid) return;
+
+  const signs = [
+    { icon: '🛑', name: 'STOP', desc: 'Full stop required' },
+    { icon: '🚧', name: 'Construction', desc: 'Road work ahead' },
+    { icon: '⚠️', name: 'Warning', desc: 'Hazard ahead' },
+    { icon: '🚫', name: 'No Trucks', desc: 'Truck prohibited' },
+    { icon: '⬇️', name: 'Steep Grade', desc: 'Use low gear' },
+    { icon: '🌉', name: 'Bridge', desc: 'Check clearance' },
+    { icon: '🔄', name: 'Roundabout', desc: 'Yield to traffic' },
+    { icon: '🚸', name: 'School Zone', desc: 'Reduce speed' },
+    { icon: '🦌', name: 'Wildlife', desc: 'Animal crossing' },
+    { icon: '💨', name: 'Crosswind', desc: 'High wind area' },
+    { icon: '🛣️', name: 'Interstate', desc: 'Freeway entrance' },
+    { icon: '🅿️', name: 'Rest Area', desc: '1 mile ahead' }
+  ];
+
+  let html = '';
+  signs.forEach(sign => {
+    html += '<div class="sign-card" onclick="showSignDetail(\'' + sign.name + '\', \'' + sign.desc + '\')">';
+    html += '<div style="font-size:32px;margin-bottom:6px;">' + sign.icon + '</div>';
+    html += '<div class="sign-name">' + sign.name + '</div>';
+    html += '<div class="sign-desc">' + sign.desc + '</div>';
+    html += '</div>';
+  });
+
+  grid.innerHTML = html;
+}
+
+function showSignDetail(name, desc) {
+  showToast(name + ': ' + desc, 'info', 3000);
+}
+
+function filterRoadSigns(category) {
+  const tabs = document.querySelectorAll('.signs-tab');
+  tabs.forEach(tab => tab.classList.remove('active'));
+  event.target.classList.add('active');
+
+  // In a real app, this would filter signs by category
+  showToast('Showing ' + category + ' signs', 'info', 1500);
+}
+
+// ========== GOOGLE MAPS TRUCK STOPS (Fallback) ==========
+async function openGoogleMapsTruckStops() {
+  try {
+    const position = await getGPSPosition(5000);
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
+    const url = 'https://www.google.com/maps/search/truck+stop/@' + lat + ',' + lon + ',12z';
+    window.open(url, '_blank');
+  } catch (err) {
+    showToast('❌ GPS error: ' + err.message, 'error');
+  }
+}
+
+// ========== EXPORT ALL FUNCTIONS ==========
+window.searchNearbyPOI = searchNearbyPOI;
+window.closeNearbyPoiOverlay = closeNearbyPoiOverlay;
+window.openRoadSignsPanel = openRoadSignsPanel;
+window.closeRoadSignsPanel = closeRoadSignsPanel;
+window.loadRoadSigns = loadRoadSigns;
+window.showSignDetail = showSignDetail;
+window.filterRoadSigns = filterRoadSigns;
+window.openGoogleMapsTruckStops = openGoogleMapsTruckStops;
+window.openPOIInMaps = openPOIInMaps;
+window.calculateDistance = calculateDistance;
+window.getGPSPosition = getGPSPosition;
+
+</script>
 </body>
 </html>
