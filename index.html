@@ -2010,6 +2010,78 @@
     overflow: hidden; text-overflow: ellipsis;
   }
 
+  /* ── BOTÓN LATERAL DE REPORTES (reemplaza el FAB flotante) ── */
+  #reportSideBtn {
+    position: fixed;
+    right: 0;
+    bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+    z-index: 6501;
+    width: 46px;
+    height: 104px;
+    background: linear-gradient(160deg,#f59e0b,#d97706);
+    color: #fff;
+    border: none;
+    border-radius: 14px 0 0 14px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: -4px 0 20px rgba(245,158,11,.55);
+    transition: width .2s, background .2s, box-shadow .2s, transform .15s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+    animation: fabPulse 3s ease-in-out infinite;
+  }
+  #reportSideBtn.visible { display: flex; }
+  #reportSideBtn:hover { width: 54px; box-shadow: -6px 0 26px rgba(245,158,11,.8); }
+  #reportSideBtn:active { transform: scaleX(.94); box-shadow: -2px 0 8px rgba(245,158,11,.3); }
+
+  /* ── VENTANA PEQUEÑA DE REPORTES ── */
+  #reportPopupOverlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 25198;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease;
+  }
+  #reportPopupOverlay.open { opacity: 1; pointer-events: all; }
+  #reportPopup {
+    position: fixed;
+    left: 50%; top: 50%;
+    transform: translate(-50%,-50%) scale(.8);
+    z-index: 25199;
+    width: min(340px, 86vw);
+    background: rgba(8, 14, 26, 0.97);
+    border: 1.5px solid rgba(255,255,255,.13);
+    border-radius: 24px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 16px 56px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.06);
+    padding: 22px 18px 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform .28s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
+  }
+  #reportPopup.open { transform: translate(-50%,-50%) scale(1); opacity: 1; pointer-events: all; }
+  #reportPopupTitle {
+    text-align: center; color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 800; letter-spacing: .3px;
+    margin-bottom: 18px;
+  }
+  #reportPopupGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    justify-items: center;
+  }
+
   /* ── TOP BAR ROUND REPORT BUTTONS ────────────────────── */
   .top-rpt-btn {
     width: 36px; height: 36px;
@@ -8634,8 +8706,18 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
   </div>
 
   <!-- DRAGGABLE REPORT FAB — dentro del dashboard de seguimiento -->
-  <button id="reportFab" title="Reportar — arrastra para mover">🚨</button>
-  <!-- RADIAL REPORT MENU (populated by JS) -->
+  <!-- BOTÓN LATERAL DE REPORTES (reemplaza el botón flotante) -->
+  <button id="reportSideBtn" onclick="openReportPopup()" aria-label="Reportar" title="Reportar">
+    <span class="side-tab-icon">🚨</span>
+    <span class="side-tab-label">Reporte</span>
+  </button>
+  <!-- VENTANA PEQUEÑA DE REPORTES -->
+  <div id="reportPopupOverlay" onclick="closeReportPopup()"></div>
+  <div id="reportPopup" role="dialog" aria-modal="true" aria-label="Reportar">
+    <div id="reportPopupTitle">¿Qué quieres reportar?</div>
+    <div id="reportPopupGrid"></div>
+  </div>
+  <!-- RADIAL REPORT MENU (legacy — kept for JS compatibility) -->
   <div id="reportRadialMenu"></div>
 
 </div>
@@ -17477,8 +17559,7 @@ function fmStartTracking() {
       slw.classList.add('visible');
     }
   }
-  document.getElementById('reportFab').classList.add('visible');
-  setTimeout(initFabDrag, 100);
+  document.getElementById('reportSideBtn')?.classList.add('visible');
   const pfab = document.getElementById('profileFab');
   if (pfab) pfab.style.display = 'flex';
   const trb = document.getElementById('topReportBtns');
@@ -18021,7 +18102,8 @@ function fmStopTracking() {
   // Hide miles remaining widget
   const mrw = document.getElementById('milesRemainingWidget');
   if (mrw) { mrw.classList.remove('visible', 'moving'); }
-  document.getElementById('reportFab').classList.remove('visible');
+  document.getElementById('reportSideBtn')?.classList.remove('visible');
+  closeReportPopup();
   closeRadialMenu();
   const trbStop = document.getElementById('topReportBtns');
   if (trbStop) trbStop.style.display = 'none';
@@ -21175,6 +21257,33 @@ function closeRadialMenu() {
   const bd = document.getElementById('reportRadialMenu-backdrop');
   if (bd) bd.style.opacity = '0';
   setTimeout(() => { menu.classList.remove('open'); menu.innerHTML = ''; }, 280);
+}
+
+/* ── Ventana pequeña de reportes (abierta desde el botón lateral) ── */
+function openReportPopup() {
+  const grid = document.getElementById('reportPopupGrid');
+  const overlay = document.getElementById('reportPopupOverlay');
+  const popup = document.getElementById('reportPopup');
+  if (!grid || !overlay || !popup) return;
+  grid.innerHTML = '';
+  REPORT_ITEMS.forEach(rt => {
+    const btn = document.createElement('button');
+    btn.className = 'rr-item';
+    btn.style.background = rt.bg;
+    btn.innerHTML = '<span class="rr-emoji">' + rt.emoji + '</span><span class="rr-label">' + rt.label + '</span>';
+    btn.onclick = () => { closeReportPopup(); quickReport(rt.type, rt.emoji, rt.label); };
+    grid.appendChild(btn);
+  });
+  overlay.classList.add('open');
+  popup.classList.add('open');
+  if (typeof vibrate === 'function') vibrate(15);
+}
+
+function closeReportPopup() {
+  const overlay = document.getElementById('reportPopupOverlay');
+  const popup = document.getElementById('reportPopup');
+  if (overlay) overlay.classList.remove('open');
+  if (popup) popup.classList.remove('open');
 }
 
 function quickReport(type, emoji, label) {
