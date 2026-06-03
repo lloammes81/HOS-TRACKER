@@ -18223,14 +18223,12 @@ function _dashHeaderTick() {
   const _moving = typeof fmIsTracking !== 'undefined' && fmIsTracking
                 && typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving;
 
-  // Moving: only ETA and miles — name hidden while driving
+  // Moving: only ETA — name hidden while driving
   // Stopped: only the driver name
   const slides = [];
   if (_moving) {
     const etaVal = document.getElementById('fmEta')?.textContent?.trim();
     if (etaVal && etaVal !== '--') slides.push({ text: `🕐 ${etaVal} al destino`, sub: true });
-    const remVal = document.getElementById('fmRem')?.textContent?.trim();
-    if (remVal && remVal !== '--') slides.push({ text: `🛣️ ${remVal} restantes`, sub: true });
   }
   if (slides.length === 0) slides.push({ text: _dashHeaderDriverName, sub: false });
 
