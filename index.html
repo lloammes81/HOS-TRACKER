@@ -10217,44 +10217,57 @@ function _mkTile(styleKey) {
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 if (!MAP_STYLES[currentMapStyle]) { currentMapStyle = 'dark'; localStorage.setItem('hos_map_style', 'dark'); }
 let fmTileLayer = null;
-let fmTrafficLayer = null;
-let fmTrafficEnabled = localStorage.getItem('hos_traffic') === 'true';
+let fmTrafficLayer    = null;
+let miniTrafficLayer  = null;
+let hosMiniTrafficLayer = null;
+// Default traffic ON — only off if user explicitly disabled it
+let fmTrafficEnabled = localStorage.getItem('hos_traffic') !== 'false';
+
+const _TRAFFIC_URL = `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}`;
+const _TRAFFIC_OPTS = { maxZoom: 22, opacity: 0.82, pane: 'overlayPane' };
+
+function _addTrafficToMap(mapInst, layerRef) {
+  if (!mapInst) return null;
+  if (layerRef) { try { mapInst.removeLayer(layerRef); } catch {} }
+  return L.tileLayer(_TRAFFIC_URL, _TRAFFIC_OPTS).addTo(mapInst);
+}
+
+function _removeTrafficFromMap(mapInst, layerRef) {
+  if (layerRef && mapInst) { try { mapInst.removeLayer(layerRef); } catch {} }
+  return null;
+}
 
 function toggleTrafficLayer() {
   fmTrafficEnabled = !fmTrafficEnabled;
   localStorage.setItem('hos_traffic', fmTrafficEnabled);
-  const btn = document.getElementById('trafficBtn');
-  if (btn) {
-    btn.style.background = fmTrafficEnabled ? 'rgba(239,68,68,0.28)' : '';
-    btn.style.borderColor = fmTrafficEnabled ? 'rgba(239,68,68,0.6)' : '';
-    btn.title = fmTrafficEnabled ? 'Tráfico ACTIVO — toca para desactivar' : 'Tráfico en tiempo real';
-  }
+  _syncTrafficBtn();
   if (fmTrafficEnabled) {
-    _addTrafficLayer();
+    fmTrafficLayer    = _addTrafficToMap(fmMapInst,      fmTrafficLayer);
+    miniTrafficLayer  = _addTrafficToMap(miniMap,        miniTrafficLayer);
+    hosMiniTrafficLayer = _addTrafficToMap(hosMinimapInst, hosMiniTrafficLayer);
   } else {
-    if (fmTrafficLayer && fmMapInst) {
-      try { fmMapInst.removeLayer(fmTrafficLayer); } catch {}
-      fmTrafficLayer = null;
-    }
+    fmTrafficLayer    = _removeTrafficFromMap(fmMapInst,      fmTrafficLayer);
+    miniTrafficLayer  = _removeTrafficFromMap(miniMap,        miniTrafficLayer);
+    hosMiniTrafficLayer = _removeTrafficFromMap(hosMinimapInst, hosMiniTrafficLayer);
   }
 }
 
+function _syncTrafficBtn() {
+  const btn = document.getElementById('trafficBtn');
+  if (!btn) return;
+  btn.style.background  = fmTrafficEnabled ? 'rgba(239,68,68,0.28)' : '';
+  btn.style.borderColor = fmTrafficEnabled ? 'rgba(239,68,68,0.6)'  : '';
+  btn.title = fmTrafficEnabled ? 'Tráfico ACTIVO — toca para desactivar' : 'Tráfico en tiempo real';
+}
+
 function _addTrafficLayer() {
-  if (!fmMapInst) return;
-  if (fmTrafficLayer) { try { fmMapInst.removeLayer(fmTrafficLayer); } catch {} fmTrafficLayer = null; }
-  fmTrafficLayer = L.tileLayer(
-    `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}`,
-    { maxZoom: 22, opacity: 0.82 }
-  ).addTo(fmMapInst);
+  fmTrafficLayer = _addTrafficToMap(fmMapInst, fmTrafficLayer);
 }
 
 // Restore traffic state on map open
 function _restoreTrafficState() {
-  const btn = document.getElementById('trafficBtn');
-  if (fmTrafficEnabled) {
-    if (btn) { btn.style.background = 'rgba(239,68,68,0.28)'; btn.style.borderColor = 'rgba(239,68,68,0.6)'; }
-    if (fmMapInst && !fmTrafficLayer) _addTrafficLayer();
-  }
+  _syncTrafficBtn();
+  if (fmTrafficEnabled && fmMapInst && !fmTrafficLayer) _addTrafficLayer();
 }
 
 // Tono base del dashboard según estilo del mapa (sutil, el color real lo da el mapa de fondo)
@@ -14112,6 +14125,7 @@ function initMap(containerId) {
   const map = L.map(containerId, { zoomControl: true, attributionControl: false }).setView([39.5, -98.35], 4);
   _mkTile(currentMapStyle).addTo(map);
   L.control.scale({ maxWidth: 100, imperial: true, metric: false, position: 'bottomright' }).addTo(map);
+  if (fmTrafficEnabled) miniTrafficLayer = _addTrafficToMap(map, miniTrafficLayer);
   return map;
 }
 
@@ -18419,10 +18433,11 @@ function hideHosDashboard() {
   // Destruir mini mapa para liberar recursos
   if (hosMinimapInst) {
     try { hosMinimapInst.remove(); } catch(e) {}
-    hosMinimapInst  = null;
-    hosMinimapTruck = null;
-    hosMinimapRoute = null;
-    hosMinimapGlow  = null;
+    hosMinimapInst    = null;
+    hosMinimapTruck   = null;
+    hosMinimapRoute   = null;
+    hosMinimapGlow    = null;
+    hosMiniTrafficLayer = null;
   }
 }
 
@@ -18444,6 +18459,8 @@ function initHosMinimap() {
 
   hosMinimapTileLayer = _mkTile(currentMapStyle).addTo(hosMinimapInst);
   hosMinimapTileLayer.bringToBack();
+
+  if (fmTrafficEnabled) hosMiniTrafficLayer = _addTrafficToMap(hosMinimapInst, hosMiniTrafficLayer);
 
   L.control.attribution({ prefix: false, position: 'bottomright' })
     .addAttribution('© <a href="https://legal.tomtom.com/terms-of-use" target="_blank">TomTom Maps</a>')

@@ -4968,7 +4968,8 @@ map.on('load', ()=>{
 });
 
 // ── Tráfico en tiempo real ─────────────────────────────
-let dashTrafficEnabled = localStorage.getItem('dash_traffic') === 'true';
+// Default traffic ON — only off if user explicitly disabled it
+let dashTrafficEnabled = localStorage.getItem('dash_traffic') !== 'false';
 
 function _addDashTrafficLayer() {
   if (!mapLoaded) return;
