@@ -2014,30 +2014,32 @@
   #reportSideBtn {
     position: fixed;
     right: 0;
-    bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+    top: calc(118px + env(safe-area-inset-top, 0px));
     z-index: 6501;
-    width: 46px;
-    height: 104px;
-    background: linear-gradient(160deg,#f59e0b,#d97706);
+    width: 44px;
+    height: 92px;
+    background: linear-gradient(160deg, rgba(245,158,11,0.5), rgba(217,119,6,0.5));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: #fff;
-    border: none;
+    border: 1.5px solid rgba(255,255,255,0.45);
+    border-right: none;
     border-radius: 14px 0 0 14px;
-    display: none;
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 6px;
     cursor: pointer;
-    box-shadow: -4px 0 20px rgba(245,158,11,.55);
+    box-shadow: -4px 0 18px rgba(245,158,11,.3);
     transition: width .2s, background .2s, box-shadow .2s, transform .15s;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     padding: 0;
-    animation: fabPulse 3s ease-in-out infinite;
   }
   #reportSideBtn.visible { display: flex; }
-  #reportSideBtn:hover { width: 54px; box-shadow: -6px 0 26px rgba(245,158,11,.8); }
-  #reportSideBtn:active { transform: scaleX(.94); box-shadow: -2px 0 8px rgba(245,158,11,.3); }
+  #reportSideBtn:hover { width: 52px; box-shadow: -6px 0 24px rgba(245,158,11,.45); }
+  #reportSideBtn:active { transform: scaleX(.94); box-shadow: -2px 0 8px rgba(245,158,11,.25); }
 
   /* ── VENTANA PEQUEÑA DE REPORTES ── */
   #reportPopupOverlay {
@@ -8503,13 +8505,12 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
   <!-- TARJETA PRINCIPAL — fondo sólido con borde -->
   <div style="flex:0 0 auto;margin:0 10px 8px;background:#0d1220;border-radius:20px;border:1px solid rgba(16,185,129,0.22);box-shadow:0 0 0 1px rgba(16,185,129,0.08),0 8px 48px rgba(0,0,0,0.95),0 4px 20px rgba(0,0,0,0.7),0 0 40px rgba(16,185,129,0.07),inset 0 1px 0 rgba(255,255,255,0.09);display:flex;flex-direction:column;overflow:hidden;padding:8px 0 0;">
 
-  <!-- ② BADGE DE ESTADO + botón de reportes (en el espacio en blanco superior) -->
-  <div style="flex:0 0 auto;padding:0 14px 6px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+  <!-- ② BADGE DE ESTADO -->
+  <div style="flex:0 0 auto;padding:0 14px 6px;">
     <div id="dashStatusPillWrap" style="display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,0.08);border:1px solid #10b981;border-radius:999px;padding:4px 12px;">
       <span id="dashStatusDot" style="width:6px;height:6px;border-radius:50%;background:#10b981;flex-shrink:0;"></span>
       <span id="dashMainStatusLabel" style="font-size:13px;font-weight:900;letter-spacing:1px;color:#10b981;text-transform:uppercase;">CONDUCIENDO</span>
     </div>
-    <button id="reportTopBtn" onclick="openReportPopup()" aria-label="Reportar" title="Reportar" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(245,158,11,0.5),rgba(217,119,6,0.5));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.45);border-radius:999px;padding:5px 13px;color:#fff;font-size:12px;font-weight:800;font-family:'DM Sans',sans-serif;letter-spacing:.3px;cursor:pointer;box-shadow:0 3px 12px rgba(245,158,11,.3);-webkit-tap-highlight-color:transparent;flex-shrink:0;">🚨 Reportar</button>
   </div>
 
   <!-- ③ TRES ANILLOS KPI — centro más grande -->
@@ -8709,7 +8710,11 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
     </button>
   </div>
 
-  <!-- Botón de reportes movido a la fila del badge de estado, arriba a la derecha (#reportTopBtn) -->
+  <!-- BOTÓN DE REPORTES — pestaña pegada a la derecha (parte superior), desplegable -->
+  <button id="reportSideBtn" onclick="openReportPopup()" aria-label="Reportar" title="Reportar">
+    <span class="side-tab-icon">🚨</span>
+    <span class="side-tab-label">Reporte</span>
+  </button>
   <!-- VENTANA PEQUEÑA DE REPORTES -->
   <div id="reportPopupOverlay" onclick="closeReportPopup()"></div>
   <div id="reportPopup" role="dialog" aria-modal="true" aria-label="Reportar">
@@ -21297,7 +21302,7 @@ function openReportPopup() {
     grid.appendChild(btn);
   });
   // Desplegar anclado al botón disparador (esquina superior derecha)
-  const trigger = document.getElementById('reportTopBtn');
+  const trigger = document.getElementById('reportSideBtn');
   popup.style.visibility = 'hidden';
   popup.style.left = '0px'; popup.style.top = '0px';
   overlay.classList.add('open');
