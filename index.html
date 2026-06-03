@@ -14106,6 +14106,7 @@ function refreshTruckMarkers() {
 function initMap(containerId) {
   const map = L.map(containerId, { zoomControl: true, attributionControl: false }).setView([39.5, -98.35], 4);
   _mkTile(currentMapStyle).addTo(map);
+  L.control.scale({ maxWidth: 100, imperial: true, metric: false, position: 'bottomright' }).addTo(map);
   return map;
 }
 
@@ -15590,6 +15591,8 @@ function openFullMapScreen() {
     L.control.attribution({ prefix: false, position: 'bottomright' })
       .addAttribution('© <a href="https://legal.tomtom.com/terms-of-use" target="_blank">TomTom Maps</a>')
       .addTo(fmMapInst);
+
+    L.control.scale({ maxWidth: 120, imperial: true, metric: false, position: 'bottomright' }).addTo(fmMapInst);
 
     // Load US state boundary lines (always visible)
     loadStateBoundaries();
@@ -18408,6 +18411,8 @@ function initHosMinimap() {
   L.control.attribution({ prefix: false, position: 'bottomright' })
     .addAttribution('© <a href="https://legal.tomtom.com/terms-of-use" target="_blank">TomTom Maps</a>')
     .addTo(hosMinimapInst);
+
+  L.control.scale({ maxWidth: 100, imperial: true, metric: false, position: 'bottomright' }).addTo(hosMinimapInst);
 
   // Helper: crea el HTML de un marcador círculo verde con punto blanco interior
   function _greenDotHtml(size) {

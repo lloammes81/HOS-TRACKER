@@ -1117,10 +1117,12 @@
   .popup-btn:hover{filter:brightness(1.1)}
 
   /* ── Switcher de estilo de mapa ── */
-  .map-style-switch{position:absolute;top:12px;right:56px;z-index:900;background:rgba(15,23,42,.92);border:1px solid var(--line);border-radius:10px;padding:4px;display:flex;gap:2px;backdrop-filter:blur(6px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
-  .map-style-switch button{background:transparent;border:0;color:var(--muted);padding:6px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
+  .map-style-switch{position:absolute;top:12px;right:56px;z-index:900;background:rgba(15,23,42,.92);border:1px solid var(--line);border-radius:10px;padding:4px;display:flex;flex-wrap:wrap;gap:2px;max-width:260px;backdrop-filter:blur(6px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
+  .map-style-switch button{background:transparent;border:0;color:var(--muted);padding:5px 8px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap}
   .map-style-switch button.active{background:var(--brand);color:#06211a}
   .map-style-switch button:hover:not(.active){background:rgba(255,255,255,.06);color:var(--text)}
+  #dashTrafficBtn{background:rgba(15,23,42,.92);border:1px solid var(--line);color:var(--text);padding:7px 11px;border-radius:8px;font-size:12px;backdrop-filter:blur(6px);cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.35);transition:all .2s}
+  #dashTrafficBtn.active{background:rgba(239,68,68,.28);border-color:rgba(239,68,68,.6)}
 
   /* ── Perfil del conductor (modal grande) ── */
   .dp-hero{
@@ -3019,9 +3021,12 @@
             <div><div class="set-name">Estilo del mapa</div></div>
           </div>
           <div class="set-map-styles">
-            <button class="set-map-btn active" data-mstyle="streets"  onclick="setMapStyle('streets',this)">Calles</button>
-            <button class="set-map-btn"        data-mstyle="dark"     onclick="setMapStyle('dark',this)">Oscuro</button>
-            <button class="set-map-btn"        data-mstyle="satellite" onclick="setMapStyle('satellite',this)">Satélite</button>
+            <button class="set-map-btn active" data-mstyle="streets"   onclick="setMapStyle('streets')">🗺️ Día</button>
+            <button class="set-map-btn"        data-mstyle="dark"      onclick="setMapStyle('dark')">🌙 Noche</button>
+            <button class="set-map-btn"        data-mstyle="light"     onclick="setMapStyle('light')">☀️ Claro</button>
+            <button class="set-map-btn"        data-mstyle="satellite" onclick="setMapStyle('satellite')">🛰️ Satélite</button>
+            <button class="set-map-btn"        data-mstyle="terrain"   onclick="setMapStyle('terrain')">⛰️ Terreno</button>
+            <button class="set-map-btn"        data-mstyle="midnight"  onclick="setMapStyle('midnight')">🌃 Medianoche</button>
           </div>
         </div>
         <div class="set-row">
@@ -3281,11 +3286,15 @@
         <button class="btn" id="btnFitAll">📍 Ver toda la flota</button>
         <button class="btn" id="btnTrail">🛣️ Ruta del día</button>
         <button class="btn" id="btnRefresh">🔄</button>
+        <button id="dashTrafficBtn" onclick="toggleDashTraffic()" title="Tráfico en tiempo real">🚦 Tráfico</button>
       </div>
       <div class="map-style-switch" id="mapStyleSwitch">
-        <button data-style="streets" class="active" title="Calles">🗺️ Calles</button>
-        <button data-style="dark" title="Modo oscuro">🌙 Oscuro</button>
+        <button data-style="streets"  class="active" title="Día (Calles)">🗺️ Día</button>
+        <button data-style="dark"     title="Noche">🌙 Noche</button>
+        <button data-style="light"    title="Claro">☀️ Claro</button>
         <button data-style="satellite" title="Satélite">🛰️ Satélite</button>
+        <button data-style="terrain"  title="Terreno">⛰️ Terreno</button>
+        <button data-style="midnight" title="Medianoche">🌃 Mdnche</button>
       </div>
       <div class="legend">
         <div class="row"><span class="dot" style="background:#10b981"></span> En movimiento</div>
@@ -4882,9 +4891,16 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
 // ════════════════════════════════════════════════════
 // MAPA Y ESTADO (MapLibre GL — vectorial, rápido)
 // ════════════════════════════════════════════════════
+const TOMTOM_API_KEY = 'N5xmJcA6AMxr5FELvpHRiE4HOj9LqqVy';
+const _TT_BASE = 'https://api.tomtom.com/map/1/tile';
+function _ttRaster(path, ext, maxzoom) {
+  return { version:8, sources:{ 'tt':{ type:'raster', tiles:[`${_TT_BASE}/${path}/{z}/{x}/{y}.${ext}?key=${TOMTOM_API_KEY}&tileSize=256`], tileSize:256, maxzoom, attribution:'© TomTom' } }, layers:[{ id:'tt', type:'raster', source:'tt' }] };
+}
+
 const MAP_STYLES = {
-  streets: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
-  dark:    'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  streets:  'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+  dark:     'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  light:    _ttRaster('basic/main',   'png', 22),
   satellite: {
     version: 8,
     sources: {
@@ -4906,14 +4922,17 @@ const MAP_STYLES = {
       { id: 'sat',    type:'raster', source:'sat-raster' },
       { id: 'labels', type:'raster', source:'labels-raster' }
     ]
-  }
+  },
+  terrain:  _ttRaster('hybrid/main',  'jpg', 19),
+  midnight: _ttRaster('basic/night',  'png', 22)
 };
 
-let currentMapStyle = 'streets';
+let currentMapStyle = localStorage.getItem('app_mapStyle') || 'streets';
+if (!MAP_STYLES[currentMapStyle]) currentMapStyle = 'streets';
 
 const map = new maplibregl.Map({
   container: 'map',
-  style: MAP_STYLES.streets,
+  style: MAP_STYLES[currentMapStyle],
   center: [-98.5795, 39.8283],   // ⚠️ MapLibre usa [lon, lat]
   zoom: 3.6,
   attributionControl: false
@@ -4948,6 +4967,39 @@ map.on('load', ()=>{
   pendingTrailOps.splice(0).forEach(fn => { try{ fn(); }catch(e){ console.warn(e); } });
 });
 
+// ── Tráfico en tiempo real ─────────────────────────────
+let dashTrafficEnabled = localStorage.getItem('dash_traffic') === 'true';
+
+function _addDashTrafficLayer() {
+  if (!mapLoaded) return;
+  try { if (map.getSource('dash-traffic')) return; } catch { return; }
+  map.addSource('dash-traffic', {
+    type: 'raster',
+    tiles: [`https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}`],
+    tileSize: 256
+  });
+  map.addLayer({ id: 'dash-traffic-layer', type: 'raster', source: 'dash-traffic', paint: { 'raster-opacity': 0.82 } });
+}
+
+function _removeDashTrafficLayer() {
+  try { if (map.getLayer('dash-traffic-layer')) map.removeLayer('dash-traffic-layer'); } catch {}
+  try { if (map.getSource('dash-traffic')) map.removeSource('dash-traffic'); } catch {}
+}
+
+function toggleDashTraffic() {
+  dashTrafficEnabled = !dashTrafficEnabled;
+  localStorage.setItem('dash_traffic', dashTrafficEnabled);
+  const btn = document.getElementById('dashTrafficBtn');
+  if (dashTrafficEnabled) {
+    _addDashTrafficLayer();
+    if (btn) btn.classList.add('active');
+  } else {
+    _removeDashTrafficLayer();
+    if (btn) btn.classList.remove('active');
+  }
+}
+window.toggleDashTraffic = toggleDashTraffic;
+
 // Re-aplicar fuentes/capas cuando cambia el estilo
 map.on('styledata', ()=>{
   if(!mapLoaded) return;
@@ -4961,20 +5013,14 @@ map.on('styledata', ()=>{
     const pts = (trails.get(selectedId)||[]).map(p=>[p[1], p[0]]);
     addOrUpdateTrail(selectedRouteSrcId, pts, '#f97316', 5, .88);
   }
+  // Restaurar capa de tráfico
+  if (dashTrafficEnabled) _addDashTrafficLayer();
 });
 
 // ── Switcher de estilo ────────────────────────────────
 document.getElementById('mapStyleSwitch').addEventListener('click', (e)=>{
   const btn = e.target.closest('button[data-style]');
-  if(!btn) return;
-  const st = btn.dataset.style;
-  if(st === currentMapStyle) return;
-  document.querySelectorAll('#mapStyleSwitch button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  currentMapStyle = st;
-  mapLoaded = false;
-  map.setStyle(MAP_STYLES[st]);
-  map.once('idle', ()=> mapLoaded = true);
+  if(btn) setMapStyle(btn.dataset.style);
 });
 
 // ── Marker HTML element ────────────────────────────────
@@ -10132,22 +10178,20 @@ function applyDarkMode(on){
 window.applyDarkMode = applyDarkMode;
 
 // ── Map style (unified between settings + map overlay) ─────
-function setMapStyle(style, btn){
-  if(!MAP_STYLES[style]) return;
-  map.setStyle(MAP_STYLES[style]);
+function setMapStyle(style){
+  if(!MAP_STYLES[style] || style === currentMapStyle) return;
   currentMapStyle = style;
   localStorage.setItem('app_mapStyle', style);
-  // sync settings buttons
   document.querySelectorAll('.set-map-btn').forEach(b => b.classList.toggle('active', b.dataset.mstyle === style));
-  // sync map overlay buttons
-  document.querySelectorAll('.map-style-switch button').forEach(b => b.classList.toggle('active', b.dataset.style === style));
+  document.querySelectorAll('#mapStyleSwitch button').forEach(b => b.classList.toggle('active', b.dataset.style === style));
+  mapLoaded = false;
+  map.setStyle(MAP_STYLES[style]);
+  map.once('idle', ()=>{
+    mapLoaded = true;
+    if (dashTrafficEnabled) _addDashTrafficLayer();
+  });
 }
 window.setMapStyle = setMapStyle;
-
-// Wire existing map-overlay style switch through new function
-document.querySelectorAll('.map-style-switch button').forEach(b => {
-  b.addEventListener('click', () => setMapStyle(b.dataset.style, b));
-});
 
 // ── Notifications (from settings panel) ───────────────────
 function setNotifFromSettings(on){
@@ -11030,11 +11074,15 @@ window.openLoadSearch = function(){
 (function initAppSettings(){
   // Dark mode
   if(localStorage.getItem('app_darkMode') === 'true') applyDarkMode(true);
-  // Map style
-  const ms = localStorage.getItem('app_mapStyle');
-  if(ms && MAP_STYLES[ms] && ms !== 'streets'){
-    map.setStyle(MAP_STYLES[ms]);
-    currentMapStyle = ms;
+  // Map style — already applied at map creation; just sync button states
+  document.querySelectorAll('#mapStyleSwitch button').forEach(b => b.classList.toggle('active', b.dataset.style === currentMapStyle));
+  document.querySelectorAll('.set-map-btn').forEach(b => b.classList.toggle('active', b.dataset.mstyle === currentMapStyle));
+  // Traffic
+  if (dashTrafficEnabled) {
+    const btn = document.getElementById('dashTrafficBtn');
+    if (btn) btn.classList.add('active');
+    if (mapLoaded) _addDashTrafficLayer();
+    else map.once('load', _addDashTrafficLayer);
   }
   // Weather
   if(localStorage.getItem('app_weather') === 'true'){
