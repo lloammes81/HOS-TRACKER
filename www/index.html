@@ -8468,11 +8468,12 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
       <!-- Botón volver -->
       <button onclick="backToMainFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:24px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
 
-      <!-- Foto + nombre -->
+      <!-- Foto + nombre (bloque centrado en la tarjeta) -->
+      <div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:14px;">
       <div id="dashProfilePhoto" style="width:68px;height:68px;border-radius:50%;flex-shrink:0;background:#1e293b;border:3px solid rgba(16,185,129,0.7);box-shadow:0 0 0 2px rgba(16,185,129,0.25),0 0 18px rgba(16,185,129,0.55),0 0 36px rgba(16,185,129,0.2),0 6px 20px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;margin:-14px 0;position:relative;z-index:2;transform:scale(1.08);"></div>
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;">
-        <div id="dashProfileName" style="font-size:24px;font-weight:900;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;width:100%;">Driver</div>
-        <div id="dashMovingInfo" style="display:none;align-items:center;gap:14px;margin-top:4px;">
+      <div style="min-width:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+        <div id="dashProfileName" style="font-size:24px;font-weight:900;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;max-width:100%;">Driver</div>
+        <div id="dashMovingInfo" style="display:none;align-items:center;justify-content:center;gap:14px;margin-top:4px;">
           <div>
             <div style="font-size:9px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:rgba(255,255,255,0.55);text-transform:uppercase;line-height:1;">⏱ Llegada</div>
             <div id="dashRouteEta" style="font-size:16px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:#22d3ee;line-height:1.1;">--:--</div>
@@ -8487,6 +8488,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       <!-- Botón campana notificaciones -->
@@ -8550,6 +8552,8 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
     <!-- CICLO 70H ring -->
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">
       <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
+        <!-- Botón desplegable de reportes — en la parte superior del anillo de 70h -->
+        <button id="reportRingBtn" onclick="openReportPopup()" aria-label="Reportar" title="Reportar" style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);z-index:6;width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.9);background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 12px rgba(245,158,11,.6);-webkit-tap-highlight-color:transparent;padding:0;">🚨</button>
         <svg viewBox="0 0 94 94" style="width:100%;height:100%;position:absolute;inset:0;">
           <circle cx="47" cy="47" r="40" fill="#0e1f35" stroke="rgba(255,255,255,0.30)" stroke-width="4"/>
           <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
@@ -8705,12 +8709,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
     </button>
   </div>
 
-  <!-- DRAGGABLE REPORT FAB — dentro del dashboard de seguimiento -->
-  <!-- BOTÓN LATERAL DE REPORTES (reemplaza el botón flotante) -->
-  <button id="reportSideBtn" onclick="openReportPopup()" aria-label="Reportar" title="Reportar">
-    <span class="side-tab-icon">🚨</span>
-    <span class="side-tab-label">Reporte</span>
-  </button>
+  <!-- Botón de reportes movido a la parte superior del anillo CICLO 70H (#reportRingBtn) -->
   <!-- VENTANA PEQUEÑA DE REPORTES -->
   <div id="reportPopupOverlay" onclick="closeReportPopup()"></div>
   <div id="reportPopup" role="dialog" aria-modal="true" aria-label="Reportar">
