@@ -31084,7 +31084,7 @@ const AppStorage = {
 };
 
 // Toast helper
-function showToast(msg, type, duration) {
+function showAppToast(msg, type, duration) {
   type = type || 'info';
   duration = duration || 3000;
   var t = document.getElementById('appToast');
@@ -31103,13 +31103,13 @@ function showToast(msg, type, duration) {
 // Safe GPS
 function safeGetLocation(onSuccess, onError) {
   if (!navigator.geolocation) {
-    showToast('GPS no disponible', 'warning', 4000);
+    showAppToast('GPS no disponible', 'warning', 4000);
     if (onError) onError({ code: 0, message: 'No GPS' });
     return;
   }
   navigator.geolocation.getCurrentPosition(onSuccess, function(err) {
     console.warn('GPS error:', err);
-    showToast('Error GPS: ' + (err.message || 'Acceso denegado'), 'error', 4000);
+    showAppToast('Error GPS: ' + (err.message || 'Acceso denegado'), 'error', 4000);
     if (onError) onError(err);
   }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
 }
@@ -31130,15 +31130,15 @@ window.addEventListener('error', function(e) {
 });
 window.addEventListener('unhandledrejection', function(e) {
   console.error('Promise error:', e.reason);
-  showToast('Error de red o datos', 'warning', 3000);
+  showAppToast('Error de red o datos', 'warning', 3000);
 });
 
 // Network status
 window.addEventListener('online', function() {
-  showToast('Conexión restaurada', 'success', 2000);
+  showAppToast('Conexión restaurada', 'success', 2000);
 });
 window.addEventListener('offline', function() {
-  showToast('Sin conexión', 'warning', 4000);
+  showAppToast('Sin conexión', 'warning', 4000);
 });
 </script>
 
@@ -31171,7 +31171,7 @@ async function requestWakeLock() {
       wakeLock.addEventListener('release', () => {
         console.log('Wake Lock released');
       });
-      showToast('✅ Pantalla siempre activa', 'success');
+      showAppToast('✅ Pantalla siempre activa', 'success');
     }
   } catch (err) {
     console.log('Wake Lock error:', err);
@@ -31192,7 +31192,7 @@ if ('getBattery' in navigator) {
     console.log('Battery:', battery.level * 100 + '%');
     battery.addEventListener('levelchange', () => {
       if (battery.level < 0.2) {
-        showToast('🔋 Batería baja: ' + Math.round(battery.level * 100) + '%', 'warning');
+        showAppToast('🔋 Batería baja: ' + Math.round(battery.level * 100) + '%', 'warning');
       }
     });
   });
@@ -31211,7 +31211,7 @@ if ('connection' in navigator) {
   console.log('Network:', conn.effectiveType, conn.downlink + 'Mbps');
   conn.addEventListener('change', () => {
     if (conn.effectiveType === '2g') {
-      showToast('⚠️ Conexión lenta - modo ahorro', 'warning');
+      showAppToast('⚠️ Conexión lenta - modo ahorro', 'warning');
     }
   });
 }
@@ -31234,7 +31234,7 @@ async function saveFileLocally(data, filename) {
     const writable = await handle.createWritable();
     await writable.write(data);
     await writable.close();
-    showToast('✅ Archivo guardado', 'success');
+    showAppToast('✅ Archivo guardado', 'success');
   } catch (err) {
     console.log('File save cancelled or failed:', err);
   }
@@ -31739,7 +31739,7 @@ function saveLocationForHour(hour, status) {
 
   // Show toast for significant stops (offduty, sleeper, onduty)
   if (status !== 'driving' && lbCurrentAddress) {
-    showToast('📍 ' + stopTypeLabel + ' at ' + lbCurrentAddress.split(',')[0], 'info', 3000);
+    showAppToast('📍 ' + stopTypeLabel + ' at ' + lbCurrentAddress.split(',')[0], 'info', 3000);
   }
 
   // Save to storage
@@ -32233,7 +32233,7 @@ function saveLogbook() {
   drives.unshift(logEntry);
   AppStorage.set('drives_history', drives.slice(0, 100));
 
-  showToast('✅ Logbook saved with GPS locations!', 'success');
+  showAppToast('✅ Logbook saved with GPS locations!', 'success');
   hapticAlert([100, 50, 100]);
 }
 
@@ -32270,13 +32270,13 @@ function shareLogbook() {
     navigator.share({ title: 'Daily Logbook', text: text });
   } else {
     navigator.clipboard.writeText(text).then(() => {
-      showToast('📋 Logbook with locations copied!', 'success');
+      showAppToast('📋 Logbook with locations copied!', 'success');
     });
   }
 }
 
 function scanLogbook() {
-  showToast('📷 Position paper log in frame', 'info');
+  showAppToast('📷 Position paper log in frame', 'info');
 
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
@@ -32299,7 +32299,7 @@ function scanLogbook() {
           canvas.toBlob(blob => {
             const url = URL.createObjectURL(blob);
             AppStorage.set('scanned_log_' + Date.now(), url);
-            showToast('✅ Paper log scanned!', 'success');
+            showAppToast('✅ Paper log scanned!', 'success');
           }, 'image/jpeg');
 
           stream.getTracks().forEach(t => t.stop());
@@ -32308,12 +32308,12 @@ function scanLogbook() {
         };
         document.body.appendChild(captureBtn);
       })
-      .catch(err => showToast('❌ Camera error: ' + err.message, 'error'));
+      .catch(err => showAppToast('❌ Camera error: ' + err.message, 'error'));
   }
 }
 
 function showLogbookHelp() {
-  showToast('GPS auto-saves location every status change. Grid shows location per hour. Tap cells for manual override.', 'info', 6000);
+  showAppToast('GPS auto-saves location every status change. Grid shows location per hour. Tap cells for manual override.', 'info', 6000);
 }
 
 // Sheet open/close
@@ -32604,7 +32604,7 @@ function detectPreTrip(hour, status) {
     lbFirstOnDutyToday = true;
 
     // Show special pre-trip notification
-    showToast('🔍 PRE-TRIP INSPECTION at ' + (lbCurrentAddress ? lbCurrentAddress.split(',')[0] : 'current location'), 'success', 4000);
+    showAppToast('🔍 PRE-TRIP INSPECTION at ' + (lbCurrentAddress ? lbCurrentAddress.split(',')[0] : 'current location'), 'success', 4000);
     hapticAlert([100, 50, 100, 50, 100]);
 
     // Save as pre-trip location
@@ -32619,7 +32619,7 @@ function detectPreTrip(hour, status) {
 
   // Detect OFF DUTY or SLEEPER as rest stops
   if ((status === 'offduty' || status === 'sleeper') && lbLastStatusChange === 'driving') {
-    showToast('🛑 REST STOP at ' + (lbCurrentAddress ? lbCurrentAddress.split(',')[0] : 'current location'), 'info', 3000);
+    showAppToast('🛑 REST STOP at ' + (lbCurrentAddress ? lbCurrentAddress.split(',')[0] : 'current location'), 'info', 3000);
   }
 
   lbLastStatusChange = status;
@@ -33040,7 +33040,7 @@ function loadRoadSigns() {
 }
 
 function showSignDetail(name, desc) {
-  showToast(name + ': ' + desc, 'info', 3000);
+  showAppToast(name + ': ' + desc, 'info', 3000);
 }
 
 function filterRoadSigns(category) {
@@ -33049,7 +33049,7 @@ function filterRoadSigns(category) {
   event.target.classList.add('active');
 
   // In a real app, this would filter signs by category
-  showToast('Showing ' + category + ' signs', 'info', 1500);
+  showAppToast('Showing ' + category + ' signs', 'info', 1500);
 }
 
 // ========== GOOGLE MAPS TRUCK STOPS (Fallback) ==========
@@ -33061,7 +33061,7 @@ async function openGoogleMapsTruckStops() {
     const url = 'https://www.google.com/maps/search/truck+stop/@' + lat + ',' + lon + ',12z';
     window.open(url, '_blank');
   } catch (err) {
-    showToast('❌ GPS error: ' + err.message, 'error');
+    showAppToast('❌ GPS error: ' + err.message, 'error');
   }
 }
 
