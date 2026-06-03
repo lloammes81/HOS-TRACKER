@@ -8530,7 +8530,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           <circle cx="45" cy="45" r="36" fill="url(#ringGrad3d)" stroke="rgba(255,255,255,0.30)" stroke-width="4"/>
           <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.85);">
           <div id="dash14hTime" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:13px;font-weight:normal;color:#ffffff;letter-spacing:1px;line-height:1;text-align:center;width:100%;">14h 0m</div>
           <div id="dash14hSub" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:7px;color:rgba(255,255,255,0.80);margin-top:1px;letter-spacing:1px;text-align:center;width:100%;">ON DUTY</div>
           <div style="width:20px;height:0.5px;background:rgba(255,255,255,0.18);margin:2px 0;"></div>
@@ -19474,7 +19474,8 @@ function update14hCircle() {
   const mins = Math.round(remaining * 60);
   const h = Math.floor(mins / 60), m = mins % 60;
   timeEl.textContent = remaining <= 0 ? '0h 0m' : h > 0 ? `${h}h ${m}m` : `${m}m`;
-  timeEl.style.color = remaining <= 0 ? '#ef4444' : remaining < 2 ? '#ef4444' : remaining < 4 ? '#f59e0b' : '#ffffff';
+  timeEl.style.color = remaining <= 0 ? '#ff6b6b' : remaining < 2 ? '#ff6b6b' : remaining < 4 ? '#fbbf24' : '#ffffff';
+  timeEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.85)';
 
   // Sub-label: shift start time or "sin turno"
   if (subLbl) {
@@ -19491,7 +19492,7 @@ function update14hCircle() {
   if (label) {
     if (remaining <= 0) {
       label.textContent = '¡Descansa 10h!';
-      label.style.color = '#ef4444';
+      label.style.color = '#ff6b6b';
     } else if (hosShiftStartTime) {
       const used = 14 - remaining;
       const uh = Math.floor(used), um2 = Math.round((used - uh) * 60);
