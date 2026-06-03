@@ -1,87 +1,58 @@
-const CACHE_NAME = 'truck-precision-v211';
-const APP_VERSION = 'v211';
+const CACHE_NAME = 'truck-precision-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap'
+];
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+  );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.map(key => caches.delete(key)))
-    ).then(() => {
-      self.clients.claim();
-      return self.clients.matchAll({ type: 'window' }).then(clients => {
-        clients.forEach(client => {
-          client.postMessage({ type: 'SW_UPDATED', version: APP_VERSION });
-          client.navigate(client.url);
-        });
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      )
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      if (response) return response;
+      return fetch(event.request).catch(() => {
+        // Offline fallback
+        if (event.request.destination === 'document') {
+          return new Response('<h1>Offline - Truck Precision</h1>', {
+            status: 503,
+            headers: { 'Content-Type': 'text/html' }
+          });
+        }
       });
     })
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    fetch(event.request, { cache: 'reload' }).catch(() => {
-      if (event.request.mode === 'navigate') {
-        return caches.match('/index.html');
-      }
-    })
-  );
-});
-
-const _notifTimers = {};
-
-self.addEventListener('message', event => {
-  const d = event.data;
-  if (!d || !d.type) return;
-  if (d.type === 'GET_VERSION') {
-    event.source && event.source.postMessage({ type: 'VERSION', version: APP_VERSION });
-  }
-  if (d.type === 'SCHEDULE_NOTIFICATION') {
-    const delay = Math.max(0, d.delay || 0);
-    const tag = d.tag || 'hos-alert';
-    if (_notifTimers[tag]) { clearTimeout(_notifTimers[tag]); delete _notifTimers[tag]; }
-    if (delay === 0) {
-      self.registration.showNotification(d.title || 'HOS Tracker', { body: d.body || '', icon: d.icon || './icon-192.png', badge: './icon-192.png', tag, vibrate: [200, 100, 200], requireInteraction: tag === 'rest-done', data: { url: '/' } });
-    } else {
-      _notifTimers[tag] = setTimeout(() => {
-        delete _notifTimers[tag];
-        self.registration.showNotification(d.title || 'HOS Tracker', { body: d.body || '', icon: d.icon || './icon-192.png', badge: './icon-192.png', tag, vibrate: [200, 100, 200], requireInteraction: tag === 'rest-done', data: { url: '/' } });
-      }, delay);
-    }
-  }
-  if (d.type === 'HOS_ALERT') {
-    self.registration.showNotification('🚛 HOS Tracker', { body: d.body || 'Alerta HOS', icon: './icon-192.png', badge: './icon-192.png', tag: 'hos-alert-now', vibrate: [300, 100, 300], requireInteraction: true, data: { url: '/' } });
-  }
-  if (d.type === 'CANCEL_REST_NOTIFICATIONS') {
-    ['rest-1h','rest-30min','rest-10min','rest-done'].forEach(tag => {
-      if (_notifTimers[tag]) { clearTimeout(_notifTimers[tag]); delete _notifTimers[tag]; }
-    });
+// Background sync for GPS data
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'gps-sync') {
+    event.waitUntil(syncGPSData());
   }
 });
 
-self.addEventListener('push', event => {
-  let data = {};
-  try { data = event.data ? event.data.json() : {}; } catch(e) {}
-  const title = data.title || '🚛 HOS Tracker';
-  const opts = { body: data.body || 'Nueva notificación', icon: data.icon || './icon-192.png', badge: './icon-192.png', tag: data.tag || 'hos-push', vibrate: [200, 100, 200], requireInteraction: data.requireInteraction || false, data: { url: data.url || '/' } };
-  event.waitUntil(self.registration.showNotification(title, opts));
-});
-
-self.addEventListener('periodicsync', event => {
-  if (event.tag === 'hos-news-check') {
-    event.waitUntil(self.registration.showNotification('🚛 HOS Tracker — Noticias DOT', { body: 'Hay actualizaciones disponibles.', icon: './icon-192.png', badge: './icon-192.png', tag: 'hos-periodic-news', vibrate: [150, 60, 150], data: { url: '/' } }));
-  }
-});
-
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/';
-  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-    const existing = clients.find(c => c.url.includes(url) && 'focus' in c);
-    if (existing) return existing.focus();
-    return self.clients.openWindow(url);
-  }));
-});
+async function syncGPSData() {
+  // Sync GPS data when back online
+  const clients = await self.clients.matchAll();
+  clients.forEach(client => client.postMessage({ type: 'SYNC_GPS' }));
+}
