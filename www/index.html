@@ -11238,8 +11238,9 @@ function updateWeatherWidget(wx) {
       `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Consider pulling over.`, 45000);
     flashDanger(3000);
     vibrate([300,100,300,100,300]);
-    showFullscreenAlert('danger', '⛈️', '¡CLIMA PELIGROSO!',
-      `${wx.desc} — ${wx.temp}°F, vientos ${wx.wind}mph. Considera detenerte.`, '', 15000);
+    // Ventana roja a pantalla completa eliminada para clima — solo queda la
+    // notificación (toast) de arriba. El banner y el efecto de lluvia/nieve se
+    // mantienen vía showWeatherEffect().
     showWeatherEffect(wx.code, wx.wind);
   } else if (isWarning) {
     showToast('warning','🌧️','Weather Alert',
