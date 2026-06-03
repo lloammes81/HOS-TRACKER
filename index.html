@@ -2319,6 +2319,10 @@
     0%,100% { box-shadow: 0 4px 16px rgba(239,68,68,.5); }
     50% { box-shadow: 0 0 0 6px rgba(239,68,68,.2), 0 4px 16px rgba(239,68,68,.5); }
   }
+  @keyframes offRoutePulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: .72; }
+  }
 
   /* Speed limit exceedance toast */
   .speed-toast {
@@ -7942,6 +7946,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
     <div class="local-radius-info" id="localRadiusInfo" style="display:none">📍 Local Mode — 100 mi radius</div>
     <div id="routeAlertPill" onclick="switchTab('community')">🚨 Alert on your route — tap</div>
+    <div id="offRouteBar" style="display:none;position:absolute;top:calc(58px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:19000;background:rgba(239,68,68,0.92);color:#fff;font-size:13px;font-weight:800;letter-spacing:.5px;padding:8px 18px;border-radius:24px;box-shadow:0 4px 18px rgba(239,68,68,.5);backdrop-filter:blur(8px);pointer-events:none;animation:offRoutePulse 1.2s ease-in-out infinite">🔄 FUERA DE RUTA — recalculando...</div>
 
   <!-- Map Style Picker overlay + panel -->
   <div id="mapStyleOverlay" onclick="toggleMapStylePanel()" style="position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .20s ease;"></div>
@@ -16028,24 +16033,35 @@ function roadRemainingMiles(curLat, curLon) {
   return Math.max(0, rem);
 }
 
-var _orc = 0, _lrr = 0;
+function _showOffRouteBar(show) {
+  const bar = document.getElementById('offRouteBar');
+  if (bar) bar.style.display = show ? 'block' : 'none';
+}
+
+var _lrr = 0;
 async function handleOffRoute(rl, ro) {
-  _orc++;
-  if (_orc < 4) return;
   var now2 = Date.now();
-  if (now2 - _lrr < 50000) return;
-  _lrr = now2; _orc = 0;
-  showToast('info', '🔄', lang === 'es' ? 'Recalculando ruta...' : 'Recalculating...', lang === 'es' ? 'GPS fuera de ruta' : 'Off route', 4000);
+  if (now2 - _lrr < 45000) return; // max once every 45s
+  _lrr = now2;
+  _showOffRouteBar(false);
+  showToast('info', '🔄', lang === 'es' ? 'Recalculando ruta...' : 'Recalculating...', lang === 'es' ? 'GPS fuera de ruta' : 'Off route', 5000);
   try {
     var no = { lat: rl, lon: ro, name: origin ? origin.name : 'GPS' };
-    var road2 = await fetchRoadRoute(no, destination);
-    if (!road2 || !road2.coords || road2.coords.length < 2) return;
+    // Bypass cache — always fetch a fresh route when recalculating after deviation
+    var road2 = await _fetchTomTomRoute(no, destination);
+    if (!road2 || !road2.coords || road2.coords.length < 2) {
+      showToast('warning', '⚠️', lang === 'es' ? 'Sin ruta' : 'No route', lang === 'es' ? 'Intenta de nuevo' : 'Try again', 3000);
+      return;
+    }
+    _routeCacheSet(no, destination, road2); // update cache with new route
     roadGeometry = road2.coords; routeDistance = road2.miles;
     navSteps = Array.isArray(road2.steps) ? road2.steps : []; navStepIdx = 0;
     origin = no;
     if (fmMapInst) fmRedrawRoute(roadGeometry);
-    showToast('success', '✅', road2.miles.toFixed(0) + ' mi', '', 3000);
-  } catch(e) {}
+    showToast('success', '✅', road2.miles.toFixed(0) + ' mi', lang === 'es' ? 'Nueva ruta calculada' : 'New route ready', 3000);
+  } catch(e) {
+    showToast('error', '❌', lang === 'es' ? 'Error de ruta' : 'Route error', String(e).slice(0, 50), 3000);
+  }
 }
 
 // Calculate compass heading from two GPS points
@@ -17491,7 +17507,16 @@ function fmStartTracking() {
     const rawSpeed = pos.coords.speed;
     const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
     // 8 mph threshold to filter GPS drift noise (GPS can report 3-6 mph when stationary)
-    const isMoving = gpsSpeed >= 8;
+    // Fallback: if device doesn't report speed (rawSpeed=null), estimate from position delta
+    let isMoving = gpsSpeed >= 8;
+    if (!isMoving && rawSpeed == null && window._lastRawGpsFix) {
+      const _dtSec = (Date.now() - window._lastRawGpsFix.ts) / 1000;
+      if (_dtSec > 0 && _dtSec < 8) {
+        const _dmi = haversine(lat, lon, window._lastRawGpsFix.lat, window._lastRawGpsFix.lon);
+        if ((_dmi / _dtSec) * 3600 >= 5) isMoving = true;
+      }
+    }
+    window._lastRawGpsFix = { lat, lon, ts: Date.now() };
     // Expose globally so calculateRoute can check
     fmCurrentSpeed = gpsSpeed;
     // ── Pausa de relojes HOS cuando el vehículo se detiene ──
@@ -17521,10 +17546,22 @@ function fmStartTracking() {
     const snap = (typeof snapToRoute === 'function') ? snapToRoute(lat, lon) : { lat, lon, snapped: true };
     const snapLat = snap.lat, snapLon = snap.lon;
 
-    // Off-route detection
-    if (isMoving && destination && roadGeometry) {
-      if (!snap.snapped) { if (typeof handleOffRoute === 'function') handleOffRoute(lat, lon); }
-      else { if (typeof _orc !== 'undefined') _orc = 0; }
+    // Off-route detection — time-based (8s off-route → recalculate)
+    if (destination && roadGeometry) {
+      if (!snap.snapped && isMoving) {
+        if (!window._orfStart) window._orfStart = Date.now();
+        const _orfElapsed = Date.now() - window._orfStart;
+        // Show off-route indicator after 3s
+        if (_orfElapsed > 3000) _showOffRouteBar(true);
+        // Trigger recalculation after 8s continuously off-route
+        if (_orfElapsed > 8000) {
+          window._orfStart = null;
+          if (typeof handleOffRoute === 'function') handleOffRoute(lat, lon);
+        }
+      } else {
+        // Back on route or stopped — clear timer and hide indicator
+        if (window._orfStart) { window._orfStart = null; _showOffRouteBar(false); }
+      }
     }
 
     // Always derive heading from consecutive snapped positions so the truck
