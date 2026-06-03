@@ -18282,9 +18282,11 @@ let _dashHeaderDriverName = 'Driver';
 function _startDashHeaderTicker(name) {
   _dashHeaderDriverName = name || 'Driver';
   _dashHeaderTickerIdx  = 0;
-  if (_dashHeaderTickerInt) clearInterval(_dashHeaderTickerInt);
-  _dashHeaderTick(); // show name immediately
-  _dashHeaderTickerInt = setInterval(_dashHeaderTick, 3500);
+  // Ticker desactivado: el header ya no parpadea mostrando "X al destino".
+  // Se muestra el nombre del conductor de forma fija (sin tiempo ni millas).
+  if (_dashHeaderTickerInt) { clearInterval(_dashHeaderTickerInt); _dashHeaderTickerInt = null; }
+  const el = document.getElementById('dashProfileName');
+  if (el) { el.style.opacity = '1'; el.style.fontSize = '24px'; el.textContent = _dashHeaderDriverName; }
 }
 function _stopDashHeaderTicker() {
   if (_dashHeaderTickerInt) { clearInterval(_dashHeaderTickerInt); _dashHeaderTickerInt = null; }
