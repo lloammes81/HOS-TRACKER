@@ -6292,11 +6292,6 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
   </div>
 
-  <!-- Floating ELD BT icon (hidden) -->
-  <button id="heroBtBadge" onclick="heroBleScan()" class="bt-disconnected" style="display:none;">
-    <span id="heroBtDot"></span>
-    <span id="heroBtTxt"></span>
-  </button>
 
 </div>
 
@@ -30773,15 +30768,7 @@ window._hosAutoRecalc = false;
     }
   }
 
-  // ── Escaneo manual (primer toque al badge ELD) ─────────────
-  window.heroBleScan = async function(){
-    if (_connected) return;
-    // Always open ELD sheet with native BLE scan
-    openEldSheet();
-    if(IS_CAPACITOR){
-      setTimeout(() => { try { startEldScan(); } catch(e){} }, 350);
-    }
-  };
+  window.heroBleScan = function(){};
 
   // ── Helpers de horas disponibles ──────────────────────────
   function _driveLeft(){
@@ -30951,55 +30938,6 @@ window._hosAutoRecalc = false;
 })();
 </script>
 
-<script>
-/* ── Draggable floating BT button ── */
-(function(){
-  const btn = document.getElementById('heroBtBadge');
-  if (!btn) return;
-  // Restore saved position
-  try {
-    const saved = JSON.parse(localStorage.getItem('btBtnPos'));
-    if (saved) { btn.style.bottom = 'auto'; btn.style.right = 'auto'; btn.style.top = saved.top + 'px'; btn.style.left = saved.left + 'px'; }
-  } catch(e){}
-
-  let dragging = false, ox = 0, oy = 0, moved = false;
-
-  function start(x, y) {
-    dragging = true; moved = false;
-    const r = btn.getBoundingClientRect();
-    ox = x - r.left; oy = y - r.top;
-    btn.style.transition = 'none';
-    btn.style.bottom = 'auto'; btn.style.right = 'auto';
-    btn.style.top = r.top + 'px'; btn.style.left = r.left + 'px';
-    btn.setPointerCapture && btn.setPointerCapture(btn._pid);
-  }
-  function move(x, y) {
-    if (!dragging) return;
-    const nx = x - ox, ny = y - oy;
-    const maxX = window.innerWidth - btn.offsetWidth - 4;
-    const maxY = window.innerHeight - btn.offsetHeight - 4;
-    btn.style.left = Math.max(4, Math.min(nx, maxX)) + 'px';
-    btn.style.top  = Math.max(4, Math.min(ny, maxY)) + 'px';
-    moved = true;
-  }
-  function end() {
-    if (!dragging) return;
-    dragging = false;
-    btn.style.transition = '';
-    try { localStorage.setItem('btBtnPos', JSON.stringify({ top: parseFloat(btn.style.top), left: parseFloat(btn.style.left) })); } catch(e){}
-    if (moved) { btn.addEventListener('click', function stop(e){ e.stopImmediatePropagation(); btn.removeEventListener('click', stop); }, { once: true, capture: true }); }
-  }
-
-  btn.addEventListener('pointerdown', function(e) {
-    btn._pid = e.pointerId;
-    btn.setPointerCapture(e.pointerId);
-    start(e.clientX, e.clientY);
-  });
-  btn.addEventListener('pointermove', function(e) { move(e.clientX, e.clientY); });
-  btn.addEventListener('pointerup',   end);
-  btn.addEventListener('pointercancel', end);
-})();
-</script>
 
 
 
