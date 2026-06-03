@@ -2053,22 +2053,23 @@
   #reportPopupOverlay.open { opacity: 1; pointer-events: all; }
   #reportPopup {
     position: fixed;
-    left: 50%; top: 50%;
-    transform: translate(-50%,-50%) scale(.8);
+    left: 0; top: 0;
     z-index: 25199;
-    width: min(340px, 86vw);
-    background: rgba(8, 14, 26, 0.97);
+    width: min(300px, 80vw);
+    background: rgba(8, 14, 26, 0.82);
     border: 1.5px solid rgba(255,255,255,.13);
-    border-radius: 24px;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    box-shadow: 0 16px 56px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.06);
-    padding: 22px 18px 24px;
+    border-radius: 20px;
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    box-shadow: 0 16px 48px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.06);
+    padding: 16px 16px 18px;
+    transform-origin: top right;
+    transform: scale(.8);
     opacity: 0;
     pointer-events: none;
-    transition: transform .28s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
+    transition: transform .24s cubic-bezier(.34,1.56,.64,1), opacity .18s ease;
   }
-  #reportPopup.open { transform: translate(-50%,-50%) scale(1); opacity: 1; pointer-events: all; }
+  #reportPopup.open { transform: scale(1); opacity: 1; pointer-events: all; }
   #reportPopupTitle {
     text-align: center; color: #fff;
     font-family: 'DM Sans', sans-serif;
@@ -8508,7 +8509,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
       <span id="dashStatusDot" style="width:6px;height:6px;border-radius:50%;background:#10b981;flex-shrink:0;"></span>
       <span id="dashMainStatusLabel" style="font-size:13px;font-weight:900;letter-spacing:1px;color:#10b981;text-transform:uppercase;">CONDUCIENDO</span>
     </div>
-    <button id="reportTopBtn" onclick="openReportPopup()" aria-label="Reportar" title="Reportar" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#f59e0b,#d97706);border:1.5px solid rgba(255,255,255,0.85);border-radius:999px;padding:5px 13px;color:#fff;font-size:12px;font-weight:800;font-family:'DM Sans',sans-serif;letter-spacing:.3px;cursor:pointer;box-shadow:0 3px 12px rgba(245,158,11,.5);-webkit-tap-highlight-color:transparent;flex-shrink:0;">🚨 Reportar</button>
+    <button id="reportTopBtn" onclick="openReportPopup()" aria-label="Reportar" title="Reportar" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(245,158,11,0.5),rgba(217,119,6,0.5));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.45);border-radius:999px;padding:5px 13px;color:#fff;font-size:12px;font-weight:800;font-family:'DM Sans',sans-serif;letter-spacing:.3px;cursor:pointer;box-shadow:0 3px 12px rgba(245,158,11,.3);-webkit-tap-highlight-color:transparent;flex-shrink:0;">🚨 Reportar</button>
   </div>
 
   <!-- ③ TRES ANILLOS KPI — centro más grande -->
@@ -21295,8 +21296,24 @@ function openReportPopup() {
     btn.onclick = () => { closeReportPopup(); quickReport(rt.type, rt.emoji, rt.label); };
     grid.appendChild(btn);
   });
+  // Desplegar anclado al botón disparador (esquina superior derecha)
+  const trigger = document.getElementById('reportTopBtn');
+  popup.style.visibility = 'hidden';
+  popup.style.left = '0px'; popup.style.top = '0px';
   overlay.classList.add('open');
   popup.classList.add('open');
+  requestAnimationFrame(() => {
+    const pw = popup.offsetWidth, ph = popup.offsetHeight;
+    let left = (window.innerWidth - pw) / 2, top = 70;
+    if (trigger) {
+      const r = trigger.getBoundingClientRect();
+      left = Math.max(8, Math.min(window.innerWidth - pw - 8, r.right - pw));
+      top  = Math.min(window.innerHeight - ph - 8, r.bottom + 8);
+    }
+    popup.style.left = left + 'px';
+    popup.style.top  = top + 'px';
+    popup.style.visibility = 'visible';
+  });
   if (typeof vibrate === 'function') vibrate(15);
 }
 
