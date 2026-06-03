@@ -28876,13 +28876,16 @@ window._hosAutoRecalc = false;
 #logbookSheet {
   position: fixed; inset: 0; z-index: 9000;
   background: #f5f0e8;
-  display: none; flex-direction: column;
+  display: none;
   overflow-y: auto; overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   font-family: 'Share Tech Mono', 'Courier New', monospace;
 }
-#logbookSheet.open { display: flex; animation: lbFadeIn 0.3s ease; }
-@keyframes lbFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+/* display:block (no flex) + sin transform en la animación → el scroll táctil
+   funciona en iOS/WebKit (un contenedor fixed que es flex+overflow no desliza). */
+#logbookSheet.open { display: block; animation: lbFadeIn 0.3s ease; }
+@keyframes lbFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .lb-topbar {
   position: sticky; top: 0; z-index: 10;
