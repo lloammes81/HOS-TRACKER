@@ -18925,6 +18925,10 @@ function updateDashRouteProgress(pct, remaining) {
   const remMi = hasRoute
     ? (typeof remaining === 'number' ? remaining : parseFloat(remaining) || 0)
     : 0;
+  // Distancia que falta para llegar al destino (para acotar la próxima parada).
+  // Si la ruta aún no arranca, usar la distancia total de la ruta.
+  window._dashRemainingMi = hasRoute ? remMi
+    : (hasDest ? (typeof routeDistance === 'number' ? routeDistance : 0) : 0);
   const remStr = !hasDest ? 'SIN DESTINO'
     : !hasRoute ? 'RUTA NO INICIADA'
     : (remMi < 10 ? remMi.toFixed(1) : Math.round(remMi).toLocaleString()) + ' MI';
@@ -19070,6 +19074,16 @@ function _refreshDashRouteNextStop() {
     miles = Math.max(1, Math.round(restHrsTo * spd));
     label = 'PRÓXIMA PARADA · DESCANSO 10H';
     color = '#3b82f6';
+  }
+
+  // Si la pausa/descanso cae más allá del destino, el conductor llega antes
+  // de necesitar parar → no hay parada intermedia, ocultar la fila.
+  const _remMi = (typeof window._dashRemainingMi === 'number' && window._dashRemainingMi > 0)
+    ? window._dashRemainingMi
+    : (typeof routeDistance === 'number' ? routeDistance : 0);
+  if (_remMi > 0 && miles >= _remMi - 2) {
+    row.style.display = 'none';
+    return;
   }
 
   row.style.display = 'flex';
