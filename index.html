@@ -11457,12 +11457,16 @@ async function startWeatherMonitor() {
 
   const updateNow = async () => {
     let lat = null, lon = null;
-    // 1. Best source: live tracker GPS fix (most accurate, already obtained)
-    if (window.lastFixFm && window.lastFixFm.lat != null) {
+    const FRESH_MS = 5 * 60 * 1000; // sólo usar fixes de hasta 5 min para que el clima sea el actual
+    const now = Date.now();
+    // 1. Best source: live tracker GPS fix — sólo si es reciente
+    if (window.lastFixFm && window.lastFixFm.lat != null
+        && (now - (window.lastFixFm.ts || 0)) < FRESH_MS) {
       lat = window.lastFixFm.lat; lon = window.lastFixFm.lon;
     }
-    // 2. GPS cache from warm watcher
-    if (lat == null && _gpsCache && _gpsCache.lat != null) {
+    // 2. GPS cache from warm watcher — sólo si es reciente
+    if (lat == null && _gpsCache && _gpsCache.lat != null
+        && (now - (_gpsCache.timestamp || 0)) < FRESH_MS) {
       lat = _gpsCache.lat; lon = _gpsCache.lon;
     }
     // 3. Fresh GPS request (longer timeout to give it a real chance)
@@ -32997,19 +33001,10 @@ function closeNearbyPoiOverlay() {
   if (overlay) overlay.classList.remove('open');
 }
 
-function getGPSPosition(timeout) {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error('GPS no disponible'));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: timeout || 10000,
-      maximumAge: 60000
-    });
-  });
-}
+/* getGPSPosition() unificada — se usa la definición Capacitor-aware de más
+   arriba (maxAgeMs, timeoutMs), que sí utiliza el plugin de Geolocation en la
+   app nativa. Se elimina esta versión duplicada que sólo usaba
+   navigator.geolocation y rompía la obtención de ubicación (y el clima) en iOS. */
 
 // ========== ROAD SIGNS PANEL ==========
 function openRoadSignsPanel() {
