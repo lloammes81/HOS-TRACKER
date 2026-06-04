@@ -5816,7 +5816,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
   }
 
   /* Compact HUD: show truck icon + location + progress; hide full-mode sections */
-  #fmHud.compact #mapHudTruck   { display: none !important; }
+  #fmHud.compact #mapHudTruck   { display: flex !important; }
   #fmHud.compact #mapHudLocRow  { display: block !important; }
   #fmHud.compact #mapHudProgress{ display: block !important; }
   #fmHud.compact .fm-full-only  { display: none !important; }
@@ -8314,7 +8314,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
     <div class="fm-hud-handle" style="width:36px;height:4px;background:rgba(255,255,255,0.2);border-radius:999px;margin:0 auto 10px"></div>
 
     <!-- COMPACT: truck icon centered at top of HUD -->
-    <div id="mapHudTruck" style="display:none;flex-direction:column;align-items:center;margin-bottom:6px;gap:2px">
+    <div id="mapHudTruck" style="display:flex;flex-direction:column;align-items:center;margin-bottom:8px;gap:2px">
       <div id="mapHudArrow" style="width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:20px solid #3b82f6;filter:drop-shadow(0 2px 6px rgba(0,0,0,.55));transition:border-bottom-color .3s"></div>
       <div id="mapHudCircle" style="width:66px;height:66px;border-radius:50%;border:3.5px solid #3b82f6;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.95);box-shadow:0 0 0 3px rgba(59,130,246,0.20)">
         <div id="mapHudInner" style="width:66px;height:66px;display:flex;align-items:center;justify-content:center;font-size:28px">🚛</div>
@@ -12333,12 +12333,22 @@ function updateDashRingGlow(mph, isOver) {
 }
 
 function updateSpeedometer(mph) {
-  // ── Highway mode: change route color when speed > 40 mph ─────────
+  // ── Color de ruta: solo se re-aplica cuando cambia el estado (carretera vs
+  //    ciudad). Antes se re-pintaba en CADA actualización de GPS, lo que hacía
+  //    parpadear la línea turquesa. Ahora es estable. ──
   const isHighway = mph > 40;
-  if (fmLayer || fmGlowLayer || fmCasingLayer) {
-    fmLayer      && fmLayer.setStyle({ color: '#00C8E0', weight: 10, opacity: 0.97 });
-    fmGlowLayer  && fmGlowLayer.setStyle({ color: '#00E5FF', weight: 32, opacity: 0.18 });
-    fmCasingLayer&& fmCasingLayer.setStyle({ color: '#004D60', weight: 14, opacity: 0.80 });
+  const wantState = isHighway ? 'hwy' : 'city';
+  if ((fmLayer || fmGlowLayer || fmCasingLayer) && window._fmRouteColState !== wantState) {
+    window._fmRouteColState = wantState;
+    if (isHighway) {
+      fmLayer       && fmLayer.setStyle({ color: '#00C8E0', weight: 10, opacity: 0.97 });
+      fmGlowLayer   && fmGlowLayer.setStyle({ color: '#00E5FF', weight: 32, opacity: 0.18 });
+      fmCasingLayer && fmCasingLayer.setStyle({ color: '#004D60', weight: 14, opacity: 0.80 });
+    } else {
+      fmLayer       && fmLayer.setStyle({ color: '#3b82f6', weight: 10, opacity: 0.97 });
+      fmGlowLayer   && fmGlowLayer.setStyle({ color: '#3b82f6', weight: 32, opacity: 0.18 });
+      fmCasingLayer && fmCasingLayer.setStyle({ color: '#1e3a5f', weight: 14, opacity: 0.80 });
+    }
   }
 
   // Update the inline speed sign (below speed limit sign)
@@ -15856,6 +15866,7 @@ function fmRedrawRoute(coords) {
   const casing  = fmCasingLayer;
   // ── Ruta principal azul brillante
   fmLayer = L.polyline(routeCoords,{ color:'#3b82f6', weight:10, opacity:0.97 }).addTo(fmMapInst);
+  window._fmRouteColState = null;  // permitir re-aplicar el color tras redibujar
 
   // ── Marcador origen (dot verde)
   const oIcon = L.divIcon({
