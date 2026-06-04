@@ -15630,11 +15630,11 @@ let _lastPanLat     = null;   // last position we panned to (pan-threshold filte
 let _lastPanLon     = null;
 
 // POI layers
-const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
+const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [], checkpoint: [] };
 const fmPoiGroups = {};  // LayerGroup per type for batch rendering
 // scale/truck/rest all start ON — loaded automatically when route opens
-const fmPoiActive = { scale: true, truck: true, rest: true, reports: false, restrict: false, parking: false };
-let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false };
+const fmPoiActive = { scale: true, truck: true, rest: true, parking: true, checkpoint: true, reports: false, restrict: false };
+let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false, checkpoint: false };
 
 // Community reports (stored in localStorage, shared within session)
 let communityReports = JSON.parse(localStorage.getItem('hos_reports') || '[]');
@@ -19717,6 +19717,7 @@ const POI_ICONS = {
   truck:       { emoji:'🚛', color:'#3b82f6', label:'Truck Stop' },
   rest:        { emoji:'😴', color:'#8b5cf6', label:'Rest Area' },
   parking:     { emoji:'🅿️', color:'#2563eb', label:'Truck Parking' },
+  checkpoint:  { emoji:'🔍', color:'#16a34a', label:'Inspección / Checkpoint' },
   mechanics:   { emoji:'🔧', color:'#7c3aed', label:'Truck Mechanic' },
   parts:       { emoji:'⚙️', color:'#3b82f6', label:'Parts & Dealers' },
   restaurants: { emoji:'🍽️', color:'#10b981', label:'Restaurant' },
@@ -19776,6 +19777,17 @@ const OVERPASS_QUERIES = {
       node["amenity"="parking"]["hgv"="yes"](around:${r},${lat},${lon});
       node["amenity"="parking"]["truck"="yes"](around:${r},${lat},${lon});
       way["amenity"="parking"]["hgv"="yes"](around:${r},${lat},${lon});
+    );
+    out center qt;`,
+
+  checkpoint: (lat, lon, r) => `
+    [out:json][timeout:25];
+    (
+      node["border_control"](around:${r},${lat},${lon});
+      node["amenity"="checkpoint"](around:${r},${lat},${lon});
+      node["highway"="checkpoint"](around:${r},${lat},${lon});
+      node["name"~"inspection station|port of entry|DOT checkpoint|weigh.in.motion|check point|check station",i](around:${r},${lat},${lon});
+      way["amenity"="checkpoint"](around:${r},${lat},${lon});
     );
     out center qt;`,
 
@@ -20953,12 +20965,12 @@ let _routePoisLoaded = false;
 function _loadRoutePOIs(force) {
   if (!fmMapInst) return;
   if (force) _routePoisLoaded = false;
-  ['scale', 'truck', 'rest'].forEach(type => {
+  ['scale', 'truck', 'rest', 'parking', 'checkpoint'].forEach(type => {
     if (!fmPoiActive[type]) return;
     // Ya cargado → solo asegurar que el grupo esté visible
     if (fmPoiGroups[type]) { try { fmPoiGroups[type].addTo(fmMapInst); } catch (e) {} return; }
-    const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck' : 'chipRest';
-    const chip = document.getElementById(chipId);
+    const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck' : type === 'rest' ? 'chipRest' : null;
+    const chip = chipId ? document.getElementById(chipId) : null;
     if (chip) chip.classList.remove('off');
     try { loadPOIOnDemand(type, chip); } catch (e) {}
   });
@@ -20997,8 +21009,8 @@ async function loadPOIOnDemand(type, chipEl) {
   if (!fmMapInst) return;
 
   // Show spinner on chip
-  const emoji = type === 'truck' ? '🚛' : type === 'rest' ? '😴' : '⚖️';
-  const label = type === 'truck' ? 'Truck Stops' : type === 'rest' ? 'Rest Areas' : 'Scales';
+  const emoji = type === 'truck' ? '🚛' : type === 'rest' ? '😴' : type === 'parking' ? '🅿️' : type === 'checkpoint' ? '🔍' : '⚖️';
+  const label = type === 'truck' ? 'Truck Stops' : type === 'rest' ? 'Rest Areas' : type === 'parking' ? 'Parking' : type === 'checkpoint' ? 'Inspección' : 'Scales';
   if (chipEl) chipEl.innerHTML = `${emoji} ${label} <span style="display:inline-block;animation:spin 1s linear infinite">⏳</span>`;
 
   // Get best position: GPS marker → fmLastLat → origin → map center
@@ -21035,6 +21047,22 @@ out center qt 80;`,
   node["man_made"="weigh_scale"](around:${R},${lat},${lon});
   way["amenity"="weigh_station"](around:${R},${lat},${lon});
   way["highway"="weigh_station"](around:${R},${lat},${lon});
+);
+out center qt 60;`,
+    parking: `[out:json][timeout:20];
+(
+  node["amenity"="parking"]["hgv"="yes"](around:${R},${lat},${lon});
+  node["amenity"="parking"]["truck"="yes"](around:${R},${lat},${lon});
+  way["amenity"="parking"]["hgv"="yes"](around:${R},${lat},${lon});
+);
+out center qt 80;`,
+    checkpoint: `[out:json][timeout:25];
+(
+  node["border_control"](around:${R},${lat},${lon});
+  node["amenity"="checkpoint"](around:${R},${lat},${lon});
+  node["highway"="checkpoint"](around:${R},${lat},${lon});
+  node["name"~"inspection station|port of entry|DOT checkpoint|weigh.in.motion|check point|check station",i](around:${R},${lat},${lon});
+  way["amenity"="checkpoint"](around:${R},${lat},${lon});
 );
 out center qt 60;`,
   };
