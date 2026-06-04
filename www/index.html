@@ -16165,8 +16165,18 @@ function snapToRoute(rawLat, rawLon) {
     var dt = Math.sqrt((rawLat-px)*(rawLat-px) + (rawLon-py)*(rawLon-py));
     if (dt < bestDist) { bestDist = dt; bestLat = px; bestLon = py; }
   }
-  var sn = bestDist < 0.00072; // ~80m threshold
-  return { lat: sn ? bestLat : rawLat, lon: sn ? bestLon : rawLon, snapped: sn, dist: bestDist };
+  // Lock-to-route: pegar SIEMPRE el ícono a la línea de la ruta mientras se
+  // esté razonablemente cerca (~2 km, cubre deriva de GPS y estar en la vía).
+  // 'snapped' (≈145 m) se usa para la detección de fuera-de-ruta / recálculo.
+  var lockable = bestDist < 0.02;     // ~2 km → dibujar sobre la ruta
+  var onRoute  = bestDist < 0.0013;   // ~145 m → considerado en ruta
+  return {
+    lat: lockable ? bestLat : rawLat,
+    lon: lockable ? bestLon : rawLon,
+    snapped: onRoute,
+    locked: lockable,
+    dist: bestDist
+  };
 }
 
 // Returns actual road miles remaining from current GPS position to end of roadGeometry.
