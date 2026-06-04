@@ -16587,9 +16587,29 @@ function _route3DGeoJSON() {
   return { type: 'Feature', geometry: { type: 'LineString', coordinates: coords } };
 }
 
+// Tramos con tráfico como features coloreadas (para la cinta 3D)
+function _routeTraffic3DGeoJSON() {
+  const features = [];
+  const secs = window._routeTrafficSections;
+  if (secs && secs.length && typeof roadGeometry !== 'undefined' && roadGeometry && roadGeometry.length > 1
+      && (!window._routeTrafficCoordLen || roadGeometry.length === window._routeTrafficCoordLen)) {
+    const colorFor = m => m >= 4 ? '#7f1d1d' : m === 3 ? '#ef4444' : m === 2 ? '#f97316' : '#fbbf24';
+    secs.forEach(s => {
+      const a = Math.max(0, Math.min(roadGeometry.length - 1, s.a));
+      const b = Math.max(0, Math.min(roadGeometry.length - 1, s.b));
+      if (b <= a) return;
+      const coords = roadGeometry.slice(a, b + 1).map(c => [c[1], c[0]]);
+      if (coords.length < 2) return;
+      features.push({ type: 'Feature', properties: { color: colorFor(s.mag) }, geometry: { type: 'LineString', coordinates: coords } });
+    });
+  }
+  return { type: 'FeatureCollection', features };
+}
+
 function _set3DRoute() {
   if (!fm3DMap || !fm3DReady) return;
   try { const s = fm3DMap.getSource('route'); if (s) s.setData(_route3DGeoJSON()); } catch (e) {}
+  try { const t = fm3DMap.getSource('route-traffic'); if (t) t.setData(_routeTraffic3DGeoJSON()); } catch (e) {}
 }
 
 function init3DMap() {
@@ -16633,6 +16653,11 @@ function init3DMap() {
       fm3DMap.addLayer({ id: 'route-line', type: 'line', source: 'route',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': '#00C8E0', 'line-width': 10 } });
+      // Tramos con tráfico coloreados sobre la cinta de la ruta
+      fm3DMap.addSource('route-traffic', { type: 'geojson', data: _routeTraffic3DGeoJSON() });
+      fm3DMap.addLayer({ id: 'route-traffic-line', type: 'line', source: 'route-traffic',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': ['get', 'color'], 'line-width': 11 } });
       // Marcador del camión
       const el = document.createElement('div');
       el.textContent = '🚛';
