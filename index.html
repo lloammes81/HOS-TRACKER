@@ -15633,7 +15633,7 @@ let _lastPanLon     = null;
 const fmPoiLayers = { scale: [], truck: [], rest: [], reports: [], restrict: [], parking: [] };
 const fmPoiGroups = {};  // LayerGroup per type for batch rendering
 // scale/truck/rest all start ON — loaded automatically when route opens
-const fmPoiActive = { scale: false, truck: false, rest: false, reports: false, restrict: false, parking: false };
+const fmPoiActive = { scale: true, truck: true, rest: true, reports: false, restrict: false, parking: false };
 let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, parking: false };
 
 // Community reports (stored in localStorage, shared within session)
@@ -15884,6 +15884,9 @@ function fmRedrawRoute(coords) {
 
   fmMarkers = [glow, casing, oMark, dMark];
   fmMapInst.fitBounds(fmLayer.getBounds(), { padding: [70, 70] });
+
+  // Autocargar básculas + truck stops + rest areas a lo largo de toda la ruta
+  if (typeof _loadRoutePOIs === 'function') setTimeout(() => _loadRoutePOIs(), 700);
 
   // ── Escudos de Interstate y US Route sobre la ruta (only when steps change)
   if (Array.isArray(navSteps) && navSteps.length){
@@ -20944,6 +20947,24 @@ async function loadMiniMapRestrictions() {
   if (cnt)   cnt.textContent = miniPoiMarkers.restrict.filter((_, i) => i % 2 === 1).length || '0';
 }
 
+/* Autocarga básculas + truck stops + rest areas a lo largo de TODA la ruta.
+   Se llama al dibujar la ruta en el mapa de navegación. */
+let _routePoisLoaded = false;
+function _loadRoutePOIs(force) {
+  if (!fmMapInst) return;
+  if (force) _routePoisLoaded = false;
+  ['scale', 'truck', 'rest'].forEach(type => {
+    if (!fmPoiActive[type]) return;
+    // Ya cargado → solo asegurar que el grupo esté visible
+    if (fmPoiGroups[type]) { try { fmPoiGroups[type].addTo(fmMapInst); } catch (e) {} return; }
+    const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck' : 'chipRest';
+    const chip = document.getElementById(chipId);
+    if (chip) chip.classList.remove('off');
+    try { loadPOIOnDemand(type, chip); } catch (e) {}
+  });
+  _routePoisLoaded = true;
+}
+
 function togglePOI(type) {
   fmPoiActive[type] = !fmPoiActive[type];
   const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck'
@@ -21108,7 +21129,7 @@ out center qt 60;`,
   }
 
   // Background: extend coverage along the full route
-  if (roadGeometry && roadGeometry.length > 2 && count < 30) {
+  if (roadGeometry && roadGeometry.length > 2) {
     setTimeout(() => _extendPOIAlongRoute(type), 300);
   }
 }
