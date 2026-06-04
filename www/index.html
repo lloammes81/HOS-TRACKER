@@ -14468,7 +14468,7 @@ function _tomTomInstructionsToSteps(instructions) {
 }
 
 async function _fetchTomTomRoute(orig, dest) {
-  const url = `https://api.tomtom.com/routing/1/calculateRoute/${orig.lat},${orig.lon}:${dest.lat},${dest.lon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=9072&vehicleLength=22.9&vehicleWidth=2.59&vehicleHeight=4.11&vehicleNumberOfAxles=5&vehicleCommercial=true&routeType=fastest&traffic=true&instructionsType=text&language=en-US`;
+  const url = `https://api.tomtom.com/routing/1/calculateRoute/${orig.lat},${orig.lon}:${dest.lat},${dest.lon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=9072&vehicleLength=22.9&vehicleWidth=2.59&vehicleHeight=4.11&vehicleNumberOfAxles=5&vehicleCommercial=true&routeType=fastest&traffic=true&sectionType=traffic&instructionsType=text&language=en-US`;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 15000);
   try {
@@ -14482,7 +14482,15 @@ async function _fetchTomTomRoute(orig, dest) {
     const polyCoords = points.map(p => [p.latitude, p.longitude]);
     const miles = Math.round((route.summary.lengthInMeters || 0) / 1609.344);
     const steps = _tomTomInstructionsToSteps(route.guidance?.instructions);
-    console.log(`✅ Route: TomTom | ${miles} mi | ${polyCoords.length} pts`);
+    // Tramos con tráfico (congestión) para colorear la ruta
+    try {
+      const secs = (route.sections || [])
+        .filter(s => s.sectionType === 'TRAFFIC')
+        .map(s => ({ a: s.startPointIndex | 0, b: s.endPointIndex | 0, mag: s.magnitudeOfDelay | 0 }));
+      window._routeTrafficSections = secs;
+      window._routeTrafficCoordLen = polyCoords.length;
+    } catch (e) { window._routeTrafficSections = null; }
+    console.log(`✅ Route: TomTom | ${miles} mi | ${polyCoords.length} pts | tráfico:${(window._routeTrafficSections||[]).length}`);
     return { coords: polyCoords, miles, steps, source: 'TomTom-routing' };
   } catch(e) {
     clearTimeout(t);
@@ -15861,6 +15869,31 @@ function openFullMapScreen() {
 }
 
 // Draw/redraw the green route polyline + origin/destination markers
+/* Dibuja sobre la ruta los tramos con tráfico (congestión) en color, estilo
+   nav de auto: ámbar=leve, naranja=moderado, rojo=fuerte, rojo oscuro=cierre. */
+let fmTrafficLayers = [];
+function _fmDrawTrafficSections(coords) {
+  if (typeof fmMapInst === 'undefined' || !fmMapInst) return;
+  fmTrafficLayers.forEach(l => { try { fmMapInst.removeLayer(l); } catch (e) {} });
+  fmTrafficLayers = [];
+  const secs = window._routeTrafficSections;
+  if (!secs || !secs.length || !coords || coords.length < 2) return;
+  // Solo colorear si los índices corresponden a estas coords (misma ruta TomTom)
+  if (window._routeTrafficCoordLen && coords.length !== window._routeTrafficCoordLen) return;
+  const colorFor = m => m >= 4 ? '#7f1d1d' : m === 3 ? '#ef4444' : m === 2 ? '#f97316' : '#fbbf24';
+  secs.forEach(s => {
+    const a = Math.max(0, Math.min(coords.length - 1, s.a));
+    const b = Math.max(0, Math.min(coords.length - 1, s.b));
+    if (b <= a) return;
+    const seg = coords.slice(a, b + 1);
+    if (seg.length < 2) return;
+    try {
+      const ln = L.polyline(seg, { color: colorFor(s.mag), weight: 11, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(fmMapInst);
+      fmTrafficLayers.push(ln);
+    } catch (e) {}
+  });
+}
+
 function fmRedrawRoute(coords) {
   const routeCoords = coords || roadGeometry || [
     [origin.lat, origin.lon],
@@ -15885,6 +15918,7 @@ function fmRedrawRoute(coords) {
   // ── Ruta principal azul brillante
   fmLayer = L.polyline(routeCoords,{ color:'#3b82f6', weight:10, opacity:0.97 }).addTo(fmMapInst);
   window._fmRouteColState = null;  // permitir re-aplicar el color tras redibujar
+  _fmDrawTrafficSections(routeCoords);  // colorear tramos con tráfico (rojo/ámbar) sobre la ruta
   if (typeof fm3DActive !== 'undefined' && fm3DActive) _set3DRoute();  // refrescar ruta en vista 3D
 
   // ── Marcador origen (dot verde)
