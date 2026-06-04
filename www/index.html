@@ -31851,6 +31851,15 @@ window.nativeShare = nativeShare;
     <div class="lb-grid-container">
       <div class="lb-grid-header">24-HOUR DUTY STATUS GRAPH</div>
 
+      <!-- Cuadrícula RODS estándar (FMCSA) dibujada en canvas -->
+      <div style="background:#fff;padding:8px 6px 2px;">
+        <canvas id="lbRodsCanvas" style="width:100%;height:300px;display:block;touch-action:manipulation;"></canvas>
+        <div style="text-align:center;font-size:10px;color:#8b7a6a;padding:5px 0 3px;font-weight:700;">Toca una fila/hora en la gráfica para registrar tu estado</div>
+      </div>
+
+      <!-- Grid de celdas interactivo heredado: se conserva oculto para no romper
+           la lógica de edición/datos existente (las funciones siguen usando estas celdas). -->
+      <div id="lbLegacyGrid" style="display:none">
       <!-- Hour labels (spacer keeps them aligned with the hour cells) -->
       <div class="lb-hour-labels-row">
         <div class="lb-status-label"></div>
@@ -31907,6 +31916,7 @@ window.nativeShare = nativeShare;
         </div>
       </div>
       </div><!-- /lb-rows-wrap -->
+      </div><!-- /lbLegacyGrid -->
     </div>
 
     <!-- Location History Timeline -->
@@ -32070,6 +32080,9 @@ function initLogbook() {
   createHourLabels();
   createRecapGrid();
   updateCurrentTimeMarker();
+  // Edición por toque sobre la gráfica RODS
+  const rodsCanvas = document.getElementById('lbRodsCanvas');
+  if (rodsCanvas) rodsCanvas.addEventListener('click', lbCanvasTap);
   loadLogbookData();
   loadDriverProfile();
   startAutoDetection();
@@ -32538,6 +32551,192 @@ function updateSummary() {
   drawDutyLine();
 }
 
+/* ════════════════════════════════════════════════════════════
+   📊  RODS GRID (canvas) — Record of Duty Status estilo FMCSA
+   Filas OFF / SB / D / ON, eje de 24h con marcas de 15 min,
+   línea de estado escalonada continua y totales por fila.
+══════════════════════════════════════════════════════════ */
+const LB_ROWS = ['offduty', 'sleeper', 'driving', 'onduty'];
+const LB_ROW_LABEL = { offduty: 'OFF', sleeper: 'SB', driving: 'D', onduty: 'ON' };
+
+function lbFmtHM(hoursFloat) {
+  const mins = Math.max(0, Math.round(hoursFloat * 60));
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
+function lbRodsGeom(canvas) {
+  const cssW = canvas.clientWidth || (canvas.parentElement && canvas.parentElement.clientWidth) || 320;
+  const cssH = canvas.clientHeight || 300;
+  const leftW = 42, rightW = 56, topH = 20, botH = 16;
+  const gridW = Math.max(10, cssW - leftW - rightW);
+  const rowsH = Math.max(10, cssH - topH - botH);
+  const rowH = rowsH / 4;
+  return {
+    cssW, cssH, leftW, rightW, topH, botH, gridW, rowsH, rowH,
+    x0: leftW, x1: leftW + gridW,
+    rowTop: i => topH + i * rowH,
+    rowCenter: i => topH + i * rowH + rowH / 2,
+    xOf: h => leftW + (h / 24) * gridW
+  };
+}
+
+// Estado "sostenido" por hora: las horas sin registrar mantienen el estado
+// previo (OFF DUTY desde medianoche hasta el primer cambio), como en un RODS real.
+function lbHeldTimeline() {
+  const day = lbData[getDateKey(lbCurrentDate)] || {};
+  const held = [];
+  let prev = 'offduty';
+  for (let h = 0; h < 24; h++) {
+    let s = day[h];
+    if (!s || LB_ROWS.indexOf(s) < 0) s = prev;
+    held[h] = s; prev = s;
+  }
+  const segs = [];
+  let st = 0;
+  for (let h = 1; h <= 24; h++) {
+    if (h === 24 || held[h] !== held[st]) { segs.push({ start: st, end: h, status: held[st] }); st = h; }
+  }
+  return segs;
+}
+
+function drawRodsGraph() {
+  const canvas = document.getElementById('lbRodsCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const g = lbRodsGeom(canvas);
+  const dpr = window.devicePixelRatio || 1;
+  const bw = Math.round(g.cssW * dpr), bh = Math.round(g.cssH * dpr);
+  if (canvas.width !== bw) canvas.width = bw;
+  if (canvas.height !== bh) canvas.height = bh;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, g.cssW, g.cssH);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, g.cssW, g.cssH);
+
+  // ── Marcas de cuarto/media hora (cuelgan del borde superior de cada fila) ──
+  ctx.strokeStyle = '#9aa0a6'; ctx.lineWidth = 1;
+  for (let i = 0; i < 4; i++) {
+    const top = g.rowTop(i);
+    for (let h = 0; h < 24; h++) {
+      for (let q = 1; q < 4; q++) {
+        const x = g.xOf(h + q / 4);
+        const len = (q === 2) ? g.rowH * 0.5 : g.rowH * 0.28;
+        ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + len); ctx.stroke();
+      }
+    }
+  }
+
+  // ── Líneas de hora (verticales, toda la altura) ──
+  for (let h = 0; h <= 24; h++) {
+    const x = g.xOf(h);
+    ctx.strokeStyle = (h % 24 === 0) ? '#222' : '#d4d4d4';
+    ctx.lineWidth = (h % 24 === 0) ? 1.4 : 1;
+    ctx.beginPath(); ctx.moveTo(x, g.topH); ctx.lineTo(x, g.topH + g.rowsH); ctx.stroke();
+  }
+
+  // ── Líneas horizontales (bordes de fila) ──
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 1.2;
+  for (let i = 0; i <= 4; i++) {
+    const y = g.rowTop(i);
+    ctx.beginPath(); ctx.moveTo(g.x0, y); ctx.lineTo(g.x1, y); ctx.stroke();
+  }
+
+  // ── Etiquetas de hora (arriba y abajo) ──
+  ctx.fillStyle = '#333'; ctx.font = '700 9px "DM Sans",sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const labelFor = h => (h === 0 || h === 24) ? 'MN' : (h === 12 ? 'N' : String(h > 12 ? h - 12 : h));
+  for (let h = 0; h <= 24; h++) {
+    const x = g.xOf(h);
+    ctx.fillText(labelFor(h), x, g.topH / 2);
+    ctx.fillText(labelFor(h), x, g.topH + g.rowsH + g.botH / 2);
+  }
+
+  // ── Etiquetas de fila (OFF / SB / D / ON) ──
+  ctx.fillStyle = '#111'; ctx.font = '800 13px "DM Sans",sans-serif';
+  for (let i = 0; i < 4; i++) ctx.fillText(LB_ROW_LABEL[LB_ROWS[i]], g.leftW / 2, g.rowCenter(i));
+
+  // ── Datos: timeline sostenida, recortada a la hora actual si es hoy ──
+  const now = new Date();
+  const isToday = getDateKey(now) === getDateKey(lbCurrentDate);
+  const endH = isToday ? Math.min(24, now.getHours() + now.getMinutes() / 60) : 24;
+  const segs = lbHeldTimeline();
+  const counts = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
+  const drawSegs = [];
+  for (const sg of segs) {
+    if (sg.start >= endH) break;
+    const e = Math.min(sg.end, endH);
+    drawSegs.push({ start: sg.start, end: e, status: sg.status });
+    counts[sg.status] += (e - sg.start);
+    if (e >= endH) break;
+  }
+
+  // ── Línea de estado escalonada ──
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath();
+  let prevY = null;
+  drawSegs.forEach((sg, k) => {
+    const yc = g.rowCenter(LB_ROWS.indexOf(sg.status));
+    const xs = g.xOf(sg.start), xe = g.xOf(sg.end);
+    if (k === 0) { ctx.moveTo(xs, yc); }
+    else { ctx.lineTo(xs, prevY); ctx.lineTo(xs, yc); } // salto vertical en el cambio
+    ctx.lineTo(xe, yc);
+    prevY = yc;
+  });
+  ctx.stroke();
+
+  // ── Duración de cada tramo (sobre la línea, estilo RODS) ──
+  ctx.fillStyle = '#111'; ctx.font = '700 9px "Share Tech Mono",monospace'; ctx.textAlign = 'center';
+  for (const sg of drawSegs) {
+    const dur = sg.end - sg.start;
+    if (dur < 0.75) continue;
+    const idx = LB_ROWS.indexOf(sg.status);
+    const xc = (g.xOf(sg.start) + g.xOf(sg.end)) / 2;
+    ctx.fillText(lbFmtHM(dur), xc, g.rowCenter(idx) - g.rowH * 0.30);
+  }
+
+  // ── Totales por fila (derecha) ──
+  ctx.fillStyle = '#111'; ctx.font = '800 11px "Share Tech Mono",monospace'; ctx.textAlign = 'left';
+  for (let i = 0; i < 4; i++) ctx.fillText(lbFmtHM(counts[LB_ROWS[i]]), g.x1 + 6, g.rowCenter(i));
+
+  // ── Marcador "AHORA" (rojo) ──
+  if (isToday) {
+    const xn = g.xOf(endH);
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(xn, g.topH); ctx.lineTo(xn, g.topH + g.rowsH); ctx.stroke();
+  }
+}
+
+// Toca la gráfica para fijar el estado de una hora (mapea x→hora, y→fila).
+function lbCanvasTap(ev) {
+  const canvas = document.getElementById('lbRodsCanvas');
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  const g = lbRodsGeom(canvas);
+  const cx = (ev.touches && ev.touches[0] ? ev.touches[0].clientX : ev.clientX) - rect.left;
+  const cy = (ev.touches && ev.touches[0] ? ev.touches[0].clientY : ev.clientY) - rect.top;
+  if (cx < g.x0 || cx > g.x1) return;
+  const hour = Math.floor((cx - g.x0) / g.gridW * 24);
+  const rowIdx = Math.floor((cy - g.topH) / g.rowH);
+  if (hour < 0 || hour > 23 || rowIdx < 0 || rowIdx > 3) return;
+  const status = LB_ROWS[rowIdx];
+  const dateKey = getDateKey(lbCurrentDate);
+  if (!lbData[dateKey]) lbData[dateKey] = {};
+  if (lbData[dateKey][hour] === status) {
+    lbData[dateKey][hour] = null;
+    if (lbLocationData[dateKey]) delete lbLocationData[dateKey][hour];
+  } else {
+    lbData[dateKey][hour] = status;
+    if (typeof saveLocationForHour === 'function') saveLocationForHour(hour, status);
+  }
+  updateSummary();
+  checkHOSRules();
+  updateHoursAvailable();
+  updateLocationHistory();
+  saveLogbookToStorage();
+}
+
 // Draw the continuous duty-status line that steps between the four rows,
 // mirroring a professional paper/ELD Record of Duty Status.
 //
@@ -32550,6 +32749,9 @@ function updateSummary() {
 // logged change, each status is held until the next change, and for the current
 // day it runs right up to the live "NOW" time so it keeps moving with the clock.
 function drawDutyLine() {
+  // Render principal: cuadrícula RODS clásica en canvas (estilo FMCSA).
+  drawRodsGraph();
+  // (Lo de abajo mantiene la línea SVG sobre el grid heredado, ahora oculto.)
   const wrap = document.getElementById('lbRowsWrap');
   const svg  = document.getElementById('lbDutyLine');
   const path = document.getElementById('lbDutyPath');
