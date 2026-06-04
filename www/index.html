@@ -15980,8 +15980,10 @@ const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 let fmTruckEl = null;  // the inner div element for rotation
 
 function buildTruckIconHTML(heading, isMoving) {
-  // El marcador del mapa ES el camión visible, dibujado en la posición pegada
-  // a la ruta (lock-to-route) → siempre sobre la línea, como Waze/Google.
+  // Marcador del mapa INVISIBLE: el único camión visible es el ícono del HUD
+  // (#mapHudTruck) sobre los anillos. El mapa se centra para alinear la ruta
+  // con ese ícono (ver calcFollowCenter).
+  return '<div style="width:1px;height:1px;opacity:0"></div>';
   const overLimit = typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded;
 
   // Glow: siempre azul (parado=suave, movimiento=brillante), rojo si sobrepasa límite
@@ -16493,9 +16495,14 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
     if (offsetFrac !== undefined) {
       offsetPx = size.y * offsetFrac;
     } else {
-      // #fixedTruckMarker: bottom:102px, arrow(20)+gap(2)+circle(66) = 88px total
-      // Circle center is 102 + 33 = 135px from screen bottom
-      const TRUCK_CENTER_FROM_BOTTOM = 135;
+      // La posición del camión en pantalla = el ícono del HUD sobre los anillos
+      // (#mapHudTruck). El mapa se centra para que la ruta pase por ese ícono.
+      let TRUCK_CENTER_FROM_BOTTOM = 135;
+      const _hudT = document.getElementById('mapHudTruck');
+      if (_hudT) {
+        const _r = _hudT.getBoundingClientRect();
+        if (_r.height > 0) TRUCK_CENTER_FROM_BOTTOM = Math.max(60, size.y - (_r.top + _r.height / 2));
+      }
       const truckTargetY = size.y - TRUCK_CENTER_FROM_BOTTOM;
       offsetPx = truckTargetY - size.y / 2;
       offsetPx = Math.max(40, Math.min(offsetPx, size.y * 0.48));
