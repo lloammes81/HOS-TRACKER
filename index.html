@@ -31821,14 +31821,14 @@ window.nativeShare = nativeShare;
     <!-- DESDE / HASTA -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
       <div style="background:rgba(139,30,30,.08);border:1.5px solid rgba(139,30,30,.3);border-radius:14px;padding:12px 14px;">
-        <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">📍 DESDE (CIUDAD)</div>
-        <div id="lbFromCity" style="font-size:13px;font-weight:800;color:#fff;line-height:1.3;min-height:18px;">--</div>
-        <div id="lbFromTime" style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;">Pre-trip location</div>
+        <div style="font-size:9px;color:#8b1e1e;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">📍 DESDE (CIUDAD)</div>
+        <div id="lbFromCity" style="font-size:13px;font-weight:800;color:#8b1e1e;line-height:1.3;min-height:18px;">--</div>
+        <div id="lbFromTime" style="font-size:10px;color:#6b5b4f;margin-top:3px;">Pre-trip location</div>
       </div>
       <div style="background:rgba(16,185,129,.08);border:1.5px solid rgba(16,185,129,.3);border-radius:14px;padding:12px 14px;">
-        <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">🏁 HASTA (CIUDAD)</div>
-        <div id="lbToCity" style="font-size:13px;font-weight:800;color:#fff;line-height:1.3;min-height:18px;">--</div>
-        <div id="lbToSub" style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;">GPS destination</div>
+        <div style="font-size:9px;color:#065f46;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">🏁 HASTA (CIUDAD)</div>
+        <div id="lbToCity" style="font-size:13px;font-weight:800;color:#065f46;line-height:1.3;min-height:18px;">--</div>
+        <div id="lbToSub" style="font-size:10px;color:#6b5b4f;margin-top:3px;">GPS destination</div>
       </div>
     </div>
 
@@ -32058,7 +32058,9 @@ function initLogbook() {
   loadLogbookData();
   loadDriverProfile();
   startAutoDetection();
-  setInterval(updateCurrentTimeMarker, 60000);
+  // Advance the NOW marker and the running duty-status line on a short tick so
+  // the graph tracks the clock live (both no-op while the sheet is hidden).
+  setInterval(function() { updateCurrentTimeMarker(); drawDutyLine(); }, 30000);
   // Keep the duty-status line aligned with the columns when the viewport changes.
   window.addEventListener('resize', drawDutyLine);
 }
@@ -32524,7 +32526,12 @@ function updateSummary() {
 // Draw the continuous duty-status line that steps between the four rows,
 // mirroring a professional paper/ELD Record of Duty Status. The SVG uses a
 // 0..24 (hours) x 0..4 (status rows) viewBox stretched over the hour columns,
-// so a vertical jump happens wherever the status changes between two hours.
+// so a vertical jump happens wherever the status changes.
+//
+// The line is continuous: once a status is logged it is carried forward until
+// the next change (you stay in a status until you switch), and for the current
+// day it runs right up to the live "NOW" time instead of stopping on whole
+// hours — so the line keeps moving with the clock no matter the status.
 function drawDutyLine() {
   const wrap = document.getElementById('lbRowsWrap');
   const svg  = document.getElementById('lbDutyLine');
@@ -32544,16 +32551,29 @@ function drawDutyLine() {
   const yIndex = { offduty: 0, sleeper: 1, driving: 2, onduty: 3 };
   const day = lbData[getDateKey(lbCurrentDate)] || {};
 
-  let d = '';
-  let prevY = null;
+  // For today the line stops at the live time; past/other days draw the full 24h.
+  const now = new Date();
+  const isToday = getDateKey(now) === getDateKey(lbCurrentDate);
+  const endX = isToday ? Math.min(24, now.getHours() + now.getMinutes() / 60) : 24;
+
+  // Start at the first logged hour (nothing is drawn before the first entry).
+  let firstH = -1;
   for (let h = 0; h < 24; h++) {
-    const s = day[h];
-    if (s == null || yIndex[s] === undefined) { prevY = null; continue; }
-    const y = yIndex[s] + 0.5;
-    if (prevY === null) d += 'M ' + h + ' ' + y + ' ';
-    else if (prevY !== y) d += 'L ' + h + ' ' + y + ' '; // vertical change at this hour
-    d += 'L ' + (h + 1) + ' ' + y + ' ';                 // horizontal across the hour
-    prevY = y;
+    if (day[h] != null && yIndex[day[h]] !== undefined) { firstH = h; break; }
+  }
+  if (firstH === -1 || firstH >= endX) { path.setAttribute('d', ''); return; }
+
+  let prevY = yIndex[day[firstH]] + 0.5;
+  let d = 'M ' + firstH + ' ' + prevY + ' ';
+  for (let h = firstH; h < 24 && h < endX; h++) {
+    // A new status logged at this hour draws a vertical connector, then we carry
+    // it forward across any later hours that have no explicit entry.
+    if (day[h] != null && yIndex[day[h]] !== undefined) {
+      const y = yIndex[day[h]] + 0.5;
+      if (y !== prevY) { d += 'L ' + h + ' ' + y + ' '; prevY = y; }
+    }
+    const segEnd = Math.min(h + 1, endX);
+    d += 'L ' + segEnd + ' ' + prevY + ' ';
   }
   path.setAttribute('d', d.trim());
 }
