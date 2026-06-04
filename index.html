@@ -2933,6 +2933,19 @@
   }
   #fmFollowBtn.active { background:#10b981; box-shadow:0 2px 12px rgba(16,185,129,.5); }
   #fmFollowBtn.visible { display:flex; }
+  #fmOverviewBtn {
+    position:absolute;
+    left: calc(10px + env(safe-area-inset-left,0px));
+    bottom: 252px; z-index:10;
+    width:44px; height:44px; border-radius:50%; border:none;
+    background:rgba(15,23,42,0.88); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    color:#fff; font-size:19px; cursor:pointer;
+    box-shadow:0 2px 12px rgba(0,0,0,.4);
+    display:none; align-items:center; justify-content:center;
+    transition:background .2s, transform .15s;
+  }
+  #fmOverviewBtn:active { transform:scale(.92); }
+  #fmOverviewBtn.visible { display:flex; }
 
   /* ── TAP TOGGLE ZOOM (widgets + stats) ─────────────────── */
   .tap-zoom{
@@ -8119,6 +8132,8 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
   <!-- AUTO-FOLLOW button (bottom-left) -->
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
+  <!-- VISTA GENERAL DE RUTA (encima del auto-follow) -->
+  <button id="fmOverviewBtn" class="visible" title="Vista general de ruta" onclick="fmRouteOverview()">🗺️</button>
 
   <!-- Compass rose — rotates to keep N pointing north while map is heading-up -->
   <div id="mapCompassWidget">
@@ -8348,6 +8363,12 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
         </div>
       </div>
     </div><!-- end .fm-full-only -->
+
+    <!-- ETA inteligente HOS + próxima parada sugerida -->
+    <div id="fmSmartInfo" style="display:none;margin-bottom:10px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);box-shadow:0 6px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.06);">
+      <div id="fmHosEta" style="display:flex;align-items:center;gap:6px;padding:9px 12px;font-size:12.5px;font-weight:800;letter-spacing:.2px;background:rgba(16,185,129,0.12);color:#f1f5f9;"></div>
+      <div id="fmNextStopBanner" onclick="_fmOpenNearbyStops()" style="display:none;align-items:center;gap:6px;padding:8px 12px;font-size:11.5px;font-weight:700;background:rgba(245,158,11,0.12);border-top:1px solid rgba(255,255,255,0.07);color:#fde68a;cursor:pointer;-webkit-tap-highlight-color:transparent;"></div>
+    </div>
 
     <!-- 4 ELD-style stat circles — professional glass cards -->
     <div class="hud-rings-grid">
@@ -16414,6 +16435,15 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
   }
 }
 
+function fmRouteOverview() {
+  if (!fmMapInst || !fmLayer) return;
+  // Desactivar auto-follow para que no vuelva a centrar en el camión
+  fmFollowing = false; fmUserDragged = true;
+  const fb = document.getElementById('fmFollowBtn');
+  if (fb) fb.classList.remove('active');
+  try { fmMapInst.fitBounds(fmLayer.getBounds(), { padding: [70, 70] }); } catch (e) {}
+}
+
 function toggleFollow() {
   fmFollowing = !fmFollowing;
   fmUserDragged = !fmFollowing;
@@ -17856,6 +17886,8 @@ function fmStartTracking() {
     const driveEl = document.getElementById('fmDriveLeft');
     driveEl.textContent = fmtH(driveLeft);
     driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
+    // ETA inteligente HOS + próxima parada (banner del HUD)
+    _updateFmSmartInfo(etaH, remaining, driveLeft);
     // Update circular widget on the map
     updateDriveHoursWidget(driveLeft, driveMax);
     if (typeof updateDashRouteHoursRow === 'function') updateDashRouteHoursRow();
@@ -19135,6 +19167,90 @@ function _refreshDashRouteNextStop() {
     }
   });
 }
+
+// ── ETA inteligente HOS + próxima parada (banner del HUD del mapa) ──
+let _fmStopCache2 = { key:null, name:null, fetching:false };
+function _updateFmSmartInfo(etaH, remainingMi, driveLeft) {
+  const box   = document.getElementById('fmSmartInfo');
+  const etaEl = document.getElementById('fmHosEta');
+  const stopB = document.getElementById('fmNextStopBanner');
+  if (!box || !etaEl) return;
+  const moving = (typeof fmVehicleMoving !== 'undefined') && fmVehicleMoving;
+  if (!destination || !(etaH > 0) || !moving) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  const _es = (typeof lang !== 'undefined' && lang === 'es');
+
+  // Hora de llegada (reloj)
+  const arr = new Date(Date.now() + etaH * 3600000);
+  const arrStr = arr.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const dayStr = arr.toLocaleDateString(_es ? 'es-ES' : 'en-US', { weekday: 'short' });
+
+  const dLeft = (typeof driveLeft === 'number') ? driveLeft
+              : (typeof _hosCurrentDriveLeft !== 'undefined' ? _hosCurrentDriveLeft : 11);
+
+  if (etaH <= dLeft + 0.001) {
+    const margin = Math.max(0, dLeft - etaH);
+    etaEl.style.background = 'rgba(16,185,129,0.14)';
+    etaEl.innerHTML = `🏁 ${_es ? 'Llega' : 'Arrive'} <b style="margin:0 4px">${arrStr}</b> · ${dayStr}`
+      + ` &nbsp;·&nbsp; <span style="color:#34d399">${_es ? 'margen' : 'margin'} ${fmtH(margin)}</span>`;
+  } else {
+    etaEl.style.background = 'rgba(245,158,11,0.16)';
+    etaEl.innerHTML = `⚠️ ${_es ? 'No alcanzas sin descanso' : "Won't make it without rest"}`
+      + ` &nbsp;·&nbsp; <span style="color:#fbbf24">${_es ? 'faltan' : 'short'} ${fmtH(etaH - dLeft)} ${_es ? 'de manejo' : 'driving'}</span>`;
+  }
+
+  // Próxima parada: la que llegue antes (pausa 30 min vs descanso 10h)
+  const b30Done  = (typeof b30Complete !== 'undefined') && b30Complete;
+  const b30HrsTo = b30Done ? Infinity
+    : Math.max(0, (B30_DRIVE_LIMIT - (typeof b30DriveSecs !== 'undefined' ? b30DriveSecs : 0)) / 3600);
+  const spd = (typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55;
+  let kind, hrsTo, label;
+  if (b30HrsTo < dLeft) { kind = 'break'; hrsTo = b30HrsTo; label = _es ? 'Pausa 30 min' : '30-min break'; }
+  else                  { kind = 'rest';  hrsTo = dLeft;    label = _es ? 'Descanso 10h' : '10h rest'; }
+  const stopMi = Math.max(1, Math.round(hrsTo * spd));
+  if (stopB) {
+    if (stopMi < remainingMi - 2) {
+      stopB.style.display = 'flex';
+      const cityTxt = _fmStopCache2.name ? ' · ' + _fmStopCache2.name.toUpperCase() : '';
+      stopB.innerHTML = `🛑 ${label} ${_es ? 'en' : 'in'} ${stopMi.toLocaleString()} mi${cityTxt}`
+        + ` <span style="margin-left:auto;opacity:.85">${_es ? 'ver paradas ›' : 'stops ›'}</span>`;
+      const key = kind + ':' + Math.round(stopMi / 25);
+      if (_fmStopCache2.key !== key && !_fmStopCache2.fetching && typeof _fetchStopCityAhead === 'function') {
+        _fmStopCache2.fetching = true;
+        _fetchStopCityAhead(stopMi, name => {
+          _fmStopCache2.fetching = false; _fmStopCache2.key = key; _fmStopCache2.name = name || '';
+        });
+      }
+    } else {
+      stopB.style.display = 'none';
+    }
+  }
+}
+function _fmOpenNearbyStops() {
+  const _es = (typeof lang !== 'undefined' && lang === 'es');
+  if (typeof _showStopAlertPopup === 'function') {
+    _showStopAlertPopup(
+      _es ? 'Paradas cercanas' : 'Nearby stops',
+      _es ? 'Buscando truck stops y parking…' : 'Finding truck stops & parking…',
+      'rgb(245,158,11)', true);
+  } else if (typeof openCommunityPanel === 'function') {
+    openCommunityPanel();
+  }
+}
+// Tocar un anillo del HUD del mapa muestra su detalle
+document.addEventListener('DOMContentLoaded', function () {
+  const cards = document.querySelectorAll('.hud-rings-grid .hud-ring-card');
+  if (!cards.length) return;
+  const show = (i) => {
+    const _es = (typeof lang !== 'undefined' && lang === 'es');
+    const v = id => (document.getElementById(id)?.textContent || '--');
+    if (i === 0) showToast('info', '🕐', _es ? 'Llegada al destino' : 'Arrival', (_es ? 'Tiempo de viaje restante: ' : 'Trip time left: ') + v('fmEta'), 4500);
+    else if (i === 1) showToast('info', '🚛', _es ? 'Horas de manejo' : 'Driving hours', (_es ? 'Disponibles ahora: ' : 'Available now: ') + v('fmDriveLeft') + (_es ? ' de 11h' : ' of 11h'), 4500);
+    else if (i === 2) showToast('info', '📏', _es ? 'Distancia restante' : 'Distance left', (_es ? 'Faltan ' : 'Remaining ') + v('fmRem'), 4500);
+    else showToast('info', '📅', _es ? 'Ciclo de 70 horas' : '70-hour cycle', (_es ? 'Disponibles: ' : 'Available: ') + v('fm70Left'), 4500);
+  };
+  cards.forEach((c, i) => { c.style.cursor = 'pointer'; c.addEventListener('click', () => show(i)); });
+});
 
 let _stopAlertDismissed = false;
 let _stopAlertRepeatTimer = null;
