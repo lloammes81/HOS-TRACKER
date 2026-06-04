@@ -16193,16 +16193,24 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
 // Route snapping — keep truck marker on the road
 function snapToRoute(rawLat, rawLon) {
   if (!roadGeometry || roadGeometry.length < 2) return { lat: rawLat, lon: rawLon, snapped: false, dist: 0 };
+  // Corrección de longitud: 1° de longitud ≈ cos(lat) × 1° de latitud en metros.
+  // Antes se mezclaban grados de lat/lon como si midieran lo mismo, lo que
+  // distorsionaba el punto proyectado y los umbrales (~13% a la latitud de
+  // Florida). Trabajamos en un espacio escalado (X=lat, Y=lon·kx) para que la
+  // distancia sea coherente en todas las direcciones; bestDist queda en
+  // "grados-latitud" reales (~111 km/grado), así 0.02≈2 km y 0.0013≈145 m valen.
+  var kx = Math.cos(rawLat * Math.PI / 180); if (!isFinite(kx) || kx < 0.1) kx = 0.1;
+  var ryRaw = rawLon * kx;
   var bestDist = Infinity, bestLat = rawLat, bestLon = rawLon;
   for (var j = 0; j < roadGeometry.length - 1; j++) {
-    var ax = roadGeometry[j][0], ay = roadGeometry[j][1];
-    var bx = roadGeometry[j+1][0], by = roadGeometry[j+1][1];
+    var ax = roadGeometry[j][0], ay = roadGeometry[j][1] * kx;
+    var bx = roadGeometry[j+1][0], by = roadGeometry[j+1][1] * kx;
     var dx = bx - ax, dy = by - ay, ls = dx*dx + dy*dy;
-    var t = ls > 0 ? ((rawLat-ax)*dx + (rawLon-ay)*dy) / ls : 0;
+    var t = ls > 0 ? ((rawLat-ax)*dx + (ryRaw-ay)*dy) / ls : 0;
     t = Math.max(0, Math.min(1, t));
     var px = ax + t*dx, py = ay + t*dy;
-    var dt = Math.sqrt((rawLat-px)*(rawLat-px) + (rawLon-py)*(rawLon-py));
-    if (dt < bestDist) { bestDist = dt; bestLat = px; bestLon = py; }
+    var dt = Math.sqrt((rawLat-px)*(rawLat-px) + (ryRaw-py)*(ryRaw-py));
+    if (dt < bestDist) { bestDist = dt; bestLat = px; bestLon = py / kx; }
   }
   // Lock-to-route: pegar SIEMPRE el ícono a la línea de la ruta mientras se
   // esté razonablemente cerca (~2 km, cubre deriva de GPS y estar en la vía).
