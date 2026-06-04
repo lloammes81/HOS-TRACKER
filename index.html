@@ -32556,24 +32556,18 @@ function drawDutyLine() {
   const isToday = getDateKey(now) === getDateKey(lbCurrentDate);
   const endX = isToday ? Math.min(24, now.getHours() + now.getMinutes() / 60) : 24;
 
-  // Start at the first logged hour (nothing is drawn before the first entry).
-  let firstH = -1;
-  for (let h = 0; h < 24; h++) {
-    if (day[h] != null && yIndex[day[h]] !== undefined) { firstH = h; break; }
-  }
-  if (firstH === -1 || firstH >= endX) { path.setAttribute('d', ''); return; }
-
-  let prevY = yIndex[day[firstH]] + 0.5;
-  let d = 'M ' + firstH + ' ' + prevY + ' ';
-  for (let h = firstH; h < 24 && h < endX; h++) {
-    // A new status logged at this hour draws a vertical connector, then we carry
-    // it forward across any later hours that have no explicit entry.
+  // Like a paper RODS the driver is OFF DUTY until the first logged change, so
+  // the line starts at midnight on row 1 and is carried forward through every
+  // status change across the whole day (no gaps).
+  let prevY = yIndex.offduty + 0.5;
+  let d = 'M 0 ' + prevY + ' ';
+  for (let h = 0; h < 24 && h < endX; h++) {
     if (day[h] != null && yIndex[day[h]] !== undefined) {
       const y = yIndex[day[h]] + 0.5;
-      if (y !== prevY) { d += 'L ' + h + ' ' + y + ' '; prevY = y; }
+      if (y !== prevY) { d += 'L ' + h + ' ' + y + ' '; prevY = y; } // vertical change
     }
     const segEnd = Math.min(h + 1, endX);
-    d += 'L ' + segEnd + ' ' + prevY + ' ';
+    d += 'L ' + segEnd + ' ' + prevY + ' ';                          // hold the status
   }
   path.setAttribute('d', d.trim());
 }
