@@ -17919,7 +17919,9 @@ function fmStartTracking() {
         return Math.abs(fmCurrentZoom - tz) >= 1;
       })();
 
-      if (_movedM > 20 || _zoomChanged) {
+      // Re-centrar casi continuamente (umbral bajo) para que el ícono del
+      // camión quede SIEMPRE pegado a la línea de la ruta, como en los GPS.
+      if (_movedM > 6 || _zoomChanged) {
         _lastPanLat = snapLat; _lastPanLon = snapLon;
 
         if (!fmUserZoomed) {
@@ -17939,7 +17941,8 @@ function fmStartTracking() {
           setTimeout(() => { window._fmProgrammaticBearing = false; }, 300);
         }
         const followCenter = calcFollowCenter(snapLat, snapLon, heading);
-        fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 1.0, noMoveStart: true });
+        // Pan corto y continuo: la ruta sigue al ícono sin rezagarse.
+        fmMapInst.setView(followCenter, fmCurrentZoom, { animate: true, duration: 0.65, noMoveStart: true });
         if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
         window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1300);
       }
