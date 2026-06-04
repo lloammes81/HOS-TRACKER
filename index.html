@@ -29599,6 +29599,9 @@ window._hosAutoRecalc = false;
   font-size: 8px; font-weight: 900; color: #10b981; background: #fff;
   padding: 1px 4px; border-radius: 2px; border: 1px solid #10b981;
 }
+/* Show the NOW badge only on the top (off-duty) row; the marker repeats
+   across the other rows as a plain line so it reads as one vertical "now" axis. */
+.lb-current-time.no-label::after { display: none; }
 
 /* Instructions overlay */
 .lb-help-btn {
@@ -31845,6 +31848,7 @@ window.nativeShare = nativeShare;
         </div>
         <div class="lb-hours-area">
           <div class="lb-hours-grid" id="lbGridSleeper"></div>
+          <div class="lb-current-time no-label" style="left:0%"></div>
         </div>
       </div>
 
@@ -31855,6 +31859,7 @@ window.nativeShare = nativeShare;
         </div>
         <div class="lb-hours-area">
           <div class="lb-hours-grid" id="lbGridDriving"></div>
+          <div class="lb-current-time no-label" style="left:0%"></div>
         </div>
       </div>
 
@@ -31865,6 +31870,7 @@ window.nativeShare = nativeShare;
         </div>
         <div class="lb-hours-area">
           <div class="lb-hours-grid" id="lbGridOnDuty"></div>
+          <div class="lb-current-time no-label" style="left:0%"></div>
         </div>
       </div>
     </div>
@@ -32595,8 +32601,17 @@ function updateCurrentTimeMarker() {
   const hour = now.getHours();
   const minute = now.getMinutes();
   const percent = ((hour + minute / 60) / 24) * 100;
-  const marker = document.getElementById('lbTimeMarker');
-  if (marker) marker.style.left = percent + '%';
+
+  // The hour grid has a fixed min-width (720px) and scrolls horizontally inside
+  // its area, so a "left: %" relative to the visible area width would land on the
+  // wrong hour. Position the marker in pixels against the grid's real width so the
+  // NOW line aligns with the duty cells regardless of scroll/viewport size.
+  const grid = document.getElementById('lbGridOffDuty');
+  const gridWidth = grid ? grid.getBoundingClientRect().width : 0;
+  const markers = document.querySelectorAll('.lb-current-time');
+  markers.forEach(marker => {
+    marker.style.left = gridWidth ? (percent / 100 * gridWidth) + 'px' : percent + '%';
+  });
 
   const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   const dateEl = document.getElementById('lbCurrentDate');
@@ -32878,6 +32893,9 @@ function openLogbookSheet() {
   updateLogbookForDate();
   loadDriverProfile();
   lbFillRouteFields();
+  // Now that the sheet is visible the grid has a real width, so the NOW marker
+  // can be placed against actual pixels (it reads 0 while display:none).
+  updateCurrentTimeMarker();
   requestWakeLock();
 }
 
