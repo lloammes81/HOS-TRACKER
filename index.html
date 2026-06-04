@@ -18352,9 +18352,12 @@ function fmStartTracking() {
           else if (!fmHeadingUpMode) fmMapInst.setBearing(0);
           setTimeout(() => { window._fmProgrammaticBearing = false; }, 300);
         }
-        const ctr = moving
-          ? calcFollowCenter(snap.lat, snap.lon, finalHdg)
-          : [snap.lat, snap.lon];
+        // Centrar SIEMPRE con calcFollowCenter (igual que watchPosition) para que
+        // la línea de la ruta quede pegada al ícono del HUD también cuando el fix
+        // de getCurrentPosition no reporta velocidad (moving=false → antes se
+        // centraba en [snap.lat,snap.lon] = centro de pantalla y la ruta se
+        // separaba del ícono, que va ~70% abajo sobre los anillos).
+        const ctr = calcFollowCenter(snap.lat, snap.lon, finalHdg);
         fmMapInst.setView(ctr, fmCurrentZoom, { animate: false, noMoveStart: true });
         if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
         window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1000);
