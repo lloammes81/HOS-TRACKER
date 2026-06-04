@@ -32059,6 +32059,7 @@ window.nativeShare = nativeShare;
 
 let lbCurrentStatus = 'offduty';
 let lbData = {};
+let lbEvents = {}; // dateKey -> [{m, s}] cambios de estado con precisión de minuto
 let lbLocationData = {}; // Stores GPS per hour
 let lbCurrentDate = new Date();
 let lbAutoDetectInterval = null;
@@ -32395,14 +32396,18 @@ function determineAutoStatus() {
     lbCurrentStatus = newStatus;
     updateAutoStatusUI(statusIcon, statusText, badgeColor, borderColor, textColor);
 
-    const currentHour = new Date().getHours();
+    const now2 = new Date();
+    const currentHour = now2.getHours();
     const dateKey = getDateKey(lbCurrentDate);
+    // Registra la transición con el minuto real (fuente de verdad de la gráfica/totales).
+    lbSetEvent(dateKey, currentHour * 60 + now2.getMinutes(), newStatus);
     if (!lbData[dateKey]) lbData[dateKey] = {};
     if (!lbData[dateKey][currentHour]) {
       autoFillHour(currentHour, newStatus);
       // Save location when status changes!
       saveLocationForHour(currentHour, newStatus);
     }
+    saveLogbookToStorage();
   }
 
   updateAutoStatusUI(statusIcon, statusText, badgeColor, borderColor, textColor);
@@ -32469,7 +32474,10 @@ function selectLogbookStatus(status) {
     if (pill.dataset.status === status) pill.classList.add('selected');
   });
 
-  const currentHour = new Date().getHours();
+  const now3 = new Date();
+  const currentHour = now3.getHours();
+  // Transición manual con minuto real (modelo de eventos).
+  lbSetEvent(getDateKey(lbCurrentDate), currentHour * 60 + now3.getMinutes(), status);
   autoFillHour(currentHour, status);
   // Save location on manual change too!
   saveLocationForHour(currentHour, status);
@@ -32523,14 +32531,12 @@ function clearHourFromAllStatuses(hour, dateKey) {
 // ========== SUMMARY & ALERTS ==========
 function updateSummary() {
   const dateKey = getDateKey(lbCurrentDate);
-  const counts = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
-
-  if (lbData[dateKey]) {
-    for (let h = 0; h < 24; h++) {
-      const status = lbData[dateKey][h];
-      if (status && counts[status] !== undefined) counts[status]++;
-    }
-  }
+  // Conteo con precisión de minuto (modelo de eventos) → horas.
+  const cm = lbCountsMin(dateKey, lbEndMinFor(dateKey));
+  const counts = {
+    offduty: cm.offduty / 60, sleeper: cm.sleeper / 60,
+    driving: cm.driving / 60, onduty: cm.onduty / 60
+  };
 
   document.getElementById('lbValOffDuty').textContent = counts.offduty.toFixed(1);
   document.getElementById('lbValSleeper').textContent = counts.sleeper.toFixed(1);
@@ -32600,6 +32606,65 @@ function lbHeldTimeline() {
   return segs;
 }
 
+/* ── Modelo de eventos al minuto (fuente de verdad de gráfica/totales/HOS) ──
+   lbEvents[dateKey] = [{m, s}] ordenado por minuto; el estado antes del primer
+   evento es OFF DUTY. Cada estado se mantiene hasta el siguiente evento. */
+function lbDeriveEventsFromHourly(dateKey) {
+  const day = lbData[dateKey];
+  if (!day) return [];
+  const out = []; let prev = null;
+  for (let h = 0; h < 24; h++) {
+    const s = day[h];
+    if (s && LB_ROWS.indexOf(s) >= 0) { if (s !== prev) out.push({ m: h * 60, s }); prev = s; }
+  }
+  return out;
+}
+
+function lbEventsFor(dateKey) {
+  const evs = lbEvents[dateKey];
+  if (evs && evs.length) return evs.slice().sort((a, b) => a.m - b.m);
+  return lbDeriveEventsFromHourly(dateKey); // compat con registros por hora previos
+}
+
+// Registra/actualiza un cambio de estado en un minuto concreto y colapsa duplicados.
+function lbSetEvent(dateKey, minute, status) {
+  minute = Math.max(0, Math.min(1439, Math.round(minute)));
+  if (LB_ROWS.indexOf(status) < 0) return;
+  let evs = (lbEvents[dateKey] || lbDeriveEventsFromHourly(dateKey)).slice();
+  evs = evs.filter(e => e.m !== minute);
+  evs.push({ m: minute, s: status });
+  evs.sort((a, b) => a.m - b.m);
+  const collapsed = []; let prev = null;
+  for (const e of evs) { if (e.s !== prev) { collapsed.push(e); prev = e.s; } } // quita estados repetidos
+  lbEvents[dateKey] = collapsed;
+}
+
+// Segmentos [{start,end,status}] en minutos, recortados a endMin (hora actual si es hoy).
+function lbSegmentsMin(dateKey, endMin) {
+  const evs = lbEventsFor(dateKey);
+  const segs = []; let cur = 'offduty', start = 0;
+  for (const e of evs) {
+    if (e.m >= endMin) break;
+    if (e.s !== cur) { if (e.m > start) segs.push({ start, end: e.m, status: cur }); cur = e.s; start = e.m; }
+  }
+  if (start < endMin) segs.push({ start, end: endMin, status: cur });
+  return segs;
+}
+
+// Totales por estado, en MINUTOS, hasta endMin.
+function lbCountsMin(dateKey, endMin) {
+  const c = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
+  for (const sg of lbSegmentsMin(dateKey, endMin)) c[sg.status] += (sg.end - sg.start);
+  return c;
+}
+
+// Minuto-fin para un día: hora actual si es hoy, si no 24h completas.
+function lbEndMinFor(dateKey) {
+  const now = new Date();
+  if (getDateKey(now) === dateKey) return now.getHours() * 60 + now.getMinutes();
+  return 1440;
+}
+
 function drawRodsGraph() {
   const canvas = document.getElementById('lbRodsCanvas');
   if (!canvas) return;
@@ -32657,20 +32722,13 @@ function drawRodsGraph() {
   ctx.fillStyle = '#111'; ctx.font = '800 13px "DM Sans",sans-serif';
   for (let i = 0; i < 4; i++) ctx.fillText(LB_ROW_LABEL[LB_ROWS[i]], g.leftW / 2, g.rowCenter(i));
 
-  // ── Datos: timeline sostenida, recortada a la hora actual si es hoy ──
-  const now = new Date();
-  const isToday = getDateKey(now) === getDateKey(lbCurrentDate);
-  const endH = isToday ? Math.min(24, now.getHours() + now.getMinutes() / 60) : 24;
-  const segs = lbHeldTimeline();
-  const counts = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
-  const drawSegs = [];
-  for (const sg of segs) {
-    if (sg.start >= endH) break;
-    const e = Math.min(sg.end, endH);
-    drawSegs.push({ start: sg.start, end: e, status: sg.status });
-    counts[sg.status] += (e - sg.start);
-    if (e >= endH) break;
-  }
+  // ── Datos: segmentos al minuto, recortados a la hora actual si es hoy ──
+  const dateKey = getDateKey(lbCurrentDate);
+  const isToday = getDateKey(new Date()) === dateKey;
+  const endMin = lbEndMinFor(dateKey);
+  const xMin = m => g.x0 + (m / 1440) * g.gridW;   // minuto → x
+  const drawSegs = lbSegmentsMin(dateKey, endMin); // {start,end,status} en minutos
+  const counts = lbCountsMin(dateKey, endMin);     // minutos por estado
 
   // ── Línea de estado escalonada ──
   ctx.strokeStyle = '#111'; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -32678,7 +32736,7 @@ function drawRodsGraph() {
   let prevY = null;
   drawSegs.forEach((sg, k) => {
     const yc = g.rowCenter(LB_ROWS.indexOf(sg.status));
-    const xs = g.xOf(sg.start), xe = g.xOf(sg.end);
+    const xs = xMin(sg.start), xe = xMin(sg.end);
     if (k === 0) { ctx.moveTo(xs, yc); }
     else { ctx.lineTo(xs, prevY); ctx.lineTo(xs, yc); } // salto vertical en el cambio
     ctx.lineTo(xe, yc);
@@ -32689,20 +32747,20 @@ function drawRodsGraph() {
   // ── Duración de cada tramo (sobre la línea, estilo RODS) ──
   ctx.fillStyle = '#111'; ctx.font = '700 9px "Share Tech Mono",monospace'; ctx.textAlign = 'center';
   for (const sg of drawSegs) {
-    const dur = sg.end - sg.start;
-    if (dur < 0.75) continue;
+    const durMin = sg.end - sg.start;
+    if (durMin < 45) continue; // solo tramos ≥ 45 min para no saturar
     const idx = LB_ROWS.indexOf(sg.status);
-    const xc = (g.xOf(sg.start) + g.xOf(sg.end)) / 2;
-    ctx.fillText(lbFmtHM(dur), xc, g.rowCenter(idx) - g.rowH * 0.30);
+    const xc = (xMin(sg.start) + xMin(sg.end)) / 2;
+    ctx.fillText(lbFmtHM(durMin / 60), xc, g.rowCenter(idx) - g.rowH * 0.30);
   }
 
-  // ── Totales por fila (derecha) ──
+  // ── Totales por fila (derecha), en HH:MM ──
   ctx.fillStyle = '#111'; ctx.font = '800 11px "Share Tech Mono",monospace'; ctx.textAlign = 'left';
-  for (let i = 0; i < 4; i++) ctx.fillText(lbFmtHM(counts[LB_ROWS[i]]), g.x1 + 6, g.rowCenter(i));
+  for (let i = 0; i < 4; i++) ctx.fillText(lbFmtHM(counts[LB_ROWS[i]] / 60), g.x1 + 6, g.rowCenter(i));
 
   // ── Marcador "AHORA" (rojo) ──
   if (isToday) {
-    const xn = g.xOf(endH);
+    const xn = xMin(endMin);
     ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(xn, g.topH); ctx.lineTo(xn, g.topH + g.rowsH); ctx.stroke();
   }
@@ -32717,19 +32775,21 @@ function lbCanvasTap(ev) {
   const cx = (ev.touches && ev.touches[0] ? ev.touches[0].clientX : ev.clientX) - rect.left;
   const cy = (ev.touches && ev.touches[0] ? ev.touches[0].clientY : ev.clientY) - rect.top;
   if (cx < g.x0 || cx > g.x1) return;
-  const hour = Math.floor((cx - g.x0) / g.gridW * 24);
   const rowIdx = Math.floor((cy - g.topH) / g.rowH);
-  if (hour < 0 || hour > 23 || rowIdx < 0 || rowIdx > 3) return;
+  if (rowIdx < 0 || rowIdx > 3) return;
   const status = LB_ROWS[rowIdx];
+  // Minuto tocado, ajustado a la marca de 15 min más cercana.
+  let minute = (cx - g.x0) / g.gridW * 1440;
+  minute = Math.round(minute / 15) * 15;
+  minute = Math.max(0, Math.min(1439, minute));
   const dateKey = getDateKey(lbCurrentDate);
+  // Inserta una transición de estado en ese minuto (se mantiene hasta el siguiente cambio).
+  lbSetEvent(dateKey, minute, status);
+  // Mantén la capa por hora y la captura de ubicación para las funciones auxiliares.
+  const hour = Math.floor(minute / 60);
   if (!lbData[dateKey]) lbData[dateKey] = {};
-  if (lbData[dateKey][hour] === status) {
-    lbData[dateKey][hour] = null;
-    if (lbLocationData[dateKey]) delete lbLocationData[dateKey][hour];
-  } else {
-    lbData[dateKey][hour] = status;
-    if (typeof saveLocationForHour === 'function') saveLocationForHour(hour, status);
-  }
+  lbData[dateKey][hour] = status;
+  if (typeof saveLocationForHour === 'function') saveLocationForHour(hour, status);
   updateSummary();
   checkHOSRules();
   updateHoursAvailable();
@@ -32800,14 +32860,11 @@ function drawDutyLine() {
 
 function checkHOSRules() {
   const dateKey = getDateKey(lbCurrentDate);
-  const counts = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
-
-  if (lbData[dateKey]) {
-    for (let h = 0; h < 24; h++) {
-      const status = lbData[dateKey][h];
-      if (status && counts[status] !== undefined) counts[status]++;
-    }
-  }
+  const cm = lbCountsMin(dateKey, lbEndMinFor(dateKey));
+  const counts = {
+    offduty: cm.offduty / 60, sleeper: cm.sleeper / 60,
+    driving: cm.driving / 60, onduty: cm.onduty / 60
+  };
 
   const alert = document.getElementById('lbHosAlert');
   const alertText = document.getElementById('lbHosAlertText');
@@ -32820,16 +32877,16 @@ function checkHOSRules() {
     message = '⛔ DRIVING LIMIT REACHED: 11 hours maximum!';
     show = true;
   } else if (counts.driving >= 10) {
-    message = '⚠️ Driving: ' + counts.driving + 'h / 11h limit approaching';
+    message = '⚠️ Driving: ' + counts.driving.toFixed(1) + 'h / 11h limit approaching';
     show = true;
   } else if (totalOnDuty >= 14) {
     message = '⛔ DUTY LIMIT REACHED: 14 hours maximum!';
     show = true;
   } else if (totalOnDuty >= 12) {
-    message = '⚠️ On Duty: ' + totalOnDuty + 'h / 14h limit approaching';
+    message = '⚠️ On Duty: ' + totalOnDuty.toFixed(1) + 'h / 14h limit approaching';
     show = true;
   } else if (counts.offduty + counts.sleeper < 10) {
-    message = '⚠️ Rest required: ' + (10 - counts.offduty - counts.sleeper) + 'h more needed';
+    message = '⚠️ Rest required: ' + (10 - counts.offduty - counts.sleeper).toFixed(1) + 'h more needed';
     show = true;
   }
 
@@ -32844,14 +32901,11 @@ function checkHOSRules() {
 
 function updateHoursAvailable() {
   const dateKey = getDateKey(lbCurrentDate);
-  const counts = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
-
-  if (lbData[dateKey]) {
-    for (let h = 0; h < 24; h++) {
-      const s = lbData[dateKey][h];
-      if (s) counts[s]++;
-    }
-  }
+  const cm = lbCountsMin(dateKey, lbEndMinFor(dateKey));
+  const counts = {
+    offduty: cm.offduty / 60, sleeper: cm.sleeper / 60,
+    driving: cm.driving / 60, onduty: cm.onduty / 60
+  };
 
   const drivingUsed = counts.driving;
   const onDutyUsed = counts.driving + counts.onduty;
@@ -32881,19 +32935,16 @@ function updateHoursAvailable() {
 }
 
 function calculateCycleHours() {
-  let total = 0;
+  let totalMin = 0;
   const today = new Date();
   for (let i = 0; i < 8; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const key = getDateKey(d);
-    if (lbData[key]) {
-      for (let h = 0; h < 24; h++) {
-        if (lbData[key][h] === 'driving' || lbData[key][h] === 'onduty') total++;
-      }
-    }
+    const cm = lbCountsMin(key, lbEndMinFor(key)); // precisión de minuto
+    totalMin += cm.driving + cm.onduty;            // on-duty = manejo + on-duty
   }
-  return total;
+  return totalMin / 60;
 }
 
 function updateCurrentTimeMarker() {
@@ -33003,12 +33054,21 @@ function getDateKey(date) {
 // ========== STORAGE ==========
 function saveLogbookToStorage() {
   AppStorage.set('logbook_data', lbData);
+  AppStorage.set('logbook_events', lbEvents);
   AppStorage.set('logbook_locations', lbLocationData);
 }
 
 function loadLogbookData() {
   lbData = AppStorage.get('logbook_data', {});
+  lbEvents = AppStorage.get('logbook_events', {});
   lbLocationData = AppStorage.get('logbook_locations', {});
+  // Migración: si un día tiene celdas por hora pero aún no eventos, derívalos.
+  for (const key in lbData) {
+    if (!lbEvents[key] || !lbEvents[key].length) {
+      const ev = lbDeriveEventsFromHourly(key);
+      if (ev.length) lbEvents[key] = ev;
+    }
+  }
   updateLogbookForDate();
 }
 
@@ -33036,13 +33096,7 @@ function saveLogbook() {
 
 function shareLogbook() {
   const dateKey = getDateKey(lbCurrentDate);
-  const counts = { offduty: 0, sleeper: 0, driving: 0, onduty: 0 };
-  if (lbData[dateKey]) {
-    for (let h = 0; h < 24; h++) {
-      const s = lbData[dateKey][h];
-      if (s) counts[s]++;
-    }
-  }
+  const counts = lbCountsMin(dateKey, lbEndMinFor(dateKey)); // minutos por estado
 
   // Build location summary
   let locSummary = '';
@@ -33060,7 +33114,7 @@ function shareLogbook() {
     'Driver: ' + (document.getElementById('lbDriverName').textContent || 'N/A') + '\n' +
     'Current: ' + (document.getElementById('lbCurrentAddress').textContent || 'N/A') + '\n' +
     'Hours Available: ' + (document.getElementById('lbHoursAvailable').textContent || '0') + '\n' +
-    'Driving: ' + counts.driving + 'h | On Duty: ' + counts.onduty + 'h | Sleeper: ' + counts.sleeper + 'h | Off Duty: ' + counts.offduty + 'h' +
+    'Driving: ' + lbFmtHM(counts.driving / 60) + ' | On Duty: ' + lbFmtHM(counts.onduty / 60) + ' | Sleeper: ' + lbFmtHM(counts.sleeper / 60) + ' | Off Duty: ' + lbFmtHM(counts.offduty / 60) +
     locSummary;
 
   if (navigator.share) {
