@@ -8354,9 +8354,16 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
       <!-- LLEGADA -->
       <div class="hud-ring-card">
-        <div style="position:relative;width:90px;height:90px;">
+        <div style="position:relative;width:90px;height:90px;filter:drop-shadow(0 5px 9px rgba(0,0,0,0.55));">
           <svg width="90" height="90" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(34,211,238,.14)" stroke-width="5.5"/>
+            <defs>
+              <radialGradient id="ringGrad3dMap" cx="38%" cy="30%" r="80%">
+                <stop offset="0%" stop-color="#47597f"/>
+                <stop offset="55%" stop-color="#2e3c5a"/>
+                <stop offset="100%" stop-color="#18223c"/>
+              </radialGradient>
+            </defs>
+            <circle cx="40" cy="40" r="36" fill="url(#ringGrad3dMap)" stroke="rgba(34,211,238,.14)" stroke-width="5.5"/>
             <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#22d3ee" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
@@ -8368,9 +8375,9 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
       <!-- MANEJO -->
       <div id="hudManejoCell" class="hud-ring-card">
-        <div style="position:relative;width:90px;height:90px;">
+        <div style="position:relative;width:90px;height:90px;filter:drop-shadow(0 5px 9px rgba(0,0,0,0.55));">
           <svg width="90" height="90" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(52,211,153,.14)" stroke-width="5.5"/>
+            <circle cx="40" cy="40" r="36" fill="url(#ringGrad3dMap)" stroke="rgba(52,211,153,.14)" stroke-width="5.5"/>
             <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#34d399" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
@@ -8382,9 +8389,9 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
       <!-- RESTANTE -->
       <div class="hud-ring-card">
-        <div style="position:relative;width:90px;height:90px;">
+        <div style="position:relative;width:90px;height:90px;filter:drop-shadow(0 5px 9px rgba(0,0,0,0.55));">
           <svg width="90" height="90" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(96,165,250,.14)" stroke-width="5.5"/>
+            <circle cx="40" cy="40" r="36" fill="url(#ringGrad3dMap)" stroke="rgba(96,165,250,.14)" stroke-width="5.5"/>
             <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#60a5fa" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="226 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
@@ -8396,9 +8403,9 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
       <!-- 70 HRS -->
       <div class="hud-ring-card">
-        <div style="position:relative;width:90px;height:90px;">
+        <div style="position:relative;width:90px;height:90px;filter:drop-shadow(0 5px 9px rgba(0,0,0,0.55));">
           <svg width="90" height="90" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="rgba(3,6,18,0.92)" stroke="rgba(167,139,250,.14)" stroke-width="5.5"/>
+            <circle cx="40" cy="40" r="36" fill="url(#ringGrad3dMap)" stroke="rgba(167,139,250,.14)" stroke-width="5.5"/>
             <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#a78bfa" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="226 226"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
@@ -12146,7 +12153,7 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   const totalMins = Math.round(hoursLeft * 60);
   const h = Math.floor(totalMins / 60);
   const m = totalMins % 60;
-  hrs.textContent = h > 0 ? `${h}h${m > 0 ? m : ''}` : `${m}m`;
+  hrs.textContent = h > 0 ? `${h}h${m > 0 ? ' ' + m + 'm' : ''}` : `${m}m`;
 
   // ELD-style side labels: MAX (left) and USED (right)
   const maxEl   = document.getElementById('dhMaxLabel');
@@ -12217,7 +12224,7 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   if (hudText) {
     const tm = Math.round(hoursLeft * 60);
     const hh = Math.floor(tm / 60), mm = tm % 60;
-    hudText.textContent = hh > 0 ? `${hh}h${mm > 0 ? mm : ''}` : `${mm}m`;
+    hudText.textContent = hh > 0 ? `${hh}h${mm > 0 ? ' ' + mm + 'm' : ''}` : `${mm}m`;
     hudText.style.color = arcColor;
   }
   // Color-code the HUD cell border to match severity
