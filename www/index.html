@@ -15980,8 +15980,8 @@ const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 let fmTruckEl = null;  // the inner div element for rotation
 
 function buildTruckIconHTML(heading, isMoving) {
-  // Leaflet marker is invisible — the fixed #fixedTruckMarker div is the real display
-  return '<div style="width:1px;height:1px;opacity:0"></div>';
+  // El marcador del mapa ES el camión visible, dibujado en la posición pegada
+  // a la ruta (lock-to-route) → siempre sobre la línea, como Waze/Google.
   const overLimit = typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded;
 
   // Glow: siempre azul (parado=suave, movimiento=brillante), rojo si sobrepasa límite
@@ -16111,8 +16111,10 @@ function updateFixedTruckIcon(isMoving, overLimit, heading) {
 }
 
 function showFixedTruckIcon() {
+  // Overlay fijo desactivado: el camión se dibuja sobre el mapa, pegado a la
+  // ruta (marcador fmGpsMarker). Se mantiene el ícono del HUD (mapHudTruck).
   const el = document.getElementById('fixedTruckMarker');
-  if (el) el.classList.add('visible');
+  if (el) el.classList.remove('visible');
   updateFixedTruckIcon(false, false, 0);
 }
 
@@ -16171,7 +16173,8 @@ function fmUpdateTruckMarker(lat, lon, heading, isMoving) {
   if (!truckFrom) truckFrom = { lat, lon, heading: heading ?? 0 };
 
   const html = buildTruckIconHTML(heading, isMoving);
-  const icon = L.divIcon({ className: '', html, iconAnchor: [0, 0], iconSize: [1, 1] });
+  // Ancla = centro del círculo (flecha 20 + gap 3 + medio círculo 33 = 56 desde arriba)
+  const icon = L.divIcon({ className: '', html, iconAnchor: [33, 56], iconSize: [66, 89] });
   if (!fmGpsMarker) {
     fmGpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(fmMapInst);
     truckFrom   = { lat, lon, heading: heading ?? 0 };
