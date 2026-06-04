@@ -16030,7 +16030,11 @@ function updateFixedTruckIcon(isMoving, overLimit, heading) {
   if (inner)  inner.innerHTML    = iconHtml;
   if (circle) circle.className   = overLimit ? 'over-limit' : (isMoving ? 'moving' : '');
   if (arrow)  { arrow.className  = overLimit ? 'over' : ''; }
-  if (arrow && heading != null && heading >= 0) arrow.style.transform = `rotate(${heading}deg)`;
+  // En modo heading-up el mapa rota para que la ruta vaya hacia ARRIBA en
+  // pantalla; la flecha (panel fijo) debe apuntar arriba para ir acorde con la
+  // línea de la ruta. En modo norte-arriba sí gira con el rumbo.
+  const _arrowDeg = (typeof fmHeadingUpMode !== 'undefined' && fmHeadingUpMode) ? 0 : ((heading != null && heading >= 0) ? heading : 0);
+  if (arrow) arrow.style.transform = `rotate(${_arrowDeg}deg)`;
 
   // ── Update HUD-embedded truck icon (#mapHudTruck) ───────────
   const hudInner  = document.getElementById('mapHudInner');
@@ -16043,7 +16047,7 @@ function updateFixedTruckIcon(isMoving, overLimit, heading) {
   }
   if (hudArrow) {
     hudArrow.style.borderBottomColor = borderColor;
-    if (heading != null && heading >= 0) hudArrow.style.transform = `rotate(${heading}deg)`;
+    hudArrow.style.transform = `rotate(${_arrowDeg}deg)`;
   }
 
   // ── Rotate compass rose (counter-rotation keeps N pointing north) ─
