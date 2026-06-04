@@ -29446,7 +29446,7 @@ window._hosAutoRecalc = false;
 .lb-hours-grid {
   display: grid;
   grid-template-columns: repeat(24, 1fr);
-  min-width: 720px; height: 100%;
+  height: 100%;
 }
 .lb-hour-cell {
   border-right: 1px solid #e0d5c5;
@@ -29461,15 +29461,17 @@ window._hosAutoRecalc = false;
 .lb-hour-cell.filled-driving { background: rgba(139,30,30,0.35); }
 .lb-hour-cell.filled-onduty { background: rgba(245,158,11,0.3); }
 
-/* Hour labels at top */
+/* Hour labels at top. The spacer matches the status-label column so the
+   24 hour labels line up exactly with the hour cells below. */
+.lb-hour-labels-row { display: flex; border-bottom: 2px solid #8b1e1e; }
 .lb-hour-labels {
-  display: grid; grid-template-columns: repeat(24, 1fr);
-  min-width: 720px; border-bottom: 2px solid #8b1e1e;
+  flex: 1; display: grid; grid-template-columns: repeat(24, 1fr);
   background: #f5f0e8;
 }
 .lb-hour-label {
-  text-align: center; font-size: 10px; font-weight: 700;
+  text-align: center; font-size: 8px; font-weight: 700;
   color: #6b5b4f; padding: 4px 0; border-right: 1px solid #d4c5b0;
+  min-width: 0; overflow: hidden; white-space: nowrap;
 }
 .lb-hour-label:last-child { border-right: none; }
 .lb-hour-label.midnight { color: #8b1e1e; font-weight: 900; }
@@ -31826,8 +31828,11 @@ window.nativeShare = nativeShare;
     <div class="lb-grid-container">
       <div class="lb-grid-header">24-HOUR DUTY STATUS GRAPH</div>
 
-      <!-- Hour labels -->
-      <div class="lb-hour-labels" id="lbHourLabels"></div>
+      <!-- Hour labels (spacer keeps them aligned with the hour cells) -->
+      <div class="lb-hour-labels-row">
+        <div class="lb-status-label"></div>
+        <div class="lb-hour-labels" id="lbHourLabels"></div>
+      </div>
 
       <!-- Status rows -->
       <div class="lb-status-row" data-status="offduty">
@@ -32067,8 +32072,8 @@ function createHourLabels() {
   const labels = document.getElementById('lbHourLabels');
   if (!labels) return;
   labels.innerHTML = '';
-  const hours = ['12AM','1','2','3','4','5','6','7','8','9','10','11',
-                 '12PM','1','2','3','4','5','6','7','8','9','10','11'];
+  const hours = ['12','1','2','3','4','5','6','7','8','9','10','11',
+                 '12','1','2','3','4','5','6','7','8','9','10','11'];
   hours.forEach((h, i) => {
     const label = document.createElement('div');
     label.className = 'lb-hour-label' + (i === 0 || i === 12 ? ' midnight' : '');
@@ -32602,10 +32607,8 @@ function updateCurrentTimeMarker() {
   const minute = now.getMinutes();
   const percent = ((hour + minute / 60) / 24) * 100;
 
-  // The hour grid has a fixed min-width (720px) and scrolls horizontally inside
-  // its area, so a "left: %" relative to the visible area width would land on the
-  // wrong hour. Position the marker in pixels against the grid's real width so the
-  // NOW line aligns with the duty cells regardless of scroll/viewport size.
+  // Position the marker in pixels against the grid's real rendered width so the
+  // NOW line aligns exactly with the duty cells across viewport sizes.
   const grid = document.getElementById('lbGridOffDuty');
   const gridWidth = grid ? grid.getBoundingClientRect().width : 0;
   const markers = document.querySelectorAll('.lb-current-time');
