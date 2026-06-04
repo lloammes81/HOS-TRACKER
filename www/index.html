@@ -2946,6 +2946,20 @@
   }
   #fmOverviewBtn:active { transform:scale(.92); }
   #fmOverviewBtn.visible { display:flex; }
+  #fm3DToggleBtn {
+    position:absolute;
+    left: calc(10px + env(safe-area-inset-left,0px));
+    bottom: 304px; z-index:10;
+    width:44px; height:44px; border-radius:50%; border:none;
+    background:rgba(15,23,42,0.88); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    color:#fff; font-size:14px; font-weight:900; cursor:pointer;
+    box-shadow:0 2px 12px rgba(0,0,0,.4);
+    display:none; align-items:center; justify-content:center;
+    transition:background .2s, transform .15s;
+  }
+  #fm3DToggleBtn:active { transform:scale(.92); }
+  #fm3DToggleBtn.visible { display:flex; }
+  #fm3DToggleBtn.active { background:#10b981; box-shadow:0 2px 12px rgba(16,185,129,.5); }
 
   /* ── TAP TOGGLE ZOOM (widgets + stats) ─────────────────── */
   .tap-zoom{
@@ -8033,6 +8047,8 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 ">
   <!-- MAP fills entire screen -->
   <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
+  <!-- Vista 3D de navegación (MapLibre GL) — beta, encima del mapa 2D -->
+  <div id="fullMap3D" style="display:none;position:absolute;inset:0;z-index:2"></div>
 
     <div class="local-radius-info" id="localRadiusInfo" style="display:none">📍 Local Mode — 100 mi radius</div>
     <div id="routeAlertPill" onclick="switchTab('community')">🚨 Alert on your route — tap</div>
@@ -8134,6 +8150,8 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
   <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
   <!-- VISTA GENERAL DE RUTA (encima del auto-follow) -->
   <button id="fmOverviewBtn" class="visible" title="Vista general de ruta" onclick="fmRouteOverview()">🗺️</button>
+  <!-- TOGGLE VISTA 3D (MapLibre) -->
+  <button id="fm3DToggleBtn" class="visible" title="Vista 3D" onclick="toggle3DNav()">3D</button>
 
   <!-- Compass rose — rotates to keep N pointing north while map is heading-up -->
   <div id="mapCompassWidget">
@@ -15867,6 +15885,7 @@ function fmRedrawRoute(coords) {
   // ── Ruta principal azul brillante
   fmLayer = L.polyline(routeCoords,{ color:'#3b82f6', weight:10, opacity:0.97 }).addTo(fmMapInst);
   window._fmRouteColState = null;  // permitir re-aplicar el color tras redibujar
+  if (typeof fm3DActive !== 'undefined' && fm3DActive) _set3DRoute();  // refrescar ruta en vista 3D
 
   // ── Marcador origen (dot verde)
   const oIcon = L.divIcon({
@@ -16462,6 +16481,135 @@ function fmRouteOverview() {
   const fb = document.getElementById('fmFollowBtn');
   if (fb) fb.classList.remove('active');
   try { fmMapInst.fitBounds(fmLayer.getBounds(), { padding: [70, 70] }); } catch (e) {}
+}
+
+/* ════════════════════════════════════════════════════════════
+   🗺️ VISTA 3D DE NAVEGACIÓN (MapLibre GL) — beta
+   Aditiva y reversible: no toca el mapa Leaflet. Toggle 2D/3D.
+════════════════════════════════════════════════════════════ */
+let fm3DActive = false, fm3DMap = null, fm3DMarker = null, fm3DReady = false, fm3DLibLoading = false;
+
+function _load3DLib(cb) {
+  if (window.maplibregl) { cb(); return; }
+  if (fm3DLibLoading) {
+    const t = setInterval(() => { if (window.maplibregl) { clearInterval(t); cb(); } }, 200);
+    return;
+  }
+  fm3DLibLoading = true;
+  const css = document.createElement('link');
+  css.rel = 'stylesheet';
+  css.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
+  document.head.appendChild(css);
+  const js = document.createElement('script');
+  js.src = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
+  js.onload = () => cb();
+  js.onerror = () => {
+    fm3DLibLoading = false;
+    if (typeof showToast === 'function') showToast('warning', '🗺️', 'Vista 3D', 'No se pudo cargar la librería 3D (revisa la conexión).', 4000);
+  };
+  document.head.appendChild(js);
+}
+
+function toggle3DNav() {
+  if (fm3DActive) { disable3DNav(); return; }
+  _load3DLib(() => enable3DNav());
+}
+
+function enable3DNav() {
+  fm3DActive = true;
+  const c = document.getElementById('fullMap3D');
+  if (c) c.style.display = 'block';
+  const btn = document.getElementById('fm3DToggleBtn');
+  if (btn) { btn.classList.add('active'); btn.textContent = '2D'; }
+  if (!fm3DMap) init3DMap();
+  else { try { fm3DMap.resize(); } catch (e) {} _set3DRoute(); }
+}
+
+function disable3DNav() {
+  fm3DActive = false;
+  const c = document.getElementById('fullMap3D');
+  if (c) c.style.display = 'none';
+  const btn = document.getElementById('fm3DToggleBtn');
+  if (btn) { btn.classList.remove('active'); btn.textContent = '3D'; }
+}
+
+function _route3DGeoJSON() {
+  let coords = [];
+  if (typeof roadGeometry !== 'undefined' && roadGeometry && roadGeometry.length > 1) {
+    coords = roadGeometry.map(c => [c[1], c[0]]); // [lat,lon] → [lon,lat]
+  } else if (origin && destination) {
+    coords = [[origin.lon, origin.lat], [destination.lon, destination.lat]];
+  }
+  return { type: 'Feature', geometry: { type: 'LineString', coordinates: coords } };
+}
+
+function _set3DRoute() {
+  if (!fm3DMap || !fm3DReady) return;
+  try { const s = fm3DMap.getSource('route'); if (s) s.setData(_route3DGeoJSON()); } catch (e) {}
+}
+
+function init3DMap() {
+  if (!window.maplibregl) return;
+  const ttTiles  = `https://api.tomtom.com/map/1/tile/basic/night/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`;
+  const trfTiles = `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}`;
+  let start = [-81.5, 28.5];
+  if (window.lastFixFm && window.lastFixFm.lat != null) start = [window.lastFixFm.lon, window.lastFixFm.lat];
+  else if (typeof origin !== 'undefined' && origin) start = [origin.lon, origin.lat];
+
+  try {
+    fm3DMap = new maplibregl.Map({
+      container: 'fullMap3D',
+      style: {
+        version: 8,
+        sources: {
+          tt:      { type: 'raster', tiles: [ttTiles],  tileSize: 256, maxzoom: 22 },
+          ttraffic:{ type: 'raster', tiles: [trfTiles], tileSize: 256, maxzoom: 22 }
+        },
+        layers: [
+          { id: 'tt',       type: 'raster', source: 'tt' },
+          { id: 'ttraffic', type: 'raster', source: 'ttraffic', paint: { 'raster-opacity': 0.85 } }
+        ]
+      },
+      center: start, zoom: 15, pitch: 58, bearing: 0,
+      attributionControl: false, dragRotate: true, pitchWithRotate: true
+    });
+  } catch (e) {
+    if (typeof showToast === 'function') showToast('warning', '🗺️', 'Vista 3D', 'No se pudo iniciar el mapa 3D.', 4000);
+    return;
+  }
+
+  fm3DMap.on('load', () => {
+    fm3DReady = true;
+    try {
+      fm3DMap.addSource('route', { type: 'geojson', data: _route3DGeoJSON() });
+      // Casing (borde oscuro) + línea principal → efecto cinta
+      fm3DMap.addLayer({ id: 'route-casing', type: 'line', source: 'route',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#0b2545', 'line-width': 16, 'line-opacity': 0.95 } });
+      fm3DMap.addLayer({ id: 'route-line', type: 'line', source: 'route',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#00C8E0', 'line-width': 10 } });
+      // Marcador del camión
+      const el = document.createElement('div');
+      el.textContent = '🚛';
+      el.style.cssText = 'font-size:30px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7))';
+      fm3DMarker = new maplibregl.Marker({ element: el }).setLngLat(start).addTo(fm3DMap);
+    } catch (e) {}
+  });
+}
+
+// Llamado desde el bucle de GPS cuando la vista 3D está activa
+function fm3DUpdate(lat, lon, heading, isMoving) {
+  if (!fm3DActive || !fm3DMap || !fm3DReady) return;
+  try {
+    if (fm3DMarker) fm3DMarker.setLngLat([lon, lat]);
+    fm3DMap.easeTo({
+      center: [lon, lat],
+      bearing: (heading != null && heading >= 0) ? heading : fm3DMap.getBearing(),
+      pitch: 58, zoom: Math.max(fm3DMap.getZoom(), 15),
+      duration: 800, essential: true
+    });
+  } catch (e) {}
 }
 
 function toggleFollow() {
@@ -17755,6 +17903,8 @@ function fmStartTracking() {
     fmUpdateTruckMarker(snapLat, snapLon, heading, isMoving);
     // ── Update fixed overlay icon (always center-bottom above rings) ────
     updateFixedTruckIcon(isMoving, typeof speedLimitExceeded !== 'undefined' && speedLimitExceeded, heading);
+    // ── Vista 3D (MapLibre) — seguir al camión si está activa ──
+    if (fm3DActive) fm3DUpdate(snapLat, snapLon, heading, isMoving);
     // Actualizar mini mapa del dashboard si está visible
     updateHosDashMinimap(snapLat, snapLon);
 
