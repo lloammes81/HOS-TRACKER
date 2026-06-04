@@ -32524,14 +32524,16 @@ function updateSummary() {
 }
 
 // Draw the continuous duty-status line that steps between the four rows,
-// mirroring a professional paper/ELD Record of Duty Status. The SVG uses a
-// 0..24 (hours) x 0..4 (status rows) viewBox stretched over the hour columns,
-// so a vertical jump happens wherever the status changes.
+// mirroring a professional paper/ELD Record of Duty Status.
 //
-// The line is continuous: once a status is logged it is carried forward until
-// the next change (you stay in a status until you switch), and for the current
-// day it runs right up to the live "NOW" time instead of stopping on whole
-// hours — so the line keeps moving with the clock no matter the status.
+// Geometry is measured in pixels: each horizontal segment sits at the exact
+// vertical CENTER of its status row (the rows aren't equal height because of
+// their borders, so a fixed 4-unit viewBox would drift off-centre), and the
+// vertical jumps connect those centres. X maps hours 0..24 across the columns.
+//
+// The line is continuous: the driver is OFF DUTY from midnight until the first
+// logged change, each status is held until the next change, and for the current
+// day it runs right up to the live "NOW" time so it keeps moving with the clock.
 function drawDutyLine() {
   const wrap = document.getElementById('lbRowsWrap');
   const svg  = document.getElementById('lbDutyLine');
@@ -32544,30 +32546,37 @@ function drawDutyLine() {
   const areaRect = area.getBoundingClientRect();
   if (!areaRect.width) return; // sheet hidden — nothing to measure yet
 
-  // Align the overlay with the hour columns (offset past the status-label column).
+  // Align/scale the overlay to the hour columns and use a 1:1 pixel viewBox.
+  const W = areaRect.width;
+  const H = wrapRect.height;
   svg.style.left  = (areaRect.left - wrapRect.left) + 'px';
-  svg.style.width = areaRect.width + 'px';
+  svg.style.width = W + 'px';
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
 
-  const yIndex = { offduty: 0, sleeper: 1, driving: 2, onduty: 3 };
+  // Vertical centre (in px, relative to the wrap top) of each status row.
+  const centerY = {};
+  wrap.querySelectorAll('.lb-status-row').forEach(row => {
+    const r = row.getBoundingClientRect();
+    centerY[row.dataset.status] = (r.top - wrapRect.top) + r.height / 2;
+  });
+  if (centerY.offduty === undefined) return;
+
   const day = lbData[getDateKey(lbCurrentDate)] || {};
-
-  // For today the line stops at the live time; past/other days draw the full 24h.
   const now = new Date();
   const isToday = getDateKey(now) === getDateKey(lbCurrentDate);
-  const endX = isToday ? Math.min(24, now.getHours() + now.getMinutes() / 60) : 24;
+  const endH = isToday ? Math.min(24, now.getHours() + now.getMinutes() / 60) : 24;
+  const xOf = h => (h / 24) * W;
 
-  // Like a paper RODS the driver is OFF DUTY until the first logged change, so
-  // the line starts at midnight on row 1 and is carried forward through every
-  // status change across the whole day (no gaps).
-  let prevY = yIndex.offduty + 0.5;
-  let d = 'M 0 ' + prevY + ' ';
-  for (let h = 0; h < 24 && h < endX; h++) {
-    if (day[h] != null && yIndex[day[h]] !== undefined) {
-      const y = yIndex[day[h]] + 0.5;
-      if (y !== prevY) { d += 'L ' + h + ' ' + y + ' '; prevY = y; } // vertical change
+  let cur = 'offduty';            // OFF DUTY until the first logged change
+  let y = centerY.offduty;
+  let d = 'M 0 ' + y + ' ';
+  for (let h = 0; h < 24 && h < endH; h++) {
+    const s = day[h];
+    if (s != null && centerY[s] !== undefined && s !== cur) {
+      cur = s; y = centerY[s];
+      d += 'L ' + xOf(h) + ' ' + y + ' ';        // vertical change at this hour
     }
-    const segEnd = Math.min(h + 1, endX);
-    d += 'L ' + segEnd + ' ' + prevY + ' ';                          // hold the status
+    d += 'L ' + xOf(Math.min(h + 1, endH)) + ' ' + y + ' '; // hold the status
   }
   path.setAttribute('d', d.trim());
 }
