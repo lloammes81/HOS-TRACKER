@@ -29605,6 +29605,14 @@ window._hosAutoRecalc = false;
    across the other rows as a plain line so it reads as one vertical "now" axis. */
 .lb-current-time.no-label::after { display: none; }
 
+/* Continuous duty-status line (Record of Duty Status). The SVG overlays the
+   four status rows; left/width are set in JS to match the hour columns. */
+.lb-rows-wrap { position: relative; }
+.lb-duty-line {
+  position: absolute; top: 0; height: 100%;
+  pointer-events: none; z-index: 4; overflow: visible;
+}
+
 /* Instructions overlay */
 .lb-help-btn {
   position: fixed; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); right: 16px;
@@ -31834,7 +31842,12 @@ window.nativeShare = nativeShare;
         <div class="lb-hour-labels" id="lbHourLabels"></div>
       </div>
 
-      <!-- Status rows -->
+      <!-- Status rows. The duty-status line is an SVG overlay that steps
+           between rows like a professional Record of Duty Status. -->
+      <div class="lb-rows-wrap" id="lbRowsWrap">
+      <svg class="lb-duty-line" id="lbDutyLine" preserveAspectRatio="none" viewBox="0 0 24 4" aria-hidden="true">
+        <path id="lbDutyPath" fill="none" stroke="#1e293b" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>
+      </svg>
       <div class="lb-status-row" data-status="offduty">
         <div class="lb-status-label">
           <div class="lb-status-num">1</div>
@@ -31878,6 +31891,7 @@ window.nativeShare = nativeShare;
           <div class="lb-current-time no-label" style="left:0%"></div>
         </div>
       </div>
+      </div><!-- /lb-rows-wrap -->
     </div>
 
     <!-- Location History Timeline -->
@@ -32045,6 +32059,8 @@ function initLogbook() {
   loadDriverProfile();
   startAutoDetection();
   setInterval(updateCurrentTimeMarker, 60000);
+  // Keep the duty-status line aligned with the columns when the viewport changes.
+  window.addEventListener('resize', drawDutyLine);
 }
 
 function createHourGrid(gridId, status) {
@@ -32501,6 +32517,45 @@ function updateSummary() {
   if (totalOnDuty >= 14) ondutyEl.className = 'lb-summary-item danger';
   else if (totalOnDuty >= 12) ondutyEl.className = 'lb-summary-item warning';
   else ondutyEl.className = 'lb-summary-item';
+
+  drawDutyLine();
+}
+
+// Draw the continuous duty-status line that steps between the four rows,
+// mirroring a professional paper/ELD Record of Duty Status. The SVG uses a
+// 0..24 (hours) x 0..4 (status rows) viewBox stretched over the hour columns,
+// so a vertical jump happens wherever the status changes between two hours.
+function drawDutyLine() {
+  const wrap = document.getElementById('lbRowsWrap');
+  const svg  = document.getElementById('lbDutyLine');
+  const path = document.getElementById('lbDutyPath');
+  if (!wrap || !svg || !path) return;
+
+  const area = wrap.querySelector('.lb-hours-area');
+  if (!area) return;
+  const wrapRect = wrap.getBoundingClientRect();
+  const areaRect = area.getBoundingClientRect();
+  if (!areaRect.width) return; // sheet hidden — nothing to measure yet
+
+  // Align the overlay with the hour columns (offset past the status-label column).
+  svg.style.left  = (areaRect.left - wrapRect.left) + 'px';
+  svg.style.width = areaRect.width + 'px';
+
+  const yIndex = { offduty: 0, sleeper: 1, driving: 2, onduty: 3 };
+  const day = lbData[getDateKey(lbCurrentDate)] || {};
+
+  let d = '';
+  let prevY = null;
+  for (let h = 0; h < 24; h++) {
+    const s = day[h];
+    if (s == null || yIndex[s] === undefined) { prevY = null; continue; }
+    const y = yIndex[s] + 0.5;
+    if (prevY === null) d += 'M ' + h + ' ' + y + ' ';
+    else if (prevY !== y) d += 'L ' + h + ' ' + y + ' '; // vertical change at this hour
+    d += 'L ' + (h + 1) + ' ' + y + ' ';                 // horizontal across the hour
+    prevY = y;
+  }
+  path.setAttribute('d', d.trim());
 }
 
 function checkHOSRules() {
@@ -32897,8 +32952,10 @@ function openLogbookSheet() {
   loadDriverProfile();
   lbFillRouteFields();
   // Now that the sheet is visible the grid has a real width, so the NOW marker
-  // can be placed against actual pixels (it reads 0 while display:none).
+  // and duty-status line can be placed against actual pixels (they read 0 while
+  // display:none). A rAF pass ensures layout has settled before measuring.
   updateCurrentTimeMarker();
+  requestAnimationFrame(function() { updateCurrentTimeMarker(); drawDutyLine(); });
   requestWakeLock();
 }
 
