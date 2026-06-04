@@ -7747,8 +7747,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
       <div class="reset-rules">
         <div class="reset-rules-title">📋 34-Hour Reset Rules (FMCSA)</div>
         <div class="reset-rule-item"><div class="reset-rule-dot"></div><div class="reset-rule-text">Driver must be off-duty for <strong>34 consecutive hours</strong> to restart the 70-hour/8-day cycle</div></div>
-        <div class="reset-rule-item"><div class="reset-rule-dot"></div><div class="reset-rule-text">The restart period must include <strong>two periods of 1 AM to 5 AM</strong> (home terminal time)</div></div>
-        <div class="reset-rule-item"><div class="reset-rule-dot"></div><div class="reset-rule-text">Only <strong>one 34-hour restart</strong> is allowed per 168-hour (7-day) period</div></div>
+        <div class="reset-rule-item"><div class="reset-rule-dot"></div><div class="reset-rule-text">Only the <strong>34 consecutive hours off-duty</strong> are required — the 2013 "two 1–5 AM periods" and "once per 168 hours" conditions were <strong>suspended in 2014</strong> and no longer apply</div></div>
         <div class="reset-rule-item"><div class="reset-rule-dot"></div><div class="reset-rule-text">After restart, a driver regains the full <strong>70 hours in 8 days</strong> (or 60h/7 days if applicable)</div></div>
         <div class="reset-rule-item"><div class="reset-rule-dot"></div><div class="reset-rule-text">Short-haul drivers and certain exceptions may have different rules — verify with your carrier</div></div>
       </div>
@@ -9784,7 +9783,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
         <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:16px;padding:14px 16px;margin-bottom:12px">
           <div style="font-size:11px;font-weight:800;color:#3b82f6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🔄 Reset del Ciclo (34h)</div>
-          <div style="font-size:13px;color:#cbd5e1;line-height:1.6">Toma <strong style="color:#60a5fa">34 horas consecutivas</strong> fuera de servicio para reiniciar las 70 hrs. Debe incluir dos períodos entre <strong style="color:#60a5fa">1:00 AM – 5:00 AM</strong>.</div>
+          <div style="font-size:13px;color:#cbd5e1;line-height:1.6">Toma <strong style="color:#60a5fa">34 horas consecutivas</strong> fuera de servicio para reiniciar las 70 hrs. Solo se requieren las 34 horas seguidas (la condición de los periodos 1:00–5:00 AM fue suspendida en 2014).</div>
         </div>
 
         <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:16px;padding:14px 16px;margin-bottom:12px">
@@ -10327,7 +10326,7 @@ let speedWidgetPos = JSON.parse(localStorage.getItem('hos_speed_pos') || 'null')
 localStorage.removeItem('hos_speedometer_pos');
 let speedometerPos   = null;
 let driveHoursPos    = JSON.parse(localStorage.getItem('hos_drivehours_pos')   || 'null');
-let defaultSpeed = parseInt(localStorage.getItem('hos_speed') || '60');
+let defaultSpeed = parseInt(localStorage.getItem('hos_speed') || '60', 10);
 let currentTab = 'plan';
 
 // ── MAP STYLE ────────────────────────────────────────────────
@@ -10434,7 +10433,7 @@ let watchId = null;
 let tripStart = null;
 
 /* ── Safety feature states ────────────────────── */
-let fatigueActive   = localStorage.getItem('hos_fatigue')  !== 'false' ? false : false;
+let fatigueActive   = localStorage.getItem('hos_fatigue')  === 'true';
 let weatherActive   = true; // always on
 let bridgeActive    = localStorage.getItem('hos_bridge') === 'true';
 let trailerHeight   = parseFloat(localStorage.getItem('hos_trailer') || '13.6');
@@ -14356,7 +14355,6 @@ function extractUSRouteNumber(step){
 
 function addInterstateMarkers(map, steps, isFull){
   if (!showInterstateShields) return;
-  if (!showInterstateShields) return;
   if (!map || !Array.isArray(steps) || !steps.length) return;
 
   const list = isFull ? interstateMarkersFull : interstateMarkersMini;
@@ -14499,13 +14497,17 @@ async function _fetchTomTomRoute(orig, dest) {
 }
 
 async function fetchOsrmStepsOnly(orig, dest){
+  // AbortSignal.timeout no existe en iOS < 16: usar AbortController manual.
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 10000);
   try{
     const url = `https://api.tomtom.com/routing/1/calculateRoute/${orig.lat},${orig.lon}:${dest.lat},${dest.lon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=9072&vehicleLength=22.9&vehicleWidth=2.59&vehicleHeight=4.11&vehicleNumberOfAxles=5&vehicleCommercial=true&routeType=fastest&instructionsType=text&language=en-US`;
-    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(t);
     const j = await r.json();
     if (!j.routes?.length) return [];
     return _tomTomInstructionsToSteps(j.routes[0].guidance?.instructions);
-  }catch{ return []; }
+  }catch{ clearTimeout(t); return []; }
 }
 async function fetchRoadRoute(orig, dest) {
   const cached = _routeCacheGet(orig, dest);
@@ -15749,6 +15751,10 @@ function openFullMapScreen() {
       touchRotate: true,     // allow manual two-finger rotation
       rotateControl: false
     }).setView([39.5, -98.35], 4);
+    // Mantener fullMapInst como alias de la instancia real del mapa completo
+    // (antes quedaba siempre en null, rompiendo refreshTruckMarkers y la
+    //  limpieza de marcadores de nombres de carretera en el mapa completo).
+    fullMapInst = fmMapInst;
 
     // Center on GPS as soon as map opens instead of USA overview
     if (window.lastFixFm) {
@@ -17934,8 +17940,10 @@ function fmStartTracking() {
     if (_mi) _mi.style.display = isMoving ? 'flex' : 'none';
 
     // ── Heading: prefer GPS bearing ─────────────────────────
+    // heading puede ser null en muchos dispositivos: conservar el último
+    // valor válido en vez de sobrescribir con null (evita NaN aguas abajo).
     let heading = pos.coords.heading;
-    fmLastHeading = heading;
+    if (heading != null && heading >= 0) fmLastHeading = heading;
 
     // ── Update accuracy circle (raw GPS) ────────────────────
     if (fmAccMarker) fmAccMarker.setLatLng([lat, lon]).setRadius(acc);
@@ -27089,6 +27097,8 @@ async function startEldScan(){
 }
 
 function startEldDataSimulation(){
+  // Evitar intervalos duplicados (doble decremento de horas / fuga de memoria)
+  if(eldInterval){ clearInterval(eldInterval); eldInterval=null; }
   let odo=487320,hrs=12847.3,fuel=72;
   let milesDay=0;
   // HOS hours: start from current form values or defaults
@@ -27150,7 +27160,8 @@ function startEldDataSimulation(){
     const du=Math.min(driveHoursUsed,11);
     const ou=Math.min(onDutyHoursUsed,14);
     const cu=cycleHoursUsed;
-    const offH=24-du-sleeperHours-ou;
+    // on-duty (ou) ya incluye las horas de manejo (du); no restar du otra vez.
+    const offH=24-sleeperHours-ou;
 
     const el=id=>document.getElementById(id);
     if(el('lbDriveUsed')) el('lbDriveUsed').textContent=du.toFixed(1)+'h';
@@ -27461,9 +27472,11 @@ function getScanLocation() {
 
 function prefillTruckNum() {
   const inp = document.getElementById('scanTruckNum');
+  if (!inp) return;
   const saved = localStorage.getItem('hos_truck_number');
   if (saved) inp.value = saved;
-  inp.addEventListener('change', () => localStorage.setItem('hos_truck_number', inp.value));
+  // onchange (no addEventListener) para no acumular listeners en cada apertura
+  inp.onchange = () => localStorage.setItem('hos_truck_number', inp.value);
 }
 
 function setScanFormat(fmt) {
@@ -28521,7 +28534,7 @@ window._hosAutoRecalc = false;
     const NEWS_KEY = 'hos_last_news_ts';
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) return;
-      const last = parseInt(localStorage.getItem(NEWS_KEY) || '0');
+      const last = parseInt(localStorage.getItem(NEWS_KEY) || '0', 10);
       const now = Date.now();
       if (now - last > 30 * 60 * 1000) { // 30 min
         localStorage.setItem(NEWS_KEY, String(now));
@@ -28540,7 +28553,7 @@ window._hosAutoRecalc = false;
     // Verificar cada 30 min mientras la app está abierta
     setInterval(() => {
       if (document.hidden) return;
-      const last = parseInt(localStorage.getItem(NEWS_KEY) || '0');
+      const last = parseInt(localStorage.getItem(NEWS_KEY) || '0', 10);
       const now = Date.now();
       if (now - last > 30 * 60 * 1000) {
         localStorage.setItem(NEWS_KEY, String(now));
@@ -28587,7 +28600,7 @@ window._hosAutoRecalc = false;
           </div>
           <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:12px;padding:14px;margin-bottom:20px;font-size:12px;color:#fca5a5;line-height:1.55;text-align:left">
             ⚖️ <strong>Regulación DOT FMCSA</strong><br>
-            El reinicio de 34h debe incluir dos períodos entre <strong>1:00 AM – 5:00 AM</strong>.<br>
+            El reinicio requiere <strong>34 horas consecutivas</strong> fuera de servicio (la condición de los periodos 1:00–5:00 AM fue suspendida en 2014).<br>
             Referencia: 49 CFR § 395.3(c).
           </div>
           <button id="hosMandatoryRestDoneBtn" style="width:100%;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;letter-spacing:.3px">
@@ -31645,12 +31658,9 @@ window.addEventListener('offline', function() {
 <script src="hardware-permissions.js"></script>
 
 <script>
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(reg => console.log('SW registered:', reg.scope))
-    .catch(err => console.log('SW registration failed:', err));
-}
+// El Service Worker ya se registra arriba (bloque "SERVICE WORKER + PUSH
+// NOTIFICATIONS"). Evitamos un segundo registro duplicado que competía con
+// el primero y podía disparar recargas por 'controllerchange'.
 
 // Request persistent storage for offline maps
 if (navigator.storage && navigator.storage.persist) {
@@ -31715,9 +31725,14 @@ if ('connection' in navigator) {
 
 // Background Sync for GPS data
 async function registerGPSSync() {
-  if ('serviceWorker' in navigator && 'sync' in registration) {
+  if (!('serviceWorker' in navigator)) return;
+  try {
     const reg = await navigator.serviceWorker.ready;
-    await reg.sync.register('gps-sync');
+    if ('sync' in reg) {
+      await reg.sync.register('gps-sync');
+    }
+  } catch (err) {
+    console.warn('[HOS] GPS sync no disponible:', err);
   }
 }
 
@@ -32714,7 +32729,7 @@ function setLogbookDate(offset) {
     const input = document.createElement('input');
     input.type = 'date';
     input.onchange = function() {
-      lbCurrentDate = new Date(this.value);
+      lbCurrentDate = this.value ? new Date(this.value + 'T00:00:00') : new Date();
       updateLogbookForDate();
     };
     input.click();

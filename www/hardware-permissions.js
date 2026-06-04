@@ -3,11 +3,30 @@
 // 📱 HARDWARE PERMISSIONS MANAGER
 // ════════════════════════════════════════════════════════════
 
+// Adaptador: la app define showToast(type, icon, title, msg).
+// Usamos un nombre propio (hwToast) para NO sobrescribir la showToast
+// global de la app, y traducimos la firma (mensaje, nivel).
+function hwToast(message, level) {
+  level = level || 'info';
+  const map = {
+    success: { type: 'success', icon: '✅', title: 'Hardware' },
+    error:   { type: 'danger',  icon: '❌', title: 'Hardware' },
+    warning: { type: 'warning', icon: '⚠️', title: 'Hardware' },
+    info:    { type: 'info',    icon: 'ℹ️', title: 'Hardware' }
+  };
+  const m = map[level] || map.info;
+  if (typeof showToast === 'function') {
+    showToast(m.type, m.icon, m.title, message);
+  } else {
+    console.log('[Hardware] ' + level + ': ' + message);
+  }
+}
+
 const HardwareManager = {
   // GPS / Geolocation
   async requestGPS() {
     if (!navigator.geolocation) {
-      showToast('GPS no soportado en este dispositivo', 'error');
+      hwToast('GPS no soportado en este dispositivo', 'error');
       return false;
     }
     try {
@@ -18,10 +37,10 @@ const HardwareManager = {
           maximumAge: 0
         });
       });
-      showToast('✅ GPS activo', 'success');
+      hwToast('✅ GPS activo', 'success');
       return position;
     } catch (err) {
-      showToast('❌ GPS: ' + err.message, 'error');
+      hwToast('❌ GPS: ' + err.message, 'error');
       return false;
     }
   },
@@ -29,7 +48,7 @@ const HardwareManager = {
   // Bluetooth
   async requestBluetooth() {
     if (!navigator.bluetooth) {
-      showToast('Bluetooth no disponible. Usa Chrome/Android', 'warning');
+      hwToast('Bluetooth no disponible. Usa Chrome/Android', 'warning');
       return false;
     }
     try {
@@ -37,11 +56,11 @@ const HardwareManager = {
         acceptAllDevices: true,
         optionalServices: ['battery_service', 'device_information']
       });
-      showToast('✅ Bluetooth: ' + device.name, 'success');
+      hwToast('✅ Bluetooth: ' + device.name, 'success');
       return device;
     } catch (err) {
       if (err.name !== 'NotFoundError') {
-        showToast('❌ Bluetooth: ' + err.message, 'error');
+        hwToast('❌ Bluetooth: ' + err.message, 'error');
       }
       return false;
     }
@@ -50,7 +69,7 @@ const HardwareManager = {
   // Camera
   async requestCamera(videoElement) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      showToast('Cámara no soportada', 'error');
+      hwToast('Cámara no soportada', 'error');
       return false;
     }
     try {
@@ -66,10 +85,10 @@ const HardwareManager = {
         videoElement.srcObject = stream;
         videoElement.play();
       }
-      showToast('✅ Cámara activa', 'success');
+      hwToast('✅ Cámara activa', 'success');
       return stream;
     } catch (err) {
-      showToast('❌ Cámara: ' + err.message, 'error');
+      hwToast('❌ Cámara: ' + err.message, 'error');
       return false;
     }
   },
@@ -79,10 +98,10 @@ const HardwareManager = {
     if (!navigator.mediaDevices) return false;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      showToast('✅ Micrófono activo', 'success');
+      hwToast('✅ Micrófono activo', 'success');
       return stream;
     } catch (err) {
-      showToast('❌ Micrófono: ' + err.message, 'error');
+      hwToast('❌ Micrófono: ' + err.message, 'error');
       return false;
     }
   },
@@ -90,15 +109,15 @@ const HardwareManager = {
   // Notifications
   async requestNotifications() {
     if (!('Notification' in window)) {
-      showToast('Notificaciones no soportadas', 'warning');
+      hwToast('Notificaciones no soportadas', 'warning');
       return false;
     }
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      showToast('✅ Notificaciones activas', 'success');
+      hwToast('✅ Notificaciones activas', 'success');
       return true;
     }
-    showToast('❌ Notificaciones denegadas', 'warning');
+    hwToast('❌ Notificaciones denegadas', 'warning');
     return false;
   },
 
@@ -118,7 +137,7 @@ const HardwareManager = {
 
   // Request all permissions at once
   async requestAll() {
-    showToast('Solicitando permisos de hardware...', 'info');
+    hwToast('Solicitando permisos de hardware...', 'info');
     await this.requestGPS();
     await this.requestNotifications();
     // Bluetooth y cámara se solicitan on-demand por seguridad
