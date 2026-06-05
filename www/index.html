@@ -26626,7 +26626,14 @@ let scanFlashOn = false, scanLocation = null;
 
 // ── Open / Close ──────────────────────────────────────────────────────────
 async function openScannerSheet() {
-  document.getElementById('scannerSheet').classList.add('open');
+  const sheet = document.getElementById('scannerSheet');
+  // Reubicar como hijo directo de <body> y bloquear el scroll de fondo.
+  // En iOS PWA standalone, un overlay position:fixed mostrado con la página
+  // scrolleada se posiciona mal (se "mete" en el dash); esto lo evita —
+  // mismo patrón que el logbook, que sí funciona.
+  if (sheet && sheet.parentElement !== document.body) document.body.appendChild(sheet);
+  sheet.classList.add('open');
+  document.body.style.overflow = 'hidden';
   document.getElementById('scanCameraView').style.display = 'flex';
   document.getElementById('scanReview').classList.remove('show');
   await startScanCamera();
@@ -26638,6 +26645,7 @@ async function openScannerSheet() {
 function closeScannerSheet() {
   stopScanCamera();
   document.getElementById('scannerSheet').classList.remove('open');
+  document.body.style.overflow = '';
   scanPages = []; scanActiveIdx = 0;
   updateScanBadge();
 }
