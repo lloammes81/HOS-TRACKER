@@ -26970,7 +26970,8 @@ function renderEldDiagnostics(){
 }
 
 async function forceEldScan(){
-  return startEldScan();
+  // Muestra TODOS los dispositivos Bluetooth (sin filtro de ELD).
+  return startEldScanNative(true);
 }
 function closeEldSheet(){document.getElementById('eldSheet').classList.remove('open');}
 
@@ -26997,7 +26998,16 @@ function startEldDemo(){
 // NATIVE BLE SCAN — uses @capacitor-community/bluetooth-le
 // Works on both Android & iOS when running as an installed app
 // ─────────────────────────────────────────────────────────────
-async function startEldScanNative(){
+// Nombres/keywords BLE de ELD y adaptadores OBD-II comunes. El escaneo normal
+// solo muestra coincidencias; "Forzar Escaneo" muestra todos los dispositivos.
+const ELD_NAME_PATTERNS = /\b(ELD|HOS|KeepTruckin|Motive|Samsara|Geotab|GO9|GO[0-9]|PeopleNet|Omnitracs|DashLink|BigRoad|VDO|RoadLog|Rand\s?McNally|Transflo|IOSiX|PT30|ATrack|Teletrac|Verizon\s?Connect|EROAD|ISAAC|Continental|Garmin\s?eLog|OBD|OBDII|ELM327|Vgate|VeePeak|VLink|VeoCar)\b/i;
+
+function isLikelyEld(name){
+  if(!name) return false;            // sin nombre → no asumimos ELD en escaneo filtrado
+  return ELD_NAME_PATTERNS.test(name);
+}
+
+async function startEldScanNative(showAll){
   const ring=document.getElementById('eldRing');
   const icon=document.getElementById('eldRingIcon');
   const lbl=document.getElementById('eldRingLabel');
@@ -27024,14 +27034,18 @@ async function startEldScanNative(){
     lbl.textContent='BUSCANDO ELD...';
     scanBtn.textContent='⏳ Escaneando dispositivos...';
 
-    // Show ALL nearby Bluetooth devices — user picks their ELD
-    const found = new Map(); // deviceId -> {name, rssi}
+    // Escaneo: en modo normal solo se muestran dispositivos ELD conocidos;
+    // showAll=true (Forzar Escaneo) lista todos los dispositivos cercanos.
+    const found = new Map(); // deviceId -> {name, rssi}  (todos los vistos)
+    let shown = 0;           // cuántos se mostraron tras el filtro
     if(list){ list.innerHTML=''; list.style.display='block'; }
     await ble.requestLEScan({ allowDuplicates:false }, (result) => {
       const id   = result.device?.deviceId;
       const name = result.device?.name || result.localName || '';
       if(!id || found.has(id)) return;
       found.set(id, { name, id, rssi: result.rssi });
+      if(!showAll && !isLikelyEld(name)) return; // filtra los que no parecen ELD
+      shown++;
       if(list){
         const displayName = name || 'Dispositivo sin nombre';
         const row = document.createElement('button');
@@ -27044,14 +27058,18 @@ async function startEldScanNative(){
     // Auto-stop scan after 15s
     setTimeout(async () => {
       try { await ble.stopLEScan(); } catch(e){}
-      if(found.size===0){
-        lbl.textContent='SIN DISPOSITIVOS';
+      if(shown===0){
+        lbl.textContent='SIN ELD';
         if(banner && bannerTxt){
-          bannerTxt.textContent = 'No se detectaron dispositivos. Asegúrate de que el Bluetooth del dispositivo esté encendido y dentro del rango.';
+          if(!showAll && found.size>0){
+            bannerTxt.textContent = 'No se detectó ningún ELD, pero hay ' + found.size + ' dispositivo(s) Bluetooth cerca. Usa "Forzar Escaneo ELD" para verlos todos.';
+          } else {
+            bannerTxt.textContent = 'No se detectaron dispositivos. Asegúrate de que el ELD esté encendido, emparejable y dentro del rango.';
+          }
           banner.style.display='flex';
         }
       }
-      scanBtn.textContent='🔍 Buscar Dispositivos Bluetooth';
+      scanBtn.textContent = '🔍 Buscar Solo Dispositivos ELD';
       scanBtn.disabled=false;
     }, 15000);
   } catch(e){
