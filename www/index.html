@@ -5443,10 +5443,14 @@ body.dark #fullMap .leaflet-tile-pane {
 /* ══════════════════════════════════════════════════════════
    📡  ELD BLUETOOTH SHEET
 ══════════════════════════════════════════════════════════ */
-#eldSheet, #eldSheet.open { display:none !important; }
+#eldSheet {
+  position:fixed; inset:0; z-index:1500;
+  background:rgba(0,0,0,.55);
+  display:none; align-items:flex-end; justify-content:center;
+}
+#eldSheet.open { display:flex; }
 .eld-panel {
-  display:none !important;
-  width:100%;background:var(--surface);
+  width:100%; max-width:540px; background:var(--surface);
   border-radius:22px 22px 0 0;
   padding:20px 18px calc(30px + env(safe-area-inset-bottom,0px));
   font-family:'DM Sans',sans-serif;
@@ -7111,6 +7115,16 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
         <div class="tpb-info">
           <div class="tpb-title">Digital Logbook</div>
           <div class="tpb-sub">HOS paper log replica · auto-calculate hours · DOT compliant</div>
+        </div>
+        <div class="tpb-arrow">›</div>
+      </button>
+
+      <!-- Conectar ELD por Bluetooth -->
+      <button class="tool-page-btn" onclick="openEldSheet()" style="--tclr:#6366f1;--tcbg:rgba(99,102,241,.1);--tcbdr:rgba(99,102,241,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#4f46e5,#6366f1)">📡</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Conectar ELD (Bluetooth)</div>
+          <div class="tpb-sub">Vincula tu dispositivo ELD por Bluetooth para datos en vivo</div>
         </div>
         <div class="tpb-arrow">›</div>
       </button>
@@ -26874,11 +26888,10 @@ async function loadNativeBlePlugin(){
   return null;
 }
 function openEldSheet(){
-  // Deshabilitado — ELD sheet removido de la UI
-  return;
   try {
     document.getElementById('eldSheet').classList.add('open');
   } catch(e){ console.error('[ELD] openEldSheet error', e); return; }
+  try { renderEldDiagnostics(); } catch(e){}
 
   const scanBtn    = document.getElementById('eldScanBtn');
   const demoBtn    = document.getElementById('eldDemoBtn');
@@ -26975,7 +26988,7 @@ function startEldDemo(){
   const _demoBtn0 = document.getElementById('eldDemoBtn'); if(_demoBtn0) _demoBtn0.style.display='none';
   document.getElementById('eldLiveData').style.display='block';
   document.getElementById('eldLogbook').style.display='block';
-  document.getElementById('eldArrowStatus').style.color='#f59e0b';
+  { const _a=document.getElementById('eldArrowStatus'); if(_a) _a.style.color='#f59e0b'; }
   startEldDataSimulation();
   showToast('info','🎮','Modo Simulación ELD','Logbook y HOS activados',3000);
 }
@@ -27077,7 +27090,7 @@ async function connectNativeBleDevice(deviceId, name){
     if(demoBtn) demoBtn.style.display='none';
     document.getElementById('eldLiveData').style.display='block';
     document.getElementById('eldLogbook').style.display='block';
-    document.getElementById('eldArrowStatus').style.color='#6366f1';
+    { const _a=document.getElementById('eldArrowStatus'); if(_a) _a.style.color='#6366f1'; }
     startEldDataSimulation();
     try{ showToast('info','📡','ELD Conectado', name || 'Dispositivo vinculado', 3000); }catch(_){}
   } catch(e){
@@ -27226,7 +27239,7 @@ function disconnectEld(){
   ring.className='eld-status-ring';
   document.getElementById('eldRingIcon').textContent='📡';
   document.getElementById('eldRingLabel').textContent='DESCONECTADO';
-  document.getElementById('eldArrowStatus').style.color='';
+  { const _a=document.getElementById('eldArrowStatus'); if(_a) _a.style.color=''; }
   showToast('info','🔌','ELD Desconectado','Dispositivo desvinculado',2500);
 }
 
