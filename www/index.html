@@ -5437,7 +5437,9 @@ body.dark #fullMap .leaflet-tile-pane {
    📄  DOCUMENT SCANNER SHEET
 ══════════════════════════════════════════════════════════ */
 #scannerSheet {
-  position:fixed;inset:0;z-index:5000;
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  width:100%; height:100%;
+  z-index:5000;
   background:#000;
   display:none;flex-direction:column;
 }
@@ -22110,6 +22112,11 @@ function syncActiveRouteFab() {
 
 function switchTab(tab) {
   currentTab = tab;
+  // Cierra overlays a pantalla completa que pudieran quedar encima del dash
+  try {
+    const _ss = document.getElementById('scannerSheet');
+    if (_ss && _ss.classList.contains('open') && typeof closeScannerSheet === 'function') closeScannerSheet();
+  } catch(e){}
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
