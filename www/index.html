@@ -26376,6 +26376,16 @@ function incrementUserReports() {
     </div>
 
     <div id="eldDeviceList" class="eld-device-list" style="display:none"></div>
+
+    <!-- Estado conectado (popup simple, sin datos en vivo) -->
+    <div id="eldConnectedBar" style="display:none;margin-top:6px">
+      <div style="padding:12px 14px;background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.30);border-radius:12px;margin-bottom:10px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600">Dispositivo ELD conectado</div>
+        <div id="eldConnNameMini" style="font-size:14px;font-weight:800;color:#10b981;margin-top:2px"></div>
+      </div>
+      <button onclick="disconnectEld()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">🔌 Desconectar ELD</button>
+    </div>
+
     <div id="eldLiveData" style="display:none">
       <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px">📊 Datos en Vivo del ELD</div>
       <div class="eld-data-grid">
@@ -26892,7 +26902,6 @@ function openEldSheet(){
   try {
     document.getElementById('eldSheet').classList.add('open');
   } catch(e){ console.error('[ELD] openEldSheet error', e); return; }
-  try { renderEldDiagnostics(); } catch(e){}
 
   const scanBtn    = document.getElementById('eldScanBtn');
   const demoBtn    = document.getElementById('eldDemoBtn');
@@ -26900,12 +26909,21 @@ function openEldSheet(){
   const forceBtn   = document.getElementById('eldForceBtn');
   const iosNotice  = document.getElementById('eldIosNotice');
   const alertBanner= document.getElementById('eldAlertBanner');
+  const diag       = document.getElementById('eldDiag');
+  const liveData   = document.getElementById('eldLiveData');
+  const connBar    = document.getElementById('eldConnectedBar');
+  const list       = document.getElementById('eldDeviceList');
 
+  // Popup de solo escaneo: sin diagnóstico, simulación ni datos en vivo.
   if(iosNotice)    iosNotice.style.display='none';
   if(noBT)         noBT.style.display='none';
   if(alertBanner)  alertBanner.style.display='none';
   if(forceBtn)     forceBtn.style.display='none';
-  if(demoBtn)      demoBtn.style.display='block';
+  if(demoBtn)      demoBtn.style.display='none';
+  if(diag)         diag.style.display='none';
+  if(liveData)     liveData.style.display='none';
+  if(connBar)      connBar.style.display='none';
+  if(list){ list.innerHTML=''; list.style.display='none'; }
 
   if(!IS_CAPACITOR){
     // Running in browser — native BLE not available
@@ -27103,15 +27121,15 @@ async function connectNativeBleDevice(deviceId, name){
     eldDevice = { name, deviceId, native:true };
     ring.className='eld-status-ring connected';
     icon.textContent='✅'; lbl.textContent='CONECTADO';
-    document.getElementById('eldConnectedName').textContent = name || 'Dispositivo ELD';
+    const _nm = name || 'Dispositivo ELD';
+    { const _cn=document.getElementById('eldConnectedName'); if(_cn) _cn.textContent=_nm; }
+    { const _cm=document.getElementById('eldConnNameMini'); if(_cm) _cm.textContent=_nm; }
     if(list) list.style.display='none';
     if(scanBtn) scanBtn.style.display='none';
     if(demoBtn) demoBtn.style.display='none';
-    document.getElementById('eldLiveData').style.display='block';
-    document.getElementById('eldLogbook').style.display='block';
-    { const _a=document.getElementById('eldArrowStatus'); if(_a) _a.style.color='#6366f1'; }
-    startEldDataSimulation();
-    try{ showToast('info','📡','ELD Conectado', name || 'Dispositivo vinculado', 3000); }catch(_){}
+    // Popup simple: solo confirmación de conexión (sin datos en vivo ni simulación).
+    { const _cb=document.getElementById('eldConnectedBar'); if(_cb) _cb.style.display='block'; }
+    try{ showToast('info','📡','ELD Conectado', _nm, 3000); }catch(_){}
   } catch(e){
     console.error('[ELD native] connect error:', e);
     const banner=document.getElementById('eldAlertBanner');
@@ -27248,13 +27266,12 @@ function disconnectEld(){
   if(eldInterval){clearInterval(eldInterval);eldInterval=null;}
   if(eldDevice&&eldDevice.gatt&&eldDevice.gatt.connected) eldDevice.gatt.disconnect();
   eldDevice=null;
-  document.getElementById('eldLiveData').style.display='none';
-  document.getElementById('eldLogbook').style.display='none';
-  document.getElementById('eldScanBtn').style.display='block';
-  document.getElementById('eldScanBtn').textContent='🔍 Buscar Dispositivos Bluetooth';
-  document.getElementById('eldScanBtn').disabled=false;
-  const _demoBtn1 = document.getElementById('eldDemoBtn'); if(_demoBtn1) _demoBtn1.style.display='block';
-  document.getElementById('eldAlertBanner').style.display='none';
+  { const _ld=document.getElementById('eldLiveData'); if(_ld) _ld.style.display='none'; }
+  { const _cb=document.getElementById('eldConnectedBar'); if(_cb) _cb.style.display='none'; }
+  const _scan=document.getElementById('eldScanBtn');
+  if(_scan){ _scan.style.display='block'; _scan.textContent='🔍 Buscar Dispositivos Bluetooth'; _scan.disabled=false; }
+  const _demoBtn1 = document.getElementById('eldDemoBtn'); if(_demoBtn1) _demoBtn1.style.display='none';
+  { const _ab=document.getElementById('eldAlertBanner'); if(_ab) _ab.style.display='none'; }
   const ring=document.getElementById('eldRing');
   ring.className='eld-status-ring';
   document.getElementById('eldRingIcon').textContent='📡';
