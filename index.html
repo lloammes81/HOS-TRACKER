@@ -4566,13 +4566,6 @@ body.dark #fullMap .leaflet-tile-pane {
   @keyframes heroPulse {
     0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)}
   }
-  @keyframes btPulse {
-    0%,100%{box-shadow:0 4px 18px rgba(0,0,0,.7),0 0 0 0 rgba(107,114,128,.5)}
-    60%{box-shadow:0 4px 18px rgba(0,0,0,.7),0 0 0 9px rgba(107,114,128,.0)}
-  }
-  #heroBtBadge.bt-disconnected {
-    animation: btPulse 2s ease-out infinite;
-  }
   .hero-pill-text {
     font-size: 9px; font-weight: 800; letter-spacing: 0;
     text-transform: uppercase; color: #10b981;
@@ -5441,110 +5434,6 @@ body.dark #fullMap .leaflet-tile-pane {
   .comm-clear-btn.clea
 
 /* ══════════════════════════════════════════════════════════
-   📡  ELD BLUETOOTH SHEET
-══════════════════════════════════════════════════════════ */
-#eldSheet {
-  position:fixed; inset:0; z-index:1500;
-  background:rgba(0,0,0,.55);
-  display:none; align-items:flex-end; justify-content:center;
-}
-#eldSheet.open { display:flex; }
-.eld-panel {
-  width:100%; max-width:540px; background:var(--surface);
-  border-radius:22px 22px 0 0;
-  padding:20px 18px calc(30px + env(safe-area-inset-bottom,0px));
-  font-family:'DM Sans',sans-serif;
-  max-height:92vh;overflow:hidden;
-}
-.eld-handle { width:36px;height:4px;background:rgba(255,255,255,.18);border-radius:999px;margin:0 auto 18px; }
-.eld-title  { font-size:18px;font-weight:900;color:var(--text);margin-bottom:4px; }
-.eld-sub    { font-size:12px;color:var(--muted);margin-bottom:20px; }
-.eld-status-ring {
-  width:90px;height:90px;border-radius:50%;margin:0 auto 16px;
-  display:flex;align-items:center;justify-content:center;flex-direction:column;
-  border:3px solid rgba(99,102,241,.3);
-  background:rgba(99,102,241,.08);font-size:32px;
-  transition:all .4s;
-}
-.eld-status-ring.scanning { animation:eldScan 1.5s ease-in-out infinite;border-color:#6366f1; }
-.eld-status-ring.connected { border-color:#10b981;background:rgba(16,185,129,.12); }
-@keyframes eldScan { 0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.4)} 50%{box-shadow:0 0 0 16px rgba(99,102,241,0)} }
-.eld-device-list { margin:14px 0;max-height:220px;overflow-y:auto; }
-.eld-device-row {
-  display:flex;align-items:center;gap:12px;padding:12px 14px;
-  background:var(--surface2);border-radius:14px;margin-bottom:8px;
-  border:1.5px solid var(--border);cursor:pointer;transition:border-color .2s;
-}
-.eld-device-row:active { border-color:#6366f1; }
-.eld-device-icon { font-size:24px; }
-.eld-device-name { font-size:14px;font-weight:700;color:var(--text); }
-.eld-device-mac  { font-size:11px;color:var(--muted);margin-top:1px; }
-.eld-device-signal { margin-left:auto;font-size:11px;font-weight:700;color:#6366f1; }
-.eld-data-grid {
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;
-}
-.eld-data-card {
-  background:var(--surface2);border-radius:14px;padding:12px;
-  border:1px solid var(--border);text-align:center;
-}
-.eld-data-val  { font-size:22px;font-weight:900;color:#6366f1;font-family:'Bebas Neue',sans-serif; }
-.eld-data-lbl  { font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:3px; }
-
-/* ELD Logbook */
-.eld-logbook { margin-top:16px; overflow-y:auto; max-height:54vh; }
-.eld-lb-section-title {
-  font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;
-  color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px;
-}
-.eld-lb-section-title::after { content:'';flex:1;height:1px;background:var(--border); }
-.eld-lb-hos-grid {
-  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;
-}
-.eld-lb-hos-card {
-  background:var(--surface2);border-radius:12px;padding:11px 12px;
-  border:1px solid var(--border);text-align:center;
-}
-.eld-lb-hos-val { font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1; }
-.eld-lb-hos-lbl { font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px; }
-/* Status timeline (24h logbook graph) */
-.eld-lb-graph {
-  background:rgba(0,0,0,.2);border-radius:12px;padding:12px;
-  margin-bottom:14px;border:1px solid var(--border);
-}
-.eld-lb-graph-title { font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px; }
-.eld-lb-row { display:flex;align-items:center;gap:6px;margin-bottom:6px; }
-.eld-lb-row-lbl { font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;width:26px;flex-shrink:0; }
-.eld-lb-bar-wrap { flex:1;height:14px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;position:relative; }
-.eld-lb-bar { height:100%;border-radius:4px;transition:width .8s ease; }
-.eld-lb-bar.drive { background:linear-gradient(90deg,#10b981,#059669); }
-.eld-lb-bar.onduty { background:linear-gradient(90deg,#f59e0b,#d97706); }
-.eld-lb-bar.sleeper { background:linear-gradient(90deg,#6366f1,#4f46e5); }
-.eld-lb-bar.offduty { background:linear-gradient(90deg,rgba(255,255,255,.15),rgba(255,255,255,.1)); }
-.eld-lb-bar-val { font-size:9px;font-weight:800;color:var(--muted);width:30px;text-align:right;flex-shrink:0; }
-/* Hour tick marks */
-.eld-lb-ticks { display:flex;justify-content:space-between;padding:0 0 4px 32px;margin-bottom:8px; }
-.eld-lb-tick { font-size:8px;color:rgba(255,255,255,.2);font-weight:600; }
-/* Violations */
-.eld-violation-row {
-  display:flex;align-items:center;gap:8px;padding:8px 12px;
-  background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);
-  border-radius:10px;margin-bottom:6px;
-}
-.eld-violation-icon { font-size:16px;flex-shrink:0; }
-.eld-violation-text { font-size:12px;font-weight:700;color:#ef4444; }
-.eld-violation-sub  { font-size:11px;color:var(--muted);margin-top:1px; }
-/* Summary row */
-.eld-lb-summary {
-  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;
-}
-.eld-lb-stat-pill {
-  flex:1;min-width:80px;background:var(--surface2);border:1px solid var(--border);
-  border-radius:10px;padding:8px 10px;text-align:center;
-}
-.eld-lb-stat-num { font-family:'Bebas Neue',sans-serif;font-size:20px;line-height:1; }
-.eld-lb-stat-lbl { font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px; }
-
-/* ══════════════════════════════════════════════════════════
    📄  DOCUMENT SCANNER SHEET
 ══════════════════════════════════════════════════════════ */
 #scannerSheet {
@@ -6399,8 +6288,6 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
   </div>
 
-  <!-- ELD BT badge removed -->
-  <button id="heroBtBadge" style="display:none!important"></button>
 
 </div>
 
@@ -7115,16 +7002,6 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
         <div class="tpb-info">
           <div class="tpb-title">Digital Logbook</div>
           <div class="tpb-sub">HOS paper log replica · auto-calculate hours · DOT compliant</div>
-        </div>
-        <div class="tpb-arrow">›</div>
-      </button>
-
-      <!-- Conectar ELD por Bluetooth -->
-      <button class="tool-page-btn" onclick="openEldSheet()" style="--tclr:#6366f1;--tcbg:rgba(99,102,241,.1);--tcbdr:rgba(99,102,241,.3)">
-        <div class="tpb-icon" style="background:linear-gradient(135deg,#4f46e5,#6366f1)">📡</div>
-        <div class="tpb-info">
-          <div class="tpb-title">Conectar ELD (Bluetooth)</div>
-          <div class="tpb-sub">Vincula tu dispositivo ELD por Bluetooth para datos en vivo</div>
         </div>
         <div class="tpb-arrow">›</div>
       </button>
@@ -26332,167 +26209,6 @@ function incrementUserReports() {
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════
-     📡  ELD BLUETOOTH SHEET
-══════════════════════════════════════════════════════════ -->
-<div id="eldSheet" onclick="if(event.target===this)closeEldSheet()">
-  <div class="eld-panel">
-    <div class="eld-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div>
-        <div class="eld-title">📡 ELD Bluetooth</div>
-        <div class="eld-sub">Conecta tu dispositivo ELD para datos en vivo</div>
-      </div>
-      <button onclick="closeEldSheet()" style="background:rgba(255,255,255,.08);border:none;border-radius:50%;width:32px;height:32px;color:var(--muted);cursor:pointer;font-size:16px">✕</button>
-    </div>
-    <div class="eld-status-ring" id="eldRing">
-      <span id="eldRingIcon" style="font-size:32px">📡</span>
-      <span id="eldRingLabel" style="font-size:10px;font-weight:700;color:var(--muted);margin-top:4px;letter-spacing:.5px">DESCONECTADO</span>
-    </div>
-    <div id="eldAlertBanner" style="background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.35);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;gap:8px">
-      <span>⚠️</span><span id="eldAlertText" style="font-size:13px;font-weight:700;color:#ef4444"></span>
-    </div>
-    <!-- iOS notice (shown only on iOS) -->
-    <div id="eldIosNotice" style="display:none;background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.3);border-radius:14px;padding:16px;margin-bottom:14px;text-align:center">
-      <div style="font-size:32px;margin-bottom:8px">🔒</div>
-      <div style="font-size:15px;font-weight:800;color:#ef4444;margin-bottom:8px">Bluetooth no disponible en iOS</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.6">Apple no permite Web Bluetooth en Safari ni en ningún navegador de iPhone/iPad.<br><br>
-      Para conectar tu ELD vía Bluetooth usa la <b style="color:var(--text)">app oficial de tu proveedor ELD</b> (Motive, Samsara, PeopleNet, etc.) instalada en tu iPhone.</div>
-    </div>
-
-    <!-- Android/Chrome BLE scan button -->
-    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">📡 Buscar Dispositivos Bluetooth</button>
-
-    <!-- Force scan button (bypass detection, always visible) -->
-    <button id="eldForceBtn" onclick="forceEldScan()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(16,185,129,.35);background:rgba(16,185,129,.10);color:#10b981;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🔵 Forzar Escaneo ELD (si no aparece)</button>
-
-    <!-- Demo mode button — always available for simulation / iOS -->
-    <button id="eldDemoBtn" onclick="startEldDemo()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:#f59e0b;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🎮 Activar Modo Simulación ELD</button>
-
-    <!-- Diagnostic panel (live environment detection) -->
-    <div id="eldDiag" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11px;line-height:1.55;color:var(--muted)">
-      <div style="font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:.3px">🔧 Diagnóstico de tu dispositivo</div>
-      <div id="eldDiagLines"></div>
-    </div>
-
-    <div id="eldDeviceList" class="eld-device-list" style="display:none"></div>
-
-    <!-- Estado conectado (popup simple, sin datos en vivo) -->
-    <div id="eldConnectedBar" style="display:none;margin-top:6px">
-      <div style="padding:12px 14px;background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.30);border-radius:12px;margin-bottom:10px">
-        <div style="font-size:11px;color:var(--muted);font-weight:600">Dispositivo ELD conectado</div>
-        <div id="eldConnNameMini" style="font-size:14px;font-weight:800;color:#10b981;margin-top:2px"></div>
-      </div>
-      <button onclick="disconnectEld()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">🔌 Desconectar ELD</button>
-    </div>
-
-    <div id="eldLiveData" style="display:none">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px">📊 Datos en Vivo del ELD</div>
-      <div class="eld-data-grid">
-        <div class="eld-data-card"><div class="eld-data-val" id="eldMph">0</div><div class="eld-data-lbl">Velocidad MPH</div></div>
-        <div class="eld-data-card"><div class="eld-data-val" id="eldOdometer">--</div><div class="eld-data-lbl">Odómetro (mi)</div></div>
-        <div class="eld-data-card"><div class="eld-data-val" id="eldEngineHrs">--</div><div class="eld-data-lbl">Horas Motor</div></div>
-        <div class="eld-data-card"><div class="eld-data-val" id="eldDutyStatus" style="font-size:14px">D</div><div class="eld-data-lbl">Estado HOS</div></div>
-        <div class="eld-data-card"><div class="eld-data-val" id="eldRpm" style="color:#f59e0b">--</div><div class="eld-data-lbl">RPM Motor</div></div>
-        <div class="eld-data-card"><div class="eld-data-val" id="eldFuel" style="color:#10b981">--</div><div class="eld-data-lbl">Combustible %</div></div>
-      </div>
-      <div style="margin-top:12px;padding:10px 14px;background:rgba(99,102,241,.08);border-radius:12px;border:1px solid rgba(99,102,241,.2)">
-        <div style="font-size:11px;color:var(--muted);font-weight:600">Dispositivo conectado</div>
-        <div id="eldConnectedName" style="font-size:14px;font-weight:800;color:#6366f1;margin-top:2px"></div>
-      </div>
-
-      <!-- ── LOGBOOK ─────────────────────────────────────────── -->
-      <div class="eld-logbook" id="eldLogbook">
-
-        <div class="eld-lb-section-title" style="margin-top:16px">📋 Logbook de Horas (FMCSA)</div>
-
-        <!-- HOS summary cards -->
-        <div class="eld-lb-hos-grid">
-          <div class="eld-lb-hos-card">
-            <div class="eld-lb-hos-val" id="lbDriveUsed" style="color:#10b981">0.0h</div>
-            <div class="eld-lb-hos-lbl">Manejo Hoy</div>
-          </div>
-          <div class="eld-lb-hos-card">
-            <div class="eld-lb-hos-val" id="lbDriveLeft" style="color:#6366f1">11.0h</div>
-            <div class="eld-lb-hos-lbl">Manejo Restante</div>
-          </div>
-          <div class="eld-lb-hos-card">
-            <div class="eld-lb-hos-val" id="lbOnDutyUsed" style="color:#f59e0b">0.0h</div>
-            <div class="eld-lb-hos-lbl">On-Duty Hoy</div>
-          </div>
-          <div class="eld-lb-hos-card">
-            <div class="eld-lb-hos-val" id="lbCycleUsed" style="color:#ef4444">0.0h</div>
-            <div class="eld-lb-hos-lbl">Ciclo 70h Usado</div>
-          </div>
-        </div>
-
-        <!-- Summary pills -->
-        <div class="eld-lb-summary">
-          <div class="eld-lb-stat-pill">
-            <div class="eld-lb-stat-num" id="lbMilesDay" style="color:#10b981">0</div>
-            <div class="eld-lb-stat-lbl">Millas Hoy</div>
-          </div>
-          <div class="eld-lb-stat-pill">
-            <div class="eld-lb-stat-num" id="lbBreakDue" style="color:#f59e0b">--</div>
-            <div class="eld-lb-stat-lbl">Próx. Descanso</div>
-          </div>
-          <div class="eld-lb-stat-pill">
-            <div class="eld-lb-stat-num" id="lbStatus" style="color:#6366f1">SB</div>
-            <div class="eld-lb-stat-lbl">Estado Actual</div>
-          </div>
-        </div>
-
-        <!-- 24-hour graph -->
-        <div class="eld-lb-graph">
-          <div class="eld-lb-graph-title">📊 Gráfica de 24 horas (estilo logbook)</div>
-          <div class="eld-lb-ticks">
-            <span class="eld-lb-tick">0</span><span class="eld-lb-tick">4</span>
-            <span class="eld-lb-tick">8</span><span class="eld-lb-tick">12</span>
-            <span class="eld-lb-tick">16</span><span class="eld-lb-tick">20</span>
-            <span class="eld-lb-tick">24</span>
-          </div>
-          <div class="eld-lb-row">
-            <div class="eld-lb-row-lbl">D</div>
-            <div class="eld-lb-bar-wrap"><div class="eld-lb-bar drive" id="lbBarDrive" style="width:0%"></div></div>
-            <div class="eld-lb-bar-val" id="lbBarDriveVal">0h</div>
-          </div>
-          <div class="eld-lb-row">
-            <div class="eld-lb-row-lbl">ON</div>
-            <div class="eld-lb-bar-wrap"><div class="eld-lb-bar onduty" id="lbBarOnDuty" style="width:0%"></div></div>
-            <div class="eld-lb-bar-val" id="lbBarOnDutyVal">0h</div>
-          </div>
-          <div class="eld-lb-row">
-            <div class="eld-lb-row-lbl">SB</div>
-            <div class="eld-lb-bar-wrap"><div class="eld-lb-bar sleeper" id="lbBarSleeper" style="width:0%"></div></div>
-            <div class="eld-lb-bar-val" id="lbBarSleeperVal">0h</div>
-          </div>
-          <div class="eld-lb-row">
-            <div class="eld-lb-row-lbl">OFF</div>
-            <div class="eld-lb-bar-wrap"><div class="eld-lb-bar offduty" id="lbBarOff" style="width:100%"></div></div>
-            <div class="eld-lb-bar-val" id="lbBarOffVal">24h</div>
-          </div>
-        </div>
-
-        <!-- Violations -->
-        <div class="eld-lb-section-title">⚠️ Infracciones HOS</div>
-        <div id="lbViolations">
-          <div style="text-align:center;padding:14px;color:var(--muted);font-size:13px">✅ Sin infracciones detectadas</div>
-        </div>
-
-        <!-- Disconnect -->
-        <button onclick="disconnectEld()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px">🔌 Desconectar ELD</button>
-      </div>
-    </div>
-    <div id="eldNoBluetooth" style="display:none;text-align:center;padding:16px 0;color:var(--muted)">
-      <div style="font-size:36px;margin-bottom:8px">📶</div>
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Bluetooth Web no disponible</div>
-      <div style="font-size:12px;line-height:1.6;margin-bottom:12px">Requiere Chrome/Edge en Android.<br></div>
-
-    </div>
-  </div>
-</div>
-
-
 <script>
 function updatePlanUI() {
   const monthly = document.querySelector('input[name="subPlan"][value="monthly"]').checked;
@@ -26874,13 +26590,9 @@ window.showSubscribeModal = function() {
   if (sc) sc.style.display = 'none';
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  📡 ELD BLUETOOTH — Web Bluetooth API
-// ─────────────────────────────────────────────────────────────────────────────
-let eldDevice=null,eldChar=null,eldInterval=null;
-
 // ───────────────────────────────────────────────────────────
 // Detect Capacitor native shell — unlocks native BLE plugin
+// (loadNativeBlePlugin se conserva: lo reutiliza el escáner de cámaras)
 // ───────────────────────────────────────────────────────────
 const IS_CAPACITOR = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 let BleClient = null; // lazy-loaded plugin reference
@@ -26898,388 +26610,6 @@ async function loadNativeBlePlugin(){
   } catch(e){ console.error('[ELD] Cannot load native BLE plugin:', e); }
   return null;
 }
-function openEldSheet(){
-  try {
-    document.getElementById('eldSheet').classList.add('open');
-  } catch(e){ console.error('[ELD] openEldSheet error', e); return; }
-
-  const scanBtn    = document.getElementById('eldScanBtn');
-  const demoBtn    = document.getElementById('eldDemoBtn');
-  const noBT       = document.getElementById('eldNoBluetooth');
-  const forceBtn   = document.getElementById('eldForceBtn');
-  const iosNotice  = document.getElementById('eldIosNotice');
-  const alertBanner= document.getElementById('eldAlertBanner');
-  const diag       = document.getElementById('eldDiag');
-  const liveData   = document.getElementById('eldLiveData');
-  const connBar    = document.getElementById('eldConnectedBar');
-  const list       = document.getElementById('eldDeviceList');
-
-  // Popup de solo escaneo: sin diagnóstico, simulación ni datos en vivo.
-  if(iosNotice)    iosNotice.style.display='none';
-  if(noBT)         noBT.style.display='none';
-  if(alertBanner)  alertBanner.style.display='none';
-  if(forceBtn)     forceBtn.style.display='none';
-  if(demoBtn)      demoBtn.style.display='none';
-  if(diag)         diag.style.display='none';
-  if(liveData)     liveData.style.display='none';
-  if(connBar)      connBar.style.display='none';
-  if(list){ list.innerHTML=''; list.style.display='none'; }
-
-  if(!IS_CAPACITOR){
-    // Running in browser — native BLE not available
-    if(noBT){
-      noBT.style.display='block';
-      noBT.innerHTML = `
-        <div style="font-size:36px;margin-bottom:8px">📱</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">App nativa requerida</div>
-        <div style="font-size:12px;line-height:1.6;margin-bottom:12px">
-          Instala <b>Truck Precision</b> como app en tu dispositivo para conectar dispositivos Bluetooth.
-        </div>
-      `;
-    }
-    if(scanBtn) scanBtn.style.display='none';
-    return;
-  }
-
-  // Native Capacitor — show scan button
-  if(scanBtn){
-    scanBtn.style.display='block';
-    scanBtn.disabled=false;
-    scanBtn.textContent='🔍 Buscar Dispositivos Bluetooth';
-  }
-}
-
-// Render live environment diagnostic inside ELD sheet
-function renderEldDiagnostics(){
-  const diagEl = document.getElementById('eldDiagLines');
-  if(!diagEl) return;
-  const ua = navigator.userAgent || '';
-  const isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
-  const isAndroid = /Android/.test(ua);
-  const isChrome = /Chrome\//.test(ua) && !/Edg\//.test(ua) && !/OPR\//.test(ua);
-  const isEdge = /Edg\//.test(ua);
-  const isFirefox = /Firefox\//.test(ua);
-  const isSamsung = /SamsungBrowser/.test(ua);
-  const isInApp = /(FBAN|FBAV|Instagram|Line\/|TikTok|Twitter|WhatsApp|MicroMessenger)/i.test(ua);
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
-  const ok = v => v ? '<span style="color:#10b981">✓</span>' : '<span style="color:#ef4444">✗</span>';
-  let plat = isIOS ? 'iOS (Safari/WebKit)' : isAndroid ? 'Android' : 'Desktop/Otro';
-  let brw = isChrome ? 'Chrome' : isEdge ? 'Edge' : isFirefox ? 'Firefox' : isSamsung ? 'Samsung Internet' : isInApp ? 'Navegador in-app' : 'Otro';
-
-  // Capacitor native detection — if running inside the app, BT works natively
-  if(IS_CAPACITOR){
-    diagEl.innerHTML = `
-      <div>📱 Plataforma: <b style="color:var(--text)">${plat} (App nativa)</b></div>
-      <div>📦 Entorno: <b style="color:#10b981">Capacitor</b> — Bluetooth nativo disponible</div>
-      <div>✓ Sin restricciones de navegador</div>
-      <div>✓ Acceso completo al hardware BT</div>
-      <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);color:#10b981;font-weight:700">
-        ✅ Listo — pulsa "Buscar Dispositivos ELD" para parear el hardware
-      </div>`;
-    return;
-  }
-
-  diagEl.innerHTML = `
-    <div>📱 Plataforma: <b style="color:var(--text)">${plat}</b></div>
-    <div>📦 Entorno: <b style="color:#f59e0b">Navegador (sin acceso nativo BT)</b></div>
-    <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);color:#f59e0b;font-weight:700">
-      ⚠️ Instala Truck Precision como app nativa para conectar dispositivos Bluetooth.
-    </div>`;
-}
-
-async function forceEldScan(){
-  // Muestra TODOS los dispositivos Bluetooth (sin filtro de ELD).
-  return startEldScanNative(true);
-}
-function closeEldSheet(){document.getElementById('eldSheet').classList.remove('open');}
-
-function startEldDemo(){
-  // Simulate ELD connection without Bluetooth (iOS / no-BLE mode)
-  const ring=document.getElementById('eldRing');
-  const icon=document.getElementById('eldRingIcon');
-  const lbl=document.getElementById('eldRingLabel');
-  ring.className='eld-status-ring connected';
-  icon.textContent='🎮';lbl.textContent='SIMULACIÓN';
-  document.getElementById('eldConnectedName').textContent='Modo Simulación — Truck Precision';
-  document.getElementById('eldIosNotice').style.display='none';
-  document.getElementById('eldNoBluetooth').style.display='none';
-  document.getElementById('eldScanBtn').style.display='none';
-  const _demoBtn0 = document.getElementById('eldDemoBtn'); if(_demoBtn0) _demoBtn0.style.display='none';
-  document.getElementById('eldLiveData').style.display='block';
-  document.getElementById('eldLogbook').style.display='block';
-  { const _a=document.getElementById('eldArrowStatus'); if(_a) _a.style.color='#f59e0b'; }
-  startEldDataSimulation();
-  showToast('info','🎮','Modo Simulación ELD','Logbook y HOS activados',3000);
-}
-
-// ─────────────────────────────────────────────────────────────
-// NATIVE BLE SCAN — uses @capacitor-community/bluetooth-le
-// Works on both Android & iOS when running as an installed app
-// ─────────────────────────────────────────────────────────────
-// Nombres/keywords BLE de ELD y adaptadores OBD-II comunes. El escaneo normal
-// solo muestra coincidencias; "Forzar Escaneo" muestra todos los dispositivos.
-const ELD_NAME_PATTERNS = /\b(ELD|HOS|KeepTruckin|Motive|Samsara|Geotab|GO9|GO[0-9]|PeopleNet|Omnitracs|DashLink|BigRoad|VDO|RoadLog|Rand\s?McNally|Transflo|IOSiX|PT30|ATrack|Teletrac|Verizon\s?Connect|EROAD|ISAAC|Continental|Garmin\s?eLog|OBD|OBDII|ELM327|Vgate|VeePeak|VLink|VeoCar)\b/i;
-
-function isLikelyEld(name){
-  if(!name) return false;            // sin nombre → no asumimos ELD en escaneo filtrado
-  return ELD_NAME_PATTERNS.test(name);
-}
-
-async function startEldScanNative(showAll){
-  const ring=document.getElementById('eldRing');
-  const icon=document.getElementById('eldRingIcon');
-  const lbl=document.getElementById('eldRingLabel');
-  const scanBtn=document.getElementById('eldScanBtn');
-  const banner=document.getElementById('eldAlertBanner');
-  const bannerTxt=document.getElementById('eldAlertText');
-  const list=document.getElementById('eldDeviceList');
-  if(banner) banner.style.display='none';
-
-  const ble = await loadNativeBlePlugin();
-  if(!ble){
-    if(banner && bannerTxt){
-      bannerTxt.textContent = 'Plugin BluetoothLe no instalado. Ejecuta: npm i @capacitor-community/bluetooth-le && npx cap sync android';
-      banner.style.display='flex';
-    }
-    return;
-  }
-  ring.className='eld-status-ring scanning';
-  icon.textContent='🔵'; lbl.textContent='INICIANDO BT...';
-  scanBtn.textContent='⏳ Inicializando BLE...';
-  scanBtn.disabled=true;
-  try {
-    await ble.initialize({ androidNeverForLocation: true });
-    lbl.textContent='BUSCANDO ELD...';
-    scanBtn.textContent='⏳ Escaneando dispositivos...';
-
-    // Escaneo: en modo normal solo se muestran dispositivos ELD conocidos;
-    // showAll=true (Forzar Escaneo) lista todos los dispositivos cercanos.
-    const found = new Map(); // deviceId -> {name, rssi}  (todos los vistos)
-    let shown = 0;           // cuántos se mostraron tras el filtro
-    if(list){ list.innerHTML=''; list.style.display='block'; }
-    await ble.requestLEScan({ allowDuplicates:false }, (result) => {
-      const id   = result.device?.deviceId;
-      const name = result.device?.name || result.localName || '';
-      if(!id || found.has(id)) return;
-      found.set(id, { name, id, rssi: result.rssi });
-      if(!showAll && !isLikelyEld(name)) return; // filtra los que no parecen ELD
-      shown++;
-      if(list){
-        const displayName = name || 'Dispositivo sin nombre';
-        const row = document.createElement('button');
-        row.style.cssText = 'display:flex;width:100%;justify-content:space-between;align-items:center;padding:10px 12px;margin-bottom:6px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:10px;color:var(--text);font-family:inherit;cursor:pointer;font-size:13px;font-weight:700';
-        row.innerHTML = `<span>📡 ${displayName}</span><span style="font-size:11px;color:var(--muted)">RSSI ${result.rssi??'?'} dBm</span>`;
-        row.onclick = () => connectNativeBleDevice(id, displayName);
-        list.appendChild(row);
-      }
-    });
-    // Auto-stop scan after 15s
-    setTimeout(async () => {
-      try { await ble.stopLEScan(); } catch(e){}
-      if(shown===0){
-        lbl.textContent='SIN ELD';
-        if(banner && bannerTxt){
-          if(!showAll && found.size>0){
-            bannerTxt.textContent = 'No se detectó ningún ELD, pero hay ' + found.size + ' dispositivo(s) Bluetooth cerca. Usa "Forzar Escaneo ELD" para verlos todos.';
-          } else {
-            bannerTxt.textContent = 'No se detectaron dispositivos. Asegúrate de que el ELD esté encendido, emparejable y dentro del rango.';
-          }
-          banner.style.display='flex';
-        }
-      }
-      scanBtn.textContent = '🔍 Buscar Dispositivos Bluetooth';
-      scanBtn.disabled=false;
-    }, 15000);
-  } catch(e){
-    console.error('[ELD native] scan error:', e);
-    ring.className='eld-status-ring';
-    icon.textContent='📡'; lbl.textContent='ERROR';
-    scanBtn.textContent='🔍 Buscar Dispositivos Bluetooth';
-    scanBtn.disabled=false;
-    let msg = e?.message || e?.errorMessage || String(e);
-    if(/location/i.test(msg)) msg = 'Activa el GPS del teléfono (requerido para escanear BLE en Android).';
-    else if(/denied|not granted/i.test(msg)) msg = 'Permiso de Bluetooth denegado. Ve a Ajustes → Apps → Truck Precision → Permisos.';
-    else if(/not enabled|bluetooth.*off/i.test(msg)) msg = 'El Bluetooth del teléfono está apagado. Actívalo en los ajustes.';
-    if(banner && bannerTxt){ bannerTxt.textContent = msg; banner.style.display='flex'; }
-  }
-}
-
-async function connectNativeBleDevice(deviceId, name){
-  const ring=document.getElementById('eldRing');
-  const icon=document.getElementById('eldRingIcon');
-  const lbl=document.getElementById('eldRingLabel');
-  const list=document.getElementById('eldDeviceList');
-  const scanBtn=document.getElementById('eldScanBtn');
-  const demoBtn=document.getElementById('eldDemoBtn');
-  const ble = await loadNativeBlePlugin();
-  if(!ble) return;
-  try {
-    try { await ble.stopLEScan(); } catch(_){}
-    lbl.textContent='CONECTANDO...';
-    await ble.connect({ deviceId });
-    eldDevice = { name, deviceId, native:true };
-    ring.className='eld-status-ring connected';
-    icon.textContent='✅'; lbl.textContent='CONECTADO';
-    const _nm = name || 'Dispositivo ELD';
-    { const _cn=document.getElementById('eldConnectedName'); if(_cn) _cn.textContent=_nm; }
-    { const _cm=document.getElementById('eldConnNameMini'); if(_cm) _cm.textContent=_nm; }
-    if(list) list.style.display='none';
-    if(scanBtn) scanBtn.style.display='none';
-    if(demoBtn) demoBtn.style.display='none';
-    // Popup simple: solo confirmación de conexión (sin datos en vivo ni simulación).
-    { const _cb=document.getElementById('eldConnectedBar'); if(_cb) _cb.style.display='block'; }
-    try{ showToast('info','📡','ELD Conectado', _nm, 3000); }catch(_){}
-  } catch(e){
-    console.error('[ELD native] connect error:', e);
-    const banner=document.getElementById('eldAlertBanner');
-    const bannerTxt=document.getElementById('eldAlertText');
-    if(banner && bannerTxt){
-      bannerTxt.textContent = 'Error al conectar: ' + (e?.message || e?.errorMessage || String(e));
-      banner.style.display='flex';
-    }
-  }
-}
-
-async function startEldScan(){
-  // Always use native Capacitor BLE — no Web Bluetooth.
-  // showAll=true: muestra TODOS los dispositivos Bluetooth cercanos (sin filtro de ELD).
-  return startEldScanNative(true);
-}
-
-function startEldDataSimulation(){
-  // Evitar intervalos duplicados (doble decremento de horas / fuga de memoria)
-  if(eldInterval){ clearInterval(eldInterval); eldInterval=null; }
-  let odo=487320,hrs=12847.3,fuel=72;
-  let milesDay=0;
-  // HOS hours: start from current form values or defaults
-  let driveHoursLeft = parseFloat(document.getElementById('hoursInput')?.value||11);
-  if(driveHoursLeft>11) driveHoursLeft=11;
-  let driveHoursUsed = 11 - driveHoursLeft;
-  let onDutyHoursUsed = driveHoursUsed + 0.5; // pre-trip inspection
-  let sleeperHours = 0;
-  let cycleHoursLeft = 70;
-  let cycleHoursUsed = 70 - cycleHoursLeft;
-  let continuousDriveMin = 0; // minutes driven without 30-min break
-
-  eldInterval=setInterval(()=>{
-    const speed=window.fmCurrentSpeed||0;
-    const rpm=1200+speed*18+Math.floor(Math.random()*80-40);
-    fuel=Math.max(10,fuel-0.001);
-    odo+=speed/3600; hrs+=1/3600;
-    const isDriving = speed>2;
-    const tickHrs = 1/2400; // per 1500ms tick in hours
-
-    // Decrease HOS hours when driving
-    if(isDriving){
-      driveHoursLeft=Math.max(0,driveHoursLeft-tickHrs);
-      driveHoursUsed+=tickHrs;
-      onDutyHoursUsed+=tickHrs;
-      cycleHoursLeft=Math.max(0,cycleHoursLeft-tickHrs);
-      cycleHoursUsed+=tickHrs;
-      continuousDriveMin+=tickHrs*60;
-      milesDay+=speed*tickHrs;
-    }
-
-    // Live data cards
-    document.getElementById('eldMph').textContent=speed;
-    document.getElementById('eldOdometer').textContent=Math.floor(odo).toLocaleString();
-    document.getElementById('eldEngineHrs').textContent=hrs.toFixed(1);
-    document.getElementById('eldRpm').textContent=rpm;
-    document.getElementById('eldFuel').textContent=Math.round(fuel)+'%';
-    const st=isDriving?'D':'SB';
-    const dEl=document.getElementById('eldDutyStatus');
-    dEl.textContent=st; dEl.style.color=isDriving?'#10b981':'#f59e0b';
-
-    if(fuel<20){
-      const b=document.getElementById('eldAlertBanner');
-      b.style.display='flex';
-      document.getElementById('eldAlertText').textContent='⛽ Combustible bajo — '+Math.round(fuel)+'% restante';
-    }
-
-    // ── HUD map bubbles ───────────────────────────────────
-    const driveEl=document.getElementById('fmDriveLeft');
-    if(driveEl) driveEl.textContent=driveHoursLeft.toFixed(1)+'h';
-    const cycleEl=document.getElementById('fm70Left');
-    if(cycleEl) cycleEl.textContent=cycleHoursLeft.toFixed(1)+'h';
-    const arc=document.getElementById('hudDhArc');
-    if(arc){ const pct=driveHoursLeft/11; arc.setAttribute('stroke-dasharray',`${pct*226} 226`); arc.setAttribute('stroke',driveHoursLeft<2?'#ef4444':driveHoursLeft<4?'#f59e0b':'#34d399'); }
-    const arc70=document.getElementById('hud70Arc');
-    if(arc70){ const f=Math.max(0,cycleHoursLeft/70); const c=cycleHoursLeft<10?'#ef4444':cycleHoursLeft<20?'#f59e0b':'#a78bfa'; arc70.setAttribute('stroke-dasharray',`${f*226} 226`); arc70.setAttribute('stroke',c); }
-
-    // ── Logbook update ────────────────────────────────────
-    const du=Math.min(driveHoursUsed,11);
-    const ou=Math.min(onDutyHoursUsed,14);
-    const cu=cycleHoursUsed;
-    // on-duty (ou) ya incluye las horas de manejo (du); no restar du otra vez.
-    const offH=24-sleeperHours-ou;
-
-    const el=id=>document.getElementById(id);
-    if(el('lbDriveUsed')) el('lbDriveUsed').textContent=du.toFixed(1)+'h';
-    if(el('lbDriveLeft')) el('lbDriveLeft').textContent=driveHoursLeft.toFixed(1)+'h';
-    if(el('lbOnDutyUsed')) el('lbOnDutyUsed').textContent=ou.toFixed(1)+'h';
-    if(el('lbCycleUsed')) el('lbCycleUsed').textContent=cu.toFixed(1)+'h';
-    if(el('lbMilesDay')) el('lbMilesDay').textContent=Math.round(milesDay);
-    if(el('lbStatus')) { el('lbStatus').textContent=st; el('lbStatus').style.color=isDriving?'#10b981':'#6366f1'; }
-
-    // Break due warning (30-min break required after 8h driving)
-    const breakDueEl=el('lbBreakDue');
-    if(breakDueEl){
-      if(du>=8 && continuousDriveMin>=480){
-        breakDueEl.textContent='¡YA!'; breakDueEl.style.color='#ef4444';
-      } else if(du>=7){
-        const minsLeft=Math.max(0,60-(continuousDriveMin-420));
-        breakDueEl.textContent=Math.round(minsLeft)+'m'; breakDueEl.style.color='#f59e0b';
-      } else {
-        breakDueEl.textContent='OK'; breakDueEl.style.color='#10b981';
-      }
-    }
-
-    // Graph bars (out of 24h = 100%)
-    const driveW=(du/24*100).toFixed(1);
-    const onW=(Math.max(0,ou-du)/24*100).toFixed(1);
-    const sbW=(sleeperHours/24*100).toFixed(1);
-    const offW=(Math.max(0,offH)/24*100).toFixed(1);
-    if(el('lbBarDrive')) { el('lbBarDrive').style.width=driveW+'%'; el('lbBarDriveVal').textContent=du.toFixed(1)+'h'; }
-    if(el('lbBarOnDuty')) { el('lbBarOnDuty').style.width=onW+'%'; el('lbBarOnDutyVal').textContent=(ou-du<0?0:ou-du).toFixed(1)+'h'; }
-    if(el('lbBarSleeper')) { el('lbBarSleeper').style.width=sbW+'%'; el('lbBarSleeperVal').textContent=sleeperHours.toFixed(1)+'h'; }
-    if(el('lbBarOff')) { el('lbBarOff').style.width=offW+'%'; el('lbBarOffVal').textContent=Math.max(0,offH).toFixed(1)+'h'; }
-
-    // Violations
-    const vDiv=el('lbViolations');
-    if(vDiv){
-      const viols=[];
-      if(du>11) viols.push({icon:'🚨',text:'Límite 11h excedido',sub:`${du.toFixed(1)}h manejadas (máx 11h)`});
-      if(ou>14) viols.push({icon:'⚠️',text:'Límite 14h on-duty excedido',sub:`${ou.toFixed(1)}h (máx 14h)`});
-      if(cu>70) viols.push({icon:'🔴',text:'Ciclo 70h excedido',sub:`${cu.toFixed(1)}h usadas`});
-      if(du>=8 && continuousDriveMin>480) viols.push({icon:'⏸️',text:'Descanso 30 min requerido',sub:'8h continuas sin pausa de 30 min'});
-      if(viols.length){
-        vDiv.innerHTML=viols.map(v=>`<div class="eld-violation-row"><div class="eld-violation-icon">${v.icon}</div><div><div class="eld-violation-text">${v.text}</div><div class="eld-violation-sub">${v.sub}</div></div></div>`).join('');
-      } else {
-        vDiv.innerHTML='<div style="text-align:center;padding:14px;color:var(--muted);font-size:13px">✅ Sin infracciones detectadas</div>';
-      }
-    }
-  },1500);
-}
-
-function disconnectEld(){
-  if(eldInterval){clearInterval(eldInterval);eldInterval=null;}
-  if(eldDevice&&eldDevice.gatt&&eldDevice.gatt.connected) eldDevice.gatt.disconnect();
-  eldDevice=null;
-  { const _ld=document.getElementById('eldLiveData'); if(_ld) _ld.style.display='none'; }
-  { const _cb=document.getElementById('eldConnectedBar'); if(_cb) _cb.style.display='none'; }
-  const _scan=document.getElementById('eldScanBtn');
-  if(_scan){ _scan.style.display='block'; _scan.textContent='🔍 Buscar Dispositivos Bluetooth'; _scan.disabled=false; }
-  const _demoBtn1 = document.getElementById('eldDemoBtn'); if(_demoBtn1) _demoBtn1.style.display='none';
-  { const _ab=document.getElementById('eldAlertBanner'); if(_ab) _ab.style.display='none'; }
-  const ring=document.getElementById('eldRing');
-  ring.className='eld-status-ring';
-  document.getElementById('eldRingIcon').textContent='📡';
-  document.getElementById('eldRingLabel').textContent='DESCONECTADO';
-  { const _a=document.getElementById('eldArrowStatus'); if(_a) _a.style.color=''; }
-  showToast('info','🔌','ELD Desconectado','Dispositivo desvinculado',2500);
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 //  📄 DOCUMENT SCANNER — Camera + Crop + PDF/JPG + WhatsApp/Email
 // ═══════════════════════════════════════════════════════════════════════════
@@ -31169,7 +30499,7 @@ window._hosAutoRecalc = false;
 
 
 <script>
-/* ── HOS ELD Tracker — datos 100% desde el ELD via Bluetooth ── */
+/* ── HOS Tracker — horas de servicio calculadas desde el GPS del teléfono ── */
 (function(){
   const C         = 251.3;  // 2π × 40
   const DRIVE_MAX = 11;
@@ -31177,9 +30507,7 @@ window._hosAutoRecalc = false;
   const SAVE_KEY  = 'hos_eld_state';
 
   // ── Estado ─────────────────────────────────────────────────
-  let _eldDevice   = null;
-  let _eldServer   = null;
-  let _connected   = false;
+  let _connected   = false;  // sin ELD: siempre false (se conserva para la UI)
   let _connectedAt = null;   // Date: hora de conexión al ELD
   let _shiftStart  = null;   // Date: primer movimiento detectado por ELD
   let _driveMs     = 0;      // ms acumulados conduciendo
@@ -31276,7 +30604,6 @@ window._hosAutoRecalc = false;
     if (_gpsWatchId != null || !navigator.geolocation) return;
     _gpsActive = true;
     _setDuty(typeof lang !== 'undefined' && lang === 'es' ? 'GPS ACTIVO' : 'GPS ACTIVE', '#10b981');
-    _setBtBadge(_connected ? 'connected' : 'gps');
     _gpsWatchId = navigator.geolocation.watchPosition(
       pos => {
         const raw = pos.coords.speed;
@@ -31289,7 +30616,6 @@ window._hosAutoRecalc = false;
       () => {
         _gpsActive = false;
         _setDuty(typeof lang !== 'undefined' && lang === 'es' ? 'SIN GPS' : 'NO GPS', '#6b7280');
-        _setBtBadge('disconnected');
       },
       { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 }
     );
@@ -31302,116 +30628,6 @@ window._hosAutoRecalc = false;
     }
     _gpsActive = false;
   }
-
-  // ── Parser de datos ELD ───────────────────────────────────
-  // Adaptar según el protocolo real del ELD (FMCSA / propietario).
-  // Este parser maneja el formato hipotético de 4 bytes más común.
-  function _parseEld(dataView){
-    try {
-      // Byte 0-1: velocidad en décimas de mph (ej. 0x00A0 = 160 → 16.0 mph)
-      const rawSpeed = dataView.getUint16(0, true);
-      const mph      = rawSpeed / 10;
-      // Byte 2: drive minutes usados hoy (0-660 = 0-11h), escala ×1
-      const driveMin = dataView.getUint8(2);
-      // Byte 3: horas del ciclo usadas (0-70)
-      const cycleH   = dataView.getUint8(3);
-      return { mph, driveMin, cycleH };
-    } catch(e){ return null; }
-  }
-
-  // ── Suscripción a notificaciones del ELD ──────────────────
-  async function _subscribeEld(server){
-    // Intenta servicios conocidos en orden de probabilidad
-    const SERVICE_CANDIDATES = [
-      '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART (común en ELDs)
-      'battery_service',
-    ];
-    const CHAR_CANDIDATES = [
-      '6e400003-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART TX
-      'battery_level',
-    ];
-
-    for (let i = 0; i < SERVICE_CANDIDATES.length; i++){
-      try {
-        const svc  = await server.getPrimaryService(SERVICE_CANDIDATES[i]);
-        const char = await svc.getCharacteristic(CHAR_CANDIDATES[i]);
-        await char.startNotifications();
-        char.addEventListener('characteristicvaluechanged', e => {
-          const parsed = _parseEld(e.target.value);
-          if (!parsed) return;
-          // Si el ELD reporta horas acumuladas directamente, usarlas
-          if (parsed.driveMin > 0 || parsed.cycleH > 0){
-            _driveMs = parsed.driveMin * 60000;
-            _cycleMs = parsed.cycleH   * 3600000;
-          }
-          if (parsed.mph > 2) _onEldMoving(Math.round(parsed.mph));
-          else                 _onEldStopped();
-        });
-        return; // suscripción exitosa
-      } catch(_){}
-    }
-    // Sin notificaciones: polling cada 3s via read
-    _pollId = setInterval(async ()=>{
-      try {
-        const svc  = await server.getPrimaryService('battery_service');
-        const char = await svc.getCharacteristic('battery_level');
-        const val  = await char.readValue();
-        // Si solo tenemos battery, al menos sabemos que el ELD está encendido
-        // El tiempo se acumula mientras esté conectado y sin datos de parada
-        _onEldMoving(0); // velocidad desconocida pero conectado = en turno
-      } catch(_){ /* silencioso */ }
-    }, 3000);
-  }
-
-  // ── Conexión al ELD ────────────────────────────────────────
-  async function _connect(device){
-    _setBtBadge('scanning');
-    try {
-      _eldServer = await device.gatt.connect();
-      _eldDevice = device;
-      _connected   = true;
-      _connectedAt = new Date();
-      if (!_shiftStart) _shiftStart = new Date();
-      _save();
-      _stopGpsMode();
-      _setBtBadge('connected');
-      _setDuty('ELD CONECTADO', '#a78bfa');
-
-      device.addEventListener('gattserverdisconnected', _onDisconnected);
-      await _subscribeEld(_eldServer);
-    } catch(e){
-      console.warn('ELD connect error:', e);
-      _setBtBadge('error');
-    }
-  }
-
-  function _onDisconnected(){
-    _connected = false;
-    clearInterval(_pollId);
-    if (_isMoving) _onEldStopped();
-    _setBtBadge('disconnected');
-    _setDuty('ELD DESCONECTADO', '#6b7280');
-    _save();
-    // Activar GPS del teléfono como fallback inmediatamente
-    _startGpsMode();
-    // Intentar reconectar automáticamente después de 5s
-    setTimeout(_autoReconnect, 5000);
-  }
-
-  // ── Auto-reconexión a ELD ya autorizado ───────────────────
-  async function _autoReconnect(){
-    if (_connected) return;
-    // Native reconnect via saved deviceId
-    if(IS_CAPACITOR && eldDevice?.deviceId){
-      try {
-        _setBtBadge('scanning');
-        await connectNativeBleDevice(eldDevice.deviceId, eldDevice.name || 'ELD');
-      } catch(_){}
-    }
-  }
-
-  // ── ELD scan deshabilitado ─────────────
-  window.heroBleScan = async function(){ return; };
 
   // ── Helpers de horas disponibles ──────────────────────────
   function _driveLeft(){
@@ -31497,33 +30713,6 @@ window._hosAutoRecalc = false;
     if (txt){ txt.textContent = label; txt.style.color = color; }
   }
 
-  function _setBtBadge(s){
-    const colors = { connected:'#00e5a0', scanning:'#facc15', error:'#f87171', disconnected:'#6b7280', gps:'#10b981' };
-    const labels = { connected:'ELD ●', scanning:'Buscando...', error:'Error BT', disconnected:'ELD', gps:'GPS ●' };
-    const dot   = document.getElementById('heroBtDot');
-    const txt   = document.getElementById('heroBtTxt');
-    const badge = document.getElementById('heroBtBadge');
-    const svg   = badge && badge.querySelector('svg path');
-    if (dot)   dot.style.background = colors[s];
-    if (txt){  txt.textContent = labels[s]; txt.style.color = colors[s]; }
-    if (svg)   svg.setAttribute('stroke', colors[s]);
-    if (badge){
-      const connected = s === 'connected';
-      const scanning  = s === 'scanning';
-      const gps       = s === 'gps';
-      badge.style.borderColor = connected ? 'rgba(0,229,160,0.50)' : scanning ? 'rgba(250,204,21,0.40)' : gps ? 'rgba(16,185,129,0.50)' : 'rgba(255,255,255,0.18)';
-      badge.style.background  = connected ? 'rgba(0,229,160,0.12)' : scanning ? 'rgba(250,204,21,0.08)' : gps ? 'rgba(16,185,129,0.12)' : 'rgba(8,14,26,0.88)';
-      badge.classList.toggle('bt-disconnected', !connected && !scanning && !gps);
-    }
-    // Sync BT/GPS status into dash TURNO ring
-    const dashBt = document.getElementById('dashBtStatus');
-    if (dashBt) {
-      dashBt.textContent = s === 'connected' ? 'BT ●' : s === 'scanning' ? 'BT...' : s === 'gps' ? 'GPS ●' : 'BT ○';
-      dashBt.style.color = s === 'connected' ? '#00e5a0' : s === 'scanning' ? '#facc15' : s === 'gps' ? '#10b981' : 'rgba(167,139,250,0.55)';
-    }
-    if (typeof _syncHeroArcStatus === 'function') _syncHeroArcStatus();
-  }
-
   function _fmt(d){ const h=d.getHours(),m=d.getMinutes(); return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
   function _fmtElapsed(from){
     const mins = Math.min(Math.floor((Date.now() - from.getTime()) / 60000), 14 * 60);
@@ -31543,9 +30732,6 @@ window._hosAutoRecalc = false;
 
   // Sin ELD: usar GPS del teléfono como fuente de movimiento por defecto
   setTimeout(() => { _startGpsMode(); }, 500); // GPS siempre activo
-
-  // Intentar auto-reconectar a ELD previamente autorizado al abrir el app
-  setTimeout(_autoReconnect, 1500);
 
   // Loop: actualizar anillos cada segundo, guardar cada 30s
   setInterval(_updateRings, 1000);
@@ -31581,55 +30767,7 @@ window._hosAutoRecalc = false;
 })();
 </script>
 
-<script>
-/* ── Draggable floating BT button ── */
-(function(){
-  const btn = document.getElementById('heroBtBadge');
-  if (!btn) return;
-  // Restore saved position
-  try {
-    const saved = JSON.parse(localStorage.getItem('btBtnPos'));
-    if (saved) { btn.style.bottom = 'auto'; btn.style.right = 'auto'; btn.style.top = saved.top + 'px'; btn.style.left = saved.left + 'px'; }
-  } catch(e){}
 
-  let dragging = false, ox = 0, oy = 0, moved = false;
-
-  function start(x, y) {
-    dragging = true; moved = false;
-    const r = btn.getBoundingClientRect();
-    ox = x - r.left; oy = y - r.top;
-    btn.style.transition = 'none';
-    btn.style.bottom = 'auto'; btn.style.right = 'auto';
-    btn.style.top = r.top + 'px'; btn.style.left = r.left + 'px';
-    btn.setPointerCapture && btn.setPointerCapture(btn._pid);
-  }
-  function move(x, y) {
-    if (!dragging) return;
-    const nx = x - ox, ny = y - oy;
-    const maxX = window.innerWidth - btn.offsetWidth - 4;
-    const maxY = window.innerHeight - btn.offsetHeight - 4;
-    btn.style.left = Math.max(4, Math.min(nx, maxX)) + 'px';
-    btn.style.top  = Math.max(4, Math.min(ny, maxY)) + 'px';
-    moved = true;
-  }
-  function end() {
-    if (!dragging) return;
-    dragging = false;
-    btn.style.transition = '';
-    try { localStorage.setItem('btBtnPos', JSON.stringify({ top: parseFloat(btn.style.top), left: parseFloat(btn.style.left) })); } catch(e){}
-    if (moved) { btn.addEventListener('click', function stop(e){ e.stopImmediatePropagation(); btn.removeEventListener('click', stop); }, { once: true, capture: true }); }
-  }
-
-  btn.addEventListener('pointerdown', function(e) {
-    btn._pid = e.pointerId;
-    btn.setPointerCapture(e.pointerId);
-    start(e.clientX, e.clientY);
-  });
-  btn.addEventListener('pointermove', function(e) { move(e.clientX, e.clientY); });
-  btn.addEventListener('pointerup',   end);
-  btn.addEventListener('pointercancel', end);
-})();
-</script>
 
 
 
