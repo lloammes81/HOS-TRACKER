@@ -26360,7 +26360,7 @@ function incrementUserReports() {
     </div>
 
     <!-- Android/Chrome BLE scan button -->
-    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">📡 Buscar Solo Dispositivos ELD</button>
+    <button id="eldScanBtn" onclick="startEldScan()" style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;box-shadow:0 4px 14px rgba(99,102,241,.4)">📡 Buscar Dispositivos Bluetooth</button>
 
     <!-- Force scan button (bypass detection, always visible) -->
     <button id="eldForceBtn" onclick="forceEldScan()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(16,185,129,.35);background:rgba(16,185,129,.10);color:#10b981;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">🔵 Forzar Escaneo ELD (si no aparece)</button>
@@ -27069,7 +27069,7 @@ async function startEldScanNative(showAll){
           banner.style.display='flex';
         }
       }
-      scanBtn.textContent = '🔍 Buscar Solo Dispositivos ELD';
+      scanBtn.textContent = '🔍 Buscar Dispositivos Bluetooth';
       scanBtn.disabled=false;
     }, 15000);
   } catch(e){
@@ -27123,8 +27123,9 @@ async function connectNativeBleDevice(deviceId, name){
 }
 
 async function startEldScan(){
-  // Always use native Capacitor BLE — no Web Bluetooth
-  return startEldScanNative();
+  // Always use native Capacitor BLE — no Web Bluetooth.
+  // showAll=true: muestra TODOS los dispositivos Bluetooth cercanos (sin filtro de ELD).
+  return startEldScanNative(true);
 }
 
 function startEldDataSimulation(){
