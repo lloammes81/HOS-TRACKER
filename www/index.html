@@ -6254,7 +6254,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
         </svg>
         <div class="hero-kpi-inner" style="gap:0;">
           <div class="hero-kpi-val" id="heroValTurno" style="font-size:18px;letter-spacing:2px;">--:--</div>
-          <div class="hero-kpi-lbl" id="heroTurnoSub">BT ○</div>
+          <div class="hero-kpi-lbl" id="heroTurnoSub">GPS ○</div>
           <div style="width:22px;height:0.5px;background:rgba(255,255,255,.12);margin:2px 0;"></div>
           <div class="hero-kpi-val" id="heroValTurno2" style="font-size:14px;color:rgba(170,190,210,0.55);letter-spacing:2px;">--:--</div>
           <div class="hero-kpi-lbl">inicio</div>
@@ -12029,9 +12029,8 @@ function applyDriveHoursPos() {
 }
 
 function _syncHeroArcStatus() {
-  const isEld = window._hosTracker?.eldConnected?.() === true;
   const isOff = (typeof _dashCurrentStatus !== 'undefined' && (_dashCurrentStatus === 'off' || _dashCurrentStatus === 'rest'));
-  const arcColor = isOff ? '#ef4444' : isEld ? '#10b981' : '#f59e0b';
+  const arcColor = isOff ? '#ef4444' : '#f59e0b';
   const arc = document.getElementById('heroArcTurno');
   if (arc) { arc.style.stroke = arcColor; arc.style.strokeDashoffset = '0'; }
 }
@@ -26616,7 +26615,7 @@ async function loadNativeBlePlugin(){
       BleClient = plugins.BluetoothLe;
       return BleClient;
     }
-  } catch(e){ console.error('[ELD] Cannot load native BLE plugin:', e); }
+  } catch(e){ console.error('[BLE] Cannot load native BLE plugin:', e); }
   return null;
 }
 // ═══════════════════════════════════════════════════════════════════════════
@@ -27437,19 +27436,7 @@ window._hosAutoRecalc = false;
       return;
     }
 
-    // ELD conectado: usar los valores exactos de los anillos, omitir popups
-    if (window._hosTracker?.eldConnected?.()) {
-      const dLeft = window._hosTracker.driveLeft();
-      const cLeft = window._hosTracker.cycleLeft();
-      const dailyInp  = document.getElementById('dailyHoursInput');
-      const weeklyInp = document.getElementById('hoursInput');
-      if (dailyInp)  dailyInp.value  = Math.max(0, dLeft).toFixed(2);
-      if (weeklyInp) weeklyInp.value = Math.max(0, cLeft).toFixed(2);
-      _origCalcForPopup();
-      return;
-    }
-
-    // Sin ELD: siempre mostrar popup de confirmación con horas pre-llenadas del tracker
+    // Mostrar popup de confirmación con horas pre-llenadas del tracker GPS
     const _noEldReg = (function() {
       try { return JSON.parse(localStorage.getItem('hos_no_eld_reg')); } catch(e) { return null; }
     })();
@@ -30524,14 +30511,12 @@ window._hosAutoRecalc = false;
   const SAVE_KEY  = 'hos_eld_state';
 
   // ── Estado ─────────────────────────────────────────────────
-  let _connected   = false;  // sin ELD: siempre false (se conserva para la UI)
-  let _connectedAt = null;   // Date: hora de conexión al ELD
-  let _shiftStart  = null;   // Date: primer movimiento detectado por ELD
+  let _shiftStart  = null;   // Date: primer movimiento GPS detectado
   let _driveMs     = 0;      // ms acumulados conduciendo
   let _cycleMs     = 0;      // ms acumulados en el ciclo semanal
   let _sessionStart= null;   // Date: inicio del segmento de movimiento actual
   let _isMoving    = false;
-  let _eldSpeed    = 0;      // mph reportado por ELD
+  let _speed       = 0;      // mph calculado desde GPS
   let _pollId      = null;
   let _gpsWatchId  = null;  // watchPosition del teléfono (modo sin ELD)
   let _gpsActive   = false;
@@ -30541,7 +30526,6 @@ window._hosAutoRecalc = false;
     const extra = (_sessionStart && _isMoving) ? Date.now() - _sessionStart.getTime() : 0;
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       shiftTs    : _shiftStart   ? _shiftStart.getTime()   : null,
-      connTs     : _connectedAt  ? _connectedAt.getTime()  : null,
       driveMs    : _driveMs + extra,
       cycleMs    : _cycleMs + extra,
       driveDate  : new Date().toDateString(),
@@ -30559,16 +30543,15 @@ window._hosAutoRecalc = false;
       }
       // Resetear turno si tiene más de 24h (ventana diaria DOT)
       _shiftStart  = (d.shiftTs && Date.now() - d.shiftTs < 24 * 3600000) ? new Date(d.shiftTs) : null;
-      _connectedAt = (d.connTs  && Date.now() - d.connTs  < 24 * 3600000) ? new Date(d.connTs)  : null;
       // Reiniciar horas diarias si cambió el día calendario (el ciclo 70h sigue acumulando)
       _driveMs = (d.driveDate && d.driveDate === new Date().toDateString()) ? (d.driveMs || 0) : 0;
       _cycleMs = d.cycleMs || 0;
     } catch(e){}
   }
 
-  // ── Lógica de movimiento (datos del ELD) ───────────────────
-  function _onEldMoving(speedMph){
-    _eldSpeed = speedMph;
+  // ── Lógica de movimiento (GPS) ───────────────────────────
+  function _onMoving(speedMph){
+    _speed = speedMph;
     if (!_isMoving){
       _isMoving     = true;
       _sessionStart = new Date();
@@ -30584,11 +30567,11 @@ window._hosAutoRecalc = false;
         _vehicleStopStartMs = null;
         try { localStorage.removeItem('hos_stop_start'); } catch(e) {}
       }
-      _setDuty('EN MOVIMIENTO · ELD', '#00e5a0');
+      _setDuty('EN MOVIMIENTO', '#00e5a0');
     }
   }
 
-  function _onEldStopped(){
+  function _onStopped(){
     if (_isMoving && _sessionStart){
       const ms = Date.now() - _sessionStart.getTime();
       _driveMs += ms;
@@ -30597,12 +30580,11 @@ window._hosAutoRecalc = false;
       _save();
     }
     _isMoving = false;
-    _eldSpeed  = 0;
-    _setDuty('DETENIDO · ELD', '#f59e0b');
+    _speed    = 0;
+    _setDuty('DETENIDO', '#f59e0b');
   }
 
   // ── GPS del dispositivo — siempre activo para detección de movimiento ────
-  // (incluso cuando ELD está conectado; ELD solo se usa para identificación)
   let _gpsLastPos = null; // {lat, lon, ts} — for delta-speed fallback when coords.speed is null
   function _calcMphFromDelta(lat, lon, ts) {
     if (!_gpsLastPos) { _gpsLastPos = { lat, lon, ts }; return 0; }
@@ -30627,8 +30609,8 @@ window._hosAutoRecalc = false;
         // coords.speed is often null on iOS Safari/PWA — fall back to position delta
         let mph = (raw != null && raw >= 0) ? raw * 0.621371
                   : _calcMphFromDelta(pos.coords.latitude, pos.coords.longitude, pos.timestamp || Date.now());
-        if (mph >= 5) _onEldMoving(Math.round(mph));
-        else          _onEldStopped();
+        if (mph >= 5) _onMoving(Math.round(mph));
+        else          _onStopped();
       },
       () => {
         _gpsActive = false;
@@ -30661,23 +30643,18 @@ window._hosAutoRecalc = false;
     const dl = _driveLeft();
     const cl = _cycleLeft();
 
-    // Anillo 1: Turno / Conexión ELD — full circle, color by status
+    // Anillo 1: Turno / inicio de movimiento GPS — full circle, color by status
     const arcT = document.getElementById('heroArcTurno');
     if (arcT) arcT.style.strokeDashoffset = '0';
     const valT = document.getElementById('heroValTurno');
-    // Mostrar hora de inicio de turno: ELD conectado o primer movimiento GPS
-    const shiftRef = _connectedAt || _shiftStart;
-    if (valT) valT.textContent = shiftRef ? _fmt(shiftRef) : '--:--';
+    if (valT) valT.textContent = _shiftStart ? _fmt(_shiftStart) : '--:--';
     const subT = document.getElementById('heroTurnoSub');
     if (subT){
-      if (_connected) {
-        subT.textContent = _isMoving ? `${_eldSpeed} mph` : 'ELD ●';
-        subT.style.color = 'rgba(170,190,210,0.65)';
-      } else if (_gpsActive) {
-        subT.textContent = _isMoving ? `${_eldSpeed} mph · GPS` : 'GPS ●';
+      if (_gpsActive) {
+        subT.textContent = _isMoving ? `${_speed} mph · GPS` : 'GPS ●';
         subT.style.color = 'rgba(170,190,210,0.65)';
       } else {
-        subT.textContent = 'ELD ○';
+        subT.textContent = 'GPS ○';
         subT.style.color = 'rgba(170,190,210,0.35)';
       }
     }
@@ -30744,10 +30721,10 @@ window._hosAutoRecalc = false;
     hosShiftStartTime = _shiftStart.getTime();
     try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
   }
-  _setDuty('SIN ELD', '#6b7280');
+  _setDuty('SIN GPS', '#6b7280');
   _updateRings();
 
-  // Sin ELD: usar GPS del teléfono como fuente de movimiento por defecto
+  // Usar GPS del teléfono como fuente de movimiento
   setTimeout(() => { _startGpsMode(); }, 500); // GPS siempre activo
 
   // Loop: actualizar anillos cada segundo, guardar cada 30s
@@ -30762,7 +30739,6 @@ window._hosAutoRecalc = false;
   window._hosTracker = {
     driveLeft:     _driveLeft,
     cycleLeft:     _cycleLeft,
-    eldConnected:  () => _connected,
     // Inicializa el tracker con las horas RESTANTES que el driver ingresó
     setInitialHours: function(dailyHrsLeft, cycleHrsLeft) {
       _driveMs = Math.max(0, (DRIVE_MAX - dailyHrsLeft) * 3600000);
@@ -30771,11 +30747,10 @@ window._hosAutoRecalc = false;
       if (!_shiftStart) _shiftStart = new Date();
       _save();
     },
-    // Llamado desde el bucle GPS — siempre usa GPS del dispositivo para movimiento,
-    // incluso cuando el ELD está conectado (ELD solo se usa para identificación/logging)
+    // Llamado desde el bucle GPS
     reportMoving: function(moving, speedMph) {
-      if (moving) _onEldMoving(speedMph || 0);
-      else        _onEldStopped();
+      if (moving) _onMoving(speedMph || 0);
+      else        _onStopped();
     },
     // Pausa el GPS interno cuando el rastreo de ruta toma el control
     pauseInternalGps: function() { _stopGpsMode(); },
