@@ -11400,10 +11400,22 @@ function applyDriveHoursPos() {
 }
 
 function _syncHeroArcStatus() {
-  const isOff = (typeof _dashCurrentStatus !== 'undefined' && (_dashCurrentStatus === 'off' || _dashCurrentStatus === 'rest'));
-  const arcColor = isOff ? '#ef4444' : '#f59e0b';
+  const C   = 251.3; // 2π×40
   const arc = document.getElementById('heroArcTurno');
-  if (arc) { arc.style.stroke = arcColor; arc.style.strokeDashoffset = '0'; }
+  if (!arc) return;
+  // 14h shift window: drain the ring as hours are consumed
+  const shiftElapsedH = (typeof hosShiftStartTime !== 'undefined' && hosShiftStartTime)
+    ? Math.min(14, (Date.now() - hosShiftStartTime) / 3600000)
+    : 0;
+  const remaining14h = 14 - shiftElapsedH;
+  arc.style.strokeDashoffset = C * (shiftElapsedH / 14);
+  // Color matches the 14h circle on the dashboard
+  const isOff = typeof _dashCurrentStatus !== 'undefined' &&
+                (_dashCurrentStatus === 'off' || _dashCurrentStatus === 'rest');
+  arc.style.stroke = isOff         ? '#ef4444'
+    : remaining14h < 2             ? '#ef4444'
+    : remaining14h < 4             ? '#f59e0b'
+    : '#10b981';
 }
 
 function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
@@ -29138,9 +29150,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     const dl = _driveLeft();
     const cl = _cycleLeft();
 
-    // Anillo 1: Turno / inicio de movimiento GPS — full circle, color by status
-    const arcT = document.getElementById('heroArcTurno');
-    if (arcT) arcT.style.strokeDashoffset = '0';
+    // Anillo 1: Turno — 14h shift window progress (handled by _syncHeroArcStatus below)
     const valT = document.getElementById('heroValTurno');
     if (valT) valT.textContent = _shiftStart ? _fmt(_shiftStart) : '--:--';
     const subT = document.getElementById('heroTurnoSub');
