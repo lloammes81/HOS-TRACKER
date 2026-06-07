@@ -29182,9 +29182,20 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       const arcD = document.getElementById('heroArcDrive');
       if (arcD){ arcD.style.strokeDashoffset = C * (1 - dPct); arcD.style.stroke = dArcCol; }
       const valD = document.getElementById('heroValDrive');
+      const lblD = document.getElementById('heroLblDrive');
       if (valD){
-        const h = Math.floor(dl), m = Math.round((dl - h) * 60);
-        valD.textContent = h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`;
+        const totalSecs = Math.floor(dl * 3600);
+        const h = Math.floor(totalSecs / 3600);
+        const m = Math.floor((totalSecs % 3600) / 60);
+        const s = totalSecs % 60;
+        if (_isMoving) {
+          // Muestra h+m y los segundos cuentan regresivo en el label
+          valD.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+          if (lblD){ lblD.textContent = String(s).padStart(2,'0') + 's'; lblD.style.color = dArcCol; }
+        } else {
+          valD.textContent = h > 0 ? `${h}h` : `${m}m`;
+          if (lblD){ lblD.textContent = 'Manejo'; lblD.style.color = ''; }
+        }
         valD.style.color = dTxtCol;
       }
     }
