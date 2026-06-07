@@ -14804,6 +14804,9 @@ async function retryRoute() {
 function renderResults(hours, speed, depart) {
   document.getElementById('resultsCard').style.display = 'block';
   document.getElementById('shareTrackBtns').style.display = 'grid';
+  // Ocultar el formulario de planeación ahora que hay ruta calculada;
+  // sólo reaparecerá al presionar "Nueva Ruta" (resetForm).
+  try { syncPlanCardActiveRoute(); } catch(e) {}
   // Hide slider while results are visible
   const _cb = document.getElementById('calcSlider');
   if (_cb) _cb.style.display = 'none';
@@ -21638,6 +21641,8 @@ function resetForm() {
   document.getElementById('shareTrackBtns').style.display = 'none';
   document.getElementById('miniMapCard').style.display = 'none';
   hideError();
+  // Reaparecer el formulario de planeación
+  try { syncPlanCardActiveRoute(); } catch(e) {}
 }
 
 function showError(msg) {
@@ -21651,25 +21656,37 @@ function hideError() {
 
 function syncPlanCardActiveRoute() {
   const tracking = !!fmIsTracking;
+  // Hay ruta calculada cuando hay destino asignado y resultsCard visible
+  const resultsCard         = document.getElementById('resultsCard');
+  const hasCalcRoute        = !!(destination && destination.lat && resultsCard && resultsCard.style.display === 'block');
+  const hideForm            = tracking || hasCalcRoute;
+
   const planFormInputs      = document.getElementById('planFormInputs');
   const planDepartureSection = document.getElementById('planDepartureSection');
   const calcBtn             = document.getElementById('calcSlider');
   const cancelBtn           = document.getElementById('cancelActiveRouteBtn');
   const errorBox            = document.getElementById('errorBox');
+  const wpArea              = document.getElementById('waypointsArea');
+  const addStop             = document.getElementById('addStopBtn');
+  const optBtn              = document.getElementById('optimizeStopsBtn');
+  const originRow           = document.getElementById('stopRowOrigin');
 
-  if (planFormInputs)       planFormInputs.style.display       = tracking ? 'none' : '';
-  if (planDepartureSection) planDepartureSection.style.display  = tracking ? 'none' : '';
-  if (calcBtn)              calcBtn.style.display               = tracking ? 'none' : '';
-  if (errorBox)             errorBox.style.display              = tracking ? 'none' : (errorBox._visible ? '' : 'none');
+  if (planFormInputs)       planFormInputs.style.display       = hideForm ? 'none' : '';
+  if (planDepartureSection) planDepartureSection.style.display  = hideForm ? 'none' : '';
+  if (calcBtn)              calcBtn.style.display               = hideForm ? 'none' : '';
+  if (wpArea)               wpArea.style.display                = hideForm ? 'none' : '';
+  if (addStop && hideForm)  addStop.style.display               = 'none';
+  if (optBtn && hideForm)   optBtn.style.display                = 'none';
+  if (originRow)            originRow.style.display             = hideForm ? 'none' : '';
+  if (errorBox)             errorBox.style.display              = hideForm ? 'none' : (errorBox._visible ? '' : 'none');
   if (cancelBtn)            cancelBtn.style.display             = tracking ? '' : 'none';
 
   if (tracking) {
     const altRoutes = document.getElementById('altRoutesCard');
-    const results   = document.getElementById('resultsCard');
     const shareBtns = document.getElementById('shareTrackBtns');
-    if (altRoutes) altRoutes.style.display = 'none';
-    if (results)   results.style.display   = 'none';
-    if (shareBtns) shareBtns.style.display = 'none';
+    if (altRoutes)    altRoutes.style.display    = 'none';
+    if (resultsCard)  resultsCard.style.display  = 'none';
+    if (shareBtns)    shareBtns.style.display    = 'none';
   }
 }
 
