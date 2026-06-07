@@ -14809,6 +14809,8 @@ function renderResults(hours, speed, depart) {
   // Ocultar el formulario de planeación ahora que hay ruta calculada;
   // sólo reaparecerá al presionar "Nueva Ruta" (resetForm).
   try { syncPlanCardActiveRoute(); } catch(e) {}
+  // Persistir para reanudación tras cierre de la app
+  try { _fmSaveActiveRoute(); } catch(e) {}
   // Hide slider while results are visible
   const _cb = document.getElementById('calcSlider');
   if (_cb) _cb.style.display = 'none';
@@ -17951,11 +17953,15 @@ function fmStopTracking() {
 const _FM_ROUTE_KEY = 'hos_active_route';
 
 function _fmSaveActiveRoute() {
-  if (!fmIsTracking || !origin || !destination) return;
+  // Guarda la ruta tanto si está siendo rastreada como si solo está
+  // calculada — así sobrevive al cierre de la app aunque no se haya
+  // iniciado el rastreo todavía.
+  if (!origin || !destination || !destination.lat) return;
   try {
     localStorage.setItem(_FM_ROUTE_KEY, JSON.stringify({
       origin,
       destination,
+      waypoints: (typeof waypoints !== 'undefined' ? waypoints : []).filter(w => w && w.lat),
       routeDistance,
       roadGeometry: roadGeometry ? roadGeometry.slice(0, 2000) : null,
       schedule: typeof schedule !== 'undefined' ? schedule : [],
@@ -17963,6 +17969,11 @@ function _fmSaveActiveRoute() {
       navSteps: (typeof navSteps !== 'undefined' ? navSteps : []).slice(0, 60),
       navStepIdx: typeof navStepIdx !== 'undefined' ? navStepIdx : 0,
       routeSource: typeof routeSource !== 'undefined' ? routeSource : '',
+      wasTracking: !!fmIsTracking,
+      departureInput: document.getElementById('departureInput')?.value || '',
+      hoursInput: document.getElementById('hoursInput')?.value || '70',
+      speedInput: document.getElementById('speedInput')?.value || '60',
+      dailyHoursInput: document.getElementById('dailyHoursInput')?.value || '11',
       savedAt: Date.now()
     }));
   } catch(e) {}
@@ -18043,15 +18054,52 @@ function _fmRestoreRoute(saved) {
   if (typeof arrivalTime !== 'undefined') arrivalTime = saved.arrivalTimestamp ? new Date(saved.arrivalTimestamp) : null;
   if (typeof navSteps    !== 'undefined') navSteps    = saved.navSteps    || [];
   if (typeof routeSource !== 'undefined') routeSource = saved.routeSource || '';
-  // navStepIdx se restaura después de fmStartTracking() porque éste lo resetea a 0
 
-  openFullMapScreen();
+  // Restaurar inputs del formulario para que un recálculo dé el mismo
+  // resultado que la ruta original.
+  try {
+    const destInput = document.getElementById('destInput');
+    if (destInput && destination.name) destInput.value = destination.name;
+    const dep = document.getElementById('departureInput');
+    if (dep && saved.departureInput) dep.value = saved.departureInput;
+    const hi  = document.getElementById('hoursInput');
+    if (hi && saved.hoursInput)  hi.value = saved.hoursInput;
+    const si  = document.getElementById('speedInput');
+    if (si && saved.speedInput)  si.value = saved.speedInput;
+    const dh  = document.getElementById('dailyHoursInput');
+    if (dh && saved.dailyHoursInput) dh.value = saved.dailyHoursInput;
+  } catch(e) {}
+
+  // Restaurar waypoints en la UI
+  try {
+    if (Array.isArray(saved.waypoints) && saved.waypoints.length && typeof addWaypoint === 'function') {
+      saved.waypoints.forEach((wp, i) => {
+        addWaypoint();
+        if (typeof waypoints !== 'undefined') waypoints[i] = wp;
+        const input = document.querySelectorAll('#waypointsArea .stop-row input')[i];
+        if (input && wp.name) input.value = wp.name;
+      });
+      if (typeof _updateOptimizeBtnVisibility === 'function') _updateOptimizeBtnVisibility();
+    }
+  } catch(e) {}
+
+  // Recalcular ruta automáticamente. Esto repobla resultsCard, schedule,
+  // mini-mapa y aplica syncPlanCardActiveRoute() para ocultar el formulario.
   setTimeout(() => {
-    fmStartTracking();
-    // Restaurar posición en la navegación tras el reset que hace fmStartTracking
-    const restoredIdx = saved.navStepIdx || 0;
-    if (restoredIdx > 0) setTimeout(() => { if (typeof navStepIdx !== 'undefined') navStepIdx = restoredIdx; }, 300);
-  }, 400);
+    try { calculateRoute(); }
+    catch(e) { console.warn('Recalc falló:', e); }
+  }, 300);
+
+  // Si la ruta tenía rastreo activo cuando se cerró la app, reanudarlo
+  // y mostrar el HOS Dashboard tras el recálculo.
+  if (saved.wasTracking) {
+    setTimeout(() => {
+      try { fmStartTracking(); } catch(e) {}
+      try { showHosDashboard(); } catch(e) {}
+      const restoredIdx = saved.navStepIdx || 0;
+      if (restoredIdx > 0) setTimeout(() => { if (typeof navStepIdx !== 'undefined') navStepIdx = restoredIdx; }, 300);
+    }, 1800);
+  }
 }
 
 // Verificar ruta pendiente al abrir la app (1.5s para que el DOM esté listo)
