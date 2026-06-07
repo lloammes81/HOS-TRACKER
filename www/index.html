@@ -6423,6 +6423,11 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Agregar Parada
         </button>
+        <!-- Optimize stops button -->
+        <button class="add-stop-btn" id="optimizeStopsBtn" onclick="optimizeWaypoints()" style="display:none;margin-top:6px;background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.4);color:#10b981">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M3 12l4-4 4 4 4-4 4 4 2-2"/></svg>
+          Optimizar Orden
+        </button>
 
         <!-- Cancelar ruta — sólo visible con ruta activa -->
         <button id="cancelActiveRouteBtn" onclick="cancelActiveRoute()" style="display:none;width:100%;margin-top:8px;padding:14px;border-radius:14px;border:1.5px solid rgba(239,68,68,0.5);background:rgba(239,68,68,0.1);color:#f87171;font-size:15px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;letter-spacing:0.2px;">
@@ -22618,6 +22623,7 @@ function setupWaypointInput(inputId, suggId, index) {
             input.value = item.dataset.name;
             sugg.style.display = 'none';
             waypoints[index] = { name: item.dataset.name, lat: parseFloat(item.dataset.lat), lon: parseFloat(item.dataset.lon) };
+            _updateOptimizeBtnVisibility();
           };
           item.addEventListener('mousedown', selectWp);
           item.addEventListener('touchstart', selectWp, { passive: false });
@@ -22660,6 +22666,13 @@ function addWaypoint() {
   // Update add button label
   const addBtn = document.getElementById('addStopBtn');
   if (waypointCount >= MAX_WAYPOINTS) addBtn.style.display = 'none';
+  _updateOptimizeBtnVisibility();
+}
+
+function _updateOptimizeBtnVisibility() {
+  const btn = document.getElementById('optimizeStopsBtn');
+  if (!btn) return;
+  btn.style.display = (getActiveWaypoints().length >= 2) ? '' : 'none';
 }
 
 function removeWaypoint(idx) {
@@ -22668,6 +22681,7 @@ function removeWaypoint(idx) {
   waypoints[idx] = null;
   waypointCount = Math.max(0, waypointCount - 1);
   document.getElementById('addStopBtn').style.display = '';
+  _updateOptimizeBtnVisibility();
   // Re-number remaining visible waypoints
   const rows = document.querySelectorAll('#waypointsArea .stop-row');
   rows.forEach((r, i) => {
@@ -22678,6 +22692,92 @@ function removeWaypoint(idx) {
 
 function getActiveWaypoints() {
   return waypoints.filter(w => w && w.lat);
+}
+
+// ════════════════════════════════════════════════════════════
+// 🧭  OPTIMIZE WAYPOINT ORDER (nearest-neighbor heuristic)
+// Reordena las paradas para minimizar la distancia total
+// origen → wp₁ → wp₂ → … → destino. Heurística clásica de TSP:
+// desde cada nodo se salta al más cercano no visitado.
+// Para 1–8 paradas (límite de la app) es óptimo en la práctica.
+// ════════════════════════════════════════════════════════════
+function optimizeWaypoints() {
+  const active = getActiveWaypoints();
+  if (active.length < 2) {
+    showToast('info','ℹ️','Sin orden que optimizar','Agrega al menos 2 paradas',2500);
+    return;
+  }
+  if (!origin || !origin.lat) {
+    showToast('warning','⚠️','Falta origen','Selecciona origen primero',2500);
+    return;
+  }
+  const anchor = (destination && destination.lat) ? destination : null;
+
+  // Nearest-neighbor desde el origen
+  const remaining = active.slice();
+  const ordered = [];
+  let cursor = { lat: origin.lat, lon: origin.lon };
+  while (remaining.length) {
+    let bestIdx = 0, bestD = Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      const d = haversine(cursor.lat, cursor.lon, remaining[i].lat, remaining[i].lon);
+      if (d < bestD) { bestD = d; bestIdx = i; }
+    }
+    const next = remaining.splice(bestIdx, 1)[0];
+    ordered.push(next);
+    cursor = next;
+  }
+
+  // Si hay destino, refinamos: si el último waypoint queda lejos del destino
+  // pero hay otro waypoint cercano al destino, los intercambiamos (2-opt simple).
+  if (anchor && ordered.length >= 2) {
+    for (let pass = 0; pass < 2; pass++) {
+      let improved = false;
+      for (let i = 0; i < ordered.length - 1; i++) {
+        for (let j = i + 1; j < ordered.length; j++) {
+          const prev = i === 0 ? origin : ordered[i-1];
+          const a = ordered[i], b = ordered[j];
+          const next = j === ordered.length - 1 ? anchor : ordered[j+1];
+          const dCur = haversine(prev.lat,prev.lon,a.lat,a.lon) + haversine(b.lat,b.lon,next.lat,next.lon);
+          const dSwp = haversine(prev.lat,prev.lon,b.lat,b.lon) + haversine(a.lat,a.lon,next.lat,next.lon);
+          if (dSwp + 0.1 < dCur) {
+            // invertir el segmento i..j
+            const seg = ordered.slice(i, j+1).reverse();
+            ordered.splice(i, seg.length, ...seg);
+            improved = true;
+          }
+        }
+      }
+      if (!improved) break;
+    }
+  }
+
+  // Aplicar el nuevo orden sobreescribiendo los slots usados
+  // (mantenemos el mismo número de filas; los slots null quedan al final)
+  const newWaypoints = new Array(waypoints.length).fill(null);
+  let slot = 0;
+  for (let i = 0; i < waypoints.length && slot < ordered.length; i++) {
+    if (waypoints[i] && waypoints[i].lat) {
+      newWaypoints[i] = ordered[slot++];
+    }
+  }
+  for (let i = 0; i < waypoints.length; i++) {
+    if (waypoints[i] && !waypoints[i].lat) newWaypoints[i] = waypoints[i];
+  }
+  waypoints = newWaypoints;
+
+  // Reflejar el nuevo orden en los inputs de la UI
+  const rows = document.querySelectorAll('#waypointsArea .stop-row');
+  let k = 0;
+  rows.forEach(row => {
+    const input = row.querySelector('input');
+    if (!input) return;
+    const wp = waypoints[k++];
+    if (wp && wp.name) input.value = wp.name;
+    else if (input) input.value = '';
+  });
+
+  showToast('success','✅','Orden optimizado','Recalcula la ruta para aplicar',3000);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -22949,6 +23049,7 @@ async function geocodeAndSetWP(name, idx2) {
     const data = await res.json();
     if (data.results?.[0]) {
       waypoints[idx2] = { name, lat: data.results[0].position.lat, lon: data.results[0].position.lon };
+      _updateOptimizeBtnVisibility();
     }
   } catch {}
 }
