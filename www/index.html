@@ -7994,19 +7994,21 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
   <div style="flex:0 0 auto;padding:calc(6px + env(safe-area-inset-top,0px)) 12px 8px;background:transparent;position:relative;">
     <!-- Glow layer behind the header pill -->
     <div style="position:absolute;inset:0;border-radius:26px;background:radial-gradient(ellipse 85% 70% at 50% 100%,rgba(16,185,129,0.28) 0%,rgba(59,130,246,0.12) 55%,transparent 100%);filter:blur(12px);pointer-events:none;z-index:0;"></div>
-    <div id="dashHeaderPill" style="display:flex;flex-direction:column;gap:0;background:rgba(46,60,90,0.72);border:1px solid rgba(16,185,129,0.30);border-radius:18px;padding:2px 12px 0;box-shadow:0 16px 32px rgba(0,0,0,0.62),0 6px 12px rgba(0,0,0,0.45),0 0 22px rgba(16,185,129,0.16),inset 0 2px 0 rgba(255,255,255,0.22),inset 0 -3px 9px rgba(0,0,0,0.42);overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);position:relative;z-index:1;transition:background 1s ease,border-color 0.8s ease;">
-      <!-- fila superior — volver / datos / campana -->
-      <div style="display:flex;align-items:center;gap:14px;width:100%;padding-bottom:3px;">
-      <!-- Botón volver -->
-      <button onclick="backToMainFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:24px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
+    <div id="dashHeaderPill" style="display:flex;flex-direction:column;gap:0;background:rgba(46,60,90,0.72);border:1px solid rgba(16,185,129,0.30);border-radius:18px;padding:0;box-shadow:0 16px 32px rgba(0,0,0,0.62),0 6px 12px rgba(0,0,0,0.45),0 0 22px rgba(16,185,129,0.16),inset 0 2px 0 rgba(255,255,255,0.22),inset 0 -3px 9px rgba(0,0,0,0.42);overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);position:relative;z-index:1;transition:background 1s ease,border-color 0.8s ease;">
 
-      <!-- Foto del conductor (sin nombre) — pegada al botón de volver -->
-      <div id="dashProfilePhoto" style="width:54px;height:54px;border-radius:50%;flex-shrink:0;background:#1e293b;border:2.5px solid rgba(16,185,129,0.7);box-shadow:0 0 0 2px rgba(16,185,129,0.25),0 0 14px rgba(16,185,129,0.5),0 0 28px rgba(16,185,129,0.18),0 4px 14px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;position:relative;z-index:2;"></div>
-      <!-- Nombre del conductor mantenido como elemento oculto para no romper JS -->
+      <!-- Botón volver — absoluto esquina superior izquierda -->
+      <button onclick="backToMainFromDash()" style="position:absolute;top:6px;left:8px;background:rgba(255,255,255,0.07);border:none;border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:24px;cursor:pointer;z-index:3;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
+
+      <!-- Botón campana — absoluto esquina superior derecha -->
+      <button id="notifBellBtn" onclick="openNotifPanel()" style="position:absolute;top:6px;right:8px;background:rgba(16,185,129,0.13);border:1.5px solid rgba(16,185,129,0.35);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;z-index:3;-webkit-tap-highlight-color:transparent;padding:0;">
+        🔔
+        <span id="notifBellBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:13px;font-weight:900;border-radius:999px;min-width:18px;padding:2px 5px;text-align:center;border:2px solid #181d2c;line-height:1.2;pointer-events:none"></span>
+      </button>
+
+      <!-- Elementos de estado ocultos (no romper JS) -->
+      <div id="dashProfilePhoto" style="display:none;"></div>
       <div id="dashProfileName" style="display:none;">Driver</div>
-
-      <!-- Datos de viaje (Llegada / Manejo) ocupan el centro -->
-      <div id="dashMovingInfo" style="flex:1;min-width:0;display:none;align-items:center;justify-content:center;gap:14px;">
+      <div id="dashMovingInfo" style="display:none;position:absolute;top:8px;left:50px;right:50px;align-items:center;justify-content:center;gap:14px;z-index:2;">
         <div>
           <div style="font-size:9px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:rgba(255,255,255,0.55);text-transform:uppercase;line-height:1;">⏱ Llegada</div>
           <div id="dashRouteEta" style="font-size:16px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:#22d3ee;line-height:1.1;">--:--</div>
@@ -8022,15 +8024,8 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
         </div>
       </div>
 
-      <!-- Botón campana notificaciones -->
-      <button id="notifBellBtn" onclick="openNotifPanel()" style="position:relative;background:rgba(16,185,129,0.13);border:1.5px solid rgba(16,185,129,0.35);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;margin-left:auto;">
-        🔔
-        <span id="notifBellBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:13px;font-weight:900;border-radius:999px;min-width:18px;padding:2px 5px;text-align:center;border:2px solid #181d2c;line-height:1.2;pointer-events:none"></span>
-      </button>
-      </div><!-- /fila superior -->
-
-      <!-- ── VIOLATION COUNTDOWN STRIP ── -->
-      <div id="dashViolStrip" style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px;padding:4px 8px 7px;border-top:1px solid rgba(255,255,255,0.08);margin-top:0;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+      <!-- ── VIOLATION COUNTDOWN STRIP — sin separador, sube al tope ── -->
+      <div id="dashViolStrip" style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px;padding:10px 8px 10px;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
         <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.92);line-height:1.15;">Time remaining before Possible Violation</div>
         <div id="dashViolTime" style="font-size:34px;font-weight:800;letter-spacing:0.5px;color:#ffffff;text-shadow:0 0 10px rgba(163,230,53,0.55);line-height:1.05;">--h --m</div>
         <div id="dashViolType" style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.92);line-height:1.2;">Possible Violation 30 Minutes break</div>
