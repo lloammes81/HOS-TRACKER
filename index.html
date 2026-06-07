@@ -12388,19 +12388,7 @@ function updateMapSpeedSign(truckMph, carMph, code, stateName) {
 }
 
 function showPoliceAlert(gpsSpeed, limit) {
-  if (policeAlertCooldown) return;
-  const el = document.getElementById('policeAlert');
-  const spTxt = document.getElementById('paSpeedTxt');
-  const limTxt = document.getElementById('paLimitTxt');
-  if (!el || !spTxt || !limTxt) return;
-  policeAlertCooldown = true;
-  spTxt.textContent  = `${Math.round(gpsSpeed)} mph`;
-  limTxt.textContent = `Límite: ${limit} mph`;
-  el.classList.add('show');
-  vibrate([300,100,300,100,600]);
-  // Auto-dismiss after 8 seconds
-  if (policeAlertTimer) clearTimeout(policeAlertTimer);
-  policeAlertTimer = setTimeout(() => dismissPoliceAlert(false), 8000);
+  // El popup de alerta policial (paSpeedTxt/paLimitTxt) fue eliminado; no-op.
 }
 function dismissPoliceAlert(resetCooldown = true) {
   document.getElementById('policeAlert')?.classList.remove('show');
@@ -12417,16 +12405,11 @@ function dismissPoliceAlert(resetCooldown = true) {
 function checkSpeedLimit(gpsSpeed) {
   if (!speedLimitActive || !currentTruckSpeedLimit) return;
   const limit   = currentTruckSpeedLimit;
-  const sign    = document.getElementById('slSign');
-  const mssSign = document.getElementById('mssSign');
   const toast   = document.getElementById('speedToast');
   const overLimit = gpsSpeed > limit;
 
   // Police alert: > 5 mph over the limit
   if (gpsSpeed > limit + 5) showPoliceAlert(gpsSpeed, limit);
-
-  if (sign)    sign.classList.toggle('over-limit', overLimit);
-  if (mssSign) mssSign.classList.toggle('warn', overLimit);
 
   if (overLimit) {
     if (!speedLimitExceeded) {
@@ -12445,8 +12428,6 @@ function checkSpeedLimit(gpsSpeed) {
       }
     }
   } else {
-    sign?.classList.remove('over-limit');
-    mssSign?.classList.remove('warn');
     if (speedLimitExceeded) {
       speedLimitExceeded = false;
       // Rebuild truck marker to restore blue border
@@ -12579,8 +12560,6 @@ function initSosSettings() {
   if (sosContact.name)  document.getElementById('sosContactInput').value = sosContact.name;
   if (sosContact.phone) document.getElementById('sosPhoneInput').value  = sosContact.phone;
   document.getElementById('sosToggle')?.classList.toggle('on', sosBtnActive);
-  document.getElementById('speedLimitToggle')?.classList.toggle('on', speedLimitActive);
-  document.getElementById('fuelToggle')?.classList.toggle('on', fuelActive);
 }
 
 function triggerSOS() {
@@ -12638,8 +12617,6 @@ function init() {
   updateSettingsChecks();
   // Apply default speed
   document.getElementById('speedInput').value = defaultSpeed;
-  const _si = document.getElementById('speedIndicatorVal');
-  if (_si) _si.textContent = defaultSpeed + ' mph';
 
   // Apply saved safety feature states
   document.getElementById('fatigueToggle').classList.toggle('on', fatigueActive);
@@ -12701,9 +12678,7 @@ function changeMapStyle(styleKey) {
 
   // Apply satellite class for CSS filter differentiation
   const isSat = (styleKey === 'satellite');
-  const fullMapEl = document.getElementById('fullMap');
   const miniMapEl = document.getElementById('miniMap');
-  if (fullMapEl) fullMapEl.classList.toggle('satellite-style', isSat);
   if (miniMapEl) miniMapEl.classList.toggle('satellite-style', isSat);
 
   // Update button highlights (full map panel + dashboard minimap panel)
@@ -13138,9 +13113,7 @@ function getTruckLeafletIcon() {
 }
 
 function renderTruckPreview() {
-  const pv = document.getElementById('truckPreview');
-  if (!pv) return;
-  pv.innerHTML = getTruckIconHTML(22);
+  // El preview del ícono de camión (truckPreview) fue eliminado; no-op.
 }
 
 function refreshTruckMarkers() {
@@ -13152,12 +13125,6 @@ function refreshTruckMarkers() {
         const lRef = { layer: miniLayer };
         drawRoute(miniMap, roadGeometry, mRef, lRef);
         miniMarkersList = mRef.list; miniLayer = lRef.layer;
-      }
-      if (fullMapInst && document.getElementById('fullMapOverlay')?.classList.contains('open')) {
-        const mRef2 = { list: fullMarkersList };
-        const lRef2 = { layer: fullLayer };
-        drawRoute(fullMapInst, roadGeometry, mRef2, lRef2);
-        fullMarkersList = mRef2.list; fullLayer = lRef2.layer;
       }
     }
   } catch {}
@@ -13542,67 +13509,7 @@ function _speakNav(text){
 }
 
 function updateNavInstruction(curLat, curLon){
-  const box = document.getElementById('navNext');
-  if (!box) return;
-  if (!navSteps || !navSteps.length){ box.style.display='none'; return; }
-  if (!fmVehicleMoving){ box.style.display='none'; return; }
-
-  // Advance step when within ~160 ft of maneuver
-  for (let i = navStepIdx; i < navSteps.length; i++){
-    const loc = navSteps[i]?.maneuver?.location;
-    if (!loc) continue;
-    if (haversine(curLat, curLon, loc[1], loc[0]) < 0.03){
-      navStepIdx = Math.min(i+1, navSteps.length-1);
-      window._navVoiceKey = null; // reset thresholds for new step
-      _speakNav(osrmStepText(navSteps[navStepIdx]));
-    }
-    break;
-  }
-
-  const step = navSteps[navStepIdx];
-  const loc  = step?.maneuver?.location;
-  if (!loc){ box.style.display='none'; return; }
-
-  const dMi    = haversine(curLat, curLon, loc[1], loc[0]);
-  const instTxt = osrmStepText(step) || (lang==='es' ? 'Continúa recto' : 'Continue straight');
-  const arrow  = osrmManeuverArrow(step);
-
-  // Check arrival at destination
-  let isArriving = false;
-  try{
-    if (destination?.lat != null){
-      const dDest = haversine(curLat, curLon, destination.lat, destination.lon);
-      if (dDest <= 0.5 && navStepIdx >= navSteps.length-2) isArriving = true;
-    }
-  }catch{}
-
-  const isUrgent = !isArriving && dMi < 0.2;
-
-  // Voice announcements at 0.5 mi and 0.15 mi thresholds
-  if (!isArriving){
-    const vKey05 = `${navStepIdx}_05`;
-    const vKey015 = `${navStepIdx}_015`;
-    if (dMi <= 0.5 && dMi > 0.15 && window._navVoiceKey !== vKey05){
-      window._navVoiceKey = vKey05;
-      _speakNav(lang==='es' ? `En ${milesToPretty(dMi)}, ${instTxt}` : `In ${milesToPretty(dMi)}, ${instTxt}`);
-    } else if (dMi <= 0.15 && window._navVoiceKey !== vKey015){
-      window._navVoiceKey = vKey015;
-      _speakNav(instTxt);
-    }
-  }
-
-  const distTxt = isArriving ? (lang==='es' ? 'Llegando' : 'Arriving') : milesToPretty(dMi);
-  const panelClass = isArriving ? 'arriving' : isUrgent ? 'urgent' : '';
-
-  box.style.display = 'flex';
-  box.innerHTML = `
-    <div class="nav-main-row">
-      <div class="nav-arrow-panel${panelClass ? ' '+panelClass : ''}">${isArriving ? '📍' : arrow}</div>
-      <div class="nav-body">
-        <div class="nav-dist">${distTxt}</div>
-        <div class="nav-inst">${instTxt}</div>
-      </div>
-    </div>`;
+  // El banner de navegación (navNext) fue eliminado; no-op.
 }
 function fmtTime(d) {
   const dt = new Date(d); let h = dt.getHours(); const m = dt.getMinutes();
@@ -14040,13 +13947,6 @@ function _applyRouteResult(road, depart, hours, speed, isInitialLoad) {
         miniMarkersList = mRef.list;
         miniLayer = lRef.layer;
       }, 50);
-    }
-    // Also update the full map if it's currently open
-    if (fmMapInst && typeof fmRedrawRoute === 'function') {
-      const fmScreen = document.getElementById('fullMapScreen');
-      if (fmScreen && fmScreen.style.display !== 'none' && fmScreen.style.display !== '') {
-        setTimeout(() => fmRedrawRoute(), 100);
-      }
     }
   }
 
@@ -14725,11 +14625,6 @@ function updateFixedTruckIcon(isMoving, overLimit, heading) {
   const _arrowDeg = (typeof fmHeadingUpMode !== 'undefined' && fmHeadingUpMode) ? 0 : ((heading != null && heading >= 0) ? heading : 0);
   if (arrow) arrow.style.transform = `rotate(${_arrowDeg}deg)`;
 
-  // ── Rotate compass rose (counter-rotation keeps N pointing north) ─
-  const compassEl = document.getElementById('mapCompassWidget');
-  if (compassEl && heading != null && heading >= 0) {
-    compassEl.style.transform = `rotate(${-heading}deg)`;
-  }
 }
 
 function showFixedTruckIcon() {
@@ -14954,11 +14849,6 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
       // La posición del camión en pantalla = el ícono del HUD sobre los anillos
       // (#mapHudTruck). El mapa se centra para que la ruta pase por ese ícono.
       let TRUCK_CENTER_FROM_BOTTOM = 135;
-      const _hudT = document.getElementById('mapHudTruck');
-      if (_hudT) {
-        const _r = _hudT.getBoundingClientRect();
-        if (_r.height > 0) TRUCK_CENTER_FROM_BOTTOM = Math.max(60, size.y - (_r.top + _r.height / 2));
-      }
       const truckTargetY = size.y - TRUCK_CENTER_FROM_BOTTOM;
       offsetPx = truckTargetY - size.y / 2;
       offsetPx = Math.max(40, Math.min(offsetPx, size.y * 0.48));
@@ -15372,7 +15262,6 @@ function updateFmToDisplay() {
 // ── Garmin-style nav card ──
 function updateNextStopCard() {
   const card = document.getElementById('hosNavCard');
-  const tabs = document.getElementById('dashTabsRow');
   if (!card) return;
 
   // hosNavCard removed from UI — keep permanently hidden, only update hidden fields for compat
@@ -15473,8 +15362,6 @@ function _scheduleAutoResumeFollow() {
     if (!fmIsTracking) return;
     fmFollowing = true;
     fmUserDragged = false;
-    const fb = document.getElementById('fmFollowBtn');
-    if (fb) fb.classList.add('active');
     if (fmGpsMarker && fmMapInst) {
       const ll = fmGpsMarker.getLatLng();
       _lastPanLat = null; _lastPanLon = null; // force immediate re-pan on next GPS tick
@@ -15717,8 +15604,6 @@ function _restoreManejo() {
   if (lblD) { lblD.textContent = lang === 'es' ? 'Manejo' : 'Drive'; lblD.style.color = ''; }
   const valD = document.getElementById('heroValDrive');
   if (valD) valD.style.fontSize = '36px';
-  const fmDrLbl = document.getElementById('fmDriveLbl');
-  if (fmDrLbl) { fmDrLbl.textContent = 'MANEJO'; fmDrLbl.style.color = '#34d399'; }
   const chron = document.getElementById('heroRestChronometer');
   if (chron) chron.style.display = 'none';
   _hideSleepOverlay(false);
@@ -15984,10 +15869,6 @@ function fmStartTracking() {
   lastStateCheck = 0;
   lastFuelCheck  = 0;
   lastRoadSpeedCheck = 0;
-  // Show "back to dashboard" button when tracking is active
-  const _btd = document.getElementById('backToDashBtn');
-  if (_btd) _btd.style.display = 'flex';
-
   // Restore accumulated drive seconds for today (persisted across sessions)
   fmDriveSeconds = 0;
   try {
@@ -16381,37 +16262,6 @@ function fmStartTracking() {
     const _cycMax = parseFloat(document.getElementById('hoursInput').value) || 70;
     updateHeroKPIs(driveLeft, driveMax, cycleLeft, _cycMax);
 
-    // ── Location name throttled ──────────────────────────────
-    const nowGeo = Date.now();
-    if (nowGeo - fmLastGeocode > 12000) {
-      fmLastGeocode = nowGeo;
-      (async () => {
-        const locEl = document.getElementById('fmLocVal');
-        const hudLocEl = document.getElementById('mapHudLocVal');
-        const _setLoc = t => { if (locEl) locEl.textContent = t; if (hudLocEl) hudLocEl.textContent = t; };
-        if (!locEl) return;
-
-        // TomTom reverse geocode
-        try {
-          const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), 8000);
-          const rH = await fetch(
-            `https://api.tomtom.com/search/2/reverseGeocode/${lat.toFixed(5)},${lon.toFixed(5)}.json?key=${TOMTOM_API_KEY}`,
-            { signal: ctrl.signal, headers: { 'Accept-Language': 'en' } }
-          );
-          clearTimeout(t);
-          const dH = await rH.json();
-          const street = dH.addresses?.[0]?.address?.streetName || '';
-          const city   = dH.addresses?.[0]?.address?.municipality || dH.addresses?.[0]?.address?.municipalitySubdivision || dH.addresses?.[0]?.address?.countrySecondarySubdivision || '';
-          const state  = dH.addresses?.[0]?.address?.countrySubdivision || '';
-          const addr   = [street, city, state].filter(Boolean).join(', ');
-          if (addr) { _setLoc(addr); return; }
-        } catch(eH) { console.warn('TomTom reverse failed:', eH.message); }
-
-        // Last resort: coordinates
-        _setLoc(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
-      })();
-    }
 
     // ── Check nearby community reports ─────────────────────
     checkNearbyReports(lat, lon);
@@ -16529,8 +16379,6 @@ function fmStopTracking() {
   document.getElementById('reportSideBtn')?.classList.remove('visible');
   closeReportPopup();
   closeRadialMenu();
-  const trbStop = document.getElementById('topReportBtns');
-  if (trbStop) trbStop.style.display = 'none';
   // Hide overlays
   document.getElementById('incidentPanel').innerHTML = '';
   Object.keys(activeIncidentBubbles).forEach(id => delete activeIncidentBubbles[id]);
@@ -16773,16 +16621,7 @@ function _hosMinimapFollow(lat, lon) {
 }
 
 function updateDashBackground() {
-  const tint = DASH_BG_MAP[currentMapStyle] || DASH_BG_MAP.dark;
-  const ring   = document.getElementById('dashRingBg');
   const screen = document.getElementById('hosDashScreen');
-  // Sección del anillo: vidrio esmerilado — el mapa real se ve detrás difuminado
-  if (ring) {
-    ring.style.background          = tint;
-    ring.style.backdropFilter      = 'blur(18px)';
-    ring.style.webkitBackdropFilter= 'blur(18px)';
-    ring.style.transition          = 'background 0.6s ease';
-  }
   // Pantalla completa: semitransparente para que el mapa sea la "sombra" de fondo
   if (screen) {
     screen.style.transition = 'background 0.6s ease';
@@ -16812,17 +16651,9 @@ function showHosDashboard() {
                 ? (TRUCK_EMOJIS[_dp.truckType || _ps.truckType] || '🚛') : '🚛';
 
   const nameEl  = document.getElementById('dashProfileName');
-  const photoEl = document.getElementById('dashProfilePhoto');
   if (nameEl)  nameEl.textContent = name;
   // Start rotating ticker: name → ETA → miles remaining
   _startDashHeaderTicker(name);
-  if (photoEl) {
-    if (photo) {
-      photoEl.innerHTML = `<img src="${photo}" alt="foto" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`;
-    } else {
-      photoEl.textContent = emoji;
-    }
-  }
 
   updateDashBackground();
 
@@ -16893,21 +16724,9 @@ function showHosDashboard() {
       : Math.max(0, dMax);
     updateHosDashboard(dLeft, dMax);
     if (typeof _updateRestMode === 'function') _updateRestMode();
-    // Refrescar ETA + porcentaje + millas en el panel de ruta
-    if (typeof updateDashRouteProgress === 'function') {
-      const _curPct = parseInt(document.getElementById('fmPct')?.textContent) || 0;
-      const _curRem = parseFloat(document.getElementById('fmRem')?.textContent) || 0;
-      updateDashRouteProgress(_curPct, _curRem);
-    }
   }, 1000);
 
   updateDashDestCard();
-  // Inicializar barra de progreso de ruta si hay ruta activa
-  if (typeof updateDashRouteProgress === 'function') {
-    const _curPct = parseInt(document.getElementById('fmPct')?.textContent) || 0;
-    const _curRem = parseFloat(document.getElementById('fmRem')?.textContent) || 0;
-    updateDashRouteProgress(_curPct, _curRem);
-  }
 
   // Mostrar clima si está activo
   refreshDashWeather();
@@ -17372,10 +17191,7 @@ function updateDashRouteProgress(pct, remaining) {
   // ETA — leer del HUD del mapa (fmEta) cuando hay tracking,
   // si no, calcular usando velocidad actual / promedio
   if (etaEl) {
-    const fmEtaTxt = document.getElementById('fmEta')?.textContent?.trim();
-    if (hasRoute && fmEtaTxt && fmEtaTxt !== '--' && fmEtaTxt !== '--:--') {
-      etaEl.textContent = fmEtaTxt.toUpperCase();
-    } else if (hasDest && remMi > 0) {
+    if (hasDest && remMi > 0) {
       const spd = (typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55;
       const eta = new Date(Date.now() + (remMi / spd) * 3600000);
       etaEl.textContent = eta.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}).toUpperCase();
@@ -17867,7 +17683,6 @@ function _updateViolationCard() {
   const pill    = document.getElementById('dashHeaderPill');
   const timeEl  = document.getElementById('dashViolTime');
   const typeEl  = document.getElementById('dashViolType');
-  const iconEl  = document.getElementById('dashViolIcon');
   if (!pill || !timeEl || !typeEl) return;
 
   // ── 1. Calcular tiempo hasta cada violación ───────────────────
@@ -17886,11 +17701,9 @@ function _updateViolationCard() {
   if (breakSecsLeft <= driveSecsLeft) {
     secsLeft = breakSecsLeft;
     label    = 'Possible Violation 30 Minutes break';
-    if (iconEl) iconEl.textContent = '⏸';
   } else {
     secsLeft = driveSecsLeft;
     label    = 'Possible Violation 11h Driving limit';
-    if (iconEl) iconEl.textContent = '🚛';
   }
 
   // ── 2. Formatear tiempo ───────────────────────────────────────
@@ -18888,13 +18701,6 @@ async function loadTruckRestrictionsFullMap(waypoints) {
   fmPoiLayers.restrict = layers;
   fmPoiLoaded.restrict = true;
 
-  // Update chip
-  const chip = document.getElementById('chipRestrict');
-  if (chip) {
-    chip.style.opacity = '1';
-    const count = allElements.filter(e => e.geometry).length;
-    chip.innerHTML = `🚫 Restrictions <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:1px 6px;font-size:10px;margin-left:3px">${count}</span>`;
-  }
 }
 
 // Load restrictions for mini-map
@@ -19248,29 +19054,7 @@ let activeIncidentTypes = JSON.parse(localStorage.getItem('hos_inc_types') || '{
 
 
 function updateActiveIncidentIcons() {
-  const row = document.getElementById('activeIconsRow');
-  const container = document.getElementById('activeIncidentIcons');
-  if (!row || !container) return;
-
-  row.innerHTML = '';
-  const active = Object.keys(activeIncidentTypes).filter(k => activeIncidentTypes[k]);
-
-  if (active.length === 0) {
-    container.style.display = 'none';
-    return;
-  }
-  container.style.display = 'flex';
-
-  active.forEach(type => {
-    const cfg = INCIDENT_TYPES[type];
-    const icon = document.createElement('div');
-    icon.className = 'inc-mini-icon';
-    icon.style.background = cfg.bg + '22';
-    icon.style.borderColor = cfg.bg + '55';
-    icon.title = cfg.label;
-    icon.textContent = cfg.emoji;
-    row.appendChild(icon);
-  });
+  // Vinculada a una opción eliminada (elemento inexistente); no-op.
 }
 
 function initIncidentToggles() {
@@ -19308,14 +19092,10 @@ const REPORT_ITEMS = [
 
 function closeRadialMenu() {
   reportSheetOpen = false;
-  const fab = document.getElementById('reportFab');
-  if (fab) { fab.textContent = '🚨'; fab.classList.remove('open-state'); }
   const menu = document.getElementById('reportRadialMenu');
   if (!menu) return;
   const panel = menu.querySelector('.rr-panel');
   if (panel) panel.classList.remove('rr-panel-visible');
-  const bd = document.getElementById('reportRadialMenu-backdrop');
-  if (bd) bd.style.opacity = '0';
   setTimeout(() => { menu.classList.remove('open'); menu.innerHTML = ''; }, 280);
 }
 
@@ -19751,8 +19531,7 @@ function syncActiveRouteFab() {
   const fab = document.getElementById('activeRouteFab');
   if (!fab) return;
   const dashOpen = document.getElementById('hosDashScreen')?.style.display !== 'none';
-  const mapOpen  = document.getElementById('fullMapScreen')?.style.display  !== 'none';
-  const show = !!fmIsTracking && currentTab === 'plan' && !dashOpen && !mapOpen;
+  const show = !!fmIsTracking && currentTab === 'plan' && !dashOpen;
   fab.classList.toggle('arf-visible', show);
   if (show && destination) {
     const sub = document.getElementById('arfSub');
@@ -19827,7 +19606,6 @@ function bindEvents() {
     openFullMapScreen();
   });
   document.getElementById('stopTrackBtn').addEventListener('click', stopTracking);
-  document.getElementById('sendReportBtn')?.addEventListener('click', shareRoute);
   document.getElementById('shareAppRow').addEventListener('click', shareRoute);
 
   document.getElementById('resetBtn').addEventListener('click', resetForm);
@@ -20508,9 +20286,6 @@ document.addEventListener('click', e => {
 document.addEventListener('DOMContentLoaded', () => {
   // Start warm GPS cache immediately so all features get instant fixes
   startGPSWarm();
-
-  const di = document.getElementById('dotInput');
-  if (di) di.addEventListener('keydown', e => { if (e.key === 'Enter') searchDOT(); });
 
   if (navigator.geolocation) {
     useGPS();
@@ -21536,12 +21311,7 @@ function applyAllAvatars() {
   applyAv('heroAvatarImg', 'heroAvatarName', '50%');
 
   // Dashboard header photo
-  const dashPhEl = document.getElementById('dashProfilePhoto');
   const dashNmEl = document.getElementById('dashProfileName');
-  if (dashPhEl) {
-    if (photo) dashPhEl.innerHTML = '<img src="'+photo+'" alt="foto" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">';
-    else dashPhEl.textContent = emoji;
-  }
   if (dashNmEl && name) dashNmEl.textContent = name;
 
   // Profile card avatar
@@ -21609,155 +21379,11 @@ const JOB_LABELS = {
    ⛽  FUEL FINDER
    ══════════════════════════════════════════════════════════ */
 async function fetchEIAPrice() {
-  const el = document.getElementById('fuelAvgPrice');
-  const dateEl = document.getElementById('fuelAvgDate');
-  if (!el) return;
-  el.textContent = '…';
-  try {
-    // EIA v2 API — free key required; try with a public demo approach first
-    // Series: EMD_EPD2D_PTE_NUS_DPG = Diesel, US average, weekly (cents per gallon)
-    const url = 'https://api.eia.gov/v2/petroleum/pri/gnd/data/?api_key=DEMO_KEY&frequency=weekly&data[0]=value&facets[product][]=DID&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=1';
-    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    const json = await r.json();
-    const val = json?.response?.data?.[0];
-    if (val?.value) {
-      const price = (val.value / 100).toFixed(3);
-      el.textContent = '$' + price;
-      if (dateEl) dateEl.textContent = 'Semana del ' + val.period + ' · EIA.gov';
-      return;
-    }
-  } catch {}
-  // Fallback: try EIA v1 (no-key variant)
-  try {
-    const r2 = await fetch('https://api.eia.gov/series/?api_key=DEMO_KEY&series_id=PET.EMD_EPD2D_PTE_NUS_DPG.W', { signal: AbortSignal.timeout(8000) });
-    const j2 = await r2.json();
-    const series = j2?.series?.[0]?.data;
-    if (series?.length) {
-      const [period, value] = series[0];
-      el.textContent = '$' + (value / 100).toFixed(3);
-      if (dateEl) dateEl.textContent = 'Semana del ' + period + ' · EIA.gov';
-      return;
-    }
-  } catch {}
-  el.textContent = 'N/A';
-  if (dateEl) dateEl.innerHTML = '<a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" style="color:#3b82f6">Ver precio en EIA →</a>';
+  // Vinculada a una opción eliminada (elemento inexistente); no-op.
 }
 
 async function searchFuelNearby(btn) {
-  const list = document.getElementById('fuelResultsList');
-  if (!list) return;
-  const origTxt = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Buscando…'; }
-
-  let lat, lon;
-  try {
-    const pos = await getGPSPosition(4000, 10000);
-    lat = pos.coords.latitude; lon = pos.coords.longitude;
-  } catch {
-    if (origin) { lat = origin.lat; lon = origin.lon; }
-    else { showToast('warning','📍','GPS necesario','Activa tu ubicación e intenta de nuevo', 4000); if (btn) { btn.disabled = false; btn.textContent = origTxt; } return; }
-  }
-
-  list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:14px">⏳ Consultando base de datos…</div>';
-
-  try {
-    const r = 100000; // 100 km
-    const query = `[out:json][timeout:30];
-(
-  node["amenity"="truck_stop"](around:${r},${lat},${lon});
-  node["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
-  node["amenity"="fuel"]["fuel:HGV_diesel"="yes"](around:${r},${lat},${lon});
-  node["amenity"="fuel"]["fuel:diesel"="yes"](around:${r},${lat},${lon});
-  node["brand"~"Pilot Flying J|Love's Travel Stops|Travel Centers of America|Petro Stopping Centers|Sapp Bros|Flying J|TA Travel Center|TA-Petro",i](around:${r},${lat},${lon});
-  node["name"~"Flying J|Pilot Travel|Loves Travel|TA Travel|TA-Petro|Petro Stop|Sapp Bros|Kwik Trip|Truck Stop|Travel Plaza|Travel Center",i](around:${r},${lat},${lon});
-  way["amenity"="truck_stop"](around:${r},${lat},${lon});
-  way["amenity"="fuel"]["hgv"="yes"](around:${r},${lat},${lon});
-);
-out center qt;`;
-    const data = await overpassFetch(query, 40000);
-
-    // Deduplicate
-    const seen = new Set();
-    const els = (data.elements || []).filter(el => {
-      const elLat = el.lat ?? el.center?.lat;
-      const elLon = el.lon ?? el.center?.lon;
-      if (!elLat || !elLon) return false;
-      const k = `${elLat.toFixed(3)}_${elLon.toFixed(3)}_${el.tags?.name || ''}`;
-      if (seen.has(k)) return false; seen.add(k); return true;
-    });
-
-    // Sort by distance
-    els.sort((a, b) => {
-      const aLat = a.lat ?? a.center?.lat, aLon = a.lon ?? a.center?.lon;
-      const bLat = b.lat ?? b.center?.lat, bLon = b.lon ?? b.center?.lon;
-      return haversine(lat, lon, aLat, aLon) - haversine(lat, lon, bLat, bLon);
-    });
-
-    if (!els.length) {
-      list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">⛽</div><div style="font-size:14px;font-weight:700">Sin resultados</div><div style="font-size:12px;margin-top:6px">Aumenta el radio o verifica conexión</div></div>';
-      if (btn) { btn.disabled = false; btn.textContent = origTxt; }
-      return;
-    }
-
-    const gmUrl = `https://maps.tomtom.com/search/truck+stop`;
-    const tpUrl = `https://truckerpath.com/`;
-    list.innerHTML = `
-      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">⛽ ${els.length} truck stops · 100 km</div>
-      <div style="display:flex;gap:8px;margin-bottom:14px">
-        <a href="${gmUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(22,160,133,.15);border:1px solid rgba(22,160,133,.3);border-radius:12px;color:#14a085;font-size:13px;font-weight:700;text-decoration:none">
-          🗺️ TomTom Maps
-        </a>
-        <a href="${tpUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(234,88,12,.15);border:1px solid rgba(234,88,12,.3);border-radius:12px;color:#ea580c;font-size:13px;font-weight:700;text-decoration:none">
-          🚛 Trucker Path
-        </a>
-      </div>`;
-
-    els.forEach(el => {
-      const elLat = el.lat ?? el.center?.lat;
-      const elLon = el.lon ?? el.center?.lon;
-      const dist = haversine(lat, lon, elLat, elLon).toFixed(1);
-      const distKm = (haversine(lat, lon, elLat, elLon) * 1.60934).toFixed(1);
-      const name = el.tags?.name || el.tags?.operator || 'Gasolinera';
-      const city = [el.tags?.['addr:city'], el.tags?.['addr:state']].filter(Boolean).join(', ');
-      const phone = el.tags?.phone || '';
-      const brand = el.tags?.brand || el.tags?.operator || '';
-
-      // Pick emoji/color by brand
-      let emoji = '⛽', bgColor = 'rgba(16,185,129,.15)';
-      const n = (name + brand).toLowerCase();
-      if (/flying.?j|pilot/i.test(n))       { emoji = '✈️'; bgColor = 'rgba(245,158,11,.15)'; }
-      else if (/love|loves/i.test(n))        { emoji = '❤️'; bgColor = 'rgba(239,68,68,.15)'; }
-      else if (/ta\b|travel.?center|petro/i.test(n)) { emoji = '🔵'; bgColor = 'rgba(29,78,216,.15)'; }
-      else if (/truck.?stop/i.test(n))       { emoji = '🚛'; bgColor = 'rgba(16,185,129,.15)'; }
-      else if (/shell/i.test(n))             { emoji = '🐚'; bgColor = 'rgba(245,158,11,.15)'; }
-      else if (/chevron/i.test(n))           { emoji = '💙'; bgColor = 'rgba(59,130,246,.15)'; }
-
-      const mapsUrl = `https://maps.tomtom.com/directions/to/${elLat},${elLon}`;
-
-      const card = document.createElement('div');
-      card.className = 'fuel-station-card';
-      card.innerHTML = `
-        <div class="fuel-station-icon" style="background:${bgColor}">${emoji}</div>
-        <div class="fuel-station-info">
-          <div class="fuel-station-name">${name}</div>
-          <div class="fuel-station-meta">${city || brand || 'Estación de combustible'}${phone ? ' · ' + phone : ''}</div>
-          <div class="fuel-station-actions">
-            <button class="fuel-action-btn" style="background:rgba(16,185,129,.15);color:#10b981"
-              onclick="showFuelOnMap(${elLat},${elLon},'${name.replace(/'/g,"\\'")}','${emoji}')">🗺️ Mapa</button>
-            <button class="fuel-action-btn" style="background:rgba(59,130,246,.15);color:#3b82f6"
-              onclick="window.open('${mapsUrl}','_blank')">🧭 Navegar</button>
-          </div>
-        </div>
-        <div class="fuel-station-dist">${dist} mi<div style="font-size:10px;font-weight:600;color:var(--muted)">${distKm} km</div></div>`;
-      list.appendChild(card);
-    });
-
-    showToast('success','⛽',`${els.length} estaciones`, 'Toca una para ver en mapa o navegar', 4000);
-  } catch(e) {
-    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">⚠️ Error de conexión. Verifica tu internet.</div>';
-  }
-
-  if (btn) { btn.disabled = false; btn.textContent = origTxt; }
+  // Vinculada a una opción eliminada (elemento inexistente); no-op.
 }
 
 function closeNearbyPoiSheet() {
@@ -22218,10 +21844,6 @@ function updateProfileDisplay() {
 /* ── Apply job mode to maps ── */
 function applyJobMode(jobType) {
   const isLocal = jobType === 'local';
-
-  // Show/hide radius indicator on fullscreen map
-  const indicator = document.getElementById('localRadiusInfo');
-  if (indicator) indicator.style.display = isLocal ? 'block' : 'none';
 
   // If fullscreen map is open and we have GPS, apply view
   if (isLocal && fmMapInst) {
@@ -23202,14 +22824,7 @@ function persistCurrentUserToProfiles() {
 }
 
 function syncProfileFab() {
-  if (!currentUser) return;
-  const pfab = document.getElementById('profileFab');
-  if (!pfab) return;
-  if (currentUser.photoData) {
-    pfab.innerHTML = `<img alt="foto" src="${currentUser.photoData}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;display:block;" />`;
-  } else {
-    pfab.textContent = currentUser.avatar || '👤';
-  }
+  // Vinculada a una opción eliminada (elemento inexistente); no-op.
 }
 
 function applyUserIconToMap() {
@@ -23356,8 +22971,6 @@ function logoutUser() {
   currentUser = null;
   localStorage.removeItem('hos_user');
   document.getElementById('profileTabBar').style.display = 'flex';
-  const pfab = document.getElementById('profileFab');
-  if (pfab) pfab.textContent = '👤';
   switchProfileTab('login');
   showToast('info','👋','Sesión cerrada','Hasta pronto.', 2500);
 }
@@ -23373,8 +22986,6 @@ function deleteUserProfile() {
   currentUser = null;
   localStorage.removeItem('hos_user');
   document.getElementById('profileTabBar').style.display = 'flex';
-  const pfab = document.getElementById('profileFab');
-  if (pfab) pfab.textContent = '👤';
   switchProfileTab('register');
   showToast('info','🗑️','Perfil eliminado','Tu perfil ha sido eliminado.', 3000);
 }
@@ -24792,8 +24403,6 @@ function closeDotNewsDetail() {
     if (side) { side.textContent = legacy.textContent; side.style.display = legacy.style.display; }
     const dash = document.getElementById('dashSideTabBadge');
     if (dash) { dash.textContent = legacy.textContent; dash.style.display = legacy.style.display; }
-    const hqa = document.getElementById('hqaBadgeComm');
-    if (hqa) { hqa.textContent = legacy.textContent; hqa.style.display = legacy.style.display; }
   });
   obs.observe(legacy, { attributes: true, childList: true, subtree: true });
 })();
@@ -28922,12 +28531,7 @@ function updateLocationHistory() {
 }
 
 function updateLocationDisplay() {
-  if (!lbLastPosition) return;
-
-  const locEl = document.getElementById('lbLocation');
-  if (locEl) {
-    locEl.textContent = '📍 ' + lbLastPosition.lat.toFixed(4) + ', ' + lbLastPosition.lng.toFixed(4);
-  }
+  // Vinculada a una opción eliminada (elemento inexistente); no-op.
 }
 
 // ========== AUTO-STATUS DETECTION ==========
