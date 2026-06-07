@@ -26651,13 +26651,26 @@ let scanFlashOn = false, scanLocation = null;
 // ── Open / Close ──────────────────────────────────────────────────────────
 async function openScannerSheet() {
   const sheet = document.getElementById('scannerSheet');
-  // Reubicar como hijo directo de <body> y bloquear el scroll de fondo.
-  // En iOS PWA standalone, un overlay position:fixed mostrado con la página
-  // scrolleada se posiciona mal (se "mete" en el dash); esto lo evita —
-  // mismo patrón que el logbook, que sí funciona.
-  if (sheet && sheet.parentElement !== document.body) document.body.appendChild(sheet);
+  // Mover el sheet a <html> (documentElement) — fuera de cualquier
+  // ancestro que pudiera crear un containing-block (transform, filter,
+  // backdrop-filter, contain, will-change) y romper position:fixed.
+  if (sheet && sheet.parentElement !== document.documentElement) {
+    document.documentElement.appendChild(sheet);
+  }
+  // Forzar el posicionamiento con inline-style (gana a cualquier CSS).
+  sheet.setAttribute('style',
+    'position:fixed!important;' +
+    'top:0!important;left:0!important;right:0!important;bottom:0!important;' +
+    'width:100vw!important;height:100vh!important;height:100dvh!important;' +
+    'margin:0!important;padding:0!important;' +
+    'z-index:2147483647!important;' +
+    'background:#000!important;' +
+    'display:flex!important;flex-direction:column!important;' +
+    'transform:none!important;'
+  );
   sheet.classList.add('open');
   document.body.classList.add('scanner-open');
+  document.documentElement.classList.add('scanner-open');
   document.body.style.overflow = 'hidden';
   document.getElementById('scanCameraView').style.display = 'flex';
   document.getElementById('scanReview').classList.remove('show');
@@ -26669,8 +26682,11 @@ async function openScannerSheet() {
 
 function closeScannerSheet() {
   stopScanCamera();
-  document.getElementById('scannerSheet').classList.remove('open');
+  const sheet = document.getElementById('scannerSheet');
+  sheet.classList.remove('open');
+  sheet.removeAttribute('style');
   document.body.classList.remove('scanner-open');
+  document.documentElement.classList.remove('scanner-open');
   document.body.style.overflow = '';
   scanPages = []; scanActiveIdx = 0;
   updateScanBadge();
