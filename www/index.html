@@ -15423,9 +15423,14 @@ function fmTickClock() {
   if (speedClock) {
     speedClock.textContent = now.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit',hour12:true});
   }
-  // Segundos dentro del anillo DISPONIBLES
+  // Segundos dentro del anillo DISPONIBLES — cuenta regresiva del tiempo de manejo restante
   const secClock = document.getElementById('dashSecondsClock');
-  if (secClock) secClock.textContent = String(now.getSeconds()).padStart(2,'0');
+  if (secClock) {
+    const _dLeftSecs = window._hosTracker
+      ? Math.max(0, Math.floor(window._hosTracker.driveLeft() * 3600))
+      : 0;
+    secClock.textContent = String(_dLeftSecs % 60).padStart(2, '0');
+  }
 }
 
 /* ── Búsqueda de destino desde el mapa ── */
@@ -17698,7 +17703,12 @@ function showHosDashboard() {
   if (_dashRingInterval) clearInterval(_dashRingInterval);
   _dashRingInterval = setInterval(() => {
     const _sc = document.getElementById('dashSecondsClock');
-    if (_sc) _sc.textContent = String(new Date().getSeconds()).padStart(2,'0');
+    if (_sc) {
+      const _dLeftSecs = window._hosTracker
+        ? Math.max(0, Math.floor(window._hosTracker.driveLeft() * 3600))
+        : 0;
+      _sc.textContent = String(_dLeftSecs % 60).padStart(2, '0');
+    }
     if (b30InBreak && !b30Complete) return;
     const dMax = Math.min(
       Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11),
@@ -17711,7 +17721,10 @@ function showHosDashboard() {
     // fresco (>15 s) tratamos el vehículo como detenido para que el anillo no siga
     // corriendo estando estacionado. No afirmamos movimiento desde aquí para no
     // pelear contra los manejadores de GPS (eso congelaba los relojes al manejar).
-    const _fixAge = window.lastFixFm ? (Date.now() - window.lastFixFm.ts) : Infinity;
+    // Solo forzar "detenido" si hay un fix previo y está obsoleto (>15 s).
+    // Si nunca llegó un fix (lastFixFm === undefined) no interferimos: el GPS
+    // interno del tracker ya maneja su propio estado de movimiento.
+    const _fixAge = window.lastFixFm ? (Date.now() - window.lastFixFm.ts) : 0;
     if (_fixAge >= 15000 && window._hosTracker?.reportMoving) {
       window._hosTracker.reportMoving(false, 0);
     }
