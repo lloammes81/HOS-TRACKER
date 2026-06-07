@@ -7288,6 +7288,17 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           Centra el documento en el encuadre
         </div>
       </div>
+      <!-- Camera error panel (hidden by default) -->
+      <div id="scanCamError" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.82);flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center">
+        <div style="font-size:48px">📷</div>
+        <div id="scanCamErrorMsg" style="color:#fff;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;max-width:260px;line-height:1.5"></div>
+        <div style="color:rgba(255,255,255,.6);font-size:12px;font-family:'DM Sans',sans-serif;max-width:260px;line-height:1.5">
+          Ve a Ajustes del navegador → Permisos → Cámara y permite el acceso.
+        </div>
+        <button onclick="startScanCamera()" style="margin-top:8px;background:#f59e0b;color:#000;border:none;border-radius:999px;padding:10px 24px;font-size:13px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer">
+          🔄 Reintentar
+        </button>
+      </div>
     </div>
 
     <!-- Bottom controls -->
@@ -26652,6 +26663,16 @@ function closeScannerSheet() {
 
 // ── Camera ────────────────────────────────────────────────────────────────
 async function startScanCamera() {
+  const errPanel = document.getElementById('scanCamError');
+  const errMsg   = document.getElementById('scanCamErrorMsg');
+  errPanel.style.display = 'none';
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    errMsg.textContent = 'Tu navegador no soporta acceso a la cámara. Usa Chrome o Safari actualizado.';
+    errPanel.style.display = 'flex';
+    return;
+  }
+
   try {
     if (scanStream) { scanStream.getTracks().forEach(t=>t.stop()); }
     scanStream = await navigator.mediaDevices.getUserMedia({
@@ -26666,7 +26687,17 @@ async function startScanCamera() {
     await vid.play();
     updateDimOverlay();
   } catch(e) {
-    showToast('warn','📷','Cámara no disponible', e.message, 4000);
+    let hint = e.message || 'Error desconocido';
+    if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+      hint = 'Permiso de cámara denegado. Permite el acceso en los ajustes del navegador.';
+    } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+      hint = 'No se encontró ninguna cámara en este dispositivo.';
+    } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
+      hint = 'La cámara está siendo usada por otra app. Ciérrala e intenta de nuevo.';
+    }
+    errMsg.textContent = hint;
+    errPanel.style.display = 'flex';
+    showToast('warn','📷','Cámara no disponible', hint, 4000);
   }
 }
 
