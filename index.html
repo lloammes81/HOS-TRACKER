@@ -9844,11 +9844,7 @@ function _addTrafficToMap(mapInst, layerRef) {
 
 
 function _syncTrafficBtn() {
-  const btn = document.getElementById('trafficBtn');
-  if (!btn) return;
-  btn.style.background  = fmTrafficEnabled ? 'rgba(239,68,68,0.28)' : '';
-  btn.style.borderColor = fmTrafficEnabled ? 'rgba(239,68,68,0.6)'  : '';
-  btn.title = fmTrafficEnabled ? 'Tráfico ACTIVO — toca para desactivar' : 'Tráfico en tiempo real';
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 function _addTrafficLayer() {
@@ -12841,17 +12837,7 @@ function setDepartureNow() {
 }
 
 function updateDepartureDisplay() {
-  const el = document.getElementById('departureInput');
-  const dateEl = document.getElementById('departureDate');
-  const timeEl = document.getElementById('departureTime');
-  if (!el || !dateEl || !timeEl) return;
-  // Si no hay valor, establecer ahora para que siempre haya fecha/hora
-  if (!el.value) { setDepartureNow(); return; }
-  const d = new Date(el.value);
-  const locale = lang === 'es' ? 'es' : 'en';
-  // Siempre mostrar la fecha real (día, mes y día del mes)
-  dateEl.textContent = d.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
-  timeEl.textContent = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 
@@ -12941,111 +12927,11 @@ function updateSettingsChecks() {
 }
 
 function applySpeedWidgetPos() {
-  const w = document.getElementById('speedLimitWidget');
-  const stage = document.getElementById('speedWidgetStage');
-  if (!w || !stage) return;
-
-  let x = 12, y = 12;
-  if (speedWidgetPos && typeof speedWidgetPos.x === 'number' && typeof speedWidgetPos.y === 'number') {
-    x = speedWidgetPos.x; y = speedWidgetPos.y;
-  }
-
-  const sw = stage.clientWidth;
-  const sh = stage.clientHeight;
-  const ww = w.offsetWidth || 78;
-  const wh = w.offsetHeight || 118;
-  const pad = 6;
-
-  x = Math.max(pad, Math.min(sw - ww - pad, x));
-  y = Math.max(pad, Math.min(sh - wh - pad, y));
-
-  w.style.left = x + 'px';
-  w.style.top  = y + 'px';
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 function initSpeedWidgetDrag() {
-  const w = document.getElementById('speedLimitWidget');
-  const stage = document.getElementById('speedWidgetStage');
-  const resetBtn = document.getElementById('speedWidgetResetBtn');
-  const centerBtn = document.getElementById('speedWidgetCenterBtn');
-  if (!w || !stage) return;
-
-  applySpeedWidgetPos();
-
-  let dragging = false;
-  let startX = 0, startY = 0;
-  let origLeft = 0, origTop = 0;
-
-  const getPoint = (e) => {
-    const t = e.touches && e.touches[0];
-    return t ? { x: t.clientX, y: t.clientY } : { x: e.clientX, y: e.clientY };
-  };
-
-  const onDown = (e) => {
-    dragging = true;
-    w.classList.add('dragging');
-    const pt = getPoint(e);
-    startX = pt.x; startY = pt.y;
-
-    origLeft = parseFloat(w.style.left || '0') || 0;
-    origTop  = parseFloat(w.style.top  || '0') || 0;
-
-    e.preventDefault();
-  };
-
-  const onMove = (e) => {
-    if (!dragging) return;
-    const pt = getPoint(e);
-    const dx = pt.x - startX;
-    const dy = pt.y - startY;
-
-    const sw = stage.clientWidth;
-    const sh = stage.clientHeight;
-    const ww = w.offsetWidth;
-    const wh = w.offsetHeight;
-
-    let newLeft = origLeft + dx;
-    let newTop  = origTop + dy;
-
-    const pad = 6;
-    newLeft = Math.max(pad, Math.min(sw - ww - pad, newLeft));
-    newTop  = Math.max(pad, Math.min(sh - wh - pad, newTop));
-
-    w.style.left = newLeft + 'px';
-    w.style.top  = newTop + 'px';
-
-    speedWidgetPos = { x: Math.round(newLeft), y: Math.round(newTop) };
-    localStorage.setItem('hos_speed_pos', JSON.stringify(speedWidgetPos));
-
-    e.preventDefault();
-  };
-
-  const onUp = () => {
-    if (!dragging) return;
-    dragging = false;
-    w.classList.remove('dragging');
-  };
-
-  bindDragEvents(w, onDown, onMove, onUp);
-
-  if (resetBtn) {
-    resetBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      speedWidgetPos = { x: 12, y: 12 };
-      localStorage.setItem('hos_speed_pos', JSON.stringify(speedWidgetPos));
-      applySpeedWidgetPos();
-    });
-  }
-  if (centerBtn) {
-    centerBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const x = Math.round((stage.clientWidth - w.offsetWidth) / 2);
-      const y = Math.round((stage.clientHeight - w.offsetHeight) / 2);
-      speedWidgetPos = { x, y };
-      localStorage.setItem('hos_speed_pos', JSON.stringify(speedWidgetPos));
-      applySpeedWidgetPos();
-    });
-  }
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 
@@ -15125,8 +15011,7 @@ function roadRemainingMiles(curLat, curLon) {
 }
 
 function _showOffRouteBar(show) {
-  const bar = document.getElementById('offRouteBar');
-  if (bar) bar.style.display = show ? 'block' : 'none';
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 var _lrr = 0;
@@ -15655,64 +15540,7 @@ let _nextBreakCity = null;  // city for next 30-min break
 let _nextRestCity  = null;  // city for next 10h rest
 
 function updateFmToDisplay() {
-  const toEl  = document.getElementById('fmTo');
-  const lblEl = document.getElementById('fmToLbl');
-  if (!toEl) return;
-
-  const _b30due  = typeof use30min !== 'undefined' && use30min && typeof b30Complete !== 'undefined' && !b30Complete && typeof b30Warned30m !== 'undefined' && b30Warned30m;
-  const _b30brk  = typeof b30InBreak !== 'undefined' && b30InBreak && typeof b30Complete !== 'undefined' && !b30Complete;
-  const hoursGone = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft <= 0;
-  const hoursLow  = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft > 0 && _hosCurrentDriveLeft <= 2;
-
-  // Priority 1: active break or break urgently due
-  if (_b30due || _b30brk) {
-    if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
-    const city = _hosBreakStopName || _nextBreakCity;
-    toEl.style.color = '#f59e0b';
-    toEl.textContent = city || 'Próxima parada';
-    return;
-  }
-  // Priority 2: hours exhausted or nearly gone
-  if (hoursGone || hoursLow) {
-    if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
-    const city = _hosHoursStopName || _nextRestCity;
-    toEl.style.color = '#818cf8';
-    toEl.textContent = city || 'Busca área de descanso';
-    return;
-  }
-  // Priority 3: show upcoming 30-min break city from schedule
-  if (_nextBreakCity) {
-    if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
-    toEl.style.color = '#f59e0b';
-    toEl.textContent = _nextBreakCity;
-    return;
-  }
-  // Priority 4: show upcoming 10h rest city from schedule
-  if (_nextRestCity) {
-    if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
-    toEl.style.color = '#818cf8';
-    toEl.textContent = _nextRestCity;
-    return;
-  }
-  // Priority 5: geocoding still in progress — show placeholder with destination
-  const hasBreakInSched  = Array.isArray(schedule) && schedule.some(s => s.type === 'break30');
-  const hasRestInSched   = Array.isArray(schedule) && schedule.some(s => s.type === 'rest' || s.type === 'reset');
-  if (hasBreakInSched) {
-    if (lblEl) { lblEl.textContent = '☕ PAUSA 30 MIN'; lblEl.style.color = '#f59e0b'; }
-    toEl.style.color = '#f59e0b';
-    toEl.textContent = '…';
-    return;
-  }
-  if (hasRestInSched) {
-    if (lblEl) { lblEl.textContent = '😴 DESCANSO 10H'; lblEl.style.color = '#818cf8'; }
-    toEl.style.color = '#818cf8';
-    toEl.textContent = '…';
-    return;
-  }
-  // Default: show final destination
-  if (lblEl) { lblEl.textContent = 'HASTA'; lblEl.style.color = 'rgba(255,255,255,0.35)'; }
-  toEl.style.color = '';
-  toEl.textContent = destination ? destination.name.split(',')[0] : '--';
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 // ── Garmin-style nav card ──
@@ -15871,26 +15699,13 @@ setInterval(() => {
 }, 5000);
 
 function _showSleepOverlay() {
-  if (_sleepOverlayDismissed) return;
-  const ov = document.getElementById('restSleepOverlay');
-  if (ov) ov.style.display = 'flex';
-  _updateSleepOverlayTime();
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 function _hideSleepOverlay(dismissed) {
-  const ov = document.getElementById('restSleepOverlay');
-  if (ov) ov.style.display = 'none';
-  if (dismissed) _sleepOverlayDismissed = true;
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 function _updateSleepOverlayTime() {
-  const ov = document.getElementById('restSleepOverlay');
-  if (!ov || ov.style.display !== 'flex') return;
-  const stopHrs = _vehicleStopStartMs ? (Date.now() - _vehicleStopStartMs) / 3600000 : 0;
-  const rem = Math.max(0, 10 - stopHrs);
-  const h = Math.floor(rem);
-  const m = Math.floor((rem - h) * 60);
-  const s = Math.floor(((rem - h) * 60 - m) * 60);
-  const dig = document.getElementById('restSleepDigital');
-  if (dig) dig.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 function _playRestAlarm() {
@@ -17967,60 +17782,7 @@ function _refreshDashRouteNextStop() {
 // ── ETA inteligente HOS + próxima parada (banner del HUD del mapa) ──
 let _fmStopCache2 = { key:null, name:null, fetching:false };
 function _updateFmSmartInfo(etaH, remainingMi, driveLeft) {
-  const box   = document.getElementById('fmSmartInfo');
-  const etaEl = document.getElementById('fmHosEta');
-  const stopB = document.getElementById('fmNextStopBanner');
-  if (!box || !etaEl) return;
-  const moving = (typeof fmVehicleMoving !== 'undefined') && fmVehicleMoving;
-  if (!destination || !(etaH > 0) || !moving) { box.style.display = 'none'; return; }
-  box.style.display = 'block';
-  const _es = (typeof lang !== 'undefined' && lang === 'es');
-
-  // Hora de llegada (reloj)
-  const arr = new Date(Date.now() + etaH * 3600000);
-  const arrStr = arr.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  const dayStr = arr.toLocaleDateString(_es ? 'es-ES' : 'en-US', { weekday: 'short' });
-
-  const dLeft = (typeof driveLeft === 'number') ? driveLeft
-              : (typeof _hosCurrentDriveLeft !== 'undefined' ? _hosCurrentDriveLeft : 11);
-
-  if (etaH <= dLeft + 0.001) {
-    const margin = Math.max(0, dLeft - etaH);
-    etaEl.style.background = 'rgba(16,185,129,0.14)';
-    etaEl.innerHTML = `🏁 ${_es ? 'Llega' : 'Arrive'} <b style="margin:0 4px">${arrStr}</b> · ${dayStr}`
-      + ` &nbsp;·&nbsp; <span style="color:#34d399">${_es ? 'margen' : 'margin'} ${fmtH(margin)}</span>`;
-  } else {
-    etaEl.style.background = 'rgba(245,158,11,0.16)';
-    etaEl.innerHTML = `⚠️ ${_es ? 'No alcanzas sin descanso' : "Won't make it without rest"}`
-      + ` &nbsp;·&nbsp; <span style="color:#fbbf24">${_es ? 'faltan' : 'short'} ${fmtH(etaH - dLeft)} ${_es ? 'de manejo' : 'driving'}</span>`;
-  }
-
-  // Próxima parada: la que llegue antes (pausa 30 min vs descanso 10h)
-  const b30Done  = (typeof b30Complete !== 'undefined') && b30Complete;
-  const b30HrsTo = b30Done ? Infinity
-    : Math.max(0, (B30_DRIVE_LIMIT - (typeof b30DriveSecs !== 'undefined' ? b30DriveSecs : 0)) / 3600);
-  const spd = (typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55;
-  let kind, hrsTo, label;
-  if (b30HrsTo < dLeft) { kind = 'break'; hrsTo = b30HrsTo; label = _es ? 'Pausa 30 min' : '30-min break'; }
-  else                  { kind = 'rest';  hrsTo = dLeft;    label = _es ? 'Descanso 10h' : '10h rest'; }
-  const stopMi = Math.max(1, Math.round(hrsTo * spd));
-  if (stopB) {
-    if (stopMi < remainingMi - 2) {
-      stopB.style.display = 'flex';
-      const cityTxt = _fmStopCache2.name ? ' · ' + _fmStopCache2.name.toUpperCase() : '';
-      stopB.innerHTML = `🛑 ${label} ${_es ? 'en' : 'in'} ${stopMi.toLocaleString()} mi${cityTxt}`
-        + ` <span style="margin-left:auto;opacity:.85">${_es ? 'ver paradas ›' : 'stops ›'}</span>`;
-      const key = kind + ':' + Math.round(stopMi / 25);
-      if (_fmStopCache2.key !== key && !_fmStopCache2.fetching && typeof _fetchStopCityAhead === 'function') {
-        _fmStopCache2.fetching = true;
-        _fetchStopCityAhead(stopMi, name => {
-          _fmStopCache2.fetching = false; _fmStopCache2.key = key; _fmStopCache2.name = name || '';
-        });
-      }
-    } else {
-      stopB.style.display = 'none';
-    }
-  }
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 // Tocar un anillo del HUD del mapa muestra su detalle
 document.addEventListener('DOMContentLoaded', function () {
@@ -20689,18 +20451,7 @@ let _rightPanelAutoHideTimer = null;
 
 let _leftPanelAutoHideTimer = null;
 function toggleMapLeftPanel(forceHide) {
-  const ctrl = document.getElementById('mapLeftControls');
-  const btn  = document.getElementById('mapLeftPanelBtn');
-  if (!ctrl || !btn) return;
-  const hiding = forceHide === true ? true : !ctrl.classList.contains('panel-hidden');
-  ctrl.classList.toggle('panel-hidden', hiding);
-  btn.classList.toggle('open', !hiding);
-  btn.textContent = hiding ? '›' : '‹';
-  // Si se abre, programar auto-ocultamiento a los 5 segundos
-  if (_leftPanelAutoHideTimer) clearTimeout(_leftPanelAutoHideTimer);
-  if (!hiding) {
-    _leftPanelAutoHideTimer = setTimeout(() => toggleMapLeftPanel(true), 5000);
-  }
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 function toggleDashSideMenu() {
@@ -21382,25 +21133,11 @@ function renderAltRoutes(orig, dest) {
 }
 
 function showMapAltBar(orig, dest, labels) {
-  const bar = document.getElementById('mapAltBar');
-  const mapList = document.getElementById('mapAltList');
-  if (!bar || !mapList) return;
-  mapList.innerHTML = altRoutes.map((r, i) => `
-    <div class="map-alt-card ${i === selectedAltIdx ? 'selected' : ''}" onclick="selectAltRoute(${i});hideMapAltBar()">
-      <div class="mac-radio"></div>
-      <div class="mac-info">
-        <div class="mac-dist">${r.miles} mi · ${r.hours}h</div>
-        <div class="mac-time">${orig.name.split(',')[0]} → ${dest.name.split(',')[0]}</div>
-      </div>
-      <div class="mac-badge ${labels[i]?.cls || 'alt'}">${labels[i]?.text || 'Alt'}</div>
-    </div>
-  `).join('');
-  bar.classList.add('show');
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 function hideMapAltBar() {
-  const bar = document.getElementById('mapAltBar');
-  if (bar) bar.classList.remove('show');
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 function selectAltRoute(idx) {
@@ -21467,8 +21204,7 @@ function saveToHistory(orig, dest, miles, wps) {
 }
 
 function updateHistCount() {
-  const el = document.getElementById('histCount');
-  if (el) el.textContent = routeHistory.length > 0 ? routeHistory.length : '';
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 function closeRouteHistory() {
@@ -23034,18 +22770,7 @@ function checkRouteAlerts() {
 }
 
 function updateRouteAlertPill(alerts) {
-  const pill = document.getElementById('routeAlertPill');
-  if (!pill) return;
-  if (alerts.length === 0) {
-    pill.style.display = 'none';
-    return;
-  }
-  // Show highest priority type
-  const priority = ['accident', 'inspection', 'police', 'hazard'];
-  const top = priority.map(t => alerts.find(r => r.type === t)).find(Boolean) || alerts[0];
-  const cfg = COMM_TYPE_CFG[top.type] || { emoji: '⚠️', label: top.type };
-  pill.textContent = cfg.emoji + ' ' + cfg.label + ' on your route — tap';
-  pill.style.display = 'block';
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 function renderRouteAlertBanners() {
@@ -23519,63 +23244,7 @@ window.addEventListener('resize', () => {
 <script id="fmHudCompactScript">
 (function(){
   function makeCompactHud(){
-    const hud = document.getElementById('fmHud');
-    if(!hud) return;
-
-    // Hide: "UBICACIÓN ACTUAL", progress, and "DESDE/HASTA" sections
-    const locLbl = document.getElementById('fmLocLbl');
-    const progLbl = document.getElementById('fmProgLbl');
-    const fromVal = document.getElementById('fmFrom');
-
-    const headerRow = locLbl && locLbl.closest('div'); // row container
-    const progressBox = progLbl && progLbl.closest('div[style*="margin-bottom"]');
-    const fromToRow = fromVal && fromVal.closest('div[style*="display:flex"]');
-
-    // Hide handle too (first small bar)
-    const handle = hud.querySelector('div[style*="width:36px"][style*="height:4px"]');
-
-    [headerRow, progressBox, fromToRow, handle].forEach(el=>{
-      if(el) el.classList.add('fm-hide');
-    });
-
-    // Convert the 4-stats grid into round tappable circles
-    const eta = document.getElementById('fmEta');
-    const statsRow = eta && eta.closest('div[style*="grid-template-columns"]');
-    if(statsRow){
-      statsRow.classList.add('fm-stats-row');
-      const kids = Array.from(statsRow.children).filter(n=>n && n.tagName === 'DIV');
-      kids.forEach((box)=>{
-        box.classList.add('fm-stat');
-        box.setAttribute('role','button');
-        box.setAttribute('tabindex','0');
-        
-        // Tap once to enlarge, tap again to shrink (and collapse others)
-        box.classList.add('tap-zoom');
-        const toggleZoom = () => {
-          const row = box.parentElement;
-          if (row) row.querySelectorAll('.fm-stat.zoomed').forEach(el => { if (el !== box) el.classList.remove('zoomed'); });
-          box.classList.toggle('zoomed');
-        };
-        box.addEventListener('click', (e)=>{ e.stopPropagation(); toggleZoom(); }, {passive:false});
-        box.addEventListener('touchstart', (e)=>{ e.stopPropagation(); toggleZoom(); }, {passive:false});
-        box.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); toggleZoom(); } });
-
-      });
-    }
-
-    // Enable compact mode (transparent background, only circles visible)
-    hud.classList.add('compact');
-    // Belt-and-suspenders: also explicitly hide full-only sections via fm-hide
-    hud.querySelectorAll('.fm-full-only').forEach(el => el.classList.add('fm-hide'));
-    // Toggle zoom on floating widgets (tap to enlarge/shrink)
-    ['driveHoursWidget','weatherWidget'].forEach((id)=>{
-      const el = document.getElementById(id);
-      if(!el) return;
-      el.classList.add('tap-zoom');
-      el.addEventListener('click', (e)=>{ e.stopPropagation(); el.classList.toggle('zoomed'); }, {passive:false});
-    });
-    // speedometerWidget is draggable — no tap-zoom
-
+    // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
   }
 
   if(document.readyState === 'loading'){
@@ -30980,34 +30649,7 @@ function closeRoadSignsPanel() {
 }
 
 function loadRoadSigns() {
-  const grid = document.getElementById('roadSignsGrid');
-  if (!grid) return;
-
-  const signs = [
-    { icon: '🛑', name: 'STOP', desc: 'Full stop required' },
-    { icon: '🚧', name: 'Construction', desc: 'Road work ahead' },
-    { icon: '⚠️', name: 'Warning', desc: 'Hazard ahead' },
-    { icon: '🚫', name: 'No Trucks', desc: 'Truck prohibited' },
-    { icon: '⬇️', name: 'Steep Grade', desc: 'Use low gear' },
-    { icon: '🌉', name: 'Bridge', desc: 'Check clearance' },
-    { icon: '🔄', name: 'Roundabout', desc: 'Yield to traffic' },
-    { icon: '🚸', name: 'School Zone', desc: 'Reduce speed' },
-    { icon: '🦌', name: 'Wildlife', desc: 'Animal crossing' },
-    { icon: '💨', name: 'Crosswind', desc: 'High wind area' },
-    { icon: '🛣️', name: 'Interstate', desc: 'Freeway entrance' },
-    { icon: '🅿️', name: 'Rest Area', desc: '1 mile ahead' }
-  ];
-
-  let html = '';
-  signs.forEach(sign => {
-    html += '<div class="sign-card" onclick="showSignDetail(\'' + sign.name + '\', \'' + sign.desc + '\')">';
-    html += '<div style="font-size:32px;margin-bottom:6px;">' + sign.icon + '</div>';
-    html += '<div class="sign-name">' + sign.name + '</div>';
-    html += '<div class="sign-desc">' + sign.desc + '</div>';
-    html += '</div>';
-  });
-
-  grid.innerHTML = html;
+  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 function showSignDetail(name, desc) {
