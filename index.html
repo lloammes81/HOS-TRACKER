@@ -15165,12 +15165,10 @@ let currentUser = JSON.parse(localStorage.getItem('hos_user') || 'null');
 
 function launchTrackingDirect() {
   if (!origin || !destination) { alert(t ? t('errSel') : 'Select origin and destination'); return; }
-  openFullMapScreen();
-  // Hide the confirmation banner — skip the "map only / start tracking" choice
-  const banner = document.getElementById('fmTrackBanner');
-  if (banner) banner.style.display = 'none';
-  // Small delay so the map DOM is ready before starting tracking
-  setTimeout(() => { fmStartTracking(); }, 150);
+  // El mapa grande fue eliminado — ahora iniciar rastreo abre directamente
+  // el HOS Dashboard, que ya es la pantalla de estado mientras se conduce.
+  try { fmStartTracking(); } catch(e) { console.warn('fmStartTracking falló:', e); }
+  try { showHosDashboard(); } catch(e) { console.warn('showHosDashboard falló:', e); }
 }
 
 function openFullMapScreen() {
