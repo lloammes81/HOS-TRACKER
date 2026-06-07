@@ -8003,31 +8003,30 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
       <!-- Botón volver -->
       <button onclick="backToMainFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:24px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
 
-      <!-- Foto + nombre (bloque centrado en la tarjeta) -->
-      <div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:14px;">
-      <div id="dashProfilePhoto" style="width:68px;height:68px;border-radius:50%;flex-shrink:0;background:#1e293b;border:3px solid rgba(16,185,129,0.7);box-shadow:0 0 0 2px rgba(16,185,129,0.25),0 0 18px rgba(16,185,129,0.55),0 0 36px rgba(16,185,129,0.2),0 6px 20px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;margin:-14px 0;position:relative;z-index:2;transform:scale(1.08);"></div>
-      <div style="min-width:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
-        <div id="dashProfileName" style="font-size:24px;font-weight:900;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;max-width:100%;">Driver</div>
-        <div id="dashMovingInfo" style="display:none;align-items:center;justify-content:center;gap:14px;margin-top:4px;">
-          <div>
-            <div style="font-size:9px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:rgba(255,255,255,0.55);text-transform:uppercase;line-height:1;">⏱ Llegada</div>
-            <div id="dashRouteEta" style="font-size:16px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:#22d3ee;line-height:1.1;">--:--</div>
-            <div id="dashRouteRemaining" style="font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;color:rgba(255,255,255,0.60);text-transform:uppercase;line-height:1.2;">-- MI · <span id="dashRoutePct">0%</span></div>
-          </div>
-          <div style="width:1px;height:28px;background:rgba(255,255,255,0.15);flex-shrink:0;"></div>
-          <div>
-            <div style="font-size:9px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:rgba(255,255,255,0.55);text-transform:uppercase;line-height:1;">🕐 Manejo</div>
-            <div id="dashRouteDriveLeft" style="font-size:16px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:#10b981;line-height:1.1;">--H --M</div>
-            <div style="height:2px;background:rgba(255,255,255,0.10);border-radius:999px;overflow:hidden;margin-top:3px;width:60px;">
-              <div id="dashRouteDriveBarFill" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width 1s ease;"></div>
-            </div>
+      <!-- Foto del conductor (sin nombre) — pegada al botón de volver -->
+      <div id="dashProfilePhoto" style="width:54px;height:54px;border-radius:50%;flex-shrink:0;background:#1e293b;border:2.5px solid rgba(16,185,129,0.7);box-shadow:0 0 0 2px rgba(16,185,129,0.25),0 0 14px rgba(16,185,129,0.5),0 0 28px rgba(16,185,129,0.18),0 4px 14px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;position:relative;z-index:2;"></div>
+      <!-- Nombre del conductor mantenido como elemento oculto para no romper JS -->
+      <div id="dashProfileName" style="display:none;">Driver</div>
+
+      <!-- Datos de viaje (Llegada / Manejo) ocupan el centro -->
+      <div id="dashMovingInfo" style="flex:1;min-width:0;display:none;align-items:center;justify-content:center;gap:14px;">
+        <div>
+          <div style="font-size:9px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:rgba(255,255,255,0.55);text-transform:uppercase;line-height:1;">⏱ Llegada</div>
+          <div id="dashRouteEta" style="font-size:16px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:#22d3ee;line-height:1.1;">--:--</div>
+          <div id="dashRouteRemaining" style="font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;color:rgba(255,255,255,0.60);text-transform:uppercase;line-height:1.2;">-- MI · <span id="dashRoutePct">0%</span></div>
+        </div>
+        <div style="width:1px;height:28px;background:rgba(255,255,255,0.15);flex-shrink:0;"></div>
+        <div>
+          <div style="font-size:9px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:rgba(255,255,255,0.55);text-transform:uppercase;line-height:1;">🕐 Manejo</div>
+          <div id="dashRouteDriveLeft" style="font-size:16px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:#10b981;line-height:1.1;">--H --M</div>
+          <div style="height:2px;background:rgba(255,255,255,0.10);border-radius:999px;overflow:hidden;margin-top:3px;width:60px;">
+            <div id="dashRouteDriveBarFill" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width 1s ease;"></div>
           </div>
         </div>
       </div>
-      </div>
 
       <!-- Botón campana notificaciones -->
-      <button id="notifBellBtn" onclick="openNotifPanel()" style="position:relative;background:rgba(16,185,129,0.13);border:1.5px solid rgba(16,185,129,0.35);border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">
+      <button id="notifBellBtn" onclick="openNotifPanel()" style="position:relative;background:rgba(16,185,129,0.13);border:1.5px solid rgba(16,185,129,0.35);border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;margin-left:auto;">
         🔔
         <span id="notifBellBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:13px;font-weight:900;border-radius:999px;min-width:18px;padding:2px 5px;text-align:center;border:2px solid #181d2c;line-height:1.2;pointer-events:none"></span>
       </button>
