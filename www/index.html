@@ -8035,15 +8035,10 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
       </div><!-- /fila superior -->
 
       <!-- ── VIOLATION COUNTDOWN STRIP ── -->
-      <div id="dashViolStrip" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 2px 6px;border-top:1px solid rgba(255,255,255,0.08);margin-top:0;">
-        <div style="display:flex;align-items:center;gap:6px;min-width:0;">
-          <span id="dashViolIcon" style="font-size:14px;flex-shrink:0;">⏱</span>
-          <div style="min-width:0;">
-            <div style="font-size:8px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:rgba(255,255,255,0.50);text-transform:uppercase;line-height:1;">TIEMPO ANTES DE VIOLACIÓN</div>
-            <div id="dashViolType" style="font-size:9px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:rgba(255,255,255,0.70);text-transform:uppercase;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">PAUSA 30 MIN</div>
-          </div>
-        </div>
-        <div id="dashViolTime" style="font-size:22px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:#a3e635;text-shadow:0 0 10px rgba(163,230,53,0.55);flex-shrink:0;line-height:1;">--H --M</div>
+      <div id="dashViolStrip" style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px;padding:4px 8px 7px;border-top:1px solid rgba(255,255,255,0.08);margin-top:0;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+        <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.92);line-height:1.15;">Time remaining before Possible Violation</div>
+        <div id="dashViolTime" style="font-size:34px;font-weight:800;letter-spacing:0.5px;color:#ffffff;text-shadow:0 0 10px rgba(163,230,53,0.55);line-height:1.05;">--h --m</div>
+        <div id="dashViolType" style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.92);line-height:1.2;">Possible Violation 30 Minutes break</div>
       </div>
     </div>
   </div>
@@ -19403,11 +19398,11 @@ function _updateViolationCard() {
   let secsLeft, label;
   if (breakSecsLeft <= driveSecsLeft) {
     secsLeft = breakSecsLeft;
-    label    = 'PAUSA 30 MIN';
+    label    = 'Possible Violation 30 Minutes break';
     if (iconEl) iconEl.textContent = '⏸';
   } else {
     secsLeft = driveSecsLeft;
-    label    = 'LÍMITE 11H MANEJO';
+    label    = 'Possible Violation 11h Driving limit';
     if (iconEl) iconEl.textContent = '🚛';
   }
 
@@ -19415,7 +19410,7 @@ function _updateViolationCard() {
   const totalMins = Math.max(0, Math.ceil(secsLeft / 60));
   const hh = Math.floor(totalMins / 60);
   const mm = totalMins % 60;
-  const timeStr = secsLeft >= Infinity ? '∞' : (hh > 0 ? hh + 'H ' + String(mm).padStart(2,'0') + 'M' : mm + 'M');
+  const timeStr = secsLeft >= Infinity ? '∞' : (hh > 0 ? hh + 'h ' + mm + 'm' : mm + 'm');
 
   timeEl.textContent = timeStr;
   if (typeEl) typeEl.textContent = label;
