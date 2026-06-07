@@ -26635,28 +26635,44 @@ async function loadNativeBlePlugin(){
 // ═══════════════════════════════════════════════════════════════════════════
 //  📄 DOCUMENT SCANNER — Camera + Crop + PDF/JPG + WhatsApp/Email
 // ═══════════════════════════════════════════════════════════════════════════
+// ── Fullscreen overlay helper ──────────────────────────────────────────────
+// SIEMPRE usa <dialog> + showModal() para overlays de pantalla completa.
+// showModal() renderiza en la top layer del navegador: es inmune a cualquier
+// containing-block (transform, filter, backdrop-filter, contain, will-change)
+// que pudiera romper position:fixed en ancestros. NO uses div+z-index para
+// overlays fullscreen — eso garantiza que el overlay se "meta" en el dash.
+//
+// Uso:
+//   HTML:  <dialog id="miSheet"> ... </dialog>
+//   Abrir: openOverlay('miSheet')
+//   Cerrar: closeOverlay('miSheet')
+function openOverlay(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.parentElement !== document.body) document.body.appendChild(el);
+  if (typeof el.showModal === 'function') { try { if (!el.open) el.showModal(); } catch(e) { el.setAttribute('open',''); } }
+  else el.setAttribute('open', '');
+  el.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeOverlay(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('open');
+  if (typeof el.close === 'function' && el.open) { try { el.close(); } catch(e) {} }
+  else el.removeAttribute('open');
+  el.style.cssText = '';
+  document.body.style.overflow = '';
+}
+// ──────────────────────────────────────────────────────────────────────────
+
 let scanStream = null, scanPages = [], scanActiveIdx = 0;
 let scanFormat = 'PDF', scanFacingMode = 'environment';
 let scanFlashOn = false, scanLocation = null;
 
 // ── Open / Close ──────────────────────────────────────────────────────────
 async function openScannerSheet() {
-  const sheet = document.getElementById('scannerSheet');
-  // <dialog>.showModal() renderiza en la top layer del navegador —
-  // imposible que ningún ancestro lo afecte. Si por compatibilidad no
-  // está disponible, caemos al patrón anterior con inline-style.
-  if (sheet && sheet.parentElement !== document.body) document.body.appendChild(sheet);
-  if (typeof sheet.showModal === 'function') {
-    if (!sheet.open) { try { sheet.showModal(); } catch(e) { sheet.show && sheet.show(); } }
-  } else {
-    sheet.setAttribute('open', '');
-    sheet.style.cssText =
-      'position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;' +
-      'width:100vw!important;height:100vh!important;height:100dvh!important;margin:0!important;padding:0!important;' +
-      'z-index:2147483647!important;background:#000!important;display:flex!important;flex-direction:column!important;';
-  }
-  sheet.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  openOverlay('scannerSheet');
   document.getElementById('scanCameraView').style.display = 'flex';
   document.getElementById('scanReview').classList.remove('show');
   await startScanCamera();
@@ -26667,15 +26683,7 @@ async function openScannerSheet() {
 
 function closeScannerSheet() {
   stopScanCamera();
-  const sheet = document.getElementById('scannerSheet');
-  sheet.classList.remove('open');
-  if (typeof sheet.close === 'function' && sheet.open) {
-    try { sheet.close(); } catch(e) {}
-  } else {
-    sheet.removeAttribute('open');
-  }
-  sheet.style.cssText = '';
-  document.body.style.overflow = '';
+  closeOverlay('scannerSheet');
   scanPages = []; scanActiveIdx = 0;
   updateScanBadge();
 }
@@ -28775,18 +28783,19 @@ window._hosAutoRecalc = false;
    📋  DIGITAL LOGBOOK - HOS Paper Log Replica
 ══════════════════════════════════════════════════════════ */
 
-#logbookSheet {
-  position: fixed; inset: 0; z-index: 9000;
+/* <dialog> se renderiza en la top layer — inmune a containing-blocks */
+dialog#logbookSheet {
+  padding:0; margin:0; border:0; outline:0;
+  width:100vw; max-width:100vw;
+  height:100vh; height:100dvh; max-height:100vh; max-height:100dvh;
   background: #f5f0e8;
-  display: none;
   overflow-y: auto; overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   font-family: 'Share Tech Mono', 'Courier New', monospace;
 }
-/* display:block (no flex) + sin transform en la animación → el scroll táctil
-   funciona en iOS/WebKit (un contenedor fixed que es flex+overflow no desliza). */
-#logbookSheet.open { display: block; animation: lbFadeIn 0.3s ease; }
+dialog#logbookSheet::backdrop { background: #000; }
+dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
 @keyframes lbFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .lb-topbar {
@@ -31009,7 +31018,7 @@ window.nativeShare = nativeShare;
 <!-- ════════════════════════════════════════════════════════════
      📋  DIGITAL LOGBOOK SHEET
 ══════════════════════════════════════════════════════════ -->
-<div id="logbookSheet">
+<dialog id="logbookSheet">
   <div class="lb-topbar">
     <div class="lb-topbar-title">📋 DRIVER'S DAILY LOG</div>
     <button class="lb-close" onclick="closeLogbookSheet()">✕</button>
@@ -31277,7 +31286,7 @@ window.nativeShare = nativeShare;
   </div>
 
   <button class="lb-help-btn" onclick="showLogbookHelp()">❓</button>
-</div>
+</dialog>
 
 
 
@@ -32469,8 +32478,7 @@ async function lbFillRouteFields() {
 }
 
 function openLogbookSheet() {
-  document.getElementById('logbookSheet').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  openOverlay('logbookSheet');
   updateLogbookForDate();
   loadDriverProfile();
   lbFillRouteFields();
@@ -32483,8 +32491,7 @@ function openLogbookSheet() {
 }
 
 function closeLogbookSheet() {
-  document.getElementById('logbookSheet').classList.remove('open');
-  document.body.style.overflow = '';
+  closeOverlay('logbookSheet');
   if (window.wakeLock) {
     window.wakeLock.release().catch(() => {});
     window.wakeLock = null;
