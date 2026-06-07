@@ -11419,16 +11419,6 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     arcC.style.stroke = arcCol; arcC.style.strokeDashoffset = C * (1 - pct);
     valC.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#c8d4e0';
   }
-  const arcDot = document.getElementById('heroArcDot');
-  const valDot = document.getElementById('heroValDot');
-  const lblDot = document.getElementById('heroLblDot');
-  if (arcDot) {
-    const ok = driveLeft > 0 && cycleLeft > 0;
-    arcDot.style.stroke = ok ? '#10b981' : '#ef4444';
-    arcDot.style.strokeDashoffset = ok ? 0 : C * 0.25;
-    if (valDot) valDot.style.color = ok ? '#10b981' : '#ef4444';
-    if (lblDot) lblDot.textContent = ok ? 'Compliant' : 'At Limit';
-  }
   _syncHeroArcStatus();
 }
 
@@ -11503,27 +11493,6 @@ function updateDriveHoursWidget(hoursLeft, maxHours) {
   // Label
   label.textContent = lang === 'es' ? 'HORAS DE MANEJO' : 'DRIVING LEFT';
 
-  // Also update mini HUD ring (in the compact bubble strip)
-  const hudArc  = document.getElementById('hudDhArc');
-  const hudText = document.getElementById('fmDriveLeft');
-  const hudCell = document.getElementById('hudManejoCell');
-  if (hudArc) {
-    hudArc.style.stroke = arcColor;
-    const hudPct  = Math.max(0, Math.min(1, hoursLeft / Math.max(1, maxHours)));
-    const hudDash = hudPct * 226.19; // r=36, circumference = 2π×36 ≈ 226.19
-    hudArc.setAttribute('stroke-dasharray', `${hudDash.toFixed(1)} 226`);
-  }
-  if (hudText) {
-    const tm = Math.round(hoursLeft * 60);
-    const hh = Math.floor(tm / 60), mm = tm % 60;
-    hudText.textContent = hh > 0 ? `${hh}h${mm > 0 ? ' ' + mm + 'm' : ''}` : `${mm}m`;
-    hudText.style.color = arcColor;
-  }
-  // Color-code the HUD cell border to match severity
-  if (hudCell) {
-    hudCell.classList.toggle('warn',     isWarn && !isCritical);
-    hudCell.classList.toggle('critical', isCritical);
-  }
   // Actualizar también el dashboard HOS si está visible
   if (document.getElementById('hosDashScreen')?.style.display !== 'none') {
     updateHosDashboard(hoursLeft, maxHours);
@@ -11622,17 +11591,11 @@ function updateSpeedometer(mph) {
     }
   }
 
-  // Update the inline speed sign (below speed limit sign)
-  const mySpeedNum = document.getElementById('mssMySpeedNum');
-  const mySpeedSign = document.getElementById('mssMySpeed');
-  if (mySpeedNum) mySpeedNum.textContent = Math.round(mph);
   const over = (currentTruckSpeedLimit != null) && (mph > (currentTruckSpeedLimit + 0.5));
-  if (mySpeedSign) mySpeedSign.classList.toggle('warn', !!over);
 
   // Actualizar panel de velocidad del dashboard (mini mapa overlay)
   // NOTA: debe ir ANTES del return por speedoVisible para que siempre se actualice
   const _dashNumEl  = document.getElementById('dashSpeedNum');
-  const _dashArcEl  = document.getElementById('dashSpeedoArc');
   const _dashLimEl  = document.getElementById('dashLimitNum');
   const _dashLimSign = document.getElementById('dashSpeedLimitSign');
   if (_dashNumEl) {
@@ -11660,38 +11623,6 @@ function updateSpeedometer(mph) {
     }
   }
 
-  if (!speedoVisible) return;
-  const num = document.getElementById('speedoNum');
-  const statusBadge = document.getElementById('speedoStatus');
-  const widget = document.getElementById('speedometerWidget');
-
-  num.textContent = Math.round(mph);
-  const moving = mph >= 8;
-
-  // Drive-hours widget: scale up when driving, scale down when stopped
-  const dhwSpd = document.getElementById('driveHoursWidget');
-  if (dhwSpd && moving && !wasMoving) {
-    dhwSpd.classList.add('boost');
-    setTimeout(() => dhwSpd.classList.remove('boost'), 1200);
-  }
-  wasMoving = moving;
-
-  // Two-box widget: color the speed number
-  if (widget) widget.classList.toggle('over-limit', !!over);
-  if (num) num.style.color = over ? '#ef4444' : (moving ? '#000' : '#6b7280');
-
-  if (moving) {
-    if (statusBadge) {
-      statusBadge.textContent = over ? (lang === 'es' ? '⚠ EXCESO' : '⚠ OVER LIMIT')
-                                     : (lang === 'es' ? '🚛 MANEJANDO' : '🚛 DRIVING');
-      statusBadge.className = 'speedo-status ' + (over ? 'over-speed' : 'moving');
-    }
-  } else {
-    if (statusBadge) {
-      statusBadge.textContent = lang === 'es' ? '⏸ DETENIDO' : '⏸ STOPPED';
-      statusBadge.className = 'speedo-status';
-    }
-  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -12411,18 +12342,6 @@ async function fetchRoadSpeedLimit(lat, lon) {
       if (mph && mph >= 5 && mph <= 120) {
         if (mph !== currentTruckSpeedLimit) {
           currentTruckSpeedLimit = mph;
-          const unit = isMetric ? 'km/h' : 'mph';
-          const num     = document.getElementById('mssNum');
-          const diff    = document.getElementById('mssDiff');
-          const mssSign = document.getElementById('mssSign');
-          const slNum   = document.getElementById('slNum');
-          if (num)  num.textContent  = mph;
-          if (slNum) slNum.textContent = mph;
-          const _sln = document.getElementById('speedoLimitNum'); if (_sln) _sln.textContent = mph;
-          if (diff) diff.textContent = `Road limit · ${mph} ${unit}`;
-          if (mssSign) { mssSign.classList.remove('new'); void mssSign.offsetWidth; mssSign.classList.add('new'); }
-          document.getElementById('mapSpeedSign')?.classList.add('visible');
-          document.getElementById('speedLimitWidget')?.classList.add('visible');
           const _dl = document.getElementById('dashLimitNum');
           if (_dl) _dl.textContent = mph;
         }
@@ -12891,29 +12810,6 @@ function applyLang() {
   document.getElementById('darkBtn').textContent = '🌙 ' + t('dark');
   document.getElementById('drivesTabBtn').innerHTML = `${t('business')} <span id="drivesCount">${savedDrives.length}</span>`;
   document.getElementById('langVal').textContent = lang === 'en' ? 'English' : 'Español';
-  const swt = document.getElementById('settSecSpeedWidget');
-  if (swt) swt.textContent = (lang==='es') ? 'Widget de Velocidad' : 'Speed Widget';
-  const swTitle = document.getElementById('speedWidgetTitle');
-  if (swTitle) swTitle.textContent = (lang==='es') ? 'Widget Límite de Velocidad' : 'Speed Limit Widget';
-  const swDesc = document.getElementById('speedWidgetDesc');
-  if (swDesc) swDesc.textContent = (lang==='es') ? 'Arrastra el widget para colocarlo. Se guarda automáticamente.' : 'Drag the widget to place it. This is saved automatically.';
-  const swReset = document.getElementById('speedWidgetResetBtn');
-  if (swReset) swReset.textContent = (lang==='es') ? 'Restablecer' : 'Reset Position';
-  const swCenter = document.getElementById('speedWidgetCenterBtn');
-  if (swCenter) swCenter.textContent = (lang==='es') ? 'Centrar' : 'Center';
-
-  const stt = document.getElementById('settSecTruckIcon');
-  if (stt) stt.textContent = (lang==='es') ? 'Icono del Camión' : 'Truck Icon';
-  const tiTitle = document.getElementById('truckIconTitle');
-  if (tiTitle) tiTitle.textContent = (lang==='es') ? 'Icono del camión en el mapa' : 'Truck marker icon';
-  const tiDesc = document.getElementById('truckIconDesc');
-  if (tiDesc) tiDesc.textContent = (lang==='es') ? 'Elige un icono o sube una foto. Esto cambia el camión en el mapa de ruta.' : 'Choose an icon or upload your own photo. This changes the truck marker on the route map.';
-  const tp = document.getElementById('truckPickerLbl');
-  if (tp) tp.textContent = (lang==='es') ? 'Elegir' : 'Choose';
-  const tu = document.getElementById('truckUploadLbl');
-  if (tu) tu.textContent = (lang==='es') ? 'Subir foto' : 'Upload photo';
-  const tr = document.getElementById('truckResetBtn');
-  if (tr) tr.textContent = (lang==='es') ? 'Restablecer' : 'Reset';
   populateCountrySelects();
   renderDrives();
   renderSummary();
@@ -14451,15 +14347,7 @@ function closeRouteDetail() {
 }
 
 function renderSummary() {
-  const miles = savedDrives.reduce((a,d) => a+(d.distance||0), 0);
-  const val = savedDrives.reduce((a,d) => a+parseFloat(d.value||0), 0);
-  const sd = document.getElementById('sumDrives');   if (sd) sd.textContent = savedDrives.length;
-  const sm = document.getElementById('sumMiles');    if (sm) sm.textContent = miles.toLocaleString();
-  const sv = document.getElementById('sumValue');    if (sv) sv.textContent = '$' + val.toFixed(0);
-  const ss = document.getElementById('sumStatus');   if (ss) ss.textContent = savedDrives.length ? t('status100') : t('noRoutes');
-  const sdc = document.getElementById('sumDesc');    if (sdc) sdc.textContent = savedDrives.length ? t('allLogged') : t('planRoute');
-  const sendReportEl = document.getElementById('sendReportBtn');
-  if (sendReportEl) sendReportEl.style.display = savedDrives.length ? 'flex' : 'none';
+  // La tarjeta de resumen (sumDrives/sumMiles/...) fue eliminada; no-op.
 }
 
 
@@ -14837,20 +14725,6 @@ function updateFixedTruckIcon(isMoving, overLimit, heading) {
   const _arrowDeg = (typeof fmHeadingUpMode !== 'undefined' && fmHeadingUpMode) ? 0 : ((heading != null && heading >= 0) ? heading : 0);
   if (arrow) arrow.style.transform = `rotate(${_arrowDeg}deg)`;
 
-  // ── Update HUD-embedded truck icon (#mapHudTruck) ───────────
-  const hudInner  = document.getElementById('mapHudInner');
-  const hudCircle = document.getElementById('mapHudCircle');
-  const hudArrow  = document.getElementById('mapHudArrow');
-  if (hudInner)  hudInner.innerHTML = iconHtml;
-  if (hudCircle) {
-    hudCircle.style.borderColor = borderColor;
-    hudCircle.style.boxShadow   = `0 0 0 3px ${glowColor}`;
-  }
-  if (hudArrow) {
-    hudArrow.style.borderBottomColor = borderColor;
-    hudArrow.style.transform = `rotate(${_arrowDeg}deg)`;
-  }
-
   // ── Rotate compass rose (counter-rotation keeps N pointing north) ─
   const compassEl = document.getElementById('mapCompassWidget');
   if (compassEl && heading != null && heading >= 0) {
@@ -15210,16 +15084,6 @@ function b30UpdateTimer() {
   if (!b30BreakStart) return;
   const elapsed = (Date.now() - b30BreakStart) / 1000;
   const remaining = Math.max(0, B30_BREAK_MIN - elapsed);
-  const pct = Math.min(100, (elapsed / B30_BREAK_MIN) * 100);
-  const m = Math.floor(remaining / 60);
-  const s = Math.floor(remaining % 60);
-  const display = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-
-  const countEl = document.getElementById('breakTimerCount');
-  const barEl   = document.getElementById('breakTimerBar');
-  const lblEl   = document.getElementById('breakTimerLabel');
-  const overlay = document.getElementById('breakTimerOverlay');
-  if (!countEl) return;
 
   // Actualizar ring principal del dashboard con el countdown
   updateDashRingBreak(remaining, elapsed);
@@ -15232,13 +15096,6 @@ function b30UpdateTimer() {
     _hosBreakStopName = null; _hosBreakStopFetching = false;
     b30ViolShown = false;
     if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
-
-    countEl.textContent = '✓ 30:00';
-    countEl.style.color = '#10b981';
-    if (barEl) { barEl.style.width = '100%'; barEl.style.background = '#10b981'; }
-    if (lblEl) lblEl.textContent = '¡Pausa completada! Puedes continuar.';
-    const inner = overlay.querySelector('div');
-    if (inner) { inner.style.borderColor = '#10b981'; inner.style.animation = 'none'; }
 
     // Restaurar el ring principal a horas de manejo
     setTimeout(b30RestoreMainRing, 3000);
@@ -15260,38 +15117,15 @@ function b30UpdateTimer() {
     _autoStopSecs = 0;
     _vehicleStopStartMs = null;
     localStorage.removeItem('hos_stop_start');
-    document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
 
-    // Ocultar overlay después de 8 segundos
-    setTimeout(() => {
-      const ov = document.getElementById('breakTimerOverlay');
-      if (ov) ov.style.display = 'none';
-      b30InBreak = false;
-    }, 8000);
-
-  } else if (remaining > 0) {
-    countEl.textContent = display;
-    countEl.style.color = remaining < 300 ? '#34d399' : '#fff';
-    if (barEl) barEl.style.width = pct + '%';
-    // Actualizar contador hacia arriba (cuánto llevas)
-    const done = Math.floor(elapsed / 60);
-    const doneSec = Math.floor(elapsed % 60);
-    if (lblEl) lblEl.textContent = `Llevas ${String(done).padStart(2,'0')}:${String(doneSec).padStart(2,'0')} — Faltan ${display}`;
+    setTimeout(() => { b30InBreak = false; }, 8000);
   }
 }
 
 function b30ShowBreakTimer() {
-  const overlay = document.getElementById('breakTimerOverlay');
-  if (!overlay || b30Complete) return;
+  if (b30Complete) return;
   b30InBreak = true;
   b30BreakStart = Date.now();
-  overlay.style.display = 'block';
-  const inner = overlay.querySelector('div');
-  if (inner) inner.classList.add('bto-pulse');
-
-  // Ocultar banner de violación si está visible
-  const viol = document.getElementById('breakViolationBanner');
-  if (viol) viol.style.display = 'none';
   b30ViolShown = false;
 
   // Inicializar el ring principal en modo break (30:00 / 0%)
@@ -15415,8 +15249,6 @@ function b30Check(isMoving) {
     // ── Violación: 8 horas sin pausa, sigue manejando ──────
     if (b30DriveSecs >= B30_DRIVE_LIMIT && !b30ViolShown) {
       b30ViolShown = true;
-      const viol = document.getElementById('breakViolationBanner');
-      if (viol) viol.style.display = 'block';
       showToast('danger','⚖️',
         '⚖️ VIOLACIÓN HOS',
         'Multa $1,000–$16,000. Detente AHORA.',
@@ -15436,10 +15268,6 @@ function b30Check(isMoving) {
       b30ViolShown = false; b30InBreak = false; b30BreakStart = null;
       _hosBreakStopName = null; _hosBreakStopFetching = false;
       if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
-      const _ov = document.getElementById('breakTimerOverlay');
-      if (_ov) _ov.style.display = 'none';
-      const _viol = document.getElementById('breakViolationBanner');
-      if (_viol) _viol.style.display = 'none';
     }
 
     // Si lleva suficiente tiempo manejando, mostrar temporizador de pausa
@@ -15447,10 +15275,8 @@ function b30Check(isMoving) {
     if (needsBreak && !b30InBreak && !b30Complete && b30StopSecs >= 300) {
       b30ShowBreakTimer();
     }
-    // Ocultar banner de violación mientras está parado
+    // Ocultar violación mientras está parado
     if (b30ViolShown) {
-      const viol = document.getElementById('breakViolationBanner');
-      if (viol) viol.style.display = 'none';
       b30ViolShown = false;
     }
   }
@@ -15884,16 +15710,6 @@ function _showRestInManejoCircle(restRemaining, restPct) {
     _updateSleepOverlayTime();
   }
 
-  // Map HUD MANEJO ring (during navigation)
-  const fmDrLbl = document.getElementById('fmDriveLbl');
-  if (fmDrLbl) { fmDrLbl.textContent = done ? 'MANEJO' : '😴 REST'; fmDrLbl.style.color = done ? '' : '#f97316'; }
-  const hudDhArcEl = document.getElementById('hudDhArc');
-  if (hudDhArcEl) { hudDhArcEl.setAttribute('stroke', arcCol); hudDhArcEl.setAttribute('stroke-dasharray', `${restPct * 226} 226`); }
-  const hudManVal = document.getElementById('fmDriveLeft');
-  if (hudManVal) {
-    const h = Math.floor(restRemaining), m = Math.round((restRemaining - h) * 60);
-    hudManVal.textContent = done ? '11h' : (h > 0 ? `${h}h` : `${m}m`);
-  }
 }
 
 function _restoreManejo() {
@@ -15911,19 +15727,13 @@ function _restoreManejo() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function _clearAllAutoBlinkClasses() {
-  document.getElementById('dashTabRest')?.classList.remove('dash-tab-break-warn');
-  document.getElementById('dashTabWait')?.classList.remove('dash-tab-wait-pulse');
-  document.getElementById('dashTabOff')?.classList.remove('dash-tab-sleeper-pulse');
+  // Las pestañas de estado del dashboard (dashTab*) fueron eliminadas; no-op.
 }
 
 function autoUpdateDashStatus(isMoving) {
   const now   = Date.now();
   const delta = _autoStopLastTs ? Math.min((now - _autoStopLastTs) / 1000, 30) : 0;
   _autoStopLastTs = now;
-
-  const restBtn    = document.getElementById('dashTabRest');
-  const waitBtn    = document.getElementById('dashTabWait');
-  const sleeperBtn = document.getElementById('dashTabOff');
 
   // ¿Le corresponde la pausa obligatoria de 30 min?
   const breakDue = !b30Complete &&
@@ -15955,9 +15765,6 @@ function autoUpdateDashStatus(isMoving) {
     // Siempre → Conduciendo cuando hay movimiento
     if (_dashCurrentStatus !== 'driving') setDashStatus('driving');
 
-    // Parpadeo rojo en Descanso si la pausa ya es obligatoria
-    if (restBtn && breakDue) restBtn.classList.add('dash-tab-break-warn');
-
   } else {
     // ── Vehículo detenido ─────────────────────────────────────
     // Registrar el primer momento de parada
@@ -15968,9 +15775,6 @@ function autoUpdateDashStatus(isMoving) {
 
     // Acumular tiempo detenido
     _autoStopSecs += delta;
-
-    // Quitar parpadeo rojo (no aplica estando parado)
-    restBtn?.classList.remove('dash-tab-break-warn');
 
     // ── Verificar proactivamente si ya se cumplieron ≥10h de parada ──
     const stopHrsNow = (now - _vehicleStopStartMs) / 3600000;
@@ -15994,18 +15798,12 @@ function autoUpdateDashStatus(isMoving) {
     // ── SIN pausa pendiente → Espera después de 2 min parado ──
     const noBreakPending = b30Complete || !breakDue;
     if (noBreakPending && _autoStopSecs >= 120) {
-      if (waitBtn) waitBtn.classList.add('dash-tab-wait-pulse');
       if (_dashCurrentStatus === 'driving') setDashStatus('wait');
-    } else {
-      waitBtn?.classList.remove('dash-tab-wait-pulse');
     }
 
     // ── 30 min parado → Sleeper parpadea índigo ───────────────
     if (_autoStopSecs >= _AUTO_SLEEP_THRESHOLD) {
-      if (sleeperBtn) sleeperBtn.classList.add('dash-tab-sleeper-pulse');
       if (_dashCurrentStatus !== 'off') setDashStatus('off');
-    } else {
-      sleeperBtn?.classList.remove('dash-tab-sleeper-pulse');
     }
   }
 }
@@ -16435,29 +16233,6 @@ function fmStartTracking() {
     const _sv = document.getElementById('fmSpeedVal');
     if (_sv) { _sv.textContent = gpsSpeed; _sv.style.color = isMoving ? '#10b981' : '#9ca3af'; }
     updateSpeedometer(gpsSpeed);
-
-    const chip = document.getElementById('fmStatusChip');
-    if (chip) {
-      chip.textContent  = isMoving ? '🚛 ' + (lang==='es'?'Manejando':'Driving') : '⏸ ' + (lang==='es'?'Detenido':'Stopped');
-      chip.style.background = isMoving ? 'rgba(16,185,129,0.2)' : 'rgba(107,114,128,0.2)';
-      chip.style.color      = isMoving ? '#10b981' : '#9ca3af';
-    }
-
-    // HUD MANEJO ring — scale up when truck is moving
-    const _hudCell = document.getElementById('hudManejoCell');
-    if (_hudCell) _hudCell.classList.toggle('driving', isMoving);
-
-    { const _el = document.getElementById('fmPct'); if (_el) _el.textContent = pct + '%'; }
-    { const _el = document.getElementById('fmBar'); if (_el) _el.style.width = pct + '%'; }
-    { const _hp = document.getElementById('mapHudPct'); if (_hp) _hp.textContent = pct + '%'; }
-    { const _hb = document.getElementById('mapHudBar'); if (_hb) _hb.style.width = pct + '%'; }
-    { const _el = document.getElementById('fmEta'); if (_el) _el.textContent = fmtH(etaH); }
-    { const _el = document.getElementById('fmRem'); if (_el) _el.textContent = remaining.toFixed(1) + ' mi'; }
-    // Update outer-ring arcs for LLEGADA and RESTANTE
-    const _etaArc = document.getElementById('hudEtaArc');
-    if (_etaArc) { const f = pct / 100; _etaArc.setAttribute('stroke-dasharray', `${f * 226} 226`); }
-    const _remArc = document.getElementById('hudRemArc');
-    if (_remArc) { const f = Math.max(0, remaining / Math.max(1, routeDistance)); _remArc.setAttribute('stroke-dasharray', `${f * 226} 226`); }
 
     // ── Miles remaining widget on map ────────────────────────
     const mrWidget = document.getElementById('milesRemainingWidget');
@@ -17022,8 +16797,7 @@ function showHosDashboard() {
 
   // Ocultar widgets flotantes que tienen z-index mayor al dashboard
   ['milesRemainingWidget','driveHoursWidget','speedometerWidget',
-   'fuelWidget','speedLimitWidget','mapSpeedSign','incidentPanel',
-   'breakTimerOverlay','breakViolationBanner'].forEach(id => {
+   'fuelWidget','incidentPanel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.setProperty('display','none','important');
   });
@@ -18256,12 +18030,6 @@ function setDashStatus(status) {
     localStorage.setItem('hos_shift_start', hosShiftStartTime);
   }
   update14hCircle();
-  const tabs = {
-    driving: document.getElementById('dashTabDriving'),
-    rest:    document.getElementById('dashTabRest'),
-    wait:    document.getElementById('dashTabWait'),
-    off:     document.getElementById('dashTabOff')
-  };
   const labels = {
     driving: 'CONDUCIENDO',
     rest:    'DESCANSO',
@@ -18274,23 +18042,6 @@ function setDashStatus(status) {
     wait:    '#f59e0b',
     off:     '#6366f1'
   };
-  Object.keys(tabs).forEach(k => {
-    if (!tabs[k]) return;
-    if (k === status) {
-      tabs[k].classList.add('dash-tab-active');
-      tabs[k].style.background = colors[k];
-      tabs[k].style.borderColor = colors[k];
-    } else {
-      tabs[k].classList.remove('dash-tab-active');
-      tabs[k].style.background = '';
-      tabs[k].style.borderColor = '';
-    }
-  });
-  const statusEl = document.getElementById('dashStatusLabel');
-  if (statusEl) {
-    statusEl.textContent = labels[status] || status;
-    statusEl.style.color  = colors[status] || '#10b981';
-  }
   // Update main status pill
   const mainLbl = document.getElementById('dashMainStatusLabel');
   const mainDot = document.getElementById('dashStatusDot');
