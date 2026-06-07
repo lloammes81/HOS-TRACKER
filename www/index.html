@@ -94,25 +94,11 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; height: -webkit-fill-available; -webkit-text-size-adjust: 100%; }
   /* ── TIPOGRAFÍA MILITAR GLOBAL ──
-     Todo el texto de la app usa estilo táctico:
-       • Bebas Neue → títulos, botones, etiquetas
-       • Share Tech Mono → cuerpo, valores, inputs */
-  body, body *, input, textarea, select, button {
-    font-family: "Share Tech Mono", "Courier New", monospace !important;
-    letter-spacing: .3px;
-  }
-  h1, h2, h3, h4, h5, h6,
-  .title, .card-title, .sect-title, .scan-topbar-title,
-  .tpb-title, .tool-page-title, .restr-sect-title, .restr-section-title,
-  .hud-ring-lbl, .results-k, .sched .t, .sett-label, .sett-group-title,
-  button:not(.lb-help-btn):not(.scan-top-btn):not(.scan-mode-btn):not(.scan-capture-btn),
-  .tab-btn, .btn, .smallbtn, .iconbtn,
-  [class*="title"], [class*="Title"] {
-    font-family: "Bebas Neue", "Share Tech Mono", monospace !important;
-    letter-spacing: 1.5px !important;
-    text-transform: uppercase;
-  }
+     Share Tech Mono en body → herencia natural (sin body * que recalcula todo).
+     Bebas Neue sólo en los selectores específicos que lo necesitan. */
   body {
+    font-family: "Share Tech Mono", "Courier New", monospace;
+    letter-spacing: .3px;
     background: var(--bg);
     color: var(--text);
     min-height: 100%;
@@ -125,6 +111,13 @@
     /* Prevent overscroll bounce showing white bg */
     overscroll-behavior: none;
   }
+  /* Bebas Neue en selectores específicos — herencia directa, sin wildcard */
+  h1, h2, h3, h4, h5, h6,
+  .tab-btn, .btn, .smallbtn, .iconbtn,
+  .results-k, .hud-ring-lbl, .sett-label, .sett-group-title,
+  .scan-topbar-title, .tpb-title, .restr-section-title, .restr-sect-title,
+  .sched .t, .k, .v { font-family: "Bebas Neue", "Share Tech Mono", monospace; letter-spacing: 1.5px; }
+
   /* Dark mode — atmospheric truck-at-night background */
   body.dark {
     background-color: #06090f;
