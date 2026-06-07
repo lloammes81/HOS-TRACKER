@@ -5437,16 +5437,25 @@ body.dark #fullMap .leaflet-tile-pane {
    📄  DOCUMENT SCANNER SHEET
 ══════════════════════════════════════════════════════════ */
 #scannerSheet {
-  position:fixed; top:0; left:0; right:0; bottom:0;
-  width:100vw; height:100vh; height:100dvh;
-  z-index:2147483000;
+  position:fixed !important;
+  top:0 !important; left:0 !important; right:0 !important; bottom:0 !important;
+  width:100vw !important;
+  height:100vh !important; height:100dvh !important;
+  margin:0 !important; padding:0 !important;
+  z-index:2147483647 !important;
   background:#000;
-  display:none;flex-direction:column;
+  display:none; flex-direction:column;
+  transform:none !important;
 }
-#scannerSheet.open { display:flex; }
+#scannerSheet.open { display:flex !important; }
+/* Oculta CUALQUIER barra/overlay del dash mientras el escáner está abierto */
 body.scanner-open .tab-bar,
 body.scanner-open #bottomNav,
-body.scanner-open .bottom-nav { display:none !important; }
+body.scanner-open .bottom-nav,
+body:has(#scannerSheet.open) .tab-bar,
+body:has(#scannerSheet.open) #bottomNav,
+body:has(#scannerSheet.open) .bottom-nav,
+body:has(#scannerSheet.open) .App > *:not(#scannerSheet) { visibility:hidden !important; }
 
 /* ── Top bar ── */
 .scan-topbar {
