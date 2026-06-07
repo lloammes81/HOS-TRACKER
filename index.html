@@ -5437,12 +5437,16 @@ body.dark #fullMap .leaflet-tile-pane {
    📄  DOCUMENT SCANNER SHEET
 ══════════════════════════════════════════════════════════ */
 #scannerSheet {
-  position:fixed; inset:0;
-  z-index:35000;
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  width:100vw; height:100vh; height:100dvh;
+  z-index:2147483000;
   background:#000;
   display:none;flex-direction:column;
 }
 #scannerSheet.open { display:flex; }
+body.scanner-open .tab-bar,
+body.scanner-open #bottomNav,
+body.scanner-open .bottom-nav { display:none !important; }
 
 /* ── Top bar ── */
 .scan-topbar {
@@ -26644,6 +26648,7 @@ async function openScannerSheet() {
   // mismo patrón que el logbook, que sí funciona.
   if (sheet && sheet.parentElement !== document.body) document.body.appendChild(sheet);
   sheet.classList.add('open');
+  document.body.classList.add('scanner-open');
   document.body.style.overflow = 'hidden';
   document.getElementById('scanCameraView').style.display = 'flex';
   document.getElementById('scanReview').classList.remove('show');
@@ -26656,6 +26661,7 @@ async function openScannerSheet() {
 function closeScannerSheet() {
   stopScanCamera();
   document.getElementById('scannerSheet').classList.remove('open');
+  document.body.classList.remove('scanner-open');
   document.body.style.overflow = '';
   scanPages = []; scanActiveIdx = 0;
   updateScanBadge();
