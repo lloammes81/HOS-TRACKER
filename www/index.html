@@ -15177,19 +15177,6 @@ function closeFullMapScreen() {
 
 const fmHeadingUpMode = true; // always heading-up — locked
 
-function _updateCompassBtn() {
-  const btn = document.getElementById('compassBtn');
-  if (!btn) return;
-  btn.innerHTML = fmHeadingUpMode
-    ? '<span style="font-size:17px">🧭</span><span style="font-size:9px;font-weight:800;letter-spacing:.3px;margin-top:2px;line-height:1">RUTA</span>'
-    : '<span style="font-size:17px">🔼</span><span style="font-size:9px;font-weight:800;letter-spacing:.3px;margin-top:2px;line-height:1">NORTE</span>';
-  btn.style.background    = fmHeadingUpMode ? 'rgba(16,185,129,0.3)' : 'rgba(15,23,42,0.88)';
-  btn.style.borderColor   = fmHeadingUpMode ? 'rgba(16,185,129,0.6)' : 'rgba(255,255,255,0.12)';
-  btn.style.display       = 'flex';
-  btn.style.flexDirection = 'column';
-  btn.style.alignItems    = 'center';
-  btn.title = fmHeadingUpMode ? 'Vista dirección de viaje (toca para Norte)' : 'Vista norte arriba (toca para Ruta)';
-}
 
 // ── calcFollowCenter ────────────────────────────────────────────────────────
 // Returns a map center offset so the truck sits in the lower third of the
@@ -16683,9 +16670,6 @@ function fmStartTracking() {
       ? Math.max(0, Math.min(window._hosTracker.driveLeft(), driveMax))
       : Math.max(0, driveMax - elapsed);
     _hosCurrentDriveLeft = driveLeft;
-    const driveEl = document.getElementById('fmDriveLeft');
-    driveEl.textContent = fmtH(driveLeft);
-    driveEl.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
     // ETA inteligente HOS + próxima parada (banner del HUD)
     _updateFmSmartInfo(etaH, remaining, driveLeft);
     // Update circular widget on the map
@@ -16803,12 +16787,6 @@ function fmStartTracking() {
     const cycleLeft = window._hosTracker
       ? Math.max(0, window._hosTracker.cycleLeft())
       : Math.max(0, parseFloat(document.getElementById('hoursInput').value) - elapsed);
-    const cyEl = document.getElementById('fm70Left');
-    cyEl.textContent = fmtH(cycleLeft);
-    cyEl.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#a78bfa';
-    // Update outer-ring arc for 70 HRS
-    const _70arcGps = document.getElementById('hud70Arc');
-    if (_70arcGps) { const cycMax = parseFloat(document.getElementById('hoursInput').value) || 70; const f = Math.max(0, cycleLeft / cycMax); const c = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#a78bfa'; _70arcGps.setAttribute('stroke-dasharray', `${f * 226} 226`); _70arcGps.setAttribute('stroke', c); }
     // Update hero KPI rings
     const _cycMax = parseFloat(document.getElementById('hoursInput').value) || 70;
     updateHeroKPIs(driveLeft, driveMax, cycleLeft, _cycMax);
@@ -20723,18 +20701,6 @@ function toggleMapLeftPanel(forceHide) {
   if (!hiding) {
     _leftPanelAutoHideTimer = setTimeout(() => toggleMapLeftPanel(true), 5000);
   }
-}
-function _autoHideLeftPanelOnOpen() {
-  // Al abrir el mapa: mostrar controles 3 segundos, luego ocultar
-  const ctrl = document.getElementById('mapLeftControls');
-  const btn  = document.getElementById('mapLeftPanelBtn');
-  if (!ctrl || !btn) return;
-  // Mostrar
-  ctrl.classList.remove('panel-hidden');
-  btn.classList.add('open');
-  btn.textContent = '‹';
-  if (_leftPanelAutoHideTimer) clearTimeout(_leftPanelAutoHideTimer);
-  _leftPanelAutoHideTimer = setTimeout(() => toggleMapLeftPanel(true), 3500);
 }
 
 function toggleDashSideMenu() {
