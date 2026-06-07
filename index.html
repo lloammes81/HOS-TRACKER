@@ -7611,11 +7611,6 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
 <script>
 (function(){
-  function _nameColor(name) {
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-    return 'hsl(' + (Math.abs(h) % 360) + ',55%,45%)';
-  }
   function openDrawer() {
     var dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
     var nameEl = document.getElementById('drawerName');
@@ -9852,25 +9847,7 @@ function _addTrafficToMap(mapInst, layerRef) {
   return L.tileLayer(_TRAFFIC_URL, _TRAFFIC_OPTS).addTo(mapInst);
 }
 
-function _removeTrafficFromMap(mapInst, layerRef) {
-  if (layerRef && mapInst) { try { mapInst.removeLayer(layerRef); } catch {} }
-  return null;
-}
 
-function toggleTrafficLayer() {
-  fmTrafficEnabled = !fmTrafficEnabled;
-  localStorage.setItem('hos_traffic', fmTrafficEnabled);
-  _syncTrafficBtn();
-  if (fmTrafficEnabled) {
-    fmTrafficLayer    = _addTrafficToMap(fmMapInst,      fmTrafficLayer);
-    miniTrafficLayer  = _addTrafficToMap(miniMap,        miniTrafficLayer);
-    hosMiniTrafficLayer = _addTrafficToMap(hosMinimapInst, hosMiniTrafficLayer);
-  } else {
-    fmTrafficLayer    = _removeTrafficFromMap(fmMapInst,      fmTrafficLayer);
-    miniTrafficLayer  = _removeTrafficFromMap(miniMap,        miniTrafficLayer);
-    hosMiniTrafficLayer = _removeTrafficFromMap(hosMinimapInst, hosMiniTrafficLayer);
-  }
-}
 
 function _syncTrafficBtn() {
   const btn = document.getElementById('trafficBtn');
@@ -10117,23 +10094,7 @@ let _camBtScanTimer   = null;
 /* ── helpers ─────────────────────────────────────────────── */
 function _camEl(id) { return document.getElementById(id); }
 
-function _camShowOverlay(show, msg) {
-  const ov = _camEl('camOverlay');
-  if (!ov) return;
-  ov.style.display = show ? 'flex' : 'none';
-  if (msg) ov.innerHTML = `<span style="font-size:22px">📷</span><span>${msg}</span>`;
-}
 
-function _camSetLive(live) {
-  const dot  = _camEl('camLiveDot');
-  const wdot = _camEl('camStatusDot');
-  const txt  = _camEl('camStatusTxt');
-  if (dot)  { dot.className  = 'cam-live-dot' + (live ? ' live' : ''); }
-  if (wdot) { wdot.className = 'cam-status-dot' + (live ? ' connected' : ''); }
-  if (txt)  txt.textContent  = live ? '● Dash cam conectada y activa' : 'Sin dash cam conectada';
-  _camConnected = live;
-  _updateCamToolBtn();
-}
 
 function updateCamWidget() {
   const w = _camEl('cameraWidget');
@@ -10158,149 +10119,17 @@ function selectCamType(type) {
 }
 
 /* ── Settings: save IP / protocol ──────────────────────── */
-function saveCamIp() {
-  const v = (_camEl('camIpInput') || {}).value || '';
-  const p = (_camEl('camProtoSelect') || {}).value || 'mjpeg';
-  _camIpUrl = v; _camProto = p;
-  localStorage.setItem('cam_ip_url', v);
-  localStorage.setItem('cam_proto', p);
-}
 
 /* ── Settings: preview toggle ──────────────────────────── */
-function toggleCamPreviewSetting(btn) {
-  _camPreviewOn = !_camPreviewOn;
-  localStorage.setItem('cam_preview', _camPreviewOn);
-  if (btn) btn.classList.toggle('on', _camPreviewOn);
-  updateCamWidget();
-}
 
 /* ── Device camera removed — dash cam only (WiFi/BT) ───── */
 
 /* ── WiFi / IP camera ───────────────────────────────────── */
-function connectWifiCamera() {
-  const ip    = (_camEl('camIpInput') || {}).value?.trim();
-  const proto = (_camEl('camProtoSelect') || {}).value || 'mjpeg';
-  if (!ip) { showToast && showToast('warning','🌐','IP requerida','Ingresa la dirección IP de tu cámara.'); return; }
-
-  let url;
-  if (proto === 'mjpeg')     url = `http://${ip}/?action=stream`;
-  else if (proto === 'jpg')  url = `http://${ip}/?action=snapshot`;
-  else                       url = `http://${ip}`;  // HLS — video src
-
-  const imgEl = _camEl('camImg');
-  const vidEl = _camEl('camVideo');
-  const btn   = _camEl('camWifiBtn');
-
-  if (_camConnected) { disconnectCamera(); return; }
-
-  if (proto === 'hls' || proto === 'mjpeg_vid') {
-    if (vidEl) { vidEl.src = url; vidEl.style.display = 'block'; vidEl.play().catch(()=>{}); }
-    if (imgEl) imgEl.style.display = 'none';
-  } else if (proto === 'jpg') {
-    // poll JPEG every 500ms
-    if (imgEl) { imgEl.style.display = 'block'; imgEl.src = url + '&_=' + Date.now(); }
-    if (vidEl) vidEl.style.display = 'none';
-    window._camJpgPoll = setInterval(() => {
-      if (imgEl && _camConnected) imgEl.src = url + '&_=' + Date.now();
-    }, 500);
-  } else {
-    // MJPEG: browser renders directly from img src
-    if (imgEl) { imgEl.style.display = 'block'; imgEl.src = url; }
-    if (vidEl) vidEl.style.display = 'none';
-  }
-
-  imgEl && (imgEl.onerror = () => { _camShowOverlay(true,'Sin señal · verifica IP'); _camSetLive(false); });
-  imgEl && (imgEl.onload  = () => { _camShowOverlay(false); _camSetLive(true); });
-  _camShowOverlay(false);
-  _camSetLive(true);
-  updateCamWidget();
-  if (btn) { btn.textContent = '⏹ Desconectar'; btn.classList.add('cam-danger'); }
-  const title = _camEl('camWidgetTitle');
-  if (title) title.textContent = 'DASH CAM · ' + ip.split(':')[0];
-}
 
 /* ── Bluetooth scan for cameras ────────────────────────── */
-async function startCamBtScan() {
-  const btn  = _camEl('camBtScanBtn');
-  const list = _camEl('camBtList');
-  if (_camBtScanActive) return;
-  _camBtScanActive = true;
-  if (btn)  { btn.textContent = '⏳ Escaneando...'; btn.disabled = true; }
-  if (list) { list.innerHTML = ''; list.style.display = 'flex'; }
 
-  const devices = [];
-  const addDevice = (id, name) => {
-    if (devices.find(d => d.id === id)) return;
-    devices.push({ id, name });
-    const item = document.createElement('div');
-    item.className = 'cam-bt-item';
-    item.innerHTML = `<span style="font-size:18px">📷</span>
-      <div class="cam-bt-item-name">${name || 'Dispositivo BT'}</div>
-      <div class="cam-bt-item-id">${id.substring(0,12)}...</div>`;
-    item.onclick = () => connectCamBtDevice(id, name);
-    if (list) list.appendChild(item);
-  };
-
-  // Native Capacitor BLE
-  const ble = await (typeof loadNativeBlePlugin === 'function' ? loadNativeBlePlugin() : Promise.resolve(null));
-  if (ble) {
-    try {
-      await ble.initialize({ androidNeverForLocation: false });
-      await ble.requestLEScan({ allowDuplicates: false }, r => {
-        const n = r.device?.name || r.localName || '';
-        if (n) addDevice(r.device?.deviceId || n, n);
-      });
-      _camBtScanTimer = setTimeout(async () => {
-        try { await ble.stopLEScan(); } catch {}
-        _camBtScanActive = false;
-        if (btn) { btn.textContent = '📶 Escanear de nuevo'; btn.disabled = false; }
-        if (!devices.length && list) list.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:4px 8px">No se encontraron dispositivos</div>';
-      }, 12000);
-    } catch(e) {
-      _camBtScanActive = false;
-      if (btn) { btn.textContent = '📶 Escanear dispositivos'; btn.disabled = false; }
-      showToast && showToast('warning','📶','Bluetooth','Activa Bluetooth para escanear cámaras.');
-    }
-  } else {
-    // Web Bluetooth API fallback
-    try {
-      const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
-      addDevice(dev.id || dev.name, dev.name || 'Cámara BT');
-    } catch(e) { /* user cancelled */ }
-    _camBtScanActive = false;
-    if (btn) { btn.textContent = '📶 Escanear de nuevo'; btn.disabled = false; }
-  }
-}
-
-function connectCamBtDevice(id, name) {
-  // BT pairing done — prompt user to connect via WiFi for video
-  const btn = _camEl('camBtScanBtn');
-  if (btn) btn.textContent = `✓ ${name} vinculado`;
-  _camSetLive(false);
-  const txt = _camEl('camStatusTxt');
-  if (txt) txt.textContent = `${name} vinculado — ingresa IP para video`;
-  // Switch to WiFi panel to finish connection
-  selectCamType('wifi');
-  showToast && showToast('success','📷',`${name} vinculado`,'Ingresa la IP de la cámara en el panel WiFi.');
-}
 
 /* ── Disconnect all ─────────────────────────────────────── */
-function disconnectCamera() {
-  if (_camStream) { _camStream.getTracks().forEach(t => t.stop()); _camStream = null; }
-  if (_camMediaRecorder && _camRecording) { try { _camMediaRecorder.stop(); } catch {} }
-  if (window._camJpgPoll) { clearInterval(window._camJpgPoll); window._camJpgPoll = null; }
-  const vid = _camEl('camVideo'); if (vid) { vid.srcObject = null; vid.src = ''; vid.style.display = 'none'; }
-  const img = _camEl('camImg');   if (img) { img.src = ''; img.style.display = 'none'; }
-  _camShowOverlay(true, 'Sin señal');
-  _camSetLive(false);
-  _camRecording = false;
-  updateCamWidget();
-  // Reset buttons
-  const db = _camEl('camDeviceBtn'); if (db) { db.textContent = '📷 Activar cámara'; db.classList.remove('cam-danger'); db.disabled = false; }
-  const wb = _camEl('camWifiBtn');   if (wb) { wb.textContent = '🌐 Conectar cámara'; wb.classList.remove('cam-danger'); }
-  const rb = _camEl('camRecBtn');    if (rb) { rb.textContent = '⏺ REC'; rb.classList.remove('recording'); }
-  const title = _camEl('camWidgetTitle'); if (title) title.textContent = 'DASH CAM';
-}
 
 /* ── Widget controls ────────────────────────────────────── */
 function toggleCamMinimize() {
@@ -10319,32 +10148,7 @@ function closeCamWidget() {
   updateCamWidget();
 }
 
-function openCameraFromTools() {
-  _camPreviewOn = true;
-  localStorage.setItem('cam_preview', 'true');
-  const t = _camEl('camPreviewToggle'); if (t) t.classList.add('on');
-  _camMinimized = false;
-  updateCamWidget();
-  if (!_camConnected && _camType === 'wifi' && _camIpUrl) {
-    connectWifiCamera();
-  }
-  _updateCamToolBtn();
-}
 
-function _updateCamToolBtn() {
-  const sub = document.getElementById('camToolSubtxt');
-  const arrow = document.getElementById('camToolArrow');
-  if (!sub || !arrow) return;
-  if (_camConnected) {
-    sub.textContent = '● En vivo — toca para ver la ventana';
-    arrow.textContent = '◉';
-    arrow.style.color = '#22d3ee';
-  } else {
-    sub.textContent = 'Ver la dash cam en vivo — WiFi o Bluetooth';
-    arrow.textContent = '›';
-    arrow.style.color = '';
-  }
-}
 
 /* ── Recording ──────────────────────────────────────────── */
 function toggleCamRecord() {
@@ -11044,22 +10848,12 @@ async function startWeatherMonitor() {
   document.getElementById('weatherToggle').classList.add('on');
 }
 
-function stopWeatherMonitor() {
-  if (weatherInterval) { clearInterval(weatherInterval); weatherInterval = null; }
-  document.getElementById('weatherWidget').classList.remove('visible');
-  document.getElementById('weatherStatusTxt').textContent = 'Off';
-  document.getElementById('weatherToggle').classList.remove('on');
-  lastWeatherLat = null; lastWeatherLon = null;
-}
 
 function toggleWeatherMonitor() {
   // Weather is always active — toggling just restarts the monitor
   if (!weatherInterval) startWeatherMonitor();
 }
 
-function showWeatherDetail() {
-  openWeatherPanel();
-}
 
 let _activePanel = null;
 
@@ -11260,9 +11054,6 @@ function _renderWeatherPanel() {
   }
 }
 
-function openNativeWeatherApp() {
-  openWeatherPanel();
-}
 
 /* ════════════════════════════════════════════════════════════
    📅  CALENDAR PANEL
@@ -11560,17 +11351,7 @@ function startBridgeDetector() {
   bridgeInterval = setInterval(checkBridges, 3 * 60 * 1000); // every 3 min
 }
 
-function stopBridgeDetector() {
-  if (bridgeInterval) { clearInterval(bridgeInterval); bridgeInterval = null; }
-  document.getElementById('bridgeInput').classList.remove('visible');
-  document.getElementById('bridgeStatusTxt').textContent = 'Off — set trailer height';
-  document.getElementById('trailerHeightRow').style.display = 'none';
-  lastBridgeLat = null; lastBridgeLon = null;
-}
 
-function toggleBridgeDetector() {
-  // Bridge detector siempre activo — no se puede desactivar
-}
 
 function adjustHeight(delta) {
   trailerHeight = Math.max(8, Math.min(18, Math.round((trailerHeight + delta) * 10) / 10));
@@ -12411,16 +12192,6 @@ let lastBorderWarnState = '';
 let lastBorderWarnCheck = 0;
 let stateBannerTimer    = null;
 
-function toggleSpeedLimit(btn) {
-  speedLimitActive = !speedLimitActive;
-  localStorage.setItem('hos_speedlimit', speedLimitActive);
-  btn.classList.toggle('on', speedLimitActive);
-  document.getElementById('speedLimitStatusTxt').textContent =
-    speedLimitActive ? 'Límite real de la vía actual' : 'Desactivado';
-  if (!speedLimitActive) {
-    document.getElementById('speedLimitWidget').classList.remove('visible');
-  }
-}
 
 function showStateBanner(name) {
   const el = document.getElementById('stateBanner');
@@ -12834,18 +12605,6 @@ let fuelStations    = [];
 let lastFuelCheck   = 0;
 let fuelMarkers     = [];
 
-function toggleFuelFinder(btn) {
-  fuelActive = !fuelActive;
-  localStorage.setItem('hos_fuel', fuelActive);
-  btn.classList.toggle('on', fuelActive);
-  document.getElementById('fuelStatusTxt').textContent =
-    fuelActive ? 'Activo durante rastreo' : 'Desactivado';
-  if (!fuelActive) {
-    document.getElementById('fuelWidget').classList.remove('visible');
-    fuelMarkers.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
-    fuelMarkers = [];
-  }
-}
 
 async function fetchCheapFuel(lat, lon) {
   if (!fuelActive) return;
@@ -13105,17 +12864,6 @@ function changeMapStyle(styleKey) {
   }
 }
 
-function toggleMapStylePanel() {
-  const panel   = document.getElementById('mapStylePanel');
-  const overlay = document.getElementById('mapStyleOverlay');
-  if (!panel) return;
-  const opening = !panel.classList.contains('visible');
-  panel.classList.toggle('visible', opening);
-  if (overlay) {
-    overlay.style.opacity        = opening ? '1' : '0';
-    overlay.style.pointerEvents  = opening ? 'all' : 'none';
-  }
-}
 
 // Cycle through map color themes quickly
 const MAP_COLOR_THEMES = [
@@ -13126,25 +12874,6 @@ const MAP_COLOR_THEMES = [
   { label:'Alto Contraste', filter:'contrast(1.5) saturate(1.3)' },
 ];
 let mapColorIdx = 0;
-function cycleMapColor() {
-  mapColorIdx = (mapColorIdx + 1) % MAP_COLOR_THEMES.length;
-  const theme = MAP_COLOR_THEMES[mapColorIdx];
-  const mapEl = document.getElementById('fullMap');
-  if (mapEl) mapEl.style.filter = theme.filter;
-  const btn = document.getElementById('btnMapColor');
-  if (btn) {
-    btn.title = theme.label;
-    // Brief label flash
-    btn.textContent = '';
-    const span = document.createElement('span');
-    span.style.cssText = 'font-size:9px;font-weight:900;letter-spacing:-0.5px';
-    span.textContent = theme.label.toUpperCase().substring(0,5);
-    btn.appendChild(span);
-    clearTimeout(btn._rt);
-    btn._rt = setTimeout(() => { btn.innerHTML = '🎨'; }, 1200);
-  }
-  showToast('info','🎨','Mapa', theme.label, 2000);
-}
 
 function applyTheme() {
   document.body.classList.toggle('dark', isDark);
@@ -13182,31 +12911,6 @@ function updateDepartureDisplay() {
   timeEl.textContent = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
-function openDeparturePicker() {
-  const el = document.getElementById('departureInput');
-  if (!el) return;
-  if (el.showPicker) {
-    try { el.showPicker(); } catch {}
-  } else {
-    el.style.position = 'fixed';
-    el.style.opacity = '0';
-    el.style.width = '100%';
-    el.style.height = '100%';
-    el.style.top = '0';
-    el.style.left = '0';
-    el.style.pointerEvents = 'all';
-    el.focus();
-    el.click();
-    setTimeout(() => {
-      el.style.position = 'absolute';
-      el.style.width = '1px';
-      el.style.height = '1px';
-      el.style.top = '0';
-      el.style.left = '0';
-      el.style.pointerEvents = 'none';
-    }, 500);
-  }
-}
 
 function populateCountrySelects() {
   const sel = document.getElementById('countrySelectMenu');
@@ -13545,26 +13249,6 @@ async function runDestSearch(q) {
   sugg.innerHTML = `<div style="padding:12px 14px;font-size:14px;color:var(--muted)">Sin resultados para "<b>${q}</b>"</div>`;
 }
 
-async function fetchAutocomplete(q) {
-  const items = [];
-  try {
-    const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 7000);
-    const r = await fetch(`https://api.tomtom.com/search/2/geocode/${encodeURIComponent(q)}.json?key=${TOMTOM_API_KEY}&limit=10&countrySet=US&language=en-US`, { signal: ctrl.signal });
-    const data = await r.json();
-    (data.results||[]).forEach(d => {
-      const a = d.address || {};
-      const street = a.streetNumber&&a.streetName?`${a.streetNumber} ${a.streetName}`:(a.streetName||'');
-      const city = a.municipality||a.municipalitySubdivision||a.countrySecondarySubdivision||'';
-      const state = a.countrySubdivision || '';
-      const parts = [street,city,state,'USA'].filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i);
-      const name = parts.join(', ') || a.freeformAddress || '';
-      if (name) items.push({ name, lat:d.position.lat, lon:d.position.lon,
-        state: state.trim(), country_code:'US', isAddress:!!(a.streetNumber||a.streetName) });
-    });
-  } catch {}
-  return items;
-}
 
 function showSuggestions(containerId, items, onSelect) {
   const el = document.getElementById(containerId);
@@ -13982,19 +13666,6 @@ async function _fetchTomTomRoute(orig, dest) {
   }
 }
 
-async function fetchOsrmStepsOnly(orig, dest){
-  // AbortSignal.timeout no existe en iOS < 16: usar AbortController manual.
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 10000);
-  try{
-    const url = `https://api.tomtom.com/routing/1/calculateRoute/${orig.lat},${orig.lon}:${dest.lat},${dest.lon}/json?key=${TOMTOM_API_KEY}&travelMode=truck&vehicleMaxSpeed=90&vehicleWeight=36287&vehicleAxleWeight=9072&vehicleLength=22.9&vehicleWidth=2.59&vehicleHeight=4.11&vehicleNumberOfAxles=5&vehicleCommercial=true&routeType=fastest&instructionsType=text&language=en-US`;
-    const r = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(t);
-    const j = await r.json();
-    if (!j.routes?.length) return [];
-    return _tomTomInstructionsToSteps(j.routes[0].guidance?.instructions);
-  }catch{ clearTimeout(t); return []; }
-}
 async function fetchRoadRoute(orig, dest) {
   const cached = _routeCacheGet(orig, dest);
   if (cached) return cached;
@@ -14027,77 +13698,9 @@ async function fetchRoadRoute(orig, dest) {
   };
 }
 // ── Road-name markers (labels) ──────────────────────────────
-function extractRoadLabel(step){
-  const ref  = (step?.ref || '').trim();
-  const name = (step?.name || '').trim();
-  const road = (step?.road || '').trim();
-  const dest = (step?.destinations || '').trim();
-  // Prefer refs (I-10, US-1, SR-...), then names
-  const base = ref || name || road || dest;
-  if (!base) return null;
 
-  // Clean up common noise
-  const cleaned = base
-    .replace(/\s+/g,' ')
-    .replace(/\b(?:toward|towards|to|exit|ramp|merge|continue)\b/ig,'')
-    .trim();
 
-  // Avoid tiny/meaningless labels
-  if (cleaned.length < 3) return null;
-  return cleaned;
-}
 
-function makeRoadNameDivIcon(label){
-  const safe = String(label).replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  return L.divIcon({
-    className:'',
-    html:`<div class="roadname-pill">🛣️ ${safe}</div>`,
-    iconSize:null
-  });
-}
-
-function clearRoadNameMarkers(isFull){
-  const arr = isFull ? roadNameMarkersFull : roadNameMarkersMini;
-  arr.forEach(m => { try { (isFull?fullMapInst:miniMap).removeLayer(m); } catch {} });
-  arr.length = 0;
-}
-
-function addRoadNameMarkers(map, steps, isFull){
-  if (!map || !Array.isArray(steps) || !steps.length) return;
-
-  // Clear old
-  const arr = isFull ? roadNameMarkersFull : roadNameMarkersMini;
-  arr.forEach(m => { try { map.removeLayer(m); } catch {} });
-  arr.length = 0;
-
-  let last = '';
-  let added = 0;
-
-  for (let i = 0; i < steps.length; i++){
-    const step = steps[i];
-    const loc = step?.maneuver?.location; // [lon,lat]
-    if (!loc || !isFinite(loc[0]) || !isFinite(loc[1])) continue;
-
-    const label = extractRoadLabel(step);
-    if (!label) continue;
-
-    // Only add when road changes (prevents spam)
-    if (label.toLowerCase() === last.toLowerCase()) continue;
-    last = label;
-
-    // Cap markers to keep map clean
-    if (added >= 18) break;
-
-    const marker = L.marker([loc[1], loc[0]], {
-      icon: makeRoadNameDivIcon(label),
-      interactive: false
-    });
-
-    marker.addTo(map);
-    arr.push(marker);
-    added++;
-  }
-}
 
 
 function calculateSchedule(start, distance, speed, cycle, firstDayLimit = 11) {
@@ -15030,12 +14633,6 @@ function renderSummary() {
   if (sendReportEl) sendReportEl.style.display = savedDrives.length ? 'flex' : 'none';
 }
 
-function setOriginLabel(name) {
-  const txt = document.getElementById('originLabelText');
-  if (txt) { txt.textContent = name; txt.style.color = 'var(--text)'; }
-  const loc = document.getElementById('heroWxLoc');
-  if (loc && name) loc.textContent = '📍 ' + name;
-}
 
 function useGPS() {
   if (!navigator.geolocation) {
@@ -15821,69 +15418,6 @@ function fmTickClock() {
 
 /* ── Búsqueda de destino desde el mapa ── */
 let mapSearchDebounce;
-function toggleMapSearch() {
-  const overlay = document.getElementById('mapSearchOverlay');
-  const visible = overlay && overlay.style.display !== 'none';
-  if (overlay) overlay.style.display = visible ? 'none' : 'block';
-  if (!visible) setTimeout(() => document.getElementById('mapSearchInput')?.focus(), 120);
-}
-function closeMapSearch() {
-  const overlay = document.getElementById('mapSearchOverlay');
-  if (overlay) overlay.style.display = 'none';
-  const inp  = document.getElementById('mapSearchInput');
-  const sugg = document.getElementById('mapSearchSugg');
-  if (inp)  inp.value = '';
-  if (sugg) sugg.style.display = 'none';
-}
-function handleMapSearch(val) {
-  clearTimeout(mapSearchDebounce);
-  const sugg = document.getElementById('mapSearchSugg');
-  const q = (val || '').trim();
-  if (q.length < 3) { if (sugg) sugg.style.display = 'none'; return; }
-  sugg.innerHTML = '<div style="padding:12px 14px;font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:8px"><span style="animation:spin 1s linear infinite;display:inline-block">⏳</span> Buscando...</div>';
-  sugg.style.display = 'block';
-  mapSearchDebounce = setTimeout(async () => {
-    const mkItem = (name, lat, lon, state, cc, isAddr) =>
-      ({ name, lat, lon, state: (state||'').trim(), country_code: (cc||'').toUpperCase(), isAddress: !!isAddr });
-
-    // 1️⃣ TomTom Geocode PRIMARY
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 8000);
-      const r = await fetch(
-        `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(q)}.json?key=${TOMTOM_API_KEY}&limit=8&countrySet=US&language=en-US`,
-        { signal: ctrl.signal }
-      );
-      clearTimeout(t);
-      const data = await r.json();
-      if (data && data.results && data.results.length) {
-        const items = data.results.map(d => {
-          const a = d.address || {};
-          const street = a.streetNumber && a.streetName ? `${a.streetNumber} ${a.streetName}` : (a.streetName || '');
-          const city   = a.municipality || a.municipalitySubdivision || a.countrySecondarySubdivision || '';
-          const state  = a.countrySubdivision || '';
-          const parts  = [street, city, state, 'USA'].filter(Boolean).filter((v,i,arr) => arr.indexOf(v)===i);
-          const name   = parts.join(', ') || a.freeformAddress || '';
-          return mkItem(name, d.position.lat, d.position.lon, state, 'us', !!(a.streetNumber || a.streetName));
-        }).filter(x => x.name);
-        items.sort((a,b) => {
-          const sA = /^\d/.test(a.name)?2:a.isAddress?1:0;
-          const sB = /^\d/.test(b.name)?2:b.isAddress?1:0;
-          return sB - sA;
-        });
-        if (items.length) {
-          showSuggestions('mapSearchSugg', items, it => { setDestinationWithLocalCheck(it); closeMapSearch(); });
-          return;
-        }
-      }
-    } catch(e1) {
-      if (sugg) sugg.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:#ef4444">⚠️ Sin conexión. Intenta de nuevo.</div>`;
-      return;
-    }
-
-    if (sugg) sugg.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:#94a3b8">Sin resultados para "<b>${q}</b>"</div>`;
-  }, 300);
-}
 
 function closeFullMapScreen() {
   // El mapa grande fue eliminado — no-op.
@@ -15970,11 +15504,6 @@ function reopenMap() {
 
 const fmHeadingUpMode = true; // always heading-up — locked
 
-function toggleHeadingUp() {
-  // Heading-up is permanently locked; just remind the user
-  showToast('info', '🧭', 'Vista: Dirección de viaje',
-    'El mapa siempre apunta en la dirección de viaje', 2000);
-}
 function _updateCompassBtn() {
   const btn = document.getElementById('compassBtn');
   if (!btn) return;
@@ -16036,14 +15565,6 @@ function calcFollowCenter(lat, lon, heading, offsetFrac) {
   }
 }
 
-function fmRouteOverview() {
-  if (!fmMapInst || !fmLayer) return;
-  // Desactivar auto-follow para que no vuelva a centrar en el camión
-  fmFollowing = false; fmUserDragged = true;
-  const fb = document.getElementById('fmFollowBtn');
-  if (fb) fb.classList.remove('active');
-  try { fmMapInst.fitBounds(fmLayer.getBounds(), { padding: [70, 70] }); } catch (e) {}
-}
 
 /* ════════════════════════════════════════════════════════════
    🗺️ VISTA 3D DE NAVEGACIÓN (MapLibre GL) — beta
@@ -16051,49 +15572,9 @@ function fmRouteOverview() {
 ════════════════════════════════════════════════════════════ */
 let fm3DActive = false, fm3DMap = null, fm3DMarker = null, fm3DReady = false, fm3DLibLoading = false;
 
-function _load3DLib(cb) {
-  if (window.maplibregl) { cb(); return; }
-  if (fm3DLibLoading) {
-    const t = setInterval(() => { if (window.maplibregl) { clearInterval(t); cb(); } }, 200);
-    return;
-  }
-  fm3DLibLoading = true;
-  const css = document.createElement('link');
-  css.rel = 'stylesheet';
-  css.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
-  document.head.appendChild(css);
-  const js = document.createElement('script');
-  js.src = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
-  js.onload = () => cb();
-  js.onerror = () => {
-    fm3DLibLoading = false;
-    if (typeof showToast === 'function') showToast('warning', '🗺️', 'Vista 3D', 'No se pudo cargar la librería 3D (revisa la conexión).', 4000);
-  };
-  document.head.appendChild(js);
-}
 
-function toggle3DNav() {
-  if (fm3DActive) { disable3DNav(); return; }
-  _load3DLib(() => enable3DNav());
-}
 
-function enable3DNav() {
-  fm3DActive = true;
-  const c = document.getElementById('fullMap3D');
-  if (c) c.style.display = 'block';
-  const btn = document.getElementById('fm3DToggleBtn');
-  if (btn) { btn.classList.add('active'); btn.textContent = '2D'; }
-  if (!fm3DMap) init3DMap();
-  else { try { fm3DMap.resize(); } catch (e) {} _set3DRoute(); }
-}
 
-function disable3DNav() {
-  fm3DActive = false;
-  const c = document.getElementById('fullMap3D');
-  if (c) c.style.display = 'none';
-  const btn = document.getElementById('fm3DToggleBtn');
-  if (btn) { btn.classList.remove('active'); btn.textContent = '3D'; }
-}
 
 function _route3DGeoJSON() {
   let coords = [];
@@ -16130,60 +15611,6 @@ function _set3DRoute() {
   try { const t = fm3DMap.getSource('route-traffic'); if (t) t.setData(_routeTraffic3DGeoJSON()); } catch (e) {}
 }
 
-function init3DMap() {
-  if (!window.maplibregl) return;
-  const ttTiles  = `https://api.tomtom.com/map/1/tile/basic/night/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}&tileSize=256`;
-  const trfTiles = `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_API_KEY}`;
-  let start = [-81.5, 28.5];
-  if (window.lastFixFm && window.lastFixFm.lat != null) start = [window.lastFixFm.lon, window.lastFixFm.lat];
-  else if (typeof origin !== 'undefined' && origin) start = [origin.lon, origin.lat];
-
-  try {
-    fm3DMap = new maplibregl.Map({
-      container: 'fullMap3D',
-      style: {
-        version: 8,
-        sources: {
-          tt:      { type: 'raster', tiles: [ttTiles],  tileSize: 256, maxzoom: 22 },
-          ttraffic:{ type: 'raster', tiles: [trfTiles], tileSize: 256, maxzoom: 22 }
-        },
-        layers: [
-          { id: 'tt',       type: 'raster', source: 'tt' },
-          { id: 'ttraffic', type: 'raster', source: 'ttraffic', paint: { 'raster-opacity': 0.85 } }
-        ]
-      },
-      center: start, zoom: 15, pitch: 58, bearing: 0,
-      attributionControl: false, dragRotate: true, pitchWithRotate: true
-    });
-  } catch (e) {
-    if (typeof showToast === 'function') showToast('warning', '🗺️', 'Vista 3D', 'No se pudo iniciar el mapa 3D.', 4000);
-    return;
-  }
-
-  fm3DMap.on('load', () => {
-    fm3DReady = true;
-    try {
-      fm3DMap.addSource('route', { type: 'geojson', data: _route3DGeoJSON() });
-      // Casing (borde oscuro) + línea principal → efecto cinta
-      fm3DMap.addLayer({ id: 'route-casing', type: 'line', source: 'route',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#0b2545', 'line-width': 16, 'line-opacity': 0.95 } });
-      fm3DMap.addLayer({ id: 'route-line', type: 'line', source: 'route',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#00C8E0', 'line-width': 10 } });
-      // Tramos con tráfico coloreados sobre la cinta de la ruta
-      fm3DMap.addSource('route-traffic', { type: 'geojson', data: _routeTraffic3DGeoJSON() });
-      fm3DMap.addLayer({ id: 'route-traffic-line', type: 'line', source: 'route-traffic',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': ['get', 'color'], 'line-width': 11 } });
-      // Marcador del camión
-      const el = document.createElement('div');
-      el.textContent = '🚛';
-      el.style.cssText = 'font-size:30px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7))';
-      fm3DMarker = new maplibregl.Marker({ element: el }).setLngLat(start).addTo(fm3DMap);
-    } catch (e) {}
-  });
-}
 
 // Llamado desde el bucle de GPS cuando la vista 3D está activa
 function fm3DUpdate(lat, lon, heading, isMoving) {
@@ -16199,18 +15626,6 @@ function fm3DUpdate(lat, lon, heading, isMoving) {
   } catch (e) {}
 }
 
-function toggleFollow() {
-  fmFollowing = !fmFollowing;
-  fmUserDragged = !fmFollowing;
-  const btn = document.getElementById('fmFollowBtn');
-  btn.classList.toggle('active', fmFollowing);
-  // If re-enabling follow, snap to truck immediately
-  if (fmFollowing && fmGpsMarker) {
-    const ll = fmGpsMarker.getLatLng();
-    const rc = calcFollowCenter(ll.lat, ll.lng, fmLastHeading);
-    fmMapInst.setView(rc, fmCurrentZoom, { animate: true, duration: 0.8 });
-  }
-}
 
 /* ════════════════════════════════════════════════════════════
    ⏸  SISTEMA DE PAUSA OBLIGATORIA DE 30 MIN (FMCSA HOS)
@@ -18161,34 +17576,6 @@ function _stopDashHeaderTicker() {
   const el = document.getElementById('dashProfileName');
   if (el) { el.style.opacity = '1'; el.textContent = _dashHeaderDriverName; }
 }
-function _dashHeaderTick() {
-  const el = document.getElementById('dashProfileName');
-  if (!el) return;
-
-  const _moving = typeof fmIsTracking !== 'undefined' && fmIsTracking
-                && typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving;
-
-  // Moving: only ETA — name hidden while driving
-  // Stopped: only the driver name
-  const slides = [];
-  if (_moving) {
-    const etaVal = document.getElementById('fmEta')?.textContent?.trim();
-    if (etaVal && etaVal !== '--') slides.push({ text: `🕐 ${etaVal} al destino`, sub: true });
-  }
-  if (slides.length === 0) slides.push({ text: _dashHeaderDriverName, sub: false });
-
-  const slide = slides[_dashHeaderTickerIdx % slides.length];
-  _dashHeaderTickerIdx = (_dashHeaderTickerIdx + 1) % slides.length;
-
-  // Fade out → swap text → fade in
-  el.style.transition = 'opacity 0.25s ease';
-  el.style.opacity = '0';
-  setTimeout(() => {
-    el.textContent  = slide.text;
-    el.style.fontSize = slide.sub ? '17px' : '24px';
-    el.style.opacity = '1';
-  }, 260);
-}
 // Flags de sesión para alertas de horas de manejo (se reinician al iniciar viaje)
 let _hosWarn1hFired  = false;
 let _hosWarn30mFired = false;
@@ -19043,17 +18430,6 @@ function _updateFmSmartInfo(etaH, remainingMi, driveLeft) {
     }
   }
 }
-function _fmOpenNearbyStops() {
-  const _es = (typeof lang !== 'undefined' && lang === 'es');
-  if (typeof _showStopAlertPopup === 'function') {
-    _showStopAlertPopup(
-      _es ? 'Paradas cercanas' : 'Nearby stops',
-      _es ? 'Buscando truck stops y parking…' : 'Finding truck stops & parking…',
-      'rgb(245,158,11)', true);
-  } else if (typeof openCommunityPanel === 'function') {
-    openCommunityPanel();
-  }
-}
 // Tocar un anillo del HUD del mapa muestra su detalle
 document.addEventListener('DOMContentLoaded', function () {
   const cards = document.querySelectorAll('.hud-rings-grid .hud-ring-card');
@@ -19356,23 +18732,6 @@ function updateHosDashboard(driveLeft, driveMax) {
   update14hCircle();
 }
 
-function showFullMapFromDash() {
-  const dash = document.getElementById('hosDashScreen');
-  if (dash) dash.style.display = 'none';
-  // Abrir el mapa completo si aún no está visible
-  const mapScreen = document.getElementById('fullMapScreen');
-  const mapVisible = mapScreen && mapScreen.style.display !== 'none' && mapScreen.style.display !== '';
-  if (!mapVisible) {
-    openFullMapScreen();
-  }
-  // Restaurar widgets de mapa que showHosDashboard() ocultó con display:none !important
-  ['driveHoursWidget','speedometerWidget','fuelWidget','speedLimitWidget','mapSpeedSign','incidentPanel'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.removeProperty('display');
-  });
-  // Invalidar tamaño del mapa para que se redibuje correctamente
-  setTimeout(() => { if (typeof fmMapInst !== 'undefined' && fmMapInst) fmMapInst.invalidateSize(); }, 150);
-}
 
 let _violCardInt = null;
 
@@ -19465,9 +18824,6 @@ function backToMainFromDash() {
 }
 
 // Botón "Volver al Dashboard" que aparece en el mapa completo durante rastreo
-function showDashFromMap() {
-  showHosDashboard();
-}
 
 function update14hCircle() {
   const arc    = document.getElementById('dash14hArc');
@@ -19967,93 +19323,6 @@ async function showServiceOnMap(type, radiusMiles, _btn) {
   }, 700);
 }
 
-async function loadPOI(type, lat, lon) {
-  if (!fmMapInst) return;
-  const radius = 160934; // 100 miles in meters
-  const centerLat = lat || (origin ? (origin.lat + destination.lat) / 2 : 39.5);
-  const centerLon = lon || (origin ? (origin.lon + destination.lon) / 2 : -98.35);
-
-  try {
-    const query = OVERPASS_QUERIES[type](centerLat, centerLon, radius);
-    const r = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query)
-    });
-    const data = await r.json();
-    const elements = data.elements || [];
-
-    // Clear existing markers for this type
-    fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
-    fmPoiLayers[type] = [];
-
-    const cfg = POI_ICONS[type];
-    elements.forEach(el => {
-      const elLat = el.lat ?? el.center?.lat;
-      const elLon = el.lon ?? el.center?.lon;
-      if (!elLat || !elLon) return;
-
-      // Calculate distance from current truck/origin position
-      const truckLat = fmGpsMarker ? fmGpsMarker.getLatLng().lat : (origin?.lat || centerLat);
-      const truckLon = fmGpsMarker ? fmGpsMarker.getLatLng().lng : (origin?.lon || centerLon);
-      const dist = Math.round(haversine(truckLat, truckLon, elLat, elLon));
-
-      const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
-      const amenity = el.tags?.amenity || el.tags?.highway || '';
-
-      // Build popup content
-      let popupHtml = `
-        <div style="font-family:'DM Sans',sans-serif;min-width:160px;max-width:220px">
-          <div style="font-size:20px;margin-bottom:4px">${cfg.emoji}</div>
-          <div style="font-weight:800;font-size:14px;margin-bottom:4px">${name}</div>
-          <div style="color:#6b7280;font-size:12px;margin-bottom:6px">${cfg.label}</div>
-          <div style="background:#f0fdf4;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:#065f46">
-            📏 ${dist} mi away
-          </div>
-      `;
-      if (el.tags?.opening_hours) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:4px">🕐 ${el.tags.opening_hours}</div>`;
-      if (el.tags?.phone) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:2px">📞 ${el.tags.phone}</div>`;
-      if (el.tags?.['addr:city']) popupHtml += `<div style="font-size:11px;color:#6b7280;margin-top:2px">📍 ${el.tags['addr:city']}</div>`;
-      popupHtml += '</div>';
-
-      const icon = L.divIcon({
-        className: '',
-        html: `
-          <div style="
-            background:${cfg.color};
-            border:2.5px solid #fff;
-            border-radius:50%;
-            width:28px; height:28px;
-            display:flex; align-items:center; justify-content:center;
-            font-size:13px; line-height:1;
-            box-shadow:0 2px 8px rgba(0,0,0,0.4);
-            cursor:pointer;
-          ">${cfg.emoji}</div>
-          <div style="
-            position:absolute; bottom:-18px; left:50%;
-            transform:translateX(-50%);
-            background:rgba(0,0,0,0.75); color:#fff;
-            font-size:9px; font-weight:700;
-            padding:2px 5px; border-radius:4px;
-            white-space:nowrap; font-family:'DM Sans',sans-serif;
-          ">${dist}mi</div>
-        `,
-        iconAnchor: [14, 14],
-        popupAnchor: [0, -16]
-      });
-
-      const marker = L.marker([elLat, elLon], { icon })
-        .bindPopup(popupHtml, { maxWidth: 240 });
-
-      if (fmPoiActive[type]) marker.addTo(fmMapInst);
-      fmPoiLayers[type].push(marker);
-    });
-
-    fmPoiLoaded[type] = true;
-    console.log(`✅ POI ${type}: loaded ${elements.length} items`);
-  } catch (e) {
-    console.warn(`POI ${type} load failed:`, e);
-  }
-}
 
 async function loadAllPOIs(lat, lon) {
   if (!origin || !destination) return;
@@ -20289,165 +19558,6 @@ async function loadAllPOIs(lat, lon) {
 /* ════════════════════════════════════════════════════════════
    📍  NEARBY SEARCH — from Settings panel
 ════════════════════════════════════════════════════════════ */
-async function runNearbySearch() {
-  const wantTruck = document.getElementById('nearbyTruck')?.checked;
-  const wantRest  = document.getElementById('nearbyRest')?.checked;
-  const wantScale = document.getElementById('nearbyScale')?.checked;
-
-  if (!wantTruck && !wantRest && !wantScale) {
-    document.getElementById('nearbyResultsList').style.display = 'none';
-    return;
-  }
-
-  const statusEl  = document.getElementById('nearbyStatus');
-  const listEl    = document.getElementById('nearbyResultsList');
-  const itemsEl   = document.getElementById('nearbyResultsItems');
-  const titleEl   = document.getElementById('nearbyResultsTitle');
-
-  statusEl.style.display = 'block';
-  statusEl.textContent = '📡 Obteniendo ubicación...';
-  listEl.style.display = 'none';
-  itemsEl.innerHTML = '';
-
-  // Get current position
-  let userLat, userLon;
-  try {
-    const pos = await new Promise((res, rej) =>
-      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, maximumAge: 30000 })
-    );
-    userLat = pos.coords.latitude;
-    userLon = pos.coords.longitude;
-  } catch(e) {
-    statusEl.textContent = '❌ No se pudo obtener la ubicación. Activa el GPS.';
-    return;
-  }
-
-  statusEl.textContent = '🔍 Buscando lugares cercanos...';
-
-  const radius = 160934; // 100 miles
-  const seen = new Set();
-  const results = [];
-
-  // Build combined query
-  const parts = [];
-  if (wantTruck) parts.push(
-    `node["amenity"="fuel"]["hgv"="yes"](around:${radius},${userLat},${userLon});`,
-    `node["amenity"="truck_stop"](around:${radius},${userLat},${userLon});`,
-    `node["name"~"Flying J|Pilot|Love's|TA Travel|Petro |Sapp Bros|Kwik Trip|Loves Travel",i](around:${radius},${userLat},${userLon});`,
-    `way["amenity"="truck_stop"](around:${radius},${userLat},${userLon});`
-  );
-  if (wantRest) parts.push(
-    `node["highway"="rest_area"](around:${radius},${userLat},${userLon});`,
-    `node["amenity"="rest_area"](around:${radius},${userLat},${userLon});`,
-    `way["highway"="rest_area"](around:${radius},${userLat},${userLon});`
-  );
-  if (wantScale) parts.push(
-    `node["amenity"="weigh_station"](around:${radius},${userLat},${userLon});`,
-    `node["highway"="weigh_station"](around:${radius},${userLat},${userLon});`
-  );
-
-  const query = `[out:json][timeout:30];\n(\n${parts.join('\n')}\n);\nout center;`;
-
-  try {
-    const data = await overpassFetch(query, 25000);
-    const elements = data.elements || [];
-
-    elements.forEach(el => {
-      if (seen.has(el.id)) return;
-      const elLat = el.lat ?? el.center?.lat;
-      const elLon = el.lon ?? el.center?.lon;
-      if (!elLat || !elLon) return;
-      seen.add(el.id);
-
-      const name    = el.tags?.name || el.tags?.['name:en'] || '';
-      const amenity = el.tags?.amenity || el.tags?.highway || '';
-      const dist    = haversine(userLat, userLon, elLat, elLon);
-
-      // Classify
-      let poiType;
-      if (amenity === 'weigh_station' || el.tags?.highway === 'weigh_station') {
-        if (!wantScale) return;
-        poiType = 'scale';
-      } else if (amenity === 'rest_area' || el.tags?.highway === 'rest_area') {
-        if (!wantRest) return;
-        poiType = 'rest';
-      } else {
-        if (!wantTruck) return;
-        poiType = 'truck';
-      }
-
-      results.push({ name, dist, poiType, elLat, elLon, tags: el.tags || {} });
-    });
-  } catch(e) {
-    statusEl.textContent = '❌ Error al buscar. Verifica tu conexión.';
-    return;
-  }
-
-  // Sort by distance
-  results.sort((a, b) => a.dist - b.dist);
-
-  statusEl.style.display = 'none';
-  listEl.style.display = 'block';
-
-  if (results.length === 0) {
-    titleEl.textContent = 'No se encontraron lugares cercanos';
-    itemsEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:16px;font-size:13px">Intenta ampliar el radio o verificar los filtros.</div>';
-    return;
-  }
-
-  titleEl.textContent = `${results.length} lugares encontrados cerca`;
-
-  const POI_CFG_NEARBY = {
-    truck: { emoji: '🚛', color: '#2563eb', bg: '#eff6ff', label: 'Truck Stop' },
-    rest:  { emoji: '😴', color: '#7c3aed', bg: '#f5f3ff', label: 'Rest Area' },
-    scale: { emoji: '⚖️', color: '#dc2626', bg: '#fef2f2', label: 'Weigh Station' },
-  };
-
-  // Render up to 25 results
-  results.slice(0, 25).forEach(res => {
-    const cfg   = POI_CFG_NEARBY[res.poiType];
-    const brand = res.poiType === 'truck' ? getTruckBrand(res.name) : null;
-    const displayName = res.name || cfg.label;
-    const subLabel = res.tags?.['addr:city']
-      ? `${res.tags['addr:city']}${res.tags?.['addr:state'] ? ', ' + res.tags['addr:state'] : ''}`
-      : cfg.label;
-    const distLabel = res.dist < 1 ? `${Math.round(res.dist * 5280)} ft` : `${res.dist.toFixed(1)} mi`;
-
-    const item = document.createElement('div');
-    item.className = 'nearby-result-item';
-    item.innerHTML = `
-      <div class="nearby-result-icon" style="background:${cfg.bg};border:1.5px solid ${cfg.color}22">
-        ${brand ? brand.logo : cfg.emoji}
-      </div>
-      <div style="flex:1;min-width:0">
-        <div class="nearby-result-name">${displayName}</div>
-        <div class="nearby-result-sub">${subLabel}</div>
-      </div>
-      <button class="nearby-add-btn" title="Agregar como parada al mapa">＋</button>
-    `;
-
-    // ＋ button → add as stop on map
-    item.querySelector('.nearby-add-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      addNearbyStopToMap(res, displayName, cfg, brand);
-    });
-
-    // Tap row → fly to location on map
-    item.addEventListener('click', () => {
-      if (fmMapInst) {
-        fmMapInst.flyTo([res.elLat, res.elLon], 16, { duration: 1 });
-        L.popup({ maxWidth: 220 })
-          .setLatLng([res.elLat, res.elLon])
-          .setContent(`<div style="font-family:'DM Sans',sans-serif;font-weight:800;font-size:13px">${brand ? brand.logo : cfg.emoji} ${displayName}</div><div style="font-size:11px;color:#6b7280;margin-top:3px">${distLabel} de tu ubicación</div>`)
-          .openOn(fmMapInst);
-      } else {
-        window.open(`https://maps.tomtom.com/search/${res.elLat},${res.elLon}`, '_blank');
-      }
-    });
-
-    itemsEl.appendChild(item);
-  });
-}
 
 function showSubscribeModal() {
   document.getElementById('subscribeModal').style.display = 'flex';
@@ -20483,97 +19593,7 @@ function handleSubscribeSubmit() {
 // Add a nearby search result as a pinned stop on the map
 let nearbyStopMarkers = []; // track added stops
 
-function addNearbyStopToMap(res, displayName, cfg, brand) {
-  // Open fullscreen map if not open
-  if (document.getElementById('fullMapScreen').style.display === 'none' ||
-      document.getElementById('fullMapScreen').style.display === '') {
-    openFullMapScreen();
-  }
 
-  if (!fmMapInst) {
-    showToast('info', '🗺️', 'Abre el mapa primero', 'Toca Ver Mapa para abrir el mapa completo.', 3000);
-    return;
-  }
-
-  const markerBg   = brand ? brand.color : cfg.color;
-  const markerIcon = brand?.logoUrl
-    ? `<img src="${brand.logoUrl}" style="width:24px;height:24px;object-fit:contain;border-radius:3px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:18px">${brand.logo}</span>`
-    : (brand ? brand.logo : cfg.emoji);
-  const shortName  = brand ? brand.short : displayName.substring(0, 14);
-
-  // Build a distinctive stop marker with a star badge
-  const icon = L.divIcon({
-    className: '',
-    html: `
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-        <div style="position:relative">
-          <div style="
-            width:40px; height:40px;
-            background:${markerBg};
-            border-radius:50%;
-            border:3px solid #fff;
-            box-shadow:0 3px 14px rgba(0,0,0,.6),0 0 0 2px ${markerBg}55;
-            display:flex;align-items:center;justify-content:center;
-            font-size:18px;line-height:1;cursor:pointer;
-          ">${markerIcon}</div>
-          <div style="
-            position:absolute;top:-4px;right:-4px;
-            width:16px;height:16px;border-radius:50%;
-            background:#10b981;border:2px solid #fff;
-            display:flex;align-items:center;justify-content:center;
-            font-size:9px;color:#fff;font-weight:900;
-          ">★</div>
-        </div>
-        <div style="
-          background:${markerBg};color:#fff;
-          font-size:9px;font-weight:900;
-          padding:2px 7px;border-radius:6px;
-          white-space:nowrap;font-family:'DM Sans',sans-serif;
-          box-shadow:0 2px 6px rgba(0,0,0,.4);
-          max-width:80px;overflow:hidden;text-overflow:ellipsis;
-        ">${shortName}</div>
-      </div>`,
-    iconAnchor: [20, 20],
-    popupAnchor: [0, -28]
-  });
-
-  const popup = `
-    <div style="font-family:'DM Sans',sans-serif;min-width:160px;padding:4px">
-      <div style="font-size:22px;text-align:center;margin-bottom:4px">${markerIcon}</div>
-      <div style="font-weight:900;font-size:14px;text-align:center">${displayName}</div>
-      <div style="color:#6b7280;font-size:11px;text-align:center;margin-top:2px">${cfg.label}</div>
-      <button onclick="
-        if(fmMapInst && this.dataset.lat) {
-          navigator.clipboard?.writeText(this.dataset.lat+','+this.dataset.lon);
-          window.open('https://maps.tomtom.com/search/'+this.dataset.lat+','+this.dataset.lon,'_blank');
-        }
-      " data-lat="${res.elLat}" data-lon="${res.elLon}" style="
-        margin-top:10px;width:100%;padding:8px;border-radius:8px;
-        background:#10b981;color:#fff;border:none;font-size:12px;
-        font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;
-      ">🗺️ Abrir en TomTom Maps</button>
-    </div>`;
-
-  const m = L.marker([res.elLat, res.elLon], { icon })
-    .addTo(fmMapInst)
-    .bindPopup(popup, { maxWidth: 220 });
-
-  nearbyStopMarkers.push(m);
-  fmMapInst.flyTo([res.elLat, res.elLon], 15, { duration: 1 });
-  setTimeout(() => m.openPopup(), 1100);
-
-  showToast('info', markerIcon, `${shortName} agregado`,
-    `Marcado en el mapa como parada.`, 2500);
-  vibrate([40, 20, 40]);
-}
-
-function clearAllPOIs() {
-  ['scale','truck','rest','reports','restrict'].forEach(type => {
-    fmPoiLayers[type].forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
-    fmPoiLayers[type] = [];
-  });
-  Object.keys(fmPoiLoaded).forEach(k => fmPoiLoaded[k] = false);
-}
 
 /* ════════════════════════════════════════════════════════════
    🚫  TRUCK RESTRICTION SEGMENTS
@@ -20863,32 +19883,6 @@ function _loadRoutePOIs(force) {
   _routePoisLoaded = true;
 }
 
-function togglePOI(type) {
-  fmPoiActive[type] = !fmPoiActive[type];
-  const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck'
-               : type === 'rest'  ? 'chipRest'  : type === 'restrict' ? 'chipRestrict' : 'chipReport';
-  const chip = document.getElementById(chipId);
-  if (chip) chip.classList.toggle('off', !fmPoiActive[type]);
-
-  // Turning OFF — hide group and done
-  if (!fmPoiActive[type]) {
-    const grp = fmPoiGroups[type];
-    if (grp && fmMapInst) { try { fmMapInst.removeLayer(grp); } catch {} }
-    return;
-  }
-
-  // Turning ON — if group already exists, just show it
-  const grp = fmPoiGroups[type];
-  if (grp && fmMapInst) {
-    try { grp.addTo(fmMapInst); } catch {}
-    return;
-  }
-
-  // Group doesn't exist yet → load on demand immediately
-  if (type === 'truck' || type === 'rest' || type === 'scale') {
-    loadPOIOnDemand(type, chip);
-  }
-}
 
 /* ── loadPOIOnDemand — carga rápida bajo demanda centrada en posición actual ── */
 async function loadPOIOnDemand(type, chipEl) {
@@ -21150,26 +20144,6 @@ const INCIDENT_TYPES = {
 // Load saved incident type states
 let activeIncidentTypes = JSON.parse(localStorage.getItem('hos_inc_types') || '{}');
 
-function toggleIncidentType(type, btn) {
-  activeIncidentTypes[type] = !activeIncidentTypes[type];
-  localStorage.setItem('hos_inc_types', JSON.stringify(activeIncidentTypes));
-
-  btn.classList.toggle('on', activeIncidentTypes[type]);
-  const statusEl = document.getElementById(`inc${type.charAt(0).toUpperCase()+type.slice(1)}Status`);
-  if (statusEl) {
-    statusEl.textContent = activeIncidentTypes[type]
-      ? INCIDENT_TYPES[type].statusOn
-      : 'Desactivado';
-  }
-
-  // When activated — immediately submit a report at current position (if tracking)
-  if (activeIncidentTypes[type] && fmIsTracking) {
-    const cfg = INCIDENT_TYPES[type];
-    submitIncident(type, cfg.emoji, cfg.label);
-  }
-
-  updateActiveIncidentIcons();
-}
 
 function updateActiveIncidentIcons() {
   const row = document.getElementById('activeIconsRow');
@@ -21225,138 +20199,10 @@ const REPORT_ITEMS = [
 ];
 
 /* Init drag on the FAB — called once when tracking starts */
-function initFabDrag() {
-  const fab = document.getElementById('reportFab');
-  if (!fab || fab._dragInited) return;
-  fab._dragInited = true;
 
-  /* Read initial CSS position and store as fixed coords */
-  const r = fab.getBoundingClientRect();
-  _fabPos = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 
-  let _startX, _startY, _moved;
 
-  fab.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    fab.setPointerCapture(e.pointerId);
-    _startX = e.clientX; _startY = e.clientY; _moved = false;
-    _fabDragState = { ox: e.clientX - _fabPos.x, oy: e.clientY - _fabPos.y };
-    fab.classList.add('dragging');
-  }, { passive: false });
 
-  fab.addEventListener('pointermove', e => {
-    if (!_fabDragState) return;
-    const dx = e.clientX - _startX, dy = e.clientY - _startY;
-    if (!_moved && Math.hypot(dx, dy) > 8) {
-      _moved = true;
-      if (reportSheetOpen) closeRadialMenu();
-    }
-    if (_moved) {
-      const W = window.innerWidth, H = window.innerHeight, R = 32;
-      _fabPos.x = Math.max(R, Math.min(W - R, e.clientX - _fabDragState.ox));
-      _fabPos.y = Math.max(R, Math.min(H - R, e.clientY - _fabDragState.oy));
-      _applyFabPos(false);
-    }
-  });
-
-  const _onUp = () => {
-    fab.classList.remove('dragging');
-    const wasMoved = _moved;
-    _fabDragState = null;
-    if (!wasMoved) _toggleRadialMenu();
-    else _snapFabToEdge();
-  };
-  fab.addEventListener('pointerup',     _onUp);
-  fab.addEventListener('pointercancel', () => { _fabDragState = null; fab.classList.remove('dragging'); });
-}
-
-function _applyFabPos(animate) {
-  const fab = document.getElementById('reportFab');
-  if (!fab || !_fabPos) return;
-  if (animate) {
-    fab.style.transition = 'left .3s cubic-bezier(.34,1.56,.64,1), top .3s cubic-bezier(.34,1.56,.64,1)';
-    setTimeout(() => { if (fab) fab.style.transition = ''; }, 360);
-  }
-  fab.style.left   = (_fabPos.x - 28) + 'px';
-  fab.style.top    = (_fabPos.y - 28) + 'px';
-  fab.style.bottom = 'unset';
-  fab.style.right  = 'unset';
-}
-
-function _snapFabToEdge() {
-  const W = window.innerWidth;
-  _fabPos.x = _fabPos.x < W / 2 ? 38 : W - 38;
-  _applyFabPos(true);
-}
-
-function _toggleRadialMenu() {
-  reportSheetOpen = !reportSheetOpen;
-  const fab = document.getElementById('reportFab');
-  fab.classList.add('spinning');
-  setTimeout(() => fab.classList.remove('spinning'), 360);
-  if (reportSheetOpen) {
-    fab.textContent = '✕';
-    fab.classList.add('open-state');
-    _openRadialMenu();
-  } else {
-    closeRadialMenu();
-  }
-}
-
-function _openRadialMenu() {
-  if (!_fabPos) {
-    const r = document.getElementById('reportFab').getBoundingClientRect();
-    _fabPos = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  }
-
-  const menu = document.getElementById('reportRadialMenu');
-  menu.innerHTML = '';
-  menu.classList.add('open');
-
-  /* Backdrop */
-  const bd = document.createElement('div');
-  bd.id = 'reportRadialMenu-backdrop';
-  bd.onclick = () => closeRadialMenu();
-  menu.appendChild(bd);
-  requestAnimationFrame(() => bd.style.opacity = '1');
-
-  /* Panel cuadrícula — 2 cols si ≤4 items, si no 3 cols */
-  const W = window.innerWidth, H = window.innerHeight;
-  const COLS = REPORT_ITEMS.length <= 4 ? 2 : 3;
-  const ITEM = 72, GAP = 12, PAD = 14;
-  const ROWS = Math.ceil(REPORT_ITEMS.length / COLS);
-  const PW = PAD * 2 + COLS * ITEM + (COLS - 1) * GAP;
-  const PH = PAD * 2 + ROWS * ITEM + (ROWS - 1) * GAP;
-
-  const goUp = _fabPos.y > H * 0.4;
-  let px = _fabPos.x - PW / 2;
-  let py = goUp ? _fabPos.y - PH - 14 : _fabPos.y + 44;
-  px = Math.max(8, Math.min(W - PW - 8, px));
-  py = Math.max(8, Math.min(H - PH - 8, py));
-
-  const panel = document.createElement('div');
-  panel.className = 'rr-panel';
-  panel.style.left   = px + 'px';
-  panel.style.top    = py + 'px';
-  panel.style.width  = PW + 'px';
-  panel.style.gridTemplateColumns = 'repeat(' + COLS + ',' + ITEM + 'px)';
-  panel.style.gap    = GAP + 'px';
-  panel.style.padding = PAD + 'px';
-  panel.style.transformOrigin = (_fabPos.x - px) + 'px ' + (goUp ? PH : 0) + 'px';
-
-  REPORT_ITEMS.forEach(rt => {
-    const btn = document.createElement('button');
-    btn.className = 'rr-item';
-    btn.style.background = rt.bg;
-    btn.innerHTML = '<span class="rr-emoji">' + rt.emoji + '</span><span class="rr-label">' + rt.label + '</span>';
-    btn.addEventListener('pointerdown', e => e.stopPropagation());
-    btn.onclick = () => { quickReport(rt.type, rt.emoji, rt.label); closeRadialMenu(); };
-    panel.appendChild(btn);
-  });
-
-  menu.appendChild(panel);
-  requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add('rr-panel-visible')));
-}
 
 function closeRadialMenu() {
   reportSheetOpen = false;
@@ -21464,29 +20310,6 @@ function quickReport(type, emoji, label) {
   vibrate([60, 40, 120]);
 }
 
-function submitIncident(type, emoji, label) {
-  if (!fmMapInst) return;
-  let lat, lon;
-  if (fmGpsMarker) {
-    const ll = fmGpsMarker.getLatLng();
-    lat = ll.lat; lon = ll.lng;
-  } else {
-    const c = fmMapInst.getCenter();
-    lat = c.lat; lon = c.lng;
-  }
-  const report = { id: Date.now(), type, emoji, label, lat, lon, ts: Date.now(),
-    reportedBy: currentUser ? currentUser.id : 'anonymous',
-    reportedByName: currentUser ? currentUser.name : 'Anónimo',
-    confirmations: [], denials: [], confirmed: false };
-  communityReports.push(report);
-  communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
-  localStorage.setItem('hos_reports', JSON.stringify(communityReports));
-  addReportMarker(report);
-  // No bubble on screen — report goes straight to map
-  showToast('warning', emoji, `${label} Reportado`,
-    'Visible en el mapa de la ruta.', 4000);
-  vibrate([50, 30, 50]);
-}
 
 let _rapTimer;
 function showReportAlert(emoji, label, byName) {
@@ -21501,11 +20324,6 @@ function showReportAlert(emoji, label, byName) {
   clearTimeout(_rapTimer);
   _rapTimer = setTimeout(() => pop.classList.remove('show'), 6000);
 }
-
-// Legacy stubs (FAB removed but referenced in old bind)
-function openReportPanel() {}
-function closeReportPanel() {}
-function submitReport(type, emoji, label) { submitIncident(type, emoji, label); }
 
 function addReportMarker(report) {
   if (!fmMapInst) return;
@@ -22298,12 +21116,6 @@ function toggleSideTabMenu() {
   }
 }
 let _rightPanelAutoHideTimer = null;
-function toggleMapRightPanel() { /* panel is always visible — button removed */ }
-function _autoHideRightPanelOnOpen() {
-  const ctrl = document.getElementById('mapRightControls');
-  if (!ctrl) return;
-  ctrl.classList.remove('panel-hidden');
-}
 
 let _leftPanelAutoHideTimer = null;
 function toggleMapLeftPanel(forceHide) {
@@ -22379,11 +21191,6 @@ function closeCommQuickPanel() {
   document.getElementById('commQuickOverlay').classList.remove('show');
 }
 
-function openCommunityPanel() {
-  document.getElementById('communityPanel').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  renderCommunityReports();
-}
 function closeCommunityPanel() {
   document.getElementById('communityPanel').classList.remove('open');
   document.body.style.overflow = '';
@@ -22620,9 +21427,6 @@ const _origPush = Array.prototype.push;
 /* ════════════════════════════════════════════════════════════
    🅿️  PARKING POI INTEGRATION
 ════════════════════════════════════════════════════════════ */
-function toggleMiniParking() {
-  if (typeof toggleMiniPOI === 'function') toggleMiniPOI('parking');
-}
 
 // Update updateCommBadge on page load
 function initCommBadge() {
@@ -23109,11 +21913,6 @@ function updateHistCount() {
   if (el) el.textContent = routeHistory.length > 0 ? routeHistory.length : '';
 }
 
-function openRouteHistory() {
-  document.getElementById('historyOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  renderHistoryList();
-}
 function closeRouteHistory() {
   document.getElementById('historyOverlay').classList.remove('open');
   document.body.style.overflow = '';
@@ -23434,35 +22233,6 @@ document.addEventListener('click', e => {
 ════════════════════════════════════════════════════════════ */
 
 /* ── Freight Calc (inline on Tools page) ── */
-function calcFreightInline() {
-  const miles     = parseFloat(document.getElementById('frtMiles2').value)     || 0;
-  const rate      = parseFloat(document.getElementById('frtRate2').value)      || 0;
-  const fuelPrice = parseFloat(document.getElementById('frtFuelPrice2').value) || 0;
-  const mpg       = parseFloat(document.getElementById('frtMpg2').value)       || 6.5;
-  const other     = parseFloat(document.getElementById('frtOther2').value)     || 0;
-
-  const gross    = miles * rate;
-  const fuelCost = fuelPrice > 0 && mpg > 0 ? (miles / mpg) * fuelPrice : 0;
-  const net      = gross - fuelCost - other;
-  const perMile  = miles > 0 ? net / miles : 0;
-  const fmt = v => '$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2});
-
-  document.getElementById('frtGross2').textContent    = fmt(gross);
-  document.getElementById('frtFuelCost2').textContent = fmt(fuelCost);
-  document.getElementById('frtNet2').textContent      = (net < 0 ? '-' : '') + fmt(net);
-  document.getElementById('frtNet2').style.color      = net < 0 ? '#ef4444' : '#10b981';
-  document.getElementById('frtPerMile2').textContent  = (perMile < 0 ? '-$' : '$') + Math.abs(perMile).toFixed(3);
-  if (miles > 0 && rate > 0) {
-    document.getElementById('frtNetSub2').textContent =
-      miles.toLocaleString() + ' miles · ' + (fuelCost > 0 ? (miles/mpg).toFixed(0) + ' gal fuel' : 'no fuel cost');
-  }
-  // Sync with sheet version
-  ['frtMiles','frtRate','frtFuelPrice','frtMpg','frtOther'].forEach((id,i) => {
-    const vals = [miles, rate, fuelPrice, mpg, other];
-    const el = document.getElementById(id);
-    if (el && !el.value && vals[i]) el.value = vals[i];
-  });
-}
 
 /* ── DOT Lookup (inline on Tools page) ── */
 async function searchDOTInline() {
@@ -23526,43 +22296,9 @@ function displayDotResultInline(c, dotNum) {
 }
 
 /* ── 34h Reset (inline on Tools page — synced with sheet version) ── */
-function startResetCountdownInline() {
-  startResetCountdown(); // call original which sets resetActive, resetEndTime, etc.
-  // Sync inline UI
-  document.getElementById('resetStartBtn2').style.display = 'none';
-  document.getElementById('resetCancelBtn2').style.display = 'block';
-  const end = new Date(resetEndTime);
-  document.getElementById('resetEndTime2').textContent = end.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('resetTimerLabel2').textContent = 'Reset Completes At';
-  startInlineResetSync();
-}
 
-function cancelResetCountdownInline() {
-  cancelResetCountdown();
-  document.getElementById('resetStartBtn2').style.display = 'block';
-  document.getElementById('resetCancelBtn2').style.display = 'none';
-  document.getElementById('resetBigTime2').textContent = '34:00:00';
-  document.getElementById('resetTimerLabel2').textContent = 'Time Until Reset Complete';
-}
 
 let inlineResetSync = null;
-function startInlineResetSync() {
-  if (inlineResetSync) clearInterval(inlineResetSync);
-  inlineResetSync = setInterval(() => {
-    const el = document.getElementById('resetBigTime2');
-    if (!el) { clearInterval(inlineResetSync); return; }
-    if (!resetActive || !resetEndTime) {
-      el.textContent = '34:00:00';
-      clearInterval(inlineResetSync); return;
-    }
-    const remaining = resetEndTime - Date.now();
-    if (remaining <= 0) { el.textContent = '✅ COMPLETE'; clearInterval(inlineResetSync); return; }
-    const h = Math.floor(remaining / 3600000);
-    const m = Math.floor((remaining % 3600000) / 60000);
-    const s = Math.floor((remaining % 60000) / 1000);
-    el.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-  }, 1000);
-}
 
 /* ════════════════════════════════════════════════════════════
    👥  COMMUNITY PAGE — INLINE FUNCTIONS
@@ -23616,18 +22352,7 @@ let commPageFilter    = 'all';
 let commFilterByRoute = false;
 let commSelectedType  = 'police';
 
-function setCommFilter(chip, type) {
-  commPageFilter = type;
-  document.querySelectorAll('.comm-filter-chip').forEach(c => c.classList.remove('active'));
-  chip.classList.add('active');
-  renderCommPage();
-}
 
-function selectCommType(btn, type) {
-  commSelectedType = type;
-  document.querySelectorAll('.comm-type-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-}
 
 function toggleRouteFilter() {
   commFilterByRoute = !commFilterByRoute;
@@ -23673,68 +22398,6 @@ function getRouteInterstates() {
   return [...names];
 }
 
-function submitCommReport() {
-  const comment  = document.getElementById('commCommentInput')?.value?.trim() || '';
-  const type     = commSelectedType;
-  const cfg      = COMM_TYPE_CFG[type] || COMM_TYPE_CFG['hazard'];
-  const userName = driverProfile?.name || 'Anonymous';
-  const emoji    = TRUCK_EMOJIS[driverProfile?.truckType] || '🚛';
-
-  // Get GPS position
-  let lat, lon;
-  if (window.lastFixFm) { lat = window.lastFixFm.lat; lon = window.lastFixFm.lon; }
-  else if (fmGpsMarker)  { const ll = fmGpsMarker.getLatLng(); lat = ll.lat; lon = ll.lng; }
-  else if (origin)       { lat = origin.lat; lon = origin.lon; }
-  else {
-    showToast('warning','📍','No location','Open the map with GPS active first', 4000);
-    return;
-  }
-
-  // Detect route/interstate
-  const interstates = getRouteInterstates();
-  const onRoute     = isReportOnRoute({ lat, lon });
-
-  const report = {
-    id:            Date.now(),
-    type, emoji:   cfg.emoji, label: cfg.label,
-    lat, lon,
-    ts:            Date.now(),
-    comment:       comment,
-    userName:      userName,
-    userEmoji:     emoji,
-    truckType:     driverProfile?.truckType || '18wheeler',
-    onRoute,
-    interstates,
-    votes:         0,
-    reportedBy:    currentUser ? currentUser.id : userName,
-    reportedByName: userName,
-    confirmations: [],
-    denials: [],
-    confirmed: false
-  };
-
-  communityReports.push(report);
-  communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
-  localStorage.setItem('hos_reports', JSON.stringify(communityReports));
-
-  // Add marker on full map only (no screen bubble)
-  addReportMarker(report);
-
-  // Clear form
-  const _inp = document.getElementById('commCommentInput');
-  if (_inp) _inp.value = '';
-  document.querySelectorAll('.comm-type-btn').forEach(b => b.classList.remove('selected'));
-  const _first = document.querySelector('.comm-type-btn[data-type="police"]');
-  if (_first) _first.classList.add('selected');
-  commSelectedType = 'police';
-
-  updateCommBadge(communityReports.length);
-  updateCommTabBadge(communityReports.length);
-  renderCommPage();
-
-  vibrate([20, 10, 40]);
-  showToast('info', cfg.emoji, cfg.label + ' reported', onRoute ? '✅ Posted on your route' : 'Posted near your location', 3000);
-}
 
 function refreshCommPage() {
   communityReports = JSON.parse(localStorage.getItem('hos_reports') || '[]');
@@ -23853,22 +22516,8 @@ function renderCommPage() {
   }).join('');
 }
 
-function upvoteCommCard(id, el) {
-  upvoteReport(id, el);
-  setTimeout(renderCommPage, 100);
-}
 
-function quickReportPage(type, emoji, label) {
-  const btn = document.querySelector('.comm-type-btn[data-type="' + type + '"]');
-  if (btn) selectCommType(btn, type);
-  document.querySelector('.comm-new-report-card')?.scrollIntoView({ behavior: 'smooth' });
-  setTimeout(renderCommPage, 300);
-}
 
-function upvoteReportPage(id, el) {
-  upvoteReport(id, el);
-  renderCommPage();
-}
 
 /* ── Patch switchTab to refresh community page on tab switch ── */
 const _origSwitchTab = switchTab;
@@ -24642,12 +23291,6 @@ function drawLocalRadiusCircle(lat, lon) {
   }).addTo(fmMapInst);
 }
 
-function removeLocalRadiusCircle() {
-  if (localRadiusCircle && fmMapInst) {
-    fmMapInst.removeLayer(localRadiusCircle);
-    localRadiusCircle = null;
-  }
-}
 
 /* ── Hook into openFullMapScreen to apply local mode ── */
 const _origOpenFullMap = openFullMapScreen;
@@ -24852,25 +23495,7 @@ function dismissLocalWarning() {
 /* ════════════════════════════════════════════════════════════
    🚛  TRUCK OPTIONS PANEL CONTROLS
 ════════════════════════════════════════════════════════════ */
-function toggleTruckOpts() {
-  const body  = document.getElementById('truckOptsBody');
-  const arrow = document.getElementById('truckOptsArrow');
-  const opening = body.style.display === 'none';
-  body.style.display = opening ? 'block' : 'none';
-  arrow.classList.toggle('open', opening);
-}
 
-function setRouteType(type) {
-  truckOptions.routeType = type;
-  document.querySelectorAll('.rt-pill').forEach(p => {
-    p.classList.toggle('active', p.dataset.type === type);
-  });
-  // Si ya hay una ruta calculada, recalcular sin mostrar popups de horas
-  if (origin && destination && routeDistance > 0) {
-    _hosAutoRecalc = true;
-    calculateRoute();
-  }
-}
 
 /* ════════════════════════════════════════════════════════════
    🚨  COMMUNITY ROUTE ALERTS — AUTO DETECTION
@@ -24887,9 +23512,6 @@ function startRouteAlertMonitor() {
   _alertCheckInterval = setInterval(checkRouteAlerts, 60 * 1000); // every 60s
 }
 
-function stopRouteAlertMonitor() {
-  if (_alertCheckInterval) { clearInterval(_alertCheckInterval); _alertCheckInterval = null; }
-}
 
 function checkRouteAlerts() {
   if (!roadGeometry || roadGeometry.length < 2) return;
@@ -28011,9 +26633,6 @@ window._hosAutoRecalc = false;
   function yieldSVG(){
     return `<svg viewBox="0 0 70 62" width="58" height="52"><polygon points="35,60 2,4 68,4" fill="#fff" stroke="#dc2626" stroke-width="5"/><text x="35" y="38" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="900" font-family="system-ui,sans-serif">YIELD</text></svg>`;
   }
-  function circleSVG(text,bg,fg,size=56){
-    return `<svg viewBox="0 0 64 64" width="${size}" height="${size}"><circle cx="32" cy="32" r="29" fill="${bg}" stroke="${fg}" stroke-width="3"/><text x="32" y="37" text-anchor="middle" fill="${fg}" font-size="10" font-weight="900" font-family="system-ui,sans-serif">${text}</text></svg>`;
-  }
   function pentagonSVG(text,bg,fg){
     return `<svg viewBox="0 0 64 60" width="54" height="54"><polygon points="32,2 62,22 50,58 14,58 2,22" fill="${bg}" stroke="${fg}" stroke-width="2.5"/><text x="32" y="36" text-anchor="middle" fill="${fg}" font-size="10" font-weight="900" font-family="system-ui,sans-serif">${text}</text></svg>`;
   }
@@ -30668,28 +29287,8 @@ function showAppToast(msg, type, duration) {
 }
 
 // Safe GPS
-function safeGetLocation(onSuccess, onError) {
-  if (!navigator.geolocation) {
-    showAppToast('GPS no disponible', 'warning', 4000);
-    if (onError) onError({ code: 0, message: 'No GPS' });
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(onSuccess, function(err) {
-    console.warn('GPS error:', err);
-    showAppToast('Error GPS: ' + (err.message || 'Acceso denegado'), 'error', 4000);
-    if (onError) onError(err);
-  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
-}
 
 // Debounce
-function debounce(fn, ms) {
-  var t;
-  return function() {
-    clearTimeout(t);
-    var args = arguments, self = this;
-    t = setTimeout(function() { fn.apply(self, args); }, ms);
-  };
-}
 
 // Global error handlers
 window.addEventListener('error', function(e) {
@@ -31646,22 +30245,6 @@ function lbRodsGeom(canvas) {
 
 // Estado "sostenido" por hora: las horas sin registrar mantienen el estado
 // previo (OFF DUTY desde medianoche hasta el primer cambio), como en un RODS real.
-function lbHeldTimeline() {
-  const day = lbData[getDateKey(lbCurrentDate)] || {};
-  const held = [];
-  let prev = 'offduty';
-  for (let h = 0; h < 24; h++) {
-    let s = day[h];
-    if (!s || LB_ROWS.indexOf(s) < 0) s = prev;
-    held[h] = s; prev = s;
-  }
-  const segs = [];
-  let st = 0;
-  for (let h = 1; h <= 24; h++) {
-    if (h === 24 || held[h] !== held[st]) { segs.push({ start: st, end: h, status: held[st] }); st = h; }
-  }
-  return segs;
-}
 
 /* ── Modelo de eventos al minuto (fuente de verdad de gráfica/totales/HOS) ──
    lbEvents[dateKey] = [{m, s}] ordenado por minuto; el estado antes del primer

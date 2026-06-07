@@ -5590,11 +5590,6 @@ function drawRoute(pts, uid){
   if(mapLoaded) run(); else pendingTrailOps.push(run);
 }
 
-function showSelectedRoute(uid){
-  // Solo usa el trail en memoria si no hay historial Firebase cargado aún
-  const pts = trails.get(uid) || [];
-  if(pts.length >= 2) drawRoute(pts, uid);
-}
 
 function updateRouteInfoBar(uid){
   const mainEl = document.querySelector('main');
@@ -7866,9 +7861,6 @@ function _wcGetWeekBounds(offset){
   return { mon: from, sun: to };
 }
 
-function _wcWeekKey(offset){
-  return _wcGetWeekBounds(offset).mon.toISOString().slice(0,10);
-}
 
 const _WC_DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 function _wcWeekLabelStr(offset){
