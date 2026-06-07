@@ -7999,7 +7999,9 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
   <div style="flex:0 0 auto;padding:calc(6px + env(safe-area-inset-top,0px)) 12px 8px;background:transparent;position:relative;">
     <!-- Glow layer behind the header pill -->
     <div style="position:absolute;inset:0;border-radius:26px;background:radial-gradient(ellipse 85% 70% at 50% 100%,rgba(16,185,129,0.28) 0%,rgba(59,130,246,0.12) 55%,transparent 100%);filter:blur(12px);pointer-events:none;z-index:0;"></div>
-    <div style="display:flex;align-items:center;gap:14px;background:rgba(46,60,90,0.72);border:1px solid rgba(16,185,129,0.30);border-radius:18px;padding:5px 12px;box-shadow:0 16px 32px rgba(0,0,0,0.62),0 6px 12px rgba(0,0,0,0.45),0 0 22px rgba(16,185,129,0.16),inset 0 2px 0 rgba(255,255,255,0.22),inset 0 -3px 9px rgba(0,0,0,0.42);overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);position:relative;z-index:1;">
+    <div id="dashHeaderPill" style="display:flex;flex-direction:column;gap:0;background:rgba(46,60,90,0.72);border:1px solid rgba(16,185,129,0.30);border-radius:18px;padding:5px 12px 0;box-shadow:0 16px 32px rgba(0,0,0,0.62),0 6px 12px rgba(0,0,0,0.45),0 0 22px rgba(16,185,129,0.16),inset 0 2px 0 rgba(255,255,255,0.22),inset 0 -3px 9px rgba(0,0,0,0.42);overflow:visible;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);position:relative;z-index:1;transition:background 1s ease,border-color 0.8s ease;">
+      <!-- fila superior — volver / avatar / datos / campana -->
+      <div style="display:flex;align-items:center;gap:14px;width:100%;padding-bottom:5px;">
       <!-- Botón volver -->
       <button onclick="backToMainFromDash()" style="background:rgba(255,255,255,0.07);border:none;border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#f1f5f9;font-size:24px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
 
@@ -8030,6 +8032,19 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
         🔔
         <span id="notifBellBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:13px;font-weight:900;border-radius:999px;min-width:18px;padding:2px 5px;text-align:center;border:2px solid #181d2c;line-height:1.2;pointer-events:none"></span>
       </button>
+      </div><!-- /fila superior -->
+
+      <!-- ── VIOLATION COUNTDOWN STRIP ── -->
+      <div id="dashViolStrip" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 2px 6px;border-top:1px solid rgba(255,255,255,0.08);margin-top:0;">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+          <span id="dashViolIcon" style="font-size:14px;flex-shrink:0;">⏱</span>
+          <div style="min-width:0;">
+            <div style="font-size:8px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:rgba(255,255,255,0.50);text-transform:uppercase;line-height:1;">TIEMPO ANTES DE VIOLACIÓN</div>
+            <div id="dashViolType" style="font-size:9px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;color:rgba(255,255,255,0.70);text-transform:uppercase;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">PAUSA 30 MIN</div>
+          </div>
+        </div>
+        <div id="dashViolTime" style="font-size:22px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:#a3e635;text-shadow:0 0 10px rgba(163,230,53,0.55);flex-shrink:0;line-height:1;">--H --M</div>
+      </div>
     </div>
   </div>
 
@@ -18365,6 +18380,11 @@ function showHosDashboard() {
   setTimeout(initHosMinimap, 120);
   // Forzar re-render de Leaflet una vez el flex layout esté establecido
   setTimeout(() => { if (hosMinimapInst) hosMinimapInst.invalidateSize(); }, 350);
+
+  // Violation countdown card — actualizar inmediatamente y cada 30s
+  _updateViolationCard();
+  if (_violCardInt) clearInterval(_violCardInt);
+  _violCardInt = setInterval(_updateViolationCard, 30000);
 }
 
 let _dashGpsWatchId = null;
@@ -18372,6 +18392,7 @@ let _dashGpsWatchId = null;
 function hideHosDashboard() {
   if (_dash14hInterval)  { clearInterval(_dash14hInterval);  _dash14hInterval  = null; }
   if (_dashRingInterval) { clearInterval(_dashRingInterval); _dashRingInterval = null; }
+  if (_violCardInt)      { clearInterval(_violCardInt);      _violCardInt      = null; }
   _stopDashHeaderTicker();
   if (_dashGpsWatchId != null) { navigator.geolocation.clearWatch(_dashGpsWatchId); _dashGpsWatchId = null; }
   const screen = document.getElementById('hosDashScreen');
@@ -19358,7 +19379,79 @@ function showFullMapFromDash() {
   setTimeout(() => { if (typeof fmMapInst !== 'undefined' && fmMapInst) fmMapInst.invalidateSize(); }, 150);
 }
 
+let _violCardInt = null;
+
+function _updateViolationCard() {
+  const pill    = document.getElementById('dashHeaderPill');
+  const timeEl  = document.getElementById('dashViolTime');
+  const typeEl  = document.getElementById('dashViolType');
+  const iconEl  = document.getElementById('dashViolIcon');
+  if (!pill || !timeEl || !typeEl) return;
+
+  // ── 1. Calcular tiempo hasta cada violación ───────────────────
+  const breakSecsLeft = (typeof b30Complete !== 'undefined' && b30Complete)
+    ? Infinity
+    : Math.max(0, (typeof B30_DRIVE_LIMIT !== 'undefined' ? B30_DRIVE_LIMIT : 28800)
+                  - (typeof b30DriveSecs  !== 'undefined' ? b30DriveSecs  : 0));
+
+  const driveHrsLeft = (window._hosTracker && typeof window._hosTracker.driveLeft === 'function')
+    ? window._hosTracker.driveLeft()
+    : Math.max(0, 11 - (typeof fmDriveSeconds !== 'undefined' ? fmDriveSeconds / 3600 : 0));
+  const driveSecsLeft = driveHrsLeft * 3600;
+
+  // Mostrar la violación más próxima
+  let secsLeft, label;
+  if (breakSecsLeft <= driveSecsLeft) {
+    secsLeft = breakSecsLeft;
+    label    = 'PAUSA 30 MIN';
+    if (iconEl) iconEl.textContent = '⏸';
+  } else {
+    secsLeft = driveSecsLeft;
+    label    = 'LÍMITE 11H MANEJO';
+    if (iconEl) iconEl.textContent = '🚛';
+  }
+
+  // ── 2. Formatear tiempo ───────────────────────────────────────
+  const totalMins = Math.max(0, Math.ceil(secsLeft / 60));
+  const hh = Math.floor(totalMins / 60);
+  const mm = totalMins % 60;
+  const timeStr = secsLeft >= Infinity ? '∞' : (hh > 0 ? hh + 'H ' + String(mm).padStart(2,'0') + 'M' : mm + 'M');
+
+  timeEl.textContent = timeStr;
+  if (typeEl) typeEl.textContent = label;
+
+  // ── 3. Color dinámico por urgencia ───────────────────────────
+  let bg, border, textColor, glow;
+  if (secsLeft >= Infinity || secsLeft > 4 * 3600) {
+    bg        = 'linear-gradient(135deg,rgba(22,101,52,0.85) 0%,rgba(16,185,129,0.30) 100%)';
+    border    = 'rgba(16,185,129,0.55)';
+    textColor = '#a3e635';
+    glow      = 'rgba(163,230,53,0.55)';
+  } else if (secsLeft > 3600) {
+    bg        = 'linear-gradient(135deg,rgba(120,53,15,0.88) 0%,rgba(245,158,11,0.32) 100%)';
+    border    = 'rgba(245,158,11,0.60)';
+    textColor = '#fcd34d';
+    glow      = 'rgba(252,211,77,0.55)';
+  } else if (secsLeft > 0) {
+    bg        = 'linear-gradient(135deg,rgba(127,29,29,0.92) 0%,rgba(239,68,68,0.36) 100%)';
+    border    = 'rgba(239,68,68,0.65)';
+    textColor = '#fca5a5';
+    glow      = 'rgba(252,165,165,0.55)';
+  } else {
+    bg        = 'linear-gradient(135deg,rgba(127,29,29,1.0) 0%,rgba(239,68,68,0.55) 100%)';
+    border    = '#ef4444';
+    textColor = '#ffffff';
+    glow      = 'rgba(239,68,68,0.80)';
+  }
+
+  pill.style.background  = bg;
+  pill.style.borderColor = border;
+  timeEl.style.color     = textColor;
+  timeEl.style.textShadow = `0 0 10px ${glow}`;
+}
+
 function backToMainFromDash() {
+  if (_violCardInt) { clearInterval(_violCardInt); _violCardInt = null; }
   // Ocultar dashboard Y mapa grande → regresar a pantalla principal
   const dash = document.getElementById('hosDashScreen');
   if (dash) dash.style.display = 'none';
