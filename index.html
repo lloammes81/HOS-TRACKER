@@ -10518,10 +10518,10 @@ async function fetchWeather(lat, lon) {
 }
 
 function refreshDashWeather() {
-  const icon = document.getElementById('wxIcon');
-  const temp = document.getElementById('wxTemp');
-  const desc = document.getElementById('wxDesc');
-  const wind = document.getElementById('wxWind');
+  const icon = document.getElementById('heroWxIcon');
+  const temp = document.getElementById('heroWxTemp');
+  const desc = document.getElementById('heroWxDesc');
+  const wind = document.getElementById('heroWxWind');
   const hasData = weatherActive && temp && temp.textContent && temp.textContent !== '--°';
   // Legacy hidden row
   const row = document.getElementById('dashWeatherRow');
@@ -10555,12 +10555,6 @@ function updateWeatherWidget(wx) {
   const wxIconTxt = (!wx.isDay && WX_ICONS_NIGHT[wx.code]) ? WX_ICONS_NIGHT[wx.code] : (WX_ICONS[wx.code] || '🌡️');
   const wxTempTxt = `${wx.temp}°F`;
   const wxWindTxt = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
-  // Map widget
-  document.getElementById('wxIcon').textContent = wxIconTxt;
-  document.getElementById('wxTemp').textContent = wxTempTxt;
-  document.getElementById('wxDesc').textContent = wx.desc;
-  const wxWindEl = document.getElementById('wxWind');
-  if (wxWindEl) wxWindEl.textContent = wxWindTxt;
   // Hero weather bar
   const hIcon = document.getElementById('heroWxIcon');
   const hTemp = document.getElementById('heroWxTemp');
@@ -10571,9 +10565,6 @@ function updateWeatherWidget(wx) {
   if (hDesc) hDesc.textContent = wx.desc;
   if (hWind) hWind.textContent = wxWindTxt;
   refreshDashWeather();
-  // Color the temp red if danger
-  document.getElementById('wxTemp').className = 'wx-temp' + (isDanger ? ' wx-danger' : '');
-  document.getElementById('wxDesc').className = 'wx-desc' + (isDanger ? ' wx-danger' : '');
 
   if (isDanger) {
     showToast('danger','⛈️','⚠️ DANGEROUS WEATHER',
@@ -10790,9 +10781,7 @@ function showWeatherEffect(wxCode, windSpeed) {
 }
 
 async function startWeatherMonitor() {
-  document.getElementById('weatherWidget').classList.add('visible');
   document.getElementById('weatherStatusTxt').textContent = 'Fetching weather...';
-  document.getElementById('wxDesc').textContent = 'Loading...';
 
   const updateNow = async () => {
     let lat = null, lon = null;
@@ -11333,9 +11322,6 @@ async function checkBridges() {
     widget.classList.remove('bridge-warn', 'bridge-danger');
     document.getElementById('bridgeNextTxt').style.color = 'rgba(255,255,255,.5)';
   }
-  document.getElementById('bridgeStatusTxt') &&
-    (document.getElementById('bridgeStatusTxt').textContent =
-      `Active · ${needed}ft trailer · ${bridges.length} bridge${bridges.length > 1 ? 's' : ''} en ruta`);
 }
 
 function startBridgeDetector() {
@@ -11352,7 +11338,6 @@ function adjustHeight(delta) {
   localStorage.setItem('hos_trailer', trailerHeight);
   document.getElementById('bridgeDisplayVal').textContent = trailerHeight.toFixed(1);
   document.getElementById('trailerHeightInput').value = trailerHeight;
-  document.getElementById('bridgeStatusTxt').textContent = `Active · ${trailerHeight}ft trailer`;
   checkBridges(); // recheck with new height
 }
 
@@ -12335,11 +12320,6 @@ async function detectStateAndUpdateLimit(lat, lon) {
     if (limits && speedLimitActive) {
       currentStateCode = offlineCode;
       updateMapSpeedSign(limits.truck, limits.car, offlineCode, offlineCode);
-      const slN = document.getElementById('slNum');
-      const slS = document.getElementById('slState');
-      if (slN) slN.textContent = limits.truck;
-      if (slS) slS.textContent = offlineCode;
-      document.getElementById('speedLimitWidget')?.classList.add('visible');
     }
   }
 
@@ -12353,21 +12333,10 @@ async function detectStateAndUpdateLimit(lat, lon) {
     lastBorderWarnState = ''; // reset border warning for next state
     if (speedLimitActive) {
       const limits = STATE_SPEED_LIMITS[code];
-      if (limits) {
-        document.getElementById('slNum').textContent = limits.truck;
-        document.getElementById('slState').textContent = code;
-        document.getElementById('speedLimitWidget').classList.add('visible');
-        updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
-      }
+      if (limits) updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
     }
     showStateBanner(stateRaw || code);
     setTimeout(() => showDOTStateNotif(code, stateRaw || code), 3500);
-  } else if (speedLimitActive) {
-    const sign = document.getElementById('mapSpeedSign');
-    if (sign && !sign.classList.contains('visible')) {
-      const limits = STATE_SPEED_LIMITS[code];
-      if (limits) updateMapSpeedSign(limits.truck, limits.car, code, stateRaw);
-    }
   }
 }
 
@@ -12497,39 +12466,10 @@ async function fetchRoadSpeedLimit(lat, lon) {
 }
 
 function updateMapSpeedSign(truckMph, carMph, code, stateName) {
+  // El letrero de velocidad sobre el mapa grande fue eliminado. Sólo se
+  // conserva el límite vigente para las alertas de exceso de velocidad y para
+  // el panel de límite del mini-dashboard (que se refresca aparte).
   currentTruckSpeedLimit = Number(truckMph) || null;
-
-  const sign  = document.getElementById('mapSpeedSign');
-  const mssSign = document.getElementById('mssSign');
-  const num   = document.getElementById('mssNum');
-  const stBadge = document.getElementById('mssState');
-  const diff  = document.getElementById('mssDiff');
-  if (!sign) return;
-
-  num.textContent = truckMph;
-  const _sln2 = document.getElementById('speedoLimitNum'); if (_sln2) _sln2.textContent = truckMph;
-  stBadge.textContent = (stateName && stateName !== code ? stateName : code);
-
-  const unit = (code === 'ON' || code === 'BC' || code === 'AB' || code === 'QC') ? 'km/h' : 'mph';
-  if (carMph !== truckMph) {
-    diff.textContent = `Cars: ${carMph} ${unit}`;
-  } else {
-    diff.textContent = `Trucks & cars: ${truckMph} ${unit}`;
-  }
-
-  // Sync minimap dashboard speed limit panel immediately
-  const _dashLimEl = document.getElementById('dashLimitNum');
-  if (_dashLimEl) _dashLimEl.textContent = truckMph;
-
-  sign.classList.add('visible');
-  // Trigger pop animation
-  mssSign.classList.remove('new');
-  void mssSign.offsetWidth; // reflow
-  mssSign.classList.add('new');
-}
-
-function hideMapSpeedSign() {
-  document.getElementById('mapSpeedSign')?.classList.remove('visible');
 }
 
 function showPoliceAlert(gpsSpeed, limit) {
@@ -12718,9 +12658,6 @@ function toggleSosBtn(btn) {
   sosBtnActive = !sosBtnActive;
   localStorage.setItem('hos_sosbtn', sosBtnActive);
   btn.classList.toggle('on', sosBtnActive);
-  if (fmIsTracking) {
-    document.getElementById('sosFab').classList.toggle('visible', sosBtnActive);
-  }
 }
 
 function initSosSettings() {
@@ -14789,184 +14726,6 @@ function openFullMapScreen() {
   // El mapa grande fue eliminado por completo a petición del usuario.
   // Mantenemos la función como no-op para no romper a sus invocadores.
   return;
-  const screen = document.getElementById('fullMapScreen');
-  screen.style.display = 'flex';
-  screen.style.flexDirection = 'column';
-  document.body.classList.add('map-active');
-  setTimeout(_autoHideLeftPanelOnOpen, 400); // mostrar controles 3.5s luego ocultar
-  // Sync compass button label with current heading mode
-  setTimeout(_updateCompassBtn, 450);
-
-  // Bridge mode: hide all overlays when height detector is on
-  screen.classList.toggle('bridge-mode', !!bridgeActive);
-
-  document.getElementById('fmTrackBanner').style.display = 'block';
-  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'none'; }
-  document.getElementById('poiLegend').classList.add('visible');
-  document.getElementById('fmFollowBtn').classList.add('visible');
-  // Sync chip visual state with fmPoiActive (all enabled by default)
-  ['scale','truck','rest'].forEach(t => {
-    const cid = t === 'scale' ? 'chipScale' : t === 'truck' ? 'chipTruck' : 'chipRest';
-    const c = document.getElementById(cid);
-    if (c) c.classList.toggle('off', !fmPoiActive[t]);
-  });
-
-  if (origin) document.getElementById('fmFrom').textContent = origin.name.split(',')[0];
-  if (destination) {
-    document.getElementById('fmTo').textContent = destination.name.split(',')[0];
-    setTimeout(updateFmToDisplay, 200);
-  }
-
-  // Build map style panel buttons (once)
-  const stylePanel = document.getElementById('mapStylePanel');
-  if (stylePanel && !stylePanel.dataset.built) {
-    stylePanel.dataset.built = '1';
-    Object.entries(MAP_STYLES).forEach(([key, s]) => {
-      const btn = document.createElement('button');
-      btn.className = 'map-style-btn' + (key === currentMapStyle ? ' active' : '');
-      btn.dataset.style = key;
-      btn.innerHTML = `<span class="msb-emoji">${s.emoji}</span><span class="msb-label">${s.label}</span>`;
-      btn.onclick = () => { changeMapStyle(key); stylePanel.classList.remove('visible'); };
-      stylePanel.appendChild(btn);
-    });
-    // Close panel on outside tap
-    document.getElementById('fullMap').addEventListener('click', () => {
-      stylePanel.classList.remove('visible');
-    }, { passive: true });
-  }
-
-  if (!fmMapInst) {
-    fmMapInst = L.map('fullMap', {
-      zoomControl: false,
-      attributionControl: false,
-      zoomAnimation: true,
-      fadeAnimation: true,
-      rotate: true,          // leaflet-rotate plugin
-      bearing: 0,
-      touchRotate: true,     // allow manual two-finger rotation
-      rotateControl: false
-    }).setView([39.5, -98.35], 4);
-    // Mantener fullMapInst como alias de la instancia real del mapa completo
-    // (antes quedaba siempre en null, rompiendo refreshTruckMarkers y la
-    //  limpieza de marcadores de nombres de carretera en el mapa completo).
-    fullMapInst = fmMapInst;
-
-    // Center on GPS as soon as map opens instead of USA overview
-    if (window.lastFixFm) {
-      fmMapInst.setView([window.lastFixFm.lat, window.lastFixFm.lon], 7, { animate: false });
-    } else if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        if (!fmIsTracking) {
-          fmMapInst.setView([pos.coords.latitude, pos.coords.longitude], 7, { animate: true, duration: 1 });
-        }
-      }, () => {}, { timeout: 5000, enableHighAccuracy: true });
-    }
-
-    fmTileLayer = _mkTile(currentMapStyle).addTo(fmMapInst);
-    fmTileLayer.bringToBack();
-
-    L.control.attribution({ prefix: false, position: 'bottomright' })
-      .addAttribution('© <a href="https://legal.tomtom.com/terms-of-use" target="_blank">TomTom Maps</a>')
-      .addTo(fmMapInst);
-
-    L.control.scale({ maxWidth: 120, imperial: true, metric: false, position: 'bottomright' }).addTo(fmMapInst);
-
-    // Load US state boundary lines (always visible)
-    loadStateBoundaries();
-
-    // Detect when user drags map — pause auto-follow (resume after 8s)
-    fmMapInst.on('dragstart', () => {
-      if (window._fmProgrammaticMove) return; // ignore programmatic pans
-      fmUserDragged = true;
-      fmFollowing = false;
-      document.getElementById('fmFollowBtn').classList.remove('active');
-      _scheduleAutoResumeFollow();
-    });
-
-    // Detect when user zooms (pinch) — pause auto-follow (resume after 8s)
-    fmMapInst.on('zoomstart', () => {
-      if (window._fmProgrammaticMove) return; // ignore programmatic zoom
-      fmUserDragged = true;
-      fmFollowing = false;
-      const fb = document.getElementById('fmFollowBtn');
-      if (fb) fb.classList.remove('active');
-      _scheduleAutoResumeFollow();
-    });
-    // Save user's manual zoom so auto-follow doesn't override it
-    fmMapInst.on('zoomend', () => {
-      if (window._fmProgrammaticMove) return;
-      fmUserZoomed = true;
-      fmCurrentZoom = fmMapInst.getZoom();
-    });
-
-    // Detect when user manually rotates — pause auto-bearing for 20s
-    // Use _fmProgrammaticBearing to skip GPS-triggered rotatestart events
-    fmMapInst.on('rotatestart', () => {
-      if (window._fmProgrammaticBearing) return; // GPS rotation — ignore
-      fmUserRotated = true;
-      if (_autoResumeRotationTimer) clearTimeout(_autoResumeRotationTimer);
-    });
-    fmMapInst.on('rotateend', () => {
-      if (window._fmProgrammaticBearing) return;
-      _scheduleAutoResumeRotation();
-    });
-
-    // Center button — re-enable follow and center on last GPS fix
-    const centerBtn = document.getElementById('btnCenter');
-    if (centerBtn && !centerBtn.dataset.bound) {
-      centerBtn.dataset.bound = '1';
-      centerBtn.addEventListener('click', () => {
-        if (!window.lastFixFm) return;
-        fmFollowing = true;
-        fmUserDragged = false;
-        fmUserRotated = false;
-        fmUserZoomed = false;
-        if (_autoResumeRotationTimer) { clearTimeout(_autoResumeRotationTimer); _autoResumeRotationTimer = null; }
-        const fb = document.getElementById('fmFollowBtn');
-        if (fb) fb.classList.add('active');
-        const lf = window.lastFixFm;
-        const cc = calcFollowCenter(lf.lat, lf.lon, fmLastHeading);
-        fmMapInst.setView(cc, Math.max(fmMapInst.getZoom(), 15), { animate:true, duration:0.7, noMoveStart:true });
-      });
-    }
-  }
-
-  setTimeout(() => {
-    fmMapInst.invalidateSize();
-    if (origin && destination) {
-      // Only redraw if route geometry changed (not on every open)
-      const routeKey = (origin.lat||0).toFixed(4) + ',' + (destination.lat||0).toFixed(4) + ',' + (roadGeometry?.length||0);
-      if (routeKey !== fmLastRouteKey) {
-        fmLastRouteKey = routeKey;
-        fmLastStepsHash = showInterstateShields ? '' : 'disabled'; // re-add only if shields on
-        fmRedrawRoute();
-        // Reset chip labels to show loading
-        document.getElementById('chipScale').innerHTML = '⚖️ Scales <span style="opacity:.5;font-size:10px">•••</span>';
-        document.getElementById('chipTruck').innerHTML = '🚛 Truck Stops <span style="opacity:.5;font-size:10px">•••</span>';
-        document.getElementById('chipRest').innerHTML  = '😴 Rest Areas <span style="opacity:.5;font-size:10px">•••</span>';
-        // Start loading POIs after route is drawn
-        setTimeout(() => loadAllPOIs(), 500);
-      } else {
-        // Route hasn't changed — just ensure map is sized correctly
-        // Shields are already on the map, don't re-add
-      }
-    }
-    document.getElementById('fmHud').style.transform = 'translateY(0)';
-    // After HUD is visible and sized, position origin at bottom of screen
-    if (origin && fmMapInst && !fmIsTracking) {
-      setTimeout(() => {
-        const c = calcFollowCenter(origin.lat, origin.lon, 0);
-        window._fmProgrammaticMove = true;
-        fmMapInst.setView(c, fmMapInst.getZoom(), { animate: true, duration: 0.8 });
-        setTimeout(() => { window._fmProgrammaticMove = false; }, 1200);
-      }, 80);
-    }
-  }, 200);
-
-  setTimeout(_restoreTrafficState, 300);
-  fmTickClock();
-  if (fmClockTimer) clearInterval(fmClockTimer);
-  fmClockTimer = setInterval(fmTickClock, 1000);
 }
 
 // Draw/redraw the green route polyline + origin/destination markers
@@ -15405,27 +15164,6 @@ function calcHeading(lat1, lon1, lat2, lon2) {
   return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
 }
 
-function fmTickClock() {
-  const now = new Date();
-  const locale = (typeof lang !== 'undefined' && lang === 'es') ? 'es-US' : 'en-US';
-  const timeStr = now.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
-  const dateStr = now.toLocaleDateString(locale === 'es-US' ? 'es-ES' : 'en-US', {weekday:'short',month:'short',day:'numeric'});
-  document.getElementById('fmClockTxt').textContent = timeStr;
-  document.getElementById('fmDateTxt').textContent  = dateStr;
-  // Reloj encima del letrero de velocidad (solo hora:min)
-  const speedClock = document.getElementById('mapSpeedClock');
-  if (speedClock) {
-    speedClock.textContent = now.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit',hour12:true});
-  }
-  // Segundos dentro del anillo DISPONIBLES — cuenta regresiva del tiempo de manejo restante
-  const secClock = document.getElementById('dashSecondsClock');
-  if (secClock) {
-    const _dLeftSecs = window._hosTracker
-      ? Math.max(0, Math.floor(window._hosTracker.driveLeft() * 3600))
-      : 0;
-    secClock.textContent = String(_dLeftSecs % 60).padStart(2, '0');
-  }
-}
 
 /* ── Búsqueda de destino desde el mapa ── */
 let mapSearchDebounce;
@@ -15433,84 +15171,8 @@ let mapSearchDebounce;
 function closeFullMapScreen() {
   // El mapa grande fue eliminado — no-op.
   return;
-  // Ocultar el mapa grande
-  document.getElementById('fullMapScreen').style.display = 'none';
-  document.getElementById('fmHud').style.transform = 'translateY(100%)';
-  document.getElementById('poiLegend').classList.remove('visible');
-  document.getElementById('fmFollowBtn').classList.remove('visible');
-  document.body.classList.remove('map-active');
-
-  if (fmIsTracking) {
-    // Hay rastreo activo → volver al HOS Dashboard
-    showHosDashboard();
-  } else {
-    syncActiveRouteFab();
-  }
 }
 
-function minimizeMap() {
-  // Cancel any in-flight fmStartTracking GPS/route await
-  fmTrackAbort = true;
-  // Hide map UI but keep GPS tracking, route, and notifications alive
-  document.getElementById('fullMapScreen').style.display = 'none';
-  document.getElementById('fmHud').style.transform = 'translateY(100%)';
-  document.getElementById('poiLegend').classList.remove('visible');
-  document.getElementById('fmFollowBtn').classList.remove('visible');
-  document.body.classList.remove('map-active');
-  // GPS tracking continues — fmStopTracking() NOT called
-  // Route line stays on map — fmRouteLayer NOT cleared
-  // Show a persistent notification bar so user knows tracking is active
-  showMinimizedBanner();
-}
-
-function showMinimizedBanner() {
-  // Create or update minimized banner
-  let banner = document.getElementById('fmMiniBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'fmMiniBanner';
-    banner.style.cssText = [
-      'position:fixed','bottom:calc(80px + env(safe-area-inset-bottom,0px))',
-      'left:50%','transform:translateX(-50%)',
-      'background:rgba(16,185,129,0.95)','color:#fff',
-      'padding:10px 20px','border-radius:999px','z-index:9999',
-      'display:flex','align-items:center','gap:10px',
-      'box-shadow:0 4px 20px rgba(16,185,129,0.4)',
-      'font-family:\'DM Sans\',sans-serif','font-size:13px','font-weight:800',
-      'cursor:pointer','backdrop-filter:blur(10px)',
-      'animation:heroPulse 2s ease-in-out infinite'
-    ].join(';');
-    banner.innerHTML = '<span>🛣️</span><span id="fmMiniBannerText">Rastreo activo — toca para volver</span>';
-    banner.onclick = () => { banner.remove(); reopenMap(); };
-    document.body.appendChild(banner);
-  }
-  // Update banner with live info
-  const updateBanner = () => {
-    const txt = document.getElementById('fmMiniBannerText');
-    if (!txt || !document.getElementById('fmMiniBanner')) return;
-    const eta = document.getElementById('fmEta')?.textContent || '--';
-    const rem = document.getElementById('fmDistRemaining')?.textContent || '--';
-    txt.textContent = `🛣️ ${rem} restantes · ETA ${eta} — toca para volver`;
-  };
-  updateBanner();
-  const bannerTimer = setInterval(() => {
-    if (!document.getElementById('fmMiniBanner')) { clearInterval(bannerTimer); return; }
-    updateBanner();
-  }, 10000);
-}
-
-function reopenMap() {
-  document.getElementById('fullMapScreen').style.display = 'block';
-  document.getElementById('fmHud').style.transform = 'translateY(0)';
-  document.body.classList.add('map-active');
-  const banner = document.getElementById('fmMiniBanner');
-  if (banner) banner.remove();
-  // Re-center on current position if tracking
-  if (fmGpsMarker && fmMapInst) {
-    fmMapInst.setView(fmGpsMarker.getLatLng(), fmMapInst.getZoom());
-  }
-  setTimeout(_autoHideLeftPanelOnOpen, 400);
-}
 
 
 const fmHeadingUpMode = true; // always heading-up — locked
@@ -15670,8 +15332,6 @@ function b30Reset() {
   b30ViolShown = false; b30InBreak = false; b30BreakStart = null;
   b30Complete = false;
   if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
-  document.getElementById('breakTimerOverlay').style.display = 'none';
-  document.getElementById('breakViolationBanner').style.display = 'none';
 }
 
 function b30UpdateTimer() {
@@ -15849,7 +15509,6 @@ function b30Check(isMoving) {
       b30BreakStart = null;
       b30StopSecs = 0;
       if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
-      document.getElementById('breakTimerOverlay').style.display = 'none';
       b30RestoreMainRing();
     }
     b30StopSecs = 0;
@@ -16663,25 +16322,14 @@ function fmStartTracking() {
   // Iniciar servicio Android en segundo plano (si está disponible)
   try { if (window.AndroidHOS) AndroidHOS.startTracking(lang==='es'?'Rastreo GPS activo':'GPS tracking active'); } catch(e) {}
 
-  document.getElementById('fmTrackBanner').style.display = 'none';
-  document.getElementById('fmLiveDot').style.background = '#10b981';
-  document.getElementById('fmLiveDot').style.boxShadow = '0 0 8px #10b981';
-  document.getElementById('fmLiveDot').style.animation = 'liveblink 1.5s infinite';
-  document.getElementById('fmLocVal').textContent = origin?.name?.split(',')[0] || (lang==='es' ? '📍 Ruta activa' : '📍 Route active');
-  { const _hl = document.getElementById('mapHudLocVal'); if (_hl) _hl.textContent = document.getElementById('fmLocVal').textContent; }
-  document.getElementById('fmStatusChip').textContent = '📡 GPS activo';
-
   // ── Start IMMEDIATELY from origin — no GPS blocking wait ─────────────────────
   // watchPosition will update the truck position as real GPS fixes arrive.
   // This avoids the iOS/Android permission-dialog freeze entirely.
   const realLat = origin?.lat ?? 39.5;
   const realLon = origin?.lon ?? -98.35;
 
-  document.getElementById('fmFrom').textContent = origin?.name?.split(',')[0] || '';
   navStepIdx = 0;
   window._navVoiceKey = null;
-  const navBox = document.getElementById('navNext');
-  if (navBox) navBox.style.display = 'none'; // only shown when vehicle is moving
 
   if (fmMapInst) {
     fmRedrawRoute(roadGeometry);
@@ -16690,7 +16338,6 @@ function fmStartTracking() {
     fmPrevLat = realLat; fmPrevLon = realLon;
 
     fmFollowing = true;
-    document.getElementById('fmFollowBtn').classList.add('active');
     // Use fitBounds zoom (set by fmRedrawRoute above) instead of forcing zoom 15
     fmCurrentZoom = fmMapInst.getZoom();
     window._fmProgrammaticMove = true;
@@ -16762,7 +16409,6 @@ function fmStartTracking() {
   _hosWarn30mFired = false;
   _hosWarnExpiredFired = false;
   b30Reset();             // reinicia sistema de pausa 30 min
-  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'block'; }
   showSpeedometer();
   showDriveHoursWidget();
   // Leer horas restantes del tracker (respeta lo que el driver ingresó en el popup)
@@ -16774,41 +16420,7 @@ function fmStartTracking() {
   updateHeroKPIs(_initDriveLeft, _initDriveMax, _initCycleLeft, 70);
   // Mostrar dashboard HOS en lugar del mapa completo
   showHosDashboard();
-  // Show speed signs immediately — always visible when tracking starts
-  {
-    const initSign = document.getElementById('mapSpeedSign');
-    if (initSign && !initSign.classList.contains('visible')) {
-      const mssNum = document.getElementById('mssNum');
-      const mssState = document.getElementById('mssState');
-      const mssDiff = document.getElementById('mssDiff');
-      if (mssNum) mssNum.textContent = '--';
-      if (mssState) mssState.textContent = '';
-      if (mssDiff) mssDiff.textContent = '';
-      initSign.classList.add('visible');
-    }
-    // Also show the draggable speed limit widget
-    const slw = document.getElementById('speedLimitWidget');
-    if (slw) {
-      const slNum = slw.querySelector('.sl-num');
-      if (slNum) slNum.textContent = '--';
-      slw.classList.add('visible');
-    }
-  }
   document.getElementById('reportSideBtn')?.classList.add('visible');
-  const pfab = document.getElementById('profileFab');
-  if (pfab) pfab.style.display = 'flex';
-  const trb = document.getElementById('topReportBtns');
-  if (trb) trb.style.display = 'flex';
-  // Show SOS button if enabled
-  if (sosBtnActive) document.getElementById('sosFab').classList.add('visible');
-  document.getElementById('fmLiveDot').style.background = '#10b981';
-  document.getElementById('fmLiveDot').style.boxShadow  = '0 0 8px #10b981';
-  document.getElementById('fmLiveDot').style.animation  = 'liveblink 1.5s infinite';
-  document.getElementById('fmPct').textContent  = '0%';
-  document.getElementById('fmBar').style.width  = '0%';
-  { const _hp = document.getElementById('mapHudPct'); if (_hp) _hp.textContent = '0%'; }
-  { const _hb = document.getElementById('mapHudBar'); if (_hb) _hb.style.width = '0%'; }
-  document.getElementById('fmRem').textContent  = routeDistance + ' mi';
   // Guardar estado de la ruta inmediatamente al iniciar rastreo
   setTimeout(_fmSaveActiveRoute, 300);
 
@@ -17255,10 +16867,7 @@ function fmStartTracking() {
       if (_distToDest <= 0.25) { markLastRouteCompleted(); alert(t('arrived')); fmStopTracking(); }
     }
 
-  }, () => {
-    document.getElementById('fmLocVal').textContent = '⚠️ Weak GPS signal';
-    { const _hl = document.getElementById('mapHudLocVal'); if (_hl) _hl.textContent = '⚠️ Weak GPS signal'; }
-  }, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+  }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
 
   // ── GPS polling fallback — forces fresh fix from phone hardware every 2s ──
   // Guarantees real-time movement even if watchPosition is throttled by the OS.
@@ -17358,29 +16967,15 @@ function fmStopTracking() {
   document.getElementById('incidentPanel').innerHTML = '';
   Object.keys(activeIncidentBubbles).forEach(id => delete activeIncidentBubbles[id]);
   updateIncidentBadge();
-  document.getElementById('sosFab').classList.remove('visible');
   document.getElementById('fuelWidget').classList.remove('visible');
-  document.getElementById('speedLimitWidget').classList.remove('visible');
   document.getElementById('speedToast').classList.remove('show');
-  hideMapSpeedSign();
   fuelMarkers.forEach(m => { try { fmMapInst?.removeLayer(m); } catch {} });
   fuelMarkers = [];
   fuelStations = [];
   currentStateCode = '';
-  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.style.display = 'none'; }
-  document.getElementById('fmLiveDot').style.background = '#6b7280';
-  document.getElementById('fmLiveDot').style.boxShadow = 'none';
-  document.getElementById('fmLiveDot').style.animation = 'none';
   if (fmAccMarker) { try { fmMapInst.removeLayer(fmAccMarker); } catch {} fmAccMarker = null; }
-  // Volver a pantalla de planeación (ocultar mapa grande)
-  document.getElementById('fullMapScreen').style.display = 'none';
   document.body.classList.remove('map-active');
   hideHosDashboard();
-  // hideHosDashboard() restaura display de los overlays; re-ocultarlos
-  ['breakTimerOverlay','breakViolationBanner'].forEach(id => {
-    const ov = document.getElementById(id);
-    if (ov) ov.style.display = 'none';
-  });
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -18828,9 +18423,6 @@ function backToMainFromDash() {
   // Ocultar dashboard Y mapa grande → regresar a pantalla principal
   const dash = document.getElementById('hosDashScreen');
   if (dash) dash.style.display = 'none';
-  const map = document.getElementById('fullMapScreen');
-  if (map) map.style.display = 'none';
-  document.getElementById('fmHud').style.transform = 'translateY(100%)';
   document.body.classList.remove('map-active');
   // Restaurar widgets flotantes
   ['milesRemainingWidget','driveHoursWidget','speedometerWidget',
@@ -20332,16 +19924,8 @@ function quickReport(type, emoji, label) {
 
 let _rapTimer;
 function showReportAlert(emoji, label, byName) {
-  const pop = document.getElementById('reportAlertPopup');
-  if (!pop) return;
-  document.getElementById('rapEmoji').textContent = emoji;
-  document.getElementById('rapTitle').textContent = label;
-  document.getElementById('rapBy').textContent = `Por: ${byName || 'Anónimo'} · ahora`;
-  pop.classList.remove('show');
-  void pop.offsetWidth;
-  pop.classList.add('show');
-  clearTimeout(_rapTimer);
-  _rapTimer = setTimeout(() => pop.classList.remove('show'), 6000);
+  // El popup flotante de alerta de reporte (reportAlertPopup) fue eliminado;
+  // se conserva la función como no-op para no romper a sus invocadores.
 }
 
 function addReportMarker(report) {
@@ -20761,16 +20345,6 @@ function bindEvents() {
     if (origin && destination) openFullMapScreen();
   });
 
-  document.getElementById('closeFullMap').addEventListener('click', closeFullMapScreen);
-  document.getElementById('fmNoTrack').addEventListener('click', () => {
-    document.getElementById('fmTrackBanner').style.display = 'none';
-  });
-  document.getElementById('fmYesTrack').addEventListener('click', () => {
-    document.getElementById('fmTrackBanner').style.display = 'none';
-    fmStartTracking();
-  });
-  { const _sb = document.getElementById('fmStopBtn'); if (_sb) _sb.addEventListener('click', fmStopTracking); }
-
 
   // Safety feature toggles
   document.getElementById('fatigueToggle').addEventListener('click', e => { e.stopPropagation(); toggleFatigueDetector(); });
@@ -20782,7 +20356,6 @@ function bindEvents() {
       trailerHeight = v;
       localStorage.setItem('hos_trailer', v);
       document.getElementById('bridgeDisplayVal').textContent = v.toFixed(1);
-      document.getElementById('bridgeStatusTxt').textContent = `Active · ${v}ft trailer`;
       checkBridges();
     }
   });
@@ -22253,66 +21826,6 @@ document.addEventListener('click', e => {
 
 /* ── Freight Calc (inline on Tools page) ── */
 
-/* ── DOT Lookup (inline on Tools page) ── */
-async function searchDOTInline() {
-  const dotNum = document.getElementById('dotInput2').value.trim();
-  if (!dotNum || isNaN(dotNum)) {
-    const e = document.getElementById('dotError2');
-    e.textContent = 'Please enter a valid DOT number'; e.classList.add('visible');
-    return;
-  }
-  document.getElementById('dotError2').classList.remove('visible');
-  document.getElementById('dotResult2').classList.remove('visible');
-  document.getElementById('dotLoading2').classList.add('visible');
-
-  try {
-    const url = 'https://mobile.fmcsa.dot.gov/qc/services/carriers/' + dotNum + '?webKey=demo';
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (res.ok) {
-      const data = await res.json();
-      displayDotResultInline(data.content || data.carrier || data, dotNum);
-    } else { throw new Error('unavailable'); }
-  } catch (e) {
-    document.getElementById('dotLoading2').classList.remove('visible');
-    document.getElementById('dotCompanyName2').textContent = 'DOT #' + dotNum;
-    document.getElementById('dotNumber2').textContent = dotNum;
-    document.getElementById('dotMC2').textContent = '—';
-    document.getElementById('dotStatus2').innerHTML =
-      '<a href="https://safer.fmcsa.dot.gov/query.asp?searchtype=ANY&query_type=queryCarrierSnapshot&query_param=USDOT&query_string=' + dotNum +
-      '" target="_blank" style="color:#3b82f6;text-decoration:underline">View on SAFER.fmcsa.dot.gov ↗</a>';
-    document.getElementById('dotSafety2').textContent = '—';
-    document.getElementById('dotUnits2').textContent = '—';
-    document.getElementById('dotDrivers2').textContent = '—';
-    document.getElementById('dotState2').textContent = '—';
-    document.getElementById('dotResult2').classList.add('visible');
-  }
-}
-
-function displayDotResultInline(c, dotNum) {
-  document.getElementById('dotLoading2').classList.remove('visible');
-  const get = (obj, ...keys) => { for (const k of keys) { if (obj && obj[k]) return obj[k]; } return '—'; };
-  const name   = get(c,'legalName','legal_name','name','dbaName') || ('DOT #' + dotNum);
-  const status = get(c,'operatingStatus','operating_status');
-  const safety = get(c,'safetyRating','safety_rating');
-  const units  = get(c,'totalPowerUnits','power_units');
-  const drivers = get(c,'totalDrivers','drivers');
-  const state  = get(c,'phyState','state');
-  const mc     = get(c,'mcMxMffNum','mc_number');
-
-  document.getElementById('dotCompanyName2').textContent = name;
-  document.getElementById('dotNumber2').textContent = dotNum;
-  document.getElementById('dotMC2').textContent = mc;
-  const sEl = document.getElementById('dotStatus2');
-  sEl.textContent = status;
-  sEl.className = 'dot-val ' + (/active|authorized/i.test(status) ? 'green' : /revoked|out of service/i.test(status) ? 'red' : 'yellow');
-  const sfEl = document.getElementById('dotSafety2');
-  sfEl.textContent = safety;
-  sfEl.className = 'dot-val ' + (/satisfactory/i.test(safety) ? 'green' : /unsatisfactory|conditional/i.test(safety) ? 'red' : '');
-  document.getElementById('dotUnits2').textContent = units;
-  document.getElementById('dotDrivers2').textContent = drivers;
-  document.getElementById('dotState2').textContent = state;
-  document.getElementById('dotResult2').classList.add('visible');
-}
 
 /* ── 34h Reset (inline on Tools page — synced with sheet version) ── */
 
@@ -22431,14 +21944,6 @@ function renderCommPage() {
   const list = document.getElementById('commPageList');
   if (!list) return;
 
-  // Update user display in submit form
-  const userName = driverProfile?.name || 'Anonymous';
-  const userEmoji = TRUCK_EMOJIS[driverProfile?.truckType] || '🚛';
-  const userLbl = document.getElementById('commUserLabel');
-  const userAv  = document.getElementById('commUserAvatar');
-  if (userLbl) userLbl.textContent = userName;
-  if (userAv)  userAv.textContent  = userEmoji;
-
   // Get user position
   const userLat = window.lastFixFm?.lat || (origin?.lat) || null;
   const userLon = window.lastFixFm?.lon || (origin?.lon) || null;
@@ -22454,7 +21959,6 @@ function renderCommPage() {
   if (commFilterByRoute) {
     if (!roadGeometry || roadGeometry.length < 2) {
       list.innerHTML = '<div class="comm-no-route"><div class="comm-no-route-icon">🛣️</div><div class="comm-no-route-text">No active route.<br>Calculate a route first to filter reports.</div></div>';
-      document.getElementById('commPageCount').textContent = '0';
       return;
     }
     reports = reports.filter(r => isReportOnRoute(r, 10));
@@ -22464,9 +21968,6 @@ function renderCommPage() {
   if (commPageFilter !== 'all') {
     reports = reports.filter(r => r.type === commPageFilter);
   }
-
-  // Update count
-  document.getElementById('commPageCount').textContent = reports.length;
 
   const interstates = getRouteInterstates();
   const routeLabel  = interstates.length ? interstates.slice(0,3).join(' · ') : (roadGeometry ? 'Your route' : '');
@@ -22618,11 +22119,6 @@ function applyAllAvatars() {
 
 function updateFuelAvatar() { applyAllAvatars(); }
 
-/* ── Wire dotInput2 Enter key ── */
-{
-  const di2 = document.getElementById('dotInput2');
-  if (di2) di2.addEventListener('keydown', e => { if (e.key === 'Enter') searchDOTInline(); });
-}
 
 /* ── Init: update community tab badge ── */
 function initCommTabBadge() {
