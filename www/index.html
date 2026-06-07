@@ -93,8 +93,26 @@
   ══════════════════════════════════════════ */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; height: -webkit-fill-available; -webkit-text-size-adjust: 100%; }
+  /* ── TIPOGRAFÍA MILITAR GLOBAL ──
+     Todo el texto de la app usa estilo táctico:
+       • Bebas Neue → títulos, botones, etiquetas
+       • Share Tech Mono → cuerpo, valores, inputs */
+  body, body *, input, textarea, select, button {
+    font-family: "Share Tech Mono", "Courier New", monospace !important;
+    letter-spacing: .3px;
+  }
+  h1, h2, h3, h4, h5, h6,
+  .title, .card-title, .sect-title, .scan-topbar-title,
+  .tpb-title, .tool-page-title, .restr-sect-title, .restr-section-title,
+  .hud-ring-lbl, .results-k, .sched .t, .sett-label, .sett-group-title,
+  button:not(.lb-help-btn):not(.scan-top-btn):not(.scan-mode-btn):not(.scan-capture-btn),
+  .tab-btn, .btn, .smallbtn, .iconbtn,
+  [class*="title"], [class*="Title"] {
+    font-family: "Bebas Neue", "Share Tech Mono", monospace !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase;
+  }
   body {
-    font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100%;
@@ -740,8 +758,9 @@
     font-family:'Share Tech Mono','Courier New',monospace !important;
     letter-spacing:.5px !important;
   }
-  /* Mini-map / Full-map: desactivados por completo a petición del usuario */
-  #miniMapCard { display:none !important; }
+  /* Full-map: desactivado por completo a petición del usuario.
+     El mini-mapa (#miniMapCard) sí se mantiene. */
+  #fullMapScreen, #fullMapBtn { display:none !important; }
 
   /* ══════════════════════════════════════════
      MINI MAP
@@ -7971,469 +7990,6 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
   </button>
 </div>
 
-<div id="fullMapScreen" style="
-  display:none; position:fixed; inset:0; z-index:500;
-  background:#000; flex-direction:column;
-">
-  <!-- MAP fills entire screen -->
-  <div id="fullMap" style="position:absolute;inset:0;z-index:1"></div>
-  <!-- Vista 3D de navegación (MapLibre GL) — beta, encima del mapa 2D -->
-  <div id="fullMap3D" style="display:none;position:absolute;inset:0;z-index:2"></div>
-
-    <div class="local-radius-info" id="localRadiusInfo" style="display:none">📍 Local Mode — 100 mi radius</div>
-    <div id="routeAlertPill" onclick="switchTab('community')">🚨 Alert on your route — tap</div>
-    <div id="offRouteBar" style="display:none;position:absolute;top:calc(58px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:19000;background:rgba(239,68,68,0.92);color:#fff;font-size:13px;font-weight:800;letter-spacing:.5px;padding:8px 18px;border-radius:24px;box-shadow:0 4px 18px rgba(239,68,68,.5);backdrop-filter:blur(8px);pointer-events:none;animation:offRoutePulse 1.2s ease-in-out infinite">🔄 FUERA DE RUTA — recalculando...</div>
-
-  <!-- Map Style Picker overlay + panel -->
-  <div id="mapStyleOverlay" onclick="toggleMapStylePanel()" style="position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .20s ease;"></div>
-  <div id="mapStylePanel"></div>
-
-  <!-- NEXT TURN / EXIT INSTRUCTION -->
-  <div id="navNext" class="nav-next" style="display:none">🧭</div>
-
-  <!-- SPEED SIGN GROUP: sign + SOS button below it -->
-  <div id="mapSpeedGroup">
-    <!-- MAP SPEED LIMIT SIGN (display only — no buttons inside) -->
-    <div id="mapSpeedSign">
-      <div class="mss-sign" id="mssSign">
-        <div class="mss-top">SPEED&#10;LIMIT</div>
-        <div class="mss-num" id="mssNum">65</div>
-        <div class="mss-truck-label">TRUCKS</div>
-      </div>
-      <div class="mss-sign" id="mssMySpeed" style="border-top:none;border-top-left-radius:0;border-top-right-radius:0;margin-top:-1px">
-        <div class="mss-top">YOUR&#10;SPEED</div>
-        <div class="mss-num" id="mssMySpeedNum">0</div>
-        <div class="mss-truck-label">MPH</div>
-      </div>
-      <div class="mss-post"></div>
-      <div class="mss-state-badge" id="mssState">-- STATE</div>
-      <div class="mss-diff" id="mssDiff"></div>
-    </div>
-    <!-- SOS button below speed signs -->
-    <button id="sosFab" onclick="triggerSOS()" title="SOS Emergencia" style="font-size:10px;font-weight:900;letter-spacing:1px;background:#ef4444;border:2.5px solid #fff;color:#fff;animation:sosFabPulse 2s ease-in-out infinite">SOS</button>
-    <!-- Community reports button — moved here to keep right column aligned -->
-    <button id="mapSpeedCommBtn" onclick="openCommunityPanel()" title="Community Reports"
-      style="position:relative;width:44px;height:44px;border-radius:50%;border:none;
-             background:rgba(15,23,42,0.88);backdrop-filter:blur(8px);color:#fff;
-             font-size:20px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.4);
-             display:flex;align-items:center;justify-content:center;
-             -webkit-tap-highlight-color:transparent;">
-      👥<span class="comm-count-badge" id="commBadge2"></span>
-    </button>
-  </div>
-
-  <!-- COMMUNITY REPORT ALERT POPUP -->
-  <div id="reportAlertPopup">
-    <div style="font-size:28px" id="rapEmoji">⚠️</div>
-    <div style="font-size:13px;font-weight:800;color:#f1f5f9" id="rapTitle">Reporte de Comunidad</div>
-    <div style="font-size:11px;color:rgba(241,245,249,0.75)" id="rapMsg">Reportado en tu área — mantente alerta</div>
-    <div style="font-size:10px;color:rgba(241,245,249,0.45)" id="rapBy">Por: Anónimo</div>
-    <button onclick="document.getElementById('reportAlertPopup').classList.remove('show')" style="margin-top:4px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;color:#f1f5f9;font-size:11px;font-weight:700;padding:4px 12px;cursor:pointer">✕ Cerrar</button>
-  </div>
-
-
-  <!-- LEFT PANEL TOGGLE TAB -->
-  <button id="mapLeftPanelBtn" onclick="toggleMapLeftPanel()" title="Controles del mapa">›</button>
-
-  <!-- LEFT SIDE CONTROL COLUMN: estilo, brújula, centrar, color, zoom -->
-  <div id="mapLeftControls" class="panel-hidden">
-    <button id="mapStyleBtn" onclick="toggleMapStylePanel()" title="Estilo de mapa">🗺️</button>
-    <button id="compassBtn"  onclick="toggleHeadingUp()"     title="Vista dirección de viaje (toca para Norte)" style="flex-direction:column;gap:1px;height:52px;background:rgba(16,185,129,0.3);border-color:rgba(16,185,129,0.6)"><span style="font-size:17px">🧭</span><span style="font-size:9px;font-weight:800;letter-spacing:.3px;line-height:1">RUTA</span></button>
-    <!-- Weather widget — below compass -->
-    <div id="weatherWidget" onclick="showWeatherDetail()">
-      <div class="wx-row">
-        <div class="wx-icon" id="wxIcon">🌤️</div>
-        <div class="wx-temp" id="wxTemp">--°</div>
-      </div>
-      <div class="wx-desc" id="wxDesc">Clima</div>
-    </div>
-    <div class="map-ctrl-sep"></div>
-    <button id="btnCenter"   title="Centralizar">🎯</button>
-    <button id="btnMapColor" onclick="cycleMapColor()"       title="Color del mapa">🎨</button>
-    <div class="map-ctrl-sep"></div>
-    <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomIn()">+</button>
-    <button class="map-ctrl-zoom" onclick="fmMapInst && fmMapInst.zoomOut()">−</button>
-    <div class="map-ctrl-sep"></div>
-    <button id="trafficBtn" onclick="toggleTrafficLayer()" title="Tráfico en tiempo real" style="font-size:17px">🚦</button>
-    <button id="mapSearchBtn" onclick="toggleMapSearch()" title="Buscar destino" style="font-size:18px">🔍</button>
-  </div>
-
-  <!-- BARRA DE BÚSQUEDA DEL MAPA -->
-  <div id="mapSearchOverlay" style="
-    display:none;position:absolute;
-    top:calc(58px + env(safe-area-inset-top,0px));
-    left:8px;right:8px;z-index:20;pointer-events:all;
-  ">
-    <div style="background:rgba(10,16,30,0.96);border-radius:14px;padding:10px 14px;backdrop-filter:blur(14px);box-shadow:0 4px 28px rgba(0,0,0,.7);border:1px solid rgba(255,255,255,0.1)">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:17px;flex-shrink:0">🔍</span>
-        <input id="mapSearchInput" type="text" placeholder="Buscar destino..." autocomplete="off"
-               oninput="handleMapSearch(this.value)"
-               style="flex:1;background:transparent;border:none;color:#f1f5f9;font-size:15px;outline:none;min-height:38px;caret-color:#06b6d4" />
-        <button onclick="closeMapSearch()" style="background:none;border:none;color:#6b7280;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent">✕</button>
-      </div>
-    </div>
-    <div id="mapSearchSugg" style="display:none;background:rgba(10,16,30,0.97);border-radius:12px;margin-top:5px;overflow:hidden;box-shadow:0 4px 28px rgba(0,0,0,.6);max-height:270px;overflow-y:auto"></div>
-  </div>
-
-  <!-- AUTO-FOLLOW button (bottom-left) -->
-  <button id="fmFollowBtn" class="visible active" title="Auto-follow truck" onclick="toggleFollow()">🎯</button>
-  <!-- VISTA GENERAL DE RUTA (encima del auto-follow) -->
-  <button id="fmOverviewBtn" class="visible" title="Vista general de ruta" onclick="fmRouteOverview()">🗺️</button>
-  <!-- TOGGLE VISTA 3D (MapLibre) -->
-  <button id="fm3DToggleBtn" class="visible" title="Vista 3D" onclick="toggle3DNav()">3D</button>
-
-  <!-- Compass rose — rotates to keep N pointing north while map is heading-up -->
-  <div id="mapCompassWidget">
-    <svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-      <!-- Background -->
-      <circle cx="28" cy="28" r="27" fill="rgba(5,9,20,0.82)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-      <!-- Cardinal tick marks -->
-      <line x1="28" y1="3"  x2="28" y2="11" stroke="#f87171" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="53" y1="28" x2="45" y2="28" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="28" y1="53" x2="28" y2="45" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="3"  y1="28" x2="11" y2="28" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- N label -->
-      <text x="28" y="21" text-anchor="middle" dominant-baseline="middle" font-family="'DM Sans',sans-serif" font-size="9" font-weight="900" fill="#f87171" letter-spacing=".5">N</text>
-      <!-- Needle: red north half, white south half -->
-      <polygon points="28,5 25.5,27 28,30 30.5,27" fill="#ef4444"/>
-      <polygon points="28,51 25.5,29 28,26 30.5,29" fill="rgba(255,255,255,0.75)"/>
-      <!-- Center dot -->
-      <circle cx="28" cy="28" r="3.5" fill="rgba(10,18,36,0.95)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
-    </svg>
-  </div>
-
-  <!-- Rest sleep overlay — shown during 10h mandatory rest -->
-  <div id="restSleepOverlay" onclick="_hideSleepOverlay(true)">
-    <span class="zzz-bubble" style="left:12%;top:64%;font-size:26px;animation-duration:3.2s;animation-delay:0s;">z</span>
-    <span class="zzz-bubble" style="left:22%;top:58%;font-size:18px;animation-duration:2.7s;animation-delay:0.9s;">z</span>
-    <span class="zzz-bubble" style="left:38%;top:70%;font-size:38px;animation-duration:4.1s;animation-delay:1.6s;">Z</span>
-    <span class="zzz-bubble" style="left:50%;top:66%;font-size:22px;animation-duration:3.5s;animation-delay:0.3s;">z</span>
-    <span class="zzz-bubble" style="left:62%;top:72%;font-size:42px;animation-duration:3.9s;animation-delay:1.1s;">Z</span>
-    <span class="zzz-bubble" style="left:74%;top:60%;font-size:20px;animation-duration:2.9s;animation-delay:0.6s;">z</span>
-    <span class="zzz-bubble" style="left:83%;top:67%;font-size:30px;animation-duration:3.6s;animation-delay:2.0s;">Z</span>
-    <span class="zzz-bubble" style="left:28%;top:75%;font-size:16px;animation-duration:2.4s;animation-delay:1.4s;">z</span>
-    <div style="font-size:96px;line-height:1;margin-bottom:14px;filter:drop-shadow(0 6px 28px rgba(249,115,22,0.35));">😴</div>
-    <div id="restSleepDigital" style="font-family:'Share Tech Mono',monospace;font-size:54px;font-weight:700;color:#fff;letter-spacing:5px;text-shadow:0 0 40px rgba(255,255,255,0.15);">10:00:00</div>
-    <div style="color:rgba(255,255,255,0.38);font-size:12px;letter-spacing:5px;margin-top:10px;text-transform:uppercase;">Tiempo de descanso</div>
-    <div style="color:rgba(255,255,255,0.18);font-size:11px;margin-top:52px;letter-spacing:1px;">Toca para minimizar</div>
-  </div>
-
-  <!-- RIGHT SIDE CONTROL COLUMN: Community Reports -->
-  <div id="mapRightControls" style="display:none!important">
-    <button onclick="openCommunityPanel()" title="Community Reports" style="position:relative">👥<span class="comm-count-badge" id="commBadge"></span></button>
-  </div>
-
-  <!-- POI Filter chips (ocultos, se activan por JS) -->
-  <div id="poiLegend" style="display:none!important">
-    <div class="poi-chip" id="chipScale"    onclick="togglePOI('scale')">⚖️ Scales</div>
-    <div class="poi-chip" id="chipTruck"    onclick="togglePOI('truck')">🚛 Truck Stops</div>
-    <div class="poi-chip" id="chipRest"     onclick="togglePOI('rest')">😴 Rest Areas</div>
-    <div class="poi-chip" id="chipReport"   onclick="togglePOI('reports')">🚨 Reports</div>
-    <div class="poi-chip" id="chipRestrict" onclick="togglePOI('restrict')">🚫 Restrictions</div>
-  </div>
-
-  <!-- TOP BAR -->
-  <div style="
-    position:absolute;top:0;left:0;right:0;z-index:10;
-    padding-top:calc(10px + env(safe-area-inset-top, 0px));
-    padding-left:calc(10px + env(safe-area-inset-left, 0px));
-    padding-right:calc(10px + env(safe-area-inset-right, 0px));
-    pointer-events:none;
-    display:flex; align-items:flex-start; justify-content:space-between;
-  ">
-
-    <!-- LEFT: close + weather + SOS -->
-    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:7px;pointer-events:all">
-
-      <!-- Back button — minimizes map but keeps route & notifications -->
-      <button id="closeFullMap" style="
-        width:40px;height:40px;border-radius:50%;border:none;
-        background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
-        color:#fff;font-size:20px;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;
-        box-shadow:0 2px 12px rgba(0,0,0,0.4);
-        -webkit-tap-highlight-color:transparent;
-        touch-action:manipulation;
-      ">‹</button>
-
-      <!-- Botón detalles de ruta (visible solo cuando hay rastreo activo) -->
-      <button id="backToDashBtn" onclick="if(fmIsTracking){showHosDashboard()}" style="
-        display:none;
-        width:40px;height:40px;border-radius:12px;border:1px solid rgba(16,185,129,0.4);
-        background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
-        color:#10b981;font-size:18px;cursor:pointer;
-        align-items:center;justify-content:center;
-        box-shadow:0 2px 12px rgba(0,0,0,0.4),0 0 8px rgba(16,185,129,0.2);
-        -webkit-tap-highlight-color:transparent;
-        touch-action:manipulation;
-      ">📋</button>
-
-      <!-- SOS ahora está en mapRightControls -->
-
-    </div>
-
-    <!-- CENTER: clock + report buttons row -->
-    <div style="
-      pointer-events:none;
-      display:flex;flex-direction:column;align-items:center;gap:6px;
-      margin-top:2px;
-    ">
-
-      <!-- Clock pill (oculto) -->
-      <div style="
-        background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);
-        border-radius:10px;padding:6px 12px;
-        display:none;flex-direction:column;align-items:center;
-        box-shadow:0 2px 10px rgba(0,0,0,0.3);
-      ">
-        <div style="display:flex;align-items:center;gap:5px">
-          <div id="fmLiveDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0"></div>
-          <span id="fmClockTxt" style="font-size:13px;font-weight:700;color:#f1f5f9;white-space:nowrap">--:-- --</span>
-        </div>
-        <span id="fmDateTxt" style="font-size:10px;color:rgba(255,255,255,0.45);white-space:nowrap;margin-top:1px">---</span>
-      </div>
-
-      <!-- Quick report round buttons — 3 types -->
-      <div id="topReportBtns" style="
-        display:none;
-        align-items:center;gap:8px;
-        pointer-events:all;
-      ">
-        <button class="top-rpt-btn" style="background:#1d3a8a" onclick="quickReport('police','🚔','Policía')"       title="Policía">🚔</button>
-        <button class="top-rpt-btn" style="background:#7f1d1d" onclick="quickReport('accident','💥','Accidente')"   title="Accidente">💥</button>
-        <button class="top-rpt-btn" style="background:#4b5320" onclick="quickReport('inspection','🔍','Inspección')" title="Inspección">🔍</button>
-      </div>
-
-    </div>
-
-    <!-- RIGHT: spacer (speed sign is absolute top-right via CSS) -->
-    <div style="width:40px"></div>
-  </div>
-
-  <!-- ALT ROUTES TOP BAR -->
-  <div id="mapAltBar">
-    <div id="mapAltList"></div>
-  </div>
-
-  <!-- CONFIRM TRACKING BANNER (shows when map opens, before tracking starts) -->
-  <div id="fmTrackBanner" style="
-    position:absolute;
-    top:calc(80px + env(safe-area-inset-top, 0px));
-    left:calc(14px + env(safe-area-inset-left, 0px));
-    right:calc(14px + env(safe-area-inset-right, 0px));
-    z-index:10;
-    background:rgba(15,23,42,0.92);backdrop-filter:blur(12px);
-    border-radius:16px;padding:14px 16px;
-    border:1px solid rgba(16,185,129,0.3);
-    box-shadow:0 4px 20px rgba(0,0,0,0.5);
-  ">
-    <div style="font-size:13px;color:rgba(255,255,255,0.8);font-weight:600;margin-bottom:10px;text-align:center" id="fmBannerDesc">
-      📡 ¿Activar seguimiento GPS en vivo?
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <button id="fmNoTrack" onclick="document.getElementById('fmTrackBanner').style.display='none'" style="
-        padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);
-        background:rgba(255,255,255,0.08);color:#f1f5f9;font-family:'DM Sans',sans-serif;
-        font-size:13px;font-weight:700;cursor:pointer;
-      ">🗺️ Solo mapa</button>
-      <button id="fmYesTrack" onclick="document.getElementById('fmTrackBanner').style.display='none';fmStartTracking()" style="
-        padding:10px;border-radius:10px;border:none;
-        background:#10b981;color:#fff;font-family:'DM Sans',sans-serif;
-        font-size:13px;font-weight:800;cursor:pointer;
-      ">📡 Dar seguimiento</button>
-    </div>
-  </div>
-
-  <!-- BOTTOM HUD PANEL -->
-  <div id="fmHud" data-scroll style="
-    position:absolute;bottom:0;left:0;right:0;z-index:10;
-    background:rgba(10,16,30,0.92);
-    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-    border-radius:20px 20px 0 0;
-    border-top:1px solid rgba(255,255,255,0.08);
-    padding:14px 16px calc(20px + env(safe-area-inset-bottom, 0px));
-    color:#f1f5f9;
-    box-shadow:0 -4px 30px rgba(0,0,0,0.5);
-    transform:translateY(100%);
-    transition:transform .4s cubic-bezier(.16,1,.3,1);
-  ">
-    <!-- Handle (hidden in compact) -->
-    <div class="fm-hud-handle" style="width:36px;height:4px;background:rgba(255,255,255,0.2);border-radius:999px;margin:0 auto 10px"></div>
-
-    <!-- COMPACT: truck icon centered at top of HUD -->
-    <div id="mapHudTruck" style="display:flex;flex-direction:column;align-items:center;margin-bottom:8px;gap:2px">
-      <div id="mapHudArrow" style="width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:20px solid #3b82f6;filter:drop-shadow(0 2px 6px rgba(0,0,0,.55));transition:border-bottom-color .3s"></div>
-      <div id="mapHudCircle" style="width:66px;height:66px;border-radius:50%;border:3.5px solid #3b82f6;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.95);box-shadow:0 0 0 3px rgba(59,130,246,0.20)">
-        <div id="mapHudInner" style="width:66px;height:66px;display:flex;align-items:center;justify-content:center;font-size:28px">🚛</div>
-      </div>
-    </div>
-
-    <!-- Location label (always shown in compact) -->
-    <div id="mapHudLocRow" style="display:none;margin-bottom:6px;text-align:center">
-      <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.6px;line-height:1">📍 UBICACIÓN ACTUAL</div>
-      <div id="mapHudLocVal" style="font-size:12px;font-weight:700;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90vw;margin-top:2px">Localizando...</div>
-    </div>
-
-    <!-- Route progress bar (always shown in compact) -->
-    <div id="mapHudProgress" style="display:none;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-        <span style="font-size:9px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.4px">RUTA</span>
-        <span id="mapHudPct" style="font-size:10px;font-weight:800;color:#10b981">0%</span>
-      </div>
-      <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden">
-        <div id="mapHudBar" style="height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:999px;width:0%;transition:width .6s ease"></div>
-      </div>
-    </div>
-
-    <!-- Route header + old progress bar (full mode only) -->
-    <div class="fm-full-only">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px" id="fmLocLbl">UBICACIÓN ACTUAL</div>
-          <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="fmLocVal">Localizando...</div>
-        </div>
-        <div id="fmStatusChip" style="
-          margin-left:10px;padding:4px 10px;border-radius:999px;flex-shrink:0;
-          font-size:11px;font-weight:800;
-          background:rgba(107,114,128,0.25);color:#9ca3af;
-        ">⏸ Detenido</div>
-      </div>
-
-      <!-- Progress bar + pct -->
-      <div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.4px" id="fmProgLbl">PROGRESO DE RUTA</span>
-          <span style="font-size:11px;font-weight:800;color:#10b981" id="fmPct">0%</span>
-        </div>
-        <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden">
-          <div id="fmBar" style="height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:999px;width:0%;transition:width .6s ease"></div>
-        </div>
-      </div>
-    </div><!-- end .fm-full-only -->
-
-    <!-- ETA inteligente HOS + próxima parada sugerida -->
-    <div id="fmSmartInfo" style="display:none;margin-bottom:10px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);box-shadow:0 6px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.06);">
-      <div id="fmHosEta" style="display:flex;align-items:center;gap:6px;padding:9px 12px;font-size:12.5px;font-weight:800;letter-spacing:.2px;background:rgba(16,185,129,0.12);color:#f1f5f9;"></div>
-      <div id="fmNextStopBanner" onclick="_fmOpenNearbyStops()" style="display:none;align-items:center;gap:6px;padding:8px 12px;font-size:11.5px;font-weight:700;background:rgba(245,158,11,0.12);border-top:1px solid rgba(255,255,255,0.07);color:#fde68a;cursor:pointer;-webkit-tap-highlight-color:transparent;"></div>
-    </div>
-
-    <!-- 4 ELD-style stat circles — professional glass cards -->
-    <div class="hud-rings-grid">
-
-      <!-- LLEGADA -->
-      <div class="hud-ring-card">
-        <div style="position:relative;width:90px;height:90px;filter:drop-shadow(0 5px 9px rgba(0,0,0,0.55));">
-          <svg width="90" height="90" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <defs>
-              <radialGradient id="ringGrad3dMap" cx="38%" cy="30%" r="80%">
-                <stop offset="0%" stop-color="#47597f"/>
-                <stop offset="55%" stop-color="#2e3c5a"/>
-                <stop offset="100%" stop-color="#18223c"/>
-              </radialGradient>
-            </defs>
-            <circle cx="40" cy="40" r="36" fill="url(#ringGrad3dMap)" stroke="rgba(34,211,238,.14)" stroke-width="5.5"/>
-            <circle id="hudEtaArc" cx="40" cy="40" r="36" fill="none" stroke="#22d3ee" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0 226"/>
-          </svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div class="hud-ring-lbl" style="color:#22d3ee" id="fmEtaLbl">LLEGADA</div>
-            <div class="hud-ring-val" id="fmEta">--</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- MANEJO -->
-      <div id="hudManejoCell" class="hud-ring-card">
-        <div style="position:relative;width:90px;height:90px;filter:drop-shadow(0 5px 9px rgba(0,0,0,0.55));">
-          <svg width="90" height="90" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="url(#ringGrad3dMap)" stroke="rgba(52,211,153,.14)" stroke-width="5.5"/>
-            <circle id="hudDhArc" cx="40" cy="40" r="36" fill="none" stroke="#34d399" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0 226"/>
-          </svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div class="hud-ring-lbl" style="color:#34d399" id="fmDriveLbl">MANEJO</div>
-            <div class="hud-ring-val" id="fmDriveLeft">11h</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RESTANTE -->
-      <div class="hud-ring-card">
-        <div style="position:relative;width:90px;height:90px;filter:drop-shadow(0 5px 9px rgba(0,0,0,0.55));">
-          <svg width="90" height="90" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="url(#ringGrad3dMap)" stroke="rgba(96,165,250,.14)" stroke-width="5.5"/>
-            <circle id="hudRemArc" cx="40" cy="40" r="36" fill="none" stroke="#60a5fa" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="226 226"/>
-          </svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div class="hud-ring-lbl" style="color:#60a5fa" id="fmRemLbl">RESTANTE</div>
-            <div class="hud-ring-val" style="font-size:12px" id="fmRem">--</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 70 HRS -->
-      <div class="hud-ring-card">
-        <div style="position:relative;width:90px;height:90px;filter:drop-shadow(0 5px 9px rgba(0,0,0,0.55));">
-          <svg width="90" height="90" viewBox="0 0 80 80" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
-            <circle cx="40" cy="40" r="36" fill="url(#ringGrad3dMap)" stroke="rgba(167,139,250,.14)" stroke-width="5.5"/>
-            <circle id="hud70Arc" cx="40" cy="40" r="36" fill="none" stroke="#a78bfa" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="226 226"/>
-          </svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div class="hud-ring-lbl" style="color:#a78bfa" id="fm70Lbl">70 HRS</div>
-            <div class="hud-ring-val" id="fm70Left">70h</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Route from → to -->
-    <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:12px">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:9px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.4px">DESDE</div>
-        <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="fmFrom">--</div>
-      </div>
-      <div style="font-size:18px;color:rgba(255,255,255,0.25);flex-shrink:0">→</div>
-      <div style="flex:1;min-width:0;text-align:right">
-        <div style="font-size:9px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.4px" id="fmToLbl">HASTA</div>
-        <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:rtl" id="fmTo">--</div>
-      </div>
-    </div>
-
-    <!-- BREAK TIMER OVERLAY (aparece cuando el driver se detiene para el descanso) -->
-    <div id="breakTimerOverlay" style="display:none;position:absolute;bottom:calc(108px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:25;pointer-events:none;white-space:nowrap">
-      <div style="background:rgba(10,16,30,0.96);border-radius:22px;padding:16px 28px;text-align:center;backdrop-filter:blur(16px);border:2.5px solid #10b981;box-shadow:0 8px 36px rgba(0,0,0,.7);min-width:210px">
-        <div style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.2px;color:#10b981;margin-bottom:2px">⏸ DESCANSO OBLIGATORIO</div>
-        <div id="breakTimerCount" style="font-size:46px;font-weight:900;color:#fff;font-family:'Courier New',monospace;letter-spacing:3px;line-height:1.15;text-shadow:0 2px 10px rgba(16,185,129,.4)">30:00</div>
-        <div id="breakTimerLabel" style="font-size:11px;color:#94a3b8;margin-top:2px">Tiempo restante de pausa</div>
-        <div style="height:5px;background:rgba(255,255,255,.08);border-radius:999px;margin-top:10px;overflow:hidden">
-          <div id="breakTimerBar" style="height:100%;width:0%;background:#10b981;border-radius:999px;transition:width .8s ease"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- VIOLATION OVERLAY (si sigue manejando sin tomar pausa) -->
-    <div id="breakViolationBanner" style="display:none;position:absolute;top:calc(64px + env(safe-area-inset-top,0px));left:10px;right:10px;z-index:26;pointer-events:all">
-      <div style="background:rgba(127,29,29,0.97);border-radius:16px;padding:14px 16px;backdrop-filter:blur(14px);border:2px solid #ef4444;box-shadow:0 6px 28px rgba(239,68,68,.5)">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="font-size:28px">🚨</span>
-          <div>
-            <div style="font-size:14px;font-weight:900;color:#fff;letter-spacing:.3px">VIOLACIÓN HOS — 30-MIN BREAK</div>
-            <div style="font-size:11px;color:rgba(255,180,180,0.9);margin-top:1px">8 horas manejando sin descanso obligatorio</div>
-          </div>
-        </div>
-        <div style="background:rgba(0,0,0,.35);border-radius:10px;padding:10px 12px;font-size:11px;color:#fca5a5;line-height:1.6">
-          ⚖️ <b style="color:#fff">Multa FMCSA: $1,000 – $16,000</b> por conductor<br>
-          📋 <b style="color:#fff">CSA Points: +7</b> (puede causar out-of-service)<br>
-          🏢 <b style="color:#fff">Empresa: hasta $91,000</b> si hay patrón de violaciones
-        </div>
-        <button onclick="document.getElementById('breakViolationBanner').style.display='none'" style="margin-top:10px;width:100%;padding:10px;background:rgba(239,68,68,0.25);border:1.5px solid #ef4444;border-radius:10px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif">
-          ✓ Entendido — Deteniéndome ahora
-        </button>
-      </div>
-    </div>
-
-  </div>
-</div>
 
 <!-- ══════════════════════════════════════
      HOS DASHBOARD SCREEN
@@ -15625,6 +15181,9 @@ function launchTrackingDirect() {
 }
 
 function openFullMapScreen() {
+  // El mapa grande fue eliminado por completo a petición del usuario.
+  // Mantenemos la función como no-op para no romper a sus invocadores.
+  return;
   const screen = document.getElementById('fullMapScreen');
   screen.style.display = 'flex';
   screen.style.flexDirection = 'column';
@@ -16325,6 +15884,8 @@ function handleMapSearch(val) {
 }
 
 function closeFullMapScreen() {
+  // El mapa grande fue eliminado — no-op.
+  return;
   // Ocultar el mapa grande
   document.getElementById('fullMapScreen').style.display = 'none';
   document.getElementById('fmHud').style.transform = 'translateY(100%)';
