@@ -17827,12 +17827,13 @@ function _updateViolationCard() {
   _restStartMs = null; _shiftExpiredShown = false;
 
   const driveHrsLeft  = window._hosTracker ? window._hosTracker.driveLeft() : Math.max(0, 11);
+  // Tiempo transcurrido de turno en segundos (siempre corre desde el pre-trip)
+  const shiftElapsedSecs = (now - hosShiftStartTime) / 1000;
   let secsLeft, title, label;
 
-  if (!_b30Done) {
-    // Antes del break obligatorio: menor entre break y límite de manejo
-    const breakLeft = Math.max(0, (typeof B30_DRIVE_LIMIT !== 'undefined' ? B30_DRIVE_LIMIT : 28800)
-                               - (typeof b30DriveSecs !== 'undefined' ? b30DriveSecs : 0));
+  if (!b30Complete) {
+    // Faltan X segundos para cumplir las 8h de turno que requieren el break
+    const breakLeft = Math.max(0, 8 * 3600 - shiftElapsedSecs);
     if (breakLeft <= driveHrsLeft * 3600) {
       secsLeft = breakLeft;
       title    = 'Time remaining before Possible Violation';
