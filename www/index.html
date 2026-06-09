@@ -27696,6 +27696,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   let _cycleMs     = 0;      // ms acumulados en el ciclo semanal
   let _sessionStart= null;   // Date: inicio del segmento de movimiento actual
   let _isMoving    = false;
+  let _lastMovingTs= 0;      // ms timestamp of last reportMoving(true) call from any source
   let _speed       = 0;      // mph calculado desde GPS
   let _pollId      = null;
   let _gpsWatchId  = null;  // watchPosition del teléfono (modo sin ELD)
@@ -27732,6 +27733,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   // ── Lógica de movimiento (GPS) ───────────────────────────
   function _onMoving(speedMph){
     _speed = speedMph;
+    _lastMovingTs = Date.now();
     // Exponer estado al sistema global para que todos los módulos lo detecten
     fmVehicleMoving = true;
     fmCurrentSpeed  = speedMph;
@@ -27748,11 +27750,22 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
         _vehicleStopStartMs = null;
         try { localStorage.removeItem('hos_stop_start'); } catch(e) {}
       }
+      // Deactivate rest mode immediately — don't wait up to 5s for the watchdog
+      if (typeof _restModeActive !== 'undefined' && _restModeActive) {
+        if (typeof _updateRestMode === 'function') _updateRestMode();
+        else _restModeActive = false;
+      }
       _setDuty('EN MOVIMIENTO', '#00e5a0');
     }
   }
 
   function _onStopped(){
+    // Ignore stop signals that arrive within 5s of a confirmed movement from any source.
+    // GPS noise, throttled OS callbacks, and the 2s poll can interleave; a single false
+    // "stopped" reading must not cut off an active session.
+    const _movingRecently = (Date.now() - _lastMovingTs) < 5000;
+    if (_movingRecently) return;
+
     if (_isMoving && _sessionStart){
       const ms = Date.now() - _sessionStart.getTime();
       _driveMs += ms;
@@ -27762,7 +27775,6 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     }
     _isMoving = false;
     _speed    = 0;
-    // Exponer estado al sistema global
     fmVehicleMoving = false;
     fmCurrentSpeed  = 0;
     _setDuty('DETENIDO', '#f59e0b');
