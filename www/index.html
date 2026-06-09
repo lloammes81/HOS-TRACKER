@@ -15959,20 +15959,16 @@ function fmStartTracking() {
 
     const rawSpeed = pos.coords.speed;
     let gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
-    // Derive speed from recent position delta for iOS fallback and stale-sensor correction
-    let _derivedMph = 0, _hasFreshDerived = false;
+    // iOS fallback: if device doesn't report speed, derive from position delta
+    let _derivedMph = 0;
     if (window._lastRawGpsFix) {
       const _dtSec = (Date.now() - window._lastRawGpsFix.ts) / 1000;
-      if (_dtSec > 0.5 && _dtSec < 15) {
+      if (_dtSec > 0.5 && _dtSec < 30) {
         _derivedMph = (haversine(lat, lon, window._lastRawGpsFix.lat, window._lastRawGpsFix.lon) / _dtSec) * 3600;
-        _hasFreshDerived = true;
       }
     }
     window._lastRawGpsFix = { lat, lon, ts: Date.now() };
-    // Correct stale GPS sensor only when we have fresh position data (< 15s) showing stopped
-    if (_hasFreshDerived && rawSpeed != null && gpsSpeed > 10 && _derivedMph < 3) gpsSpeed = 0;
-    // iOS fallback: use position-derived when sensor returns null
-    if (rawSpeed == null && _derivedMph >= 5) gpsSpeed = Math.round(_derivedMph);
+    if (rawSpeed == null) gpsSpeed = Math.round(_derivedMph);
     let isMoving = gpsSpeed >= 8 || _derivedMph >= 5;
     fmCurrentSpeed = gpsSpeed;
     // ── Pausa de relojes HOS cuando el vehículo se detiene ──
@@ -16336,25 +16332,17 @@ function fmStartTracking() {
       const rawSpd  = pos.coords.speed;
       const hdg     = pos.coords.heading;
       const _pollNow = Date.now();
-      // Always derive speed from position delta for cross-check and iOS fallback
-      let _posDerived = 0, _hasFreshPoll = false;
+      // iOS fallback: derive speed from position delta when GPS doesn't report speed
+      let _posDerived = 0;
       if (window._fmPollLastFix) {
         const _dtSec = (_pollNow - window._fmPollLastFix.ts) / 1000;
-        if (_dtSec > 0.5 && _dtSec < 15) {
+        if (_dtSec > 0.5 && _dtSec < 30) {
           _posDerived = (haversine(lat, lon, window._fmPollLastFix.lat, window._fmPollLastFix.lon) / _dtSec) * 3600;
-          _hasFreshPoll = true;
         }
       }
       window._fmPollLastFix = { lat, lon, ts: _pollNow };
-      let _pollMph;
-      if (rawSpd != null && rawSpd >= 0) {
-        const _rawMph = rawSpd * 2.237;
-        // Correct stale sensor: position says stopped but sensor still reports speed
-        _pollMph = (_hasFreshPoll && _posDerived < 3 && _rawMph > 10) ? 0 : _rawMph;
-      } else {
-        _pollMph = _posDerived;
-      }
-      const moving  = _pollMph > 3;
+      const _pollMph = rawSpd != null && rawSpd >= 0 ? rawSpd * 2.237 : _posDerived;
+      const moving   = _pollMph > 3;
       window.lastFixFm = { lat, lon, acc: pos.coords.accuracy, ts: _pollNow };
       const snap = typeof snapToRoute === 'function' ? snapToRoute(lat, lon) : { lat, lon };
       let finalHdg = hdg;
