@@ -16606,10 +16606,6 @@ let hosShiftStartTime = (() => {
   return raw;
 })();
 let _offDutyStartMs     = parseInt(localStorage.getItem('hos_off_start')  || '0') || null;
-// Restaurar estado del período de descanso obligatorio si la app se cerró durante él
-if (typeof _restStartMs === 'undefined') {
-  window._restStartMs = parseInt(localStorage.getItem('hos_rest_start') || '0') || null;
-}
 _vehicleStopStartMs     = parseInt(localStorage.getItem('hos_stop_start') || '0') || null;
 let _dash14hInterval  = null;
 let _dashRingInterval = null;
@@ -17740,7 +17736,7 @@ function updateHosDashboard(driveLeft, driveMax) {
 
 
 let _violCardInt        = null;
-let _restStartMs        = null;   // cuando inició el período de 10h de descanso obligatorio
+let _restStartMs        = parseInt(localStorage.getItem('hos_rest_start') || '0') || null;
 let _restViolMs         = 0;      // ms manejados durante el descanso (acumulador de violación)
 let _restViolNotified   = false;  // ya se mostró el toast de violación en este período
 let _shiftExpiredShown  = false;  // ya se notificó expiración del turno
