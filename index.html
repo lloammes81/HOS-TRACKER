@@ -21025,13 +21025,6 @@ calculateRoute = async function() {
   if (isNaN(hours)||hours<=0||hours>70) { showError(t('err70')); return; }
   if (isNaN(speed)||speed<=0) { showError(t('errSpeed')); return; }
 
-  if (fmVehicleMoving && fmCurrentSpeed >= 8) {
-    showToast('danger','🚨', lang==='es'?'¡Vehículo en movimiento!':'Vehicle in Motion!',
-      lang==='es'?`Por tu seguridad detente para usar esta función.`:`Please stop the vehicle first.`, 8000);
-    vibrate([200,100,200,100,200]);
-    return;
-  }
-
   const calcBtn2 = document.getElementById('calcSlider');
   const calcLbl2 = document.getElementById('calcSliderLabel');
   if (calcBtn2) calcBtn2.classList.add('calc-disabled');
@@ -24588,15 +24581,6 @@ window._hosAutoRecalc = false;
   // Reemplaza calculateRoute con el flujo de popups
   calculateRoute = function() {
     if (!origin || !destination) { showError(t('errSel')); return; }
-    if (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving && fmCurrentSpeed >= 8) {
-      showToast('danger','🚨',
-        lang==='es' ? '¡Vehículo en movimiento!' : 'Vehicle in Motion!',
-        lang==='es' ? 'Detente para usar esta función.' : 'Please stop the vehicle first.',
-        8000);
-      if (typeof vibrate === 'function') vibrate([200,100,200,100,200]);
-      return;
-    }
-
     // Si viene de un cambio de tipo de ruta, saltar popups y calcular directo
     if (window._hosAutoRecalc) {
       window._hosAutoRecalc = false;
