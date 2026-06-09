@@ -27736,17 +27736,18 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   // ── Lógica de movimiento (GPS) ───────────────────────────
   function _onMoving(speedMph){
     _speed = speedMph;
+    // Exponer estado al sistema global para que todos los módulos lo detecten
+    fmVehicleMoving = true;
+    fmCurrentSpeed  = speedMph;
     if (!_isMoving){
       _isMoving     = true;
       _sessionStart = new Date();
       if (!_shiftStart){ _shiftStart = new Date(); }
-      // Iniciar ventana 14h sin necesidad de ruta activa
       if (typeof hosShiftStartTime !== 'undefined' && !hosShiftStartTime) {
         hosShiftStartTime = Date.now();
         try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
         if (typeof update14hCircle === 'function') update14hCircle();
       }
-      // Clear parked-vehicle timer — vehicle is moving so any prior rest period is over
       if (typeof _vehicleStopStartMs !== 'undefined' && _vehicleStopStartMs) {
         _vehicleStopStartMs = null;
         try { localStorage.removeItem('hos_stop_start'); } catch(e) {}
@@ -27765,6 +27766,9 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     }
     _isMoving = false;
     _speed    = 0;
+    // Exponer estado al sistema global
+    fmVehicleMoving = false;
+    fmCurrentSpeed  = 0;
     _setDuty('DETENIDO', '#f59e0b');
   }
 
