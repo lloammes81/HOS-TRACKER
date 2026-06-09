@@ -8058,16 +8058,16 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
               <stop offset="100%" stop-color="#18223c"/>
             </radialGradient>
           </defs>
-          <circle cx="45" cy="45" r="36" fill="url(#ringGrad3d)" stroke="rgba(255,255,255,0.30)" stroke-width="4"/>
-          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-dasharray="226 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <!-- Track (fondo gris) -->
+          <circle cx="45" cy="45" r="36" fill="url(#ringGrad3d)" stroke="rgba(255,255,255,0.18)" stroke-width="4"/>
+          <!-- Arco verde: se LLENA según horas usadas (0 → 226) -->
+          <circle id="dash14hArc" cx="45" cy="45" r="36" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 226" transform="rotate(-90 45 45)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.85);">
-          <div id="dash14hTime" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:13px;font-weight:normal;color:#ffffff;letter-spacing:1px;line-height:1;text-align:center;width:100%;">14h 0m</div>
-          <div id="dash14hSub" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:7px;color:rgba(255,255,255,0.80);margin-top:1px;letter-spacing:1px;text-align:center;width:100%;">ON DUTY</div>
-          <div style="width:20px;height:0.5px;background:rgba(255,255,255,0.18);margin:2px 0;"></div>
-          <div id="dash14hLabel" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,0.80);line-height:1;letter-spacing:0.8px;text-align:center;width:100%;">de 14h</div>
-          <!-- Indicador Bluetooth del dashboard eliminado: el escaneo ELD solo
-               se muestra como popup al pulsar el botón en Tools. -->
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.85);">
+          <div id="dash14hTime" style="font-family:'Bebas Neue',monospace;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px;line-height:1;text-align:center;width:100%;">14H</div>
+          <!-- Elementos ocultos mantenidos para compatibilidad JS -->
+          <div id="dash14hSub"   style="display:none;"></div>
+          <div id="dash14hLabel" style="display:none;"></div>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
@@ -18006,60 +18006,34 @@ function backToMainFromDash() {
 // Botón "Volver al Dashboard" que aparece en el mapa completo durante rastreo
 
 function update14hCircle() {
-  const arc    = document.getElementById('dash14hArc');
-  const timeEl = document.getElementById('dash14hTime');
-  const label  = document.getElementById('dash14hLabel');
-  const subLbl = document.getElementById('dash14hSub');
-  if (!arc || !timeEl) return;
+  const arc = document.getElementById('dash14hArc');
+  if (!arc) return;
   const C = 226; // 2π×36
+
   let remaining = 14;
   if (hosShiftStartTime) {
-    const elapsedH = (Date.now() - hosShiftStartTime) / 3600000;
-    remaining = Math.max(0, 14 - elapsedH);
+    remaining = Math.max(0, 14 - (Date.now() - hosShiftStartTime) / 3600000);
   }
-  const pct = remaining / 14;
-  arc.setAttribute('stroke-dasharray', `${(pct * C).toFixed(1)} ${C}`);
+  const used = 14 - remaining;
+
+  // Arco se LLENA con horas usadas (0 → C)
+  const usedPct = Math.min(1, used / 14);
+  arc.setAttribute('stroke-dasharray', `${(usedPct * C).toFixed(1)} ${C}`);
   arc.setAttribute('stroke', remaining <= 0 ? '#ef4444' : remaining < 2 ? '#ef4444' : remaining < 4 ? '#f59e0b' : '#10b981');
 
-  const mins = Math.round(remaining * 60);
-  const h = Math.floor(mins / 60), m = mins % 60;
-  timeEl.textContent = remaining <= 0 ? '0h 0m' : h > 0 ? `${h}h ${m}m` : `${m}m`;
-  timeEl.style.color = remaining <= 0 ? '#ff6b6b' : remaining < 2 ? '#ff6b6b' : remaining < 4 ? '#fbbf24' : '#ffffff';
-  timeEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.85)';
-
-  // Sub-label: shift start time or "sin turno"
-  if (subLbl) {
-    if (hosShiftStartTime) {
-      const d = new Date(hosShiftStartTime);
-      const hh = String(d.getHours()).padStart(2,'0'), mm = String(d.getMinutes()).padStart(2,'0');
-      subLbl.textContent = `INI ${hh}:${mm}`;
-    } else {
-      subLbl.textContent = 'ON DUTY';
-    }
+  // Centro: siempre "14H" fijo — el número cambia de color según urgencia
+  const timeEl = document.getElementById('dash14hTime');
+  if (timeEl) {
+    timeEl.textContent = '14H';
+    timeEl.style.color = remaining <= 0 ? '#ef4444' : remaining < 2 ? '#ef4444' : remaining < 4 ? '#fbbf24' : '#ffffff';
   }
 
-  // Bottom label: hours used / needs rest
-  if (label) {
-    if (remaining <= 0) {
-      label.textContent = '¡Descansa 10h!';
-      label.style.color = '#ff6b6b';
-    } else if (hosShiftStartTime) {
-      const used = 14 - remaining;
-      const uh = Math.floor(used), um2 = Math.round((used - uh) * 60);
-      label.textContent = `usadas ${uh}h ${String(um2).padStart(2,'0')}m`;
-      label.style.color = 'rgba(255,255,255,0.80)';
-    } else {
-      label.textContent = 'de 14h';
-      label.style.color = 'rgba(255,255,255,0.80)';
-    }
-  }
-
-  // Stat rows below ring label
-  const _fmtStat = (h) => { const hh=Math.floor(h),mm=Math.round((h-hh)*60); return `${hh}h ${String(mm).padStart(2,'0')}m`; };
-  const statRem = document.getElementById('dash14hStatRemaining');
+  // Stat rows: gris = restante, verde = usado
+  const _fmt = (v) => { const h=Math.floor(v), m=Math.round((v-h)*60); return `${h}h ${String(m).padStart(2,'0')}m`; };
+  const statRem  = document.getElementById('dash14hStatRemaining');
   const statUsed = document.getElementById('dash14hStatUsed');
-  if (statRem) statRem.textContent = _fmtStat(remaining);
-  if (statUsed) statUsed.textContent = _fmtStat(Math.max(0, 14 - remaining));
+  if (statRem)  statRem.textContent  = _fmt(remaining);
+  if (statUsed) statUsed.textContent = _fmt(used);
 }
 
 function setDashStatus(status) {
