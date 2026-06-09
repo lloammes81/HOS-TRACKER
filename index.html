@@ -27790,10 +27790,13 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       _isMoving     = true;
       _sessionStart = new Date();
       if (!_shiftStart){ _shiftStart = new Date(); }
-      if (typeof hosShiftStartTime !== 'undefined' && !hosShiftStartTime) {
-        hosShiftStartTime = Date.now();
-        try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
-        if (typeof update14hCircle === 'function') update14hCircle();
+      if (typeof hosShiftStartTime !== 'undefined') {
+        const _shiftAgeH = hosShiftStartTime ? (Date.now() - hosShiftStartTime) / 3600000 : 0;
+        if (!hosShiftStartTime || _shiftAgeH >= 14) {
+          hosShiftStartTime = Date.now();
+          try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
+          if (typeof update14hCircle === 'function') update14hCircle();
+        }
       }
       if (typeof _vehicleStopStartMs !== 'undefined' && _vehicleStopStartMs) {
         _vehicleStopStartMs = null;
