@@ -16719,6 +16719,8 @@ function showHosDashboard() {
   // Refrescar el anillo principal y el ciclo cada segundo mientras el dashboard es visible
   if (_dashRingInterval) clearInterval(_dashRingInterval);
   _dashRingInterval = setInterval(() => {
+    // Si rest countdown está activo, ese intervalo controla el anillo DRIVEN — no interferir
+    if (typeof _restCountdownStart !== 'undefined' && _restCountdownStart) return;
     const _sc = document.getElementById('dashSecondsClock');
     if (_sc) {
       const _dLeftSecs = window._hosTracker
@@ -17613,6 +17615,8 @@ let _dashDriveMaxCache  = null;
 function updateHosDashboard(driveLeft, driveMax) {
   _dashDriveLeftCache = driveLeft;
   _dashDriveMaxCache  = driveMax;
+  // Si el rest countdown está activo, no sobreescribir el anillo DRIVEN
+  if (typeof _restCountdownStart !== 'undefined' && _restCountdownStart) return;
 
   const arc    = document.getElementById('dashRingArc');
   const track  = document.getElementById('dashRingTrack');
