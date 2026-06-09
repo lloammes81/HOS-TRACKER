@@ -16606,6 +16606,10 @@ let hosShiftStartTime = (() => {
   return raw;
 })();
 let _offDutyStartMs     = parseInt(localStorage.getItem('hos_off_start')  || '0') || null;
+// Restaurar estado del período de descanso obligatorio si la app se cerró durante él
+if (typeof _restStartMs === 'undefined') {
+  window._restStartMs = parseInt(localStorage.getItem('hos_rest_start') || '0') || null;
+}
 _vehicleStopStartMs     = parseInt(localStorage.getItem('hos_stop_start') || '0') || null;
 let _dash14hInterval  = null;
 let _dashRingInterval = null;
@@ -17735,9 +17739,166 @@ function updateHosDashboard(driveLeft, driveMax) {
 }
 
 
-let _violCardInt = null;
+let _violCardInt        = null;
+let _restStartMs        = null;   // cuando inició el período de 10h de descanso obligatorio
+let _restViolMs         = 0;      // ms manejados durante el descanso (acumulador de violación)
+let _restViolNotified   = false;  // ya se mostró el toast de violación en este período
+let _shiftExpiredShown  = false;  // ya se notificó expiración del turno
 
 function _updateViolationCard() {
+  const pill    = document.getElementById('dashHeaderPill');
+  const timeEl  = document.getElementById('dashViolTime');
+  const typeEl  = document.getElementById('dashViolType');
+  const titleEl = document.querySelector('#dashViolStrip div:first-child');
+  if (!pill || !timeEl || !typeEl) return;
+
+  const now           = Date.now();
+  const shiftActive   = typeof hosShiftStartTime !== 'undefined' && hosShiftStartTime;
+  const _b30Done      = typeof b30Complete !== 'undefined' && b30Complete;
+  const _isMovingNow  = (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving)
+                     || (typeof fmCurrentSpeed   !== 'undefined' && fmCurrentSpeed >= 5);
+
+  // ── Sin turno iniciado ─────────────────────────────────────────
+  if (!shiftActive) {
+    _restStartMs = null; _restViolMs = 0; _restViolNotified = false; _shiftExpiredShown = false;
+    timeEl.textContent  = '--h --m';
+    if (typeEl)  typeEl.textContent  = '30 Min break · 10H rest tracking';
+    if (titleEl) titleEl.textContent = 'Start pre-trip to activate countdown';
+    _applyViolColor(pill, timeEl, 'green');
+    return;
+  }
+
+  const shiftElapsedH = (now - hosShiftStartTime) / 3600000;
+  const shiftLeftH    = Math.max(0, 14 - shiftElapsedH);
+
+  // ════════════════════════════════════════════════════════════
+  // FASE 2: Turno de 14h EXPIRADO → descanso de 10h obligatorio
+  // ════════════════════════════════════════════════════════════
+  if (shiftLeftH <= 0) {
+    // Iniciar temporizador de descanso si aún no está activo
+    if (!_restStartMs) {
+      _restStartMs = now;
+      localStorage.setItem('hos_rest_start', _restStartMs);
+    }
+
+    // Notificar expiración del turno (una sola vez)
+    if (!_shiftExpiredShown) {
+      _shiftExpiredShown = true;
+      if (typeof showToast === 'function') {
+        showToast('danger', '🚨', '14H SHIFT EXPIRED',
+          'Your on-duty window has ended. You must take a 10-hour rest break.', 12000);
+      }
+    }
+
+    const restElapsedH = (now - _restStartMs) / 3600000;
+    const restLeftH    = Math.max(0, 10 - restElapsedH);
+
+    // ── Detectar movimiento durante el descanso (VIOLACIÓN) ──
+    if (_isMovingNow && restLeftH > 0) {
+      _restViolMs += 1000; // se llama cada 1s
+      if (!_restViolNotified) {
+        _restViolNotified = true;
+        if (typeof showToast === 'function') {
+          showToast('danger', '🚨', 'HOS VIOLATION — DRIVING IN REST PERIOD',
+            'Federal fine up to $16,000. Every minute driven during rest is added to your violation record.', 15000);
+        }
+      }
+    } else if (!_isMovingNow && _restViolNotified) {
+      // Se detuvo — resetear flag para notificar de nuevo si vuelve a moverse
+      _restViolNotified = false;
+    }
+
+    // ── Descanso completo → resetear turno ───────────────────
+    if (restLeftH <= 0) {
+      hosShiftStartTime = null;
+      localStorage.removeItem('hos_shift_start');
+      _restStartMs = null; _restViolMs = 0;
+      _restViolNotified = false; _shiftExpiredShown = false;
+      localStorage.removeItem('hos_rest_start');
+      if (typeof b30Reset === 'function') b30Reset();
+      if (typeof update14hCircle === 'function') update14hCircle();
+      if (typeof showToast === 'function') {
+        showToast('success', '✅', '10-Hour Rest Complete', 'Your HOS cycle has been reset. You may begin a new shift.', 8000);
+      }
+      timeEl.textContent  = '--h --m';
+      if (typeEl)  typeEl.textContent  = 'HOS cycle reset — ready for new shift';
+      if (titleEl) titleEl.textContent = 'Rest complete';
+      _applyViolColor(pill, timeEl, 'green');
+      return;
+    }
+
+    // ── Mostrar countdown de descanso ────────────────────────
+    const violOverH = _restViolMs / 3600000;
+    const violLabel = _restViolMs > 0
+      ? `⚠️ +${Math.ceil(violOverH * 60)}m violation driving`
+      : 'Required by federal HOS regulations';
+
+    _fmtAndShow(timeEl, typeEl, titleEl, restLeftH * 3600,
+      'Time remaining for mandatory 10H rest', violLabel);
+    _applyViolColor(pill, timeEl, restLeftH > 5 ? 'red_dark' : 'red');
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // FASE 1: Turno activo — mostrar próxima violación
+  // ════════════════════════════════════════════════════════════
+  _restStartMs = null; _shiftExpiredShown = false;
+
+  const driveHrsLeft  = window._hosTracker ? window._hosTracker.driveLeft() : Math.max(0, 11);
+  let secsLeft, title, label;
+
+  if (!_b30Done) {
+    // Antes del break obligatorio: menor entre break y límite de manejo
+    const breakLeft = Math.max(0, (typeof B30_DRIVE_LIMIT !== 'undefined' ? B30_DRIVE_LIMIT : 28800)
+                               - (typeof b30DriveSecs !== 'undefined' ? b30DriveSecs : 0));
+    if (breakLeft <= driveHrsLeft * 3600) {
+      secsLeft = breakLeft;
+      title    = 'Time remaining before Possible Violation';
+      label    = 'Possible Violation · 30 Min break required';
+    } else {
+      secsLeft = Math.min(driveHrsLeft * 3600, shiftLeftH * 3600);
+      title    = 'Time remaining before Possible Violation';
+      label    = driveHrsLeft * 3600 <= shiftLeftH * 3600
+        ? 'Possible Violation · 11H driving limit'
+        : 'Possible Violation · 14H on-duty window';
+    }
+  } else {
+    // Break tomado: menor entre horas de manejo y ventana de turno
+    secsLeft = Math.min(driveHrsLeft * 3600, shiftLeftH * 3600);
+    title    = 'Time remaining before 10H Rest required';
+    label    = driveHrsLeft * 3600 <= shiftLeftH * 3600
+      ? 'Driving limit · 10H rest required'
+      : 'On-duty window · 10H rest required';
+  }
+
+  _fmtAndShow(timeEl, typeEl, titleEl, secsLeft, title, label);
+  const urgency = secsLeft > 4*3600 ? 'green' : secsLeft > 2*3600 ? 'yellow' : secsLeft > 3600 ? 'orange' : 'red';
+  _applyViolColor(pill, timeEl, urgency);
+}
+
+function _fmtAndShow(timeEl, typeEl, titleEl, secsLeft, title, label) {
+  const totalMins = Math.max(0, Math.ceil(secsLeft / 60));
+  const hh = Math.floor(totalMins / 60);
+  const mm = totalMins % 60;
+  timeEl.textContent  = hh > 0 ? hh + 'h ' + String(mm).padStart(2,'0') + 'm' : mm + 'm';
+  if (typeEl)  typeEl.textContent  = label;
+  if (titleEl) titleEl.textContent = title;
+}
+
+function _applyViolColor(pill, timeEl, level) {
+  const themes = {
+    green:    { bg:'linear-gradient(135deg,rgba(22,101,52,0.85) 0%,rgba(16,185,129,0.30) 100%)', border:'rgba(16,185,129,0.55)',  text:'#a3e635',  glow:'rgba(163,230,53,0.55)' },
+    yellow:   { bg:'linear-gradient(135deg,rgba(120,53,15,0.88) 0%,rgba(245,158,11,0.32) 100%)',  border:'rgba(245,158,11,0.60)',  text:'#fcd34d',  glow:'rgba(252,211,77,0.55)' },
+    orange:   { bg:'linear-gradient(135deg,rgba(154,52,18,0.90) 0%,rgba(249,115,22,0.35) 100%)',  border:'rgba(249,115,22,0.65)',  text:'#fdba74',  glow:'rgba(253,186,116,0.55)' },
+    red:      { bg:'linear-gradient(135deg,rgba(127,29,29,0.92) 0%,rgba(239,68,68,0.36) 100%)',   border:'rgba(239,68,68,0.65)',   text:'#fca5a5',  glow:'rgba(252,165,165,0.55)' },
+    red_dark: { bg:'linear-gradient(135deg,rgba(127,29,29,1.0)  0%,rgba(239,68,68,0.55) 100%)',   border:'#ef4444',               text:'#ffffff',  glow:'rgba(239,68,68,0.80)' },
+  };
+  const t = themes[level] || themes.green;
+  pill.style.background   = t.bg;
+  pill.style.borderColor  = t.border;
+  timeEl.style.color      = t.text;
+  timeEl.style.textShadow = `0 0 10px ${t.glow}`;
+}
   const pill    = document.getElementById('dashHeaderPill');
   const timeEl  = document.getElementById('dashViolTime');
   const typeEl  = document.getElementById('dashViolType');
