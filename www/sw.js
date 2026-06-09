@@ -1,6 +1,6 @@
 // ⚠️ Al cambiar la lógica de la app, sube el número de versión del caché.
 // Esto fuerza al navegador a instalar un nuevo Service Worker y purgar el viejo.
-const CACHE_VERSION = 'v5-viol-card';
+const CACHE_VERSION = 'v7-hos-fix';
 const CACHE_NAME = 'truck-precision-' + CACHE_VERSION;
 
 // Recursos base (se cachean en install; los errores se ignoran para no romper la instalación).
@@ -14,11 +14,10 @@ const PRECACHE = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      Promise.allSettled(PRECACHE.map((u) => cache.add(u)))
-    )
+    caches.open(CACHE_NAME)
+      .then((cache) => Promise.allSettled(PRECACHE.map((u) => cache.add(u))))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -26,6 +25,8 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((names) => Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ includeUncontrolled: true, type: 'window' }))
+      .then((clients) => clients.forEach((c) => c.postMessage({ type: 'SW_UPDATED' })))
   );
 });
 
