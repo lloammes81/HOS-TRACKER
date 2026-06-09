@@ -8069,7 +8069,17 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
                se muestra como popup al pulsar el botón en Tools. -->
         </div>
       </div>
-      <div style="font-size:13px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.90);letter-spacing:3px;text-transform:uppercase;">14H DUTY</div>
+      <div style="font-size:13px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.90);letter-spacing:3px;text-transform:uppercase;">ON-SHIFT</div>
+      <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;width:96px;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">
+          <span style="color:#9ca3af;font-size:9px;">●</span>
+          <span id="dash14hStatRemaining" style="color:rgba(255,255,255,0.80);">--h --m</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">
+          <span style="color:#10b981;font-size:9px;">●</span>
+          <span id="dash14hStatUsed" style="color:rgba(255,255,255,0.80);">--h --m</span>
+        </div>
+      </div>
     </div>
 
     <!-- DISPONIBLES ring — GRANDE -->
@@ -8087,7 +8097,17 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           <div id="dashSecondsClock" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:20px;font-weight:normal;color:#ffffff;letter-spacing:4px;text-shadow:none;margin-top:10px;text-align:center;width:100%;">00</div>
         </div>
       </div>
-      <div style="font-size:13px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.90);letter-spacing:3px;text-transform:uppercase;">DISPONIBLES</div>
+      <div style="font-size:13px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.90);letter-spacing:3px;text-transform:uppercase;">DRIVEN</div>
+      <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;width:160px;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">
+          <span style="color:#9ca3af;font-size:9px;">●</span>
+          <span id="dashDrivenStatRemaining" style="color:rgba(255,255,255,0.80);">--h --m</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">
+          <span style="color:#10b981;font-size:9px;">●</span>
+          <span id="dashDrivenStatUsed" style="color:rgba(255,255,255,0.80);">--h --m</span>
+        </div>
+      </div>
     </div>
 
     <!-- CICLO 70H ring -->
@@ -8102,7 +8122,17 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           <div id="dashCicloUsed" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:8px;color:rgba(255,255,255,0.80);margin-top:4px;letter-spacing:1px;text-align:center;width:100%;">0h usadas</div>
         </div>
       </div>
-      <div style="font-size:13px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.90);letter-spacing:3px;text-transform:uppercase;">CICLO 70H</div>
+      <div style="font-size:13px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.90);letter-spacing:3px;text-transform:uppercase;">ON-CYCLE</div>
+      <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;width:96px;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">
+          <span style="color:#9ca3af;font-size:9px;">●</span>
+          <span id="dashCycleStatRemaining" style="color:rgba(255,255,255,0.80);">--h --m</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">
+          <span style="color:#10b981;font-size:9px;">●</span>
+          <span id="dashCycleStatUsed" style="color:rgba(255,255,255,0.80);">--h --m</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -17600,13 +17630,20 @@ function updateHosDashboard(driveLeft, driveMax) {
   const m = totalMins % 60;
   timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
 
-  // Actualizar etiqueta del anillo DISPONIBLES
+  // Actualizar etiqueta del anillo DRIVEN
   const lblEl = document.getElementById('dashHosLabel');
   if (lblEl) {
     const _usedMins = Math.round((REG_DAILY - driveLeft) * 60);
     lblEl.textContent = `de ${REG_DAILY}h · usadas ${Math.floor(_usedMins/60)}h ${String(_usedMins%60).padStart(2,'0')}m`;
     lblEl.style.color = 'rgba(255,255,255,0.80)';
   }
+
+  // Stat rows below DRIVEN ring label
+  const _fmtDs = (v) => { const hh=Math.floor(v), mm=Math.round((v-hh)*60); return `${hh}h ${String(mm).padStart(2,'0')}m`; };
+  const dStatRem  = document.getElementById('dashDrivenStatRemaining');
+  const dStatUsed = document.getElementById('dashDrivenStatUsed');
+  if (dStatRem)  dStatRem.textContent  = _fmtDs(driveLeft);
+  if (dStatUsed) dStatUsed.textContent = _fmtDs(Math.max(0, REG_DAILY - driveLeft));
 
   // Hora estimada de llegada
   const arrEl  = document.getElementById('dashArrival');
@@ -17657,6 +17694,13 @@ function updateHosDashboard(driveLeft, driveMax) {
     const uh = Math.floor(used), um = Math.round((used - uh) * 60);
     cicloUsedEl.textContent = `${uh}h ${String(um).padStart(2,'0')}m usadas`;
   }
+
+  // Stat rows below ON-CYCLE ring label
+  const _fmtCs = (v) => { const hh=Math.floor(v), mm=Math.round((v-hh)*60); return `${hh}h ${String(mm).padStart(2,'0')}m`; };
+  const cStatRem  = document.getElementById('dashCycleStatRemaining');
+  const cStatUsed = document.getElementById('dashCycleStatUsed');
+  if (cStatRem)  cStatRem.textContent  = _fmtCs(cycLeft);
+  if (cStatUsed) cStatUsed.textContent = _fmtCs(Math.max(0, cycMax - cycLeft));
   // Progress bars — start full, drain as hours are consumed, color shifts green→yellow→red
   const manProg  = document.getElementById('dashManejoProg');
   const manLabel = document.getElementById('dashManejoLabel');
@@ -17813,6 +17857,13 @@ function update14hCircle() {
       label.style.color = 'rgba(255,255,255,0.80)';
     }
   }
+
+  // Stat rows below ring label
+  const _fmtStat = (h) => { const hh=Math.floor(h),mm=Math.round((h-hh)*60); return `${hh}h ${String(mm).padStart(2,'0')}m`; };
+  const statRem = document.getElementById('dash14hStatRemaining');
+  const statUsed = document.getElementById('dash14hStatUsed');
+  if (statRem) statRem.textContent = _fmtStat(remaining);
+  if (statUsed) statUsed.textContent = _fmtStat(Math.max(0, 14 - remaining));
 }
 
 function setDashStatus(status) {
