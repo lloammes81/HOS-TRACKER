@@ -28361,6 +28361,25 @@ document.addEventListener('DOMContentLoaded', function() {
   initLogbook();
 });
 
+// ── Relojes de 14H y violación: siempre activos una vez establecido el turno ──
+(function _startPermanentHosClocks() {
+  let _globalHosInt = null;
+  function _tick() {
+    if (typeof hosShiftStartTime !== 'undefined' && hosShiftStartTime) {
+      if (typeof update14hCircle === 'function') update14hCircle();
+      if (typeof _updateViolationCard === 'function') _updateViolationCard();
+    }
+  }
+  function _ensureRunning() {
+    if (!_globalHosInt) _globalHosInt = setInterval(_tick, 1000);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _ensureRunning);
+  } else {
+    _ensureRunning();
+  }
+})();
+
 function initLogbook() {
   createHourGrid('lbGridOffDuty', 'offduty');
   createHourGrid('lbGridSleeper', 'sleeper');
