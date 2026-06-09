@@ -8090,12 +8090,12 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           <circle id="dashGlowCircle" cx="130" cy="130" r="108" fill="none" stroke="#1e40af" stroke-width="1" opacity="0"/>
           <circle cx="130" cy="130" r="99" fill="url(#ringGrad3d)"/>
           <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(255,255,255,0.30)" stroke-width="9" id="dashRingTrack"/>
-          <circle cx="130" cy="130" r="108" fill="none" stroke="#10b981" stroke-width="9" stroke-linecap="round" stroke-dasharray="679 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
+          <circle cx="130" cy="130" r="108" fill="none" stroke="#10b981" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 679" id="dashRingArc" transform="rotate(-90 130 130)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;">
-          <div id="dashHosTime" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:34px;font-weight:normal;color:#ffffff;letter-spacing:2px;line-height:1;text-align:center;width:100%;">11h 0m</div>
-          <div id="dashHosLabel" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,0.80);text-align:center;width:100%;margin-top:8px;line-height:1.4;letter-spacing:1px;">de 11h límite</div>
-          <div id="dashSecondsClock" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:20px;font-weight:normal;color:#ffffff;letter-spacing:4px;text-shadow:none;margin-top:10px;text-align:center;width:100%;">00</div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.85);">
+          <div id="dashHosTime" style="font-family:'Bebas Neue',monospace;font-size:38px;font-weight:700;color:#ffffff;letter-spacing:1px;line-height:1;text-align:center;width:100%;">11H</div>
+          <div id="dashHosLabel" style="display:none;"></div>
+          <div id="dashSecondsClock" style="display:none;"></div>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
@@ -8116,11 +8116,11 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
       <div style="position:relative;width:96px;height:96px;filter:drop-shadow(0 7px 12px rgba(0,0,0,0.6)) drop-shadow(0 -1px 1px rgba(255,255,255,0.12));">
         <svg viewBox="0 0 94 94" style="width:100%;height:100%;position:absolute;inset:0;">
           <circle cx="47" cy="47" r="40" fill="url(#ringGrad3d)" stroke="rgba(255,255,255,0.30)" stroke-width="4"/>
-          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-dasharray="251 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease;"/>
+          <circle id="dashCicloArc" cx="47" cy="47" r="40" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 251" transform="rotate(-90 47 47)" style="transition:stroke-dasharray 1s ease,stroke 0.4s ease;"/>
         </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <div id="dashWeekHours" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:18px;font-weight:normal;color:#ffffff;letter-spacing:1.5px;line-height:1;text-align:center;width:100%;">70H</div>
-          <div id="dashCicloUsed" style="font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:8px;color:rgba(255,255,255,0.80);margin-top:4px;letter-spacing:1px;text-align:center;width:100%;">0h usadas</div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.85);">
+          <div id="dashWeekHours" style="font-family:'Bebas Neue',monospace;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px;line-height:1;text-align:center;width:100%;">70H</div>
+          <div id="dashCicloUsed" style="display:none;"></div>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
@@ -17626,29 +17626,18 @@ function updateHosDashboard(driveLeft, driveMax) {
   if (!arc || !timeEl) return;
 
   const REG_DAILY = 11; // regulatory 11h daily drive limit
-  const pct = Math.max(0, Math.min(1, driveLeft / REG_DAILY));
-  const circumference = 679; // 2π×108 ≈ 679
-  arc.setAttribute('stroke-dasharray', `${(pct * circumference).toFixed(1)} ${circumference}`);
+  const C_DRIVE = 679; // 2π×108 ≈ 679
+  const driveUsed = Math.max(0, REG_DAILY - driveLeft);
+  const usedPct = Math.min(1, driveUsed / REG_DAILY);
+  arc.setAttribute('stroke-dasharray', `${(usedPct * C_DRIVE).toFixed(1)} ${C_DRIVE}`);
 
   if (track) track.setAttribute('stroke', 'rgba(255,255,255,0.30)');
-  // Arc color based only on drive time remaining
   const arcColor = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
   arc.setAttribute('stroke', arcColor);
-  timeEl.style.color = driveLeft <= 0.5 ? '#ef4444' : driveLeft <= 1.0 ? '#f59e0b' : '#ffffff';
 
-  // Texto de tiempo restante
-  const totalMins = Math.round(driveLeft * 60);
-  const h = Math.floor(totalMins / 60);
-  const m = totalMins % 60;
-  timeEl.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
-
-  // Actualizar etiqueta del anillo DRIVEN
-  const lblEl = document.getElementById('dashHosLabel');
-  if (lblEl) {
-    const _usedMins = Math.round((REG_DAILY - driveLeft) * 60);
-    lblEl.textContent = `de ${REG_DAILY}h · usadas ${Math.floor(_usedMins/60)}h ${String(_usedMins%60).padStart(2,'0')}m`;
-    lblEl.style.color = 'rgba(255,255,255,0.80)';
-  }
+  // Fixed "11H" center — color changes by urgency
+  timeEl.textContent = '11H';
+  timeEl.style.color = driveLeft <= 0.5 ? '#ef4444' : driveLeft <= 2 ? '#f59e0b' : '#ffffff';
 
   // Stat rows below DRIVEN ring label
   const _fmtDs = (v) => { const hh=Math.floor(v), mm=Math.round((v-hh)*60); return `${hh}h ${String(mm).padStart(2,'0')}m`; };
@@ -17688,23 +17677,21 @@ function updateHosDashboard(driveLeft, driveMax) {
   }
 
   // Horas restantes del ciclo 70h
-  const weekEl = document.getElementById('dashWeekHours');
   const cycMax = parseFloat(document.getElementById('hoursInput')?.value) || 70;
   const cycLeft = window._hosTracker ? window._hosTracker.cycleLeft() : Math.max(0, cycMax - (REG_DAILY - driveLeft));
-  if (weekEl) weekEl.textContent = fmtH(cycLeft);
   // CICLO ring arc (C = 2π×40 ≈ 251)
   const cicloArc = document.getElementById('dashCicloArc');
   if (cicloArc) {
-    const realCycLeft = cycLeft;
-    const pctC = Math.max(0, Math.min(1, realCycLeft / cycMax));
-    cicloArc.setAttribute('stroke-dasharray', `${(pctC * 251).toFixed(1)} 251`);
-    cicloArc.setAttribute('stroke', realCycLeft < 10 ? '#ef4444' : realCycLeft < 20 ? '#f59e0b' : '#10b981');
+    const C_CYCLE = 251;
+    const cycUsed = Math.max(0, cycMax - cycLeft);
+    const cycUsedPct = Math.min(1, cycUsed / cycMax);
+    cicloArc.setAttribute('stroke-dasharray', `${(cycUsedPct * C_CYCLE).toFixed(1)} ${C_CYCLE}`);
+    cicloArc.setAttribute('stroke', cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#f59e0b' : '#10b981');
   }
-  const cicloUsedEl = document.getElementById('dashCicloUsed');
-  if (cicloUsedEl) {
-    const used = cycMax - cycLeft;
-    const uh = Math.floor(used), um = Math.round((used - uh) * 60);
-    cicloUsedEl.textContent = `${uh}h ${String(um).padStart(2,'0')}m usadas`;
+  const weekElFix = document.getElementById('dashWeekHours');
+  if (weekElFix) {
+    weekElFix.textContent = '70H';
+    weekElFix.style.color = cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#fbbf24' : '#ffffff';
   }
 
   // Stat rows below ON-CYCLE ring label
