@@ -15943,7 +15943,8 @@ function fmStartTracking() {
     let isMoving = gpsSpeed >= 8;
     if (!isMoving && rawSpeed == null && window._lastRawGpsFix) {
       const _dtSec = (Date.now() - window._lastRawGpsFix.ts) / 1000;
-      if (_dtSec > 0 && _dtSec < 8) {
+      // iOS/background GPS can take 8-20s between fixes; use a 30s window
+      if (_dtSec > 0 && _dtSec < 30) {
         const _dmi = haversine(lat, lon, window._lastRawGpsFix.lat, window._lastRawGpsFix.lon);
         if ((_dmi / _dtSec) * 3600 >= 5) isMoving = true;
       }
@@ -16311,8 +16312,18 @@ function fmStartTracking() {
       const lon     = pos.coords.longitude;
       const rawSpd  = pos.coords.speed;
       const hdg     = pos.coords.heading;
-      const moving  = rawSpd != null && rawSpd >= 0 ? rawSpd * 2.237 > 3 : false;
-      window.lastFixFm = { lat, lon, acc: pos.coords.accuracy, ts: Date.now() };
+      const _pollNow = Date.now();
+      // When GPS doesn't report speed (iOS PWA), derive movement from position delta
+      let _pollMph = rawSpd != null && rawSpd >= 0 ? rawSpd * 2.237 : 0;
+      if (rawSpd == null && window._fmPollLastFix) {
+        const _dtSec = (_pollNow - window._fmPollLastFix.ts) / 1000;
+        if (_dtSec > 0.5 && _dtSec < 30) {
+          _pollMph = (haversine(lat, lon, window._fmPollLastFix.lat, window._fmPollLastFix.lon) / _dtSec) * 3600;
+        }
+      }
+      window._fmPollLastFix = { lat, lon, ts: _pollNow };
+      const moving  = _pollMph > 3;
+      window.lastFixFm = { lat, lon, acc: pos.coords.accuracy, ts: _pollNow };
       const snap = typeof snapToRoute === 'function' ? snapToRoute(lat, lon) : { lat, lon };
       let finalHdg = hdg;
       if ((!finalHdg || finalHdg < 0) && fmPrevLat != null && moving) {
@@ -16340,8 +16351,10 @@ function fmStartTracking() {
         if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
         window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1000);
       }
-      fmCurrentSpeed = rawSpd != null && rawSpd >= 0 ? Math.round(rawSpd * 2.237) : 0;
+      fmCurrentSpeed = rawSpd != null && rawSpd >= 0 ? Math.round(rawSpd * 2.237) : Math.round(_pollMph);
       fmVehicleMoving = moving;
+      // Feed movement directly into HOS tracker so hours count even when watchPosition is slow
+      if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(moving, Math.round(_pollMph));
       updateSpeedometer(fmCurrentSpeed);
     }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 });
   }, 2000);
