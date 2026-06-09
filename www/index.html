@@ -27973,10 +27973,17 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   // ── Arranque ──────────────────────────────────────────────
   _load();
   // Si el tracker interno tiene un turno activo pero hosShiftStartTime no está
-  // sincronizado (p.ej. app reiniciada), alinearlos para que el contador 14h funcione
+  // sincronizado (p.ej. app reiniciada), alinearlos para que el contador 14h funcione.
+  // No adoptar turnos ya vencidos (>=14h) ni anulados por un descanso de 10h+:
+  // el inicializador y el auto-reset ya los descartaron y revivirlos mostraría 0M.
   if (_shiftStart && typeof hosShiftStartTime !== 'undefined' && !hosShiftStartTime) {
-    hosShiftStartTime = _shiftStart.getTime();
-    try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
+    const _syncAgeH  = (Date.now() - _shiftStart.getTime()) / 3600000;
+    const _syncStopTs = parseInt(localStorage.getItem('hos_stop_start') || '0') || 0;
+    const _syncStopH  = _syncStopTs ? (Date.now() - _syncStopTs) / 3600000 : 0;
+    if (_syncAgeH < 14 && _syncStopH < 10) {
+      hosShiftStartTime = _shiftStart.getTime();
+      try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
+    }
   }
   _setDuty('SIN GPS', '#6b7280');
   _updateRings();
