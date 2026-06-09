@@ -16781,7 +16781,7 @@ function showHosDashboard() {
       // la distancia recorrida desde el último fix de GPS.
       if (rawSpeed == null && window.lastFixFm && window.lastFixFm.lat != null) {
         const _dt = (Date.now() - window.lastFixFm.ts) / 1000;
-        if (_dt > 0.5 && _dt < 12) {
+        if (_dt > 0.5 && _dt < 30) {
           const _d = haversine(pos.coords.latitude, pos.coords.longitude, window.lastFixFm.lat, window.lastFixFm.lon);
           gpsSpeed = Math.round((_d / _dt) * 3600);
         }
@@ -17631,9 +17631,19 @@ function updateHosDashboard(driveLeft, driveMax) {
   const arcColor = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
   arc.setAttribute('stroke', arcColor);
 
-  // Fixed "11H" center — color changes by urgency
-  timeEl.textContent = '11H';
-  timeEl.style.color = driveLeft <= 0.5 ? '#ef4444' : driveLeft <= 2 ? '#f59e0b' : '#ffffff';
+  // Center counts down remaining drive time; shows "11H" only when at full limit
+  const _dLeftSec = Math.floor(driveLeft * 3600);
+  const _dH = Math.floor(_dLeftSec / 3600);
+  const _dM = Math.floor((_dLeftSec % 3600) / 60);
+  const _dLeftColor = driveLeft <= 0.5 ? '#ef4444' : driveLeft <= 2 ? '#f59e0b' : '#ffffff';
+  if (_dLeftSec >= (11 * 3600 - 30)) {
+    timeEl.textContent = '11H';
+    timeEl.style.fontSize = '64px';
+  } else {
+    timeEl.textContent = _dH > 0 ? `${_dH}h ${String(_dM).padStart(2, '0')}m` : `${_dM}m`;
+    timeEl.style.fontSize = _dH > 0 ? '36px' : '52px';
+  }
+  timeEl.style.color = _dLeftColor;
 
   // Stat rows below DRIVEN ring label
   const _fmtDs = (v) => { const hh=Math.floor(v), mm=Math.round((v-hh)*60); return `${hh}h ${String(mm).padStart(2,'0')}m`; };
