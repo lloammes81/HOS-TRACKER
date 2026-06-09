@@ -17824,9 +17824,9 @@ function _updateViolationCard() {
   // Tiempo transcurrido de turno en segundos (siempre corre desde el pre-trip)
   const shiftElapsedSecs = (now - hosShiftStartTime) / 1000;
   let secsLeft, title, label;
+  const _stopped = !_isMovingNow;
 
   if (!b30Complete) {
-    // Faltan X segundos para cumplir las 8h de turno que requieren el break
     const breakLeft = Math.max(0, 8 * 3600 - shiftElapsedSecs);
     if (breakLeft <= driveHrsLeft * 3600) {
       secsLeft = breakLeft;
@@ -17840,12 +17840,79 @@ function _updateViolationCard() {
         : 'Possible Violation · 14H on-duty window';
     }
   } else {
-    // Break tomado: menor entre horas de manejo y ventana de turno
     secsLeft = Math.min(driveHrsLeft * 3600, shiftLeftH * 3600);
     title    = 'Time remaining before 10H Rest required';
     label    = driveHrsLeft * 3600 <= shiftLeftH * 3600
       ? 'Driving limit · 10H rest required'
       : 'On-duty window · 10H rest required';
+  }
+
+  // ── Cuando el tiempo llega a 0 y el conductor está detenido → iniciar descanso 10H ──
+  if (secsLeft <= 0 && _stopped) {
+    if (!_restStartMs) {
+      _restStartMs = now;
+      localStorage.setItem('hos_rest_start', _restStartMs);
+      if (typeof showToast === 'function') {
+        showToast('info', '🛏️', 'Mandatory Rest Started',
+          'On-duty time limit reached. 10H rest countdown has begun.', 8000);
+      }
+      if (typeof _startRestCountdown === 'function') _startRestCountdown();
+    }
+    const restElapsedH = (now - _restStartMs) / 3600000;
+    const restLeftH    = Math.max(0, 10 - restElapsedH);
+
+    // Violación si el conductor se mueve durante el descanso
+    if (_isMovingNow && restLeftH > 0) {
+      _restViolMs += 1000;
+      if (!_restViolNotified) {
+        _restViolNotified = true;
+        if (typeof showToast === 'function') {
+          showToast('danger', '🚨', 'HOS VIOLATION — DRIVING DURING REST',
+            'You must complete your 10H mandatory rest before driving again.', 15000);
+        }
+      }
+    } else if (!_isMovingNow) {
+      _restViolNotified = false;
+    }
+
+    if (restLeftH <= 0) {
+      // Descanso completo → resetear todos los relojes
+      hosShiftStartTime = null;
+      localStorage.removeItem('hos_shift_start');
+      _restStartMs = null; _restViolMs = 0; _restViolNotified = false; _shiftExpiredShown = false;
+      localStorage.removeItem('hos_rest_start');
+      if (typeof b30Reset === 'function') b30Reset();
+      if (window._hosTracker?.setInitialHours) {
+        const _cMax = parseFloat(document.getElementById('hoursInput')?.value) || 70;
+        window._hosTracker.setInitialHours(11, _cMax);
+      }
+      if (typeof update14hCircle === 'function') update14hCircle();
+      if (typeof updateHosDashboard === 'function') updateHosDashboard(11, 11);
+      if (typeof showToast === 'function')
+        showToast('success', '✅', '10H Rest Complete — All Clocks Reset',
+          'Full 11H driving and 14H on-duty window available.', 10000);
+      timeEl.textContent = '--h --m';
+      if (typeEl)  typeEl.textContent  = 'HOS reset — ready for new shift';
+      if (titleEl) titleEl.textContent = 'Rest complete';
+      _applyViolColor(pill, timeEl, 'green');
+      return;
+    }
+
+    // Mostrar countdown de 10H de descanso
+    const violLabel = _restViolMs > 0
+      ? `⚠️ +${Math.ceil(_restViolMs / 60000)}m violation driven`
+      : _isMovingNow ? '🚨 MOVING DURING REST — VIOLATION' : 'Stay stopped to complete mandatory rest';
+    _fmtAndShow(timeEl, typeEl, titleEl, restLeftH * 3600,
+      'Mandatory 10H Rest — Time Remaining', violLabel);
+    _applyViolColor(pill, timeEl, _isMovingNow ? 'red_dark' : restLeftH > 5 ? 'red_dark' : 'red');
+    return;
+  }
+
+  // ── Si el tiempo llega a 0 pero el conductor está en movimiento → violación ──
+  if (secsLeft <= 0 && !_stopped) {
+    _fmtAndShow(timeEl, typeEl, titleEl, 0, '🚨 HOS VIOLATION', 'Stop immediately and begin 10H rest');
+    _applyViolColor(pill, timeEl, 'red_dark');
+    return;
   }
 
   _fmtAndShow(timeEl, typeEl, titleEl, secsLeft, title, label);
