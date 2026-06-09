@@ -28450,6 +28450,47 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   function _ensureRunning() {
     if (!_globalHosInt) _globalHosInt = setInterval(_tick, 1000);
+
+    // Cuando el conductor ingresa las horas disponibles al configurar la ruta:
+    // si coloca 11H (máximo) → resetear el turno de 14H para que arranque limpio
+    const dhi = document.getElementById('dailyHoursInput');
+    if (dhi && !dhi._hosResetListenerAdded) {
+      dhi._hosResetListenerAdded = true;
+      dhi.addEventListener('change', function() {
+        const hrs = parseFloat(this.value) || 0;
+        const cycMax = parseFloat(document.getElementById('hoursInput')?.value) || 70;
+        // Inicializar tracker con las horas ingresadas
+        if (window._hosTracker?.setInitialHours) {
+          window._hosTracker.setInitialHours(hrs, window._hosTracker.cycleLeft());
+        }
+        if (hrs >= 11) {
+          // Horas completas → resetear ventana de 14H (nuevo turno)
+          if (typeof hosShiftStartTime !== 'undefined') {
+            hosShiftStartTime = null;
+            localStorage.removeItem('hos_shift_start');
+          }
+          if (typeof _restStartMs !== 'undefined') {
+            _restStartMs = null;
+            localStorage.removeItem('hos_rest_start');
+          }
+          if (typeof b30Reset === 'function') b30Reset();
+          if (typeof update14hCircle === 'function') update14hCircle();
+          if (typeof updateHosDashboard === 'function') updateHosDashboard(11, 11);
+          if (typeof _updateViolationCard === 'function') _updateViolationCard();
+        } else if (hrs > 0) {
+          // Horas parciales → calcular cuánto del turno de 14H ya transcurrió
+          // y ajustar hosShiftStartTime para que refleje el tiempo ya usado
+          const usedH = 11 - hrs; // horas ya conducidas
+          const shiftUsedH = usedH; // aproximar tiempo de turno según horas usadas
+          if (typeof hosShiftStartTime !== 'undefined') {
+            hosShiftStartTime = Date.now() - shiftUsedH * 3600000;
+            localStorage.setItem('hos_shift_start', hosShiftStartTime);
+          }
+          if (typeof update14hCircle === 'function') update14hCircle();
+          if (typeof _updateViolationCard === 'function') _updateViolationCard();
+        }
+      });
+    }
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _ensureRunning);
