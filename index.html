@@ -17911,7 +17911,7 @@ function _updateViolationCard() {
 
   // ── Si el tiempo llega a 0 pero el conductor está en movimiento → violación ──
   if (secsLeft <= 0 && !_stopped) {
-    _fmtAndShow(timeEl, typeEl, titleEl, 0, '🚨 HOS VIOLATION', 'Stop immediately and begin 10H rest');
+    _fmtAndShow(timeEl, typeEl, titleEl, 0, '🚨 VIOLACIÓN HOS', lang === 'es' ? 'Detente e inicia las 10H de descanso obligatorio' : 'Stop immediately — begin mandatory 10H rest');
     _applyViolColor(pill, timeEl, 'red_dark');
     return;
   }
@@ -27999,7 +27999,12 @@ window.addEventListener('error', function(e) {
 });
 window.addEventListener('unhandledrejection', function(e) {
   console.error('Promise error:', e.reason);
-  showAppToast('Error de red o datos', 'warning', 3000);
+  // Solo mostrar toast si es un error de red real (fetch/network)
+  const reason = e.reason;
+  const msg = reason?.message || String(reason);
+  if (reason instanceof TypeError && (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch') || msg.includes('NetworkError'))) {
+    showAppToast('Error de red — verifica tu conexión', 'warning', 4000);
+  }
 });
 
 // Network status
