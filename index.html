@@ -16741,19 +16741,9 @@ function showHosDashboard() {
     // Solo forzar "detenido" si hay un fix previo y está obsoleto (>15 s).
     // Si nunca llegó un fix (lastFixFm === undefined) no interferimos: el GPS
     // interno del tracker ya maneja su propio estado de movimiento.
-    // Sincronizar estado de movimiento al tracker desde fmVehicleMoving
-    // (fuente unificada: GPS de ruta + GPS de dashboard + GPS interno del tracker)
-    if (window._hosTracker?.reportMoving) {
-      const _fixAge = window.lastFixFm ? (Date.now() - window.lastFixFm.ts) : 99999;
-      if (_fixAge < 8000) {
-        // Fix GPS reciente — usar fmVehicleMoving como fuente de verdad
-        window._hosTracker.reportMoving(!!fmVehicleMoving, fmCurrentSpeed || 0);
-      } else if (_fixAge >= 15000) {
-        // Fix obsoleto — asumir detenido
-        window._hosTracker.reportMoving(false, 0);
-      }
-      // Entre 8-15s: dejar que el GPS interno del tracker decida
-    }
+    // Cuando hay ruta activa el GPS de ruta ya llama reportMoving().
+    // Sin ruta, el GPS interno del tracker (_startGpsMode) maneja el movimiento solo.
+    // No interferir aquí — solo leer driveLeft()/cycleLeft() para mostrar en pantalla.
     if (typeof update14hCircle === 'function') update14hCircle();
     const dLeft = window._hosTracker
       ? Math.max(0, Math.min(window._hosTracker.driveLeft(), dMax))
@@ -27860,8 +27850,21 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   _setDuty('SIN GPS', '#6b7280');
   _updateRings();
 
-  // Usar GPS del teléfono como fuente de movimiento
-  setTimeout(() => { _startGpsMode(); }, 500); // GPS siempre activo
+  // GPS del dispositivo — siempre activo para acumular horas conducidas
+  setTimeout(() => { _startGpsMode(); }, 500);
+
+  // Watchdog: reiniciar GPS interno si lleva >30s sin fix (puede fallar silenciosamente)
+  let _gpsLastFixTs = Date.now();
+  const _origStartGps = _startGpsMode;
+  // Parchar watchPosition para registrar cada fix
+  const _origWatch = navigator.geolocation.watchPosition.bind(navigator.geolocation);
+  // Registrar último fix en cada callback del GPS interno
+  setInterval(function() {
+    if (!fmIsTracking && _gpsWatchId == null && navigator.geolocation) {
+      // GPS interno caído — reiniciar
+      _startGpsMode();
+    }
+  }, 30000);
 
   // Loop: actualizar anillos cada segundo, guardar cada 30s
   setInterval(_updateRings, 1000);
