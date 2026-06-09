@@ -27931,7 +27931,20 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   }, 30000);
 
   // Loop: actualizar anillos cada segundo, guardar cada 30s
-  setInterval(_updateRings, 1000);
+  setInterval(function() {
+    // Sincronizar estado de movimiento desde cualquier fuente GPS activa
+    // (fmWatchId de ruta, _dashGpsWatchId de dashboard, o GPS propio del tracker)
+    const _extMoving = typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving;
+    const _extSpeed  = typeof fmCurrentSpeed  !== 'undefined' ? fmCurrentSpeed : 0;
+    if (_extMoving && !_isMoving) {
+      _onMoving(_extSpeed || 5);
+    } else if (!_extMoving && _isMoving) {
+      // Solo detener si el GPS externo lleva >8s sin fix de movimiento
+      const _fixAge = window.lastFixFm ? (Date.now() - window.lastFixFm.ts) : 0;
+      if (_fixAge > 8000) _onStopped();
+    }
+    _updateRings();
+  }, 1000);
   setInterval(_save, 30000);
   // Contador de turno 14h siempre activo, con o sin ruta asignada
   if (typeof update14hCircle === 'function') {
