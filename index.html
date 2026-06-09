@@ -15958,19 +15958,22 @@ function fmStartTracking() {
     }
 
     const rawSpeed = pos.coords.speed;
-    const gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
-    // 8 mph threshold to filter GPS drift noise (GPS can report 3-6 mph when stationary)
-    // Fallback: if device doesn't report speed (rawSpeed=null), estimate from position delta
-    let isMoving = gpsSpeed >= 8;
-    if (!isMoving && rawSpeed == null && window._lastRawGpsFix) {
+    let gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
+    // Derive speed from position delta — used both as iOS fallback (rawSpeed=null)
+    // and to correct stale GPS sensor readings (velocity lags 1-3s after stopping)
+    let _derivedMph = 0;
+    if (window._lastRawGpsFix) {
       const _dtSec = (Date.now() - window._lastRawGpsFix.ts) / 1000;
-      // iOS/background GPS can take 8-20s between fixes; use a 30s window
       if (_dtSec > 0 && _dtSec < 30) {
-        const _dmi = haversine(lat, lon, window._lastRawGpsFix.lat, window._lastRawGpsFix.lon);
-        if ((_dmi / _dtSec) * 3600 >= 5) isMoving = true;
+        _derivedMph = (haversine(lat, lon, window._lastRawGpsFix.lat, window._lastRawGpsFix.lon) / _dtSec) * 3600;
       }
     }
     window._lastRawGpsFix = { lat, lon, ts: Date.now() };
+    // If GPS sensor reports speed but position delta says stopped, trust position
+    // (prevents speedometer from freezing at last speed after vehicle stops)
+    if (rawSpeed != null && gpsSpeed > 10 && _derivedMph < 3) gpsSpeed = 0;
+    // Moving if sensor ≥ 8 mph OR position-derived ≥ 5 mph (covers iOS where rawSpeed is null)
+    let isMoving = gpsSpeed >= 8 || _derivedMph >= 5;
     // Expose globally so calculateRoute can check
     fmCurrentSpeed = gpsSpeed;
     // ── Pausa de relojes HOS cuando el vehículo se detiene ──
@@ -16372,7 +16375,10 @@ function fmStartTracking() {
         if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
         window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1000);
       }
-      fmCurrentSpeed = rawSpd != null && rawSpd >= 0 ? Math.round(rawSpd * 2.237) : Math.round(_pollMph);
+      // If position says stopped but GPS sensor still reports speed (stale), use position
+      fmCurrentSpeed = (rawSpd != null && rawSpd >= 0)
+        ? ((_pollMph < 3 && rawSpd * 2.237 > 10) ? 0 : Math.round(rawSpd * 2.237))
+        : Math.round(_pollMph);
       fmVehicleMoving = moving;
       // Feed movement directly into HOS tracker so hours count even when watchPosition is slow
       if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(moving, Math.round(_pollMph));
