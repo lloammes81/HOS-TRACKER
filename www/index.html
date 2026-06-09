@@ -3543,11 +3543,7 @@ body.map-active #milesRemainingWidget{
   z-index: 20008 !important;
 }
 
-/* speedometerWidget removed — always hidden */
-#speedometerWidget,
-body.map-active #speedometerWidget {
-  display: none !important;
-}
+/* speedometerWidget — visible only while route tracking (map-active) */
 
 /* ── Fixed truck icon — always center-bottom above HUD rings ── */
 #fixedTruckMarker {
@@ -11364,10 +11360,16 @@ let wasMoving = false;
 
 
 function showSpeedometer() {
-  speedoVisible = false; // widget permanently removed
+  const w = document.getElementById('speedometerWidget');
+  if (!w) return;
+  speedoVisible = true;
+  w.classList.add('visible');
+  applySpeedometerPos();
 }
 
 function hideSpeedometer() {
+  const w = document.getElementById('speedometerWidget');
+  if (w) w.classList.remove('visible');
   speedoVisible = false;
 }
 
@@ -11628,9 +11630,28 @@ function updateSpeedometer(mph) {
   if (_dashSpdoEl) _dashSpdoEl.classList.toggle('over', !!over);
   updateDashRingGlow(mph, !!over);
 
-  // Over-limit based on state truck speed limit (if available)
-  const spw = document.getElementById('speedometerWidget');
-  if (spw) spw.classList.toggle('over-limit', !!over);
+  // Speedometer widget on main map — show while tracking, update speed
+  if (typeof fmIsTracking !== 'undefined' && fmIsTracking) {
+    if (!speedoVisible) showSpeedometer();
+    const spw = document.getElementById('speedometerWidget');
+    if (spw) {
+      spw.classList.toggle('over-limit', !!over);
+      const sn = document.getElementById('speedoNum');
+      const ss = document.getElementById('speedoStatus');
+      if (sn) sn.textContent = Math.round(mph);
+      if (ss) {
+        if (mph >= 5) {
+          ss.textContent = over ? '⚠️ SOBRE LÍMITE' : '🚛 EN MOVIMIENTO';
+          ss.style.color = over ? '#ef4444' : '#10b981';
+        } else {
+          ss.textContent = '⏸ DETENIDO';
+          ss.style.color = 'rgba(255,255,255,0.5)';
+        }
+      }
+    }
+  } else if (speedoVisible) {
+    hideSpeedometer();
+  }
 
   // Actualizar anillo HOS del dashboard en tiempo real
   if (dashSpeedOver !== !!over) {
@@ -16367,6 +16388,7 @@ function fmStopTracking() {
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   fmIsTracking = false;
   hideFixedTruckIcon();
+  hideSpeedometer();
   // Asegurar que el tracker sepa que nos detuvimos antes de restaurar GPS interno
   window._hosTracker?.reportMoving?.(false, 0);
   window._hosTracker?.resumeInternalGps?.();
