@@ -16727,7 +16727,6 @@ function showHosDashboard() {
       _sc.textContent = String(_dLeftSecs % 60).padStart(2, '0');
       _sc.style.color = _dLeftSecs < 3600 ? (_dLeftSecs < 1800 ? '#ef4444' : '#f59e0b') : 'rgba(255,255,255,0.75)';
     }
-    if (b30InBreak && !b30Complete) return;
     const dMax = Math.min(
       Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11),
       Math.max(0.1, parseFloat(document.getElementById('hoursInput')?.value) || 70)
@@ -16742,13 +16741,19 @@ function showHosDashboard() {
     // Solo forzar "detenido" si hay un fix previo y está obsoleto (>15 s).
     // Si nunca llegó un fix (lastFixFm === undefined) no interferimos: el GPS
     // interno del tracker ya maneja su propio estado de movimiento.
-    const _fixAge = window.lastFixFm ? (Date.now() - window.lastFixFm.ts) : 0;
-    if (_fixAge >= 15000 && window._hosTracker?.reportMoving) {
-      window._hosTracker.reportMoving(false, 0);
+    // Sincronizar estado de movimiento al tracker desde fmVehicleMoving
+    // (fuente unificada: GPS de ruta + GPS de dashboard + GPS interno del tracker)
+    if (window._hosTracker?.reportMoving) {
+      const _fixAge = window.lastFixFm ? (Date.now() - window.lastFixFm.ts) : 99999;
+      if (_fixAge < 8000) {
+        // Fix GPS reciente — usar fmVehicleMoving como fuente de verdad
+        window._hosTracker.reportMoving(!!fmVehicleMoving, fmCurrentSpeed || 0);
+      } else if (_fixAge >= 15000) {
+        // Fix obsoleto — asumir detenido
+        window._hosTracker.reportMoving(false, 0);
+      }
+      // Entre 8-15s: dejar que el GPS interno del tracker decida
     }
-    // Refrescar SIEMPRE los anillos desde el estado vivo del tracker. driveLeft()
-    // ya refleja si el vehículo se mueve, así que el display nunca se congela
-    // mientras el tracker esté contabilizando.
     if (typeof update14hCircle === 'function') update14hCircle();
     const dLeft = window._hosTracker
       ? Math.max(0, Math.min(window._hosTracker.driveLeft(), dMax))
@@ -17618,7 +17623,6 @@ let _dashDriveMaxCache  = null;
 function updateHosDashboard(driveLeft, driveMax) {
   _dashDriveLeftCache = driveLeft;
   _dashDriveMaxCache  = driveMax;
-  if (b30InBreak && !b30Complete) return;
 
   const arc    = document.getElementById('dashRingArc');
   const track  = document.getElementById('dashRingTrack');
