@@ -18689,7 +18689,7 @@ async function loadAllPOIs(lat, lon) {
     loadFromWaypoints('parking'),
     loadTruckRestrictionsFullMap(filtered),
   ]);
-  renderCommunityReports();
+  renderReportMarkers();
 
   const restrictCount = fmPoiLayers.restrict.filter(l => l.getLatLngs).length;
   if (restrictCount > 0) {
@@ -18713,29 +18713,7 @@ function closeSubscribeModal() {
   document.getElementById('subscribeModal').style.display = 'none';
   document.body.style.overflow = '';
 }
-function handleSubscribeSubmit() {
-  const name  = document.getElementById('subName').value.trim();
-  const email = document.getElementById('subEmail').value.trim();
-  const plan  = document.querySelector('input[name="subPlan"]:checked')?.value || 'monthly';
-  if (!name || !email) {
-    showToast('warn','⚠️','Completa los campos','Ingresa tu nombre y correo para continuar.',3000);
-    return;
-  }
-  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRe.test(email)) {
-    showToast('warn','⚠️','Correo inválido','Ingresa un correo electrónico válido.',3000);
-    return;
-  }
-  // Save pending subscription
-  const sub = { name, email, plan, date: new Date().toISOString(), status: 'pending' };
-  const subs = JSON.parse(localStorage.getItem('hos_subscriptions') || '[]');
-  subs.push(sub);
-  localStorage.setItem('hos_subscriptions', JSON.stringify(subs));
-  // Show success state
-  document.getElementById('subFormContent').style.display = 'none';
-  document.getElementById('subSuccessContent').style.display = 'flex';
-}
-
+// (handleSubscribeSubmit original eliminada: la versión vigente marca el plan Pro)
 // Add a nearby search result as a pinned stop on the map
 let nearbyStopMarkers = []; // track added stops
 
@@ -19501,7 +19479,10 @@ function addReportMarker(report) {
   fmPoiLayers.reports.push(marker);
 }
 
-function renderCommunityReports() {
+// Renombrada: antes se llamaba renderCommunityReports y era pisada por la
+// versión que pinta la lista de la página Community; los marcadores del mapa
+// nunca se renderizaban.
+function renderReportMarkers() {
   // Clear old report markers
   fmPoiLayers.reports.forEach(m => { try { fmMapInst.removeLayer(m); } catch {} });
   fmPoiLayers.reports = [];
@@ -19542,7 +19523,7 @@ function confirmReport(reportId, isStillThere) {
       showToast('info','🗑️','Aviso eliminado','2 choferes confirmaron que ya no está.', 3000);
       communityReports = communityReports.filter(r => String(r.id) !== String(reportId));
       localStorage.setItem('hos_reports', JSON.stringify(communityReports));
-      renderCommunityReports();
+      renderReportMarkers();
       return;
     } else {
       showToast('warning','❌','Voto registrado',`${report.denials.length}/4 choferes dicen que ya no está.`, 2500);
@@ -19551,7 +19532,7 @@ function confirmReport(reportId, isStillThere) {
 
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
   // Refresh markers to update counts
-  renderCommunityReports();
+  renderReportMarkers();
   // Close popup
   if (fmMapInst) fmMapInst.closePopup();
 }
@@ -21288,15 +21269,7 @@ let inlineResetSync = null;
    👥  COMMUNITY PAGE — INLINE FUNCTIONS
 ════════════════════════════════════════════════════════════ */
 
-function refreshCommPage() {
-  communityReports = JSON.parse(localStorage.getItem('hos_reports') || '[]');
-  communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
-  localStorage.setItem('hos_reports', JSON.stringify(communityReports));
-  updateCommBadge(communityReports.length);
-  updateCommTabBadge(communityReports.length);
-  renderCommPage();
-}
-
+// (copia duplicada de refreshCommPage eliminada: la definición vigente está más abajo)
 function updateCommTabBadge(count) {
   const b = document.getElementById('commTabBadge');
   if (b) {
@@ -21913,18 +21886,7 @@ async function searchNearbyPOI(type) {
   }
 }
 
-async function openGoogleMapsTruckStops() {
-  let lat, lon;
-  try {
-    const pos = await getGPSPosition(4000, 8000);
-    lat = pos.coords.latitude; lon = pos.coords.longitude;
-  } catch {
-    if (origin) { lat = origin.lat; lon = origin.lon; }
-    else { window.open('https://maps.tomtom.com/search/truck+stop', '_blank'); return; }
-  }
-  window.open(`https://maps.tomtom.com/search/truck+stop`, '_blank');
-}
-
+// (openGoogleMapsTruckStops antigua eliminada: la versión vigente abre Google Maps en la posición GPS)
 function showFuelOnMap(lat, lon, name, emoji) {
   openFullMapScreen();
   setTimeout(() => {
@@ -22014,20 +21976,7 @@ function saveDriverProfile() {
   updateProfileDisplay();
 }
 
-function handleProfilePhotoUpload(evt) {
-  const file = evt.target.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    driverProfile.photo = e.target.result;
-    localStorage.setItem('hos_driver_profile', JSON.stringify(driverProfile));
-    updateProfileDisplay();
-    showToast('success','📷','Foto actualizada','Tu foto de perfil ha sido guardada', 3000);
-  };
-  reader.readAsDataURL(file);
-  evt.target.value = '';
-}
-
+// (handleProfilePhotoUpload(evt) eliminada: la versión vigente recibe un File directamente)
 function onJobTypeChange() {
   saveDriverProfile();
   applyJobMode(driverProfile.jobType);
@@ -28596,7 +28545,7 @@ function initLogbook() {
   const rodsCanvas = document.getElementById('lbRodsCanvas');
   if (rodsCanvas) rodsCanvas.addEventListener('click', lbCanvasTap);
   loadLogbookData();
-  loadDriverProfile();
+  lbLoadDriverProfile();
   startAutoDetection();
   // Advance the NOW marker and the running duty-status line on a short tick so
   // the graph tracks the clock live (both no-op while the sheet is hidden).
@@ -29457,8 +29406,10 @@ function updateCurrentTimeMarker() {
   if (dateEl) dateEl.textContent = dateStr;
 }
 
-// ========== DRIVER PROFILE ==========
-function loadDriverProfile() {
+// ========== DRIVER PROFILE (logbook header) ==========
+// Renombrada: antes se llamaba loadDriverProfile y pisaba la cargadora real
+// del perfil (settings) definida en el bloque principal.
+function lbLoadDriverProfile() {
   const profile = AppStorage.get('driver_profile', {});
   const driverName = profile.name || document.getElementById('driverNameInput')?.value || 'Driver';
 
@@ -29732,7 +29683,7 @@ async function lbFillRouteFields() {
 function openLogbookSheet() {
   openOverlay('logbookSheet');
   updateLogbookForDate();
-  loadDriverProfile();
+  lbLoadDriverProfile();
   lbFillRouteFields();
   // Now that the sheet is visible the grid has a real width, so the NOW marker
   // and duty-status line can be placed against actual pixels (they read 0 while
@@ -30027,63 +29978,7 @@ window.clearRouteStopMarkers = clearRouteStopMarkers;
    🛠️ SERVICE BUTTONS - Truck Stops, Parking, Weigh Stations, Road Signs
 ══════════════════════════════════════════════════════════ */
 
-// ========== NEARBY POI SEARCH (Truck Stops, Parking, Weigh Stations) ==========
-async function searchNearbyPOI(type) {
-  const overlay = document.getElementById('nearbyPoiOverlay');
-  const iconEl  = document.getElementById('nearbyPoiIcon');
-  const titleEl = document.getElementById('nearbyPoiTitle');
-  const subEl   = document.getElementById('nearbyPoiSub');
-  const list    = document.getElementById('nearbyPoiList');
-
-  const isTruck = type === 'truck';
-  const isScale = type === 'weighstation';
-  const isParking = type === 'parking';
-
-  const poiIcon = isTruck ? '🚛' : isScale ? '⚖️' : '🅿️';
-  const poiTitle = isTruck ? 'Truck Stops' : isScale ? 'Weigh Stations' : 'Parking';
-  const poiSub = isTruck ? 'Cercanos a tu ubicación' : isScale ? 'Básculas DOT cercanas' : 'Parking para trucks';
-
-  if (iconEl) iconEl.textContent = poiIcon;
-  if (titleEl) titleEl.textContent = poiTitle;
-  if (subEl) subEl.textContent = poiSub;
-  if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);"><div style="font-size:40px;margin-bottom:10px;">📡</div><div>Buscando ' + poiTitle + '...</div></div>';
-
-  if (overlay) overlay.classList.add('open');
-
-  try {
-    // Get current position
-    const position = await getGPSPosition(10000);
-    const lat = position.coords.latitude;
-    const lon = position.coords.longitude;
-
-    // Search using Overpass API (OpenStreetMap)
-    let query = '';
-    if (isTruck) {
-      query = '[out:json];(node["amenity"="fuel"]["hgv"="yes"](around:50000,' + lat + ',' + lon + ');node["amenity"="truck_stop"](around:50000,' + lat + ',' + lon + ');way["amenity"="truck_stop"](around:50000,' + lat + ',' + lon + '););out center 20;';
-    } else if (isScale) {
-      query = '[out:json];(node["amenity"="weighbridge"](around:50000,' + lat + ',' + lon + ');node["highway"="weigh_station"](around:50000,' + lat + ',' + lon + '););out center 20;';
-    } else {
-      query = '[out:json];(node["amenity"="parking"]["hgv"="yes"](around:50000,' + lat + ',' + lon + ');node["parking"="truck"](around:50000,' + lat + ',' + lon + ');way["amenity"="parking"]["hgv"="yes"](around:50000,' + lat + ',' + lon + '););out center 20;';
-    }
-
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: query
-    });
-
-    const data = await response.json();
-
-    if (data.elements && data.elements.length > 0) {
-      displayPOIResults(data.elements, lat, lon, type, list);
-    } else {
-      if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div>No se encontraron ' + poiTitle + ' en 50km</div><div style="font-size:12px;margin-top:8px;">Intenta ampliar la búsqueda</div></div>';
-    }
-  } catch (err) {
-    console.error('POI search error:', err);
-    if (list) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);"><div style="font-size:40px;margin-bottom:10px;">❌</div><div>Error de conexión</div><div style="font-size:12px;margin-top:8px;">' + err.message + '</div></div>';
-  }
-}
-
+// (versión antigua de searchNearbyPOI eliminada: la versión con caché del bloque principal es la activa)
 function displayPOIResults(elements, userLat, userLon, type, listEl) {
   if (!listEl) return;
 
