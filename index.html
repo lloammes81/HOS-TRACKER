@@ -14012,6 +14012,16 @@ async function calculateRoute() {
   if (isNaN(hours)||hours<=0||hours>70) { showError(t('err70')); return; }
   if (isNaN(speed)||speed<=0) { showError(t('errSpeed')); return; }
 
+  // Advertencia si el vehículo está en movimiento — no bloquea, solo avisa
+  if (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving) {
+    showToast('warning', '⚠️',
+      lang === 'es' ? 'Advertencia de seguridad' : 'Safety Warning',
+      lang === 'es'
+        ? 'No uses el móvil mientras conduces. Asegúrate de estar seguro antes de operar la app.'
+        : 'Do not use your phone while driving. Make sure you are safe before operating the app.',
+      6000);
+  }
+
   const _calcSl = document.getElementById('calcSlider');
   const _calcLbl = document.getElementById('calcSliderLabel');
   if (_calcSl) _calcSl.classList.add('calc-disabled');
@@ -24581,6 +24591,14 @@ window._hosAutoRecalc = false;
   // Reemplaza calculateRoute con el flujo de popups
   calculateRoute = function() {
     if (!origin || !destination) { showError(t('errSel')); return; }
+    if (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving) {
+      showToast('warning', '⚠️',
+        lang === 'es' ? 'Advertencia de seguridad' : 'Safety Warning',
+        lang === 'es'
+          ? 'No uses el móvil mientras conduces. Asegúrate de estar seguro antes de operar la app.'
+          : 'Do not use your phone while driving. Make sure you are safe before operating the app.',
+        6000);
+    }
     // Si viene de un cambio de tipo de ruta, saltar popups y calcular directo
     if (window._hosAutoRecalc) {
       window._hosAutoRecalc = false;
