@@ -16724,12 +16724,7 @@ function showHosDashboard() {
       const _dLeftSecs = window._hosTracker
         ? Math.max(0, Math.floor(window._hosTracker.driveLeft() * 3600))
         : 0;
-      const _scH = Math.floor(_dLeftSecs / 3600);
-      const _scM = Math.floor((_dLeftSecs % 3600) / 60);
-      const _scS = _dLeftSecs % 60;
-      _sc.textContent = _scH > 0
-        ? `${_scH}:${String(_scM).padStart(2,'0')}:${String(_scS).padStart(2,'0')}`
-        : `${String(_scM).padStart(2,'0')}:${String(_scS).padStart(2,'0')}`;
+      _sc.textContent = String(_dLeftSecs % 60).padStart(2, '0');
       _sc.style.color = _dLeftSecs < 3600 ? (_dLeftSecs < 1800 ? '#ef4444' : '#f59e0b') : 'rgba(255,255,255,0.75)';
     }
     if (b30InBreak && !b30Complete) return;
