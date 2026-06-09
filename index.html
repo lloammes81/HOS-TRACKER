@@ -14012,17 +14012,6 @@ async function calculateRoute() {
   if (isNaN(hours)||hours<=0||hours>70) { showError(t('err70')); return; }
   if (isNaN(speed)||speed<=0) { showError(t('errSpeed')); return; }
 
-  // 🚨 Safety: block if vehicle is currently moving
-  if (fmVehicleMoving && fmCurrentSpeed >= 8) {
-    showToast('danger','🚨',
-      lang === 'es' ? '¡Vehículo en movimiento!' : 'Vehicle in Motion!',
-      lang === 'es'
-        ? `Por tu seguridad no puedes calcular una ruta a ${fmCurrentSpeed} mph. Detente para usar esta función.`
-        : `For your safety, you cannot calculate a route at ${fmCurrentSpeed} mph. Please stop the vehicle first.`,
-      8000
-    );
-    vibrate([200, 100, 200, 100, 200]);
-    return;
   }
 
   const _calcSl = document.getElementById('calcSlider');
