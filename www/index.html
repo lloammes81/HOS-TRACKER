@@ -15132,12 +15132,10 @@ function b30Check(isMoving) {
   b30LastTs = now;
 
   if (isMoving) {
-    // Si retoma marcha después de un break completo → nuevo ciclo de 8h desde cero
-    if (b30Complete) {
-      b30Complete = false;
-      b30DriveSecs = 0;
-      b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
-    }
+    // b30Complete SE MANTIENE al retomar marcha: una pausa válida de ≥30 min
+    // satisface el requisito por el resto del turno y la tarjeta de violación
+    // pasa a contar las 11h de manejo / ventana 14h (descanso 10h). El ciclo
+    // se reinicia con b30Reset() al terminar la ruta o tras el descanso de 10h.
     // Si el driver retoma marcha en medio de una pausa incompleta, cancelar pausa
     if (b30InBreak && b30StopSecs < B30_BREAK_MIN) {
       b30InBreak = false;
@@ -15189,14 +15187,12 @@ function b30Check(isMoving) {
     // Driver detenido
     b30StopSecs += delta;
 
-    // Pausa voluntaria: detenido 30+ min antes de las 8h → satisface el requisito
+    // Pausa voluntaria: detenido 30+ min antes de las 8h → satisface el requisito.
+    // Además del acumulador por fixes, verificar por reloj de pared (el GPS puede
+    // dejar de mandar fixes estando estacionado y el acumulador se queda corto).
+    b30VoluntaryStopCheck();
     if (!b30Complete && b30StopSecs >= B30_BREAK_MIN) {
-      b30Complete = true;
-      b30DriveSecs = 0;
-      b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
-      b30ViolShown = false; b30InBreak = false; b30BreakStart = null;
-      _hosBreakStopName = null; _hosBreakStopFetching = false;
-      if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
+      b30MarkBreakSatisfied();
     }
 
     // Si lleva suficiente tiempo manejando, mostrar temporizador de pausa
@@ -15208,6 +15204,44 @@ function b30Check(isMoving) {
     if (b30ViolShown) {
       b30ViolShown = false;
     }
+  }
+}
+
+// ── Pausa de 30 min satisfecha: estado + aviso al conductor ────────────────
+function b30MarkBreakSatisfied() {
+  if (b30Complete) return;
+  b30Complete = true;
+  b30DriveSecs = 0; b30StopSecs = 0;
+  b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
+  b30ViolShown = false; b30InBreak = false; b30BreakStart = null;
+  _hosBreakStopName = null; _hosBreakStopFetching = false;
+  if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
+  if (typeof showToast === 'function') {
+    showToast('success', '✅',
+      lang === 'es' ? '✅ Pausa de 30 min cumplida' : '✅ 30-Min Break Satisfied',
+      lang === 'es'
+        ? 'Tu parada cubrió la pausa obligatoria. El contador ahora muestra tus horas de manejo restantes (descanso 10h).'
+        : 'Your stop covered the mandatory break. The countdown now tracks your remaining driving hours (10H rest).',
+      9000);
+  }
+}
+
+// ── Pausa voluntaria por reloj de pared ────────────────────────────────────
+// Detecta paradas de ≥30 min aunque el GPS deje de mandar fixes estando
+// estacionado (b30Check solo acumula segundos cuando llegan fixes). Usa el
+// timestamp persistido del inicio de parada (hos_stop_start), que sobrevive
+// reinicios de la app.
+function b30VoluntaryStopCheck() {
+  if (b30Complete || (typeof use30min !== 'undefined' && !use30min)) return;
+  const movingNow = (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving)
+    || (typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed >= 5);
+  if (movingNow) return;
+  const stopTs = (typeof _vehicleStopStartMs !== 'undefined' && _vehicleStopStartMs)
+    ? _vehicleStopStartMs
+    : (parseInt(localStorage.getItem('hos_stop_start') || '0') || null);
+  if (!stopTs) return;
+  if (Date.now() - stopTs >= B30_BREAK_MIN * 1000) {
+    b30MarkBreakSatisfied();
   }
 }
 
@@ -17888,6 +17922,10 @@ function _updateViolationCard() {
     _applyViolColor(pill, timeEl, 'green');
     return;
   }
+
+  // Verificación por reloj de pared de la pausa de 30 min (corre cada 1s con
+  // la tarjeta, aunque el GPS no mande fixes estando estacionado)
+  if (typeof b30VoluntaryStopCheck === 'function') b30VoluntaryStopCheck();
 
   const shiftElapsedH = (now - hosShiftStartTime) / 3600000;
   const shiftLeftH    = Math.max(0, 14 - shiftElapsedH);
