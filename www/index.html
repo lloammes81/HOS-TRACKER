@@ -9962,19 +9962,11 @@ function startGPSWarm() {
       const mph = (speed != null && speed >= 0) ? speed * 2.237 : 0;
       // Fall back: if speed null and we have lastFixFm, derive from delta
       let derivedMph = mph;
-      if (speed == null && window.lastFixFm && window.lastFixFm.lat != null) {
-        const dtSecs = (Date.now() - window.lastFixFm.ts) / 1000;
-        if (dtSecs > 0.5) {
-          const R = 3958.8;
-          const dLat = (lat - window.lastFixFm.lat) * Math.PI / 180;
-          const dLon = (lon - window.lastFixFm.lon) * Math.PI / 180;
-          const a = Math.sin(dLat/2)**2 + Math.cos(window.lastFixFm.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLon/2)**2;
-          const dMi = 2 * R * Math.asin(Math.sqrt(a));
-          // Anti-jitter: ignorar desplazamientos dentro del error del GPS para
-          // no acumular horas de manejo con el camión estacionado
-          const accMi = Math.max(((typeof accuracy !== 'undefined' && accuracy) || 20) / 1609.34, 0.005);
-          derivedMph = dMi > accMi ? (dMi / dtSecs) * 3600 : 0;
-        }
+      if (speed == null) {
+        // Velocidad por ancla adaptativa: no acumula horas estacionado (deriva
+        // del GPS) y detecta movimiento real aunque los fixes sean rápidos.
+        window._onFixAnchor = window._onFixAnchor || {};
+        derivedMph = _anchorSpeedMph(lat, lon, Date.now(), accuracy, window._onFixAnchor);
       }
       window._hosTracker.reportMoving(derivedMph >= 5, Math.round(derivedMph));
     }
@@ -13215,7 +13207,42 @@ function haversine(lat1, lon1, lat2, lon2) {
   const R = 3959, r = x => x * Math.PI / 180;
   const dLat = r(lat2-lat1), dLon = r(lon2-lon1);
   const a = Math.sin(dLat/2)**2 + Math.cos(r(lat1))*Math.cos(r(lat2))*Math.sin(dLon/2)**2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+  // Sin redondear: los usos de distancias cortas (velocidad por delta de GPS,
+  // interpolación sobre la ruta, llegada a destino ≤0.25 mi) necesitan
+  // precisión sub-milla. Los que muestran millas redondean al pintar.
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ── Velocidad derivada de posición con ancla adaptativa anti-deriva ────────
+// El ancla solo se renueva cuando el desplazamiento supera el error del GPS
+// (movimiento real) o tras 12s sin superarlo (parado confirmado):
+// - Estacionado: la deriva queda dentro del círculo de error → 0 mph siempre.
+// - En movimiento con fixes rápidos (un intervalo corto no supera el error),
+//   la base crece hasta superar el error en 2-3 s → velocidad real.
+// st: objeto de estado propio de cada llamador ({a:ancla, last:última mph}).
+function _anchorSpeedMph(lat, lon, tsMs, accM, st) {
+  if (!st.a || tsMs - st.a.ts > 30000) { st.a = { lat, lon, ts: tsMs }; st.last = 0; st.lastTs = 0; return 0; }
+  const dt = (tsMs - st.a.ts) / 1000;
+  if (dt < 0.5) return st.last || 0;
+  const dMi   = haversine(lat, lon, st.a.lat, st.a.lon);
+  const accMi = Math.max((accM || 20) / 1609.34, 0.005);
+  if (dMi > accMi) {
+    // Movimiento confirmado sobre la base actual
+    const mph = (dMi / dt) * 3600;
+    // Renovar el ancla solo con base madura (≥4s): así la base siempre es lo
+    // bastante larga para que un intervalo corto entre fixes no caiga dentro
+    // del error del GPS (evita lecturas alternadas 0/60 a velocidad real).
+    if (dt >= 4) st.a = { lat, lon, ts: tsMs };
+    st.last = mph; st.lastTs = tsMs;
+    return mph;
+  }
+  // Desplazamiento dentro del error: sostener la última velocidad confirmada
+  // unos segundos (la base puede estar recién renovada); estacionado st.last
+  // es 0 y esto sigue devolviendo 0.
+  if (st.lastTs && tsMs - st.lastTs < 5000) return st.last || 0;
+  if (dt >= 12) st.a = { lat, lon, ts: tsMs }; // parado confirmado — renovar base
+  st.last = 0;
+  return 0;
 }
 
 // ── Interstate markers (I-10, I-95, etc) ────────────────────
@@ -16040,16 +16067,9 @@ function fmStartTracking() {
     const rawSpeed = pos.coords.speed;
     let gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
     // iOS fallback: if device doesn't report speed, derive from position delta
-    let _derivedMph = 0;
-    if (window._lastRawGpsFix) {
-      const _dtSec = (Date.now() - window._lastRawGpsFix.ts) / 1000;
-      if (_dtSec > 0.5 && _dtSec < 30) {
-        const _dMi = haversine(lat, lon, window._lastRawGpsFix.lat, window._lastRawGpsFix.lon);
-        // Anti-jitter: solo contar si el desplazamiento supera el error del GPS
-        const _accMi = Math.max(acc / 1609.34, 0.005);
-        _derivedMph = _dMi > _accMi ? (_dMi / _dtSec) * 3600 : 0;
-      }
-    }
+    // Velocidad por ancla adaptativa (anti-deriva estacionado, precisa en movimiento)
+    window._fmWatchAnchor = window._fmWatchAnchor || {};
+    const _derivedMph = _anchorSpeedMph(lat, lon, Date.now(), acc, window._fmWatchAnchor);
     window._lastRawGpsFix = { lat, lon, ts: Date.now() };
     if (rawSpeed == null) gpsSpeed = Math.round(_derivedMph);
     let isMoving = gpsSpeed >= 8 || _derivedMph >= 5;
@@ -16416,14 +16436,11 @@ function fmStartTracking() {
       const rawSpd  = pos.coords.speed;
       const hdg     = pos.coords.heading;
       const _pollNow = Date.now();
-      // iOS fallback: derive speed from position delta when GPS doesn't report speed
-      let _posDerived = 0;
-      if (window._fmPollLastFix) {
-        const _dtSec = (_pollNow - window._fmPollLastFix.ts) / 1000;
-        if (_dtSec > 0.5 && _dtSec < 30) {
-          _posDerived = (haversine(lat, lon, window._fmPollLastFix.lat, window._fmPollLastFix.lon) / _dtSec) * 3600;
-        }
-      }
+      // iOS fallback: velocidad por ancla adaptativa cuando el GPS no reporta speed
+      // (anti-deriva estacionado; _fmPollLastFix se conserva para el stale-check
+      // del ticker del velocímetro)
+      window._fmPollAnchor = window._fmPollAnchor || {};
+      const _posDerived = _anchorSpeedMph(lat, lon, _pollNow, pos.coords.accuracy, window._fmPollAnchor);
       window._fmPollLastFix = { lat, lon, ts: _pollNow };
       // Si watchPosition entregó un fix hace <2.5s este poll es redundante: no
       // pisar la velocidad real del GPS con la derivada de posición (ruidosa y
@@ -16905,14 +16922,12 @@ function showHosDashboard() {
       let gpsSpeed = rawSpeed != null && rawSpeed >= 0 ? Math.round(rawSpeed * 2.237) : 0;
       // Fallback para dispositivos que reportan speed=null (iOS PWA): derivar de
       // la distancia recorrida desde el último fix de GPS.
-      if (rawSpeed == null && window.lastFixFm && window.lastFixFm.lat != null) {
-        const _dt = (Date.now() - window.lastFixFm.ts) / 1000;
-        if (_dt > 0.5 && _dt < 30) {
-          const _d = haversine(pos.coords.latitude, pos.coords.longitude, window.lastFixFm.lat, window.lastFixFm.lon);
-          // Anti-jitter: ignorar desplazamientos dentro del círculo de error del GPS
-          const _accMi = Math.max((pos.coords.accuracy || 20) / 1609.34, 0.005);
-          gpsSpeed = _d > _accMi ? Math.round((_d / _dt) * 3600) : 0;
-        }
+      if (rawSpeed == null) {
+        // Velocidad por ancla adaptativa: 0 estacionado (deriva dentro del error
+        // del GPS), velocidad real en movimiento aunque los fixes sean rápidos.
+        window._dashSpdAnchor = window._dashSpdAnchor || {};
+        gpsSpeed = Math.round(_anchorSpeedMph(pos.coords.latitude, pos.coords.longitude,
+                                              Date.now(), pos.coords.accuracy, window._dashSpdAnchor));
       }
       window.lastFixFm = { lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy || 20, ts: Date.now() };
       // Mantener la bandera global y la velocidad sincronizadas para que el
@@ -27933,23 +27948,13 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   }
 
   // ── GPS del dispositivo — siempre activo para detección de movimiento ────
-  let _gpsLastPos = null; // {lat, lon, ts} — for delta-speed fallback when coords.speed is null
+  // Velocidad por ancla adaptativa (helper global _anchorSpeedMph): 0 cuando la
+  // deriva del GPS estacionado cabe en el círculo de error; velocidad real en
+  // movimiento aunque un solo intervalo entre fixes no supere ese error.
+  const _gpsAnchorSt = {};
   function _calcMphFromDelta(lat, lon, ts, accM) {
-    if (!_gpsLastPos) { _gpsLastPos = { lat, lon, ts }; return 0; }
-    const dtSecs = (ts - _gpsLastPos.ts) / 1000;
-    if (dtSecs < 0.5) return 0; // too close in time, skip
-    const R = 3958.8; // Earth radius miles
-    const dLat = (lat - _gpsLastPos.lat) * Math.PI / 180;
-    const dLon = (lon - _gpsLastPos.lon) * Math.PI / 180;
-    const a = Math.sin(dLat/2)**2 + Math.cos(_gpsLastPos.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLon/2)**2;
-    const distMiles = 2 * R * Math.asin(Math.sqrt(a));
-    _gpsLastPos = { lat, lon, ts };
-    // Compuerta anti-jitter: si el desplazamiento cabe dentro del círculo de
-    // error del GPS (accuracy), no es movimiento real — estacionado el GPS
-    // deriva 20-30 m y daba 5+ mph falsos que ponían a contar los anillos.
-    const accMi = Math.max((accM || 20) / 1609.34, 0.005); // mínimo ~8 m
-    if (distMiles <= accMi) return 0;
-    return (distMiles / dtSecs) * 3600; // mph
+    if (typeof _anchorSpeedMph === 'function') return _anchorSpeedMph(lat, lon, ts, accM, _gpsAnchorSt);
+    return 0;
   }
 
   let _deltaMovStreak = 0; // lecturas consecutivas de movimiento por delta de posición
