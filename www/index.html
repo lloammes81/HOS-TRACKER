@@ -16105,6 +16105,7 @@ function fmStartTracking() {
     }
     fmVehicleMoving = isMoving;
     window._dbgGps = { src:'ruta', raw:rawSpeed, spd:gpsSpeed, acc:Math.round(acc||0), ts:Date.now() };
+    if (rawSpeed != null) window._dbgRawSeenTs = Date.now();
     // CRÍTICO PRIMERO: alimentar el tracker de horas antes de cualquier lógica
     // de UI — un error más abajo en este callback no debe matar la acumulación.
     try { if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(isMoving, gpsSpeed); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
@@ -16955,12 +16956,13 @@ function showHosDashboard() {
       fmCurrentSpeed  = gpsSpeed;
       fmVehicleMoving = _moving;
       window._dbgGps = { src:'dash', raw:rawSpeed, spd:gpsSpeed, acc:Math.round(pos.coords.accuracy||0), ts:Date.now() };
+      if (rawSpeed != null) window._dbgRawSeenTs = Date.now();
       // CRÍTICO PRIMERO: alimentar el tracker de horas. Un error en la UI de
       // abajo (status/toasts/logbook) no debe matar la acumulación de manejo.
       try { if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(_moving, gpsSpeed); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
       try { autoUpdateDashStatus(_moving); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
       try { if (_moving && typeof _updateRestMode === 'function') _updateRestMode(); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
-    }, () => {}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
+    }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
   }
 
   // Iniciar mini mapa después de un tick para que el div sea visible
@@ -22795,7 +22797,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v25-diagnostics';
+  window.APP_BUILD = 'v26-gps-fresh';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
@@ -22822,6 +22824,15 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
 
       let taps = 0, tapTimer = null, diagInt = null;
       const fmtAge = ts => ts ? Math.round((Date.now() - ts)/1000) + 's' : '--';
+      // Estado del permiso de ubicación (clave para "no usa el GPS")
+      try {
+        if (navigator.permissions && navigator.permissions.query) {
+          navigator.permissions.query({ name: 'geolocation' }).then(s => {
+            window._dbgGeoPerm = s.state;
+            s.onchange = () => { window._dbgGeoPerm = s.state; };
+          }).catch(() => {});
+        }
+      } catch (e) {}
       badge.addEventListener('click', function() {
         taps++;
         clearTimeout(tapTimer);
@@ -22843,7 +22854,9 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
             const lines = [
               'BUILD ' + window.APP_BUILD + '  ' + new Date().toTimeString().slice(0,8),
               '── GPS ──',
+              'permiso: ' + (window._dbgGeoPerm || '?') + ' · geolocation=' + !!navigator.geolocation,
               'fix: ' + fmtAge(lf.ts) + ' atrás · acc ' + (lf.acc || '--') + 'm',
+              'speed hardware: ' + (window._dbgRawSeenTs ? 'hace ' + fmtAge(window._dbgRawSeenTs) : 'NUNCA (solo posición)'),
               'último spd: src=' + (g.src||'--') + ' raw=' + (g.raw==null?'null':g.raw) + ' → ' + (g.spd!=null?g.spd+'mph':'--') + ' (' + fmtAge(g.ts) + ')',
               'fmCurrentSpeed=' + (typeof fmCurrentSpeed!=='undefined'?fmCurrentSpeed:'?') + ' · fmVehicleMoving=' + (typeof fmVehicleMoving!=='undefined'?fmVehicleMoving:'?'),
               'watches: dash=' + (typeof _dashGpsWatchId!=='undefined' && _dashGpsWatchId!=null) + ' ruta=' + (typeof fmWatchId!=='undefined' && fmWatchId!=null) + ' tracking=' + (typeof fmIsTracking!=='undefined'?fmIsTracking:'?'),
@@ -28086,6 +28099,8 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     _gpsWatchId = navigator.geolocation.watchPosition(
       pos => {
         const raw = pos.coords.speed;
+        if (raw != null) window._dbgRawSeenTs = Date.now();
+        window._dbgGps = { src:'interno', raw:raw, spd:Math.round((raw!=null&&raw>=0?raw*2.237:_speed)||0), acc:Math.round(pos.coords.accuracy||0), ts:Date.now() };
         const _trusted = raw != null && raw >= 0; // velocidad del hardware GPS: confiable
         // coords.speed is often null on iOS Safari/PWA — fall back to position delta
         let mph = _trusted ? raw * 2.237
@@ -28110,7 +28125,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
         _gpsActive = false;
         _setDuty(typeof lang !== 'undefined' && lang === 'es' ? 'SIN GPS' : 'NO GPS', '#6b7280');
       },
-      { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
     );
   }
 
