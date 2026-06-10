@@ -22770,6 +22770,23 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
    SERVICE WORKER + PUSH NOTIFICATIONS (background)
 ═══════════════════════════════════════════════════════════ */
 (function() {
+  // ── Versión de la app: visible para diagnóstico ─────────────────────────
+  // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
+  // tras una recarga, avisa al conductor para confirmar que el update llegó.
+  window.APP_BUILD = 'v24-auto-update';
+  try {
+    const _prevBuild = localStorage.getItem('hos_app_build');
+    localStorage.setItem('hos_app_build', window.APP_BUILD);
+    console.log('[HOS] App build:', window.APP_BUILD);
+    if (_prevBuild && _prevBuild !== window.APP_BUILD) {
+      setTimeout(() => {
+        if (typeof showToast === 'function') {
+          showToast('success', '🔄', 'App actualizada', 'Versión ' + window.APP_BUILD + ' instalada.', 6000);
+        }
+      }, 3000);
+    }
+  } catch (e) {}
+
   if (!('serviceWorker' in navigator)) return;
 
   // Registrar Service Worker
@@ -22796,15 +22813,41 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
     })
     .catch(err => console.warn('[HOS] SW error:', err));
 
+  // ── Chequeo de actualización continuo ──────────────────────────────────
+  // reg.update() solo corría al abrir la app; una PWA puede vivir días en
+  // memoria (iOS) sin pasar por el registro y quedarse ejecutando código
+  // viejo aunque Pages ya sirva la versión nueva. Chequear al volver a
+  // primer plano y cada 30 min mientras esté abierta.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && window._swReg) window._swReg.update().catch(() => {});
+  });
+  setInterval(() => {
+    if (window._swReg) window._swReg.update().catch(() => {});
+  }, 30 * 60 * 1000);
+
+  // Recarga segura: si el vehículo va en movimiento, posponer hasta detenerse
+  // para no interrumpir el tracking a mitad de manejo.
+  function _safeReloadForUpdate() {
+    const _moving = typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving;
+    if (!_moving) { window.location.reload(); return; }
+    if (window._pendingUpdateReload) return;
+    window._pendingUpdateReload = setInterval(() => {
+      if (!(typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving)) {
+        clearInterval(window._pendingUpdateReload);
+        window.location.reload();
+      }
+    }, 30000);
+  }
+
   // Auto-reload when a new SW takes over (ensures latest version is always shown)
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    window.location.reload();
+    _safeReloadForUpdate();
   });
 
   // Reload when SW broadcasts SW_UPDATED (covers iOS where controllerchange may not fire)
   navigator.serviceWorker.addEventListener('message', event => {
     if (event.data && event.data.type === 'SW_UPDATED') {
-      window.location.reload();
+      _safeReloadForUpdate();
     }
   });
 
