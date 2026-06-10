@@ -14385,6 +14385,7 @@ let fmAccMarker  = null;  // accuracy circle
 let fmWatchId    = null;
 let fmWakeLock   = null;  // Screen Wake Lock to keep GPS running
 let fmGpsPollId  = null;  // setInterval fallback to force fresh GPS fixes
+let fmSpeedoTickId = null; // refresco 1s del velocímetro (tiempo real entre fixes GPS)
 let fmTripStart  = null;
 let fmDriveSeconds = 0;    // accumulated moving time in seconds
 let fmLastMoveTime = null; // timestamp of last GPS fix when moving
@@ -15971,6 +15972,7 @@ function fmStartTracking() {
     if (rawSpeed == null) gpsSpeed = Math.round(_derivedMph);
     let isMoving = gpsSpeed >= 8 || _derivedMph >= 5;
     fmCurrentSpeed = gpsSpeed;
+    window._fmWatchLastTs = Date.now(); // freshness: el poll de respaldo cede si este watch está vivo
     // ── Pausa de relojes HOS cuando el vehículo se detiene ──
     if (typeof window._stopPauseStart === 'undefined') window._stopPauseStart = null;
     const _wasMoving = fmVehicleMoving;
@@ -16341,6 +16343,11 @@ function fmStartTracking() {
         }
       }
       window._fmPollLastFix = { lat, lon, ts: _pollNow };
+      // Si watchPosition entregó un fix hace <2.5s este poll es redundante: no
+      // pisar la velocidad real del GPS con la derivada de posición (ruidosa y
+      // a veces 0 con fixes cacheados — hacía saltar el velocímetro a 0 en
+      // movimiento). El poll solo actúa cuando el watch está callado.
+      if (window._fmWatchLastTs && (_pollNow - window._fmWatchLastTs) < 2500) return;
       const _pollMph = rawSpd != null && rawSpd >= 0 ? rawSpd * 2.237 : _posDerived;
       const moving   = _pollMph > 3;
       window.lastFixFm = { lat, lon, acc: pos.coords.accuracy, ts: _pollNow };
@@ -16378,6 +16385,21 @@ function fmStartTracking() {
       updateSpeedometer(fmCurrentSpeed);
     }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 });
   }, 2000);
+
+  // ── Refresco 1s del velocímetro ───────────────────────────────────────────
+  // El número se repinta cada segundo con la última velocidad conocida (tiempo
+  // real entre callbacks de GPS) y decae a 0 si no llega ningún fix en >8s,
+  // para que no se quede congelado en el último valor.
+  if (fmSpeedoTickId) clearInterval(fmSpeedoTickId);
+  fmSpeedoTickId = setInterval(() => {
+    if (!fmIsTracking) return;
+    const _lastFixTs = Math.max(window._fmWatchLastTs || 0, window._fmPollLastFix?.ts || 0);
+    if (_lastFixTs && Date.now() - _lastFixTs > 8000 && fmCurrentSpeed !== 0) {
+      fmCurrentSpeed  = 0;
+      fmVehicleMoving = false;
+    }
+    updateSpeedometer(fmCurrentSpeed);
+  }, 1000);
 }
 
 function fmStopTracking() {
@@ -16385,6 +16407,7 @@ function fmStopTracking() {
   try { if (window.AndroidHOS) AndroidHOS.stopTracking(); } catch(e) {}
   if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
+  if (fmSpeedoTickId != null) { clearInterval(fmSpeedoTickId); fmSpeedoTickId = null; }
   fmIsTracking = false;
   hideFixedTruckIcon();
   hideSpeedometer();
@@ -17670,8 +17693,12 @@ function updateHosDashboard(driveLeft, driveMax) {
   const _fmtDs = (v) => { const hh=Math.floor(v), mm=Math.round((v-hh)*60); return `${hh}h ${String(mm).padStart(2,'0')}m`; };
   const dStatRem  = document.getElementById('dashDrivenStatRemaining');
   const dStatUsed = document.getElementById('dashDrivenStatUsed');
+  // "Usado" se mide contra el máximo configurado por el driver (driveMax),
+  // no contra las 11h fijas — si el límite diario es menor, 11-driveLeft
+  // mostraba horas usadas fantasma al empezar el turno.
+  const _dMaxStat = (typeof driveMax === 'number' && driveMax > 0) ? driveMax : REG_DAILY;
   if (dStatRem)  dStatRem.textContent  = _fmtDs(driveLeft);
-  if (dStatUsed) dStatUsed.textContent = _fmtDs(Math.max(0, REG_DAILY - driveLeft));
+  if (dStatUsed) dStatUsed.textContent = _fmtDs(Math.max(0, _dMaxStat - driveLeft));
 
   // Hora estimada de llegada
   const arrEl  = document.getElementById('dashArrival');
