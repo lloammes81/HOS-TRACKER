@@ -9969,7 +9969,11 @@ function startGPSWarm() {
           const dLat = (lat - window.lastFixFm.lat) * Math.PI / 180;
           const dLon = (lon - window.lastFixFm.lon) * Math.PI / 180;
           const a = Math.sin(dLat/2)**2 + Math.cos(window.lastFixFm.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLon/2)**2;
-          derivedMph = (2 * R * Math.asin(Math.sqrt(a)) / dtSecs) * 3600;
+          const dMi = 2 * R * Math.asin(Math.sqrt(a));
+          // Anti-jitter: ignorar desplazamientos dentro del error del GPS para
+          // no acumular horas de manejo con el camión estacionado
+          const accMi = Math.max(((typeof accuracy !== 'undefined' && accuracy) || 20) / 1609.34, 0.005);
+          derivedMph = dMi > accMi ? (dMi / dtSecs) * 3600 : 0;
         }
       }
       window._hosTracker.reportMoving(derivedMph >= 5, Math.round(derivedMph));
@@ -16040,7 +16044,10 @@ function fmStartTracking() {
     if (window._lastRawGpsFix) {
       const _dtSec = (Date.now() - window._lastRawGpsFix.ts) / 1000;
       if (_dtSec > 0.5 && _dtSec < 30) {
-        _derivedMph = (haversine(lat, lon, window._lastRawGpsFix.lat, window._lastRawGpsFix.lon) / _dtSec) * 3600;
+        const _dMi = haversine(lat, lon, window._lastRawGpsFix.lat, window._lastRawGpsFix.lon);
+        // Anti-jitter: solo contar si el desplazamiento supera el error del GPS
+        const _accMi = Math.max(acc / 1609.34, 0.005);
+        _derivedMph = _dMi > _accMi ? (_dMi / _dtSec) * 3600 : 0;
       }
     }
     window._lastRawGpsFix = { lat, lon, ts: Date.now() };
@@ -16902,7 +16909,9 @@ function showHosDashboard() {
         const _dt = (Date.now() - window.lastFixFm.ts) / 1000;
         if (_dt > 0.5 && _dt < 30) {
           const _d = haversine(pos.coords.latitude, pos.coords.longitude, window.lastFixFm.lat, window.lastFixFm.lon);
-          gpsSpeed = Math.round((_d / _dt) * 3600);
+          // Anti-jitter: ignorar desplazamientos dentro del círculo de error del GPS
+          const _accMi = Math.max((pos.coords.accuracy || 20) / 1609.34, 0.005);
+          gpsSpeed = _d > _accMi ? Math.round((_d / _dt) * 3600) : 0;
         }
       }
       window.lastFixFm = { lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy || 20, ts: Date.now() };
@@ -17800,7 +17809,7 @@ function updateHosDashboard(driveLeft, driveMax) {
   timeEl.style.color = _dLeftColor;
 
   // Stat rows below DRIVEN ring label
-  const _fmtDs = (v) => { const hh=Math.floor(v), mm=Math.round((v-hh)*60); return `${hh}h ${String(mm).padStart(2,'0')}m`; };
+  const _fmtDs = (v) => { const t=Math.round(Math.max(0,v)*60); return `${Math.floor(t/60)}h ${String(t%60).padStart(2,'0')}m`; };
   const dStatRem  = document.getElementById('dashDrivenStatRemaining');
   const dStatUsed = document.getElementById('dashDrivenStatUsed');
   // "Usado" se mide contra el máximo configurado por el driver (driveMax),
@@ -17867,7 +17876,7 @@ function updateHosDashboard(driveLeft, driveMax) {
   }
 
   // Stat rows below ON-CYCLE ring label
-  const _fmtCs = (v) => { const hh=Math.floor(v), mm=Math.round((v-hh)*60); return `${hh}h ${String(mm).padStart(2,'0')}m`; };
+  const _fmtCs = (v) => { const t=Math.round(Math.max(0,v)*60); return `${Math.floor(t/60)}h ${String(t%60).padStart(2,'0')}m`; };
   const cStatRem  = document.getElementById('dashCycleStatRemaining');
   const cStatUsed = document.getElementById('dashCycleStatUsed');
   if (cStatRem)  cStatRem.textContent  = _fmtCs(cycLeft);
@@ -18180,7 +18189,8 @@ function update14hCircle() {
   }
 
   // Stat rows: gris = restante, verde = usado
-  const _fmt = (v) => { const h=Math.floor(v), m=Math.round((v-h)*60); return `${h}h ${String(m).padStart(2,'0')}m`; };
+  // Redondeo por minutos totales: evita "10h 60m" cuando v ≈ 10.999
+  const _fmt = (v) => { const t=Math.round(Math.max(0,v)*60); return `${Math.floor(t/60)}h ${String(t%60).padStart(2,'0')}m`; };
   const statRem  = document.getElementById('dash14hStatRemaining');
   const statUsed = document.getElementById('dash14hStatUsed');
   if (statRem)  statRem.textContent  = _fmt(remaining);
@@ -27924,7 +27934,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
 
   // ── GPS del dispositivo — siempre activo para detección de movimiento ────
   let _gpsLastPos = null; // {lat, lon, ts} — for delta-speed fallback when coords.speed is null
-  function _calcMphFromDelta(lat, lon, ts) {
+  function _calcMphFromDelta(lat, lon, ts, accM) {
     if (!_gpsLastPos) { _gpsLastPos = { lat, lon, ts }; return 0; }
     const dtSecs = (ts - _gpsLastPos.ts) / 1000;
     if (dtSecs < 0.5) return 0; // too close in time, skip
@@ -27934,9 +27944,15 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     const a = Math.sin(dLat/2)**2 + Math.cos(_gpsLastPos.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dLon/2)**2;
     const distMiles = 2 * R * Math.asin(Math.sqrt(a));
     _gpsLastPos = { lat, lon, ts };
+    // Compuerta anti-jitter: si el desplazamiento cabe dentro del círculo de
+    // error del GPS (accuracy), no es movimiento real — estacionado el GPS
+    // deriva 20-30 m y daba 5+ mph falsos que ponían a contar los anillos.
+    const accMi = Math.max((accM || 20) / 1609.34, 0.005); // mínimo ~8 m
+    if (distMiles <= accMi) return 0;
     return (distMiles / dtSecs) * 3600; // mph
   }
 
+  let _deltaMovStreak = 0; // lecturas consecutivas de movimiento por delta de posición
   function _startGpsMode() {
     if (_gpsWatchId != null || !navigator.geolocation) return;
     _gpsActive = true;
@@ -27944,11 +27960,25 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     _gpsWatchId = navigator.geolocation.watchPosition(
       pos => {
         const raw = pos.coords.speed;
+        const _trusted = raw != null && raw >= 0; // velocidad del hardware GPS: confiable
         // coords.speed is often null on iOS Safari/PWA — fall back to position delta
-        let mph = (raw != null && raw >= 0) ? raw * 2.237
-                  : _calcMphFromDelta(pos.coords.latitude, pos.coords.longitude, pos.timestamp || Date.now());
-        if (mph >= 5) _onMoving(Math.round(mph));
-        else          _onStopped();
+        let mph = _trusted ? raw * 2.237
+                  : _calcMphFromDelta(pos.coords.latitude, pos.coords.longitude,
+                                      pos.timestamp || Date.now(), pos.coords.accuracy);
+        if (mph >= 5) {
+          // Velocidad derivada de posición estando detenido: exigir 2 lecturas
+          // seguidas antes de arrancar los relojes (un solo salto de jitter no
+          // debe poner a contar DRIVEN/ON-CYCLE con el camión estacionado).
+          if (!_trusted && !_isMoving) {
+            _deltaMovStreak++;
+            if (_deltaMovStreak < 2) return;
+          }
+          _deltaMovStreak = 0;
+          _onMoving(Math.round(mph));
+        } else {
+          _deltaMovStreak = 0;
+          _onStopped();
+        }
       },
       () => {
         _gpsActive = false;
