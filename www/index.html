@@ -7594,6 +7594,22 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 </div>
 
 <script>
+// ── Colector global de errores (diagnóstico en dispositivo) ─────────────────
+// Guarda los últimos errores JS para mostrarlos en el panel de diagnóstico
+// (3 toques sobre la etiqueta de versión). Sin esto, una excepción en un
+// callback de GPS muere en silencio y "nada funciona" sin pista alguna.
+window._hosErrLog = window._hosErrLog || [];
+window._hosLogErr = function(e) {
+  try {
+    var msg = (e && (e.message || e.reason && e.reason.message)) || String(e);
+    window._hosErrLog.push({ t: new Date().toTimeString().slice(0,8), m: String(msg).slice(0,160) });
+    if (window._hosErrLog.length > 10) window._hosErrLog.shift();
+    console.error('[HOS-ERR]', msg);
+  } catch (x) {}
+};
+window.addEventListener('error', function(ev){ window._hosLogErr(ev.error || ev.message); });
+window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev.reason || 'unhandledrejection'); });
+
 (function(){
   function openDrawer() {
     var dp = JSON.parse(localStorage.getItem('hos_driver_profile') || '{}');
@@ -16088,6 +16104,10 @@ function fmStartTracking() {
       window._stopPauseStart = null;
     }
     fmVehicleMoving = isMoving;
+    window._dbgGps = { src:'ruta', raw:rawSpeed, spd:gpsSpeed, acc:Math.round(acc||0), ts:Date.now() };
+    // CRÍTICO PRIMERO: alimentar el tracker de horas antes de cualquier lógica
+    // de UI — un error más abajo en este callback no debe matar la acumulación.
+    try { if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(isMoving, gpsSpeed); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
     const _mi = document.getElementById('dashMovingInfo');
     if (_mi) _mi.style.display = isMoving ? 'flex' : 'none';
 
@@ -16199,11 +16219,10 @@ function fmStartTracking() {
     // ── NEXT TURN / EXIT (local) ───────────────────────────
     updateNavInstruction(lat, lon);
     // ── Auto status buttons (Conduciendo / Descanso) ─────
-    autoUpdateDashStatus(isMoving);
+    try { autoUpdateDashStatus(isMoving); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
     // ── Cancel rest mode as soon as vehicle moves ────────
     if (isMoving && typeof _updateRestMode === 'function') _updateRestMode();
-    // ── Reportar movimiento al tracker HOS (sin ELD) ─────
-    if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(isMoving, gpsSpeed);
+    // (reportMoving ya se llamó arriba, justo tras calcular isMoving)
     // ── Próxima parada card ───────────────────────────────
     updateNextStopCard();
     // ── Weigh station warning ─────────────────────────────
@@ -16935,9 +16954,12 @@ function showHosDashboard() {
       const _moving = gpsSpeed >= 5;
       fmCurrentSpeed  = gpsSpeed;
       fmVehicleMoving = _moving;
-      autoUpdateDashStatus(_moving);
-      if (_moving && typeof _updateRestMode === 'function') _updateRestMode();
-      if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(_moving, gpsSpeed);
+      window._dbgGps = { src:'dash', raw:rawSpeed, spd:gpsSpeed, acc:Math.round(pos.coords.accuracy||0), ts:Date.now() };
+      // CRÍTICO PRIMERO: alimentar el tracker de horas. Un error en la UI de
+      // abajo (status/toasts/logbook) no debe matar la acumulación de manejo.
+      try { if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(_moving, gpsSpeed); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
+      try { autoUpdateDashStatus(_moving); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
+      try { if (_moving && typeof _updateRestMode === 'function') _updateRestMode(); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
     }, () => {}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
   }
 
@@ -22773,7 +22795,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v24-auto-update';
+  window.APP_BUILD = 'v25-diagnostics';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
@@ -22786,6 +22808,62 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
       }, 3000);
     }
   } catch (e) {}
+
+  // ── Badge de versión + panel de diagnóstico ─────────────────────────────
+  // Etiqueta pequeña siempre visible con la versión; 3 toques rápidos abren
+  // un panel con estado de GPS/tracker/errores para diagnosticar en campo.
+  setTimeout(function() {
+    try {
+      const badge = document.createElement('div');
+      badge.id = 'hosVerBadge';
+      badge.textContent = window.APP_BUILD;
+      badge.style.cssText = 'position:fixed;bottom:3px;left:6px;font:600 9px monospace;color:rgba(255,255,255,0.45);z-index:2147483647;pointer-events:auto;padding:2px 4px;';
+      document.body.appendChild(badge);
+
+      let taps = 0, tapTimer = null, diagInt = null;
+      const fmtAge = ts => ts ? Math.round((Date.now() - ts)/1000) + 's' : '--';
+      badge.addEventListener('click', function() {
+        taps++;
+        clearTimeout(tapTimer);
+        tapTimer = setTimeout(() => { taps = 0; }, 1200);
+        if (taps < 3) return;
+        taps = 0;
+        let panel = document.getElementById('hosDiagPanel');
+        if (panel) { panel.remove(); if (diagInt) { clearInterval(diagInt); diagInt = null; } return; }
+        panel = document.createElement('div');
+        panel.id = 'hosDiagPanel';
+        panel.style.cssText = 'position:fixed;left:6px;right:6px;bottom:22px;max-height:55vh;overflow:auto;background:rgba(0,0,0,0.93);border:1px solid rgba(16,185,129,0.5);border-radius:10px;padding:10px;font:10px/1.5 monospace;color:#a7f3d0;z-index:2147483647;white-space:pre-wrap;';
+        panel.addEventListener('click', () => { panel.remove(); if (diagInt) { clearInterval(diagInt); diagInt = null; } });
+        document.body.appendChild(panel);
+        const render = () => {
+          try {
+            const g = window._dbgGps || {};
+            const trk = (window._hosTracker && window._hosTracker._debug) ? window._hosTracker._debug() : {};
+            const lf = window.lastFixFm || {};
+            const lines = [
+              'BUILD ' + window.APP_BUILD + '  ' + new Date().toTimeString().slice(0,8),
+              '── GPS ──',
+              'fix: ' + fmtAge(lf.ts) + ' atrás · acc ' + (lf.acc || '--') + 'm',
+              'último spd: src=' + (g.src||'--') + ' raw=' + (g.raw==null?'null':g.raw) + ' → ' + (g.spd!=null?g.spd+'mph':'--') + ' (' + fmtAge(g.ts) + ')',
+              'fmCurrentSpeed=' + (typeof fmCurrentSpeed!=='undefined'?fmCurrentSpeed:'?') + ' · fmVehicleMoving=' + (typeof fmVehicleMoving!=='undefined'?fmVehicleMoving:'?'),
+              'watches: dash=' + (typeof _dashGpsWatchId!=='undefined' && _dashGpsWatchId!=null) + ' ruta=' + (typeof fmWatchId!=='undefined' && fmWatchId!=null) + ' tracking=' + (typeof fmIsTracking!=='undefined'?fmIsTracking:'?'),
+              '── TRACKER ──',
+              JSON.stringify(trk, null, 0),
+              '── HOS ──',
+              'shift: ' + (typeof hosShiftStartTime!=='undefined' && hosShiftStartTime ? ((Date.now()-hosShiftStartTime)/3600000).toFixed(2)+'h activo' : 'sin turno'),
+              'b30: complete=' + (typeof b30Complete!=='undefined'?b30Complete:'?') + ' driveSecs=' + (typeof b30DriveSecs!=='undefined'?Math.round(b30DriveSecs):'?'),
+              'restCountdown=' + (typeof _restCountdownStart!=='undefined' && !!_restCountdownStart) + ' restMode=' + (typeof _restModeActive!=='undefined'?_restModeActive:'?'),
+              '── ERRORES (' + (window._hosErrLog||[]).length + ') ──',
+              ...(window._hosErrLog||[]).slice(-4).map(e => e.t + ' ' + e.m)
+            ];
+            panel.textContent = lines.join('\n');
+          } catch (e) { panel.textContent = 'diag error: ' + e.message; }
+        };
+        render();
+        diagInt = setInterval(render, 1000);
+      });
+    } catch (e) {}
+  }, 1500);
 
   if (!('serviceWorker' in navigator)) return;
 
@@ -28212,7 +28290,22 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     },
     // Pausa el GPS interno cuando el rastreo de ruta toma el control
     pauseInternalGps: function() { _stopGpsMode(); },
-    resumeInternalGps: function() { _startGpsMode(); }
+    resumeInternalGps: function() { _startGpsMode(); },
+    // Estado interno para el panel de diagnóstico (3 toques en la versión)
+    _debug: function() {
+      return {
+        isMoving: _isMoving,
+        speed: _speed,
+        sessionAgeS: (_sessionStart && _isMoving) ? Math.round((Date.now() - _sessionStart.getTime())/1000) : null,
+        driveMs: Math.round(_driveMs/1000) + 's',
+        cycleMs: Math.round(_cycleMs/1000) + 's',
+        driveLeftH: _driveLeft().toFixed(3),
+        gpsActive: _gpsActive,
+        gpsWatch: _gpsWatchId != null,
+        lastMovingAgoS: _lastMovingTs ? Math.round((Date.now() - _lastMovingTs)/1000) : null,
+        shiftStart: _shiftStart ? _shiftStart.toTimeString().slice(0,8) : null
+      };
+    }
   };
 })();
 </script>
