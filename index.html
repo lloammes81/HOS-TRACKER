@@ -8171,8 +8171,10 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
       <!-- Barra de progreso con camión -->
       <div style="position:relative;height:6px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:visible;margin-bottom:10px;">
         <div id="dashRouteProg" style="height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:999px;width:0%;transition:width 1.2s ease;position:relative;">
-          <div id="dashRouteTruck" style="position:absolute;right:-9px;top:50%;transform:translateY(-50%);font-size:16px;line-height:1;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));">🚛</div>
+          <div id="dashRouteTruck" style="position:absolute;right:-9px;top:50%;transform:translateY(-50%);font-size:16px;line-height:1;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));z-index:2;">🚛</div>
         </div>
+        <!-- Íconos de paradas de descanso sobre la línea (⏸ pausa 30 min · 😴 descanso 10h) -->
+        <div id="dashRouteStopMarks" style="position:absolute;inset:0;pointer-events:none;"></div>
       </div>
       <!-- PRÓXIMA PARADA (ciudad donde tomar el descanso obligatorio) -->
       <div id="dashRouteStopRow" style="display:none;align-items:center;gap:9px;margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,0.10);">
@@ -15210,15 +15212,54 @@ function b30Check(isMoving) {
 }
 
 // ── Busca la ciudad ~X millas adelante en la ruta para mostrar como parada ──
+// Punto [lat,lon] que queda targetMiles adelante sobre la geometría de la ruta,
+// partiendo de la posición GPS actual (o del inicio de la ruta si aún no hay fix).
+// Interpola dentro del segmento para dar el punto exacto.
+function _pointAlongRouteAhead(targetMiles) {
+  if (!roadGeometry || roadGeometry.length < 2) return null;
+  let idx = 0;
+  const cur = window.lastFixFm;
+  if (cur && cur.lat != null) {
+    // Escaneo grueso (igual que roadRemainingMiles) para ubicar el punto actual
+    const step = Math.max(1, Math.floor(roadGeometry.length / 300));
+    let bestD = Infinity;
+    for (let i = 0; i < roadGeometry.length; i += step) {
+      const d = haversine(cur.lat, cur.lon, roadGeometry[i][0], roadGeometry[i][1]);
+      if (d < bestD) { bestD = d; idx = i; }
+    }
+  }
+  let acc = 0;
+  for (let i = idx; i < roadGeometry.length - 1; i++) {
+    const seg = haversine(roadGeometry[i][0], roadGeometry[i][1], roadGeometry[i+1][0], roadGeometry[i+1][1]);
+    if (acc + seg >= targetMiles) {
+      const f = seg > 0 ? (targetMiles - acc) / seg : 0;
+      return [roadGeometry[i][0] + (roadGeometry[i+1][0] - roadGeometry[i][0]) * f,
+              roadGeometry[i][1] + (roadGeometry[i+1][1] - roadGeometry[i][1]) * f];
+    }
+    acc += seg;
+  }
+  const last = roadGeometry[roadGeometry.length - 1];
+  return [last[0], last[1]];
+}
+
 async function _fetchStopCityAhead(targetMiles, onResult) {
-  const targetM = targetMiles * 1609.34;
-  let accumulated = 0, stopLat = null, stopLon = null;
-  for (let i = navStepIdx; i < navSteps.length; i++) {
-    accumulated += (navSteps[i].distance || 0);
-    if (accumulated >= targetM) {
-      const loc = navSteps[i]?.maneuver?.location;
-      if (loc) { stopLon = loc[0]; stopLat = loc[1]; }
-      break;
+  let stopLat = null, stopLon = null;
+  // Preferir la geometría de la ruta: da el punto exacto a targetMiles.
+  // El método por navSteps devolvía la maniobra al INICIO del paso; en
+  // interestatales un paso puede medir 200+ mi y la ciudad salía cientos
+  // de millas antes del punto real de parada.
+  const _pt = _pointAlongRouteAhead(targetMiles);
+  if (_pt) { stopLat = _pt[0]; stopLon = _pt[1]; }
+  if (stopLat == null) {
+    const targetM = targetMiles * 1609.34;
+    let accumulated = 0;
+    for (let i = navStepIdx; i < navSteps.length; i++) {
+      accumulated += (navSteps[i].distance || 0);
+      if (accumulated >= targetM) {
+        const loc = navSteps[i]?.maneuver?.location;
+        if (loc) { stopLon = loc[0]; stopLat = loc[1]; }
+        break;
+      }
     }
   }
   if (stopLat == null && window.lastFixFm) { stopLat = window.lastFixFm.lat; stopLon = window.lastFixFm.lon; }
@@ -17379,6 +17420,19 @@ function updateDashRouteHoursRow() {
 // ── Próxima parada en el panel normal ─────────────────────────────
 // Calcula cuál llega antes (pausa 30 min vs descanso 10h) y muestra
 // la ciudad sugerida + millas restantes en una fila del panel normal.
+function _renderDashRouteStopMarks(marks) {
+  const layer = document.getElementById('dashRouteStopMarks');
+  if (!layer) return;
+  // Clave por posición redondeada: evita repintar el DOM en cada tick de 1s
+  const key = marks.map(m => m.icon + Math.round(m.pct)).join('|');
+  if (layer._marksKey === key) return;
+  layer._marksKey = key;
+  layer.innerHTML = marks.map(m => {
+    const pct = Math.max(2, Math.min(98, m.pct));
+    return '<div style="position:absolute;left:' + pct.toFixed(1) + '%;top:50%;transform:translate(-50%,-50%);' +
+           'font-size:13px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.85));">' + m.icon + '</div>';
+  }).join('');
+}
 let _dashStopCache = { key:null, name:null, fetching:false };
 function _refreshDashRouteNextStop() {
   const row     = document.getElementById('dashRouteStopRow');
@@ -17388,7 +17442,7 @@ function _refreshDashRouteNextStop() {
   if (!row || !cityEl) return;
 
   const hasDest = typeof destination !== 'undefined' && !!destination;
-  if (!hasDest) { row.style.display = 'none'; return; }
+  if (!hasDest) { row.style.display = 'none'; _renderDashRouteStopMarks([]); return; }
 
   const b30Done   = (typeof b30Complete !== 'undefined') && b30Complete;
   const b30HrsTo  = b30Done ? Infinity
@@ -17414,6 +17468,28 @@ function _refreshDashRouteNextStop() {
   const _remMi = (typeof window._dashRemainingMi === 'number' && window._dashRemainingMi > 0)
     ? window._dashRemainingMi
     : (typeof routeDistance === 'number' ? routeDistance : 0);
+
+  // ── Íconos de descansos sobre la línea de progreso ──────────────────────
+  // ⏸ pausa 30 min y 😴 descanso 10h, posicionados a su distancia real sobre
+  // el total de la ruta (igual que los marcadores en los otros mapas).
+  const _total = (typeof routeDistance === 'number' && routeDistance > 0) ? routeDistance : 0;
+  if (_total > 0) {
+    const _traveled = Math.max(0, _total - _remMi);
+    const _marks = [];
+    const _b30Mi  = (b30HrsTo !== Infinity) ? b30HrsTo * spd : null;
+    const _restMi = restHrsTo * spd;
+    if (_b30Mi != null && _b30Mi < _remMi - 2) {
+      _marks.push({ pct: (_traveled + _b30Mi) / _total * 100, icon: '⏸' });
+    }
+    // Mostrar el descanso 10h solo si cae antes del destino y no se encima con la pausa
+    if (_restMi < _remMi - 2 && (_b30Mi == null || Math.abs(_restMi - _b30Mi) > 5)) {
+      _marks.push({ pct: (_traveled + _restMi) / _total * 100, icon: '😴' });
+    }
+    _renderDashRouteStopMarks(_marks);
+  } else {
+    _renderDashRouteStopMarks([]);
+  }
+
   if (_remMi > 0 && miles >= _remMi - 2) {
     row.style.display = 'none';
     return;
