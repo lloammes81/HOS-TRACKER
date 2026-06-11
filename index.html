@@ -12578,6 +12578,7 @@ async function fetchCheapFuel(lat, lon) {
         fuelMarkers.push(m);
       });
     }
+    if (typeof syncMinimapOverlays === 'function') syncMinimapOverlays();
   } catch(e) { console.warn('Fuel fetch failed:', e); }
 }
 
@@ -13206,7 +13207,11 @@ function drawRoute(map, coords, markersRef, layerRef) {
   const o = L.marker([origin.lat, origin.lon]).addTo(map).bindPopup('Origin: ' + origin.name);
   const d = L.marker([destination.lat, destination.lon]).addTo(map).bindPopup('Dest: ' + destination.name);
   const mid = coords[Math.floor(coords.length/2)] || [(origin.lat+destination.lat)/2,(origin.lon+destination.lon)/2];
-  const truck = L.marker(mid, { icon: getTruckLeafletIcon() }).addTo(map);
+  // Igual que el mapa completo: si ya hay fix GPS el camión nace en la
+  // posición real; después lo mueve el suscriptor del GPS central.
+  const truckPos = (map === miniMap && window.lastFixFm) ? [window.lastFixFm.lat, window.lastFixFm.lon] : mid;
+  const truck = L.marker(truckPos, { icon: getTruckLeafletIcon() }).addTo(map);
+  if (map === miniMap) window._miniTruckMarker = truck;
 
   // Interstate & US Route shields (only add once per route calculation)
   const isFull = (map === fullMapInst);
@@ -13216,6 +13221,47 @@ function drawRoute(map, coords, markersRef, layerRef) {
 
   markersRef.list = [glow, casing, o, d, truck];
   map.fitBounds(layer.getBounds(), { padding:[25,25] });
+  // Reflejar en este mapa los POIs/avisos que el mapa completo ya cargó
+  if (map === miniMap && typeof syncMinimapOverlays === 'function') setTimeout(syncMinimapOverlays, 0);
+}
+
+/* ── Espejado de overlays: todos los mapas muestran lo mismo ─────────
+   Clona los marcadores ya cargados en el mapa completo (básculas, truck
+   stops, rest areas, parking, checkpoints, avisos comunitarios y precios
+   de diésel) hacia el mini mapa del planificador y el minimapa del
+   dashboard. Reutiliza la data ya descargada: cero consultas extra a
+   Overpass/TomTom. 'restrict' se excluye: el mini mapa ya dibuja las
+   restricciones con sus propias polilíneas. */
+const _mirrorOverlays = { mini: [], dash: [] };
+function _mirrorOverlaysTo(mapInst, key) {
+  if (!mapInst) return;
+  _mirrorOverlays[key].forEach(m => { try { mapInst.removeLayer(m); } catch (e) {} });
+  _mirrorOverlays[key] = [];
+  try {
+    const lists = [];
+    if (typeof fmPoiLayers !== 'undefined') {
+      Object.keys(fmPoiLayers).forEach(type => {
+        if (type === 'restrict') return;
+        // Respetar los toggles del mapa completo: mostrar lo mismo, ni más ni menos
+        const active = type === 'reports' || typeof fmPoiActive === 'undefined' || fmPoiActive[type];
+        if (active && Array.isArray(fmPoiLayers[type])) lists.push(fmPoiLayers[type]);
+      });
+    }
+    if (typeof fuelMarkers !== 'undefined' && Array.isArray(fuelMarkers)) lists.push(fuelMarkers);
+    lists.forEach(list => list.forEach(src => {
+      if (!src || typeof src.getLatLng !== 'function') return;
+      const clone = L.marker(src.getLatLng(), { icon: src.options.icon });
+      const pop = src.getPopup && src.getPopup();
+      const html = pop && pop.getContent && pop.getContent();
+      if (typeof html === 'string') clone.bindPopup(html, { maxWidth: 250 });
+      clone.addTo(mapInst);
+      _mirrorOverlays[key].push(clone);
+    }));
+  } catch (e) { window._hosLogErr && window._hosLogErr(e); }
+}
+function syncMinimapOverlays() {
+  _mirrorOverlaysTo(typeof miniMap !== 'undefined' ? miniMap : null, 'mini');
+  _mirrorOverlaysTo(typeof hosMinimapInst !== 'undefined' ? hosMinimapInst : null, 'dash');
 }
 
 function haversine(lat1, lon1, lat2, lon2) {
@@ -13409,6 +13455,17 @@ window.HOSGps = (function () {
 })();
 // Arrancar el GPS central de inmediato
 try { window.HOSGps.start(); } catch (e) {}
+// Camión en vivo también en el mini mapa del planificador y el minimapa del
+// dashboard: todos los mapas muestran la misma posición actual.
+try {
+  window.HOSGps.onFix(fix => {
+    try { if (window._miniTruckMarker) window._miniTruckMarker.setLatLng([fix.lat, fix.lon]); } catch (e) {}
+    try {
+      if (typeof hosMinimapInst !== 'undefined' && hosMinimapInst && typeof updateHosDashMinimap === 'function')
+        updateHosDashMinimap(fix.lat, fix.lon);
+    } catch (e) {}
+  });
+} catch (e) {}
 
 // ── Interstate markers (I-10, I-95, etc) ────────────────────
 let interstateMarkersMini = [];
@@ -16728,6 +16785,8 @@ function fmStopTracking() {
   fuelMarkers.forEach(m => { try { fmMapInst?.removeLayer(m); } catch {} });
   fuelMarkers = [];
   fuelStations = [];
+  // Quitar también los clones de diésel/POIs reflejados en los minimapas
+  if (typeof syncMinimapOverlays === 'function') syncMinimapOverlays();
   currentStateCode = '';
   if (fmAccMarker) { try { fmMapInst.removeLayer(fmAccMarker); } catch {} fmAccMarker = null; }
   document.body.classList.remove('map-active');
@@ -17145,6 +17204,9 @@ function hideHosDashboard() {
     hosMinimapRoute   = null;
     hosMinimapGlow    = null;
     hosMiniTrafficLayer = null;
+    // Los clones espejados murieron con el mapa: vaciar la lista para que
+    // el próximo initHosMinimap los regenere limpios.
+    if (typeof _mirrorOverlays !== 'undefined') _mirrorOverlays.dash = [];
   }
 }
 
@@ -17233,6 +17295,8 @@ function initHosMinimap() {
     : `<div style="width:34px;height:34px;border-radius:50%;background:#0f172a;border:3px solid #10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.35),0 3px 12px rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;font-size:17px;">${_uEmoji}</div>`;
   const truckIcon = L.divIcon({ className: '', html: truckHtml, iconAnchor: [17, 17] });
   hosMinimapTruck = L.marker([lat, lon], { icon: truckIcon }).addTo(hosMinimapInst);
+  // Paridad con el mapa completo: reflejar aquí los POIs/avisos ya cargados
+  setTimeout(() => { try { syncMinimapOverlays(); } catch (e) {} }, 0);
 
   // Marcador destino — círculo verde más grande para destacarlo
   if (typeof destination !== 'undefined' && destination?.lat) {
@@ -19008,6 +19072,7 @@ async function loadAllPOIs(lat, lon) {
     if (fmPoiActive[type] && fmMapInst) group.addTo(fmMapInst);
 
     fmPoiLoaded[type] = true;
+    if (typeof syncMinimapOverlays === 'function') syncMinimapOverlays();
     const chipId = type === 'scale' ? 'chipScale' : type === 'truck' ? 'chipTruck' : type === 'rest' ? 'chipRest' : 'chipRestrict';
     const chip = document.getElementById(chipId);
     if (chip) {
@@ -19481,6 +19546,7 @@ out center qt 60;`,
   fmPoiGroups[type] = group;
   fmPoiLoaded[type] = true;
   if (fmPoiActive[type] && fmMapInst) group.addTo(fmMapInst);
+  if (typeof syncMinimapOverlays === 'function') syncMinimapOverlays();
 
   const count = pending.length;
   if (chipEl) {
@@ -19830,6 +19896,7 @@ function renderReportMarkers() {
     if (currentUser && r.reportedBy === currentUser.id) return; // don't show own reports
     addReportMarker(r);
   });
+  if (typeof syncMinimapOverlays === 'function') syncMinimapOverlays();
 }
 
 function confirmReport(reportId, isStillThere) {
@@ -22947,7 +23014,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v32-full-audit';
+  window.APP_BUILD = 'v33-mapas-iguales';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
