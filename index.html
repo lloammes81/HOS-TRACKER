@@ -13274,9 +13274,21 @@ function _anchorSpeedMph(lat, lon, tsMs, accM, st) {
      la cadena de acumulación de horas.
 ════════════════════════════════════════════════════════════ */
 window.HOSGps = (function () {
-  let _watchId = null, _lastFixTs = 0, _started = false;
+  let _watchId = null;       // id de navigator.geolocation (web/PWA)
+  let _capWatchId = null;    // id del plugin de Capacitor (nativo; llega async)
+  let _lastFixTs = 0, _lastStartTs = 0, _started = false, _denied = false, _deniedToastShown = false;
   const _anchorSt = {};
   const _subs = [];
+
+  // Detección en runtime (no usar la const IS_CAPACITOR: se declara más
+  // adelante en el archivo y aquí start() corre de inmediato).
+  function _capGeo() {
+    try {
+      if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())
+        return (window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) || null;
+    } catch (e) {}
+    return null;
+  }
 
   function _handle(pos) {
     const c = pos.coords;
@@ -13293,6 +13305,10 @@ window.HOSGps = (function () {
     window.lastFixFm = { lat: c.latitude, lon: c.longitude, acc: c.accuracy || 20, ts: now };
     window._dbgGps = { src: 'central', raw: raw, spd: mph, acc: Math.round(c.accuracy || 0), ts: now };
     try { fmCurrentSpeed = mph; fmVehicleMoving = moving; } catch (e) {}
+    // Mantener fresco el caché compartido de posición (clima, etiquetas de
+    // ubicación, escáner): antes solo lo llenaba el watcher de precalentamiento,
+    // que se apaga al iniciar una ruta y dejaba el caché congelado.
+    try { _gpsCache = { lat: c.latitude, lon: c.longitude, accuracy: c.accuracy, speed: raw, heading: c.heading, timestamp: now, raw: pos }; } catch (e) {}
 
     // 1) Tracker de horas — lo más crítico, siempre primero
     try { if (window._hosTracker && window._hosTracker.reportMoving) window._hosTracker.reportMoving(moving, mph); } catch (e) { window._hosLogErr && window._hosLogErr(e); }
@@ -13305,31 +13321,91 @@ window.HOSGps = (function () {
     for (const fn of _subs) { try { fn(window.lastFixFm, mph, moving); } catch (e) {} }
   }
 
+  function _onError(err) {
+    const msg = (err && err.message) || String(err || '');
+    window._hosLogErr && window._hosLogErr('GPS central: ' + msg);
+    const denied = (err && err.code === 1) || /denied|denegad/i.test(msg);
+    if (!denied) return; // timeout / sin señal: el watchdog reintenta solo
+    // Permiso denegado: reintentar cada 15s no sirve — pausar el watchdog,
+    // avisar una sola vez y rearrancar automáticamente si el usuario lo otorga.
+    _denied = true;
+    _clearWatches();
+    if (!_deniedToastShown && typeof showToast === 'function') {
+      _deniedToastShown = true;
+      const es = (typeof lang === 'undefined') || lang === 'es';
+      showToast('warning', '📍',
+        es ? 'Permiso de ubicación denegado' : 'Location permission denied',
+        es ? 'Activa el permiso de ubicación en los ajustes del navegador o del teléfono para que el GPS y el conteo de horas funcionen.'
+           : 'Enable the location permission in your browser or phone settings so GPS and hours tracking can work.',
+        10000);
+    }
+  }
+
+  // Si el usuario otorga el permiso después (Ajustes → Ubicación), rearrancar solo.
+  try {
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'geolocation' }).then(s => {
+        s.addEventListener('change', () => {
+          if (s.state === 'granted' && _denied) { _denied = false; _deniedToastShown = false; if (_started) start(); }
+        });
+      }).catch(() => {});
+    }
+  } catch (e) {}
+
+  function _clearWatches() {
+    if (_watchId != null) { try { navigator.geolocation.clearWatch(_watchId); } catch (e) {} _watchId = null; }
+    if (_capWatchId != null) {
+      const Geo = _capGeo();
+      if (Geo) { try { Geo.clearWatch({ id: _capWatchId }).catch(() => {}); } catch (e) {} }
+      _capWatchId = null;
+    }
+  }
+
   function start() {
+    _clearWatches();
+    _denied = false;
+    _lastStartTs = Date.now();
+    const Geo = _capGeo();
+    if (Geo) {
+      // Nativo (Android/iOS): plugin de Capacitor — gestiona la solicitud de
+      // permisos y usa el GPS del sistema, más fiable que el geolocation del WebView.
+      _started = true;
+      Geo.watchPosition({ enableHighAccuracy: true, timeout: 20000 }, (pos, err) => {
+        if (err) { _onError(err); return; }
+        if (pos) _handle(pos);
+      }).then(id => { _capWatchId = id; }).catch(e => _onError(e));
+      return;
+    }
     if (!navigator.geolocation) return;
-    stop();
     try {
-      _watchId = navigator.geolocation.watchPosition(_handle,
-        err => { window._hosLogErr && window._hosLogErr('GPS central: ' + (err && err.message)); },
+      _watchId = navigator.geolocation.watchPosition(_handle, _onError,
         { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
       _started = true;
     } catch (e) { window._hosLogErr && window._hosLogErr(e); }
   }
   function stop() {
-    if (_watchId != null) { try { navigator.geolocation.clearWatch(_watchId); } catch (e) {} _watchId = null; }
+    // _started=false también apaga el watchdog; antes solo se limpiaba el
+    // watch y el watchdog lo resucitaba a los 30s.
+    _started = false;
+    _clearWatches();
   }
 
-  // Watchdog: reiniciar si el watch se queda mudo >30s
-  setInterval(() => { if (_started && Date.now() - _lastFixTs > 30000) start(); }, 15000);
+  // Watchdog: reiniciar si el watch se queda mudo >30s (iOS congela
+  // watchPosition silenciosamente). Mide desde el último fix O el último
+  // arranque — antes medía desde _lastFixTs=0 y reiniciaba cada 15s hasta el
+  // primer fix, incluso con el diálogo de permiso aún en pantalla.
+  // No insiste con permiso denegado.
+  const _silentMs = () => Date.now() - Math.max(_lastFixTs, _lastStartTs);
+  setInterval(() => { if (_started && !_denied && _silentMs() > 30000) start(); }, 15000);
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && _started && Date.now() - _lastFixTs > 5000) start();
+    if (!document.hidden && _started && !_denied && _silentMs() > 5000) start();
   });
 
   return {
     start, stop,
     onFix: fn => { if (typeof fn === 'function') _subs.push(fn); },
     fixAgeMs: () => (_lastFixTs ? Date.now() - _lastFixTs : null),
-    isRunning: () => _watchId != null
+    isRunning: () => _started
   };
 })();
 // Arrancar el GPS central de inmediato
@@ -22872,7 +22948,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v30-central-gps';
+  window.APP_BUILD = 'v31-gps-fixes';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
