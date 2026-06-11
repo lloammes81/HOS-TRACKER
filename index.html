@@ -16915,18 +16915,34 @@ function showHosDashboard() {
     if (typeof _updateRestMode === 'function') _updateRestMode();
     // Actualizar progreso de ruta (camión) desde el último fix GPS disponible
     // cuando no hay tracking activo (fmIsTracking lo actualiza por su cuenta).
-    // Funciona también SIN ruta calculada: usa línea recta × 1.25 como total,
-    // así la barra avanza aunque el driver solo haya puesto el destino.
+    // El avance se mide contra una FOTO del inicio del viaje (persistida por
+    // destino): useGPS() resetea `origin` a la posición actual en cada carga
+    // de la app, así que medir contra origin dejaba el camión clavado en 0%.
     if (!fmIsTracking && window.lastFixFm && typeof destination !== 'undefined' && destination
-        && destination.lat != null && typeof origin !== 'undefined' && origin && origin.lat != null) {
+        && destination.lat != null) {
       const _lf = window.lastFixFm;
-      const _directNow   = haversine(_lf.lat, _lf.lon, destination.lat, destination.lon);
-      const _directTotal = Math.max(0.1, haversine(origin.lat, origin.lon, destination.lat, destination.lon));
+      const _directNow = haversine(_lf.lat, _lf.lon, destination.lat, destination.lon);
+      const _destKey = destination.lat.toFixed(3) + ',' + destination.lon.toFixed(3);
+      let _snap = window._tripSnap;
+      if (!_snap || _snap.key !== _destKey) {
+        try { _snap = JSON.parse(localStorage.getItem('hos_trip_snap') || 'null'); } catch(e) { _snap = null; }
+        if (!_snap || _snap.key !== _destKey) {
+          _snap = { key: _destKey, startMi: _directNow };
+          try { localStorage.setItem('hos_trip_snap', JSON.stringify(_snap)); } catch(e) {}
+        }
+        window._tripSnap = _snap;
+      }
+      // El punto de partida es la distancia MÁXIMA observada a este destino
+      // (cubre abrir la app a mitad de viaje y reusar el mismo destino).
+      if (_directNow > _snap.startMi) {
+        _snap.startMi = _directNow;
+        try { localStorage.setItem('hos_trip_snap', JSON.stringify(_snap)); } catch(e) {}
+      }
+      const _startMi = Math.max(_snap.startMi, 0.1);
       const _hasCalcRoute = typeof routeDistance === 'number' && routeDistance > 0;
-      const _total = _hasCalcRoute ? routeDistance : _directTotal * 1.25;
-      const _roadFactor  = Math.min(3.0, _total / _directTotal);
-      const _rem = Math.max(0, _directNow * _roadFactor);
-      const _pct = Math.min(100, Math.round(Math.max(0, _total - _rem) / _total * 100));
+      const _total = _hasCalcRoute ? routeDistance : _startMi * 1.25;
+      const _rem   = Math.max(0, Math.min(_total, _directNow * (_total / _startMi)));
+      const _pct   = Math.min(100, Math.round((_total - _rem) / _total * 100));
       window._dashRouteTotalMi = _total;
       if (isFinite(_pct) && isFinite(_rem)) updateDashRouteProgress(_pct, _rem);
     }
@@ -19861,6 +19877,9 @@ function resetForm() {
   origin = null; destination = null;
   routeDistance = 0; schedule = []; arrivalTime = null; totalTime = 0;
   roadGeometry = null; routeSource = null;
+  // Limpiar la foto de inicio de viaje de la barra de progreso
+  window._tripSnap = null;
+  try { localStorage.removeItem('hos_trip_snap'); } catch(e) {}
   _fmClearActiveRoute();
   document.getElementById('addStopBtn').style.display = 'none';
   // Restore calc slider
@@ -22805,7 +22824,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v28-route-progress';
+  window.APP_BUILD = 'v29-trip-snapshot';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
