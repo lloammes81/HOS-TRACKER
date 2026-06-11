@@ -16109,8 +16109,8 @@ function fmStartTracking() {
     // CRÍTICO PRIMERO: alimentar el tracker de horas antes de cualquier lógica
     // de UI — un error más abajo en este callback no debe matar la acumulación.
     try { if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(isMoving, gpsSpeed); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
-    const _mi = document.getElementById('dashMovingInfo');
-    if (_mi) _mi.style.display = isMoving ? 'flex' : 'none';
+    // dashMovingInfo queda oculto permanente: se encimaba sobre la tarjeta de
+    // violación al manejar (la tarjeta solo debe mostrar el countdown).
 
     // ── Heading: prefer GPS bearing ─────────────────────────
     // heading puede ser null en muchos dispositivos: conservar el último
@@ -18163,12 +18163,14 @@ function _fmtAndShow(timeEl, typeEl, titleEl, secsLeft, title, label) {
 }
 
 function _applyViolColor(pill, timeEl, level) {
+  // Colores SÓLIDOS (sin gradientes translúcidos): la tarjeta no debe dejar
+  // ver nada de lo que tenga detrás.
   const themes = {
-    green:    { bg:'linear-gradient(135deg,rgba(22,101,52,0.85) 0%,rgba(16,185,129,0.30) 100%)', border:'rgba(16,185,129,0.55)',  text:'#a3e635',  glow:'rgba(163,230,53,0.55)' },
-    yellow:   { bg:'linear-gradient(135deg,rgba(120,53,15,0.88) 0%,rgba(245,158,11,0.32) 100%)',  border:'rgba(245,158,11,0.60)',  text:'#fcd34d',  glow:'rgba(252,211,77,0.55)' },
-    orange:   { bg:'linear-gradient(135deg,rgba(154,52,18,0.90) 0%,rgba(249,115,22,0.35) 100%)',  border:'rgba(249,115,22,0.65)',  text:'#fdba74',  glow:'rgba(253,186,116,0.55)' },
-    red:      { bg:'linear-gradient(135deg,rgba(127,29,29,0.92) 0%,rgba(239,68,68,0.36) 100%)',   border:'rgba(239,68,68,0.65)',   text:'#fca5a5',  glow:'rgba(252,165,165,0.55)' },
-    red_dark: { bg:'linear-gradient(135deg,rgba(127,29,29,1.0)  0%,rgba(239,68,68,0.55) 100%)',   border:'#ef4444',               text:'#ffffff',  glow:'rgba(239,68,68,0.80)' },
+    green:    { bg:'#166534', border:'rgba(16,185,129,0.65)', text:'#a3e635', glow:'rgba(163,230,53,0.55)' },
+    yellow:   { bg:'#92400e', border:'rgba(245,158,11,0.70)', text:'#fcd34d', glow:'rgba(252,211,77,0.55)' },
+    orange:   { bg:'#9a3412', border:'rgba(249,115,22,0.75)', text:'#fdba74', glow:'rgba(253,186,116,0.55)' },
+    red:      { bg:'#991b1b', border:'rgba(239,68,68,0.75)',  text:'#fca5a5', glow:'rgba(252,165,165,0.55)' },
+    red_dark: { bg:'#7f1d1d', border:'#ef4444',               text:'#ffffff', glow:'rgba(239,68,68,0.80)' },
   };
   const t = themes[level] || themes.green;
   pill.style.background   = t.bg;
@@ -22797,7 +22799,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v26-gps-fresh';
+  window.APP_BUILD = 'v27-solid-card';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
