@@ -16914,16 +16914,21 @@ function showHosDashboard() {
     updateHosDashboard(dLeft, dMax);
     if (typeof _updateRestMode === 'function') _updateRestMode();
     // Actualizar progreso de ruta (camión) desde el último fix GPS disponible
-    // cuando no hay tracking activo (fmIsTracking lo actualiza por su cuenta)
+    // cuando no hay tracking activo (fmIsTracking lo actualiza por su cuenta).
+    // Funciona también SIN ruta calculada: usa línea recta × 1.25 como total,
+    // así la barra avanza aunque el driver solo haya puesto el destino.
     if (!fmIsTracking && window.lastFixFm && typeof destination !== 'undefined' && destination
-        && typeof origin !== 'undefined' && origin && typeof routeDistance === 'number' && routeDistance > 0) {
+        && destination.lat != null && typeof origin !== 'undefined' && origin && origin.lat != null) {
       const _lf = window.lastFixFm;
       const _directNow   = haversine(_lf.lat, _lf.lon, destination.lat, destination.lon);
       const _directTotal = Math.max(0.1, haversine(origin.lat, origin.lon, destination.lat, destination.lon));
-      const _roadFactor  = Math.min(3.0, routeDistance / _directTotal);
+      const _hasCalcRoute = typeof routeDistance === 'number' && routeDistance > 0;
+      const _total = _hasCalcRoute ? routeDistance : _directTotal * 1.25;
+      const _roadFactor  = Math.min(3.0, _total / _directTotal);
       const _rem = Math.max(0, _directNow * _roadFactor);
-      const _pct = Math.min(100, Math.round(Math.max(0, routeDistance - _rem) / routeDistance * 100));
-      updateDashRouteProgress(_pct, _rem);
+      const _pct = Math.min(100, Math.round(Math.max(0, _total - _rem) / _total * 100));
+      window._dashRouteTotalMi = _total;
+      if (isFinite(_pct) && isFinite(_rem)) updateDashRouteProgress(_pct, _rem);
     }
   }, 1000);
 
@@ -17377,21 +17382,20 @@ function updateDashRouteProgress(pct, remaining) {
   if (originEl) originEl.textContent = hasOrigin ? ((origin.name || '').split(',')[0].trim() || 'Origen') : 'Sin ruta';
   if (destEl)   destEl.textContent   = hasDest   ? ((destination.name || '').split(',')[0].trim() || 'Destino') : 'Sin destino';
 
-  const hasRoute = hasDest && hasOrigin && pct > 0;
-  if (progEl)   progEl.style.width = hasRoute ? Math.max(1, pct) + '%' : '0%';
+  // Hay info de ruta en cuanto existen origen+destino y millas restantes,
+  // aunque el progreso sea 0% (estás en el origen) — antes pct=0 dejaba la
+  // tarjeta clavada en "RUTA NO INICIADA" todo el viaje si nada subía el pct.
+  const remMi = (typeof remaining === 'number' && isFinite(remaining)) ? remaining : (parseFloat(remaining) || 0);
+  const hasRoute = hasDest && hasOrigin && remMi > 0;
+  if (progEl) progEl.style.width = hasRoute ? Math.max(1, Math.min(100, pct || 0)) + '%' : '0%';
 
-  // Millas restantes y %  (formato militar: "120 MI · 35%")
-  const remMi = hasRoute
-    ? (typeof remaining === 'number' ? remaining : parseFloat(remaining) || 0)
-    : 0;
   // Distancia que falta para llegar al destino (para acotar la próxima parada).
-  // Si la ruta aún no arranca, usar la distancia total de la ruta.
   window._dashRemainingMi = hasRoute ? remMi
     : (hasDest ? (typeof routeDistance === 'number' ? routeDistance : 0) : 0);
   const remStr = !hasDest ? 'SIN DESTINO'
-    : !hasRoute ? 'RUTA NO INICIADA'
+    : !hasRoute ? 'CALCULANDO...'
     : (remMi < 10 ? remMi.toFixed(1) : Math.round(remMi).toLocaleString()) + ' MI';
-  const pctStr = hasRoute ? pct + '%' : '0%';
+  const pctStr = (hasRoute ? Math.max(0, Math.min(100, pct || 0)) : 0) + '%';
   if (remEl) remEl.innerHTML = remStr + (hasRoute ? ' · <span id="dashRoutePct">' + pctStr + '</span>' : '');
   else if (pctEl) pctEl.textContent = pctStr;
 
@@ -17554,7 +17558,9 @@ function _refreshDashRouteNextStop() {
   // ── Íconos de descansos sobre la línea de progreso ──────────────────────
   // ⏸ pausa 30 min y 😴 descanso 10h, posicionados a su distancia real sobre
   // el total de la ruta (igual que los marcadores en los otros mapas).
-  const _total = (typeof routeDistance === 'number' && routeDistance > 0) ? routeDistance : 0;
+  const _total = (typeof routeDistance === 'number' && routeDistance > 0)
+    ? routeDistance
+    : (typeof window._dashRouteTotalMi === 'number' && window._dashRouteTotalMi > 0 ? window._dashRouteTotalMi : 0);
   if (_total > 0) {
     const _traveled = Math.max(0, _total - _remMi);
     const _marks = [];
@@ -22799,7 +22805,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v27-solid-card';
+  window.APP_BUILD = 'v28-route-progress';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
