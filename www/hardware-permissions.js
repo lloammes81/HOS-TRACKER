@@ -144,10 +144,10 @@ const HardwareManager = {
   }
 };
 
-// Auto-request GPS on app start
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => HardwareManager.requestGPS(), 1000);
-});
+// Nota: ya NO se auto-solicita el GPS aquí. El servicio central HOSGps
+// (index.html) arranca su propio watchPosition al cargar y gestiona el
+// permiso; pedirlo también desde aquí duplicaba la solicitud y mostraba
+// un toast de GPS sin que el usuario hubiera tocado nada.
 
 // Make globally available
 window.HardwareManager = HardwareManager;
