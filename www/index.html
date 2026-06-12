@@ -2059,8 +2059,19 @@
     padding: 0 2px 0 0;
   }
   #reportSideBtn .side-tab-icon { font-size: 16px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+  /* App móvil: el visual es compacto (34x60) pero el área táctil efectiva
+     se amplía a ~46x76 con un pseudo-elemento invisible (mínimo táctil 44px). */
+  #reportSideBtn::before {
+    content: '';
+    position: absolute;
+    top: -8px; bottom: -8px; left: -12px; right: 0;
+  }
   #reportSideBtn.visible { display: flex; }
-  #reportSideBtn:hover { width: 40px; opacity: 1; box-shadow: -5px 3px 20px rgba(245,158,11,.5), inset 0 1px 0 rgba(255,255,255,.4); }
+  /* hover solo donde existe puntero real; en pantallas táctiles el hover se
+     queda pegado tras el toque, así que el feedback táctil es :active. */
+  @media (hover: hover) {
+    #reportSideBtn:hover { width: 40px; opacity: 1; box-shadow: -5px 3px 20px rgba(245,158,11,.5), inset 0 1px 0 rgba(255,255,255,.4); }
+  }
   #reportSideBtn:active { transform: scaleX(.92); opacity: 1; box-shadow: -2px 2px 8px rgba(245,158,11,.3); }
 
   /* ── VENTANA PEQUEÑA DE REPORTES ── */
@@ -23013,7 +23024,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v34-boton-reporte';
+  window.APP_BUILD = 'v35-tactil-movil';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
