@@ -64,5 +64,16 @@ for (const [key, value] of permissions) {
   patched++;
 }
 
+// UIBackgroundModes: location — requerido para que el GPS siga entregando
+// fixes con la app en segundo plano (plugin background-geolocation).
+if (!/<key>UIBackgroundModes<\/key>/.test(xml)) {
+  const block = `\t<key>UIBackgroundModes</key>\n\t<array>\n\t\t<string>location</string>\n\t</array>\n`;
+  xml = xml.replace(/(<\/dict>\s*<\/plist>)/, `${block}$1`);
+  console.log('✅ Added: UIBackgroundModes [location]');
+} else if (!/UIBackgroundModes<\/key>\s*<array>[\s\S]*?<string>location<\/string>/.test(xml)) {
+  xml = xml.replace(/(<key>UIBackgroundModes<\/key>\s*<array>)/, `$1\n\t\t<string>location</string>`);
+  console.log('🔄 Updated: UIBackgroundModes + location');
+}
+
 fs.writeFileSync(PLIST, xml, 'utf8');
 console.log(`\n✅ iOS permissions patched: ${patched} added/updated.`);

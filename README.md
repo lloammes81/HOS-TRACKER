@@ -198,3 +198,36 @@ Desarrollado para conductores profesionales que necesitan cumplir con las regula
 
 **Versión:** 1.0.0  
 **Última actualización:** Febrero 2026
+
+---
+
+## 🔧 Mantenimiento (notas técnicas)
+
+### Avisos comunitarios compartidos
+Los reportes (policía, báscula, etc.) se sincronizan vía Firebase Realtime
+Database (nodo público `community_reports`, REST sin SDK). **Requiere
+desplegar las reglas** una vez:
+```
+firebase deploy --only database
+```
+o pegar `database.rules.json` en Firebase Console → Realtime Database →
+Rules. Mientras no se desplieguen, la app degrada al modo local anterior.
+
+### GPS en segundo plano (app nativa)
+El plugin `@capacitor-community/background-geolocation` ya está integrado
+en el servicio central HOSGps. Para activarlo hay que compilar el build
+nativo (`npm run build` y abrir `android/`/`ios/` en Android Studio/Xcode).
+Como PWA en Safari/Chrome el sistema sigue suspendiendo el GPS en
+segundo plano — es una limitación del navegador, no de la app.
+
+### Seguridad: clave de TomTom
+La clave de TomTom va embebida en el cliente (inevitable sin backend).
+**Restríngela por dominio** en developer.tomtom.com → tu app → Allowed
+Origins: `lloammes81.github.io`. Ideal a futuro: un proxy (Cloudflare
+Worker) que la oculte por completo.
+
+### Pendientes conocidos
+- `index.html` es un monolito de ~1.4 MB; separar CSS/JS/datos de ciudades
+  permitiría cachear por partes y acelerar actualizaciones.
+- `dash.png` (2 MB) y `logo.png` (0.5 MB) deberían comprimirse a WebP
+  (no había herramientas de imagen en el entorno de CI).

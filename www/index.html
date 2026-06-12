@@ -5829,14 +5829,13 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
     transition: width .2s, height .2s, background .2s, box-shadow .2s, transform .2s;
     touch-action: manipulation;
     padding: 0;
-  }
-  .side-tab-btn:hover {
+  }@media (hover: hover) { .side-tab-btn:hover {
     width: 58px;
     height: 122px;
     background: linear-gradient(160deg,#fb923c,#f97316);
     box-shadow: -6px 0 26px rgba(249,115,22,.8);
     transform: scaleX(1.04);
-  }
+  } }
   .side-tab-btn:active { width: 38px; box-shadow: -2px 0 8px rgba(249,115,22,.3); transform: scaleX(.95); }
   .side-tab-icon { font-size: 20px; line-height: 1; }
   .side-tab-label {
@@ -5890,13 +5889,12 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
     border: 1px solid rgba(255,255,255,.07);
     transition: background .2s, transform .2s, box-shadow .2s;
     touch-action: manipulation;
-  }
-  .cqp-item:hover {
+  }@media (hover: hover) { .cqp-item:hover {
     background: rgba(249,115,22,.18);
     border-color: rgba(249,115,22,.5);
     transform: scale(1.04);
     box-shadow: 0 4px 16px rgba(249,115,22,.25);
-  }
+  } }
   .cqp-item:active { background: rgba(255,255,255,.1); transform: scale(.97); }
   .cqp-item-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
   .cqp-item-info { display: flex; flex-direction: column; gap: 2px; }
@@ -13330,7 +13328,8 @@ function _anchorSpeedMph(lat, lon, tsMs, accM, st) {
 ════════════════════════════════════════════════════════════ */
 window.HOSGps = (function () {
   let _watchId = null;       // id de navigator.geolocation (web/PWA)
-  let _capWatchId = null;    // id del plugin de Capacitor (nativo; llega async)
+  let _capWatchId = null;    // id del plugin Geolocation de Capacitor (nativo; llega async)
+  let _bgWatchId = null;     // id del plugin BackgroundGeolocation (nativo con app cerrada)
   let _lastFixTs = 0, _lastStartTs = 0, _started = false, _denied = false, _deniedToastShown = false;
   const _anchorSt = {};
   const _subs = [];
@@ -13341,6 +13340,19 @@ window.HOSGps = (function () {
     try {
       if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())
         return (window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) || null;
+    } catch (e) {}
+    return null;
+  }
+  // Plugin de GPS en segundo plano (@capacitor-community/background-geolocation):
+  // en el build nativo sigue entregando fixes con la pantalla bloqueada o la
+  // app en background — el conteo de horas no se congela. Si el plugin no
+  // está instalado devuelve null y se usa el Geolocation normal.
+  function _bgGeo() {
+    try {
+      if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+        const p = window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation;
+        if (p && p.addWatcher) return p;
+      }
     } catch (e) {}
     return null;
   }
@@ -13414,12 +13426,43 @@ window.HOSGps = (function () {
       if (Geo) { try { Geo.clearWatch({ id: _capWatchId }).catch(() => {}); } catch (e) {} }
       _capWatchId = null;
     }
+    if (_bgWatchId != null) {
+      const BG = _bgGeo();
+      if (BG) { try { BG.removeWatcher({ id: _bgWatchId }).catch(() => {}); } catch (e) {} }
+      _bgWatchId = null;
+    }
   }
 
   function start() {
     _clearWatches();
     _denied = false;
     _lastStartTs = Date.now();
+    const BG = _bgGeo();
+    if (BG) {
+      // Nativo con plugin de segundo plano: el GPS sigue vivo con pantalla
+      // bloqueada (muestra una notificación persistente en Android).
+      _started = true;
+      BG.addWatcher({
+        backgroundTitle: 'HOS Tracker',
+        backgroundMessage: (typeof lang !== 'undefined' && lang === 'en')
+          ? 'GPS tracking active for hours of service'
+          : 'Rastreo GPS activo para el conteo de horas',
+        requestPermissions: true,
+        stale: false,
+        distanceFilter: 0
+      }, (loc, err) => {
+        if (err) { _onError(err); return; }
+        if (!loc) return;
+        _handle({
+          coords: {
+            latitude: loc.latitude, longitude: loc.longitude,
+            accuracy: loc.accuracy, speed: loc.speed, heading: loc.bearing
+          },
+          timestamp: loc.time || Date.now()
+        });
+      }).then(id => { _bgWatchId = id; }).catch(e => _onError(e));
+      return;
+    }
     const Geo = _capGeo();
     if (Geo) {
       // Nativo (Android/iOS): plugin de Capacitor — gestiona la solicitud de
@@ -14686,6 +14729,53 @@ let communityReports = JSON.parse(localStorage.getItem('hos_reports') || '[]');
 // Remove reports older than 2 hours
 communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
 localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+
+/* ── Avisos comunitarios COMPARTIDOS (Firebase RTDB vía REST) ─────────
+   Antes los reportes vivían solo en localStorage: ningún otro chofer los
+   veía. Ahora se publican/leen del nodo público community_reports de la
+   misma base que usa el dashboard del dispatcher. REST puro con fetch
+   (sin cargar el SDK de Firebase). Si la red o las reglas fallan, todo
+   degrada en silencio al comportamiento local de siempre. */
+const _CR_DB = 'https://hos-tracker-chat-default-rtdb.firebaseio.com/community_reports';
+function pushReportRemote(r) {
+  try {
+    fetch(`${_CR_DB}/${encodeURIComponent(String(r.id))}.json`, {
+      method: 'PUT', body: JSON.stringify(r), keepalive: true
+    }).catch(() => {});
+  } catch (e) {}
+}
+async function syncCommunityReports() {
+  try {
+    const res = await fetch(`${_CR_DB}.json?orderBy=%22ts%22&startAt=${Date.now() - 7200000}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data || typeof data !== 'object') return;
+    const byId = new Map(communityReports.map(r => [String(r.id), r]));
+    const mergeIds = (a, b) => Array.from(new Set([...(a || []), ...(b || [])]));
+    let changed = false;
+    Object.values(data).forEach(remote => {
+      if (!remote || remote.lat == null || remote.lon == null || !remote.ts) return;
+      const local = byId.get(String(remote.id));
+      if (!local) { communityReports.push(remote); changed = true; return; }
+      // Fusionar votos de ambos lados (unión por id de usuario)
+      const conf = mergeIds(local.confirmations, remote.confirmations);
+      const den  = mergeIds(local.denials, remote.denials);
+      if (conf.length !== (local.confirmations || []).length || den.length !== (local.denials || []).length) {
+        local.confirmations = conf; local.denials = den; changed = true;
+      }
+    });
+    if (changed) {
+      communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
+      localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+      try { if (typeof renderReportMarkers === 'function') renderReportMarkers(); } catch (e) {}
+      try { if (typeof renderCommunityReports === 'function') renderCommunityReports(); } catch (e) {}
+      try { if (typeof updateCommBadge === 'function') updateCommBadge(communityReports.length); } catch (e) {}
+    }
+  } catch (e) {}
+}
+// Primera sincronización al cargar y luego cada 2 minutos
+setTimeout(syncCommunityReports, 4000);
+setInterval(syncCommunityReports, 120000);
 
 // Current logged-in user
 let currentUser = JSON.parse(localStorage.getItem('hos_user') || 'null');
@@ -19796,6 +19886,7 @@ function quickReport(type, emoji, label) {
   communityReports.push(report);
   communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+  pushReportRemote(report);   // compartir con los demás choferes
 
   addReportMarker(report);
   addIncidentBubble(report, 2000);
@@ -19935,6 +20026,7 @@ function confirmReport(reportId, isStillThere) {
     if (report.denials.length >= 4) {
       // Remove from map — 4 drivers said it's gone
       showToast('info','🗑️','Aviso eliminado','4 choferes confirmaron que ya no está.', 3000);
+      pushReportRemote(report);  // publicar el 4º voto para que los demás también lo quiten
       communityReports = communityReports.filter(r => String(r.id) !== String(reportId));
       localStorage.setItem('hos_reports', JSON.stringify(communityReports));
       renderReportMarkers();
@@ -19945,6 +20037,7 @@ function confirmReport(reportId, isStillThere) {
   }
 
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+  pushReportRemote(report);   // compartir el voto con los demás choferes
   // Refresh markers to update counts
   renderReportMarkers();
   // Close popup
@@ -20671,7 +20764,8 @@ function filterComm(chip, filter) {
 }
 
 function refreshCommunityReports() {
-  // Remove expired (>2h old) and re-render
+  // Traer los avisos de los demás choferes y limpiar los vencidos (>2h)
+  syncCommunityReports();
   communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
   renderCommunityReports();
@@ -23024,7 +23118,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v35-tactil-movil';
+  window.APP_BUILD = 'v36-mejoras-mayores';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
@@ -26838,8 +26932,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   z-index: 1000 !important;
-}
-.route-stop-marker:hover { transform: scale(1.2); }
+}@media (hover: hover) { .route-stop-marker:hover { transform: scale(1.2); } }
 .route-stop-marker:active { transform: scale(0.95); }
 
 .route-stop-marker.offduty { background: linear-gradient(135deg, #64748b, #475569); }
@@ -28458,6 +28551,26 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       _startGpsMode();
     }
   }, 30000);
+
+  // Cruce de medianoche: antes una sesión de 11pm-1am atribuía las 2 horas
+  // completas al día siguiente. Al cambiar el día calendario se cierra el
+  // tramo del día anterior (el ciclo 70h/8d lo conserva) y las horas
+  // diarias arrancan en 0, igual que hace _load() al reabrir la app.
+  let _sessionDay = new Date().toDateString();
+  setInterval(function() {
+    const today = new Date().toDateString();
+    if (today === _sessionDay) return;
+    _sessionDay = today;
+    if (_isMoving && _sessionStart) {
+      const ms = Date.now() - _sessionStart.getTime();
+      _cycleMs += ms;              // lo manejado antes de medianoche sigue contando al ciclo
+      _driveMs  = 0;               // las horas diarias del nuevo día empiezan en 0
+      _sessionStart = new Date();  // la sesión activa continúa, anclada al nuevo día
+    } else {
+      _driveMs = 0;
+    }
+    _save();
+  }, 60000);
 
   // Loop: actualizar anillos cada segundo, guardar cada 30s
   setInterval(function() {
