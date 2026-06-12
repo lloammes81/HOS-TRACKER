@@ -13,6 +13,14 @@
     "companies": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "community_reports": {
+      ".read": true,
+      ".indexOn": ["ts"],
+      "$id": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['id','type','lat','lon','ts']) && newData.child('lat').isNumber() && newData.child('lon').isNumber() && newData.child('ts').isNumber() && newData.child('ts').val() > (now - 7200000) && newData.child('ts').val() <= (now + 300000)"
+      }
     }
   }
 }
