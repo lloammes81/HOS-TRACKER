@@ -2037,32 +2037,31 @@
   #reportSideBtn {
     position: fixed;
     right: 0;
-    top: calc(92px + env(safe-area-inset-top, 0px));
+    top: calc(170px + env(safe-area-inset-top, 0px));
     z-index: 6501;
-    width: 38px;
-    height: 76px;
-    background: linear-gradient(160deg, rgba(245,158,11,0.5), rgba(217,119,6,0.5));
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    width: 34px;
+    height: 60px;
+    background: linear-gradient(160deg, #fbbf24, #d97706);
     color: #fff;
-    border: 1.5px solid rgba(255,255,255,0.45);
-    border-right: none;
-    border-radius: 14px 0 0 14px;
+    border: none;
+    border-radius: 999px 0 0 999px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 6px;
     cursor: pointer;
-    box-shadow: -4px 0 18px rgba(245,158,11,.3);
-    transition: width .2s, background .2s, box-shadow .2s, transform .15s;
+    opacity: .92;
+    box-shadow: -3px 3px 14px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.4), inset -2px 0 6px rgba(0,0,0,.18);
+    transition: width .2s, opacity .2s, box-shadow .2s, transform .15s;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    padding: 0;
+    padding: 0 2px 0 0;
   }
+  #reportSideBtn .side-tab-icon { font-size: 16px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
   #reportSideBtn.visible { display: flex; }
-  #reportSideBtn:hover { width: 44px; box-shadow: -6px 0 24px rgba(245,158,11,.45); }
-  #reportSideBtn:active { transform: scaleX(.94); box-shadow: -2px 0 8px rgba(245,158,11,.25); }
+  #reportSideBtn:hover { width: 40px; opacity: 1; box-shadow: -5px 3px 20px rgba(245,158,11,.5), inset 0 1px 0 rgba(255,255,255,.4); }
+  #reportSideBtn:active { transform: scaleX(.92); opacity: 1; box-shadow: -2px 2px 8px rgba(245,158,11,.3); }
 
   /* ── VENTANA PEQUEÑA DE REPORTES ── */
   #reportPopupOverlay {
@@ -23014,7 +23013,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v33-mapas-iguales';
+  window.APP_BUILD = 'v34-boton-reporte';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
