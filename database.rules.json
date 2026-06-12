@@ -19,7 +19,23 @@
       ".indexOn": ["ts"],
       "$id": {
         ".write": true,
-        ".validate": "newData.hasChildren(['id','type','lat','lon','ts']) && newData.child('lat').isNumber() && newData.child('lon').isNumber() && newData.child('ts').isNumber() && newData.child('ts').val() > (now - 7200000) && newData.child('ts').val() <= (now + 300000)"
+        ".validate": "newData.hasChildren(['id','type','lat','lon','ts'])",
+        "id": { ".validate": "newData.isNumber() || (newData.isString() && newData.val().length <= 64)" },
+        "type": { ".validate": "newData.isString() && newData.val().length <= 32" },
+        "emoji": { ".validate": "newData.isString() && newData.val().length <= 16" },
+        "label": { ".validate": "newData.isString() && newData.val().length <= 80" },
+        "note": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "lat": { ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90" },
+        "lon": { ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180" },
+        "ts": { ".validate": "newData.isNumber() && newData.val() > (now - 7200000) && newData.val() <= (now + 300000)" },
+        "userAgent": { ".validate": "newData.isString() && newData.val().length <= 80" },
+        "reportedBy": { ".validate": "newData.isString() && newData.val().length <= 64" },
+        "reportedByName": { ".validate": "newData.isString() && newData.val().length <= 60" },
+        "confirmed": { ".validate": "newData.isBoolean()" },
+        "votes": { ".validate": "newData.isNumber()" },
+        "confirmations": { "$i": { ".validate": "newData.isString() && newData.val().length <= 64" } },
+        "denials": { "$i": { ".validate": "newData.isString() && newData.val().length <= 64" } },
+        "$other": { ".validate": false }
       }
     }
   }

@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<!-- CSP: limita los orígenes de scripts/estilos para contener cualquier XSS.
+     'unsafe-inline' es necesario por los handlers onclick inline existentes. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss: blob: data:; worker-src 'self' blob:; frame-src 'self' blob: data: about:; media-src 'self' blob: data:; object-src 'none'; base-uri 'self'">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
@@ -14744,7 +14747,10 @@ function pushReportRemote(r) {
     }).catch(() => {});
   } catch (e) {}
 }
+let _crSyncing = false; // evita solapar syncs si la red va lenta
 async function syncCommunityReports() {
+  if (_crSyncing) return;
+  _crSyncing = true;
   try {
     const res = await fetch(`${_CR_DB}.json?orderBy=%22ts%22&startAt=${Date.now() - 7200000}`);
     if (!res.ok) return;
@@ -14772,6 +14778,7 @@ async function syncCommunityReports() {
       try { if (typeof updateCommBadge === 'function') updateCommBadge(communityReports.length); } catch (e) {}
     }
   } catch (e) {}
+  finally { _crSyncing = false; }
 }
 // Primera sincronización al cargar y luego cada 2 minutos
 setTimeout(syncCommunityReports, 4000);
@@ -19912,6 +19919,19 @@ function showReportAlert(emoji, label, byName) {
   // se conserva la función como no-op para no romper a sus invocadores.
 }
 
+// Escape HTML para datos remotos de community_reports (nodo público en
+// Firebase): cualquiera puede escribir label/note/reportedByName, así que
+// NUNCA deben llegar a innerHTML sin pasar por aquí.
+function crEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Inserta una foto de avatar construyendo el <img> por DOM (la URL nunca pasa
+// por innerHTML, así no puede romper el HTML aunque venga corrupta).
+function setPhotoImg(el, src, css){
+  const im = document.createElement('img');
+  im.src = src; im.alt = ''; im.style.cssText = css || '';
+  el.replaceChildren(im);
+}
+
 function addReportMarker(report) {
   if (!fmMapInst) return;
   const cfg = REPORT_ICONS[report.type] || { emoji:'⚠️', color:'#f59e0b', label: report.label };
@@ -19941,7 +19961,7 @@ function addReportMarker(report) {
           padding:2px 6px;border-radius:5px;
           white-space:nowrap;font-family:'DM Sans',sans-serif;
           box-shadow:0 1px 4px rgba(0,0,0,.4);
-        ">${cfg.label}</div>
+        ">${crEsc(cfg.label)}</div>
       </div>`,
     iconAnchor: [18, 18],
     popupAnchor: [0, -24]
@@ -19953,20 +19973,20 @@ function addReportMarker(report) {
   const popupHtml = `
     <div style="font-family:'DM Sans',sans-serif;min-width:180px;text-align:center;padding:4px">
       <div style="font-size:26px;margin-bottom:4px">${cfg.emoji}</div>
-      <div style="font-weight:900;font-size:14px">${cfg.label}</div>
+      <div style="font-weight:900;font-size:14px">${crEsc(cfg.label)}</div>
       <div style="color:#6b7280;font-size:11px;margin-top:3px">${ageStr}</div>
-      <div style="color:#6b7280;font-size:10px;margin-top:2px">Reportado por: ${reporterName}</div>
+      <div style="color:#6b7280;font-size:10px;margin-top:2px">Reportado por: ${crEsc(reporterName)}</div>
       <div style="color:#ef4444;font-size:11px;font-weight:700;margin-top:6px">⚠️ Precaución en esta área</div>
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
         <div style="font-size:11px;color:#374151;font-weight:700;margin-bottom:6px">¿Sigue aquí?</div>
         <div style="display:flex;gap:6px;justify-content:center">
-          <button onclick="confirmReport('${report.id}', true)" style="
+          <button onclick="confirmReport('${crEsc(String(report.id)).replace(/'/g,'')}', true)" style="
             background:#10b981;color:#fff;border:none;border-radius:8px;
             padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;
             display:flex;align-items:center;gap:3px">
             ✅ Sí (${confirmCount})
           </button>
-          <button onclick="confirmReport('${report.id}', false)" style="
+          <button onclick="confirmReport('${crEsc(String(report.id)).replace(/'/g,'')}', false)" style="
             background:#ef4444;color:#fff;border:none;border-radius:8px;
             padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;
             display:flex;align-items:center;gap:3px">
@@ -20806,19 +20826,21 @@ function renderCommunityReports() {
     const cfg = TYPE_CONFIG[r.type] || { emoji:'📍', color:'#374151', bg:'rgba(55,65,81,.15)' };
     const age = formatReportAge(r.ts);
     const dist = (userLat && r.lat) ? haversine(userLat, userLon, r.lat, r.lon).toFixed(1) + ' mi away' : '';
+    // r.id viene de un nodo público: forzarlo a número evita inyección en el onclick
+    const rid = Number(r.id) || i;
     const voted = votedReports.includes(r.id || i);
-    const votes = r.votes || 0;
-    return `<div class="comm-report-card" id="commCard_${r.id || i}">
+    const votes = Number(r.votes) || 0;
+    return `<div class="comm-report-card" id="commCard_${rid}">
       <div class="comm-ico" style="background:${cfg.bg}">${cfg.emoji}</div>
       <div class="comm-info">
-        <div class="comm-title">${r.label || r.type}</div>
+        <div class="comm-title">${crEsc(r.label || r.type)}</div>
         <div class="comm-meta">
           ${dist ? `<span class="comm-dist">${dist}</span>` : ''}
           <span class="comm-time">⏱ ${age}</span>
-          ${r.note ? `<span style="font-size:11px;color:var(--muted);width:100%;margin-top:2px">${r.note}</span>` : ''}
+          ${r.note ? `<span style="font-size:11px;color:var(--muted);width:100%;margin-top:2px">${crEsc(r.note)}</span>` : ''}
         </div>
       </div>
-      <div class="comm-upvote" onclick="upvoteReport(${r.id || i}, this)">
+      <div class="comm-upvote" onclick="upvoteReport(${rid}, this)">
         <div class="comm-upvote-btn ${voted ? 'voted' : ''}">👍</div>
         <div class="comm-upvote-count">${votes}</div>
       </div>
@@ -22007,7 +22029,7 @@ function applyAllAvatars() {
     const nameEl = document.getElementById(nameId);
     if (!imgEl) return;
     if (photo) {
-      imgEl.innerHTML = '<img src="'+photo+'" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:'+(radiusStyle||'10px')+'" />';
+      setPhotoImg(imgEl, photo, 'width:100%;height:100%;object-fit:cover;border-radius:'+(radiusStyle||'10px'));
     } else {
       imgEl.textContent = emoji;
     }
@@ -22025,7 +22047,7 @@ function applyAllAvatars() {
   // Profile card avatar
   const pAv = document.getElementById('profileAvatar');
   if (pAv) {
-    if (photo) pAv.innerHTML = '<img src="'+photo+'" alt="foto" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">';
+    if (photo) setPhotoImg(pAv, photo, 'width:100%;height:100%;border-radius:50%;object-fit:cover;display:block');
     else pAv.textContent = emoji;
   }
   // Profile display name
@@ -22508,7 +22530,7 @@ function updateProfileDisplay() {
 
   if (avatarEl) {
     if (driverProfile.photo) {
-      avatarEl.innerHTML = `<img src="${driverProfile.photo}" alt="foto" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">`;
+      setPhotoImg(avatarEl, driverProfile.photo, 'width:100%;height:100%;border-radius:50%;object-fit:cover;display:block');
     } else {
       avatarEl.textContent = emoji;
     }
@@ -24167,7 +24189,7 @@ function openProManageModal() {
   const photoSrc = u.photoData || sub.photoData || '';
   const pmPP = document.getElementById('pmPhotoPreview');
   if (photoSrc) {
-    pmPP.innerHTML = `<img src="${photoSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
+    setPhotoImg(pmPP, photoSrc, 'width:100%;height:100%;object-fit:cover;border-radius:12px');
   } else {
     pmPP.innerHTML = '';
     pmPP.textContent = u.avatar || '👤';
@@ -24218,7 +24240,7 @@ function handleProManagePhoto(file) {
   reader.onload = () => {
     const data = String(reader.result || '');
     const pmPP = document.getElementById('pmPhotoPreview');
-    pmPP.innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
+    setPhotoImg(pmPP, data, 'width:100%;height:100%;object-fit:cover;border-radius:12px');
     // Store in a module-level variable to avoid dataset loss
     window._proManagePendingPhoto = data;
   };
@@ -27376,6 +27398,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   import {
     getDatabase, ref, set, update, onValue, push, remove, onDisconnect, serverTimestamp, query, orderByChild, limitToLast
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   window._fleetLinkModuleOk = true;
 
   const firebaseConfig = {
@@ -27389,6 +27412,11 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   };
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const db  = getDatabase(app);
+
+  // Sesión anónima de Firebase (best-effort): permite endurecer las reglas a
+  // "auth != null" cuando se habilite Anonymous Auth en la consola. Si falla,
+  // todo sigue funcionando como hasta ahora.
+  try { signInAnonymously(getAuth(app)).catch(()=>{}); } catch(e) {}
 
   // User ID estable
   let MY_ID = localStorage.getItem('fleet_link_uid');
@@ -27880,6 +27908,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   import {
     getDatabase, ref, onValue, update, query, orderByChild, limitToLast
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyBZbNe3zPyeRHFX9P3Dkww-BA844O_IOfQ",
@@ -27892,6 +27921,9 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   };
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const db  = getDatabase(app);
+
+  // Sesión anónima best-effort (ver bloque fleet-link).
+  try { signInAnonymously(getAuth(app)).catch(()=>{}); } catch(e) {}
 
   // ── User id estable (compartido con fleet-link) ────────
   let MY_ID = localStorage.getItem('fleet_link_uid');

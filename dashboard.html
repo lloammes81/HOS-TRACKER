@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
+<!-- CSP: limita los orígenes de scripts/estilos para contener cualquier XSS.
+     'unsafe-inline' es necesario por los handlers onclick inline existentes. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss: blob: data:; worker-src 'self' blob:; frame-src 'self' blob: data: about:; media-src 'self' blob: data:; object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Truck Precision — Dispatcher</title>
 <meta name="theme-color" content="#10b981">
@@ -4305,6 +4308,7 @@ import {
   serverTimestamp, query, orderByChild, limitToLast,
   onDisconnect, get
 } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
 // ── Firebase config ───────────────────────────────────────────
 const firebaseConfig = {
@@ -4319,6 +4323,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
+// Sesión anónima de Firebase (best-effort). No es el login de la app: solo
+// permite endurecer las reglas de la base a "auth != null" cuando se habilite
+// Anonymous Authentication en la consola. Si falla, la app sigue igual.
+try { signInAnonymously(getAuth(app)).catch(()=>{}); } catch(e) {}
+
 // ── Crypto helpers ────────────────────────────────────────────
 async function sha256(str){
   const buf = new TextEncoder().encode(str);
@@ -4329,8 +4338,38 @@ function randomSalt(){
   const a = new Uint8Array(16); crypto.getRandomValues(a);
   return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
+// Hash de contraseñas: PBKDF2-SHA256 (150k iteraciones). Los hashes viejos
+// (SHA-256 simple, formato sin prefijo) siguen siendo verificables vía
+// verifyPassword() y se migran al formato nuevo en el primer login exitoso.
+const PBKDF2_ITERATIONS = 150000;
+async function pbkdf2Hex(pass, salt, iterations){
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name:'PBKDF2', hash:'SHA-256', salt: enc.encode(salt + '|hos-tracker-v3'), iterations },
+    key, 256
+  );
+  return Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
 async function hashPassword(pass, salt){
+  return 'v3$' + PBKDF2_ITERATIONS + '$' + await pbkdf2Hex(pass, salt, PBKDF2_ITERATIONS);
+}
+async function legacyHashPassword(pass, salt){
   return sha256(salt + '|' + pass + '|hos-tracker-v2');
+}
+// Devuelve true si la contraseña coincide con el hash guardado (nuevo o legacy).
+async function verifyPassword(pass, salt, stored){
+  if(!stored) return false;
+  if(stored.startsWith('v3$')){
+    const iters = parseInt(stored.split('$')[1], 10) || PBKDF2_ITERATIONS;
+    return ('v3$' + iters + '$' + await pbkdf2Hex(pass, salt, iters)) === stored;
+  }
+  return (await legacyHashPassword(pass, salt)) === stored;
+}
+// Migra un hash legacy al formato PBKDF2 tras un login exitoso (best-effort).
+async function upgradePasswordHash(dbPath, pass, salt, stored){
+  if(stored && stored.startsWith('v3$')) return;
+  try { await update(ref(db, dbPath), { hash: await hashPassword(pass, salt) }); } catch(e) {}
 }
 function makeFleetCode(){
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -4403,7 +4442,7 @@ window.selectedPlan = 'starter';
 window.FLEET_ID     = null;
 window.COMPANY_ID   = null;
 window.CURRENT_USER = null;
-const DISPATCH_ID = localStorage.getItem('dispatch_id') || ('disp_' + Math.random().toString(36).slice(2,10));
+const DISPATCH_ID = localStorage.getItem('dispatch_id') || ('disp_' + (crypto.randomUUID ? crypto.randomUUID().slice(0,8) : Math.random().toString(36).slice(2,10)));
 localStorage.setItem('dispatch_id', DISPATCH_ID);
 
 // ── Landing page: login popup + register dropdown ────────────
@@ -4465,6 +4504,8 @@ const EMAILJS_SUPPORT_TPL     = 'template_support';
 
 if(EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY'){
   emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+} else {
+  console.warn('[EmailJS] Sin configurar: los emails de bienvenida/soporte NO se enviarán. Define EMAILJS_PUBLIC_KEY y EMAILJS_SERVICE_ID.');
 }
 
 async function sendWelcomeEmail(toEmail, company, fleetCode){
@@ -4646,12 +4687,12 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
         return showErr('No existe una empresa o usuario con ese email.');
       }
       
-      const userHash = await hashPassword(pass, foundUser.salt);
-      if(userHash !== foundUser.hash){
+      if(!(await verifyPassword(pass, foundUser.salt, foundUser.hash))){
         resetBtn(btn);
         return showErr('Contraseña incorrecta');
       }
-      
+      upgradePasswordHash(`companies/${foundCompany}/users/${foundUser.id}`, pass, foundUser.salt, foundUser.hash);
+
       window.COMPANY_ID = foundCompany;
       window.CURRENT_USER = { email: foundUser.email, role: foundUser.role, name: foundUser.name };
       
@@ -4666,7 +4707,7 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
         company:  foundUser.company || '',
         plan:     'starter',
         fleet:    window.FLEET_ID,
-        token:    await sha256(userHash + '|' + Date.now()),
+        token:    crypto.randomUUID(),
         loginAt:  Date.now(),
         userRole: foundUser.role
       };
@@ -4677,12 +4718,12 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
     }
 
     const auth = snap.val();
-    const hash = await hashPassword(pass, auth.salt);
 
-    if(hash !== auth.hash){
+    if(!(await verifyPassword(pass, auth.salt, auth.hash))){
       resetBtn(btn);
       return showErr('Contraseña incorrecta');
     }
+    upgradePasswordHash(`companies/${companyId}/auth`, pass, auth.salt, auth.hash);
 
     const metaSnap = await get(ref(db, `companies/${companyId}/meta`));
     const meta = metaSnap.val() || {};
@@ -4721,7 +4762,7 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
       company:  meta.company  || auth.company || '',
       plan:     meta.plan     || 'starter',
       fleet:    fleetKey,
-      token:    await sha256(hash + '|' + Date.now()),
+      token:    crypto.randomUUID(),
       loginAt:  Date.now(),
       userRole: 'admin'
     };
@@ -4806,7 +4847,7 @@ document.getElementById('btnStep2').addEventListener('click', async ()=>{
       companyId, email, company,
       plan:    window.selectedPlan,
       fleet:   firstFleetCode,
-      token:   await sha256(hash+'|'+Date.now()),
+      token:   crypto.randomUUID(),
       loginAt:  Date.now(),
       userRole: 'admin'
     };
@@ -5228,7 +5269,7 @@ async function openDriverPopup(uid){
       <div><div class="k">Última señal</div><div class="v" style="font-size:12px">${fmtTime(d.lastSeen)}</div></div>
       <div><div class="k">Rumbo</div><div class="v">${l.heading!=null?Math.round(l.heading)+'°':'—'}</div></div>
     </div>
-    <button class="popup-btn" onclick="openDriverProfile('${uid}')">👤 Ver perfil completo</button>
+    <button class="popup-btn" onclick="openDriverProfile('${jsArg(uid)}')">👤 Ver perfil completo</button>
   `;
   openPopup = new maplibregl.Popup({ offset:32, closeButton:true, maxWidth:'320px' })
     .setLngLat([l.lon, l.lat])
@@ -5311,7 +5352,7 @@ window.openDriverProfile = async (uid) => {
         <div class="addr">${geo.road ? escapeHtml(geo.road) + ' · ' : ''}${escapeHtml(geo.display || '')}</div>
         <div class="coords">🧭 ${l.lat.toFixed(5)}, ${l.lon.toFixed(5)}</div>
       </div>
-      <button onclick="map.flyTo({center:[${l.lon},${l.lat}],zoom:14,duration:1200});closeModal('driverProfileModal')"
+      <button onclick="map.flyTo({center:[${Number(l.lon)||0},${Number(l.lat)||0}],zoom:14,duration:1200});closeModal('driverProfileModal')"
         style="padding:9px 14px;background:rgba(249,115,22,.15);color:#fb923c;border:1px solid rgba(249,115,22,.3);border-radius:8px;cursor:pointer;font-weight:700;font-size:12px">
         🗺️ Ir al mapa
       </button>
@@ -5380,7 +5421,7 @@ window.openDriverProfile = async (uid) => {
     <div class="dp-actions">
       <button class="primary" onclick="closeModal('driverProfileModal');switchTab('notify');document.getElementById('sendNotifBtn').disabled=false;document.getElementById('notifTarget').innerHTML='Enviando a: <b>${escapeHtml((p.name||d.name||uid).replace(/'/g,'&#39;'))}</b>'">📢 Enviar notificación</button>
       ${window.CURRENT_USER?.role !== 'viewer' ? `
-      <button class="secondary" onclick="closeModal('driverProfileModal');toggleDetailEdit('${uid}')">✏️ Editar información</button>
+      <button class="secondary" onclick="closeModal('driverProfileModal');toggleDetailEdit('${jsArg(uid)}')">✏️ Editar información</button>
       ` : `<button class="secondary" onclick="closeModal('driverProfileModal')">Cerrar</button>`}
     </div>
   `;
@@ -5464,6 +5505,10 @@ function listenFleet(){
 // RENDER (simplificado)
 // ════════════════════════════════════════════════════
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+// Escapa un valor para usarlo dentro de comillas simples en un handler inline
+// (onclick="fn('X')"): escapeHtml solo no basta porque el parser HTML decodifica
+// las entidades antes de ejecutar el JS.
+function jsArg(s){ return escapeHtml(String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")); }
 function fmtTime(ts){
   if(!ts) return '—';
   const diff = Date.now()-ts;
@@ -5918,17 +5963,17 @@ function renderDetail(){
 
     ${(() => {
       const hasRoute = (routeState.allRoutes||[]).some(r => r.driverId===selectedId && (r.status==='accepted'||r.status==='in-progress'||r.status==='pending'));
-      return hasRoute ? `<button onclick="openTMSDetail('${selectedId}')" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:0;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.3)">🚛 Ver detalle de carga activa</button>` : '';
+      return hasRoute ? `<button onclick="openTMSDetail('${jsArg(selectedId)}')" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:0;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.3)">🚛 Ver detalle de carga activa</button>` : '';
     })()}
-    <button onclick="openDriverProfile('${selectedId}')" style="width:100%;margin-top:8px;padding:11px;background:linear-gradient(135deg,var(--brand),#0f766e);color:#fff;border:0;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer">👤 Ver perfil completo</button>
+    <button onclick="openDriverProfile('${jsArg(selectedId)}')" style="width:100%;margin-top:8px;padding:11px;background:linear-gradient(135deg,var(--brand),#0f766e);color:#fff;border:0;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer">👤 Ver perfil completo</button>
 
     ${trailPts > 1 ? `
     <button onclick="refitRoute()" style="width:100%;margin-top:8px;padding:9px 12px;background:linear-gradient(135deg,rgba(249,115,22,.15),rgba(249,115,22,.05));color:#fb923c;border:1px solid rgba(249,115,22,.3);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🗺️ Centrar mapa en la ruta completa</button>
     ` : `<div style="color:var(--muted);font-size:12px;margin-top:10px;text-align:center;padding:8px;background:#0a1228;border-radius:8px">Sin ruta registrada aún. La ruta aparecerá cuando el conductor empiece a moverse.</div>`}
 
     ${window.CURRENT_USER?.role !== 'viewer' ? `
-    <button onclick="toggleDetailEdit('${selectedId}')" style="width:100%;margin-top:8px;padding:9px;background:var(--info);color:white;border:0;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">✏️ Editar información del conductor</button>
-    <button onclick="expelDriver('${selectedId}')" style="width:100%;margin-top:8px;padding:9px;background:linear-gradient(135deg,#3b0a0a,#4c1111);color:#fca5a5;border:1px solid #7f1d1d;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">🚪 Expulsar conductor de la flota</button>
+    <button onclick="toggleDetailEdit('${jsArg(selectedId)}')" style="width:100%;margin-top:8px;padding:9px;background:var(--info);color:white;border:0;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">✏️ Editar información del conductor</button>
+    <button onclick="expelDriver('${jsArg(selectedId)}')" style="width:100%;margin-top:8px;padding:9px;background:linear-gradient(135deg,#3b0a0a,#4c1111);color:#fca5a5;border:1px solid #7f1d1d;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">🚪 Expulsar conductor de la flota</button>
     ` : ''}
   `;
 }
@@ -6085,8 +6130,8 @@ window.toggleDetailEdit = async (id) => {
     <div class="field"><label>Notas</label><textarea id="de_notes">${escapeHtml(p.notes||'')}</textarea></div>
 
     <div style="display:flex;gap:8px;margin-top:4px">
-      <button onclick="saveDetailEdit('${id}')" style="flex:1;padding:11px;background:linear-gradient(135deg,var(--brand),#059669);color:#06211a;border:0;border-radius:8px;font-weight:800;cursor:pointer">💾 Guardar</button>
-      <button onclick="toggleDetailEdit('${id}')" style="flex:1;padding:11px;background:#1b2542;color:var(--text);border:1px solid var(--line);border-radius:8px;cursor:pointer">✕ Cancelar</button>
+      <button onclick="saveDetailEdit('${jsArg(id)}')" style="flex:1;padding:11px;background:linear-gradient(135deg,var(--brand),#059669);color:#06211a;border:0;border-radius:8px;font-weight:800;cursor:pointer">💾 Guardar</button>
+      <button onclick="toggleDetailEdit('${jsArg(id)}')" style="flex:1;padding:11px;background:#1b2542;color:var(--text);border:1px solid var(--line);border-radius:8px;cursor:pointer">✕ Cancelar</button>
     </div>
   `;
 };
@@ -6188,9 +6233,9 @@ window.loadAdminData = async () => {
           </div>
           <div class="fr-meta">Creada: ${created}</div>
         </div>
-        <button class="btn-tiny" title="Copiar código" onclick="navigator.clipboard.writeText('${code}');toast('📋 Código copiado')">📋 Copiar</button>
+        <button class="btn-tiny" title="Copiar código" onclick="navigator.clipboard.writeText('${jsArg(code)}');toast('📋 Código copiado')">📋 Copiar</button>
         ${Object.keys(fleets).length > 1 || !isActive ? `
-        <button class="btn-tiny danger" title="Eliminar flota" onclick="deleteFleet('${code}','${escapeHtml(data.name||code)}')">🗑️ Eliminar</button>
+        <button class="btn-tiny danger" title="Eliminar flota" onclick="deleteFleet('${jsArg(code)}','${escapeHtml(data.name||code)}')">🗑️ Eliminar</button>
         ` : `<button class="btn-tiny" disabled title="No puedes eliminar la única flota activa" style="opacity:.3;cursor:not-allowed">🗑️</button>`}
       </div>`;
     }).join('');
@@ -6422,8 +6467,8 @@ window.loadUsers = async () => {
       <td class="${u.active!==false ? 'status-active' : 'status-inactive'}">${u.active!==false ? 'Activo' : 'Inactivo'}</td>
       <td class="actions">
         ${window.CURRENT_USER?.role === 'admin' ? `
-          <button class="btn-tiny" onclick="toggleUser('${uid}', ${u.active===false})">${u.active===false ? 'Activar' : 'Desactivar'}</button>
-          <button class="btn-tiny danger" onclick="deleteUser('${uid}')">Eliminar</button>
+          <button class="btn-tiny" onclick="toggleUser('${jsArg(uid)}', ${u.active===false})">${u.active===false ? 'Activar' : 'Desactivar'}</button>
+          <button class="btn-tiny danger" onclick="deleteUser('${jsArg(uid)}')">Eliminar</button>
         ` : '<span style="color:var(--muted)">Solo lectura</span>'}
       </td>
     </tr>
@@ -6505,7 +6550,7 @@ window.loadDrivers = async () => {
   if(equipSelect){
     equipSelect.innerHTML = '<option value="">Sin asignar</option>';
     Object.entries(profiles).forEach(([id, p]) => {
-      equipSelect.innerHTML += `<option value="${id}">${p.name}</option>`;
+      equipSelect.innerHTML += `<option value="${escapeHtml(id)}">${escapeHtml(p.name)}</option>`;
     });
   }
   
@@ -6569,8 +6614,8 @@ window.loadDrivers = async () => {
           ${isOnline ? '🟢 En línea' : '⚪ Offline'}
         </td>
         <td class="actions">
-          <button class="btn-tiny" onclick="editDriver('${id}')">✏️ Editar</button>
-          <button class="btn-tiny danger" onclick="deleteDriver('${id}')">🗑️</button>
+          <button class="btn-tiny" onclick="editDriver('${jsArg(id)}')">✏️ Editar</button>
+          <button class="btn-tiny danger" onclick="deleteDriver('${jsArg(id)}')">🗑️</button>
         </td>
       </tr>
     `;
@@ -6699,7 +6744,7 @@ window.loadEquipment = async () => {
     if(!sel) return;
     sel.innerHTML = '<option value="">Sin asignar</option>';
     Object.entries(drivers).forEach(([id, d]) => {
-      sel.innerHTML += `<option value="${id}">${d.name}</option>`;
+      sel.innerHTML += `<option value="${escapeHtml(id)}">${escapeHtml(d.name)}</option>`;
     });
   };
   updateSelect('newEquipDriver');
@@ -6746,8 +6791,8 @@ window.loadEquipment = async () => {
         <td>${escapeHtml(assignedDriver)}</td>
         <td><span class="pill ${eq.status === 'active' ? 'ok' : eq.status === 'maintenance' ? 'warn' : 'off'}">${eq.status || 'active'}</span></td>
         <td class="actions">
-          <button class="btn-tiny" onclick="editEquipment('${id}')">✏️</button>
-          <button class="btn-tiny danger" onclick="deleteEquipment('${id}')">🗑️</button>
+          <button class="btn-tiny" onclick="editEquipment('${jsArg(id)}')">✏️</button>
+          <button class="btn-tiny danger" onclick="deleteEquipment('${jsArg(id)}')">🗑️</button>
         </td>
       </tr>
     `;
@@ -6817,7 +6862,7 @@ window.editEquipment = async (equipId) => {
   if(driversSnap.exists()){
     Object.entries(driversSnap.val()).forEach(([id, d]) => {
       const selected = id === eq.assignedDriver ? 'selected' : '';
-      sel.innerHTML += `<option value="${id}" ${selected}>${d.name}</option>`;
+      sel.innerHTML += `<option value="${escapeHtml(id)}" ${selected}>${escapeHtml(d.name)}</option>`;
     });
   }
   
@@ -7280,9 +7325,9 @@ function _renderPayTab(){
             <select id="pmethod-${r.id}" style="font-size:10px;padding:3px 6px;border-radius:5px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-family:inherit">
               <option>Cheque</option><option>Depósito directo</option><option>Zelle</option><option>Efectivo</option><option>Otro</option>
             </select>
-            <button class="pay-btn-pagar" onclick="payRoute('${r.id}')">💳 Registrar pago</button>
+            <button class="pay-btn-pagar" onclick="payRoute('${jsArg(r.id)}')">💳 Registrar pago</button>
           </div>`:''}
-          ${paid?`<button onclick="deletePaymentByRoute('${r.id}')" style="margin-top:4px;font-size:10px;padding:2px 7px;background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3);border-radius:5px;cursor:pointer">↩ Anular</button>`:''}
+          ${paid?`<button onclick="deletePaymentByRoute('${jsArg(r.id)}')" style="margin-top:4px;font-size:10px;padding:2px 7px;background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3);border-radius:5px;cursor:pointer">↩ Anular</button>`:''}
         </div>
       </div>`;
     }).join('');
@@ -7324,7 +7369,7 @@ function _renderPayTab(){
           </div>
           <div style="text-align:right">
             <div style="font-size:17px;font-weight:900;color:#f87171">-${_payAmt(d.amount)}</div>
-            <button onclick="deleteDeduction('${uid}','${id}')" style="margin-top:4px;font-size:10px;padding:2px 6px;background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3);border-radius:5px;cursor:pointer">🗑️</button>
+            <button onclick="deleteDeduction('${jsArg(uid)}','${jsArg(id)}')" style="margin-top:4px;font-size:10px;padding:2px 6px;background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3);border-radius:5px;cursor:pointer">🗑️</button>
           </div>
         </div>`).join(''):'<div class="empty">Sin deducciones registradas</div>'}`;
 
@@ -7349,7 +7394,7 @@ function _renderPayTab(){
           </div>
           <div style="text-align:right">
             <div style="font-size:17px;font-weight:900;color:#fbbf24">-${_payAmt(a.amount)}</div>
-            <button onclick="deleteAdvance('${uid}','${id}')" style="margin-top:4px;font-size:10px;padding:2px 6px;background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.3);border-radius:5px;cursor:pointer">🗑️</button>
+            <button onclick="deleteAdvance('${jsArg(uid)}','${jsArg(id)}')" style="margin-top:4px;font-size:10px;padding:2px 6px;background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.3);border-radius:5px;cursor:pointer">🗑️</button>
           </div>
         </div>`).join(''):'<div class="empty">Sin adelantos registrados</div>'}`;
 
@@ -7365,7 +7410,7 @@ function _renderPayTab(){
         <div>
           <div class="pr-amount">${_payAmt(r.totalPay)}</div>
           <div class="pr-type">${r.payType==='percent'?r.payRate+'%':r.payType==='per_mile'||r.payType==='mile'?'$'+r.payRate+'/mi':'Fijo'}</div>
-          <button onclick="deletePayment('${uid}','${id}')" style="margin-top:6px;font-size:11px;padding:3px 8px;background:#3b0a0a;color:#fca5a5;border:1px solid #7f1d1d;border-radius:6px;cursor:pointer">🗑️</button>
+          <button onclick="deletePayment('${jsArg(uid)}','${jsArg(id)}')" style="margin-top:6px;font-size:11px;padding:3px 8px;background:#3b0a0a;color:#fca5a5;border:1px solid #7f1d1d;border-radius:6px;cursor:pointer">🗑️</button>
         </div>
       </div>`).join('');
 
@@ -7447,7 +7492,7 @@ function _renderSettlement(uid){
         </div>
         <div style="display:flex;align-items:center;gap:12px">
           <div class="psc-net ${isOwed?'owed':'settled'}">${isOwed?'Debe: '+_payAmt(bal):'✅ Liquidado'}</div>
-          <button onclick="event.stopPropagation();generatePayStubPeriod('${uid}','${key}','${cycle}')" style="padding:5px 12px;border-radius:7px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:#60a5fa;font-size:11px;font-weight:700;cursor:pointer">🖨️ PDF</button>
+          <button onclick="event.stopPropagation();generatePayStubPeriod('${jsArg(uid)}','${jsArg(key)}','${jsArg(cycle)}')" style="padding:5px 12px;border-radius:7px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:#60a5fa;font-size:11px;font-weight:700;cursor:pointer">🖨️ PDF</button>
           <span style="color:var(--muted);font-size:14px">▾</span>
         </div>
       </div>
@@ -8142,7 +8187,7 @@ async function _wcLoadAllDrivers(){
       <td style="text-align:right;color:#fbbf24">${fmt(routeBruto)}</td>
       <td><span class="wc-status-open">⏳ Abierto</span></td>
       <td style="text-align:right">
-        <button onclick="_wcCloseSingle('${uid}')" style="padding:4px 10px;border-radius:6px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.35);color:#4ade80;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Cerrar</button>
+        <button onclick="_wcCloseSingle('${jsArg(uid)}')" style="padding:4px 10px;border-radius:6px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.35);color:#4ade80;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Cerrar</button>
       </td>
     </tr>`;
   }).join('');
@@ -8584,7 +8629,7 @@ function renderRoutesList(){
     const p = r.pickup || {}; const d = r.delivery || {};
     const dname = (drivers.get(r.driverId)||{}).name || r.driverName || 'Conductor';
     return `
-      <div class="rt-item ${st}" onclick="openRouteDetail('${r.id}')" style="cursor:pointer">
+      <div class="rt-item ${st}" onclick="openRouteDetail('${jsArg(r.id)}')" style="cursor:pointer">
         <div class="rt-badge">${statusIcon[st]||'📋'}</div>
         <div style="min-width:0">
           <div class="rt-title">👤 ${escapeHtml(dname)}</div>
@@ -8668,13 +8713,13 @@ window.openRouteDetail = (id) => {
 
     <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap">
       ${r.status==='pending' || r.status==='accepted' || r.status==='in-progress' ? `
-        <button class="btn-primary" style="flex:1" onclick="updateRouteStatus('${r.id}','completed')">✅ Marcar como completada</button>
+        <button class="btn-primary" style="flex:1" onclick="updateRouteStatus('${jsArg(r.id)}','completed')">✅ Marcar como completada</button>
       ` : ''}
       ${r.status==='pending' ? `
-        <button class="btn-secondary" style="margin:0;flex:0 0 auto;width:auto;padding:15px 20px;background:#422006;color:#fcd34d;border:1px solid #92400e" onclick="updateRouteStatus('${r.id}','rejected')">❌ Cancelar ruta</button>
+        <button class="btn-secondary" style="margin:0;flex:0 0 auto;width:auto;padding:15px 20px;background:#422006;color:#fcd34d;border:1px solid #92400e" onclick="updateRouteStatus('${jsArg(r.id)}','rejected')">❌ Cancelar ruta</button>
       ` : ''}
       ${(r.pickup?.lat && r.delivery?.lat) ? `
-        <button class="btn-secondary" style="margin:0;flex:0 0 auto;width:auto;padding:15px 20px" onclick="showRouteOnMap('${r.id}')">🗺️ Ver en mapa</button>
+        <button class="btn-secondary" style="margin:0;flex:0 0 auto;width:auto;padding:15px 20px" onclick="showRouteOnMap('${jsArg(r.id)}')">🗺️ Ver en mapa</button>
       ` : ''}
       <button class="btn-secondary" style="margin:0;flex:0 0 auto;width:auto;padding:15px 20px" onclick="closeModal('routeDetailModal')">Cerrar</button>
     </div>
@@ -9167,8 +9212,8 @@ function buildTMSDetailHTML(uid, d, l, geo, route){
         </div>`).join('')}
       </div>
       <div class="tms-actions">
-        <button class="tms-action-btn" onclick="selectDriver('${uid}');closeTMSDetail();setTimeout(()=>switchTab('notify'),100)">📢 Notificar</button>
-        <button class="tms-action-btn primary" onclick="openDriverProfile('${uid}');closeTMSDetail()">👤 Perfil</button>
+        <button class="tms-action-btn" onclick="selectDriver('${jsArg(uid)}');closeTMSDetail();setTimeout(()=>switchTab('notify'),100)">📢 Notificar</button>
+        <button class="tms-action-btn primary" onclick="openDriverProfile('${jsArg(uid)}');closeTMSDetail()">👤 Perfil</button>
       </div>
     </div><!-- /tms-right -->
 
@@ -9780,7 +9825,7 @@ function _renderBrokerThread(loadId, brokerEmail){
       ? `<div class="lt-msg-atts">${m.attachments.map(a=>{
           const key  = _cacheAtt(a);
           const icon = _fileIcon(a.type||a.name);
-          return `<span class="lt-att-chip${key?' att-openable':''}" ${key?`onclick="window._openAttachment('${key}')"`:''}>` +
+          return `<span class="lt-att-chip${key?' att-openable':''}" ${key?`onclick="window._openAttachment('${jsArg(key)}')"`:''}>` +
                  `${icon} ${escapeHtml(a.name||'archivo')}${key?'↗':''}</span>`;
         }).join('')}</div>`
       : '';
@@ -9958,7 +10003,7 @@ function renderLoads(){
                     : tier === 'good' ? '<span class="lt-tier-badge good">★ BUENO</span>'
                     : '';
     return `
-    <div class="lt-row${newCls}${tierCls}" id="ltr-${l.id}" onclick="toggleLoadRow('${l.id}')">
+    <div class="lt-row${newCls}${tierCls}" id="ltr-${l.id}" onclick="toggleLoadRow('${jsArg(l.id)}')">
       <div class="lt-cell lt-col-age">${escapeHtml(l.age||'—')}</div>
       <div class="lt-cell lt-col-rate">
         <div class="lt-rate-val${tierCls}">$${(l.rate||0).toLocaleString()} ${tierBadge}</div>
@@ -9979,7 +10024,7 @@ function renderLoads(){
       <div class="lt-cell lt-col-src"><span class="lc-chip ${srcClass}" style="font-size:10px;padding:2px 7px">${escapeHtml(l.source)}</span></div>
       <div class="lt-cell lt-col-actions">
         <button class="lt-act-btn primary" onclick="event.stopPropagation();assignLoadToRoute(${JSON.stringify(l).replace(/"/g,'&quot;')})">Asignar</button>
-        <button class="lt-act-btn ${isSaved?'saved':''}" id="save-${l.id}" onclick="event.stopPropagation();toggleSaveLoad('${l.id}',this)">${isSaved?'✓':'💾'}</button>
+        <button class="lt-act-btn ${isSaved?'saved':''}" id="save-${l.id}" onclick="event.stopPropagation();toggleSaveLoad('${jsArg(l.id)}',this)">${isSaved?'✓':'💾'}</button>
       </div>
     </div>
     <div class="lt-detail-panel" id="ltd-${l.id}">
@@ -10013,10 +10058,10 @@ function renderLoads(){
         <div style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
           <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">💰 Enviar oferta al broker</div>
           <div style="display:flex;gap:6px;margin-bottom:6px">
-            <button class="ltd-offer-chip" onclick="event.stopPropagation();ltFillOffer('${l.id}',${l.rate},0.95)">-5%</button>
-            <button class="ltd-offer-chip" onclick="event.stopPropagation();ltFillOffer('${l.id}',${l.rate},1)">Igual</button>
-            <button class="ltd-offer-chip active" onclick="event.stopPropagation();ltFillOffer('${l.id}',${l.rate},1.05)">+5%</button>
-            <button class="ltd-offer-chip" onclick="event.stopPropagation();ltFillOffer('${l.id}',${l.rate},1.10)">+10%</button>
+            <button class="ltd-offer-chip" onclick="event.stopPropagation();ltFillOffer('${jsArg(l.id)}',${Number(l.rate)||0},0.95)">-5%</button>
+            <button class="ltd-offer-chip" onclick="event.stopPropagation();ltFillOffer('${jsArg(l.id)}',${Number(l.rate)||0},1)">Igual</button>
+            <button class="ltd-offer-chip active" onclick="event.stopPropagation();ltFillOffer('${jsArg(l.id)}',${Number(l.rate)||0},1.05)">+5%</button>
+            <button class="ltd-offer-chip" onclick="event.stopPropagation();ltFillOffer('${jsArg(l.id)}',${Number(l.rate)||0},1.10)">+10%</button>
           </div>
           <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
             <span style="font-size:11px;color:var(--muted);white-space:nowrap">Mi oferta $</span>
@@ -10029,7 +10074,7 @@ function renderLoads(){
             onclick="event.stopPropagation()"
             style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:12px;font-family:inherit;resize:none;outline:none;box-sizing:border-box;margin-bottom:6px"></textarea>
           <button style="width:100%;padding:9px;border-radius:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:800;font-size:12px;border:0;cursor:pointer;font-family:inherit"
-            onclick="event.stopPropagation();ltSendOffer('${l.id}','${escapeHtml(l.company||'')}','${emailUser}@${emailDomain}',${l.rate},${l.miles})">
+            onclick="event.stopPropagation();ltSendOffer('${jsArg(l.id)}','${escapeHtml(l.company||'')}','${emailUser}@${emailDomain}',${l.rate},${l.miles})">
             📤 Enviar oferta
           </button>
         </div>
@@ -10518,8 +10563,8 @@ function _syncBoardStatus(){
       const cls   = on ? 'connected' : 'disconnected';
       const title = on ? `✓ ${creds.username} · Click para abrir` : `Clic para vincular ${meta.name}`;
       const action = on
-        ? `onclick="event.preventDefault();_openBoardWithSession('${boardId}','${meta.urlBase}')"`
-        : `onclick="event.preventDefault();openBoardConnectModal('${boardId}')"`;
+        ? `onclick="event.preventDefault();_openBoardWithSession('${jsArg(boardId)}','${jsArg(meta.urlBase)}')"`
+        : `onclick="event.preventDefault();openBoardConnectModal('${jsArg(boardId)}')"`;
       return `<span class="bsb-chip ${cls}" title="${title}" ${action}>
         <span class="bsb-dot"></span>${meta.initials}
       </span>`;
@@ -10667,7 +10712,7 @@ function renderEmailList(folder){
     const initials = (m.to||m.from||'?').replace(/[^a-zA-Z]/g,' ').trim().split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || '?';
     const attBadge = m.attachments?.length ? `<div class="emr-att">📎 ${m.attachments.length}</div>` : '';
     const unreadCls = (!m.read && folder==='inbox') ? ' unread' : '';
-    return `<div class="email-msg-row${unreadCls}" onclick="openEmailDetail('${folder}',${msgs.length-1-i})">
+    return `<div class="email-msg-row${unreadCls}" onclick="openEmailDetail('${jsArg(folder)}',${msgs.length-1-i})">
       <div class="emr-av">${initials}</div>
       <div class="emr-body">
         <div class="emr-from">${escapeHtml(folder==='sent' ? ('Para: '+(m.to||'—')) : (m.from||'—'))}</div>
@@ -10945,7 +10990,7 @@ window.closePdfViewer = function(){
 function _attChip(a){
   const key  = _cacheAtt(a);
   const icon = _fileIcon(a.type || a.name);
-  const open = key ? `class="ed-att-chip att-openable" onclick="window._openAttachment('${key}')"` : `class="ed-att-chip"`;
+  const open = key ? `class="ed-att-chip att-openable" onclick="window._openAttachment('${jsArg(key)}')"` : `class="ed-att-chip"`;
   return `<div ${open}>
     <span class="att-icon">${icon}</span>
     ${escapeHtml(a.name||'archivo')}
@@ -11194,11 +11239,11 @@ function _renderNotifPanel(){
     div.className = 'np-item' + (n.unread ? ' unread' : '');
     div.dataset.id = n.id;
     div.innerHTML = `
-      <div class="np-item-ico">${n.icon}</div>
+      <div class="np-item-ico">${escapeHtml(n.icon)}</div>
       <div class="np-item-body">
-        <div class="np-item-title">${n.title}</div>
-        <div class="np-item-msg">${n.msg}</div>
-        <div class="np-item-time">${n.time}</div>
+        <div class="np-item-title">${escapeHtml(n.title)}</div>
+        <div class="np-item-msg">${escapeHtml(n.msg)}</div>
+        <div class="np-item-time">${escapeHtml(n.time)}</div>
       </div>
       <button class="np-item-del" onclick="dismissNotif(${n.id})" title="Descartar">✕</button>
     `;
