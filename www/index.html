@@ -7885,21 +7885,35 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
   <div style="text-align:center;max-width:380px;width:100%">
     <div style="width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:42px;margin:0 auto 20px;box-shadow:0 8px 32px rgba(16,185,129,.45)">🚛</div>
     <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1px;color:#f0f4ff;margin-bottom:6px">Truck Precision</div>
-    <div style="font-size:14px;color:#8896b0;margin-bottom:32px;line-height:1.5">Para funcionar necesita acceso a<br>los siguientes permisos</div>
+    <div style="font-size:14px;color:#8896b0;margin-bottom:32px;line-height:1.5">Para funcionar necesita acceso a<br>los siguientes permisos (se piden una sola vez)</div>
 
     <div style="background:#131929;border-radius:18px;border:1px solid #1e2d45;overflow:hidden;margin-bottom:24px;text-align:left">
       <div style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid #1e2d45">
         <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📍</div>
         <div>
-          <div style="font-size:15px;font-weight:800;color:#f0f4ff">Ubicación</div>
-          <div style="font-size:12px;color:#8896b0;margin-top:3px">Para detectar tu posición y calcular rutas desde tu ubicación actual</div>
+          <div style="font-size:15px;font-weight:800;color:#f0f4ff">Ubicación (siempre)</div>
+          <div style="font-size:12px;color:#8896b0;margin-top:3px">Rastreo GPS y conteo de horas, activo aun con la app minimizada</div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:14px;padding:18px 20px">
+      <div style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid #1e2d45">
         <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📷</div>
         <div>
           <div style="font-size:15px;font-weight:800;color:#f0f4ff">Cámara</div>
           <div style="font-size:12px;color:#8896b0;margin-top:3px">Para tu foto de perfil y el detector de fatiga del conductor</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid #1e2d45">
+        <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🔔</div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#f0f4ff">Notificaciones</div>
+          <div style="font-size:12px;color:#8896b0;margin-top:3px">Alertas de límites de manejo y recordatorios de descanso</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:18px 20px">
+        <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#0ea5e9,#0369a1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📶</div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#f0f4ff">Bluetooth</div>
+          <div style="font-size:12px;color:#8896b0;margin-top:3px">Para conectar dispositivos ELD y leer datos de horas de servicio</div>
         </div>
       </div>
     </div>
@@ -21740,20 +21754,59 @@ function openPermsScreen() {
   const el = document.getElementById('permsOverlay');
   if (el) { el.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 }
+// Solicita TODOS los permisos del hardware en una sola pasada (una sola vez).
+// En el build nativo usa los plugins de Capacitor para que el sistema muestre
+// sus diálogos nativos y, en el caso de la ubicación, conceda el modo "siempre"
+// (segundo plano) — así el GPS y el conteo de horas siguen activos con la app
+// minimizada o cerrada. En la web (PWA) recurre a las APIs del navegador.
 async function grantAppPermissions() {
   const btn = document.getElementById('permsAllowBtn');
   if (btn) { btn.textContent = '⏳ Solicitando...'; btn.disabled = true; }
-  // Request location first
+
+  const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const P = (window.Capacitor && window.Capacitor.Plugins) || {};
+
+  // 1) Ubicación ── permiso del sistema + un fix inicial
   try {
+    if (isNative && P.Geolocation && P.Geolocation.requestPermissions) {
+      await P.Geolocation.requestPermissions({ permissions: ['location', 'coarseLocation'] }).catch(() => {});
+    }
     await new Promise((res, rej) =>
       navigator.geolocation.getCurrentPosition(res, rej, { timeout: 12000, enableHighAccuracy: true })
     );
   } catch {}
-  // Then request camera
+  // Arrancar el GPS de segundo plano: pide "Permitir siempre" y mantiene el
+  // rastreo vivo con la app minimizada (foreground service en Android).
+  try { if (window.HOSGps) window.HOSGps.start(); } catch {}
+
+  // 2) Cámara ── getUserMedia dispara el diálogo nativo en Capacitor y la web
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     stream.getTracks().forEach(t => t.stop());
   } catch {}
+
+  // 3) Notificaciones
+  try {
+    if (isNative && P.LocalNotifications && P.LocalNotifications.requestPermissions) {
+      await P.LocalNotifications.requestPermissions().catch(() => {});
+    } else if ('Notification' in window && Notification.requestPermission) {
+      await Notification.requestPermission();
+    }
+    // Programar las notificaciones ahora que el permiso está concedido.
+    if (typeof window.scheduleHOSNotifications === 'function') {
+      try { await window.scheduleHOSNotifications(); } catch {}
+    }
+  } catch {}
+
+  // 4) Bluetooth ── initialize() pide los permisos BLUETOOTH_SCAN/CONNECT
+  try {
+    if (isNative && P.BluetoothLe && P.BluetoothLe.initialize) {
+      await P.BluetoothLe.initialize({ androidNeverForLocation: false }).catch(() => {});
+    } else if (navigator.bluetooth && navigator.bluetooth.getAvailability) {
+      await navigator.bluetooth.getAvailability().catch(() => {});
+    }
+  } catch {}
+
   skipPerms();
 }
 function skipPerms() {
@@ -23325,51 +23378,61 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   try {
     const { LocalNotifications } = await import('https://esm.sh/@capacitor/local-notifications@8');
 
-    // Solicitar permiso
-    const { display } = await LocalNotifications.requestPermissions();
-    if (display !== 'granted') return;
-
     window._localNotif = LocalNotifications;
 
-    // ── Noticias DOT: notificar items no vistos ─────────────────
-    const seenNews = JSON.parse(localStorage.getItem('hos_seen_news') || '[]');
-    const newItems = (typeof _dotNewsData !== 'undefined' ? _dotNewsData : [])
-      .map((item, i) => ({ ...item, id: i }))
-      .filter(item => !seenNews.includes(item.id));
+    // ── Programación de notificaciones (noticias DOT + recordatorio diario) ──
+    // Se expone como global para poder ejecutarla justo después de conceder el
+    // permiso desde la pantalla unificada de permisos (grantAppPermissions).
+    window.scheduleHOSNotifications = async function scheduleHOSNotifications() {
+      // Noticias DOT: notificar items no vistos
+      const seenNews = JSON.parse(localStorage.getItem('hos_seen_news') || '[]');
+      const newItems = (typeof _dotNewsData !== 'undefined' ? _dotNewsData : [])
+        .map((item, i) => ({ ...item, id: i }))
+        .filter(item => !seenNews.includes(item.id));
 
-    const newsNotifs = newItems.slice(0, 3).map((item, i) => ({
-      id:    2000 + item.id,
-      title: `🚛 ${item.tag} — Truck Precision`,
-      body:  item.title,
-      schedule: { at: new Date(Date.now() + (i + 1) * 30 * 60 * 1000) }, // cada 30 min
-      smallIcon:  'ic_stat_icon_config_sample',
-      channelId:  'hos_news'
-    }));
+      const newsNotifs = newItems.slice(0, 3).map((item, i) => ({
+        id:    2000 + item.id,
+        title: `🚛 ${item.tag} — Truck Precision`,
+        body:  item.title,
+        schedule: { at: new Date(Date.now() + (i + 1) * 30 * 60 * 1000) }, // cada 30 min
+        smallIcon:  'ic_stat_icon_config_sample',
+        channelId:  'hos_news'
+      }));
 
-    // ── Recordatorio diario a las 8:00 AM ──────────────────────
-    const tomorrow8am = new Date();
-    tomorrow8am.setDate(tomorrow8am.getDate() + 1);
-    tomorrow8am.setHours(8, 0, 0, 0);
-    const dailyNotif = {
-      id:    9000,
-      title: '🚛 Truck Precision — Noticias DOT',
-      body:  'Revisa las últimas alertas y regulaciones del día.',
-      schedule: { at: tomorrow8am, repeats: true, every: 'day' },
-      smallIcon:  'ic_stat_icon_config_sample',
-      channelId:  'hos_news'
+      // Recordatorio diario a las 8:00 AM
+      const tomorrow8am = new Date();
+      tomorrow8am.setDate(tomorrow8am.getDate() + 1);
+      tomorrow8am.setHours(8, 0, 0, 0);
+      const dailyNotif = {
+        id:    9000,
+        title: '🚛 Truck Precision — Noticias DOT',
+        body:  'Revisa las últimas alertas y regulaciones del día.',
+        schedule: { at: tomorrow8am, repeats: true, every: 'day' },
+        smallIcon:  'ic_stat_icon_config_sample',
+        channelId:  'hos_news'
+      };
+
+      // Cancelar notifs de noticias anteriores y reprogramar
+      const toCancel = newItems.slice(0, 3).map(item => ({ id: 2000 + item.id }));
+      if (toCancel.length) await LocalNotifications.cancel({ notifications: toCancel }).catch(() => {});
+
+      const allNotifs = [...newsNotifs, dailyNotif];
+      if (allNotifs.length) {
+        await LocalNotifications.schedule({ notifications: allNotifs });
+        // Marcar items como "notificados"
+        const nowSeen = [...seenNews, ...newItems.map(i => i.id)];
+        localStorage.setItem('hos_seen_news', JSON.stringify(nowSeen));
+      }
     };
 
-    // ── Cancelar notifs de noticias anteriores y reprogramar ───
-    const toCancel = newItems.slice(0, 3).map(item => ({ id: 2000 + item.id }));
-    if (toCancel.length) await LocalNotifications.cancel({ notifications: toCancel }).catch(() => {});
-
-    const allNotifs = [...newsNotifs, dailyNotif];
-    if (allNotifs.length) {
-      await LocalNotifications.schedule({ notifications: allNotifs });
-      // Marcar items como "notificados"
-      const nowSeen = [...seenNews, ...newItems.map(i => i.id)];
-      localStorage.setItem('hos_seen_news', JSON.stringify(nowSeen));
-    }
+    // Permiso: NO se solicita aquí para no mostrar un diálogo suelto antes de la
+    // pantalla unificada de permisos. Solo programamos si YA está concedido
+    // (usuarios que volvieron a abrir la app). En el primer arranque, el permiso
+    // lo pide grantAppPermissions(), que luego llama a scheduleHOSNotifications().
+    try {
+      const cur = await LocalNotifications.checkPermissions();
+      if (cur && cur.display === 'granted') await window.scheduleHOSNotifications();
+    } catch {}
 
     // ── Exponer función para alertas HOS nativas ────────────────
     window.scheduleLocalHOSAlert = async function(delayMs, title, body, id) {
