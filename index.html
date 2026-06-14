@@ -23496,9 +23496,32 @@ document.body.addEventListener('touchmove', e => {
 // viewport (usando visualViewport cuando existe) para que la app se ajuste sola
 // al iniciar y ante cualquier cambio (rotación, teclado, barra del navegador).
 function fitToScreen() {
+  const root = document.documentElement;
   const vv = window.visualViewport;
-  const h = Math.round((vv && vv.height) || window.innerHeight || document.documentElement.clientHeight);
-  if (h > 0) document.documentElement.style.setProperty('--app-height', h + 'px');
+
+  // 1) ALTURA: fijar la altura real del viewport.
+  const h = Math.round((vv && vv.height) || window.innerHeight || root.clientHeight);
+  if (h > 0) root.style.setProperty('--app-height', h + 'px');
+
+  // 2) ANCHO: si el contenido es más ancho que la pantalla, escalar TODO con
+  //    CSS zoom para que quepa completo y nada se corte. Se mide siempre sin
+  //    escala previa (zoom='') para no acumular reducciones, y solo se aplica
+  //    si realmente hay desbordamiento.
+  try {
+    root.style.zoom = '';
+    const vw = Math.round((vv && vv.width) || window.innerWidth || root.clientWidth);
+    const contentW = Math.max(
+      root.scrollWidth,
+      document.body ? document.body.scrollWidth : 0
+    );
+    if (vw > 0 && contentW > vw + 1) {
+      // Clamp a 0.6 para que un único elemento muy ancho no encoja la app a un
+      // tamaño ilegible; cubre el caso normal de desbordes moderados.
+      const scale = Math.max(0.6, vw / contentW);
+      root.style.zoom = scale;
+    }
+  } catch (e) {}
+
   // Re-encajar los mapas Leaflet tras el cambio de tamaño
   try { if (typeof miniMap !== 'undefined' && miniMap) miniMap.invalidateSize(); } catch (e) {}
   try { if (typeof fmMapInst !== 'undefined' && fmMapInst) fmMapInst.invalidateSize(); } catch (e) {}
