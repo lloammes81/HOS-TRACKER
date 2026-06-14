@@ -94,6 +94,10 @@
     min-height: 100%;
     min-height: -webkit-fill-available;
     min-height: 100dvh;
+    /* Altura real del dispositivo fijada por JS (fitToScreen): corrige los
+       WebView de Capacitor que reportan innerHeight incorrecto al arrancar y
+       hace que la app se ajuste a la pantalla automáticamente al iniciar. */
+    min-height: var(--app-height, 100dvh);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -23485,9 +23489,36 @@ document.body.addEventListener('touchmove', e => {
   if (!e.target.closest('.suggestions, .page, [data-scroll], #tcBody, #tcSheet, #supportSheet, #historySheet, #resetPanel, #communityPanel, .tool-sheet, .hist-body, #chatMessages, #chatSheet, #logbookSheet')) e.preventDefault();
 }, { passive: false });
 
+// ── Auto-ajuste a la pantalla del dispositivo ───────────────────────────────
+// Algunos WebView (Capacitor/Android, Safari iOS con barra dinámica) reportan
+// una altura incorrecta al arrancar y la app no llena la pantalla hasta que el
+// usuario rota o hace scroll. fitToScreen fija --app-height a la altura REAL del
+// viewport (usando visualViewport cuando existe) para que la app se ajuste sola
+// al iniciar y ante cualquier cambio (rotación, teclado, barra del navegador).
+function fitToScreen() {
+  const vv = window.visualViewport;
+  const h = Math.round((vv && vv.height) || window.innerHeight || document.documentElement.clientHeight);
+  if (h > 0) document.documentElement.style.setProperty('--app-height', h + 'px');
+  // Re-encajar los mapas Leaflet tras el cambio de tamaño
+  try { if (typeof miniMap !== 'undefined' && miniMap) miniMap.invalidateSize(); } catch (e) {}
+  try { if (typeof fmMapInst !== 'undefined' && fmMapInst) fmMapInst.invalidateSize(); } catch (e) {}
+}
+// Ejecutar de inmediato y repetir en los primeros instantes: el WebView suele
+// corregir innerHeight unos ms después de cargar.
+fitToScreen();
+[0, 60, 200, 500, 1000].forEach(ms => setTimeout(fitToScreen, ms));
+window.addEventListener('load', fitToScreen);
+window.addEventListener('orientationchange', () => setTimeout(fitToScreen, 120));
+window.addEventListener('pageshow', fitToScreen);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', fitToScreen);
+  window.visualViewport.addEventListener('scroll', fitToScreen);
+}
+
 // Lock orientation is not strictly needed but add a viewport meta refresh on resize
 // so Leaflet maps resize properly when keyboard closes
 window.addEventListener('resize', () => {
+  fitToScreen();
   if (miniMap) setTimeout(() => miniMap.invalidateSize(), 200);
   if (fmMapInst) setTimeout(() => fmMapInst.invalidateSize(), 200);
 });
