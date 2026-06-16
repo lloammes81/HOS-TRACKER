@@ -1,6 +1,6 @@
 // ⚠️ Al cambiar la lógica de la app, sube el número de versión del caché.
 // Esto fuerza al navegador a instalar un nuevo Service Worker y purgar el viejo.
-const CACHE_VERSION = 'v37-seguridad-csp';
+const CACHE_VERSION = 'v38-sw-notifs';
 const CACHE_NAME = 'truck-precision-' + CACHE_VERSION;
 
 // Recursos base (se cachean en install; los errores se ignoran para no romper la instalación).
@@ -35,9 +35,83 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Permite forzar la activación inmediata desde la página si hiciera falta.
+// ── Notificaciones HOS en segundo plano ──────────────────────────
+// La página programa avisos vía postMessage; el SW los muestra aunque la
+// pestaña no esté en foco. setTimeout en el SW no es 100% fiable si el SO
+// descarga el worker (en nativo @capacitor/local-notifications es el camino
+// persistente), pero cubre el caso PWA con la app en segundo plano.
+const _hosNotifTimers = new Map(); // tag → timeoutId
+
+function _showHosNotification(title, body, tag, icon) {
+  return self.registration.showNotification(title || 'Truck Precision', {
+    body: body || '',
+    icon: icon || './icon-192.png',
+    badge: './icon-192.png',
+    tag: tag || 'hos-alert',
+    renotify: true,
+    vibrate: [300, 100, 300, 100, 300],
+    requireInteraction: tag === 'rest-done',
+    data: { url: './' }
+  }).catch(() => {});
+}
+
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+  const d = event.data || {};
+
+  // Activación inmediata desde la página si hiciera falta.
+  if (d.type === 'SKIP_WAITING') { self.skipWaiting(); return; }
+
+  // Programar una notificación tras `delay` ms (avisos de descanso, etc.)
+  if (d.type === 'SCHEDULE_NOTIFICATION') {
+    const delay = Math.max(0, d.delay || 0);
+    const tag = d.tag || 'hos-alert';
+    if (_hosNotifTimers.has(tag)) clearTimeout(_hosNotifTimers.get(tag));
+    const id = setTimeout(() => {
+      _hosNotifTimers.delete(tag);
+      _showHosNotification(d.title, d.body, tag, d.icon);
+    }, delay);
+    _hosNotifTimers.set(tag, id);
+    return;
+  }
+
+  // Alerta HOS inmediata
+  if (d.type === 'HOS_ALERT') {
+    _showHosNotification(d.title || 'Truck Precision', d.body, d.tag || 'hos-alert', d.icon);
+    return;
+  }
+
+  // Cancelar todos los avisos de descanso programados y los ya mostrados
+  if (d.type === 'CANCEL_REST_NOTIFICATIONS') {
+    for (const [tag, id] of _hosNotifTimers) {
+      if (tag.indexOf('rest-') === 0) { clearTimeout(id); _hosNotifTimers.delete(tag); }
+    }
+    self.registration.getNotifications().then((list) => {
+      list.forEach((n) => { if (n.tag && n.tag.indexOf('rest-') === 0) n.close(); });
+    }).catch(() => {});
+    return;
+  }
+});
+
+// Al tocar una notificación: enfocar la app si está abierta, o abrirla.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || './';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const c of clients) {
+        if ('focus' in c) return c.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
+  );
+});
+
+// Push remoto (si en el futuro se envían desde un servidor): mostrar el payload.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; }
+  catch (e) { data = { body: event.data && event.data.text() }; }
+  event.waitUntil(_showHosNotification(data.title, data.body, data.tag, data.icon));
 });
 
 self.addEventListener('fetch', (event) => {
