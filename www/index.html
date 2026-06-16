@@ -14620,7 +14620,7 @@ function renderSummary() {
 // Aplica un fix GPS como origen: reverse-geocode a "Ciudad, ST" y rellena la
 // tarjeta de Locación Actual. Separado de useGPS para reusarlo tras esperar un
 // fix de alta precisión.
-async function _applyOriginFromFix(latitude, longitude, lbl) {
+async function _applyOriginFromFix(latitude, longitude, lbl, acc) {
   // Helper: manual timeout-safe fetch (AbortSignal.timeout not available on iOS < 16)
   async function fetchWithTimeout(url, opts, ms) {
     const ctrl = new AbortController();
@@ -14653,6 +14653,19 @@ async function _applyOriginFromFix(latitude, longitude, lbl) {
   if (!name) name = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
   origin = { name, lat: latitude, lon: longitude };
   if (lbl) { lbl.textContent = name; lbl.style.color = 'var(--text)'; }
+
+  // Si el fix es burdo (>200 m) casi siempre es porque "Ubicación precisa" está
+  // apagada para la app en los ajustes del sistema → la ciudad puede salir
+  // equivocada. Avisar al conductor y mostrar el margen de error.
+  if (acc != null && acc > 200) {
+    if (lbl) lbl.textContent = `${name} · ±${Math.round(acc)}m`;
+    showToast('warning','📡',
+      lang==='es' ? 'Ubicación aproximada' : 'Approximate location',
+      lang==='es'
+        ? `Tu ubicación es aproximada (±${Math.round(acc)} m), por eso puede salir otra ciudad. Activa "Ubicación precisa" para esta app en los ajustes del sistema.`
+        : `Your location is approximate (±${Math.round(acc)} m), so the city may be off. Enable "Precise Location" for this app in system settings.`,
+      8000);
+  }
 }
 
 function useGPS() {
@@ -14690,7 +14703,7 @@ function useGPS() {
     clearTimeout(timer);
     if (watchId != null) { try { navigator.geolocation.clearWatch(watchId); } catch(e){} }
     if (best) {
-      _applyOriginFromFix(best.lat, best.lon, lbl);
+      _applyOriginFromFix(best.lat, best.lon, lbl, best.acc);
     } else {
       if (lbl) { lbl.textContent = lang==='es' ? '⚠️ Ubicación no disponible' : '⚠️ Location unavailable'; lbl.style.color = '#ef4444'; }
       showToast('danger','📡', lang==='es'?'Ubicación no disponible':'Location unavailable', t('gpsDenied'), 4000);
