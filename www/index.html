@@ -28725,14 +28725,20 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   // Loop: actualizar anillos cada segundo, guardar cada 30s
   setInterval(function() {
     // Sincronizar estado de movimiento desde cualquier fuente GPS activa
-    // (fmWatchId de ruta, _dashGpsWatchId de dashboard, o GPS propio del tracker)
-    const _extMoving = typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving;
-    const _extSpeed  = typeof fmCurrentSpeed  !== 'undefined' ? fmCurrentSpeed : 0;
+    // (fmWatchId de ruta, _dashGpsWatchId de dashboard, o GPS propio del tracker).
+    // Cuenta como movimiento la bandera global O una lectura de velocidad fresca
+    // (≥5 mph en los últimos 8 s): si el dispositivo reporta velocidad real, las
+    // horas DEBEN acumular aunque fmVehicleMoving no se haya propagado a tiempo.
+    // Sin esto los anillos DRIVEN/CYCLE quedaban congelados aun manejando.
+    const _fixAge    = window.lastFixFm ? (Date.now() - window.lastFixFm.ts) : 0;
+    const _fresh     = window.lastFixFm ? (_fixAge < 8000) : false;
+    const _extSpeed  = (typeof fmCurrentSpeed  !== 'undefined' && fmCurrentSpeed) || 0;
+    const _flagMov   = typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving;
+    const _extMoving = _flagMov || (_fresh && _extSpeed >= 5);
     if (_extMoving && !_isMoving) {
       _onMoving(_extSpeed || 5);
     } else if (!_extMoving && _isMoving) {
       // Solo detener si el GPS externo lleva >8s sin fix de movimiento
-      const _fixAge = window.lastFixFm ? (Date.now() - window.lastFixFm.ts) : 0;
       if (_fixAge > 8000) _onStopped();
     }
     _updateRings();
