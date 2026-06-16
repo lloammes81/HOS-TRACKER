@@ -17792,7 +17792,18 @@ function updateDashRouteProgress(pct, remaining) {
   // tarjeta clavada en "RUTA NO INICIADA" todo el viaje si nada subía el pct.
   const remMi = (typeof remaining === 'number' && isFinite(remaining)) ? remaining : (parseFloat(remaining) || 0);
   const hasRoute = hasDest && hasOrigin && remMi > 0;
-  if (progEl) progEl.style.width = hasRoute ? Math.max(1, Math.min(100, pct || 0)) + '%' : '0%';
+  // Posición del camión por TIEMPO restante del viaje (no por distancia):
+  // progreso = tiempo transcurrido / tiempo total estimado (incluye descansos).
+  // Si no hay llegada/tiempo calculados, cae al progreso por distancia (pct).
+  let _posPct = pct || 0;
+  if (typeof arrivalTime !== 'undefined' && arrivalTime instanceof Date
+      && typeof totalTime === 'number' && totalTime > 0) {
+    const _totalMs = totalTime * 3600000;
+    const _remMs   = arrivalTime.getTime() - Date.now();
+    const _tPct    = (1 - _remMs / _totalMs) * 100;
+    if (isFinite(_tPct)) _posPct = Math.max(0, Math.min(100, _tPct));
+  }
+  if (progEl) progEl.style.width = hasRoute ? Math.max(1, Math.min(100, _posPct)) + '%' : '0%';
 
   // Distancia que falta para llegar al destino (para acotar la próxima parada).
   window._dashRemainingMi = hasRoute ? remMi
@@ -17800,7 +17811,7 @@ function updateDashRouteProgress(pct, remaining) {
   const remStr = !hasDest ? 'SIN DESTINO'
     : !hasRoute ? 'CALCULANDO...'
     : (remMi < 10 ? remMi.toFixed(1) : Math.round(remMi).toLocaleString()) + ' MI';
-  const pctStr = (hasRoute ? Math.max(0, Math.min(100, pct || 0)) : 0) + '%';
+  const pctStr = (hasRoute ? Math.round(Math.max(0, Math.min(100, _posPct))) : 0) + '%';
   if (remEl) remEl.innerHTML = remStr + (hasRoute ? ' · <span id="dashRoutePct">' + pctStr + '</span>' : '');
   else if (pctEl) pctEl.textContent = pctStr;
 
