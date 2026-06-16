@@ -3,6 +3,13 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main, "claude/fix-interstate-icon-sizes-OI9T2", "claude/verify-errors-FYqEJ", "claude/error-verification-jp48xb"]
+  # El bot de auto-merge empuja a main con GITHUB_TOKEN, y GitHub NO dispara el
+  # trigger `push` desde esos pushes — por eso Pages quedaba congelado. Con
+  # workflow_run, este deploy corre al COMPLETARSE el auto-merge, en el contexto
+  # de la rama por defecto (main), que es la única permitida por el environment.
+  workflow_run:
+    workflows: ["Auto-merge claude branch to main"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +23,8 @@ concurrency:
 
 jobs:
   deploy:
+    # En disparos por workflow_run, solo desplegar si el auto-merge tuvo éxito.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -23,6 +32,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
