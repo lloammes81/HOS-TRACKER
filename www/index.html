@@ -25083,6 +25083,29 @@ document.getElementById('violationOverlay')?.addEventListener('click', function(
   if (e.target === this) closeViolationSheet();
 });
 
+// Dispara una notificación del SISTEMA por una violación HOS (no solo el overlay
+// in-app), para que el conductor se entere con la app en segundo plano/cerrada.
+// Cubre las tres capas: Capacitor LocalNotifications (nativo, persistente),
+// Service Worker (PWA) y Web Notification directa como último recurso.
+function _notifyHOSViolation(title, body) {
+  try {
+    // Nativo — persiste aunque la app esté cerrada
+    if (window.scheduleLocalHOSAlert) {
+      window.scheduleLocalHOSAlert(400, title, body, 7050).catch(() => {});
+    }
+    const granted = (typeof Notification !== 'undefined') && Notification.permission === 'granted';
+    if (granted && window._swReg && window._swReg.active) {
+      // PWA / web en segundo plano vía Service Worker
+      window._swReg.active.postMessage({
+        type: 'HOS_ALERT', title, body, tag: 'hos-violation', icon: './icon-192.png'
+      });
+    } else if (granted) {
+      // Sin SW disponible — notificación directa (solo con la app en foco)
+      new Notification(title, { body, icon: './icon-192.png', tag: 'hos-violation' });
+    }
+  } catch (e) { window._hosLogErr && window._hosLogErr(e); }
+}
+
 function _detectAndShowViolations(dailyHrs, weeklyHrs) {
   const V = [];
 
@@ -25213,6 +25236,14 @@ function _detectAndShowViolations(dailyHrs, weeklyHrs) {
         <span class="vio-fine-val ${v.severity}">${v.fine}</span>
       </div>
     </div>`).join('');
+
+  /* Notificación del sistema para violaciones críticas o altas */
+  if (critCount || highCount) {
+    const _topV = V.find(v => v.severity === 'critical') || V.find(v => v.severity === 'high');
+    const _vTitle = lang === 'es' ? '🚨 Violación HOS detectada' : '🚨 HOS Violation Detected';
+    const _extra = V.length > 1 ? (lang === 'es' ? ` (+${V.length - 1} más)` : ` (+${V.length - 1} more)`) : '';
+    _notifyHOSViolation(_vTitle, `${_topV.title} · ${_topV.code}${_extra}`);
+  }
 
   /* Mostrar con delay mínimo para que el usuario vea el resultado primero */
   setTimeout(() => {
