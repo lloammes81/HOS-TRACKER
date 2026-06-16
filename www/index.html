@@ -319,6 +319,16 @@
   .form-section-label::after {
     content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.10);
   }
+  /* Camión de la barra de ruta: animación de "manejando" mientras el vehículo
+     se mueve (se conserva el translateY(-50%) que lo centra verticalmente). */
+  @keyframes truckDrive {
+    0%   { transform: translateY(-50%) translateX(0)     rotate(0deg); }
+    25%  { transform: translateY(-58%) translateX(0.6px)  rotate(-2deg); }
+    50%  { transform: translateY(-50%) translateX(0)     rotate(0deg); }
+    75%  { transform: translateY(-58%) translateX(-0.6px) rotate(2deg); }
+    100% { transform: translateY(-50%) translateX(0)     rotate(0deg); }
+  }
+  #dashRouteTruck.truck-driving { animation: truckDrive .45s ease-in-out infinite; }
   .route-inputs-card {
     background: var(--surface);
     border-radius: 20px;
@@ -17276,6 +17286,10 @@ function showHosDashboard() {
   // Refrescar el anillo principal y el ciclo cada segundo mientras el dashboard es visible
   if (_dashRingInterval) clearInterval(_dashRingInterval);
   _dashRingInterval = setInterval(() => {
+    // Animar el camión de la barra de ruta según el movimiento real del vehículo
+    const _routeTruck = document.getElementById('dashRouteTruck');
+    if (_routeTruck) _routeTruck.classList.toggle('truck-driving',
+      !!(typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving));
     // Si rest countdown está activo, ese intervalo controla el anillo DRIVEN — no interferir
     if (typeof _restCountdownStart !== 'undefined' && _restCountdownStart) return;
     const _sc = document.getElementById('dashSecondsClock');
