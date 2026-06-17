@@ -9244,8 +9244,8 @@ let _loadsEquipSel   = new Set(['Dry Van']);
 let _loadsAutoTimer  = null;
 let _loadsCountTimer = null;
 let _loadsCountdown  = 180;   // segundos hasta próxima actualización
-let _loadsNotifsOn   = JSON.parse(localStorage.getItem('lb_notifs') || 'false');
-let _loadsSaved      = new Set(JSON.parse(localStorage.getItem('lb_saved') || '[]'));
+let _loadsNotifsOn   = (()=>{ try{ return JSON.parse(localStorage.getItem('lb_notifs') || 'false'); }catch(e){ return false; } })();
+let _loadsSaved      = new Set((()=>{ try{ return JSON.parse(localStorage.getItem('lb_saved') || '[]'); }catch(e){ return []; } })());
 
 function openLoadSearch(){
   document.getElementById('loadSearchOverlay').classList.add('open');
@@ -10894,7 +10894,7 @@ function _refreshEmailContacts(){
     if(m.to && !contacts.has(m.to)) contacts.set(m.to, m.to.split('@')[0].replace(/[._]/g,' '));
   });
   // Add from saved load companies
-  const saved = JSON.parse(localStorage.getItem('lb_saved')||'[]');
+  let saved; try{ saved = JSON.parse(localStorage.getItem('lb_saved')||'[]'); }catch(e){ saved = []; }
   if(!contacts.size && !saved.length){
     list.innerHTML = `<div style="padding:8px 16px;font-size:11px;color:var(--muted)">Los contactos de brokers aparecerán aquí.</div>`;
     return;
