@@ -17435,7 +17435,8 @@ function showHosDashboard() {
       const _dLeftSecs = window._hosTracker
         ? Math.max(0, Math.floor(window._hosTracker.driveLeft() * 3600))
         : 0;
-      _sc.textContent = String(_dLeftSecs % 60).padStart(2, '0');
+      // Show real-time clock seconds (always ticking 00-59)
+      _sc.textContent = String(new Date().getSeconds()).padStart(2, '0');
       _sc.style.color = _dLeftSecs < 3600 ? (_dLeftSecs < 1800 ? '#ef4444' : '#f59e0b') : 'rgba(255,255,255,0.75)';
     }
     const dMax = Math.min(
