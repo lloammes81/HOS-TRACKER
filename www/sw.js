@@ -1,6 +1,6 @@
 // ⚠️ Al cambiar la lógica de la app, sube el número de versión del caché.
 // Esto fuerza al navegador a instalar un nuevo Service Worker y purgar el viejo.
-const CACHE_VERSION = 'v41-maps-flat';
+const CACHE_VERSION = 'v42-cancel-confirm';
 const CACHE_NAME = 'truck-precision-' + CACHE_VERSION;
 
 // Recursos base (se cachean en install; los errores se ignoran para no romper la instalación).

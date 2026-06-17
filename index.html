@@ -8220,7 +8220,7 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
         </svg>
         <span id="dashOpenMapsBtnLbl">Abrir en Mapas</span>
       </button>
-      <button id="dashCancelRouteBtn" onclick="resetForm();backToMainFromDash()"
+      <button id="dashCancelRouteBtn" onclick="showCancelRouteConfirm()"
         style="flex:0 0 auto;padding:13px 16px;
                background:rgba(239,68,68,0.15);
                border:1px solid rgba(239,68,68,0.45);border-radius:14px;
@@ -8352,6 +8352,42 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
 
   <!-- VENTANA PEQUEÑA DE REPORTES -->
   <div id="reportPopupOverlay" onclick="closeReportPopup()"></div>
+
+  <!-- CONFIRMACIÓN CANCELAR RUTA -->
+  <div id="cancelRouteOverlay" onclick="closeCancelRouteConfirm()"
+       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);
+              backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+              z-index:26000;align-items:center;justify-content:center;"></div>
+  <div id="cancelRouteModal"
+       style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+              z-index:26001;background:#0d1220;border:1px solid rgba(239,68,68,0.40);
+              border-radius:20px;padding:24px 20px 20px;width:min(88vw,320px);
+              box-shadow:0 24px 60px rgba(0,0,0,0.80);text-align:center;">
+    <div style="font-size:32px;margin-bottom:10px;">🗺️</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;
+                color:#fff;margin-bottom:6px;">¿Cancelar ruta actual?</div>
+    <div id="cancelRouteModalSub"
+         style="font-size:13px;color:rgba(255,255,255,0.60);margin-bottom:20px;line-height:1.4;">
+      Se borrará el destino y la ruta calculada.
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeCancelRouteConfirm()"
+              style="flex:1;padding:13px;background:rgba(255,255,255,0.07);
+                     border:1px solid rgba(255,255,255,0.14);border-radius:12px;
+                     color:#fff;font-family:'Bebas Neue',sans-serif;font-size:16px;
+                     letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+        No
+      </button>
+      <button onclick="resetForm();backToMainFromDash();closeCancelRouteConfirm()"
+              style="flex:1;padding:13px;background:linear-gradient(135deg,#dc2626,#b91c1c);
+                     border:none;border-radius:12px;
+                     color:#fff;font-family:'Bebas Neue',sans-serif;font-size:16px;
+                     letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+                     box-shadow:0 4px 14px rgba(239,68,68,0.40);">
+        Sí, cancelar
+      </button>
+    </div>
+  </div>
   <div id="reportPopup" role="dialog" aria-modal="true" aria-label="Reportar">
     <div id="reportPopupTitle">¿Qué quieres reportar?</div>
     <div id="reportPopupGrid"></div>
@@ -20067,6 +20103,20 @@ function closeReportPopup() {
   const popup = document.getElementById('reportPopup');
   if (overlay) overlay.classList.remove('open');
   if (popup) popup.classList.remove('open');
+}
+
+function showCancelRouteConfirm() {
+  const overlay = document.getElementById('cancelRouteOverlay');
+  const modal   = document.getElementById('cancelRouteModal');
+  if (overlay) { overlay.style.display = 'flex'; }
+  if (modal)   { modal.style.display   = 'block'; }
+}
+
+function closeCancelRouteConfirm() {
+  const overlay = document.getElementById('cancelRouteOverlay');
+  const modal   = document.getElementById('cancelRouteModal');
+  if (overlay) overlay.style.display = 'none';
+  if (modal)   modal.style.display   = 'none';
 }
 
 function quickReport(type, emoji, label) {
