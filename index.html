@@ -8191,7 +8191,7 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
   </div>
 
   <!-- ⑤ TARJETA DESTINO -->
-  <div id="dashDestCard" style="flex:0 0 auto;padding:0 10px 8px;">
+  <div id="dashDestCard" style="flex:0 0 auto;padding:0 10px 6px;">
     <div style="background:rgba(46,60,90,0.72);border:1px solid rgba(255,255,255,0.16);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:12px;min-height:0;box-shadow:0 14px 28px rgba(0,0,0,0.55),0 5px 10px rgba(0,0,0,0.42),inset 0 2px 0 rgba(255,255,255,0.20),inset 0 -3px 8px rgba(0,0,0,0.40);">
       <div style="font-size:24px;flex-shrink:0;line-height:1;">📍</div>
       <div style="flex:1;min-width:0;">
@@ -8207,6 +8207,19 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
         </div>
       </div>
     </div>
+    <!-- Botón Ver Mapa Completo — abre el mapa nativo del dispositivo con la ruta ya cargada -->
+    <button id="dashOpenMapsBtn" onclick="openInNativeMaps()"
+      style="display:none;width:100%;margin-top:6px;padding:10px 14px;
+             background:linear-gradient(135deg,rgba(16,185,129,0.18),rgba(59,130,246,0.18));
+             border:1px solid rgba(16,185,129,0.40);border-radius:12px;
+             color:#10b981;font-family:'Bebas Neue',sans-serif;font-size:15px;
+             letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+             align-items:center;justify-content:center;gap:8px;
+             -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+             box-shadow:0 4px 14px rgba(0,0,0,0.35);">
+      <span style="font-size:18px;line-height:1;">🗺️</span>
+      <span id="dashOpenMapsBtnLbl">Ver Mapa Completo</span>
+    </button>
   </div>
 
   <!-- ⑤ BARRAS DE PROGRESO — eliminadas (IDs movidos a stubs ocultos para compat JS) -->
@@ -15788,12 +15801,18 @@ function updateDashDestCard() {
   const hoursGone = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft <= 0;
   const hoursLow  = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft > 0 && _hosCurrentDriveLeft <= 2;
 
+  const _mapsBtn = document.getElementById('dashOpenMapsBtn');
+  const _mapsBtnLbl = document.getElementById('dashOpenMapsBtnLbl');
   if (!destination?.name) {
     nameEl.textContent = 'Sin destino asignado';
     arrEl.textContent = '--';
     if (dateEl) dateEl.textContent = '';
+    if (_mapsBtn) _mapsBtn.style.display = 'none';
     return;
   }
+  // Mostrar botón mapa y actualizar etiqueta por idioma
+  if (_mapsBtn) { _mapsBtn.style.display = 'flex'; }
+  if (_mapsBtnLbl) _mapsBtnLbl.textContent = (typeof lang !== 'undefined' && lang === 'en') ? 'Open Full Map' : 'Ver Mapa Completo';
 
   if (hoursGone) {
     nameEl.textContent = '🛑 Horas de manejo agotadas';
@@ -15815,7 +15834,8 @@ function updateDashDestCard() {
     return;
   }
 
-  nameEl.textContent = destination.name.split(',').slice(0,2).join(',').trim();
+  // Mostrar máximo las dos primeras partes del nombre; quitar número de calle inicial (ej. "5610 ")
+  nameEl.textContent = destination.name.split(',').slice(0,2).join(',').trim().replace(/^\d+\s+/, '');
 
   if (arrivalTime instanceof Date) {
     const days   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -15829,6 +15849,40 @@ function updateDashDestCard() {
     arrEl.textContent = 'Calculando...';
     if (dateEl) dateEl.textContent = '';
   }
+}
+
+// ── Abrir mapa nativo del dispositivo con la ruta ya cargada ──
+// Incluye el icono del camión (posición actual) como origen y la dirección
+// destino configurada en la app. Funciona en iOS (Apple Maps / Google Maps)
+// y Android (Google Maps).
+function openInNativeMaps() {
+  if (!destination) return;
+  const dLat  = destination.lat,  dLon  = destination.lon;
+  const dName = encodeURIComponent((destination.name || '').split(',').slice(0,2).join(',').trim());
+  const cLat  = window.lastFixFm?.lat, cLon = window.lastFixFm?.lon;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  let url;
+  if (dLat != null && dLon != null) {
+    if (isIOS) {
+      // Apple Maps: saddr = posición actual del camión, daddr = destino
+      url = cLat != null
+        ? `maps://?saddr=${cLat},${cLon}&daddr=${dLat},${dLon}&dirflg=d`
+        : `maps://?ll=${dLat},${dLon}&q=${dName}`;
+    } else {
+      // Google Maps (Android / otros)
+      url = cLat != null
+        ? `https://maps.google.com/?saddr=${cLat},${cLon}&daddr=${dLat},${dLon}&directionsmode=driving`
+        : `https://maps.google.com/?q=${dLat},${dLon}`;
+    }
+  } else {
+    // Sin coordenadas: buscar por nombre
+    url = isIOS
+      ? `maps://?q=${dName}`
+      : `https://maps.google.com/?q=${dName}`;
+  }
+  try { window.open(url, '_system') || window.location.assign(url); } catch(e) { window.open(url, '_blank'); }
 }
 
 // ── Route bar HASTA label: shows next mandatory stop city ──
