@@ -13325,7 +13325,7 @@ function haversine(lat1, lon1, lat2, lon2) {
 //   la base crece hasta superar el error en 2-3 s → velocidad real.
 // st: objeto de estado propio de cada llamador ({a:ancla, last:última mph}).
 function _anchorSpeedMph(lat, lon, tsMs, accM, st) {
-  if (!st.a || tsMs - st.a.ts > 30000) { st.a = { lat, lon, ts: tsMs }; st.last = 0; st.lastTs = 0; return 0; }
+  if (!st.a || tsMs - st.a.ts > 60000) { st.a = { lat, lon, ts: tsMs }; st.last = 0; st.lastTs = 0; return 0; }
   const dt = (tsMs - st.a.ts) / 1000;
   if (dt < 0.5) return st.last || 0;
   const dMi   = haversine(lat, lon, st.a.lat, st.a.lon);
@@ -13406,20 +13406,28 @@ window.HOSGps = (function () {
 
     window.lastFixFm = { lat: c.latitude, lon: c.longitude, acc: c.accuracy || 20, ts: now };
     window._dbgGps = { src: 'central', raw: raw, spd: mph, acc: Math.round(c.accuracy || 0), ts: now };
-    try { fmCurrentSpeed = mph; fmVehicleMoving = moving; } catch (e) {}
     // Mantener fresco el caché compartido de posición (clima, etiquetas de
     // ubicación, escáner): antes solo lo llenaba el watcher de precalentamiento,
     // que se apaga al iniciar una ruta y dejaba el caché congelado.
     try { _gpsCache = { lat: c.latitude, lon: c.longitude, accuracy: c.accuracy, speed: raw, heading: c.heading, timestamp: now, raw: pos }; } catch (e) {}
 
-    // 1) Tracker de horas — lo más crítico, siempre primero
-    try { if (window._hosTracker && window._hosTracker.reportMoving) window._hosTracker.reportMoving(moving, mph); } catch (e) { window._hosLogErr && window._hosLogErr(e); }
-    // 2) Estado del dashboard (CONDUCIENDO/EN SERVICIO, parada 30min, reset 10h)
-    try { if (typeof autoUpdateDashStatus === 'function') autoUpdateDashStatus(moving); } catch (e) { window._hosLogErr && window._hosLogErr(e); }
-    try { if (moving && typeof _updateRestMode === 'function') _updateRestMode(); } catch (e) {}
-    // 3) Velocímetro / panel de velocidad
-    try { if (typeof updateSpeedometer === 'function') updateSpeedometer(mph); } catch (e) {}
-    // 4) Suscriptores externos
+    // Solo actualizar velocidad/movimiento y alimentar el tracker cuando tenemos
+    // datos fiables. raw==null + ancla=0 (primer fix o gap >60s en iOS) NO debe
+    // pisar fmCurrentSpeed/fmVehicleMoving ni llamar reportMoving(false,0) —
+    // eso congela los relojes HOS al manejar.
+    const _hasReliable = raw != null || mph >= 5;
+    if (_hasReliable) {
+      try { fmCurrentSpeed = mph; fmVehicleMoving = moving; } catch (e) {}
+      // 1) Tracker de horas — lo más crítico, siempre primero
+      try { if (window._hosTracker && window._hosTracker.reportMoving) window._hosTracker.reportMoving(moving, mph); } catch (e) { window._hosLogErr && window._hosLogErr(e); }
+      // 2) Estado del dashboard (CONDUCIENDO/EN SERVICIO, parada 30min, reset 10h)
+      try { if (typeof autoUpdateDashStatus === 'function') autoUpdateDashStatus(moving); } catch (e) { window._hosLogErr && window._hosLogErr(e); }
+      try { if (moving && typeof _updateRestMode === 'function') _updateRestMode(); } catch (e) {}
+      // 3) Velocímetro / panel de velocidad
+      try { if (typeof updateSpeedometer === 'function') updateSpeedometer(mph); } catch (e) {}
+    }
+    // 4) Suscriptores externos (siempre, incluso sin velocidad fiable: pueden
+    //    usar lastFixFm para actualizar posición aunque no sepan la velocidad)
     for (const fn of _subs) { try { fn(window.lastFixFm, mph, moving); } catch (e) {} }
   }
 
