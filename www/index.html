@@ -766,9 +766,6 @@
   .mapbox {
     height: 240px; border-radius: var(--radius-sm);
     overflow: hidden; margin-top: 12px;
-    transform: perspective(1100px) rotateX(32deg);
-    transform-origin: center center;
-    transform-style: preserve-3d;
   }
   /* HERE Maps attribution — compact single line, bottom-right of every map */
   .leaflet-control-attribution {
@@ -8335,10 +8332,9 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
     <!-- Lista de lugares cercanos (visible sólo cuando quedan <1h de manejo) -->
     <div id="stopAlertPlaces" style="display:none;flex-direction:column;gap:6px;"></div>
   </div>
-  <!-- ⑥ MINI MAPA GPS — 3D perspective navigation view -->
-  <div style="flex:1;min-height:0;position:relative;overflow:hidden;border-top:1px solid rgba(255,255,255,0.07);">
-    <div id="hosMiniMap" style="position:absolute;inset:0;background:#0f1c2e;
-         transform:perspective(900px) rotateX(45deg);transform-origin:50% 100%;"></div>
+  <!-- ⑥ MINI MAPA GPS -->
+  <div style="flex:1;min-height:0;position:relative;border-top:1px solid rgba(255,255,255,0.07);">
+    <div id="hosMiniMap" style="position:absolute;inset:0;background:#0f1c2e;"></div>
   </div>
 
   <!-- BOTÓN DE REPORTES — pestaña pegada a la derecha (parte superior), desplegable -->
@@ -13258,7 +13254,7 @@ function refreshTruckMarkers() {
 
 
 function initMap(containerId) {
-  const map = L.map(containerId, { zoomControl: true, attributionControl: false, rotate: true, bearing: 0 }).setView([39.5, -98.35], 4);
+  const map = L.map(containerId, { zoomControl: true, attributionControl: false }).setView([39.5, -98.35], 4);
   _mkTile(currentMapStyle).addTo(map);
   L.control.scale({ maxWidth: 100, imperial: true, metric: false, position: 'bottomright' }).addTo(map);
   if (fmTrafficEnabled) miniTrafficLayer = _addTrafficToMap(map, miniTrafficLayer);
@@ -17301,22 +17297,15 @@ function _hosMinimapFollow(lat, lon) {
   // Dynamic zoom by speed — at >60 mph zoom reduces ~50% to show more route
   let _miniTargetZoom;
   if (fmCurrentSpeed > 60) {
-    _miniTargetZoom = 10;
+    _miniTargetZoom = 10;           // ~50% of zoom 13 → muestra ~30 mi de ruta
   } else if (fmCurrentSpeed < 20) {
     _miniTargetZoom = 17;
   } else {
     _miniTargetZoom = 13;
   }
-  // Heading-up: rotate map so direction of travel is always "up" (3D nav mode)
-  if (typeof hosMinimapInst.setBearing === 'function') {
-    const hdg = (typeof fmLastHeading !== 'undefined' && fmLastHeading != null && fmLastHeading >= 0)
-      ? fmLastHeading : 0;
-    hosMinimapInst.setBearing(hdg);
-  }
   hosMinimapInst.setView([lat, lon], _miniTargetZoom, { animate: false });
-  // Pan up by 40% so truck sits near the bottom and more road ahead is visible
   const sz = hosMinimapInst.getSize();
-  hosMinimapInst.panBy([0, -Math.round(sz.y * 0.40)], { animate: false });
+  hosMinimapInst.panBy([0, -Math.round(sz.y * 0.28)], { animate: false });
 }
 
 function updateDashBackground() {
@@ -17527,9 +17516,7 @@ function initHosMinimap() {
     dragging: true,
     scrollWheelZoom: false,
     doubleClickZoom: false,
-    tap: true,
-    rotate: true,
-    bearing: 0
+    tap: true
   }).setView([lat, lon], 7);
 
   hosMinimapTileLayer = _mkTile(currentMapStyle).addTo(hosMinimapInst);
