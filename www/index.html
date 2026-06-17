@@ -8199,26 +8199,47 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
         </div>
       </div>
     </div>
-    <!-- Botón Ver Mapa Completo — abre el mapa nativo con la ruta ya cargada -->
-    <button id="dashOpenMapsBtn" onclick="openInNativeMaps()"
-      style="display:none;width:100%;margin-top:10px;padding:13px 16px;
-             background:linear-gradient(135deg,#10b981,#059669);
-             border:none;border-radius:14px;
-             color:#fff;font-family:'Bebas Neue',sans-serif;font-size:17px;
-             letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;
-             align-items:center;justify-content:center;gap:10px;
-             -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-             box-shadow:0 6px 20px rgba(16,185,129,0.45);
-             transition:transform 0.1s,box-shadow 0.1s;"
-      onpointerdown="this.style.transform='scale(0.97)';this.style.boxShadow='0 2px 8px rgba(16,185,129,0.30)'"
-      onpointerup="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'"
-      onpointercancel="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-        <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-      </svg>
-      <span id="dashOpenMapsBtnLbl">Abrir en Mapas</span>
-    </button>
+    <!-- Botones fila: Abrir en Mapas + Cancelar Ruta -->
+    <div id="dashDestBtnsRow" style="display:none;flex-direction:row;gap:8px;margin-top:10px;">
+      <button id="dashOpenMapsBtn" onclick="openInNativeMaps()"
+        style="flex:1;padding:13px 12px;
+               background:linear-gradient(135deg,#10b981,#059669);
+               border:none;border-radius:14px;
+               color:#fff;font-family:'Bebas Neue',sans-serif;font-size:17px;
+               letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+               display:flex;align-items:center;justify-content:center;gap:8px;
+               -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+               box-shadow:0 6px 20px rgba(16,185,129,0.45);
+               transition:transform 0.1s,box-shadow 0.1s;"
+        onpointerdown="this.style.transform='scale(0.97)';this.style.boxShadow='0 2px 8px rgba(16,185,129,0.30)'"
+        onpointerup="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'"
+        onpointercancel="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+          <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+        </svg>
+        <span id="dashOpenMapsBtnLbl">Abrir en Mapas</span>
+      </button>
+      <button id="dashCancelRouteBtn" onclick="resetForm()"
+        style="flex:0 0 auto;padding:13px 16px;
+               background:rgba(239,68,68,0.15);
+               border:1px solid rgba(239,68,68,0.45);border-radius:14px;
+               color:#f87171;font-family:'Bebas Neue',sans-serif;font-size:17px;
+               letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+               display:flex;align-items:center;justify-content:center;gap:6px;
+               -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+               box-shadow:0 4px 14px rgba(239,68,68,0.20);
+               transition:transform 0.1s,background 0.15s;"
+        onpointerdown="this.style.transform='scale(0.97)';this.style.background='rgba(239,68,68,0.28)'"
+        onpointerup="this.style.transform='';this.style.background='rgba(239,68,68,0.15)'"
+        onpointercancel="this.style.transform='';this.style.background='rgba(239,68,68,0.15)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        <span id="dashCancelRouteBtnLbl">Cancelar</span>
+      </button>
+    </div>
   </div>
 
   <!-- ⑤ BARRAS DE PROGRESO — eliminadas (IDs movidos a stubs ocultos para compat JS) -->
@@ -15796,18 +15817,20 @@ function updateDashDestCard() {
   const hoursGone = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft <= 0;
   const hoursLow  = typeof _hosCurrentDriveLeft !== 'undefined' && _hosCurrentDriveLeft > 0 && _hosCurrentDriveLeft <= 2;
 
-  const _mapsBtn = document.getElementById('dashOpenMapsBtn');
+  const _btnsRow = document.getElementById('dashDestBtnsRow');
   const _mapsBtnLbl = document.getElementById('dashOpenMapsBtnLbl');
+  const _cancelLbl  = document.getElementById('dashCancelRouteBtnLbl');
   if (!destination?.name) {
     nameEl.textContent = 'Sin destino asignado';
     arrEl.textContent = '--';
     if (dateEl) dateEl.textContent = '';
-    if (_mapsBtn) _mapsBtn.style.display = 'none';
+    if (_btnsRow) _btnsRow.style.display = 'none';
     return;
   }
-  // Mostrar botón mapa y actualizar etiqueta por idioma
-  if (_mapsBtn) { _mapsBtn.style.display = 'flex'; }
+  // Mostrar fila de botones y actualizar etiquetas por idioma
+  if (_btnsRow) _btnsRow.style.display = 'flex';
   if (_mapsBtnLbl) _mapsBtnLbl.textContent = (typeof lang !== 'undefined' && lang === 'en') ? 'Open in Maps' : 'Abrir en Mapas';
+  if (_cancelLbl)  _cancelLbl.textContent  = (typeof lang !== 'undefined' && lang === 'en') ? 'Cancel' : 'Cancelar';
 
   if (hoursGone) {
     nameEl.textContent = '🛑 Horas de manejo agotadas';
