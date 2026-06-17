@@ -10010,20 +10010,23 @@ function startGPSWarm() {
         startWeatherMonitor();
       }
     }
-    // Feed movement into the HOS tracker when its internal GPS is paused (route active)
-    // coords.speed is often null on iOS — tracker's own delta-calc handles it via _startGpsMode,
-    // but during fmIsTracking the internal GPS is paused, so we feed from here instead.
+    // Feed movement into the HOS tracker when its internal GPS is paused (route active).
+    // Guard: only call reportMoving when we have reliable speed data (hardware speed OR
+    // anchor algorithm with confirmed displacement ≥5 mph). If rawSpeed is null AND the
+    // anchor has no history yet (first fix / reset after 30 s gap → returns 0), skip the
+    // call entirely — HOSGps central is already feeding reportMoving with accurate data
+    // and a spurious reportMoving(false, 0) would cancel an active driving session.
     if (typeof fmIsTracking !== 'undefined' && fmIsTracking && window._hosTracker?.reportMoving) {
       const mph = (speed != null && speed >= 0) ? speed * 2.237 : 0;
-      // Fall back: if speed null and we have lastFixFm, derive from delta
       let derivedMph = mph;
       if (speed == null) {
-        // Velocidad por ancla adaptativa: no acumula horas estacionado (deriva
-        // del GPS) y detecta movimiento real aunque los fixes sean rápidos.
         window._onFixAnchor = window._onFixAnchor || {};
         derivedMph = _anchorSpeedMph(lat, lon, Date.now(), accuracy, window._onFixAnchor);
       }
-      window._hosTracker.reportMoving(derivedMph >= 5, Math.round(derivedMph));
+      // Only report if we have a reliable reading; otherwise let HOSGps handle it.
+      if (speed != null || derivedMph >= 5) {
+        window._hosTracker.reportMoving(derivedMph >= 5, Math.round(derivedMph));
+      }
     }
   };
   if (IS_CAPACITOR) {
@@ -16492,27 +16495,38 @@ function fmStartTracking() {
     const _derivedMph = _anchorSpeedMph(lat, lon, Date.now(), acc, window._fmWatchAnchor);
     window._lastRawGpsFix = { lat, lon, ts: Date.now() };
     if (rawSpeed == null) gpsSpeed = Math.round(_derivedMph);
-    let isMoving = gpsSpeed >= 8 || _derivedMph >= 5;
-    fmCurrentSpeed = gpsSpeed;
+    // Speed is reliable when: hardware speed is available OR anchor has confirmed ≥5 mph.
+    // Without reliable speed (rawSpeed null + anchor returning 0 on first/reset call),
+    // keep the last known fmVehicleMoving so a single stale fix never freezes the clocks.
+    const _hasReliableSpeed = rawSpeed != null || _derivedMph >= 5;
+    let isMoving = _hasReliableSpeed ? (gpsSpeed >= 8 || _derivedMph >= 5)
+                                     : (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving);
+    if (_hasReliableSpeed) fmCurrentSpeed = gpsSpeed;
     window._fmWatchLastTs = Date.now(); // freshness: el poll de respaldo cede si este watch está vivo
     // ── Pausa de relojes HOS cuando el vehículo se detiene ──
     if (typeof window._stopPauseStart === 'undefined') window._stopPauseStart = null;
     const _wasMoving = fmVehicleMoving;
-    if (_wasMoving && !isMoving) {
-      // Acaba de detenerse — marca inicio de pausa
-      window._stopPauseStart = Date.now();
-    } else if (!_wasMoving && isMoving && window._stopPauseStart) {
-      // Acaba de moverse — desplaza hosShiftStartTime para descontar la pausa
-      const pauseMs = Date.now() - window._stopPauseStart;
-      if (hosShiftStartTime) hosShiftStartTime += pauseMs;
-      window._stopPauseStart = null;
+    if (_hasReliableSpeed) {
+      if (_wasMoving && !isMoving) {
+        // Acaba de detenerse — marca inicio de pausa
+        window._stopPauseStart = Date.now();
+      } else if (!_wasMoving && isMoving && window._stopPauseStart) {
+        // Acaba de moverse — desplaza hosShiftStartTime para descontar la pausa
+        const pauseMs = Date.now() - window._stopPauseStart;
+        if (hosShiftStartTime) hosShiftStartTime += pauseMs;
+        window._stopPauseStart = null;
+      }
+      fmVehicleMoving = isMoving;
     }
-    fmVehicleMoving = isMoving;
     window._dbgGps = { src:'ruta', raw:rawSpeed, spd:gpsSpeed, acc:Math.round(acc||0), ts:Date.now() };
     if (rawSpeed != null) window._dbgRawSeenTs = Date.now();
     // CRÍTICO PRIMERO: alimentar el tracker de horas antes de cualquier lógica
     // de UI — un error más abajo en este callback no debe matar la acumulación.
-    try { if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(isMoving, gpsSpeed); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
+    // Solo llamar reportMoving con datos fiables; sin velocidad confiable HOSGps
+    // ya maneja el estado — un reportMoving(false,0) espurio congela los relojes.
+    if (_hasReliableSpeed) {
+      try { if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(isMoving, gpsSpeed); } catch(e) { window._hosLogErr && window._hosLogErr(e); }
+    }
     // dashMovingInfo queda oculto permanente: se encimaba sobre la tarjeta de
     // violación al manejar (la tarjeta solo debe mostrar el countdown).
 
