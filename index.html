@@ -8207,18 +8207,25 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
         </div>
       </div>
     </div>
-    <!-- Botón Ver Mapa Completo — abre el mapa nativo del dispositivo con la ruta ya cargada -->
+    <!-- Botón Iniciar Navegación — abre el mapa nativo y arranca la búsqueda de ruta -->
     <button id="dashOpenMapsBtn" onclick="openInNativeMaps()"
-      style="display:none;width:100%;margin-top:6px;padding:10px 14px;
-             background:linear-gradient(135deg,rgba(16,185,129,0.18),rgba(59,130,246,0.18));
-             border:1px solid rgba(16,185,129,0.40);border-radius:12px;
-             color:#10b981;font-family:'Bebas Neue',sans-serif;font-size:15px;
-             letter-spacing:2px;text-transform:uppercase;cursor:pointer;
-             align-items:center;justify-content:center;gap:8px;
+      style="display:none;width:100%;margin-top:10px;padding:13px 16px;
+             background:linear-gradient(135deg,#10b981,#059669);
+             border:none;border-radius:14px;
+             color:#fff;font-family:'Bebas Neue',sans-serif;font-size:17px;
+             letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;
+             align-items:center;justify-content:center;gap:10px;
              -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-             box-shadow:0 4px 14px rgba(0,0,0,0.35);">
-      <img src="icon.png" alt="" style="width:26px;height:26px;object-fit:contain;border-radius:6px;flex-shrink:0;">
-      <span id="dashOpenMapsBtnLbl">Ver Mapa Completo</span>
+             box-shadow:0 6px 20px rgba(16,185,129,0.45);
+             transition:transform 0.1s,box-shadow 0.1s;"
+      onpointerdown="this.style.transform='scale(0.97)';this.style.boxShadow='0 2px 8px rgba(16,185,129,0.30)'"
+      onpointerup="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'"
+      onpointercancel="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.45)'">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+      </svg>
+      <span id="dashOpenMapsBtnLbl">Iniciar Navegación</span>
     </button>
   </div>
 
@@ -15812,7 +15819,7 @@ function updateDashDestCard() {
   }
   // Mostrar botón mapa y actualizar etiqueta por idioma
   if (_mapsBtn) { _mapsBtn.style.display = 'flex'; }
-  if (_mapsBtnLbl) _mapsBtnLbl.textContent = (typeof lang !== 'undefined' && lang === 'en') ? 'Open Full Map' : 'Ver Mapa Completo';
+  if (_mapsBtnLbl) _mapsBtnLbl.textContent = (typeof lang !== 'undefined' && lang === 'en') ? 'Start Navigation' : 'Iniciar Navegación';
 
   if (hoursGone) {
     nameEl.textContent = '🛑 Horas de manejo agotadas';
@@ -15866,21 +15873,18 @@ function openInNativeMaps() {
   let url;
   if (dLat != null && dLon != null) {
     if (isIOS) {
-      // Apple Maps: saddr = posición actual del camión, daddr = destino
+      // Apple Maps: dirflg=d activa modo conducción; con saddr arranca la ruta al instante
       url = cLat != null
         ? `maps://?saddr=${cLat},${cLon}&daddr=${dLat},${dLon}&dirflg=d`
-        : `maps://?ll=${dLat},${dLon}&q=${dName}`;
+        : `maps://?daddr=${dLat},${dLon}&dirflg=d`;
     } else {
-      // Google Maps (Android / otros)
-      url = cLat != null
-        ? `https://maps.google.com/?saddr=${cLat},${cLon}&daddr=${dLat},${dLon}&directionsmode=driving`
-        : `https://maps.google.com/?q=${dLat},${dLon}`;
+      // Android: google.navigation arranca la navegación turn-by-turn directamente
+      url = `google.navigation:q=${dLat},${dLon}&mode=d`;
     }
   } else {
-    // Sin coordenadas: buscar por nombre
     url = isIOS
-      ? `maps://?q=${dName}`
-      : `https://maps.google.com/?q=${dName}`;
+      ? `maps://?q=${dName}&dirflg=d`
+      : `google.navigation:q=${dName}&mode=d`;
   }
   try { window.open(url, '_system') || window.location.assign(url); } catch(e) { window.open(url, '_blank'); }
 }
