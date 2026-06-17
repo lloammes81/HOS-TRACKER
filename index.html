@@ -16915,10 +16915,15 @@ function fmStartTracking() {
         if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
         window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1000);
       }
-      fmCurrentSpeed = Math.round(_pollMph);
-      fmVehicleMoving = moving;
-      // Feed movement directly into HOS tracker so hours count even when watchPosition is slow
-      if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(moving, Math.round(_pollMph));
+      // Only override HOSGps-sourced state when we have a reliable speed reading.
+      // rawSpd==null && _posDerived==0 (first fix or stale anchor) must NOT
+      // stomp fmVehicleMoving/fmCurrentSpeed that HOSGps already set correctly.
+      const _pollHasReliable = rawSpd != null || _posDerived >= 5;
+      if (_pollHasReliable) {
+        fmCurrentSpeed = Math.round(_pollMph);
+        fmVehicleMoving = moving;
+        if (window._hosTracker?.reportMoving) window._hosTracker.reportMoving(moving, Math.round(_pollMph));
+      }
       updateSpeedometer(fmCurrentSpeed);
     }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 });
   }, 2000);
