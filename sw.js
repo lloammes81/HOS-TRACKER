@@ -1,6 +1,6 @@
-// ⚠️ Al cambiar la lógica de la app, sube el número de versión del caché.
-// Esto fuerza al navegador a instalar un nuevo Service Worker y purgar el viejo.
-const CACHE_VERSION = 'v46-bell-btn';
+// ⚠️ Solo sube este número cuando cambia la LÓGICA del SW (fetch, notificaciones, sync).
+// NO lo cambies por fixes de UI en index.html — el HTML usa network-first y se actualiza solo.
+const CACHE_VERSION = 'v46-stable';
 const CACHE_NAME = 'truck-precision-' + CACHE_VERSION;
 
 // Recursos base (se cachean en install; los errores se ignoran para no romper la instalación).
