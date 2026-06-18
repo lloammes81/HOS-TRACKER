@@ -14794,20 +14794,34 @@ async function _applyOriginFromFix(latitude, longitude, lbl, acc) {
   // Try TomTom reverse geocode
   try {
     const r = await fetchWithTimeout(
-      `https://api.tomtom.com/search/2/reverseGeocode/${latitude.toFixed(5)},${longitude.toFixed(5)}.json?key=${TOMTOM_API_KEY}`,
+      `https://api.tomtom.com/search/2/reverseGeocode/${latitude.toFixed(5)},${longitude.toFixed(5)}.json?key=${TOMTOM_API_KEY}&roadUse=true`,
       { headers: { 'Accept-Language': 'en' } }, 7000);
     const d = await r.json();
-    const addr = d.addresses?.[0]?.address || {};
+    const addresses = d.addresses || [];
+    const addr = addresses[0]?.address || {};
     const city = addr.municipality || addr.municipalitySubdivision || addr.countrySecondarySubdivision || '';
     const state = addr.countrySubdivision || '';
     const sa = stateAbbr[state] || addr.countrySubdivisionCode || (state.length <= 3 ? state : '');
     if (city && sa) name = `${city}, ${sa}`;
     else if (city) name = city;
-    // Road shield
+    // Road shield — scan all returned addresses for a numbered highway
     const _shieldEl = document.getElementById('originRoadShield');
     if (_shieldEl) {
-      const _streetName = addr.streetName || addr.street || '';
-      const _svg = _renderRoadShield(_streetName);
+      let _svg = null;
+      // 1) streetName from each address entry
+      for (const a of addresses) {
+        const sn = a.address?.streetName || a.address?.street || '';
+        _svg = _renderRoadShield(sn);
+        if (_svg) break;
+      }
+      // 2) parse freeformAddress as fallback (e.g. "I 10, Moss Point, MS …")
+      if (!_svg) {
+        for (const a of addresses) {
+          const fa = a.address?.freeformAddress || '';
+          const m = fa.match(/\b(I[-\s]?\d+[A-Z]?|Interstate\s+\d+|US[-\s]?\d+|US\s+Highway\s+\d+|SR[-\s]?\d+|State Route\s+\d+)/i);
+          if (m) { _svg = _renderRoadShield(m[1]); if (_svg) break; }
+        }
+      }
       if (_svg) { _shieldEl.innerHTML = _svg; _shieldEl.style.display = 'block'; }
       else       { _shieldEl.innerHTML = ''; _shieldEl.style.display = 'none'; }
     }
@@ -23511,7 +23525,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v36-mejoras-mayores';
+  window.APP_BUILD = 'v45-road-shield';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
