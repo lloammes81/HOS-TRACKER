@@ -490,25 +490,33 @@
     background: none; border: none; padding: 0; box-shadow: none;
   }
   .departure-input {
-    font-size: 24px !important;
-    font-weight: 700 !important;
-    color: #f97316 !important;
-    background: transparent !important;
-    color-scheme: dark;
+    position: absolute !important;
+    inset: 0 !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    z-index: 2 !important;
     width: 100% !important;
-    display: block !important;
-    margin: 0 !important;
-    padding: 10px 0 !important;
-    min-height: 44px !important;
-    border-radius: 0 !important;
-    cursor: pointer;
-    border: none !important;
-    box-shadow: none !important;
-    text-align: center !important;
+    height: 100% !important;
+    color-scheme: dark;
   }
   body.dark .departure-input { color-scheme: dark; }
   body.dark .param-box input[type="datetime-local"] {
     color-scheme: dark;
+  }
+
+  .departure-display {
+    font-family: 'Share Tech Mono','Courier New',monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: #f97316;
+    text-align: center;
+    padding: 14px 0;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    width: 100%;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   /* ── SALIDA label — army style ── */
@@ -6436,8 +6444,9 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
         <div id="planDepartureSection">
         <div class="form-section-label">📅 Día y Hora de Salida</div>
         <div class="trip-params-grid">
-          <div class="param-box full-width">
-            <input type="datetime-local" id="departureInput" class="departure-input" />
+          <div class="param-box full-width" style="position:relative;min-height:54px;">
+            <div id="departureDisplay" class="departure-display"></div>
+            <input type="datetime-local" id="departureInput" class="departure-input" onchange="updateDepartureDisplay()" />
           </div>
           <div class="param-box" style="display:none">
             <label id="lblHours">⏱️ Horas disponibles</label>
@@ -12893,7 +12902,16 @@ function setDepartureNow() {
 }
 
 function updateDepartureDisplay() {
-  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
+  const input   = document.getElementById('departureInput');
+  const display = document.getElementById('departureDisplay');
+  if (!display) return;
+  if (!input || !input.value) { display.textContent = '📅 SELECCIONAR FECHA'; return; }
+  const dt  = new Date(input.value);
+  const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const day = String(dt.getDate()).padStart(2,'0');
+  const h = dt.getHours(), m = dt.getMinutes();
+  const ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
+  display.textContent = `${day} ${MON[dt.getMonth()]} ${dt.getFullYear()} · ${h12}:${String(m).padStart(2,'0')} ${ap}`;
 }
 
 
