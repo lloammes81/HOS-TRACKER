@@ -6402,6 +6402,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           <div class="origin-label-row" id="stopRowOrigin">
             <div class="origin-loc-title">📍 Locación Actual</div>
             <div class="origin-label-body">
+              <div id="originRoadShield" style="display:none;flex-shrink:0;margin-right:4px;line-height:0;"></div>
               <span id="originLabelText" class="origin-loc-text">📡 Obteniendo ubicación…</span>
               <button class="stop-refresh-btn" onclick="useGPS()" title="Actualizar">🔄</button>
             </div>
@@ -14709,6 +14710,67 @@ function renderSummary() {
 }
 
 
+// ── Road shield SVG generator ─────────────────────────────────────────────
+// Returns an SVG string for Interstate, US Hwy or State Route shields,
+// or null if the street is not a numbered highway.
+function _renderRoadShield(streetName) {
+  if (!streetName) return null;
+  const s = streetName.trim();
+
+  // Interstate  (e.g. "Interstate 65", "I-10", "I 20")
+  const iMatch = s.match(/^(?:Interstate\s+|I[-\s]?)(\d+)/i);
+  if (iMatch) {
+    const num = iMatch[1];
+    const fs  = num.length >= 3 ? 12 : num.length === 2 ? 15 : 19;
+    const cy  = num.length >= 3 ? 38 : 40;
+    return `<svg viewBox="0 0 44 52" width="30" height="36"
+              style="display:block;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.6))">
+      <path d="M4,1.5 C2,1.5 0.5,3 0.5,5 L0.5,46 C0.5,48 2,50 4,51 L22,52 L40,51 C42,50 43.5,48 43.5,46 L43.5,5 C43.5,3 42,1.5 40,1.5 Z" fill="#003399" stroke="white" stroke-width="1.8"/>
+      <path d="M0.5,5 C0.5,3 2,1.5 4,1.5 L40,1.5 C42,1.5 43.5,3 43.5,5 L43.5,17 C36,12.5 28,10.5 22,10.5 C16,10.5 8,12.5 0.5,17 Z" fill="#CC0001"/>
+      <text x="22" y="12" text-anchor="middle" fill="white" font-size="5.2" font-weight="900"
+            font-family="'DM Sans',Arial,sans-serif" letter-spacing="0.2">INTERSTATE</text>
+      <text x="22" y="${cy}" text-anchor="middle" fill="white" font-size="${fs}" font-weight="900"
+            font-family="'DM Sans',Arial,sans-serif">${num}</text>
+    </svg>`;
+  }
+
+  // US Highway  (e.g. "US Highway 98", "US-98", "US 90")
+  const usMatch = s.match(/^US[-\s]?(?:Highway\s*|Hwy\s*)?(\d+)/i);
+  if (usMatch) {
+    const num = usMatch[1];
+    const fs  = num.length >= 3 ? 10 : num.length === 2 ? 13 : 16;
+    const cy  = num.length >= 3 ? 32 : 33;
+    return `<svg viewBox="0 0 40 46" width="26" height="32"
+              style="display:block;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.6))">
+      <path d="M2,2 L38,2 L38,30 L20,44 L2,30 Z" fill="#000" stroke="white" stroke-width="2"/>
+      <text x="20" y="14" text-anchor="middle" fill="white" font-size="7" font-weight="900"
+            font-family="'DM Sans',Arial,sans-serif">US</text>
+      <line x1="7" y1="17" x2="33" y2="17" stroke="white" stroke-width="1.3"/>
+      <text x="20" y="${cy}" text-anchor="middle" fill="white" font-size="${fs}" font-weight="900"
+            font-family="'DM Sans',Arial,sans-serif">${num}</text>
+    </svg>`;
+  }
+
+  // State Route  (e.g. "Alabama Highway 163", "SR-21", "State Route 59")
+  const srMatch = s.match(/^(?:State Route|SR|State Hwy|State Highway)\s*[-]?(\d+)/i)
+                || s.match(/^(?:Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming)\s+(?:Highway|Hwy|Route)\s+(\d+)/i);
+  if (srMatch) {
+    const num = srMatch[1];
+    const fs  = num.length >= 3 ? 10 : num.length === 2 ? 13 : 16;
+    return `<svg viewBox="0 0 40 40" width="26" height="26"
+              style="display:block;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.6))">
+      <rect x="1" y="1" width="38" height="38" rx="5" ry="5" fill="#006600" stroke="white" stroke-width="2"/>
+      <text x="20" y="14" text-anchor="middle" fill="white" font-size="6" font-weight="900"
+            font-family="'DM Sans',Arial,sans-serif">STATE</text>
+      <line x1="6" y1="16.5" x2="34" y2="16.5" stroke="white" stroke-width="1.3"/>
+      <text x="20" y="34" text-anchor="middle" fill="white" font-size="${fs}" font-weight="900"
+            font-family="'DM Sans',Arial,sans-serif">${num}</text>
+    </svg>`;
+  }
+
+  return null;
+}
+
 // Aplica un fix GPS como origen: reverse-geocode a "Ciudad, ST" y rellena la
 // tarjeta de Locación Actual. Separado de useGPS para reusarlo tras esperar un
 // fix de alta precisión.
@@ -14735,11 +14797,20 @@ async function _applyOriginFromFix(latitude, longitude, lbl, acc) {
       `https://api.tomtom.com/search/2/reverseGeocode/${latitude.toFixed(5)},${longitude.toFixed(5)}.json?key=${TOMTOM_API_KEY}`,
       { headers: { 'Accept-Language': 'en' } }, 7000);
     const d = await r.json();
-    const city = d.addresses?.[0]?.address?.municipality || d.addresses?.[0]?.address?.municipalitySubdivision || d.addresses?.[0]?.address?.countrySecondarySubdivision || '';
-    const state = d.addresses?.[0]?.address?.countrySubdivision || '';
-    const sa = stateAbbr[state] || d.addresses?.[0]?.address?.countrySubdivisionCode || (state.length <= 3 ? state : '');
+    const addr = d.addresses?.[0]?.address || {};
+    const city = addr.municipality || addr.municipalitySubdivision || addr.countrySecondarySubdivision || '';
+    const state = addr.countrySubdivision || '';
+    const sa = stateAbbr[state] || addr.countrySubdivisionCode || (state.length <= 3 ? state : '');
     if (city && sa) name = `${city}, ${sa}`;
     else if (city) name = city;
+    // Road shield
+    const _shieldEl = document.getElementById('originRoadShield');
+    if (_shieldEl) {
+      const _streetName = addr.streetName || addr.street || '';
+      const _svg = _renderRoadShield(_streetName);
+      if (_svg) { _shieldEl.innerHTML = _svg; _shieldEl.style.display = 'block'; }
+      else       { _shieldEl.innerHTML = ''; _shieldEl.style.display = 'none'; }
+    }
   } catch {}
 
   if (!name) name = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
@@ -14768,6 +14839,8 @@ function useGPS() {
   }
   const lbl = document.getElementById('originLabelText');
   if (lbl) { lbl.textContent = lang==='es' ? '📡 Obteniendo tu ubicación…' : '📡 Getting your location…'; lbl.style.color = 'var(--muted)'; }
+  const _shieldReset = document.getElementById('originRoadShield');
+  if (_shieldReset) { _shieldReset.innerHTML = ''; _shieldReset.style.display = 'none'; }
   origin = null;
 
   // getCurrentPosition suele devolver primero un fix APROXIMADO de red
