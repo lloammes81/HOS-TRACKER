@@ -4542,7 +4542,7 @@ body.dark #fullMap .leaflet-tile-pane {
   .drv-route-leg-text { flex: 1; min-width: 0; }
   .drv-route-leg-city { font-weight: 900; font-size: 13px; color: #fff; line-height: 1.15; }
   .drv-route-leg-addr { font-size: 11px; color: #94a3b8; line-height: 1.35; margin-top: 2px; word-break: break-word; }
-  .drv-route-leg-time { font-size: 11px; color: #60a5fa; margin-top: 3px; font-weight: 700; }
+  .drv-route-leg-time { font-size: 11px; color: #60a5fa; margin-top: 3px; font-weight: 700; font-family: 'Share Tech Mono','Courier New',monospace; letter-spacing: .5px; }
   .drv-route-stats {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
     margin: 10px 0;
@@ -13975,6 +13975,16 @@ function fmtTime(d) {
 function fmtDateTime(d) {
   const dt = new Date(d);
   return dt.toLocaleDateString(lang==='es'?'es-ES':'en-US',{month:'short',day:'numeric'}) + ' ' + fmtTime(dt);
+}
+// Formato militar: "18 JUN 2026 · 12:34 PM" — sin el "at" que iOS inserta con toLocaleString()
+function _fmtMilDateTime(ts) {
+  if (!ts) return '';
+  const dt = new Date(ts);
+  const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const day = String(dt.getDate()).padStart(2,'0');
+  const h = dt.getHours(), m = dt.getMinutes();
+  const ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
+  return `${day} ${MON[dt.getMonth()]} ${dt.getFullYear()} · ${h12}:${String(m).padStart(2,'0')} ${ap}`;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -28531,8 +28541,8 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       } else if (st === 'completed' || st === 'rejected'){
         actions = `<button class="drv-route-btn map" data-act="map" data-id="${r.id}">🗺️ Ver en mapa</button>`;
       }
-      const pickTime  = r.pickupTime   ? `<div class="drv-route-leg-time">🕐 ${escapeHtml(new Date(r.pickupTime).toLocaleString())}</div>` : '';
-      const dropTime  = r.deliveryTime ? `<div class="drv-route-leg-time" style="color:#fb923c">🕐 ${escapeHtml(new Date(r.deliveryTime).toLocaleString())}</div>` : '';
+      const pickTime  = r.pickupTime   ? `<div class="drv-route-leg-time">🕐 ${escapeHtml(_fmtMilDateTime(r.pickupTime))}</div>` : '';
+      const dropTime  = r.deliveryTime ? `<div class="drv-route-leg-time" style="color:#fb923c">🕐 ${escapeHtml(_fmtMilDateTime(r.deliveryTime))}</div>` : '';
       const pickRef   = r.pickupRef    ? `<div style="font-size:11px;color:#e2e8f0;margin-top:2px"><b>📞 ${escapeHtml(r.pickupRef)}</b></div>` : '';
       const dropRef   = r.deliveryRef  ? `<div style="font-size:11px;color:#e2e8f0;margin-top:2px"><b>📞 ${escapeHtml(r.deliveryRef)}</b></div>` : '';
       return `
