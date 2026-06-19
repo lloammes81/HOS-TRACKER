@@ -10072,58 +10072,26 @@ let lastBridgeLon   = null;
 let _gpsCache       = null;   // { lat, lon, accuracy, timestamp }
 let _gpsWarmId      = null;
 
+let _warmGotFix = false;
 function startGPSWarm() {
   if (_gpsWarmId !== null) return;
-  const _onFix = (lat, lon, accuracy, speed, heading, timestamp, raw) => {
-    const firstFix = !_gpsCache;
-    _gpsCache = { lat, lon, accuracy, speed, heading, timestamp, raw };
-    // On first GPS fix, refresh weather if it hasn't loaded real coordinates yet
-    if (firstFix && typeof startWeatherMonitor === 'function') {
-      if (!lastWeatherLat || Math.abs(lastWeatherLat - lat) > 0.1) {
-        lastWeatherLat = null; lastWeatherLon = null; // force fresh fetch
-        if (weatherInterval) { clearInterval(weatherInterval); weatherInterval = null; }
-        startWeatherMonitor();
-      }
+  // GPS unificado: ya NO abrimos un segundo watchPosition. El servicio central
+  // HOSGps es la única fuente de hardware; aquí solo nos suscribimos para
+  // disparar el clima en el primer fix. _gpsCache lo mantiene fresco HOSGps.
+  _gpsWarmId = 'central'; // marca: suscrito al hub, no es un watch real
+  if (!(window.HOSGps && window.HOSGps.onFix)) return;
+  window.HOSGps.onFix((fix) => {
+    if (_warmGotFix) return;
+    _warmGotFix = true;
+    // Primer fix real: refrescar el clima si aún no tiene coordenadas buenas.
+    if (typeof startWeatherMonitor === 'function'
+        && (!lastWeatherLat || Math.abs(lastWeatherLat - fix.lat) > 0.1)) {
+      lastWeatherLat = null; lastWeatherLon = null;
+      if (weatherInterval) { clearInterval(weatherInterval); weatherInterval = null; }
+      startWeatherMonitor();
     }
-    // Feed movement into the HOS tracker when its internal GPS is paused (route active).
-    // Guard: only call reportMoving when we have reliable speed data (hardware speed OR
-    // anchor algorithm with confirmed displacement ≥5 mph). If rawSpeed is null AND the
-    // anchor has no history yet (first fix / reset after 30 s gap → returns 0), skip the
-    // call entirely — HOSGps central is already feeding reportMoving with accurate data
-    // and a spurious reportMoving(false, 0) would cancel an active driving session.
-    if (typeof fmIsTracking !== 'undefined' && fmIsTracking && window._hosTracker?.reportMoving) {
-      const mph = (speed != null && speed >= 0) ? speed * 2.237 : 0;
-      let derivedMph = mph;
-      if (speed == null) {
-        window._onFixAnchor = window._onFixAnchor || {};
-        derivedMph = _anchorSpeedMph(lat, lon, Date.now(), accuracy, window._onFixAnchor);
-      }
-      // Only report if we have a reliable reading; otherwise let HOSGps handle it.
-      if (speed != null || derivedMph >= 5) {
-        window._hosTracker.reportMoving(derivedMph >= 5, Math.round(derivedMph));
-      }
-    }
-  };
-  if (IS_CAPACITOR) {
-    // Native: use Capacitor Geolocation watchPosition
-    const Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
-    if (!Geo) return;
-    Geo.watchPosition({ enableHighAccuracy: true, timeout: 20000 }, (pos, err) => {
-      if (err || !pos) return;
-      const c = pos.coords;
-      _onFix(c.latitude, c.longitude, c.accuracy, c.speed, c.heading, pos.timestamp, pos);
-    }).then(id => { _gpsWarmId = id; }).catch(() => {});
-  } else {
-    if (!navigator.geolocation) return;
-    _gpsWarmId = navigator.geolocation.watchPosition(
-      pos => {
-        const c = pos.coords;
-        _onFix(c.latitude, c.longitude, c.accuracy, c.speed, c.heading, pos.timestamp, pos);
-      },
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
-    );
-  }
+  });
+  if (!window.HOSGps.isRunning()) window.HOSGps.start();
 }
 
 function getGPSPosition(maxAgeMs = 4000, timeoutMs = 12000) {
@@ -13499,7 +13467,8 @@ window.HOSGps = (function () {
     const moving = mph >= 5;
     _lastFixTs = now;
 
-    window.lastFixFm = { lat: c.latitude, lon: c.longitude, acc: c.accuracy || 20, ts: now };
+    window.lastFixFm = { lat: c.latitude, lon: c.longitude, acc: c.accuracy || 20, ts: now,
+      heading: c.heading, speed: raw, altitude: c.altitude };
     window._dbgGps = { src: 'central', raw: raw, spd: mph, acc: Math.round(c.accuracy || 0), ts: now };
     // Mantener fresco el caché compartido de posición (clima, etiquetas de
     // ubicación, escáner): antes solo lo llenaba el watcher de precalentamiento,
@@ -13522,8 +13491,10 @@ window.HOSGps = (function () {
       try { if (typeof updateSpeedometer === 'function') updateSpeedometer(mph); } catch (e) {}
     }
     // 4) Suscriptores externos (siempre, incluso sin velocidad fiable: pueden
-    //    usar lastFixFm para actualizar posición aunque no sepan la velocidad)
-    for (const fn of _subs) { try { fn(window.lastFixFm, mph, moving); } catch (e) {} }
+    //    usar lastFixFm para actualizar posición aunque no sepan la velocidad).
+    //    Se les pasa también el pos crudo para los consumidores que necesitan
+    //    coords.heading/altitude/speed nativos (tracker de ruta, FleetLink).
+    for (const fn of _subs.slice()) { try { fn(window.lastFixFm, mph, moving, pos); } catch (e) {} }
   }
 
   function _onError(err) {
@@ -13637,9 +13608,17 @@ window.HOSGps = (function () {
     if (!document.hidden && _started && !_denied && _silentMs() > 5000) start();
   });
 
+  function offFix(fn) {
+    const i = _subs.indexOf(fn);
+    if (i >= 0) _subs.splice(i, 1);
+  }
   return {
     start, stop,
-    onFix: fn => { if (typeof fn === 'function') _subs.push(fn); },
+    // onFix devuelve una función para des-suscribirse (útil en watchers
+    // temporales como el de onboarding o conmutables como el de ruta).
+    onFix: fn => { if (typeof fn !== 'function') return () => {}; _subs.push(fn); return () => offFix(fn); },
+    offFix,
+    lastFix: () => window.lastFixFm || null,
     fixAgeMs: () => (_lastFixTs ? Date.now() - _lastFixTs : null),
     isRunning: () => _started
   };
@@ -14913,7 +14892,10 @@ function useGPS() {
     if (settled) return;
     settled = true;
     clearTimeout(timer);
-    if (watchId != null) { try { navigator.geolocation.clearWatch(watchId); } catch(e){} }
+    if (watchId != null) {
+      if (typeof watchId === 'function') { try { watchId(); } catch(e){} }
+      else { try { navigator.geolocation.clearWatch(watchId); } catch(e){} }
+    }
     if (best) {
       _applyOriginFromFix(best.lat, best.lon, lbl, best.acc);
     } else {
@@ -14925,12 +14907,12 @@ function useGPS() {
   // La semilla ya es suficientemente precisa → usarla de inmediato
   if (best && best.acc <= GOOD_ACC_M) { finish(); return; }
 
-  watchId = navigator.geolocation.watchPosition(pos => {
-    const { latitude, longitude, accuracy } = pos.coords;
+  const _accFix = (lat2, lon2, accuracy) => {
     const acc = (accuracy != null) ? accuracy : 9999;
-    if (!best || acc < best.acc) best = { lat: latitude, lon: longitude, acc };
+    if (!best || acc < best.acc) best = { lat: lat2, lon: lon2, acc };
     if (best.acc <= GOOD_ACC_M) finish();
-  }, () => {
+  };
+  const _accErr = () => {
     // Error/denegado: si ya hay un fix (semilla) usarlo; si no, reportar
     if (best) finish();
     else if (!settled) {
@@ -14939,7 +14921,18 @@ function useGPS() {
       if (lbl) { lbl.textContent = lang==='es' ? '⚠️ Permiso de ubicación denegado' : '⚠️ Location permission denied'; lbl.style.color = '#ef4444'; }
       showToast('danger','📡', lang==='es'?'Ubicación no disponible':'Location unavailable', t('gpsDenied'), 4000);
     }
-  }, { enableHighAccuracy: true, maximumAge: 0, timeout: MAX_WAIT_MS });
+  };
+  // GPS unificado: afinar la ubicación con el GPS central (HOSGps). El timeout
+  // (timer) ya cubre el caso de permiso denegado / sin fix.
+  if (window.HOSGps && window.HOSGps.onFix) {
+    if (!window.HOSGps.isRunning()) window.HOSGps.start();
+    watchId = window.HOSGps.onFix((fix) => _accFix(fix.lat, fix.lon, fix.acc));
+  } else if (navigator.geolocation) {
+    watchId = navigator.geolocation.watchPosition(
+      pos => _accFix(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+      _accErr,
+      { enableHighAccuracy: true, maximumAge: 0, timeout: MAX_WAIT_MS });
+  }
 }
 
 async function shareRoute() {
@@ -16638,16 +16631,8 @@ function fmStartTracking() {
   }
 
   // ── STEP 5: Live tracking ─────────────────────────────────
-  // Pause warm-cache watcher so only one GPS watcher runs (avoids conflicts)
-  if (_gpsWarmId != null) {
-    if (IS_CAPACITOR) {
-      const Geo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
-      if (Geo) Geo.clearWatch({ id: _gpsWarmId }).catch(() => {});
-    } else {
-      navigator.geolocation.clearWatch(_gpsWarmId);
-    }
-    _gpsWarmId = null;
-  }
+  // GPS unificado: ya no hay watcher de "warm-cache" propio que pausar — todo
+  // (tracker de ruta incluido) consume el GPS central HOSGps, que sigue activo.
 
   // Request Wake Lock so screen/browser doesn't pause GPS when idle
   if ('wakeLock' in navigator) {
@@ -16710,7 +16695,7 @@ function fmStartTracking() {
   // Guardar estado de la ruta inmediatamente al iniciar rastreo
   setTimeout(_fmSaveActiveRoute, 300);
 
-  fmWatchId = navigator.geolocation.watchPosition(async pos => {
+  const _fmHandle = async (pos) => {
     const lat  = pos.coords.latitude;
     const lon  = pos.coords.longitude;
     const acc  = pos.coords.accuracy || 20;
@@ -17102,7 +17087,16 @@ function fmStartTracking() {
       if (_distToDest <= 0.25) { markLastRouteCompleted(); alert(t('arrived')); fmStopTracking(); }
     }
 
-  }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+  };
+  // GPS unificado: el tracker de ruta se alimenta del GPS central (HOSGps),
+  // la única fuente de hardware — ya no abre su propio watchPosition. Si HOSGps
+  // no está disponible, recurre a un watch directo.
+  if (window.HOSGps && window.HOSGps.onFix) {
+    if (!window.HOSGps.isRunning()) window.HOSGps.start();
+    fmWatchId = window.HOSGps.onFix((fix, mph, moving, pos) => { if (fmIsTracking && pos) _fmHandle(pos); });
+  } else if (navigator.geolocation) {
+    fmWatchId = navigator.geolocation.watchPosition(_fmHandle, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+  }
 
   // ── GPS polling fallback — forces fresh fix from phone hardware every 2s ──
   // Guarantees real-time movement even if watchPosition is throttled by the OS.
@@ -17187,7 +17181,13 @@ function fmStartTracking() {
 function fmStopTracking() {
   // Detener servicio Android en segundo plano (si está disponible)
   try { if (window.AndroidHOS) AndroidHOS.stopTracking(); } catch(e) {}
-  if (fmWatchId != null) { navigator.geolocation.clearWatch(fmWatchId); fmWatchId = null; }
+  if (fmWatchId != null) {
+    // fmWatchId puede ser la función de des-suscripción del GPS central (HOSGps)
+    // o, en el fallback, un id numérico de watchPosition.
+    if (typeof fmWatchId === 'function') fmWatchId();
+    else { try { navigator.geolocation.clearWatch(fmWatchId); } catch (e) {} }
+    fmWatchId = null;
+  }
   if (fmGpsPollId != null) { clearInterval(fmGpsPollId); fmGpsPollId = null; }
   if (fmSpeedoTickId != null) { clearInterval(fmSpeedoTickId); fmSpeedoTickId = null; }
   fmIsTracking = false;
@@ -28251,8 +28251,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     if (!state.fleetId || !state.shareLoc) return;
     if (!navigator.geolocation) { flToast('GPS no disponible'); return; }
     stopLocationSharing();
-    state.watchId = navigator.geolocation.watchPosition(
-      pos => {
+    const _shareFix = pos => {
         const loc = {
           lat: pos.coords.latitude,
           lon: pos.coords.longitude,
@@ -28278,13 +28277,24 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
         // Historial por día (incluye velocidad para calcular millas en dashboard)
         const day = new Date().toISOString().slice(0,10);
         push(ref(db, `fleets/${state.fleetId}/history/${MY_ID}/${day}`), loc).catch(()=>{});
-      },
-      err => { console.warn('[FleetLink] GPS error', err.message); },
-      { enableHighAccuracy:true, maximumAge:5000, timeout:20000 }
-    );
+    };
+    // GPS unificado: compartir la ubicación desde el GPS central (HOSGps), no
+    // un watchPosition propio. Fallback al watch directo si HOSGps no está.
+    if (window.HOSGps && window.HOSGps.onFix) {
+      if (!window.HOSGps.isRunning()) window.HOSGps.start();
+      state.watchId = window.HOSGps.onFix((fix, mph, moving, pos) => { if (pos) _shareFix(pos); });
+    } else {
+      state.watchId = navigator.geolocation.watchPosition(_shareFix,
+        err => { console.warn('[FleetLink] GPS error', err.message); },
+        { enableHighAccuracy:true, maximumAge:5000, timeout:20000 });
+    }
   }
   function stopLocationSharing(){
-    if (state.watchId != null){ navigator.geolocation.clearWatch(state.watchId); state.watchId = null; }
+    if (state.watchId != null){
+      if (typeof state.watchId === 'function') state.watchId();
+      else { try { navigator.geolocation.clearWatch(state.watchId); } catch(e){} }
+      state.watchId = null;
+    }
   }
 
   // === NOTIFICATIONS FROM DISPATCHER ===
