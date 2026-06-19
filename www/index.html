@@ -22115,8 +22115,36 @@ function checkFirstLaunch() {
     setTimeout(openPermsScreen, 800);
   }
 }
-function openPermsScreen() {
-  if (localStorage.getItem('hos_perms_asked')) return;
+// ¿La ubicación (el permiso crítico) ya está concedida? Sirve para no volver a
+// pedir permisos cuando ya quedaron por default, y para decidir si el "Permitir
+// Acceso" realmente funcionó.
+async function _isLocationGranted() {
+  try {
+    const P = (window.Capacitor && window.Capacitor.Plugins) || {};
+    const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    if (isNative && P.Geolocation && P.Geolocation.checkPermissions) {
+      const s = await P.Geolocation.checkPermissions();
+      return s.location === 'granted' || s.coarseLocation === 'granted';
+    }
+    if (navigator.permissions && navigator.permissions.query) {
+      const s = await navigator.permissions.query({ name: 'geolocation' });
+      return s.state === 'granted';
+    }
+  } catch {}
+  return false;
+}
+function _hidePermsOverlay() {
+  const el = document.getElementById('permsOverlay');
+  if (el) { el.style.display = 'none'; document.body.style.overflow = ''; }
+}
+async function openPermsScreen() {
+  if (localStorage.getItem('hos_perms_asked')) return;       // ya concedido → default
+  if (sessionStorage.getItem('hos_perms_skipped')) return;   // "Ahora no" en esta sesión
+  // Si la ubicación ya estaba concedida de antes, queda por default y no
+  // volvemos a molestar.
+  if (await _isLocationGranted()) { localStorage.setItem('hos_perms_asked', '1'); return; }
+  const btn = document.getElementById('permsAllowBtn');
+  if (btn) { btn.textContent = 'Permitir Acceso'; btn.disabled = false; }
   const el = document.getElementById('permsOverlay');
   if (el) { el.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 }
@@ -22173,12 +22201,19 @@ async function grantAppPermissions() {
     }
   } catch {}
 
-  skipPerms();
+  // Sólo lo marcamos como "concedido por default" si la ubicación realmente
+  // quedó habilitada. Si el usuario la negó, NO lo fijamos: se volverá a ofrecer
+  // en la próxima sesión para que el GPS/clima/horas funcionen con su ubicación.
+  if (await _isLocationGranted()) {
+    localStorage.setItem('hos_perms_asked', '1');
+  }
+  _hidePermsOverlay();
 }
 function skipPerms() {
-  localStorage.setItem('hos_perms_asked', '1');
-  const el = document.getElementById('permsOverlay');
-  if (el) { el.style.display = 'none'; document.body.style.overflow = ''; }
+  // "Ahora no": no lo fijamos permanente; no reaparece durante esta sesión,
+  // pero se vuelve a ofrecer en la siguiente.
+  sessionStorage.setItem('hos_perms_skipped', '1');
+  _hidePermsOverlay();
 }
 
 /* ════════════════════════════════════════════════════════════
