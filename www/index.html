@@ -490,25 +490,33 @@
     background: none; border: none; padding: 0; box-shadow: none;
   }
   .departure-input {
-    font-size: 24px !important;
-    font-weight: 700 !important;
-    color: #f97316 !important;
-    background: transparent !important;
-    color-scheme: dark;
+    position: absolute !important;
+    inset: 0 !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    z-index: 2 !important;
     width: 100% !important;
-    display: block !important;
-    margin: 0 !important;
-    padding: 10px 0 !important;
-    min-height: 44px !important;
-    border-radius: 0 !important;
-    cursor: pointer;
-    border: none !important;
-    box-shadow: none !important;
-    text-align: center !important;
+    height: 100% !important;
+    color-scheme: dark;
   }
   body.dark .departure-input { color-scheme: dark; }
   body.dark .param-box input[type="datetime-local"] {
     color-scheme: dark;
+  }
+
+  .departure-display {
+    font-family: 'Share Tech Mono','Courier New',monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: #f97316;
+    text-align: center;
+    padding: 14px 0;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    width: 100%;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   /* ── SALIDA label — army style ── */
@@ -4269,7 +4277,7 @@ body.dark #fullMap .leaflet-tile-pane {
   .hist-meta   { display: flex; align-items: center; gap: 10px; margin-top: 5px; flex-wrap:wrap; }
   .hist-stat   { font-size: 10px; font-weight: 700; color: var(--muted); }
   .hist-stat span { color: var(--accent); }
-  .hist-date   { font-size: 10px; color: var(--muted); margin-left:auto; }
+  .hist-date   { font-size: 10px; color: var(--accent); margin-left:auto; font-family:'Share Tech Mono','Courier New',monospace; letter-spacing:.4px; text-transform:uppercase; }
   .hist-use-btn {
     padding: 5px 12px; border-radius: 8px; border: none;
     background: linear-gradient(135deg,#10b981,#059669);
@@ -4542,7 +4550,7 @@ body.dark #fullMap .leaflet-tile-pane {
   .drv-route-leg-text { flex: 1; min-width: 0; }
   .drv-route-leg-city { font-weight: 900; font-size: 13px; color: #fff; line-height: 1.15; }
   .drv-route-leg-addr { font-size: 11px; color: #94a3b8; line-height: 1.35; margin-top: 2px; word-break: break-word; }
-  .drv-route-leg-time { font-size: 11px; color: #60a5fa; margin-top: 3px; font-weight: 700; }
+  .drv-route-leg-time { font-size: 11px; color: #60a5fa; margin-top: 3px; font-weight: 700; font-family: 'Share Tech Mono','Courier New',monospace; letter-spacing: .5px; text-transform: uppercase; }
   .drv-route-stats {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
     margin: 10px 0;
@@ -6193,13 +6201,6 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
   <div id="heroWxFx" style="position:absolute;inset:0;overflow:hidden;border-radius:22px;pointer-events:none;z-index:10;"></div>
   <div class="hero-inner">
 
-    <!-- Botón campana — siempre visible en el espacio en blanco superior del hero card.
-         right:60px deja el círculo del clima (46px a right:10px) sin cubrir. -->
-    <button class="hero-btn" id="heroBellBtn" title="Notificaciones"
-      style="position:absolute;top:8px;right:60px;z-index:20;width:36px;height:36px;border-radius:10px;">
-      🔔<span class="hero-bell-badge" id="heroBellBadge" style="display:none">0</span>
-    </button>
-
     <!-- TOP BAR -->
     <div class="hero-top-bar">
       <!-- Left: brand + pill -->
@@ -6264,6 +6265,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
       <div class="hero-h1">Hours of <em>Service</em><br>Intelligence</div>
       <div class="hero-btns" style="flex-shrink:0;margin-top:20px">
+        <button class="hero-btn" id="heroBellBtn" title="Notificaciones">🔔<span class="hero-bell-badge" id="heroBellBadge" style="display:none">0</span></button>
         <button class="hero-btn" id="themeToggle" title="Cambiar color">🌙</button>
         <button class="hero-btn" id="langToggleBtn" title="Cambiar idioma" style="font-size:9px;font-weight:900;letter-spacing:.5px;">EN</button>
       </div>
@@ -6442,8 +6444,9 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
         <div id="planDepartureSection">
         <div class="form-section-label">📅 Día y Hora de Salida</div>
         <div class="trip-params-grid">
-          <div class="param-box full-width">
-            <input type="datetime-local" id="departureInput" class="departure-input" />
+          <div class="param-box full-width" style="position:relative;min-height:54px;">
+            <div id="departureDisplay" class="departure-display"></div>
+            <input type="datetime-local" id="departureInput" class="departure-input" onchange="updateDepartureDisplay()" />
           </div>
           <div class="param-box" style="display:none">
             <label id="lblHours">⏱️ Horas disponibles</label>
@@ -12899,7 +12902,16 @@ function setDepartureNow() {
 }
 
 function updateDepartureDisplay() {
-  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
+  const input   = document.getElementById('departureInput');
+  const display = document.getElementById('departureDisplay');
+  if (!display) return;
+  if (!input || !input.value) { display.textContent = '📅 SELECCIONAR FECHA'; return; }
+  const dt  = new Date(input.value);
+  const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const day = String(dt.getDate()).padStart(2,'0');
+  const h = dt.getHours(), m = dt.getMinutes();
+  const ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
+  display.textContent = `${day} ${MON[dt.getMonth()]} ${dt.getFullYear()} · ${h12}:${String(m).padStart(2,'0')} ${ap}`;
 }
 
 
@@ -13981,6 +13993,16 @@ function fmtTime(d) {
 function fmtDateTime(d) {
   const dt = new Date(d);
   return dt.toLocaleDateString(lang==='es'?'es-ES':'en-US',{month:'short',day:'numeric'}) + ' ' + fmtTime(dt);
+}
+// Formato militar: "18 JUN 2026 · 12:34 PM" — sin el "at" que iOS inserta con toLocaleString()
+function _fmtMilDateTime(ts) {
+  if (!ts) return '';
+  const dt = new Date(ts);
+  const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const day = String(dt.getDate()).padStart(2,'0');
+  const h = dt.getHours(), m = dt.getMinutes();
+  const ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
+  return `${day} ${MON[dt.getMonth()]} ${dt.getFullYear()} · ${h12}:${String(m).padStart(2,'0')} ${ap}`;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -21837,7 +21859,7 @@ function renderHistoryList() {
     return;
   }
   list.innerHTML = routeHistory.map((h, i) => {
-    const date = new Date(h.date).toLocaleDateString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+    const date = _fmtMilDateTime(h.date);
     const wpsHtml = h.waypoints?.length
       ? '<div class="hist-waypoints">via ' + h.waypoints.map(w => `<span class="hist-stop-chip">${w.split(',')[0]}</span>`).join('') + '</div>'
       : '';
@@ -23525,7 +23547,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v45-road-shield';
+  window.APP_BUILD = 'v46-bell-btn';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
@@ -28537,8 +28559,8 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       } else if (st === 'completed' || st === 'rejected'){
         actions = `<button class="drv-route-btn map" data-act="map" data-id="${r.id}">🗺️ Ver en mapa</button>`;
       }
-      const pickTime  = r.pickupTime   ? `<div class="drv-route-leg-time">🕐 ${escapeHtml(new Date(r.pickupTime).toLocaleString())}</div>` : '';
-      const dropTime  = r.deliveryTime ? `<div class="drv-route-leg-time" style="color:#fb923c">🕐 ${escapeHtml(new Date(r.deliveryTime).toLocaleString())}</div>` : '';
+      const pickTime  = r.pickupTime   ? `<div class="drv-route-leg-time">🕐 ${escapeHtml(_fmtMilDateTime(r.pickupTime))}</div>` : '';
+      const dropTime  = r.deliveryTime ? `<div class="drv-route-leg-time" style="color:#fb923c">🕐 ${escapeHtml(_fmtMilDateTime(r.deliveryTime))}</div>` : '';
       const pickRef   = r.pickupRef    ? `<div style="font-size:11px;color:#e2e8f0;margin-top:2px"><b>📞 ${escapeHtml(r.pickupRef)}</b></div>` : '';
       const dropRef   = r.deliveryRef  ? `<div style="font-size:11px;color:#e2e8f0;margin-top:2px"><b>📞 ${escapeHtml(r.deliveryRef)}</b></div>` : '';
       return `
