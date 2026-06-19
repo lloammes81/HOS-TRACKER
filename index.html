@@ -17683,10 +17683,18 @@ function showHosDashboard() {
       const _dLeftSecs = window._hosTracker
         ? Math.max(0, Math.floor(window._hosTracker.driveLeft() * 3600))
         : 0;
-      // Segundos RESTANTES de manejo (cuenta regresiva, igual que el anillo y
-      // los H/M): bajan 59→00 mientras se maneja; quietos al estar detenido,
-      // porque el tiempo de manejo solo corre cuando el vehículo se mueve.
-      _sc.textContent = String(_dLeftSecs % 60).padStart(2, '0');
+      // Segundos de la regresiva ACTIVA, para que el dashboard se vea vivo y sea
+      // un conteo real:
+      //  • Manejando → segundos del tiempo de MANEJO (baja al rodar).
+      //  • Parado pero EN TURNO → segundos de la ventana de 14h (corre en tiempo
+      //    real aunque estés detenido) → tic-tac continuo 59→00.
+      //  • Sin turno → queda quieto (no hay reloj corriendo, es correcto).
+      const _moving = (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving);
+      let _activeSecs = _dLeftSecs;
+      if (!_moving && typeof hosShiftStartTime !== 'undefined' && hosShiftStartTime) {
+        _activeSecs = Math.max(0, Math.floor(14 * 3600 - (Date.now() - hosShiftStartTime) / 1000));
+      }
+      _sc.textContent = String(_activeSecs % 60).padStart(2, '0');
       _sc.style.color = _dLeftSecs < 3600 ? (_dLeftSecs < 1800 ? '#ef4444' : '#f59e0b') : 'rgba(255,255,255,0.75)';
     }
     const dMax = Math.min(
@@ -23723,7 +23731,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v50-rings';
+  window.APP_BUILD = 'v51-rings';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
