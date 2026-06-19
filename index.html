@@ -10623,6 +10623,78 @@ let lastWxData = null;
 // lluvia para no alarmar con clima de otra ubicación; solo mostramos el dato.
 let _wxFromIP = false;
 
+// Mapea la descripción de texto de NWS a un código WMO (para reusar nuestros
+// íconos). Si no hay precipitación textual, decide por nubosidad.
+function nwsTextToCode(text, cloud, precipMm) {
+  const t = (text || '').toLowerCase();
+  if (/thunder|t-storm|tstm/.test(t)) return 95;
+  if (/freezing/.test(t)) return 66;
+  if (/snow|sleet|flurr|wintry|ice pellet|blizzard/.test(t)) return 71;
+  if (/rain|shower|drizzle/.test(t)) return 61;
+  if (/fog|mist|haze|smoke/.test(t)) return 45;
+  const cc = (cloud == null) ? 50 : cloud;
+  if (/sunny|clear|fair/.test(t)) return cc < 25 ? 0 : 1;
+  return cc < 25 ? 0 : cc < 70 ? 2 : 3;
+}
+
+// Estación NWS cacheada por ubicación (evita rehacer points→stations cada vez).
+let _nwsStationCache = {};
+
+// Condiciones ACTUALES desde NWS / weather.gov (observación real de estación).
+// Solo cubre EE.UU. y territorios; fuera de ahí devuelve null. Es la misma
+// fuente gubernamental que alimenta a la app del iPhone, así que coincide.
+async function fetchNWSCurrent(lat, lon) {
+  try {
+    const H = { headers: { 'Accept': 'application/geo+json' } };
+    const key = lat.toFixed(2) + ',' + lon.toFixed(2);
+    let stationUrl = (_nwsStationCache[key] && (Date.now() - _nwsStationCache[key].ts < 6*3600*1000))
+      ? _nwsStationCache[key].url : null;
+    if (!stationUrl) {
+      const pr = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`, H);
+      if (!pr.ok) return null;
+      const pj = await pr.json();
+      const stationsUrl = pj.properties && pj.properties.observationStations;
+      if (!stationsUrl) return null;
+      const sr = await fetch(stationsUrl, H);
+      if (!sr.ok) return null;
+      const sj = await sr.json();
+      const first = sj.features && sj.features[0] && sj.features[0].id;
+      if (!first) return null;
+      stationUrl = first + '/observations/latest';
+      _nwsStationCache[key] = { url: stationUrl, ts: Date.now() };
+    }
+    const or = await fetch(stationUrl, H);
+    if (!or.ok) return null;
+    const p = (await or.json()).properties;
+    if (!p) return null;
+    const cToF = c => (c == null ? null : Math.round(c * 9/5 + 32));
+    const out = {};
+    const tF = cToF(p.temperature && p.temperature.value);
+    if (tF != null) out.temp = tF;
+    const fl = cToF((p.heatIndex && p.heatIndex.value) ?? (p.windChill && p.windChill.value));
+    if (fl != null) out.feelsLike = fl; else if (tF != null) out.feelsLike = tF;
+    if (p.windSpeed && p.windSpeed.value != null) {
+      const u = p.windSpeed.unitCode || ''; let mph = p.windSpeed.value;
+      if (/km_h|km\/h/i.test(u)) mph *= 0.621371; else if (/m_s|m\/s/i.test(u)) mph *= 2.23694;
+      out.wind = Math.round(mph);
+    }
+    if (p.relativeHumidity && p.relativeHumidity.value != null) out.humidity = Math.round(p.relativeHumidity.value);
+    const precipMm = (p.precipitationLastHour && p.precipitationLastHour.value);
+    if (precipMm != null) out.precip = precipMm;
+    if (Array.isArray(p.cloudLayers) && p.cloudLayers.length) {
+      const amt = (p.cloudLayers[p.cloudLayers.length-1].amount || '').toUpperCase();
+      const map = { CLR:0, SKC:0, FEW:20, SCT:40, BKN:75, OVC:100, VV:100 };
+      if (amt in map) out.cloud = map[amt];
+    }
+    const text = (p.textDescription || '').trim();
+    if (text) out.desc = text;
+    out.isDay = !/\/night\//i.test(p.icon || '');
+    out.code = nwsTextToCode(text, out.cloud, precipMm);
+    out.source = 'nws';
+    return out;
+  } catch { return null; }
+}
+
 async function fetchWeather(lat, lon) {
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
@@ -10634,7 +10706,7 @@ async function fetchWeather(lat, lon) {
     const d = await r.json();
     const c = d.current;
     const code = c.weather_code ?? c.weathercode ?? 0;
-    return {
+    const wx = {
       code      : code,
       temp      : Math.round(c.temperature_2m),
       wind      : Math.round(c.windspeed_10m),
@@ -10646,9 +10718,28 @@ async function fetchWeather(lat, lon) {
       humidity  : Math.round(c.relativehumidity_2m ?? 0),
       hourly    : d.hourly || null,
       daily     : d.daily  || null,
+      source    : 'open-meteo',
       fetchedAt : Date.now()
     };
-  } catch { return null; }
+    // Condiciones ACTUALES desde NWS (EE.UU.) — coincide con la app del iPhone.
+    // El pronóstico por horas/días sigue viniendo de Open-Meteo. Con timeout
+    // para no bloquear si NWS está lento/caído.
+    try {
+      const nws = await Promise.race([
+        fetchNWSCurrent(lat, lon),
+        new Promise(res => setTimeout(() => res(null), 6000))
+      ]);
+      if (nws) Object.assign(wx, nws); // sobreescribe los campos actuales
+    } catch {}
+    return wx;
+  } catch {
+    // Open-Meteo falló: intentar al menos NWS por su cuenta.
+    try {
+      const nws = await fetchNWSCurrent(lat, lon);
+      if (nws) return Object.assign({ hourly:null, daily:null, fetchedAt:Date.now() }, nws);
+    } catch {}
+    return null;
+  }
 }
 
 function refreshDashWeather() {
@@ -10694,7 +10785,9 @@ function updateWeatherWidget(wx) {
   // Código/descripción de VISUALIZACIÓN: si el modelo dice lluvia/tormenta pero
   // no cae nada, mostramos el estado real (despejado/nublado), no tormenta.
   const _dispCode = wxDisplayCode(wx);
-  const _dispDesc = WX_DESC[_dispCode] || wx.desc;
+  // Si no hubo override, preferir la descripción real de la fuente (NWS da
+  // texto natural tipo "Sunny", "Mostly Cloudy").
+  const _dispDesc = (_dispCode === wx.code && wx.desc) ? wx.desc : (WX_DESC[_dispCode] || wx.desc);
   const wxIconTxt = (!wx.isDay && WX_ICONS_NIGHT[_dispCode]) ? WX_ICONS_NIGHT[_dispCode] : (WX_ICONS[_dispCode] || '🌡️');
   const wxTempTxt = `${wx.temp}°F`;
   const wxWindTxt = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
@@ -11131,7 +11224,7 @@ function _renderWeatherPanel() {
   const icon = (!wx.isDay && WX_ICONS_NIGHT[_pDisp]) ? WX_ICONS_NIGHT[_pDisp] : (WX_ICONS[_pDisp] || '🌡️');
   document.getElementById('wxPanelIconBig').textContent = icon;
   document.getElementById('wxPanelTempBig').textContent = `${wx.temp}°`;
-  document.getElementById('wxPanelDescBig').textContent = WX_DESC[_pDisp] || wx.desc;
+  document.getElementById('wxPanelDescBig').textContent = (_pDisp === wx.code && wx.desc) ? wx.desc : (WX_DESC[_pDisp] || wx.desc);
   document.getElementById('wxPanelFeels').textContent   = `${wx.feelsLike}°F`;
   document.getElementById('wxPanelWind').textContent    = wx.wind;
   document.getElementById('wxPanelHumidity').textContent = `${wx.humidity}%`;
@@ -23628,7 +23721,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v48-rain-fix';
+  window.APP_BUILD = 'v49-nws';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
