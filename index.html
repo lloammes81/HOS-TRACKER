@@ -10571,6 +10571,12 @@ const WX_DANGER_CODES = new Set([
   95,96,99,71,73,75,77,85,86,66,67,82
 ]);
 const WX_WARNING_CODES = new Set([55,65,61,63,56,57,80,81,51,53]);
+// Códigos que SON precipitación (lluvia/llovizna/aguaceros/nieve/hielo). Para
+// estos solo alertamos si Open-Meteo reporta precipitación real (mm > 0): el
+// weather_code del modelo a veces dice "lluvia" para la celda aunque NO esté
+// lloviendo en el punto exacto. Las tormentas eléctricas (95/96/99) NO entran
+// aquí: son peligrosas aunque la precipitación instantánea sea 0.
+const WX_PRECIP_CODES = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86]);
 
 const WX_DESC = {
   0:'Clear sky', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast',
@@ -10665,6 +10671,11 @@ function updateWeatherWidget(wx) {
   lastWxData = wx;
   const isDanger  = WX_DANGER_CODES.has(wx.code);
   const isWarning = WX_WARNING_CODES.has(wx.code);
+  // ¿Está precipitando DE VERDAD ahora? Si el código es de lluvia/nieve pero no
+  // hay mm medidos, no es lluvia real: no alarmamos ni pintamos el efecto.
+  const _isPrecipCode = WX_PRECIP_CODES.has(wx.code);
+  const _actuallyWet  = (wx.precip == null) ? true : (Number(wx.precip) > 0);
+  const precipOk = !_isPrecipCode || _actuallyWet; // true = sí podemos alertar
   const wxIconTxt = (!wx.isDay && WX_ICONS_NIGHT[wx.code]) ? WX_ICONS_NIGHT[wx.code] : (WX_ICONS[wx.code] || '🌡️');
   const wxTempTxt = `${wx.temp}°F`;
   const wxWindTxt = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
@@ -10679,9 +10690,11 @@ function updateWeatherWidget(wx) {
   if (hWind) hWind.textContent = wxWindTxt;
   refreshDashWeather();
 
-  // Sólo alertamos si la ubicación es precisa (GPS). Con ubicación por IP el
-  // clima puede ser de otra ciudad, así que no disparamos tormentas/lluvia.
-  if (isDanger && !_wxFromIP) {
+  // Solo alertamos cuando (a) la ubicación es precisa (GPS, no IP) Y (b) hay
+  // precipitación real. Con IP el clima puede ser de otra ciudad; y si el
+  // código dice lluvia sin mm medidos, no está lloviendo de verdad.
+  const _canAlert = !_wxFromIP && precipOk;
+  if (isDanger && _canAlert) {
     showToast('danger','⛈️','⚠️ DANGEROUS WEATHER',
       `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Consider pulling over.`, 45000);
     flashDanger(3000);
@@ -10690,12 +10703,12 @@ function updateWeatherWidget(wx) {
     // notificación (toast) de arriba. El banner y el efecto de lluvia/nieve se
     // mantienen vía showWeatherEffect().
     showWeatherEffect(wx.code, wx.wind);
-  } else if (isWarning && !_wxFromIP) {
+  } else if (isWarning && _canAlert) {
     showToast('warning','🌧️','Weather Alert',
       `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Drive with caution.`, 8000);
     showWeatherEffect(wx.code, wx.wind);
   }
-  // Wind warning independent
+  // Wind warning independent (no depende de precipitación, pero sí de GPS)
   if (wx.wind >= 40 && !isDanger && !_wxFromIP) {
     showToast('warning','💨','High Wind Warning',
       `${wx.wind}mph winds — Risk of rollover for high-profile trucks!`, 8000);
@@ -10703,9 +10716,10 @@ function updateWeatherWidget(wx) {
   }
   document.getElementById('weatherStatusTxt').textContent =
     `${WX_ICONS[wx.code]||'🌡️'} ${wx.temp}°F · ${wx.desc}`;
-  // Con ubicación por IP no pintamos el efecto persistente de lluvia/nieve
-  // (clima de otra ubicación); dejamos la tarjeta despejada.
-  applyHeroWeatherFx(_wxFromIP ? 0 : wx.code, _wxFromIP ? 0 : wx.wind);
+  // El efecto persistente de lluvia/nieve solo si la ubicación es precisa Y
+  // realmente está precipitando. El viento se conserva con GPS preciso aunque
+  // no llueva (para que el efecto de viento siga funcionando).
+  applyHeroWeatherFx(_canAlert ? wx.code : 0, _wxFromIP ? 0 : wx.wind);
 }
 
 /* ═══════════════════════════════════════════════════════════
