@@ -22375,12 +22375,12 @@ function renderCommPage() {
         '<div class="comm-card-top">' +
           '<div class="comm-card-ico" style="background:' + cfg.bg + '">' + cfg.emoji + '</div>' +
           '<div class="comm-card-body">' +
-            '<div class="comm-card-title">' + cfg.label + (r.interstates?.length ? ' · <span style="color:' + cfg.color + ';font-size:11px">' + r.interstates.slice(0,2).join(' ') + '</span>' : '') + '</div>' +
-            (r.comment ? '<div class="comm-card-comment">"' + r.comment + '"</div>' : '') +
+            '<div class="comm-card-title">' + crEsc(cfg.label) + (r.interstates?.length ? ' · <span style="color:' + cfg.color + ';font-size:11px">' + crEsc(r.interstates.slice(0,2).join(' ')) + '</span>' : '') + '</div>' +
+            (r.comment ? '<div class="comm-card-comment">"' + crEsc(r.comment) + '"</div>' : '') +
             '<div class="comm-card-footer">' +
               '<div class="comm-card-user">' +
                 '<div class="comm-card-user-dot" style="background:' + cfg.bg + '">' + uEmoji + '</div>' +
-                '<span class="comm-card-user-name">' + uName + '</span>' +
+                '<span class="comm-card-user-name">' + crEsc(uName) + '</span>' +
               '</div>' +
               '<span class="comm-card-meta">· ' + age + '</span>' +
               (dist ? '<span class="comm-card-dist">· ' + dist + '</span>' : '') +
@@ -23279,14 +23279,14 @@ function renderRouteAlertBanners() {
       ? haversine(window.lastFixFm.lat, window.lastFixFm.lon, r.lat, r.lon).toFixed(1) + ' mi ahead'
       : 'on your route';
     const user = r.userName || r.reportedByName || 'Anonymous';
-    const comment = r.comment ? '"' + r.comment + '"' : '';
+    const comment = r.comment ? '"' + crEsc(r.comment) + '"' : '';
 
     return '<div class="comm-route-alert">' +
       '<div class="comm-alert-icon">' + cfg.emoji + '</div>' +
       '<div class="comm-alert-body">' +
-        '<div class="comm-alert-title">🛣️ ' + cfg.label + ' on your route</div>' +
+        '<div class="comm-alert-title">🛣️ ' + crEsc(cfg.label) + ' on your route</div>' +
         '<div class="comm-alert-detail">' + (comment ? comment + '<br>' : '') + dist + '</div>' +
-        '<div class="comm-alert-meta">Posted by ' + user + ' · ' + age + '</div>' +
+        '<div class="comm-alert-meta">Posted by ' + crEsc(user) + ' · ' + age + '</div>' +
       '</div>' +
       '<div class="comm-alert-dismiss" onclick="dismissRouteAlert(' + r.id + ')">✕</div>' +
     '</div>';
