@@ -10571,12 +10571,13 @@ const WX_DANGER_CODES = new Set([
   95,96,99,71,73,75,77,85,86,66,67,82
 ]);
 const WX_WARNING_CODES = new Set([55,65,61,63,56,57,80,81,51,53]);
-// Códigos que SON precipitación (lluvia/llovizna/aguaceros/nieve/hielo). Para
-// estos solo alertamos si Open-Meteo reporta precipitación real (mm > 0): el
-// weather_code del modelo a veces dice "lluvia" para la celda aunque NO esté
-// lloviendo en el punto exacto. Las tormentas eléctricas (95/96/99) NO entran
-// aquí: son peligrosas aunque la precipitación instantánea sea 0.
-const WX_PRECIP_CODES = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86]);
+// Códigos que SON precipitación (lluvia/llovizna/aguaceros/nieve/hielo/tormenta).
+// Para estos solo alertamos si Open-Meteo reporta precipitación real (mm > 0):
+// el weather_code del modelo a veces dice "lluvia" o incluso "thunderstorm"
+// para la celda aunque NO esté cayendo nada en el punto exacto (caso real:
+// "Thunderstorm, 4 mph viento, 0 mm" en cielo despejado). Si no hay mm medidos,
+// no alarmamos.
+const WX_PRECIP_CODES = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99]);
 
 const WX_DESC = {
   0:'Clear sky', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast',
@@ -23608,7 +23609,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v46-bell-btn';
+  window.APP_BUILD = 'v48-rain-fix';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
