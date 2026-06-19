@@ -10630,6 +10630,10 @@ const WX_ICONS_NIGHT = {
 };
 
 let lastWxData = null;
+// true cuando la ubicación del clima vino de geolocalización por IP (imprecisa,
+// puede estar a cientos de km). En ese caso NO disparamos alertas de tormenta/
+// lluvia para no alarmar con clima de otra ubicación; solo mostramos el dato.
+let _wxFromIP = false;
 
 async function fetchWeather(lat, lon) {
   try {
@@ -10707,7 +10711,9 @@ function updateWeatherWidget(wx) {
   if (hWind) hWind.textContent = wxWindTxt;
   refreshDashWeather();
 
-  if (isDanger) {
+  // Sólo alertamos si la ubicación es precisa (GPS). Con ubicación por IP el
+  // clima puede ser de otra ciudad, así que no disparamos tormentas/lluvia.
+  if (isDanger && !_wxFromIP) {
     showToast('danger','⛈️','⚠️ DANGEROUS WEATHER',
       `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Consider pulling over.`, 45000);
     flashDanger(3000);
@@ -10716,20 +10722,22 @@ function updateWeatherWidget(wx) {
     // notificación (toast) de arriba. El banner y el efecto de lluvia/nieve se
     // mantienen vía showWeatherEffect().
     showWeatherEffect(wx.code, wx.wind);
-  } else if (isWarning) {
+  } else if (isWarning && !_wxFromIP) {
     showToast('warning','🌧️','Weather Alert',
       `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Drive with caution.`, 8000);
     showWeatherEffect(wx.code, wx.wind);
   }
   // Wind warning independent
-  if (wx.wind >= 40 && !isDanger) {
+  if (wx.wind >= 40 && !isDanger && !_wxFromIP) {
     showToast('warning','💨','High Wind Warning',
       `${wx.wind}mph winds — Risk of rollover for high-profile trucks!`, 8000);
     showWeatherEffect(wx.code, wx.wind);
   }
   document.getElementById('weatherStatusTxt').textContent =
     `${WX_ICONS[wx.code]||'🌡️'} ${wx.temp}°F · ${wx.desc}`;
-  applyHeroWeatherFx(wx.code, wx.wind);
+  // Con ubicación por IP no pintamos el efecto persistente de lluvia/nieve
+  // (clima de otra ubicación); dejamos la tarjeta despejada.
+  applyHeroWeatherFx(_wxFromIP ? 0 : wx.code, _wxFromIP ? 0 : wx.wind);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -10926,17 +10934,18 @@ async function startWeatherMonitor() {
 
   const updateNow = async () => {
     let lat = null, lon = null;
+    let fromIP = _wxFromIP; // pasos 1-3 = GPS preciso; paso 5 = IP; paso 4 hereda
     const FRESH_MS = 5 * 60 * 1000; // sólo usar fixes de hasta 5 min para que el clima sea el actual
     const now = Date.now();
     // 1. Best source: live tracker GPS fix — sólo si es reciente
     if (window.lastFixFm && window.lastFixFm.lat != null
         && (now - (window.lastFixFm.ts || 0)) < FRESH_MS) {
-      lat = window.lastFixFm.lat; lon = window.lastFixFm.lon;
+      lat = window.lastFixFm.lat; lon = window.lastFixFm.lon; fromIP = false;
     }
     // 2. GPS cache from warm watcher — sólo si es reciente
     if (lat == null && _gpsCache && _gpsCache.lat != null
         && (now - (_gpsCache.timestamp || 0)) < FRESH_MS) {
-      lat = _gpsCache.lat; lon = _gpsCache.lon;
+      lat = _gpsCache.lat; lon = _gpsCache.lon; fromIP = false;
     }
     // 3. Fresh GPS request (longer timeout to give it a real chance)
     if (lat == null) {
@@ -10944,9 +10953,10 @@ async function startWeatherMonitor() {
         const pos = await getGPSPosition(30000, 12000);
         lat = pos.coords ? pos.coords.latitude  : pos.lat;
         lon = pos.coords ? pos.coords.longitude : pos.lon;
+        fromIP = false;
       } catch {}
     }
-    // 4. Last known weather coords
+    // 4. Last known weather coords (hereda el origen previo)
     if (lat == null && lastWeatherLat != null) {
       lat = lastWeatherLat; lon = lastWeatherLon;
     }
@@ -10955,11 +10965,12 @@ async function startWeatherMonitor() {
       try {
         const r = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
         const d = await r.json();
-        if (d.latitude) { lat = d.latitude; lon = d.longitude; }
+        if (d.latitude) { lat = d.latitude; lon = d.longitude; fromIP = true; }
       } catch {}
     }
     if (lat == null) return;
     lastWeatherLat = lat; lastWeatherLon = lon;
+    _wxFromIP = fromIP;
     const wx = await fetchWeather(lat, lon);
     if (wx) updateWeatherWidget(wx);
   };
@@ -16707,6 +16718,7 @@ function fmStartTracking() {
     window.lastFixFm = { lat, lon, acc, ts: Date.now() };
     // Refresh weather when position moves more than ~6 miles from last weather fetch
     if (lastWeatherLat == null || haversine(lat, lon, lastWeatherLat, lastWeatherLon) > 6) {
+      lastWeatherLat = lat; lastWeatherLon = lon; _wxFromIP = false; // fix de GPS en vivo: ubicación precisa
       if (typeof fetchWeather === 'function') fetchWeather(lat, lon).then(wx => { if (wx) updateWeatherWidget(wx); });
     }
     // Refresh upcoming stops list every ~2 miles of movement
