@@ -158,59 +158,88 @@
   ══════════════════════════════════════════ */
   .tab-bar {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
+    background: transparent;
+    border-top: none;
     display: flex;
     height: var(--tab-h);
-    padding-bottom: var(--sab);
+    padding: 8px 12px var(--sab) 12px;
     padding-left: var(--sal);
     padding-right: var(--sar);
-    box-shadow: 0 -1px 0 var(--border), 0 -8px 24px rgba(0,0,0,0.06);
-    /* glass effect on iOS */
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    background: rgba(255,255,255,0.88);
+    gap: 0;
+    justify-content: center;
+    align-items: center;
   }
   body.dark .tab-bar {
-    background: rgba(19,25,41,0.92);
-    border-top-color: var(--border);
+    background: transparent;
   }
-  .tab-btn {
-    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 3px; border: none; background: none; color: var(--muted);
-    font-family: 'Bebas Neue', 'Share Tech Mono', monospace; font-size: 12px; font-weight: 400;
-    letter-spacing: 1.5px; text-transform: uppercase;
-    cursor: pointer; padding: 8px 0 4px;
-    transition: color .18s;
-    /* Minimum 44px touch target */
-    min-height: 44px;
-    position: relative;
-  }
-  .tab-btn::before {
-    content: '';
-    position: absolute; inset: 0;
-    border-radius: 12px;
-    background: var(--accent);
-    opacity: 0;
-    transform: scale(0.7);
-    transition: opacity .18s, transform .18s;
-  }
-  .tab-btn:active::before { opacity: 0.08; transform: scale(1); }
-  .tab-btn svg {
-    width: 28px; height: 28px; fill: none; stroke: currentColor;
-    stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
-    transition: transform .2s;
-  }
-  .tab-btn.active { color: var(--accent); }
-  .tab-btn.active svg { transform: translateY(-1px); }
-  /* Active dot indicator */
-  .tab-btn.active::after {
+  .tab-bar::before {
     content: '';
     position: absolute;
-    bottom: calc(var(--sab) + 4px);
-    width: 4px; height: 4px;
-    border-radius: 50%;
-    background: var(--accent);
+    bottom: 8px;
+    left: 12px;
+    right: 12px;
+    height: 56px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 28px;
+    backdrop-filter: blur(20px);
+    z-index: -1;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    font-family: 'Bebas Neue', 'Share Tech Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 8px 0 4px;
+    transition: all 0.25s ease;
+    min-height: 44px;
+    position: relative;
+    max-width: 70px;
+    border-radius: 20px;
+  }
+  .tab-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    fill: none;
+    transition: all 0.25s ease;
+  }
+  .tab-btn.active {
+    color: #ffffff;
+    background: rgba(0,0,0,0.3);
+    border-radius: 20px;
+  }
+  .tab-btn.active svg {
+    stroke-width: 2;
+    filter: drop-shadow(0 0 8px rgba(16,185,129,0.3));
+  }
+  .tab-btn::before {
+    display: none;
+  }
+  .tab-btn:active {
+    transform: scale(0.95);
+  }
+  .tab-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: all 0.25s ease;
   }
 
   /* ══════════════════════════════════════════
