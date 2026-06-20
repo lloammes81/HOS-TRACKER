@@ -20756,6 +20756,13 @@ function checkNearbyReports(lat, lon) {
 // Legacy startTracking/stopTracking still used by old monitor modal
 function startTracking() {
   if (!origin || !destination) { alert(t('errSel')); return; }
+  // 14H window starts the moment the driver begins a trip (DOT: from first on-duty action).
+  // Must start even if vehicle hasn't moved yet — the 14H is wall-clock, not drive-time.
+  if (!hosShiftStartTime) {
+    hosShiftStartTime = Date.now();
+    try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e) {}
+    if (typeof update14hCircle === 'function') update14hCircle();
+  }
   openFullMapScreen();
 }
 
@@ -29349,7 +29356,14 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       if (!_shiftStart){ _shiftStart = new Date(); }
       if (typeof hosShiftStartTime !== 'undefined') {
         const _shiftAgeH = hosShiftStartTime ? (Date.now() - hosShiftStartTime) / 3600000 : 0;
-        if (!hosShiftStartTime || _shiftAgeH >= 14) {
+        // Only reset the 14H window when: no shift exists yet (no destination was set),
+        // OR the previous 14H window has fully expired (>= 14h ago).
+        // Never override a shift that was started when the user set a destination.
+        if (_shiftAgeH >= 14) {
+          hosShiftStartTime = Date.now();
+          try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
+          if (typeof update14hCircle === 'function') update14hCircle();
+        } else if (!hosShiftStartTime) {
           hosShiftStartTime = Date.now();
           try { localStorage.setItem('hos_shift_start', hosShiftStartTime); } catch(e){}
           if (typeof update14hCircle === 'function') update14hCircle();
