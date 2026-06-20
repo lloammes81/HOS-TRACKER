@@ -6300,11 +6300,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40" style="stroke:#f59e0b"/>
         </svg>
         <div class="hero-kpi-inner" style="gap:0;">
-          <div class="hero-kpi-val" id="heroValTurno" style="font-size:18px;letter-spacing:2px;">--:--</div>
-          <div class="hero-kpi-lbl" id="heroTurnoSub" style="color:rgba(170,190,210,0.35)">GPS ○</div>
-          <div style="width:22px;height:0.5px;background:rgba(255,255,255,.12);margin:2px 0;"></div>
-          <div class="hero-kpi-val" id="heroValTurno2" style="font-size:14px;color:rgba(170,190,210,0.55);letter-spacing:2px;">--:--</div>
-          <div class="hero-kpi-lbl" id="eldBtBadge" style="font-size:9px;color:rgba(170,190,210,0.35)">🔵</div>
+          <div class="hero-kpi-lbl" id="heroEldStatusLabel" style="font-size:13px;font-weight:800;letter-spacing:1px;color:#f59e0b">GPS</div>
         </div>
       </div>
 
@@ -25202,19 +25198,16 @@ let eldDeviceName = '';
 function _updateELDRingUI() {
   const arc = document.getElementById('heroArcTurno');
   const track = document.getElementById('heroTrackTurno');
-  const subT = document.getElementById('heroTurnoSub');
-  const btBadge = document.getElementById('eldBtBadge');
+  const label = document.getElementById('heroEldStatusLabel');
 
   if (eldConnected) {
     if (arc) arc.style.stroke = '#10b981';
     if (track) track.style.stroke = 'rgba(16,185,129,0.18)';
-    if (subT) { subT.textContent = 'ELD ●'; subT.style.color = '#10b981'; }
-    if (btBadge) { btBadge.textContent = '📶'; btBadge.style.color = '#10b981'; }
+    if (label) { label.textContent = 'ELD'; label.style.color = '#10b981'; }
   } else {
     if (arc) arc.style.stroke = '#f59e0b';
     if (track) track.style.stroke = 'rgba(245,158,11,0.18)';
-    if (subT) { subT.textContent = 'GPS ○'; subT.style.color = 'rgba(170,190,210,0.45)'; }
-    if (btBadge) { btBadge.textContent = '🔵'; btBadge.style.color = 'rgba(170,190,210,0.35)'; }
+    if (label) { label.textContent = 'GPS'; label.style.color = '#f59e0b'; }
   }
 }
 
@@ -29464,17 +29457,14 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     // Anillo 1: Turno — 14h shift window progress (handled by _syncHeroArcStatus below)
     const valT = document.getElementById('heroValTurno');
     if (valT) valT.textContent = _shiftStart ? _fmt(_shiftStart) : '--:--';
-    const subT = document.getElementById('heroTurnoSub');
-    if (subT){
+    const label = document.getElementById('heroEldStatusLabel');
+    if (label){
       if (eldConnected) {
-        subT.textContent = 'ELD ●';
-        subT.style.color = '#10b981';
-      } else if (_gpsActive) {
-        subT.textContent = _isMoving ? `${_speed} mph` : 'GPS ●';
-        subT.style.color = '#f59e0b';
+        label.textContent = 'ELD';
+        label.style.color = '#10b981';
       } else {
-        subT.textContent = 'GPS ○';
-        subT.style.color = 'rgba(170,190,210,0.35)';
+        label.textContent = 'GPS';
+        label.style.color = '#f59e0b';
       }
     }
     const valT2 = document.getElementById('heroValTurno2');
