@@ -10988,15 +10988,43 @@ function applyHeroWeatherFx(wxCode, windSpeed) {
   }
 
   if (isRain || isThunder) {
-    const count = isThunder ? 70 : (wxCode >= 65 || wxCode === 82 ? 55 : 38);
-    const col   = isIce ? 'rgba(160,230,255,0.75)' : 'rgba(130,185,255,0.70)';
-    for (let i = 0; i < count; i++) {
+    // Drop count, size and speed scale with actual intensity
+    const dropCount =
+      isThunder           ? 85 :
+      wxCode === 82       ? 70 :  // violent showers
+      wxCode === 65       ? 58 :  // heavy rain
+      wxCode === 81       ? 45 :  // moderate showers
+      wxCode === 63       ? 40 :  // moderate rain
+      wxCode === 80       ? 28 :  // slight showers
+      wxCode === 61       ? 22 :  // slight rain
+      wxCode === 55       ? 30 :  // dense drizzle
+      wxCode === 53       ? 14 :  // moderate drizzle
+                            8;    // light drizzle (51)
+    const baseSpd =
+      isThunder           ? 0.22 :
+      wxCode === 82       ? 0.25 :
+      wxCode === 65       ? 0.28 :
+      wxCode === 63 || wxCode === 81 ? 0.33 :
+      wxCode === 61 || wxCode === 80 ? 0.40 :
+                            0.55; // drizzle: slow
+    const baseW =
+      isThunder || wxCode === 82 || wxCode === 65 ? 2.0 :
+      wxCode === 63 || wxCode === 81              ? 1.7 :
+      wxCode === 61 || wxCode === 80              ? 1.4 :
+                                                    1.0; // drizzle: thin
+    const baseH =
+      isThunder || wxCode === 82 || wxCode === 65 ? 22 :
+      wxCode === 63 || wxCode === 81              ? 17 :
+      wxCode === 61 || wxCode === 80              ? 13 :
+                                                     9; // drizzle: short
+    const col = isIce ? 'rgba(160,230,255,0.75)' : 'rgba(130,185,255,0.70)';
+    for (let i = 0; i < dropCount; i++) {
       const d = document.createElement('div');
-      const spd = (0.35 + Math.random() * 0.5).toFixed(2);
-      const delay = (Math.random() * 2).toFixed(2);
+      const spd = (baseSpd + Math.random() * baseSpd * 0.6).toFixed(2);
+      const delay = (Math.random() * 2.5).toFixed(2);
       d.style.cssText =
         `position:absolute;left:${(Math.random()*106-3).toFixed(1)}%;top:-20px;` +
-        `width:${(1.5+Math.random()*1).toFixed(1)}px;height:${(12+Math.random()*16).toFixed(0)}px;` +
+        `width:${(baseW + Math.random() * 0.8).toFixed(1)}px;height:${(baseH + Math.random() * 10).toFixed(0)}px;` +
         `background:${col};border-radius:2px;` +
         `animation:wxRainDrop ${spd}s linear ${delay}s infinite;`;
       fx.appendChild(d);
@@ -11050,11 +11078,33 @@ function showWeatherEffect(wxCode, windSpeed) {
   const isRain    = [51,53,55,61,63,65,80,81,82].includes(wxCode);
   const isWind    = windSpeed >= 40;
 
-  if (isThunder)      { type='thunder'; icon='⛈️'; title='TORMENTA ELÉCTRICA'; msg='Lluvia intensa y rayos. Considera estacionarte.'; borderColor='rgba(255,220,0,.4)'; duration=12000; }
-  else if (isSnow)    { type='snow';    icon='❄️'; title='NEVADA';             msg='Condiciones nevosas — reduce velocidad.'; borderColor='rgba(150,230,255,.4)'; duration=10000; }
-  else if (isIce)     { type='ice';     icon='🌧️❄️'; title='LLUVIA CONGELANTE'; msg='Superficies heladas — peligro extremo.'; borderColor='rgba(100,200,255,.4)'; duration=10000; }
-  else if (isRain)    { type='rain';    icon='🌧️'; title='LLUVIA';             msg='Visibilidad reducida — maneja con precaución.'; borderColor='rgba(100,160,255,.3)'; duration=8000; }
-  else if (isWind)    { type='wind';    icon='💨'; title='VIENTOS FUERTES';    msg=`Vientos ${windSpeed}mph — riesgo de volcadura.`; borderColor='rgba(200,220,255,.3)'; duration=8000; }
+  if (isThunder) {
+    type='thunder'; icon='⛈️'; borderColor='rgba(255,220,0,.4)'; duration=12000;
+    if (wxCode===99)      { title='TORMENTA CON GRANIZO FUERTE'; msg='Granizo intenso y rayos — estaciona el vehículo.'; }
+    else if (wxCode===96) { title='TORMENTA CON GRANIZO'; msg='Granizo y rayos activos. Busca refugio.'; }
+    else                  { title='TORMENTA ELÉCTRICA'; msg='Lluvia intensa y rayos. Considera estacionarte.'; }
+  } else if (isSnow) {
+    type='snow'; icon='❄️'; borderColor='rgba(150,230,255,.4)'; duration=10000;
+    if (wxCode===75||wxCode===86) { title='NEVADA INTENSA'; msg='Visibilidad muy baja — reduce velocidad al mínimo.'; }
+    else if (wxCode===73||wxCode===85) { title='NEVADA MODERADA'; msg='Nieve acumulándose — maneja con precaución.'; }
+    else                           { title='NEVADA LEVE'; msg='Condiciones nevosas — reduce velocidad.'; }
+  } else if (isIce) {
+    type='ice'; icon='🌧️❄️'; borderColor='rgba(100,200,255,.4)'; duration=10000;
+    title='LLUVIA CONGELANTE'; msg='Superficies heladas — peligro extremo en la carretera.';
+  } else if (isRain) {
+    type='rain'; borderColor='rgba(100,160,255,.3)';
+    if (wxCode===82)      { icon='⛈️';  title='AGUACEROS VIOLENTOS'; msg='Lluvia muy intensa — visibilidad extremadamente reducida.'; duration=10000; }
+    else if (wxCode===65) { icon='🌧️'; title='LLUVIA INTENSA'; msg='Lluvia fuerte — reduce velocidad y enciende luces.'; duration=9000; }
+    else if (wxCode===81) { icon='🌧️'; title='AGUACEROS MODERADOS'; msg='Aguaceros — maneja con precaución.'; duration=8000; }
+    else if (wxCode===63) { icon='🌧️'; title='LLUVIA MODERADA'; msg='Lluvia moderada — visibilidad reducida.'; duration=8000; }
+    else if (wxCode===80) { icon='🌦️'; title='AGUACEROS LEVES'; msg='Aguaceros intermitentes — mantén distancia.'; duration=7000; }
+    else if (wxCode===61) { icon='🌦️'; title='LLUVIA LEVE'; msg='Lluvia ligera — piso mojado.'; duration=6000; }
+    else if (wxCode===55) { icon='🌦️'; title='LLOVIZNA DENSA'; msg='Llovizna intensa — visibilidad reducida.'; duration=6000; }
+    else                  { icon='🌦️'; title='LLOVIZNA'; msg='Llovizna ligera — piso húmedo.'; duration=5000; }
+  } else if (isWind) {
+    type='wind'; icon='💨'; title='VIENTOS FUERTES'; borderColor='rgba(200,220,255,.3)'; duration=8000;
+    msg=`Vientos ${windSpeed}mph — riesgo de volcadura para vehículos pesados.`;
+  }
 
   if (!type) return;
 
@@ -11065,16 +11115,27 @@ function showWeatherEffect(wxCode, windSpeed) {
 
   // ── Rain / Ice / Thunder particles ──
   if (type === 'rain' || type === 'ice' || type === 'thunder') {
-    const count = type === 'thunder' ? 65 : 40;
+    const count =
+      type === 'thunder'  ? 85 :
+      wxCode === 82       ? 70 :
+      wxCode === 65       ? 55 :
+      wxCode === 81||wxCode===63 ? 40 :
+      wxCode === 80||wxCode===61 ? 25 :
+      wxCode === 55       ? 28 :
+      wxCode === 53       ? 14 : 8;
+    const baseSpd =
+      type === 'thunder'||wxCode===82||wxCode===65 ? 0.22 :
+      wxCode === 63||wxCode===81 ? 0.33 :
+      wxCode === 61||wxCode===80 ? 0.42 : 0.55;
+    const baseW = type==='thunder'||wxCode===82||wxCode===65 ? 2.2 : wxCode===63||wxCode===81 ? 1.8 : 1.3;
+    const baseH = type==='thunder'||wxCode===82||wxCode===65 ? 24 : wxCode===63||wxCode===81 ? 18 : 12;
     const col   = type === 'ice' ? 'rgba(140,220,255,0.7)' : 'rgba(100,170,255,0.65)';
     for (let i = 0; i < count; i++) {
       const d = document.createElement('div');
-      const w = 1.5 + Math.random();
-      const h = 14 + Math.random() * 20;
-      const spd = (0.45 + Math.random() * 0.65).toFixed(2);
+      const spd = (baseSpd + Math.random() * baseSpd * 0.6).toFixed(2);
       const delay = (Math.random() * 1.8).toFixed(2);
       d.style.cssText = `position:absolute;left:${(Math.random()*102-1).toFixed(1)}%;top:-30px;`+
-        `width:${w.toFixed(1)}px;height:${h}px;background:${col};border-radius:2px;`+
+        `width:${(baseW+Math.random()*0.8).toFixed(1)}px;height:${(baseH+Math.random()*12).toFixed(0)}px;background:${col};border-radius:2px;`+
         `animation:wxRainDrop ${spd}s linear ${delay}s infinite;`;
       canvas.appendChild(d);
     }
