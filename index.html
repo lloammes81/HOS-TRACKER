@@ -17572,14 +17572,22 @@ function _fmRestoreRoute(saved) {
     catch(e) { console.warn('Recalc falló:', e); }
   }, 300);
 
-  // Si la ruta tenía rastreo activo cuando se cerró la app, reanudarlo
-  // y mostrar el HOS Dashboard tras el recálculo.
+  // Restaurar navegación paso si estaba en medio
+  const restoredIdx = saved.navStepIdx || 0;
+  if (restoredIdx > 0 && typeof navStepIdx !== 'undefined') navStepIdx = restoredIdx;
+
+  // Mostrar dashboard automáticamente con toda la información precargar
+  // Si la ruta estaba siendo rastreada, continuar con GPS activo
   if (saved.wasTracking) {
     setTimeout(() => {
       try { fmStartTracking(); } catch(e) {}
       try { showHosDashboard(); } catch(e) {}
-      const restoredIdx = saved.navStepIdx || 0;
-      if (restoredIdx > 0) setTimeout(() => { if (typeof navStepIdx !== 'undefined') navStepIdx = restoredIdx; }, 300);
+    }, 1800);
+  } else {
+    // Ruta guardada pero no rastreando: mostrar dashboard preparado sin rastreo GPS
+    // El usuario puede empezar a rastrear cuando esté listo
+    setTimeout(() => {
+      try { showHosDashboard(); } catch(e) {}
     }, 1800);
   }
 }
