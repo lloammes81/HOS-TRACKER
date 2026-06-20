@@ -11700,11 +11700,11 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
       const arcCol = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
       arcD.style.stroke = arcCol; arcD.style.strokeDashoffset = C * (1 - pct);
       valD.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#c8d4e0';
-      // Mini anillo minutos
-      const arcMin = document.getElementById('heroArcMin');
+      // Mini badge minutos — actualizar color y texto
+      const badgeMin = document.getElementById('heroMinBadge');
       const valMin = document.getElementById('heroValMin');
-      if (arcMin){ arcMin.style.strokeDashoffset = (81.68 * (1 - m / 60)).toFixed(2); arcMin.style.stroke = arcCol; }
-      if (valMin) valMin.textContent = String(m).padStart(2,'0');
+      if (badgeMin) badgeMin.style.boxShadow = `0 0 0 2px ${arcCol},0 2px 8px rgba(0,0,0,0.6)`;
+      if (valMin) { valMin.textContent = String(m).padStart(2,'0'); valMin.style.color = arcCol; }
     }
   }
   const arcC = document.getElementById('heroArcCycle');
@@ -11717,11 +11717,11 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     const arcCol = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#10b981';
     arcC.style.stroke = arcCol; arcC.style.strokeDashoffset = C * (1 - pct);
     valC.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#c8d4e0';
-    // Mini anillo minutos ciclo
-    const arcCMin = document.getElementById('heroArcCycleMin');
+    // Mini badge minutos ciclo — actualizar color y texto
+    const badgeCMin = document.getElementById('heroCycleMinBadge');
     const valCMin = document.getElementById('heroValCycleMin');
-    if (arcCMin){ arcCMin.style.strokeDashoffset = (81.68 * (1 - m / 60)).toFixed(2); arcCMin.style.stroke = arcCol; }
-    if (valCMin) valCMin.textContent = String(m).padStart(2,'0');
+    if (badgeCMin) badgeCMin.style.boxShadow = `0 0 0 2px ${arcCol},0 2px 8px rgba(0,0,0,0.6)`;
+    if (valCMin) { valCMin.textContent = String(m).padStart(2,'0'); valCMin.style.color = arcCol; }
   }
   _syncHeroArcStatus();
 }
@@ -16539,11 +16539,11 @@ function _showRestInManejoCircle(restRemaining, restPct) {
     valD.textContent  = done ? '11H' : `${h}H`;
     valD.style.color  = done ? '#10b981' : '#c8d4e0';
     valD.style.fontSize = '42px';
-    // Update mini minutes ring during rest too
-    const arcMin = document.getElementById('heroArcMin');
+    // Update mini badge minutes during rest too
+    const badgeMin = document.getElementById('heroMinBadge');
     const valMin = document.getElementById('heroValMin');
-    if (arcMin){ arcMin.style.strokeDashoffset = (81.68 * (1 - m / 60)).toFixed(2); arcMin.style.stroke = arcCol; }
-    if (valMin) valMin.textContent = String(m).padStart(2,'0');
+    if (badgeMin) badgeMin.style.boxShadow = `0 0 0 2px ${arcCol},0 2px 8px rgba(0,0,0,0.6)`;
+    if (valMin) { valMin.textContent = String(m).padStart(2,'0'); valMin.style.color = arcCol; }
   }
   if (lblD) {
     lblD.textContent = done ? (lang === 'es' ? 'Manejo' : 'Drive') : (lang === 'es' ? '😴 DESCANSO' : '😴 REST');
@@ -18712,14 +18712,13 @@ function updateHosDashboard(driveLeft, driveMax) {
   timeEl.textContent = `${_dH}H`;
   timeEl.style.fontSize = '64px';
   timeEl.style.color = _dLeftColor;
-  // Mini anillo minutos
-  const arcMin = document.getElementById('dashRingArcMin');
+  // Mini badge minutos DRIVEN
   const minEl = document.getElementById('dashRingMin');
-  if (arcMin){
-    arcMin.setAttribute('stroke-dashoffset', (81.68 * (1 - _dM / 60)).toFixed(2));
-    arcMin.setAttribute('stroke', arcColor);
+  if (minEl) {
+    minEl.textContent = String(_dM).padStart(2,'0');
+    minEl.style.color = arcColor;
+    minEl.parentElement.style.boxShadow = `0 0 0 2px ${arcColor},0 2px 8px rgba(0,0,0,0.6)`;
   }
-  if (minEl) minEl.textContent = String(_dM).padStart(2,'0');
 
   // Stat rows below DRIVEN ring label
   const _fmtDs = (v) => { const t=Math.round(Math.max(0,v)*60); return `${Math.floor(t/60)}h ${String(t%60).padStart(2,'0')}m`; };
@@ -18782,14 +18781,14 @@ function updateHosDashboard(driveLeft, driveMax) {
     weekElFix.textContent = `${_cycH}H`;
     weekElFix.style.fontSize = '28px';
     weekElFix.style.color = cycColor;
-    // Mini anillo minutos ciclo
-    const arcCMin = document.getElementById('dashCicloArcMin');
+    // Mini badge minutos ciclo
+    const cycBadgeColor = cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#f59e0b' : '#10b981';
     const minCel = document.getElementById('dashCicloMin');
-    if (arcCMin){
-      arcCMin.setAttribute('stroke-dashoffset', (81.68 * (1 - _cycM / 60)).toFixed(2));
-      arcCMin.setAttribute('stroke', cycLeft < 10 ? '#ef4444' : cycLeft < 20 ? '#f59e0b' : '#10b981');
+    if (minCel) {
+      minCel.textContent = String(_cycM).padStart(2,'0');
+      minCel.style.color = cycBadgeColor;
+      minCel.parentElement.style.boxShadow = `0 0 0 2px ${cycBadgeColor},0 2px 6px rgba(0,0,0,0.6)`;
     }
-    if (minCel) minCel.textContent = String(_cycM).padStart(2,'0');
   }
 
   // Stat rows below ON-CYCLE ring label
@@ -19100,14 +19099,14 @@ function update14hCircle() {
     timeEl.textContent = `${_14h}H`;
     timeEl.style.fontSize = '28px';
     timeEl.style.color = remaining <= 0 ? '#ef4444' : remaining < 2 ? '#ef4444' : remaining < 4 ? '#fbbf24' : '#ffffff';
-    // Mini anillo minutos
-    const arcMin = document.getElementById('dash14hArcMin');
+    // Mini badge minutos 14H
+    const badge14Color = remaining <= 0 ? '#ef4444' : remaining < 2 ? '#ef4444' : remaining < 4 ? '#f59e0b' : '#10b981';
     const minEl = document.getElementById('dash14hMin');
-    if (arcMin){
-      arcMin.setAttribute('stroke-dashoffset', (81.68 * (1 - _14m / 60)).toFixed(2));
-      arcMin.setAttribute('stroke', remaining <= 0 ? '#ef4444' : remaining < 2 ? '#ef4444' : remaining < 4 ? '#f59e0b' : '#10b981');
+    if (minEl) {
+      minEl.textContent = String(_14m).padStart(2,'0');
+      minEl.style.color = badge14Color;
+      minEl.parentElement.style.boxShadow = `0 0 0 2px ${badge14Color},0 2px 6px rgba(0,0,0,0.6)`;
     }
-    if (minEl) minEl.textContent = String(_14m).padStart(2,'0');
   }
 
   // Stat rows: gris = restante, verde = usado
@@ -29475,13 +29474,10 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       // Mini anillo de minutos (esquina superior derecha)
       const totalSecs2 = Math.floor(dl * 3600);
       const m2 = Math.floor((totalSecs2 % 3600) / 60);
-      const arcMin = document.getElementById('heroArcMin');
+      const badgeMin = document.getElementById('heroMinBadge');
       const valMin = document.getElementById('heroValMin');
-      if (arcMin){
-        arcMin.style.strokeDashoffset = (81.68 * (1 - m2 / 60)).toFixed(2);
-        arcMin.style.stroke = dArcCol;
-      }
-      if (valMin) valMin.textContent = String(m2).padStart(2,'0');
+      if (badgeMin) badgeMin.style.boxShadow = `0 0 0 2px ${dArcCol},0 2px 8px rgba(0,0,0,0.6)`;
+      if (valMin) { valMin.textContent = String(m2).padStart(2,'0'); valMin.style.color = dArcCol; }
     }
 
     // Anillo 3: Ciclo 70H disponible
@@ -29496,11 +29492,11 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       const cm = Math.round((cl - ch) * 60);
       valC.textContent = `${ch}H`;
       valC.style.color = cTxtCol;
-      // Mini anillo minutos ciclo
-      const arcCMin = document.getElementById('heroArcCycleMin');
+      // Mini badge minutos ciclo
+      const badgeCMin = document.getElementById('heroCycleMinBadge');
       const valCMin = document.getElementById('heroValCycleMin');
-      if (arcCMin){ arcCMin.style.strokeDashoffset = (81.68 * (1 - cm / 60)).toFixed(2); arcCMin.style.stroke = cArcCol; }
-      if (valCMin) valCMin.textContent = String(cm).padStart(2,'0');
+      if (badgeCMin) badgeCMin.style.boxShadow = `0 0 0 2px ${cArcCol},0 2px 8px rgba(0,0,0,0.6)`;
+      if (valCMin) { valCMin.textContent = String(cm).padStart(2,'0'); valCMin.style.color = cArcCol; }
     }
 
     // Solo el anillo izquierdo (TURNO) usa color por estado de conexión
