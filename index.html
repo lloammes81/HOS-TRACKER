@@ -4655,6 +4655,8 @@ body.dark #fullMap .leaflet-tile-pane {
     box-shadow: inset 0 2px 0 rgba(255,255,255,0.16), inset 0 -4px 10px rgba(0,0,0,0.45), 0 7px 14px rgba(0,0,0,0.55);
     position: relative; z-index: 1;
   }
+  #eldRingBtn { transition: transform .15s; }
+  #eldRingBtn:active { transform: scale(.93); }
   .hero-kpi-val {
     font-family: 'DSEG7 Classic', 'Share Tech Mono', monospace;
     font-size: 26px; letter-spacing: 2px; color: #c8d4e0; line-height: 1;
@@ -6292,17 +6294,17 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
     <div class="hero-kpis">
 
       <!-- Anillo 1: TURNO / Conexión BT -->
-      <div class="hero-kpi">
+      <div class="hero-kpi" id="eldRingBtn" onclick="openELDBluetoothSheet()" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" title="Conectar ELD">
         <svg class="kpi-svg" viewBox="0 0 94 94">
-          <circle class="kpi-track" cx="47" cy="47" r="40"/>
-          <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40"/>
+          <circle class="kpi-track" id="heroTrackTurno" cx="47" cy="47" r="40" style="stroke:rgba(245,158,11,0.18)"/>
+          <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40" style="stroke:#f59e0b"/>
         </svg>
         <div class="hero-kpi-inner" style="gap:0;">
           <div class="hero-kpi-val" id="heroValTurno" style="font-size:18px;letter-spacing:2px;">--:--</div>
-          <div class="hero-kpi-lbl" id="heroTurnoSub">GPS ○</div>
+          <div class="hero-kpi-lbl" id="heroTurnoSub" style="color:rgba(170,190,210,0.35)">GPS ○</div>
           <div style="width:22px;height:0.5px;background:rgba(255,255,255,.12);margin:2px 0;"></div>
           <div class="hero-kpi-val" id="heroValTurno2" style="font-size:14px;color:rgba(170,190,210,0.55);letter-spacing:2px;">--:--</div>
-          <div class="hero-kpi-lbl">inicio</div>
+          <div class="hero-kpi-lbl" id="eldBtBadge" style="font-size:9px;color:rgba(170,190,210,0.35)">🔵</div>
         </div>
       </div>
 
@@ -7494,10 +7496,14 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
         </div>
       </div>
 
-      <!-- Scan Button -->
-      <button onclick="scanELDDevices()" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#0369a1,#0ea5e9);color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation;margin-bottom:16px">
+      <!-- Scan / Disconnect Buttons -->
+      <button onclick="scanELDDevices()" id="eldScanBtn" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#0369a1,#0ea5e9);color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation;margin-bottom:10px">
         🔍 Buscar Dispositivos
       </button>
+      <button onclick="disconnectELD()" id="eldDisconnectBtn" style="display:none;width:100%;padding:14px;border-radius:12px;border:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation;margin-bottom:16px">
+        ✕ Desconectar ELD
+      </button>
+      <div style="margin-bottom:6px"></div>
 
       <!-- Info Section -->
       <div style="background:rgba(107,114,128,.08);border:1px solid rgba(107,114,128,.15);border-radius:12px;padding:14px;margin-bottom:16px">
@@ -11720,13 +11726,16 @@ function _syncHeroArcStatus() {
     : 0;
   const remaining14h = 14 - shiftElapsedH;
   arc.style.strokeDashoffset = C * (shiftElapsedH / 14);
-  // Color matches the 14h circle on the dashboard
+  // Color: ELD connected = green, GPS only = yellow, critical hours = red
   const isOff = typeof _dashCurrentStatus !== 'undefined' &&
                 (_dashCurrentStatus === 'off' || _dashCurrentStatus === 'rest');
-  arc.style.stroke = isOff         ? '#ef4444'
-    : remaining14h < 2             ? '#ef4444'
-    : remaining14h < 4             ? '#f59e0b'
-    : '#10b981';
+  if (isOff || remaining14h < 2) {
+    arc.style.stroke = '#ef4444';
+  } else if (eldConnected) {
+    arc.style.stroke = '#10b981';
+  } else {
+    arc.style.stroke = '#f59e0b';
+  }
 }
 
 function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
@@ -25187,16 +25196,48 @@ function closeScannerSheet() {
 }
 
 // ── ELD Bluetooth ────────────────────────────────────────────────────────────────
+let eldConnected = false;
+let eldDeviceName = '';
+
+function _updateELDRingUI() {
+  const arc = document.getElementById('heroArcTurno');
+  const track = document.getElementById('heroTrackTurno');
+  const subT = document.getElementById('heroTurnoSub');
+  const btBadge = document.getElementById('eldBtBadge');
+
+  if (eldConnected) {
+    if (arc) arc.style.stroke = '#10b981';
+    if (track) track.style.stroke = 'rgba(16,185,129,0.18)';
+    if (subT) { subT.textContent = 'ELD ●'; subT.style.color = '#10b981'; }
+    if (btBadge) { btBadge.textContent = '📶'; btBadge.style.color = '#10b981'; }
+  } else {
+    if (arc) arc.style.stroke = '#f59e0b';
+    if (track) track.style.stroke = 'rgba(245,158,11,0.18)';
+    if (subT) { subT.textContent = 'GPS ○'; subT.style.color = 'rgba(170,190,210,0.45)'; }
+    if (btBadge) { btBadge.textContent = '🔵'; btBadge.style.color = 'rgba(170,190,210,0.35)'; }
+  }
+}
+
 function openELDBluetoothSheet() {
   const overlay = document.getElementById('eldBleOverlay');
   if (!overlay) return;
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
-  // Reset status
-  document.getElementById('eldBleStatus').style.background = '#94a3b8';
-  document.getElementById('eldBleStatusText').textContent = 'No conectado';
-  document.getElementById('eldBleStatusDetail').textContent = 'Asegúrate de que tu dispositivo ELD está encendido y cerca de este dispositivo.';
-  document.getElementById('eldDeviceList').innerHTML = '<div style="text-align:center">Pulsa "Buscar" para escanear dispositivos</div>';
+  // Sync UI to current ELD state
+  const discBtn = document.getElementById('eldDisconnectBtn');
+  if (eldConnected) {
+    document.getElementById('eldBleStatus').style.background = '#10b981';
+    document.getElementById('eldBleStatusText').textContent = 'Conectado';
+    document.getElementById('eldBleStatusDetail').textContent = `Conectado a ${eldDeviceName}`;
+    document.getElementById('eldDeviceList').innerHTML = `<div style="width:100%;padding:12px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;display:flex;align-items:center;gap:10px"><div style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0"></div><div style="font-size:13px;font-weight:700;color:var(--text)">${eldDeviceName}</div></div>`;
+    if (discBtn) discBtn.style.display = 'block';
+  } else {
+    document.getElementById('eldBleStatus').style.background = '#94a3b8';
+    document.getElementById('eldBleStatusText').textContent = 'No conectado';
+    document.getElementById('eldBleStatusDetail').textContent = 'Asegúrate de que tu dispositivo ELD está encendido y cerca.';
+    document.getElementById('eldDeviceList').innerHTML = '<div style="text-align:center;color:var(--muted)">Pulsa "Buscar" para escanear dispositivos</div>';
+    if (discBtn) discBtn.style.display = 'none';
+  }
 }
 
 function closeELDBluetoothSheet() {
@@ -25318,13 +25359,23 @@ async function connectELDDevice(deviceId, deviceName) {
       await BleClient.connect({ address: deviceId });
     }
 
-    // Connection successful
+    // Connection successful — update global state
+    eldConnected = true;
+    eldDeviceName = deviceName;
     statusText.textContent = 'Conectado';
     statusDot.style.background = '#10b981';
     statusDetail.textContent = `Conectado a ${deviceName}. Sincronizando datos...`;
 
+    // Update ring and disconnect button
+    _updateELDRingUI();
+    _syncHeroArcStatus();
+    const discBtn = document.getElementById('eldDisconnectBtn');
+    if (discBtn) discBtn.style.display = 'block';
+
     showToast('success', '📶', 'ELD Conectado', `Sincronizando datos de ${deviceName}...`, 3000);
     vibrate([50, 30, 50]);
+
+    setTimeout(() => closeELDBluetoothSheet(), 1800);
 
   } catch(err) {
     console.error('Connection error:', err);
@@ -25333,6 +25384,21 @@ async function connectELDDevice(deviceId, deviceName) {
     statusDetail.textContent = `No se pudo conectar a ${deviceName}. Intenta de nuevo.`;
     showToast('error', '❌', 'Error de Conexión', 'Verifica que el dispositivo ELD está encendido', 4000);
   }
+}
+
+function disconnectELD() {
+  eldConnected = false;
+  eldDeviceName = '';
+  try {
+    if (window.Capacitor?.Plugins?.BluetoothLe) {
+      window.Capacitor.Plugins.BluetoothLe.disconnect().catch(() => {});
+    }
+  } catch(e) {}
+  _updateELDRingUI();
+  _syncHeroArcStatus();
+  const discBtn = document.getElementById('eldDisconnectBtn');
+  if (discBtn) discBtn.style.display = 'none';
+  showToast('info', '📶', 'ELD Desconectado', 'Volviendo a modo GPS', 2500);
 }
 
 // ── Camera ────────────────────────────────────────────────────────────────
@@ -29400,9 +29466,12 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     if (valT) valT.textContent = _shiftStart ? _fmt(_shiftStart) : '--:--';
     const subT = document.getElementById('heroTurnoSub');
     if (subT){
-      if (_gpsActive) {
-        subT.textContent = _isMoving ? `${_speed} mph · GPS` : 'GPS ●';
-        subT.style.color = 'rgba(170,190,210,0.65)';
+      if (eldConnected) {
+        subT.textContent = 'ELD ●';
+        subT.style.color = '#10b981';
+      } else if (_gpsActive) {
+        subT.textContent = _isMoving ? `${_speed} mph` : 'GPS ●';
+        subT.style.color = '#f59e0b';
       } else {
         subT.textContent = 'GPS ○';
         subT.style.color = 'rgba(170,190,210,0.35)';
