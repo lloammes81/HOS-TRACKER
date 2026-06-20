@@ -10152,25 +10152,35 @@ let lastBridgeLon   = null;
 let _gpsCache       = null;   // { lat, lon, accuracy, timestamp }
 let _gpsWarmId      = null;
 
-let _warmGotFix = false;
 function startGPSWarm() {
   if (_gpsWarmId !== null) return;
-  // GPS unificado: ya NO abrimos un segundo watchPosition. El servicio central
-  // HOSGps es la única fuente de hardware; aquí solo nos suscribimos para
-  // disparar el clima en el primer fix. _gpsCache lo mantiene fresco HOSGps.
-  _gpsWarmId = 'central'; // marca: suscrito al hub, no es un watch real
+  _gpsWarmId = 'central';
   if (!(window.HOSGps && window.HOSGps.onFix)) return;
+
+  let _wxRefreshPending = false;
+
   window.HOSGps.onFix((fix) => {
-    if (_warmGotFix) return;
-    _warmGotFix = true;
-    // Primer fix real: refrescar el clima si aún no tiene coordenadas buenas.
-    if (typeof startWeatherMonitor === 'function'
-        && (!lastWeatherLat || Math.abs(lastWeatherLat - fix.lat) > 0.1)) {
-      lastWeatherLat = null; lastWeatherLon = null;
-      if (weatherInterval) { clearInterval(weatherInterval); weatherInterval = null; }
-      startWeatherMonitor();
+    // Primer fix: arrancar el clima si aún no está iniciado
+    if (!lastWeatherLat) {
+      if (typeof startWeatherMonitor === 'function') startWeatherMonitor();
+      return;
+    }
+    // Fixes sucesivos: refrescar si el conductor se movió ~10 millas o más
+    const dlat = Math.abs((lastWeatherLat || 0) - fix.lat);
+    const dlon = Math.abs((lastWeatherLon || 0) - fix.lon);
+    if ((dlat > 0.15 || dlon > 0.15) && !_wxRefreshPending) {
+      _wxRefreshPending = true;
+      setTimeout(() => {
+        _wxRefreshPending = false;
+        if (typeof startWeatherMonitor === 'function') {
+          lastWeatherLat = null; lastWeatherLon = null;
+          if (weatherInterval) { clearInterval(weatherInterval); weatherInterval = null; }
+          startWeatherMonitor();
+        }
+      }, 5000);
     }
   });
+
   if (!window.HOSGps.isRunning()) window.HOSGps.start();
 }
 
@@ -11160,7 +11170,7 @@ async function startWeatherMonitor() {
   const _initialDelay = (!lastWeatherLat && !_gpsCache && !window.lastFixFm) ? 3000 : 0;
   await new Promise(r => setTimeout(r, _initialDelay));
   await updateNow();
-  weatherInterval = setInterval(updateNow, 5 * 60 * 1000); // every 5 min
+  weatherInterval = setInterval(updateNow, 3 * 60 * 1000); // every 3 min
   document.getElementById('weatherToggle').classList.add('on');
 }
 
