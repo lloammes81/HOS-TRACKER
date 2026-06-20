@@ -6305,15 +6305,28 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
       </div>
 
       <!-- Anillo 2: MANEJO (horas disponibles) — más grande -->
-      <div class="hero-kpi" style="width:148px;height:148px;">
+      <div class="hero-kpi" style="width:148px;height:148px;position:relative;">
         <svg class="kpi-svg" viewBox="0 0 94 94">
           <circle class="kpi-track" cx="47" cy="47" r="40"/>
           <circle class="kpi-arc" id="heroArcDrive" cx="47" cy="47" r="40"/>
         </svg>
         <div id="heroManejoInner" class="hero-kpi-inner" style="width:120px;height:120px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
-          <div class="hero-kpi-val" id="heroValDrive" style="font-size:27px;">11H</div>
+          <div class="hero-kpi-val" id="heroValDrive" style="font-size:30px;">11H</div>
           <div class="hero-kpi-lbl" id="heroLblDrive" style="font-size:10px;">Manejo</div>
           <div id="heroRestChronometer" style="display:none;font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:11px;font-weight:normal;color:#f97316;letter-spacing:1px;margin-top:3px;line-height:1;">00:00:00</div>
+        </div>
+        <!-- Mini anillo de minutos — esquina superior derecha -->
+        <div id="heroMinBadge" style="position:absolute;top:-6px;right:-6px;width:44px;height:44px;">
+          <svg viewBox="0 0 36 36" style="width:44px;height:44px;transform:rotate(-90deg);display:block;">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(100,116,139,0.20)" stroke-width="3.5"/>
+            <circle id="heroArcMin" cx="18" cy="18" r="14" fill="none" stroke="#10b981" stroke-width="3.5"
+                    stroke-linecap="round" stroke-dasharray="87.96" stroke-dashoffset="87.96"
+                    style="transition:stroke-dashoffset 0.8s ease,stroke 0.4s ease;"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div id="heroValMin" style="font-size:11px;font-weight:900;color:#c8d4e0;line-height:1;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">00</div>
+            <div style="font-size:6px;color:rgba(200,212,224,0.45);line-height:1;">m</div>
+          </div>
         </div>
       </div>
 
@@ -10776,16 +10789,13 @@ function updateWeatherWidget(wx) {
       `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Consider pulling over.`, 45000);
     flashDanger(3000);
     vibrate([300,100,300,100,300]);
-    showWeatherEffect(wx.code, wx.wind);
   } else if (isWarning) {
     showToast('warning','🌧️','Weather Alert',
       `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Drive with caution.`, 8000);
-    showWeatherEffect(wx.code, wx.wind);
   }
   if (wx.wind >= 40 && !isDanger) {
     showToast('warning','💨','High Wind Warning',
       `${wx.wind}mph winds — Risk of rollover for high-profile trucks!`, 8000);
-    showWeatherEffect(wx.code, wx.wind);
   }
   document.getElementById('weatherStatusTxt').textContent =
     `${WX_ICONS[wx.code]||'🌡️'} ${wx.temp}°F · ${wx.desc}`;
@@ -11673,11 +11683,17 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     const valD = document.getElementById('heroValDrive');
     if (arcD && valD) {
       const pct = Math.max(0, Math.min(1, driveLeft / Math.max(1, driveMax)));
-      const h = Math.floor(driveLeft), m = Math.round((driveLeft - h) * 60);
-      valD.textContent = h > 0 ? `${h}H` : `${m}M`;
+      const h = Math.floor(driveLeft);
+      const m = Math.round((driveLeft - h) * 60);
+      valD.textContent = `${h}H`;
       const arcCol = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
       arcD.style.stroke = arcCol; arcD.style.strokeDashoffset = C * (1 - pct);
       valD.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#c8d4e0';
+      // Mini anillo minutos
+      const arcMin = document.getElementById('heroArcMin');
+      const valMin = document.getElementById('heroValMin');
+      if (arcMin){ arcMin.style.strokeDashoffset = (87.96 * (1 - m / 60)).toFixed(2); arcMin.style.stroke = arcCol; }
+      if (valMin) valMin.textContent = String(m).padStart(2,'0');
     }
   }
   const arcC = document.getElementById('heroArcCycle');
@@ -29415,16 +29431,25 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
         const h = Math.floor(totalSecs / 3600);
         const m = Math.floor((totalSecs % 3600) / 60);
         const s = totalSecs % 60;
+        // Centro: solo horas
+        valD.textContent = `${h}h`;
         if (_isMoving) {
-          // Muestra h+m y los segundos cuentan regresivo en el label
-          valD.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
           if (lblD){ lblD.textContent = String(s).padStart(2,'0') + 's'; lblD.style.color = dArcCol; }
         } else {
-          valD.textContent = h > 0 ? `${h}h` : `${m}m`;
           if (lblD){ lblD.textContent = 'Manejo'; lblD.style.color = ''; }
         }
         valD.style.color = dTxtCol;
       }
+      // Mini anillo de minutos (esquina superior derecha)
+      const totalSecs2 = Math.floor(dl * 3600);
+      const m2 = Math.floor((totalSecs2 % 3600) / 60);
+      const arcMin = document.getElementById('heroArcMin');
+      const valMin = document.getElementById('heroValMin');
+      if (arcMin){
+        arcMin.style.strokeDashoffset = (87.96 * (1 - m2 / 60)).toFixed(2);
+        arcMin.style.stroke = dArcCol;
+      }
+      if (valMin) valMin.textContent = String(m2).padStart(2,'0');
     }
 
     // Anillo 3: Ciclo 70H disponible
