@@ -10826,7 +10826,25 @@ async function fetchWeather(lat, lon) {
         fetchNWSCurrent(lat, lon),
         new Promise(res => setTimeout(() => res(null), 6000))
       ]);
-      if (nws) Object.assign(wx, nws); // sobreescribe los campos actuales
+      if (nws) {
+        // NWS puede venir de una estación distante (aeropuerto, etc.) hasta
+        // 30+ millas del punto exacto. Open-Meteo sí es preciso para la
+        // coordenada exacta. Regla de fusión:
+        //   - Si OM dice lluvia/tormenta pero NWS (estación lejana) dice despejado
+        //     → preservar el código de precipitación de OM; NWS solo aporta temp/viento.
+        //   - Si NWS reporta explícitamente lluvia/tormenta → confiar en NWS (observador real).
+        //   - En cualquier otro caso → NWS gana (observación medida > modelo numérico).
+        const nwsHasPrecip = /rain|shower|drizzle|thunder|snow|sleet|wintry|freezing/i.test(nws.desc || '');
+        const omHasPrecip  = WX_PRECIP_CODES.has(wx.code);
+        if (omHasPrecip && !nwsHasPrecip) {
+          // Estación NWS está despejada pero OM detecta precipitación en el punto exacto.
+          // Tomar temperatura/viento/humedad de NWS pero mantener código/descripción de OM.
+          const { code: _c, desc: _d, source: _s, ...nwsRest } = nws;
+          Object.assign(wx, nwsRest);
+        } else {
+          Object.assign(wx, nws);
+        }
+      }
     } catch {}
     return wx;
   } catch {
