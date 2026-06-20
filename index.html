@@ -11143,11 +11143,11 @@ async function startWeatherMonitor() {
     if (wx) updateWeatherWidget(wx);
   };
 
-  // Wait 3s on first load so the GPS warm-up can get an initial fix before fetching weather
-  const _initialDelay = (!lastWeatherLat && !_gpsCache && !window.lastFixFm) ? 3000 : 0;
+  // Wait 2s on first load so the GPS warm-up can get an initial fix before fetching weather
+  const _initialDelay = (!lastWeatherLat && !_gpsCache && !window.lastFixFm) ? 2000 : 0;
   await new Promise(r => setTimeout(r, _initialDelay));
   await updateNow();
-  weatherInterval = setInterval(updateNow, 60 * 1000); // every 1 min
+  weatherInterval = setInterval(updateNow, 30 * 1000); // every 30 seconds for real-time updates
   try {
     const toggleEl = document.getElementById('weatherToggle');
     if (toggleEl) toggleEl.classList.add('on');
