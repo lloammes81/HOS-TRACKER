@@ -11648,24 +11648,20 @@ function applyDriveHoursPos() {
 }
 
 function _syncHeroArcStatus() {
-  const C   = 251.3; // 2π×40
-  const arc = document.getElementById('heroArcTurno');
+  const arc   = document.getElementById('heroArcTurno');
+  const track = document.getElementById('heroTrackTurno');
+  const label = document.getElementById('heroEldStatusLabel');
   if (!arc) return;
-  // 14h shift window: drain the ring as hours are consumed
-  const shiftElapsedH = (typeof hosShiftStartTime !== 'undefined' && hosShiftStartTime)
-    ? Math.min(14, (Date.now() - hosShiftStartTime) / 3600000)
-    : 0;
-  const remaining14h = 14 - shiftElapsedH;
-  arc.style.strokeDashoffset = C * (shiftElapsedH / 14);
-  // Color: ELD connected = green, GPS only = yellow, critical hours = red
-  const isOff = typeof _dashCurrentStatus !== 'undefined' &&
-                (_dashCurrentStatus === 'off' || _dashCurrentStatus === 'rest');
-  if (isOff || remaining14h < 2) {
-    arc.style.stroke = '#ef4444';
-  } else if (eldConnected) {
-    arc.style.stroke = '#10b981';
+  // Ring stays FULL always — only color changes based on ELD/GPS connection
+  arc.style.strokeDashoffset = '0';
+  if (eldConnected) {
+    arc.style.stroke   = '#10b981';
+    if (track) track.style.stroke = 'rgba(16,185,129,0.18)';
+    if (label) { label.textContent = 'ELD'; label.style.color = '#10b981'; }
   } else {
-    arc.style.stroke = '#f59e0b';
+    arc.style.stroke   = '#f59e0b';
+    if (track) track.style.stroke = 'rgba(245,158,11,0.18)';
+    if (label) { label.textContent = 'GPS'; label.style.color = '#f59e0b'; }
   }
 }
 
