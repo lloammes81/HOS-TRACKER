@@ -927,6 +927,7 @@
     padding-bottom: var(--sab);
   }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   .modal-head {
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 18px; border-bottom: 1px solid var(--border);
@@ -5490,21 +5491,6 @@ dialog#scannerSheet {
 dialog#scannerSheet::backdrop { background:#000; }
 dialog#scannerSheet[open] { display:flex; flex-direction:column; }
 
-/* ── ELD Bluetooth Dialog ── */
-dialog#eldBluetoothSheet {
-  padding:0; margin:0; border:0; outline:0;
-  width:100%; max-width:540px;
-  height:auto; max-height:88vh;
-  border-radius:24px 24px 0 0;
-  background:var(--surface);
-  color:var(--text);
-  overflow:hidden;
-  position:fixed;bottom:0;left:0;right:0;
-  margin-left:auto;margin-right:auto;
-}
-dialog#eldBluetoothSheet::backdrop { background:rgba(0,0,0,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px); }
-dialog#eldBluetoothSheet[open] { display:flex;flex-direction:column;animation:sheetUp 0.3s cubic-bezier(0.16,1,0.3,1); }
-@keyframes sheetUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
 
 /* ── Top bar ── */
 .scan-topbar {
@@ -7471,11 +7457,12 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 <!-- ══════════════════════════════════════════════════════════
      📶  ELD BLUETOOTH CONNECTION SHEET
 ══════════════════════════════════════════════════════════ -->
-<dialog id="eldBluetoothSheet">
-  <div style="display:flex;flex-direction:column;height:100%;background:var(--surface)">
+<div id="eldBleOverlay" onclick="closeELDBluetoothSheet()" style="position:fixed;inset:0;z-index:9250;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center">
+  <div onclick="event.stopPropagation()" style="width:100%;max-width:540px;background:var(--surface);border-radius:24px 24px 0 0;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 -8px 48px rgba(0,0,0,.5);animation:sheetUp .3s cubic-bezier(.16,1,.3,1)">
+    <div class="sheet-handle"></div>
 
     <!-- Top bar -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:40px;height:40px;background:linear-gradient(135deg,#0369a1,#0ea5e9);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px">📶</div>
         <div>
@@ -7483,16 +7470,16 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:2px">Sincroniza dispositivo Bluetooth</div>
         </div>
       </div>
-      <button onclick="closeELDBluetoothSheet()" style="width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);border-radius:50%;color:var(--muted);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:system-ui">×</button>
+      <button onclick="closeELDBluetoothSheet()" class="tool-close">×</button>
     </div>
 
     <!-- Content -->
-    <div style="flex:1;overflow-y:auto;padding:20px;-webkit-overflow-scrolling:touch">
+    <div style="flex:1;overflow-y:auto;padding:20px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain">
 
       <!-- Status Section -->
       <div style="background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.2);border-radius:14px;padding:16px;margin-bottom:20px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <div style="width:8px;height:8px;border-radius:50%;background:#0ea5e9;opacity:0.4" id="eldBleStatus"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#94a3b8" id="eldBleStatus"></div>
           <span style="font-size:13px;font-weight:700;color:var(--muted)" id="eldBleStatusText">No conectado</span>
         </div>
         <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px">Estado de Conexión</div>
@@ -7501,9 +7488,9 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
       <!-- Available Devices -->
       <div style="margin-bottom:20px">
-        <div style="font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Dispositivos Disponibles</div>
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Dispositivos Disponibles</div>
         <div id="eldDeviceList" style="display:flex;flex-direction:column;gap:10px;min-height:60px;align-items:center;justify-content:center;color:var(--muted);font-size:13px">
-          <div style="text-align:center">Buscando dispositivos...</div>
+          <div style="text-align:center">Pulsa "Buscar" para escanear dispositivos</div>
         </div>
       </div>
 
@@ -7514,32 +7501,26 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
       <!-- Info Section -->
       <div style="background:rgba(107,114,128,.08);border:1px solid rgba(107,114,128,.15);border-radius:12px;padding:14px;margin-bottom:16px">
-        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Requisitos Compatibles</div>
-        <ul style="list-style:none;padding:0;margin:0;font-size:12px;color:var(--muted);line-height:1.8">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Requisitos</div>
+        <ul style="list-style:none;padding:0;margin:0;font-size:12px;color:var(--muted);line-height:1.9">
           <li>✓ Bluetooth 5.0 o superior</li>
           <li>✓ Dispositivo ELD certificado FMCSA</li>
           <li>✓ Permisos de Bluetooth habilitados</li>
-          <li>✓ Ubicación cercana (< 10 metros)</li>
+          <li>✓ Ubicación cercana (menos de 10 metros)</li>
         </ul>
       </div>
 
       <!-- Support -->
-      <div style="padding:12px 14px;background:rgba(59,130,246,.08);border-radius:10px;border:1px solid rgba(59,130,246,.15)">
+      <div style="padding:12px 14px;background:rgba(59,130,246,.08);border-radius:10px;border:1px solid rgba(59,130,246,.15);margin-bottom:8px">
         <div style="font-size:12px;color:var(--muted);line-height:1.6">
           <strong style="color:var(--text)">¿Problemas de conexión?</strong><br>
-          Reinicia tu dispositivo ELD y vuelve a intentar. Asegúrate de que no está emparejado con otro teléfono.
+          Reinicia tu ELD y vuelve a intentar. Asegúrate de que no está emparejado con otro teléfono.
         </div>
       </div>
 
     </div>
-
-    <!-- Bottom Action -->
-    <div style="padding:16px 20px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)">
-      <button onclick="closeELDBluetoothSheet()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer">Cerrar</button>
-    </div>
-
   </div>
-</dialog>
+</div>
 
 <!-- COMMUNITY PAGE -->
   <div class="page" id="page-community">
@@ -25207,19 +25188,20 @@ function closeScannerSheet() {
 
 // ── ELD Bluetooth ────────────────────────────────────────────────────────────────
 function openELDBluetoothSheet() {
-  const dialog = document.getElementById('eldBluetoothSheet');
-  if (dialog && dialog.showModal) {
-    dialog.showModal();
-  }
+  const overlay = document.getElementById('eldBleOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
-  scanELDDevices();
+  // Reset status
+  document.getElementById('eldBleStatus').style.background = '#94a3b8';
+  document.getElementById('eldBleStatusText').textContent = 'No conectado';
+  document.getElementById('eldBleStatusDetail').textContent = 'Asegúrate de que tu dispositivo ELD está encendido y cerca de este dispositivo.';
+  document.getElementById('eldDeviceList').innerHTML = '<div style="text-align:center">Pulsa "Buscar" para escanear dispositivos</div>';
 }
 
 function closeELDBluetoothSheet() {
-  const dialog = document.getElementById('eldBluetoothSheet');
-  if (dialog && dialog.close) {
-    dialog.close();
-  }
+  const overlay = document.getElementById('eldBleOverlay');
+  if (overlay) overlay.style.display = 'none';
   document.body.style.overflow = '';
 }
 
@@ -25271,8 +25253,10 @@ async function scanNativeBluetoothDevices() {
     devices.devices.forEach(device => {
       const name = device.name || 'Dispositivo desconocido';
       const rssi = device.rssi ? ` (${device.rssi} dBm)` : '';
+      const safeId = (device.deviceId || '').replace(/'/g, "\\'");
+      const safeName = name.replace(/'/g, "\\'");
       html += `
-        <div style="width:100%;padding:12px;background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.2);border-radius:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:space-between" onclick="connectELDDevice('${device.deviceId || ''}', '${name}')">
+        <div style="width:100%;padding:12px;background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.2);border-radius:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:space-between" onclick="connectELDDevice('${safeId}','${safeName}')">
           <div>
             <div style="font-size:13px;font-weight:700;color:var(--text)">${name}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px">ID: ${device.deviceId || 'N/A'}${rssi}</div>
@@ -25298,10 +25282,13 @@ async function scanWebBluetoothDevices() {
     });
 
     if (device) {
+      const dName = device.name || 'ELD Device';
+      const dId = (device.id || '').replace(/'/g, "\\'");
+      const dSafeName = dName.replace(/'/g, "\\'");
       deviceList.innerHTML = `
-        <div style="width:100%;padding:12px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="connectELDDevice('${device.id}', '${device.name || 'ELD Device'}')">
+        <div style="width:100%;padding:12px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="connectELDDevice('${dId}','${dSafeName}')">
           <div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)">${device.name || 'ELD Device'}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${dName}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px">Seleccionado</div>
           </div>
           <div style="font-size:16px">›</div>
