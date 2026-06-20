@@ -6300,7 +6300,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40" style="stroke:#f59e0b"/>
         </svg>
         <div class="hero-kpi-inner" style="gap:0;">
-          <div class="hero-kpi-lbl" id="heroEldStatusLabel" style="font-size:13px;font-weight:800;letter-spacing:1px;color:#f59e0b">GPS</div>
+          <div id="heroEldStatusLabel" style="font-size:24px;font-weight:900;letter-spacing:2px;color:#f59e0b;font-family:'Bebas Neue',sans-serif;line-height:1">GPS</div>
         </div>
       </div>
 
@@ -10658,9 +10658,16 @@ const WX_WARNING_CODES = new Set([55,65,61,63,56,57,80,81,51,53]);
 // "Thunderstorm, 4 mph viento, 0 mm" en cielo despejado). Si no hay mm medidos,
 // no alarmamos.
 const WX_PRECIP_CODES = new Set([51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99]);
-// ¿Está cayendo precipitación real ahora? (mm > 0). Si la API no la reporta,
-// asumimos que sí para no suprimir avisos legítimos por datos faltantes.
-function wxIsActuallyWet(wx){ return (wx.precip == null) ? true : (Number(wx.precip) > 0); }
+// ¿Está cayendo precipitación real ahora? Si la fuente es NWS y el texto del
+// observador dice "rain/shower/snow/etc." confiamos en ese reporte directo
+// (lluvia que acaba de comenzar puede tener 0 mm en el último período).
+// Para Open-Meteo (modelo numérico) solo alertamos si hay mm > 0 reales.
+function wxIsActuallyWet(wx){
+  if (wx.source === 'nws' && wx.desc) {
+    if (/rain|shower|drizzle|thunder|snow|sleet|wintry|freezing/i.test(wx.desc)) return true;
+  }
+  return (wx.precip == null) ? true : (Number(wx.precip) > 0);
+}
 // Código a MOSTRAR (ícono/desc). Si el modelo dice lluvia/tormenta pero no cae
 // nada, mostramos el estado real según la nubosidad (0 despejado · 2 parcial ·
 // 3 nublado) en vez de un ícono de tormenta falso.
