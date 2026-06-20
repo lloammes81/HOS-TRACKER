@@ -6311,7 +6311,7 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           <circle class="kpi-arc" id="heroArcDrive" cx="47" cy="47" r="40"/>
         </svg>
         <div id="heroManejoInner" class="hero-kpi-inner" style="width:120px;height:120px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
-          <div class="hero-kpi-val" id="heroValDrive" style="font-size:30px;">11H</div>
+          <div class="hero-kpi-val" id="heroValDrive" style="font-size:42px;letter-spacing:-1px;line-height:1;">11H</div>
           <div class="hero-kpi-lbl" id="heroLblDrive" style="font-size:10px;">Manejo</div>
           <div id="heroRestChronometer" style="display:none;font-family:'DSEG7 Classic','Share Tech Mono',monospace;font-size:11px;font-weight:normal;color:#f97316;letter-spacing:1px;margin-top:3px;line-height:1;">00:00:00</div>
         </div>
@@ -16519,9 +16519,14 @@ function _showRestInManejoCircle(restRemaining, restPct) {
   if (arcD) { arcD.style.stroke = arcCol; arcD.style.strokeDashoffset = C * (1 - restPct); }
   if (valD) {
     const h = Math.floor(restRemaining), m = Math.round((restRemaining - h) * 60);
-    valD.textContent  = done ? '11H' : (h > 0 ? `${h}h${m > 0 ? ' ' + m + 'm' : ''}` : `${m}m`);
+    valD.textContent  = done ? '11H' : `${h}H`;
     valD.style.color  = done ? '#10b981' : '#c8d4e0';
-    valD.style.fontSize = '27px';
+    valD.style.fontSize = '42px';
+    // Update mini minutes ring during rest too
+    const arcMin = document.getElementById('heroArcMin');
+    const valMin = document.getElementById('heroValMin');
+    if (arcMin){ arcMin.style.strokeDashoffset = (87.96 * (1 - m / 60)).toFixed(2); arcMin.style.stroke = arcCol; }
+    if (valMin) valMin.textContent = String(m).padStart(2,'0');
   }
   if (lblD) {
     lblD.textContent = done ? (lang === 'es' ? 'Manejo' : 'Drive') : (lang === 'es' ? '😴 DESCANSO' : '😴 REST');
@@ -16558,7 +16563,7 @@ function _restoreManejo() {
   const lblD = document.getElementById('heroLblDrive');
   if (lblD) { lblD.textContent = lang === 'es' ? 'Manejo' : 'Drive'; lblD.style.color = ''; }
   const valD = document.getElementById('heroValDrive');
-  if (valD) valD.style.fontSize = '36px';
+  if (valD) valD.style.fontSize = '42px';
   const chron = document.getElementById('heroRestChronometer');
   if (chron) chron.style.display = 'none';
   _hideSleepOverlay(false);
