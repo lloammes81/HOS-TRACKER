@@ -10807,39 +10807,44 @@ function refreshDashWeather() {
 
 function updateWeatherWidget(wx) {
   if (!wx) return;
-  lastWxData = wx;
-  const isDanger  = WX_DANGER_CODES.has(wx.code);
-  const isWarning = WX_WARNING_CODES.has(wx.code);
-  const wxIconTxt = (!wx.isDay && WX_ICONS_NIGHT[wx.code]) ? WX_ICONS_NIGHT[wx.code] : (WX_ICONS[wx.code] || '🌡️');
-  const wxTempTxt = `${wx.temp}°F`;
-  const wxWindTxt = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
-  // Hero weather bar
-  const hIcon = document.getElementById('heroWxIcon');
-  const hTemp = document.getElementById('heroWxTemp');
-  const hDesc = document.getElementById('heroWxDesc');
-  const hWind = document.getElementById('heroWxWind');
-  if (hIcon) hIcon.textContent = wxIconTxt;
-  if (hTemp) hTemp.textContent = wxTempTxt;
-  if (hDesc) hDesc.textContent = wx.desc;
-  if (hWind) hWind.textContent = wxWindTxt;
-  refreshDashWeather();
+  try {
+    lastWxData = wx;
+    const isDanger  = WX_DANGER_CODES.has(wx.code);
+    const isWarning = WX_WARNING_CODES.has(wx.code);
+    const wxIconTxt = (!wx.isDay && WX_ICONS_NIGHT[wx.code]) ? WX_ICONS_NIGHT[wx.code] : (WX_ICONS[wx.code] || '🌡️');
+    const wxTempTxt = `${wx.temp}°F`;
+    const wxWindTxt = wx.wind > 0 ? `💨 ${wx.wind} mph` : '';
+    // Hero weather bar
+    const hIcon = document.getElementById('heroWxIcon');
+    const hTemp = document.getElementById('heroWxTemp');
+    const hDesc = document.getElementById('heroWxDesc');
+    const hWind = document.getElementById('heroWxWind');
+    if (hIcon) hIcon.textContent = wxIconTxt;
+    if (hTemp) hTemp.textContent = wxTempTxt;
+    if (hDesc) hDesc.textContent = wx.desc;
+    if (hWind) hWind.textContent = wxWindTxt;
+    refreshDashWeather();
 
-  if (isDanger) {
-    showToast('danger','⛈️','⚠️ DANGEROUS WEATHER',
-      `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Consider pulling over.`, 45000);
-    flashDanger(3000);
-    vibrate([300,100,300,100,300]);
-  } else if (isWarning) {
-    showToast('warning','🌧️','Weather Alert',
-      `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Drive with caution.`, 8000);
+    if (isDanger) {
+      showToast('danger','⛈️','⚠️ DANGEROUS WEATHER',
+        `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Consider pulling over.`, 45000);
+      flashDanger(3000);
+      vibrate([300,100,300,100,300]);
+    } else if (isWarning) {
+      showToast('warning','🌧️','Weather Alert',
+        `${wx.desc} — ${wx.temp}°F, winds ${wx.wind}mph. Drive with caution.`, 8000);
+    }
+    if (wx.wind >= 40 && !isDanger) {
+      showToast('warning','💨','High Wind Warning',
+        `${wx.wind}mph winds — Risk of rollover for high-profile trucks!`, 8000);
+    }
+    const statusEl = document.getElementById('weatherStatusTxt');
+    if (statusEl) statusEl.textContent =
+      `${WX_ICONS[wx.code]||'🌡️'} ${wx.temp}°F · ${wx.desc}`;
+    applyHeroWeatherFx(wx.code, wx.wind);
+  } catch (e) {
+    // Silently fail if any UI update fails
   }
-  if (wx.wind >= 40 && !isDanger) {
-    showToast('warning','💨','High Wind Warning',
-      `${wx.wind}mph winds — Risk of rollover for high-profile trucks!`, 8000);
-  }
-  document.getElementById('weatherStatusTxt').textContent =
-    `${WX_ICONS[wx.code]||'🌡️'} ${wx.temp}°F · ${wx.desc}`;
-  applyHeroWeatherFx(wx.code, wx.wind);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -11093,7 +11098,10 @@ function showWeatherEffect(wxCode, windSpeed) {
 }
 
 async function startWeatherMonitor() {
-  document.getElementById('weatherStatusTxt').textContent = 'Fetching weather...';
+  try {
+    const statusEl = document.getElementById('weatherStatusTxt');
+    if (statusEl) statusEl.textContent = 'Fetching weather...';
+  } catch (e) {}
 
   const updateNow = async () => {
     let lat = null, lon = null;
@@ -11140,7 +11148,10 @@ async function startWeatherMonitor() {
   await new Promise(r => setTimeout(r, _initialDelay));
   await updateNow();
   weatherInterval = setInterval(updateNow, 60 * 1000); // every 1 min
-  document.getElementById('weatherToggle').classList.add('on');
+  try {
+    const toggleEl = document.getElementById('weatherToggle');
+    if (toggleEl) toggleEl.classList.add('on');
+  } catch (e) {}
 }
 
 
