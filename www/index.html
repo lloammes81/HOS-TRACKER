@@ -927,6 +927,7 @@
     padding-bottom: var(--sab);
   }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   .modal-head {
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 18px; border-bottom: 1px solid var(--border);
@@ -4654,6 +4655,8 @@ body.dark #fullMap .leaflet-tile-pane {
     box-shadow: inset 0 2px 0 rgba(255,255,255,0.16), inset 0 -4px 10px rgba(0,0,0,0.45), 0 7px 14px rgba(0,0,0,0.55);
     position: relative; z-index: 1;
   }
+  #eldRingBtn { transition: transform .15s; }
+  #eldRingBtn:active { transform: scale(.93); }
   .hero-kpi-val {
     font-family: 'DSEG7 Classic', 'Share Tech Mono', monospace;
     font-size: 26px; letter-spacing: 2px; color: #c8d4e0; line-height: 1;
@@ -5490,6 +5493,7 @@ dialog#scannerSheet {
 dialog#scannerSheet::backdrop { background:#000; }
 dialog#scannerSheet[open] { display:flex; flex-direction:column; }
 
+
 /* ── Top bar ── */
 .scan-topbar {
   position:relative;z-index:10;
@@ -6290,17 +6294,17 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
     <div class="hero-kpis">
 
       <!-- Anillo 1: TURNO / Conexión BT -->
-      <div class="hero-kpi">
+      <div class="hero-kpi" id="eldRingBtn" onclick="openELDBluetoothSheet()" style="cursor:pointer;-webkit-tap-highlight-color:transparent;" title="Conectar ELD">
         <svg class="kpi-svg" viewBox="0 0 94 94">
-          <circle class="kpi-track" cx="47" cy="47" r="40"/>
-          <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40"/>
+          <circle class="kpi-track" id="heroTrackTurno" cx="47" cy="47" r="40" style="stroke:rgba(245,158,11,0.18)"/>
+          <circle class="kpi-arc" id="heroArcTurno" cx="47" cy="47" r="40" style="stroke:#f59e0b"/>
         </svg>
         <div class="hero-kpi-inner" style="gap:0;">
           <div class="hero-kpi-val" id="heroValTurno" style="font-size:18px;letter-spacing:2px;">--:--</div>
-          <div class="hero-kpi-lbl" id="heroTurnoSub">GPS ○</div>
+          <div class="hero-kpi-lbl" id="heroTurnoSub" style="color:rgba(170,190,210,0.35)">GPS ○</div>
           <div style="width:22px;height:0.5px;background:rgba(255,255,255,.12);margin:2px 0;"></div>
           <div class="hero-kpi-val" id="heroValTurno2" style="font-size:14px;color:rgba(170,190,210,0.55);letter-spacing:2px;">--:--</div>
-          <div class="hero-kpi-lbl">inicio</div>
+          <div class="hero-kpi-lbl" id="eldBtBadge" style="font-size:9px;color:rgba(170,190,210,0.35)">🔵</div>
         </div>
       </div>
 
@@ -7005,7 +7009,15 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
         <div class="tpb-arrow" id="resetArrowStatus">›</div>
       </button>
 
-      <!-- ELD Bluetooth removed -->
+      <!-- ELD Bluetooth Connection -->
+      <button class="tool-page-btn" onclick="openELDBluetoothSheet()" style="--tclr:#0ea5e9;--tcbg:rgba(14,165,233,.1);--tcbdr:rgba(14,165,233,.3)">
+        <div class="tpb-icon" style="background:linear-gradient(135deg,#0369a1,#0ea5e9)">📶</div>
+        <div class="tpb-info">
+          <div class="tpb-title">Conectar ELD</div>
+          <div class="tpb-sub">Sincroniza datos de tu dispositivo ELD via Bluetooth</div>
+        </div>
+        <div class="tpb-arrow">›</div>
+      </button>
 
       <!-- Bridge & Weight Restrictions -->
       <button class="tool-page-btn" onclick="openBridgeRestrSheet()" style="--tclr:#f97316;--tcbg:rgba(249,115,22,.1);--tcbdr:rgba(249,115,22,.3)">
@@ -7443,6 +7455,78 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
     </div>
   </div>
 </dialog>
+
+<!-- ══════════════════════════════════════════════════════════
+     📶  ELD BLUETOOTH CONNECTION SHEET
+══════════════════════════════════════════════════════════ -->
+<div id="eldBleOverlay" onclick="closeELDBluetoothSheet()" style="position:fixed;inset:0;z-index:9250;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center">
+  <div onclick="event.stopPropagation()" style="width:100%;max-width:540px;background:var(--surface);border-radius:24px 24px 0 0;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 -8px 48px rgba(0,0,0,.5);animation:sheetUp .3s cubic-bezier(.16,1,.3,1)">
+    <div class="sheet-handle"></div>
+
+    <!-- Top bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:40px;height:40px;background:linear-gradient(135deg,#0369a1,#0ea5e9);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px">📶</div>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--text)">Conectar ELD</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:2px">Sincroniza dispositivo Bluetooth</div>
+        </div>
+      </div>
+      <button onclick="closeELDBluetoothSheet()" class="tool-close">×</button>
+    </div>
+
+    <!-- Content -->
+    <div style="flex:1;overflow-y:auto;padding:20px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain">
+
+      <!-- Status Section -->
+      <div style="background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.2);border-radius:14px;padding:16px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#94a3b8" id="eldBleStatus"></div>
+          <span style="font-size:13px;font-weight:700;color:var(--muted)" id="eldBleStatusText">No conectado</span>
+        </div>
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px">Estado de Conexión</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5" id="eldBleStatusDetail">Asegúrate de que tu dispositivo ELD está encendido y cerca de este dispositivo.</div>
+      </div>
+
+      <!-- Available Devices -->
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Dispositivos Disponibles</div>
+        <div id="eldDeviceList" style="display:flex;flex-direction:column;gap:10px;min-height:60px;align-items:center;justify-content:center;color:var(--muted);font-size:13px">
+          <div style="text-align:center">Pulsa "Buscar" para escanear dispositivos</div>
+        </div>
+      </div>
+
+      <!-- Scan / Disconnect Buttons -->
+      <button onclick="scanELDDevices()" id="eldScanBtn" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#0369a1,#0ea5e9);color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation;margin-bottom:10px">
+        🔍 Buscar Dispositivos
+      </button>
+      <button onclick="disconnectELD()" id="eldDisconnectBtn" style="display:none;width:100%;padding:14px;border-radius:12px;border:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation;margin-bottom:16px">
+        ✕ Desconectar ELD
+      </button>
+      <div style="margin-bottom:6px"></div>
+
+      <!-- Info Section -->
+      <div style="background:rgba(107,114,128,.08);border:1px solid rgba(107,114,128,.15);border-radius:12px;padding:14px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Requisitos</div>
+        <ul style="list-style:none;padding:0;margin:0;font-size:12px;color:var(--muted);line-height:1.9">
+          <li>✓ Bluetooth 5.0 o superior</li>
+          <li>✓ Dispositivo ELD certificado FMCSA</li>
+          <li>✓ Permisos de Bluetooth habilitados</li>
+          <li>✓ Ubicación cercana (menos de 10 metros)</li>
+        </ul>
+      </div>
+
+      <!-- Support -->
+      <div style="padding:12px 14px;background:rgba(59,130,246,.08);border-radius:10px;border:1px solid rgba(59,130,246,.15);margin-bottom:8px">
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">
+          <strong style="color:var(--text)">¿Problemas de conexión?</strong><br>
+          Reinicia tu ELD y vuelve a intentar. Asegúrate de que no está emparejado con otro teléfono.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- COMMUNITY PAGE -->
   <div class="page" id="page-community">
@@ -11642,13 +11726,16 @@ function _syncHeroArcStatus() {
     : 0;
   const remaining14h = 14 - shiftElapsedH;
   arc.style.strokeDashoffset = C * (shiftElapsedH / 14);
-  // Color matches the 14h circle on the dashboard
+  // Color: ELD connected = green, GPS only = yellow, critical hours = red
   const isOff = typeof _dashCurrentStatus !== 'undefined' &&
                 (_dashCurrentStatus === 'off' || _dashCurrentStatus === 'rest');
-  arc.style.stroke = isOff         ? '#ef4444'
-    : remaining14h < 2             ? '#ef4444'
-    : remaining14h < 4             ? '#f59e0b'
-    : '#10b981';
+  if (isOff || remaining14h < 2) {
+    arc.style.stroke = '#ef4444';
+  } else if (eldConnected) {
+    arc.style.stroke = '#10b981';
+  } else {
+    arc.style.stroke = '#f59e0b';
+  }
 }
 
 function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
@@ -25108,6 +25195,212 @@ function closeScannerSheet() {
   updateScanBadge();
 }
 
+// ── ELD Bluetooth ────────────────────────────────────────────────────────────────
+let eldConnected = false;
+let eldDeviceName = '';
+
+function _updateELDRingUI() {
+  const arc = document.getElementById('heroArcTurno');
+  const track = document.getElementById('heroTrackTurno');
+  const subT = document.getElementById('heroTurnoSub');
+  const btBadge = document.getElementById('eldBtBadge');
+
+  if (eldConnected) {
+    if (arc) arc.style.stroke = '#10b981';
+    if (track) track.style.stroke = 'rgba(16,185,129,0.18)';
+    if (subT) { subT.textContent = 'ELD ●'; subT.style.color = '#10b981'; }
+    if (btBadge) { btBadge.textContent = '📶'; btBadge.style.color = '#10b981'; }
+  } else {
+    if (arc) arc.style.stroke = '#f59e0b';
+    if (track) track.style.stroke = 'rgba(245,158,11,0.18)';
+    if (subT) { subT.textContent = 'GPS ○'; subT.style.color = 'rgba(170,190,210,0.45)'; }
+    if (btBadge) { btBadge.textContent = '🔵'; btBadge.style.color = 'rgba(170,190,210,0.35)'; }
+  }
+}
+
+function openELDBluetoothSheet() {
+  const overlay = document.getElementById('eldBleOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  // Sync UI to current ELD state
+  const discBtn = document.getElementById('eldDisconnectBtn');
+  if (eldConnected) {
+    document.getElementById('eldBleStatus').style.background = '#10b981';
+    document.getElementById('eldBleStatusText').textContent = 'Conectado';
+    document.getElementById('eldBleStatusDetail').textContent = `Conectado a ${eldDeviceName}`;
+    document.getElementById('eldDeviceList').innerHTML = `<div style="width:100%;padding:12px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;display:flex;align-items:center;gap:10px"><div style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0"></div><div style="font-size:13px;font-weight:700;color:var(--text)">${eldDeviceName}</div></div>`;
+    if (discBtn) discBtn.style.display = 'block';
+  } else {
+    document.getElementById('eldBleStatus').style.background = '#94a3b8';
+    document.getElementById('eldBleStatusText').textContent = 'No conectado';
+    document.getElementById('eldBleStatusDetail').textContent = 'Asegúrate de que tu dispositivo ELD está encendido y cerca.';
+    document.getElementById('eldDeviceList').innerHTML = '<div style="text-align:center;color:var(--muted)">Pulsa "Buscar" para escanear dispositivos</div>';
+    if (discBtn) discBtn.style.display = 'none';
+  }
+}
+
+function closeELDBluetoothSheet() {
+  const overlay = document.getElementById('eldBleOverlay');
+  if (overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+async function scanELDDevices() {
+  const deviceList = document.getElementById('eldDeviceList');
+  const statusText = document.getElementById('eldBleStatusText');
+  const statusDot = document.getElementById('eldBleStatus');
+
+  // Show scanning state
+  deviceList.innerHTML = '<div style="text-align:center">Buscando dispositivos ELD...</div>';
+  statusText.textContent = 'Buscando...';
+  statusDot.style.background = '#f59e0b';
+
+  try {
+    // Check if Bluetooth is available
+    if (!navigator.bluetooth && !window.Capacitor?.Plugins?.BluetoothLe) {
+      deviceList.innerHTML = '<div style="text-align:center;color:#ef4444">Bluetooth no disponible en este dispositivo</div>';
+      statusText.textContent = 'No disponible';
+      statusDot.style.background = '#ef4444';
+      return;
+    }
+
+    // Try native Bluetooth first (Capacitor)
+    if (window.Capacitor?.Plugins?.BluetoothLe) {
+      await scanNativeBluetoothDevices();
+    } else if (navigator.bluetooth) {
+      await scanWebBluetoothDevices();
+    }
+  } catch(err) {
+    console.error('Error scanning ELD devices:', err);
+    deviceList.innerHTML = '<div style="text-align:center;color:#ef4444">Error al buscar dispositivos</div>';
+    statusText.textContent = 'Error';
+    statusDot.style.background = '#ef4444';
+  }
+}
+
+async function scanNativeBluetoothDevices() {
+  const BleClient = window.Capacitor.Plugins.BluetoothLe;
+  const deviceList = document.getElementById('eldDeviceList');
+
+  try {
+    const devices = await BleClient.getDevices({ allowDuplicates: true, services: [] });
+    if (!devices || !devices.devices || devices.devices.length === 0) {
+      deviceList.innerHTML = '<div style="text-align:center;color:var(--muted)">No se encontraron dispositivos ELD cercanos</div>';
+      return;
+    }
+
+    let html = '';
+    devices.devices.forEach(device => {
+      const name = device.name || 'Dispositivo desconocido';
+      const rssi = device.rssi ? ` (${device.rssi} dBm)` : '';
+      const safeId = (device.deviceId || '').replace(/'/g, "\\'");
+      const safeName = name.replace(/'/g, "\\'");
+      html += `
+        <div style="width:100%;padding:12px;background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.2);border-radius:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:space-between" onclick="connectELDDevice('${safeId}','${safeName}')">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${name}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">ID: ${device.deviceId || 'N/A'}${rssi}</div>
+          </div>
+          <div style="font-size:16px">›</div>
+        </div>
+      `;
+    });
+    deviceList.innerHTML = html;
+  } catch(err) {
+    console.error('Native Bluetooth scan error:', err);
+    deviceList.innerHTML = '<div style="text-align:center;color:#ef4444">Error al acceder a Bluetooth</div>';
+  }
+}
+
+async function scanWebBluetoothDevices() {
+  const deviceList = document.getElementById('eldDeviceList');
+
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: ['1805', '180a', '180f']
+    });
+
+    if (device) {
+      const dName = device.name || 'ELD Device';
+      const dId = (device.id || '').replace(/'/g, "\\'");
+      const dSafeName = dName.replace(/'/g, "\\'");
+      deviceList.innerHTML = `
+        <div style="width:100%;padding:12px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="connectELDDevice('${dId}','${dSafeName}')">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${dName}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Seleccionado</div>
+          </div>
+          <div style="font-size:16px">›</div>
+        </div>
+      `;
+    }
+  } catch(err) {
+    if (err.name !== 'NotFoundError') {
+      deviceList.innerHTML = '<div style="text-align:center;color:#ef4444">Error de selección de dispositivo</div>';
+    }
+  }
+}
+
+async function connectELDDevice(deviceId, deviceName) {
+  const statusText = document.getElementById('eldBleStatusText');
+  const statusDot = document.getElementById('eldBleStatus');
+  const statusDetail = document.getElementById('eldBleStatusDetail');
+
+  try {
+    statusText.textContent = 'Conectando...';
+    statusDot.style.background = '#f59e0b';
+    statusDetail.textContent = `Conectando a ${deviceName}...`;
+
+    // For native implementation
+    if (window.Capacitor?.Plugins?.BluetoothLe) {
+      const BleClient = window.Capacitor.Plugins.BluetoothLe;
+      await BleClient.connect({ address: deviceId });
+    }
+
+    // Connection successful — update global state
+    eldConnected = true;
+    eldDeviceName = deviceName;
+    statusText.textContent = 'Conectado';
+    statusDot.style.background = '#10b981';
+    statusDetail.textContent = `Conectado a ${deviceName}. Sincronizando datos...`;
+
+    // Update ring and disconnect button
+    _updateELDRingUI();
+    _syncHeroArcStatus();
+    const discBtn = document.getElementById('eldDisconnectBtn');
+    if (discBtn) discBtn.style.display = 'block';
+
+    showToast('success', '📶', 'ELD Conectado', `Sincronizando datos de ${deviceName}...`, 3000);
+    vibrate([50, 30, 50]);
+
+    setTimeout(() => closeELDBluetoothSheet(), 1800);
+
+  } catch(err) {
+    console.error('Connection error:', err);
+    statusText.textContent = 'Error de conexión';
+    statusDot.style.background = '#ef4444';
+    statusDetail.textContent = `No se pudo conectar a ${deviceName}. Intenta de nuevo.`;
+    showToast('error', '❌', 'Error de Conexión', 'Verifica que el dispositivo ELD está encendido', 4000);
+  }
+}
+
+function disconnectELD() {
+  eldConnected = false;
+  eldDeviceName = '';
+  try {
+    if (window.Capacitor?.Plugins?.BluetoothLe) {
+      window.Capacitor.Plugins.BluetoothLe.disconnect().catch(() => {});
+    }
+  } catch(e) {}
+  _updateELDRingUI();
+  _syncHeroArcStatus();
+  const discBtn = document.getElementById('eldDisconnectBtn');
+  if (discBtn) discBtn.style.display = 'none';
+  showToast('info', '📶', 'ELD Desconectado', 'Volviendo a modo GPS', 2500);
+}
+
 // ── Camera ────────────────────────────────────────────────────────────────
 async function startScanCamera() {
   const errPanel = document.getElementById('scanCamError');
@@ -29173,9 +29466,12 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     if (valT) valT.textContent = _shiftStart ? _fmt(_shiftStart) : '--:--';
     const subT = document.getElementById('heroTurnoSub');
     if (subT){
-      if (_gpsActive) {
-        subT.textContent = _isMoving ? `${_speed} mph · GPS` : 'GPS ●';
-        subT.style.color = 'rgba(170,190,210,0.65)';
+      if (eldConnected) {
+        subT.textContent = 'ELD ●';
+        subT.style.color = '#10b981';
+      } else if (_gpsActive) {
+        subT.textContent = _isMoving ? `${_speed} mph` : 'GPS ●';
+        subT.style.color = '#f59e0b';
       } else {
         subT.textContent = 'GPS ○';
         subT.style.color = 'rgba(170,190,210,0.35)';
