@@ -1,5 +1,5 @@
 // SW versión — solo cambia cuando cambia la LÓGICA de este archivo.
-const CACHE_VERSION = 'v64-network-first';
+const CACHE_VERSION = 'v65-network-first';
 const CACHE_NAME = 'truck-precision-' + CACHE_VERSION;
 
 // Caché de tiles del mapa: independiente del ciclo de vida de la app.
