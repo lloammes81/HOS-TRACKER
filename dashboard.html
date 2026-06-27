@@ -11127,7 +11127,8 @@ window.openLoadSearch = function(){
   }
   // Weather
   if(localStorage.getItem('app_weather') === 'true'){
-    map.once('load', ()=> toggleWeatherWidget(true));
+    if (mapLoaded) toggleWeatherWidget(true);
+    else map.once('load', ()=> toggleWeatherWidget(true));
   }
   // Refresh interval
   const ri = parseInt(localStorage.getItem('app_refreshSec') || '0', 10);
