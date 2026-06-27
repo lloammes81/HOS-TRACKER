@@ -11118,22 +11118,17 @@ async function startWeatherMonitor() {
     let lat = null, lon = null;
     const FRESH_MS = 5 * 60 * 1000;
     const now = Date.now();
-    // 0. Ubicación mostrada en "Locación Actual" (origin): fuente principal,
-    //    así el clima SIEMPRE coincide con la ubicación que ve el usuario.
-    if (typeof origin !== 'undefined' && origin && origin.lat != null) {
-      lat = origin.lat; lon = origin.lon;
-    }
-    // 1. Best source: live tracker GPS fix
-    if (lat == null && window.lastFixFm && window.lastFixFm.lat != null
+    // 1. Posición GPS en vivo (tracker)
+    if (window.lastFixFm && window.lastFixFm.lat != null
         && (now - (window.lastFixFm.ts || 0)) < FRESH_MS) {
       lat = window.lastFixFm.lat; lon = window.lastFixFm.lon;
     }
-    // 2. GPS cache from warm watcher
+    // 2. Caché del GPS tibio
     if (lat == null && _gpsCache && _gpsCache.lat != null
         && (now - (_gpsCache.timestamp || 0)) < FRESH_MS) {
       lat = _gpsCache.lat; lon = _gpsCache.lon;
     }
-    // 3. Fresh GPS request
+    // 3. Pedido fresco de GPS
     if (lat == null) {
       try {
         const pos = await getGPSPosition(30000, 12000);
@@ -11141,18 +11136,17 @@ async function startWeatherMonitor() {
         lon = pos.coords ? pos.coords.longitude : pos.lon;
       } catch {}
     }
-    // 4. Last known weather coords
+    // 4. Ubicación confirmada que ve el usuario ("Locación Actual")
+    if (lat == null && typeof origin !== 'undefined' && origin && origin.lat != null) {
+      lat = origin.lat; lon = origin.lon;
+    }
+    // 5. Última ubicación usada para el clima
     if (lat == null && lastWeatherLat != null) {
       lat = lastWeatherLat; lon = lastWeatherLon;
     }
-    // 5. IP-based fallback (last resort)
-    if (lat == null) {
-      try {
-        const r = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
-        const d = await r.json();
-        if (d.latitude) { lat = d.latitude; lon = d.longitude; }
-      } catch {}
-    }
+    // SIN fallback por IP: preferimos NO actualizar antes que mostrar el clima
+    // de otra ciudad (la geolocalización por IP con datos móviles es errónea y
+    // era la causa de que el clima saliera de un lugar distinto).
     if (lat == null) return;
     lastWeatherLat = lat; lastWeatherLon = lon;
     const wx = await fetchWeather(lat, lon);
@@ -23863,7 +23857,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v56-rings';
+  window.APP_BUILD = 'v57-rings';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
