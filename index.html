@@ -11112,8 +11112,13 @@ async function startWeatherMonitor() {
     let lat = null, lon = null;
     const FRESH_MS = 5 * 60 * 1000;
     const now = Date.now();
+    // 0. Ubicación mostrada en "Locación Actual" (origin): fuente principal,
+    //    así el clima SIEMPRE coincide con la ubicación que ve el usuario.
+    if (typeof origin !== 'undefined' && origin && origin.lat != null) {
+      lat = origin.lat; lon = origin.lon;
+    }
     // 1. Best source: live tracker GPS fix
-    if (window.lastFixFm && window.lastFixFm.lat != null
+    if (lat == null && window.lastFixFm && window.lastFixFm.lat != null
         && (now - (window.lastFixFm.ts || 0)) < FRESH_MS) {
       lat = window.lastFixFm.lat; lon = window.lastFixFm.lon;
     }
