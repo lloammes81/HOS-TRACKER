@@ -10764,7 +10764,13 @@ async function fetchWeather(lat, lon) {
     const r = await fetch(url);
     const d = await r.json();
     const c = d.current;
-    const code = c.weather_code ?? c.weathercode ?? 0;
+    let code = c.weather_code ?? c.weathercode ?? 0;
+    // El weather_code del modelo a veces dice "lluvia/tormenta" para la celda
+    // aunque NO caiga nada en el punto exacto (0 mm). Si no hay precipitación
+    // real medida, no mostramos lluvia: lo tratamos como nublado.
+    const _precipNow = c.precipitation ?? 0;
+    const _PRECIP_CODES = new Set([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99]);
+    if (_PRECIP_CODES.has(code) && _precipNow <= 0) code = 3;
     return {
       code      : code,
       temp      : Math.round(c.temperature_2m),
@@ -23857,7 +23863,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v55-rings';
+  window.APP_BUILD = 'v56-rings';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
