@@ -9293,6 +9293,13 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
   <button class="toast-close" aria-label="Cerrar" onclick="hideToast()">×</button>
 </div>
 
+<!-- ══ INDICADOR PERSISTENTE: SIN CONEXIÓN (ni señal ni internet) ══ -->
+<div class="offline-indicator" id="offlineIndicator" role="status" aria-live="polite" aria-label="Sin conexión a internet">
+  <span class="oi-dot"></span>
+  <span class="oi-icon">📡</span>
+  <span>Sin conexión</span>
+</div>
+
 <!-- ══ DOT STATE REGULATIONS NOTIFICATION ══ -->
 <div id="dotStateNotif" style="
   position:fixed; top:calc(80px + env(safe-area-inset-top,0px));
@@ -23860,7 +23867,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v68-rings';
+  window.APP_BUILD = 'v69-rings';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
@@ -27526,6 +27533,37 @@ window._hosAutoRecalc = false;
 .app-toast.error   { border-color: rgba(239,68,68,0.4); }
 .app-toast.warning { border-color: rgba(245,158,11,0.4); }
 
+/* Indicador persistente: sin conexión (ni señal ni internet) */
+.offline-indicator {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(-120px);
+  z-index: 99998;
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(26, 16, 5, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(245,158,11,0.6);
+  border-radius: 999px;
+  padding: 9px 16px;
+  color: #fde68a;
+  font-size: 13px; font-weight: 800;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: .3px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+  transition: transform 0.35s cubic-bezier(.16,1,.3,1);
+  pointer-events: none;
+}
+.offline-indicator.show { transform: translateX(-50%) translateY(0); }
+.offline-indicator .oi-icon { font-size: 15px; line-height: 1; }
+.offline-indicator .oi-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #f59e0b; box-shadow: 0 0 8px #f59e0b;
+  animation: oiPulse 1.4s ease-in-out infinite;
+}
+@keyframes oiPulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
 /* Keyboard focus visible */
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -29763,12 +29801,19 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 // Network status
+function setOfflineIndicator(off) {
+  var el = document.getElementById('offlineIndicator');
+  if (el) el.classList.toggle('show', !!off);
+}
 window.addEventListener('online', function() {
+  setOfflineIndicator(false);
   showAppToast('Conexión restaurada', 'success', 2000);
 });
 window.addEventListener('offline', function() {
-  showAppToast('Sin conexión', 'warning', 4000);
+  setOfflineIndicator(true);
 });
+// Estado inicial: si ya arranca sin señal/internet, mostrar el indicador
+try { setOfflineIndicator(!navigator.onLine); } catch (e) {}
 </script>
 
 
