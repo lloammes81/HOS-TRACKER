@@ -11147,7 +11147,7 @@ async function startWeatherMonitor() {
   const _initialDelay = (!lastWeatherLat && !_gpsCache && !window.lastFixFm) ? 2000 : 0;
   await new Promise(r => setTimeout(r, _initialDelay));
   await updateNow();
-  weatherInterval = setInterval(updateNow, 30 * 1000); // every 30 seconds for real-time updates
+  weatherInterval = setInterval(updateNow, 60 * 1000); // every 1 min — refreshes weather + current GPS location
   try {
     const toggleEl = document.getElementById('weatherToggle');
     if (toggleEl) toggleEl.classList.add('on');
