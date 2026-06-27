@@ -9295,9 +9295,18 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
 
 <!-- ══ INDICADOR PERSISTENTE: SIN CONEXIÓN (ni señal ni internet) ══ -->
 <div class="offline-indicator" id="offlineIndicator" role="status" aria-live="polite" aria-label="Sin conexión a internet">
-  <span class="oi-dot"></span>
-  <span class="oi-icon">📡</span>
-  <span>Sin conexión</span>
+  <span class="oi-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="1" y1="1" x2="23" y2="23"/>
+      <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+      <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+      <path d="M10.71 5.05A16 16 0 0 1 22.58 9"/>
+      <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+      <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+      <line x1="12" y1="20" x2="12.01" y2="20"/>
+    </svg>
+  </span>
+  <span class="oi-text" id="offlineIndicatorText">Sin conexión</span>
 </div>
 
 <!-- ══ DOT STATE REGULATIONS NOTIFICATION ══ -->
@@ -23867,7 +23876,7 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
   // ── Versión de la app: visible para diagnóstico ─────────────────────────
   // Debe coincidir con CACHE_VERSION de sw.js. Al detectar cambio de versión
   // tras una recarga, avisa al conductor para confirmar que el update llegó.
-  window.APP_BUILD = 'v69-rings';
+  window.APP_BUILD = 'v70-rings';
   try {
     const _prevBuild = localStorage.getItem('hos_app_build');
     localStorage.setItem('hos_app_build', window.APP_BUILD);
@@ -27536,33 +27545,31 @@ window._hosAutoRecalc = false;
 /* Indicador persistente: sin conexión (ni señal ni internet) */
 .offline-indicator {
   position: fixed;
-  top: calc(20px + env(safe-area-inset-top, 0px));
+  top: calc(14px + env(safe-area-inset-top, 0px));
   left: 50%;
-  transform: translateX(-50%) translateY(-120px);
+  transform: translateX(-50%) translateY(-130%);
   z-index: 99998;
-  display: flex; align-items: center; gap: 8px;
-  background: rgba(26, 16, 5, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1.5px solid rgba(245,158,11,0.6);
-  border-radius: 999px;
-  padding: 9px 16px;
-  color: #fde68a;
-  font-size: 13px; font-weight: 800;
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 8px 15px 8px 13px;
+  background: rgba(17, 24, 39, 0.92);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+  color: #f3f4f6;
+  font-size: 13px; font-weight: 600;
   font-family: 'DM Sans', sans-serif;
-  letter-spacing: .3px;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
-  transition: transform 0.35s cubic-bezier(.16,1,.3,1);
+  letter-spacing: .2px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+  opacity: 0;
+  transition: transform .4s cubic-bezier(.16,1,.3,1), opacity .3s ease;
   pointer-events: none;
 }
-.offline-indicator.show { transform: translateX(-50%) translateY(0); }
-.offline-indicator .oi-icon { font-size: 15px; line-height: 1; }
-.offline-indicator .oi-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: #f59e0b; box-shadow: 0 0 8px #f59e0b;
-  animation: oiPulse 1.4s ease-in-out infinite;
-}
-@keyframes oiPulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+.offline-indicator.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.offline-indicator .oi-icon { display: inline-flex; color: #fbbf24; animation: oiBreathe 2.4s ease-in-out infinite; }
+.offline-indicator .oi-icon svg { display: block; }
+.offline-indicator .oi-text { white-space: nowrap; }
+@keyframes oiBreathe { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
 
 /* Keyboard focus visible */
 :focus-visible {
@@ -29803,7 +29810,14 @@ window.addEventListener('unhandledrejection', function(e) {
 // Network status
 function setOfflineIndicator(off) {
   var el = document.getElementById('offlineIndicator');
-  if (el) el.classList.toggle('show', !!off);
+  if (!el) return;
+  try {
+    var es = (typeof lang === 'undefined') || lang === 'es';
+    var t = document.getElementById('offlineIndicatorText');
+    if (t) t.textContent = es ? 'Sin conexión' : 'No connection';
+    el.setAttribute('aria-label', es ? 'Sin conexión a internet' : 'No internet connection');
+  } catch (e) {}
+  el.classList.toggle('show', !!off);
 }
 window.addEventListener('online', function() {
   setOfflineIndicator(false);
