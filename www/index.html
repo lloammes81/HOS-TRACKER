@@ -6071,6 +6071,40 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
 
 <body>
 
+<!-- ════════════════════════════════════════════════════════════
+     BLOQUEADOR DE ESCRITORIO — la app es 100% de uso móvil.
+     Se muestra solo en navegadores de escritorio (no en el build
+     nativo ni en teléfonos/tablets). No afecta GPS ni nada nativo.
+════════════════════════════════════════════════════════════ -->
+<div id="desktopOnlyBlocker" style="display:none;position:fixed;inset:0;z-index:2147483647;background:#06090f;color:#f1f5f9;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:'DM Sans',-apple-system,'Segoe UI',sans-serif;">
+  <div style="font-size:64px;margin-bottom:18px;line-height:1;">📱</div>
+  <div id="dobTitle" style="font-size:22px;font-weight:800;margin-bottom:10px;color:#10b981;">Abre esta app en tu teléfono</div>
+  <div id="dobBody" style="font-size:15px;line-height:1.6;max-width:420px;color:rgba(255,255,255,0.78);">HOS Tracker está diseñado solo para uso móvil. Ábrelo desde tu celular para el rastreo GPS y el conteo de horas de servicio.</div>
+</div>
+<script>
+(function(){
+  function isNative(){ try{ return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
+  function isMobile(){
+    var ua = navigator.userAgent || '';
+    var mobileUA = /Android|iPhone|iPod|Mobile|Windows Phone|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    var ipad = /iPad/i.test(ua) || (/Macintosh/i.test(ua) && (navigator.maxTouchPoints||0) > 1);
+    var touch = (navigator.maxTouchPoints||0) > 0 || ('ontouchstart' in window);
+    var narrow = Math.min(screen.width||9999, screen.height||9999) <= 950;
+    return mobileUA || ipad || (touch && narrow);
+  }
+  if (isNative() || isMobile()) return;
+  // Escritorio confirmado → mostrar aviso y bloquear interacción.
+  var en = false; try { en = (localStorage.getItem('hos_lang') === 'en'); } catch(e){}
+  var el = document.getElementById('desktopOnlyBlocker');
+  if (!el) return;
+  if (en) {
+    document.getElementById('dobTitle').textContent = 'Open this app on your phone';
+    document.getElementById('dobBody').textContent  = 'HOS Tracker is designed for mobile use only. Please open it on your phone for GPS tracking and hours-of-service counting.';
+  }
+  el.style.display = 'flex';
+  try { document.body.style.overflow = 'hidden'; } catch(e){}
+})();
+</script>
 
 <div class="bg-icons" aria-hidden="true">
   <svg class="truck-bg-svg" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
@@ -22514,6 +22548,51 @@ async function grantAppPermissions() {
     localStorage.setItem('hos_perms_asked', '1');
   }
   _hidePermsOverlay();
+  // Android: el ahorro de batería del sistema puede matar el rastreo GPS en
+  // segundo plano aunque los permisos estén concedidos. Avisar una sola vez.
+  setTimeout(_maybePromptBatteryOptimization, 800);
+}
+
+// Aviso (una sola vez, solo Android nativo) para desactivar la optimización de
+// batería — es la causa #1 de que el GPS/conteo de horas se congele con la app
+// minimizada en muchos teléfonos (Samsung, Xiaomi, etc.).
+function _maybePromptBatteryOptimization() {
+  try {
+    const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    const platform = (window.Capacitor && window.Capacitor.getPlatform) ? window.Capacitor.getPlatform() : '';
+    if (!isNative || platform !== 'android') return;
+    if (localStorage.getItem('hos_batt_opt_done')) return;
+    const isEs = (typeof lang === 'undefined') || lang !== 'en';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'battOptOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;padding:22px;';
+    overlay.innerHTML = `
+      <div style="background:#0f172a;border:1.5px solid rgba(16,185,129,0.45);border-radius:22px;padding:26px 22px 20px;max-width:360px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.95);font-family:'DM Sans',sans-serif;">
+        <div style="font-size:46px;margin-bottom:10px;line-height:1;">🔋</div>
+        <div style="font-size:18px;font-weight:800;color:#f1f5f9;margin-bottom:10px;">${isEs ? 'Mantén el GPS activo' : 'Keep GPS running'}</div>
+        <div style="font-size:13.5px;color:#94a3b8;line-height:1.55;margin-bottom:20px;">${isEs
+          ? 'Para que el conteo de horas no se detenga con la app minimizada, desactiva la <b style="color:#cbd5e1">optimización de batería</b> para HOS Tracker.'
+          : 'So the hours counter keeps running while the app is minimized, turn off <b style="color:#cbd5e1">battery optimization</b> for HOS Tracker.'}</div>
+        <button id="battOptOpen" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px;letter-spacing:.3px;-webkit-tap-highlight-color:transparent;">
+          ${isEs ? '⚙️ Abrir ajustes' : '⚙️ Open settings'}
+        </button>
+        <button id="battOptLater" style="width:100%;background:rgba(255,255,255,.06);color:#94a3b8;border:1.5px solid rgba(255,255,255,.12);border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+          ${isEs ? 'Entendido' : 'Got it'}
+        </button>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const done = () => { try { localStorage.setItem('hos_batt_opt_done', '1'); } catch(e){} overlay.remove(); };
+    overlay.querySelector('#battOptLater').onclick = done;
+    overlay.querySelector('#battOptOpen').onclick = () => {
+      try {
+        const BG = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation;
+        if (BG && BG.openSettings) BG.openSettings();
+      } catch(e){}
+      done();
+    };
+  } catch(e) {}
 }
 function skipPerms() {
   // "Ahora no": no lo fijamos permanente; no reaparece durante esta sesión,
