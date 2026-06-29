@@ -14634,6 +14634,40 @@ function resetMiniBadges() {
 }
 
 // ── Apply a route result to all UI elements ─────────────────
+// Muestra y/o redibuja el mini-mapa de ruta. Reúne la lógica que estaba
+// duplicada en calculateRoute(), _applyRouteResult() y syncPlanCardActiveRoute().
+//   show       : revela la tarjeta (#miniMapCard) e inicializa el mapa (por defecto true)
+//   reloadPOIs : recarga badges/POIs/restricciones (paradas) tras dibujar
+//   delay      : ms antes de dibujar (deja que el layout calcule el tamaño)
+function renderMiniMapRoute(opts) {
+  opts = opts || {};
+  const show       = opts.show !== false;
+  const reloadPOIs = !!opts.reloadPOIs;
+  const delay      = (typeof opts.delay === 'number') ? opts.delay : 100;
+  if (!roadGeometry) return;
+  if (show) {
+    const card = document.getElementById('miniMapCard');
+    if (card) card.style.display = 'block';
+    if (!miniMap && typeof initMap === 'function') miniMap = initMap('miniMap');
+  }
+  if (!miniMap) return; // sin mapa que dibujar (modo "solo redibujar")
+  setTimeout(() => {
+    try {
+      if (show) miniMap.invalidateSize();
+      const mRef = { list: miniMarkersList };
+      const lRef = { layer: miniLayer };
+      drawRoute(miniMap, roadGeometry, mRef, lRef);
+      miniMarkersList = mRef.list;
+      miniLayer = lRef.layer;
+      if (reloadPOIs) {
+        try { resetMiniBadges(); } catch(e) {}
+        try { loadMiniMapPOIs(); } catch(e) {}
+        try { loadMiniMapRestrictions(); } catch(e) {}
+      }
+    } catch(e) {}
+  }, delay);
+}
+
 // isInitialLoad=true  → first render (saves drive, shows map, loads POIs)
 // isInitialLoad=false → background update (updates existing map, adjusts saved drive)
 function _applyRouteResult(road, depart, hours, speed, isInitialLoad) {
@@ -14673,30 +14707,10 @@ function _applyRouteResult(road, depart, hours, speed, isInitialLoad) {
   renderResults(hours, speed, depart);
 
   if (isInitialLoad) {
-    document.getElementById('miniMapCard').style.display = 'block';
-    if (!miniMap) miniMap = initMap('miniMap');
-    setTimeout(() => {
-      miniMap.invalidateSize();
-      const mRef = { list: miniMarkersList };
-      const lRef = { layer: miniLayer };
-      drawRoute(miniMap, roadGeometry, mRef, lRef);
-      miniMarkersList = mRef.list;
-      miniLayer = lRef.layer;
-      resetMiniBadges();
-      loadMiniMapPOIs();
-      loadMiniMapRestrictions();
-    }, 100);
+    renderMiniMapRoute({ show: true, reloadPOIs: true, delay: 100 });
   } else {
     // Re-draw route on existing map with updated geometry
-    if (miniMap) {
-      setTimeout(() => {
-        const mRef = { list: miniMarkersList };
-        const lRef = { layer: miniLayer };
-        drawRoute(miniMap, roadGeometry, mRef, lRef);
-        miniMarkersList = mRef.list;
-        miniLayer = lRef.layer;
-      }, 50);
-    }
+    renderMiniMapRoute({ show: false, reloadPOIs: false, delay: 50 });
   }
 
   // Update destination card whenever route/arrival recalculates
@@ -20960,25 +20974,9 @@ function syncPlanCardActiveRoute() {
   // al reanudar una ruta guardada o al cambiar de pestaña el mapa quedaba oculto.
   const miniCard = document.getElementById('miniMapCard');
   if (miniCard && hideForm && roadGeometry && origin && destination) {
+    // Recargar POIs/paradas solo al revelar la tarjeta (evita recargas en cada cambio de pestaña)
     const wasHidden = (miniCard.style.display === 'none' || !miniCard.style.display);
-    miniCard.style.display = 'block';
-    if (!miniMap && typeof initMap === 'function') miniMap = initMap('miniMap');
-    if (miniMap) setTimeout(() => {
-      try {
-        miniMap.invalidateSize();
-        const mRef = { list: miniMarkersList };
-        const lRef = { layer: miniLayer };
-        drawRoute(miniMap, roadGeometry, mRef, lRef);
-        miniMarkersList = mRef.list;
-        miniLayer = lRef.layer;
-        // Recargar POIs/paradas solo al revelar la tarjeta (evita recargas en cada cambio de pestaña)
-        if (wasHidden) {
-          try { resetMiniBadges(); } catch(e) {}
-          try { loadMiniMapPOIs(); } catch(e) {}
-          try { loadMiniMapRestrictions(); } catch(e) {}
-        }
-      } catch(e) {}
-    }, 100);
+    renderMiniMapRoute({ show: true, reloadPOIs: wasHidden, delay: 100 });
   }
 }
 
@@ -22378,19 +22376,7 @@ calculateRoute = async function() {
 
     renderResults(hours, speed, depart);
 
-    document.getElementById('miniMapCard').style.display = 'block';
-    if (!miniMap) miniMap = initMap('miniMap');
-    setTimeout(() => {
-      miniMap.invalidateSize();
-      const mRef = { list: miniMarkersList };
-      const lRef = { layer: miniLayer };
-      drawRoute(miniMap, roadGeometry, mRef, lRef);
-      miniMarkersList = mRef.list;
-      miniLayer = lRef.layer;
-      resetMiniBadges();
-      loadMiniMapPOIs();
-      loadMiniMapRestrictions();
-    }, 100);
+    renderMiniMapRoute({ show: true, reloadPOIs: true, delay: 100 });
 
     if (routeSource === 'Fallback') {
       const _reason2 = road.fallbackReason ? ` (${road.fallbackReason})` : '';
