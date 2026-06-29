@@ -6485,10 +6485,8 @@ button, .btn, .tab-btn { touch-action: manipulation; min-height: 44px; }
           Optimizar Orden
         </button>
 
-        <!-- Cancelar ruta — sólo visible con ruta activa -->
-        <button id="cancelActiveRouteBtn" onclick="cancelActiveRoute()" style="display:none;width:100%;margin-top:8px;padding:14px;border-radius:14px;border:1.5px solid rgba(239,68,68,0.5);background:rgba(239,68,68,0.1);color:#f87171;font-size:15px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;letter-spacing:0.2px;">
-          🛑 Cancelar ruta
-        </button>
+        <!-- Cancelar ruta — eliminado a petición del usuario (se cancela desde el dashboard) -->
+        <button id="cancelActiveRouteBtn" onclick="cancelActiveRoute()" style="display:none !important;"></button>
 
         <div id="planDepartureSection" style="margin-top:14px">
         <div class="form-section-label">📅 Día y Hora de Salida</div>
@@ -20913,7 +20911,7 @@ function syncPlanCardActiveRoute() {
   if (optBtn && hideForm)   optBtn.style.display                = 'none';
   if (originRow)            originRow.style.display             = hideForm ? 'none' : '';
   if (errorBox)             errorBox.style.display              = hideForm ? 'none' : (errorBox._visible ? '' : 'none');
-  if (cancelBtn)            cancelBtn.style.display             = tracking ? '' : 'none';
+  if (cancelBtn)            cancelBtn.style.display             = 'none'; // botón eliminado a petición del usuario
 
   if (tracking) {
     const altRoutes = document.getElementById('altRoutesCard');
@@ -20921,6 +20919,32 @@ function syncPlanCardActiveRoute() {
     if (altRoutes)    altRoutes.style.display    = 'none';
     if (resultsCard)  resultsCard.style.display  = 'none';
     if (shareBtns)    shareBtns.style.display    = 'none';
+  }
+
+  // Mostrar el mapa de ruta (#miniMapCard) con sus detalles ("Próximas en Mi
+  // Ruta") siempre que haya una ruta activa/calculada — al volver del dashboard,
+  // al reanudar una ruta guardada o al cambiar de pestaña el mapa quedaba oculto.
+  const miniCard = document.getElementById('miniMapCard');
+  if (miniCard && hideForm && roadGeometry && origin && destination) {
+    const wasHidden = (miniCard.style.display === 'none' || !miniCard.style.display);
+    miniCard.style.display = 'block';
+    if (!miniMap && typeof initMap === 'function') miniMap = initMap('miniMap');
+    if (miniMap) setTimeout(() => {
+      try {
+        miniMap.invalidateSize();
+        const mRef = { list: miniMarkersList };
+        const lRef = { layer: miniLayer };
+        drawRoute(miniMap, roadGeometry, mRef, lRef);
+        miniMarkersList = mRef.list;
+        miniLayer = lRef.layer;
+        // Recargar POIs/paradas solo al revelar la tarjeta (evita recargas en cada cambio de pestaña)
+        if (wasHidden) {
+          try { resetMiniBadges(); } catch(e) {}
+          try { loadMiniMapPOIs(); } catch(e) {}
+          try { loadMiniMapRestrictions(); } catch(e) {}
+        }
+      } catch(e) {}
+    }, 100);
   }
 }
 
