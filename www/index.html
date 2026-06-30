@@ -11811,12 +11811,12 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
       valD.textContent = `${h}H`;
       const arcCol = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#10b981';
       arcD.style.stroke = arcCol; arcD.style.strokeDashoffset = C * (1 - pct);
-      valD.style.color = driveLeft < 2 ? '#ef4444' : driveLeft < 4 ? '#f59e0b' : '#c8d4e0';
+      valD.style.color = driveLeft < 2 ? '#f97316' : driveLeft < 4 ? '#f59e0b' : '#c8d4e0';
       // Mini badge minutos — actualizar color y texto
       const badgeMin = document.getElementById('heroMinBadge');
       const valMin = document.getElementById('heroValMin');
       if (badgeMin) badgeMin.style.boxShadow = `0 0 0 2px ${arcCol},0 2px 8px rgba(0,0,0,0.6)`;
-      if (valMin) { valMin.textContent = String(m).padStart(2,'0'); valMin.style.color = m <= 5 ? '#ef4444' : m <= 15 ? '#f59e0b' : '#e2e8f0'; }
+      if (valMin) { valMin.textContent = String(m).padStart(2,'0'); valMin.style.color = m <= 5 ? '#f97316' : m <= 15 ? '#f59e0b' : '#e2e8f0'; }
     }
   }
   const arcC = document.getElementById('heroArcCycle');
@@ -11828,12 +11828,12 @@ function updateHeroKPIs(driveLeft, driveMax, cycleLeft, cycleMax) {
     valC.textContent = `${h}H`;
     const arcCol = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#10b981';
     arcC.style.stroke = arcCol; arcC.style.strokeDashoffset = C * (1 - pct);
-    valC.style.color = cycleLeft < 10 ? '#ef4444' : cycleLeft < 20 ? '#f59e0b' : '#c8d4e0';
+    valC.style.color = cycleLeft < 10 ? '#f97316' : cycleLeft < 20 ? '#f59e0b' : '#c8d4e0';
     // Mini badge minutos ciclo — actualizar color y texto
     const badgeCMin = document.getElementById('heroCycleMinBadge');
     const valCMin = document.getElementById('heroValCycleMin');
     if (badgeCMin) badgeCMin.style.boxShadow = `0 0 0 2px ${arcCol},0 2px 8px rgba(0,0,0,0.6)`;
-    if (valCMin) { valCMin.textContent = String(m).padStart(2,'0'); valCMin.style.color = m <= 5 ? '#ef4444' : m <= 15 ? '#f59e0b' : '#e2e8f0'; }
+    if (valCMin) { valCMin.textContent = String(m).padStart(2,'0'); valCMin.style.color = m <= 5 ? '#f97316' : m <= 15 ? '#f59e0b' : '#e2e8f0'; }
   }
   _syncHeroArcStatus();
 }
@@ -16679,7 +16679,7 @@ function _showRestInManejoCircle(restRemaining, restPct) {
     const badgeMin = document.getElementById('heroMinBadge');
     const valMin = document.getElementById('heroValMin');
     if (badgeMin) badgeMin.style.boxShadow = `0 0 0 2px ${arcCol},0 2px 8px rgba(0,0,0,0.6)`;
-    if (valMin) { valMin.textContent = String(m).padStart(2,'0'); valMin.style.color = m <= 5 ? '#ef4444' : m <= 15 ? '#f59e0b' : '#e2e8f0'; }
+    if (valMin) { valMin.textContent = String(m).padStart(2,'0'); valMin.style.color = m <= 5 ? '#f97316' : m <= 15 ? '#f59e0b' : '#e2e8f0'; }
   }
   if (lblD) {
     lblD.textContent = done ? (lang === 'es' ? 'Manejo' : 'Drive') : (lang === 'es' ? '😴 DESCANSO' : '😴 REST');
@@ -17960,7 +17960,7 @@ function showHosDashboard() {
         _activeSecs = Math.max(0, Math.floor(14 * 3600 - (Date.now() - hosShiftStartTime) / 1000));
       }
       _sc.textContent = String(_activeSecs % 60).padStart(2, '0');
-      _sc.style.color = _dLeftSecs < 3600 ? (_dLeftSecs < 1800 ? '#ef4444' : '#f59e0b') : 'rgba(255,255,255,0.75)';
+      _sc.style.color = _dLeftSecs < 3600 ? (_dLeftSecs < 1800 ? '#f97316' : '#f59e0b') : 'rgba(255,255,255,0.75)';
     }
     const dMax = Math.min(
       Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11),
@@ -18921,7 +18921,7 @@ function updateHosDashboard(driveLeft, driveMax) {
   const _dLeftSec = Math.floor(driveLeft * 3600);
   const _dH = Math.floor(_dLeftSec / 3600);
   const _dM = Math.floor((_dLeftSec % 3600) / 60);
-  const _dLeftColor = driveLeft <= 0.5 ? '#ef4444' : driveLeft <= 2 ? '#f59e0b' : '#ffffff';
+  const _dLeftColor = driveLeft <= 0.5 ? '#f97316' : driveLeft <= 2 ? '#f59e0b' : '#ffffff';
   timeEl.textContent = `${_dH}H`;
   timeEl.style.fontSize = '64px';
   timeEl.style.color = _dLeftColor;
@@ -18929,7 +18929,7 @@ function updateHosDashboard(driveLeft, driveMax) {
   const minEl = document.getElementById('dashRingMin');
   if (minEl) {
     minEl.textContent = String(_dM).padStart(2,'0');
-    minEl.style.color = _dM <= 5 ? '#ef4444' : _dM <= 15 ? '#f59e0b' : '#e2e8f0';
+    minEl.style.color = _dM <= 5 ? '#f97316' : _dM <= 15 ? '#f59e0b' : '#e2e8f0';
     minEl.parentElement.style.boxShadow = `0 0 0 2px ${arcColor},0 2px 8px rgba(0,0,0,0.6)`;
   }
 
@@ -18999,7 +18999,7 @@ function updateHosDashboard(driveLeft, driveMax) {
     const minCel = document.getElementById('dashCicloMin');
     if (minCel) {
       minCel.textContent = String(_cycM).padStart(2,'0');
-      minCel.style.color = _cycM <= 5 ? '#ef4444' : _cycM <= 15 ? '#f59e0b' : '#e2e8f0';
+      minCel.style.color = _cycM <= 5 ? '#f97316' : _cycM <= 15 ? '#f59e0b' : '#e2e8f0';
       minCel.parentElement.style.boxShadow = `0 0 0 2px ${cycBadgeColor},0 2px 6px rgba(0,0,0,0.6)`;
     }
   }
@@ -19311,13 +19311,13 @@ function update14hCircle() {
     const _14m = Math.floor((_14sec % 3600) / 60);
     timeEl.textContent = `${_14h}H`;
     timeEl.style.fontSize = '28px';
-    timeEl.style.color = remaining <= 0 ? '#ef4444' : remaining < 2 ? '#ef4444' : remaining < 4 ? '#fbbf24' : '#ffffff';
+    timeEl.style.color = remaining <= 0 ? '#f97316' : remaining < 2 ? '#f97316' : remaining < 4 ? '#fbbf24' : '#ffffff';
     // Mini badge minutos 14H
     const badge14Color = remaining <= 0 ? '#ef4444' : remaining < 2 ? '#ef4444' : remaining < 4 ? '#f59e0b' : '#10b981';
     const minEl = document.getElementById('dash14hMin');
     if (minEl) {
       minEl.textContent = String(_14m).padStart(2,'0');
-      minEl.style.color = _14m <= 5 ? '#ef4444' : _14m <= 15 ? '#f59e0b' : '#e2e8f0';
+      minEl.style.color = _14m <= 5 ? '#f97316' : _14m <= 15 ? '#f59e0b' : '#e2e8f0';
       minEl.parentElement.style.boxShadow = `0 0 0 2px ${badge14Color},0 2px 6px rgba(0,0,0,0.6)`;
     }
   }
@@ -29797,7 +29797,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       const badgeMin = document.getElementById('heroMinBadge');
       const valMin = document.getElementById('heroValMin');
       if (badgeMin) badgeMin.style.boxShadow = `0 0 0 2px ${dArcCol},0 2px 8px rgba(0,0,0,0.6)`;
-      if (valMin) { valMin.textContent = String(m2).padStart(2,'0'); valMin.style.color = m2 <= 5 ? '#ef4444' : m2 <= 15 ? '#f59e0b' : '#e2e8f0'; }
+      if (valMin) { valMin.textContent = String(m2).padStart(2,'0'); valMin.style.color = m2 <= 5 ? '#f97316' : m2 <= 15 ? '#f59e0b' : '#e2e8f0'; }
     }
 
     // Anillo 3: Ciclo 70H disponible
