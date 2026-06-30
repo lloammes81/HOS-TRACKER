@@ -17661,6 +17661,8 @@ function _fmSaveActiveRoute() {
       hoursInput: document.getElementById('hoursInput')?.value || '70',
       speedInput: document.getElementById('speedInput')?.value || '60',
       dailyHoursInput: document.getElementById('dailyHoursInput')?.value || '11',
+      driveLeft: window._hosTracker ? window._hosTracker.driveLeft() : null,
+      cycleLeft: window._hosTracker ? window._hosTracker.cycleLeft() : null,
       savedAt: Date.now()
     }));
   } catch(e) {}
@@ -17772,7 +17774,20 @@ function _fmRestoreRoute(saved) {
 
   // Recalcular ruta automáticamente. Esto repobla resultsCard, schedule,
   // mini-mapa y aplica syncPlanCardActiveRoute() para ocultar el formulario.
+  // Usar los tiempos restantes reales del tracker (o los guardados en el snapshot)
+  // y saltar los popups de horas — el conductor ya los confirmó antes de cerrar la app.
   setTimeout(() => {
+    const _rd = window._hosTracker ? window._hosTracker.driveLeft() : saved.driveLeft;
+    const _rc = window._hosTracker ? window._hosTracker.cycleLeft() : saved.cycleLeft;
+    if (_rd != null && _rd >= 0) {
+      const dh = document.getElementById('dailyHoursInput');
+      if (dh) dh.value = Math.max(0.5, Math.min(11, parseFloat(_rd.toFixed(2))));
+    }
+    if (_rc != null && _rc >= 0) {
+      const hi = document.getElementById('hoursInput');
+      if (hi) hi.value = Math.max(1, Math.min(70, parseFloat(_rc.toFixed(2))));
+    }
+    window._hosAutoRecalc = true;
     try { calculateRoute(); }
     catch(e) { console.warn('Recalc falló:', e); }
   }, 300);
