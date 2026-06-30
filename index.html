@@ -15949,6 +15949,7 @@ function b30Reset() {
   b30ViolShown = false; b30InBreak = false; b30BreakStart = null;
   b30Complete = false;
   if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
+  window.cancelLocalHOSAlert?.(7010);
 }
 
 function b30UpdateTimer() {
@@ -16006,6 +16007,14 @@ function b30ShowBreakTimer() {
   if (b30TickId) clearInterval(b30TickId);
   b30TickId = setInterval(b30UpdateTimer, 1000);
   b30UpdateTimer();
+  // Pre-agendar alarma nativa 30 min en el futuro para que llegue con la app cerrada
+  if (window.scheduleLocalHOSAlert) {
+    const _bTitle = lang === 'es' ? '✅ ¡PAUSA DE 30 MIN COMPLETADA!' : '✅ 30-MIN BREAK COMPLETE!';
+    const _bBody  = lang === 'es'
+      ? '¡Excelente! Tomaste tu descanso obligatorio de 30 minutos. Ya puedes continuar manejando.'
+      : 'Great job! You completed your mandatory 30-minute break. You may continue driving.';
+    window.scheduleLocalHOSAlert(B30_BREAK_MIN * 1000, _bTitle, _bBody, 7010).catch(() => {});
+  }
 }
 
 /* ── Break ring helpers: hijack the main HOS ring during a mandatory break ── */
@@ -16825,8 +16834,49 @@ function checkWeighStations(lat, lon) {
   }
 }
 
+/* ── Pre-agendado nativo de alertas HOS (funciona con app cerrada) ─────────
+   Registra alarmas absolutas con el OS (AlarmManager / UNUserNotification)
+   para los umbrales críticos. Se llama throttled cada 60s mientras el
+   camión está en movimiento; las alarmas usan los mismos IDs que la ruta
+   reactiva, así que el que llegue primero cancela al otro.
+   ──────────────────────────────────────────────────────────────────────── */
+let _hosPreSchedLastTs = 0;
+function _hosPreScheduleAlerts(driveLeft) {
+  if (!window.scheduleLocalHOSAlert) return;
+  const now = Date.now();
+  if (now - _hosPreSchedLastTs < 60000) return;
+  _hosPreSchedLastTs = now;
+
+  const isEs = lang === 'es';
+  const MIN_DELAY = 2 * 60 * 1000; // no agendar si queda < 2 min (ruta reactiva lo maneja)
+
+  const thresholds = [
+    { fired: () => _hosWarn1hFired,     hours: 1.0, id: 7011,
+      t: isEs ? '⚠️ 1 HORA DE MANEJO'      : '⚠️ 1 HOUR LEFT!',
+      b: isEs ? 'Solo te queda 1 hora de manejo. Busca dónde estacionarte AHORA.'
+              : 'Only 1 hour of driving left. Start looking for parking NOW.' },
+    { fired: () => _hosWarn30mFired,    hours: 0.5, id: 7012,
+      t: isEs ? '🔴 ¡30 MINUTOS — PARA YA!' : '🔴 30 MIN — STOP NOW!',
+      b: isEs ? '⛔ Continuar manejando es riesgo de violación HOS. Estacionate INMEDIATAMENTE.'
+              : '⛔ Continuing to drive risks an HOS violation. Find parking IMMEDIATELY.' },
+    { fired: () => _hosWarnExpiredFired, hours: 0,  id: 7013,
+      t: isEs ? '🚨 ¡HORAS DE MANEJO VENCIDAS!' : '🚨 DRIVING HOURS EXPIRED!',
+      b: isEs ? '¡Has superado el límite de 11 hrs! Multa DOT hasta $16,000 · Out of Service.'
+              : 'You exceeded the 11-hr driving limit! Fine up to $16,000 · Out of Service.' },
+  ];
+
+  for (const th of thresholds) {
+    if (th.fired()) { window.cancelLocalHOSAlert?.(th.id); continue; }
+    if (driveLeft <= th.hours) continue;
+    const delay = (driveLeft - th.hours) * 3600000;
+    if (delay < MIN_DELAY) continue;
+    window.scheduleLocalHOSAlert(delay, th.t, th.b, th.id).catch(() => {});
+  }
+}
+
 /* ── 5-mile mini-map POI alerts (weigh stations & checkpoints) ── */
-const _miniAlertNotified = new Set();
+const _miniAlertNotified  = new Set();
+const _miniPreSchedTs     = new Map(); // key → timestamp of last pre-schedule
 
 function checkMiniRouteAlerts(lat, lon) {
   if (!destination || !roadGeometry) return;
@@ -16893,6 +16943,29 @@ function checkMiniRouteAlerts(lat, lon) {
       }
 
       break; // una alerta por tipo por ciclo GPS
+    }
+
+    // ── Pre-agendar para POIs entre 5.5 y 20 millas (app cerrada) ──────────
+    if (!window.scheduleLocalHOSAlert || !fmCurrentSpeed || fmCurrentSpeed < 5) continue;
+    for (const marker of markers) {
+      const ll  = marker.getLatLng();
+      const key = `pre_${cfg.type}_${ll.lat.toFixed(4)}_${ll.lng.toFixed(4)}`;
+      if (_miniAlertNotified.has(`${cfg.type}_${ll.lat.toFixed(4)}_${ll.lng.toFixed(4)}`)) continue; // ya notificado reactivamente
+      const lastTs = _miniPreSchedTs.get(key) || 0;
+      if (Date.now() - lastTs < 60000) continue; // throttle: una vez por minuto por POI
+
+      const dist = haversine(lat, lon, ll.lat, ll.lng);
+      if (dist <= 5.5 || dist > 20) continue; // solo zona fuera del rango reactivo, hasta 20mi
+      const pointToDest = haversine(ll.lat, ll.lng, destination.lat, destination.lon);
+      if (pointToDest >= distToDest) continue; // detrás de nosotros
+
+      const etaMs = (dist / Math.max(fmCurrentSpeed, 20)) * 3600000;
+      if (etaMs < 2 * 60 * 1000 || etaMs > 90 * 60 * 1000) continue; // 2-90 min
+
+      const isEs = lang === 'es';
+      const mi   = dist.toFixed(1);
+      window.scheduleLocalHOSAlert(etaMs, isEs ? cfg.titleEs : cfg.titleEn, isEs ? cfg.bodyEs(mi) : cfg.bodyEn(mi), cfg.notifId).catch(() => {});
+      _miniPreSchedTs.set(key, Date.now());
     }
   }
 }
@@ -16980,6 +17053,8 @@ function fmStartTracking() {
   _hosWarn1hFired  = false;    // reinicia alertas de horas de manejo
   _hosWarn30mFired = false;
   _hosWarnExpiredFired = false;
+  _hosPreSchedLastTs = 0;      // forzar reagendado en el primer tick GPS
+  [7011, 7012, 7013].forEach(id => window.cancelLocalHOSAlert?.(id)); // limpiar alarmas del viaje anterior
   b30Reset();             // reinicia sistema de pausa 30 min
   showSpeedometer();
   showDriveHoursWidget();
@@ -17244,6 +17319,8 @@ function fmStartTracking() {
       ? Math.max(0, Math.min(window._hosTracker.driveLeft(), driveMax))
       : Math.max(0, driveMax - elapsed);
     _hosCurrentDriveLeft = driveLeft;
+    // Pre-agendar alertas HOS nativas para que lleguen con la app cerrada
+    if (isMoving && driveLeft > 0) _hosPreScheduleAlerts(driveLeft);
     // ETA inteligente HOS + próxima parada (banner del HUD)
     _updateFmSmartInfo(etaH, remaining, driveLeft);
     // Update circular widget on the map
@@ -17501,6 +17578,7 @@ function fmStopTracking() {
   syncPlanCardActiveRoute();
   _fmClearActiveRoute();
   b30Reset(); // limpiar sistema de pausa al detener rastreo
+  [7011, 7012, 7013].forEach(id => window.cancelLocalHOSAlert?.(id)); // cancelar alarmas HOS pendientes
   _autoStopSecs   = 0;
   _autoStopLastTs = null;
   // _vehicleStopStartMs preserved — vehicle is now parked; 10h rest timer must keep running
