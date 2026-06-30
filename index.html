@@ -24157,6 +24157,29 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
 
     window._localNotif = LocalNotifications;
 
+    // ── Canales de notificación (Android 8+) ──────────────────────
+    // El plugin solo crea el canal "default" automáticamente. Las
+    // notificaciones programadas con channelId 'hos_alerts'/'hos_news'
+    // se descartan en silencio si ese canal no existe — hay que
+    // registrarlos explícitamente antes de programar nada.
+    try {
+      await LocalNotifications.createChannel({
+        id: 'hos_alerts',
+        name: 'Alertas de HOS',
+        description: 'Límites de manejo, descansos y turnos',
+        importance: 5,
+        visibility: 1,
+        vibration: true
+      });
+      await LocalNotifications.createChannel({
+        id: 'hos_news',
+        name: 'Noticias DOT',
+        description: 'Alertas y novedades regulatorias',
+        importance: 3,
+        visibility: 1
+      });
+    } catch (e) {}
+
     // ── Programación de notificaciones (noticias DOT + recordatorio diario) ──
     // Se expone como global para poder ejecutarla justo después de conceder el
     // permiso desde la pantalla unificada de permisos (grantAppPermissions).
