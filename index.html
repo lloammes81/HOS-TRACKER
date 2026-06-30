@@ -29933,7 +29933,8 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     setInitialHours: function(dailyHrsLeft, cycleHrsLeft) {
       _driveMs = Math.max(0, (DRIVE_MAX - dailyHrsLeft) * 3600000);
       _cycleMs = Math.max(0, (CYCLE_MAX - cycleHrsLeft) * 3600000);
-      _sessionStart = null;
+      // Si ya va en movimiento, reanclamos la sesión ahora para que driveLeft()/cycleLeft() sigan bajando.
+      _sessionStart = _isMoving ? new Date() : null;
       if (!_shiftStart) _shiftStart = new Date();
       _save();
     },
