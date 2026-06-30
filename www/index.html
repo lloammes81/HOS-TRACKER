@@ -17109,19 +17109,10 @@ function fmStartTracking() {
                                      : (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving);
     if (_hasReliableSpeed) fmCurrentSpeed = gpsSpeed;
     window._fmWatchLastTs = Date.now(); // freshness: el poll de respaldo cede si este watch está vivo
-    // ── Pausa de relojes HOS cuando el vehículo se detiene ──
-    if (typeof window._stopPauseStart === 'undefined') window._stopPauseStart = null;
+    // La ventana de 14H corre ininterrumpidamente desde el inicio del turno (DOT: wall-clock).
+    // Solo el reloj de 11H de manejo se pausa cuando el vehículo está detenido.
     const _wasMoving = fmVehicleMoving;
     if (_hasReliableSpeed) {
-      if (_wasMoving && !isMoving) {
-        // Acaba de detenerse — marca inicio de pausa
-        window._stopPauseStart = Date.now();
-      } else if (!_wasMoving && isMoving && window._stopPauseStart) {
-        // Acaba de moverse — desplaza hosShiftStartTime para descontar la pausa
-        const pauseMs = Date.now() - window._stopPauseStart;
-        if (hosShiftStartTime) hosShiftStartTime += pauseMs;
-        window._stopPauseStart = null;
-      }
       fmVehicleMoving = isMoving;
     }
     window._dbgGps = { src:'ruta', raw:rawSpeed, spd:gpsSpeed, acc:Math.round(acc||0), ts:Date.now() };
@@ -17930,9 +17921,9 @@ function showHosDashboard() {
     setDashStatus('off');
   }
 
-  // Iniciar intervalo de actualización del círculo 14H (cada 30 segundos)
+  // Iniciar intervalo de actualización del círculo 14H (cada 1 segundo — pared reloj continuo)
   if (_dash14hInterval) clearInterval(_dash14hInterval);
-  _dash14hInterval = setInterval(update14hCircle, 30000);
+  _dash14hInterval = setInterval(update14hCircle, 1000);
   update14hCircle();
 
   // Actualizar el círculo grande inmediatamente con las horas actuales
