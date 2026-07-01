@@ -14730,6 +14730,9 @@ function _applyRouteResult(road, depart, hours, speed, isInitialLoad) {
 
   scheduleRestAlarms(schedule, depart);
 
+  // Sync route line on dashboard minimap whenever route geometry changes
+  try { _hosRefreshRoute(); } catch(e) {}
+
   if (isInitialLoad) {
     const drive = {
       id: Date.now(),
@@ -17857,6 +17860,17 @@ let hosMinimapInst    = null;  // instancia Leaflet del mini mapa
 let hosMinimapTruck   = null;  // marcador del camión en mini mapa
 let hosMinimapRoute   = null;  // polyline de ruta en mini mapa
 let hosMinimapGlow    = null;  // polyline glow de ruta en mini mapa
+
+// Dibuja o redibuja la ruta en hosMinimapInst sin alterar el zoom/pan actual
+function _hosRefreshRoute() {
+  if (!hosMinimapInst) return;
+  const coords = (typeof roadGeometry !== 'undefined') ? roadGeometry : null;
+  if (!coords?.length) return;
+  if (hosMinimapGlow)  { try { hosMinimapInst.removeLayer(hosMinimapGlow);  } catch(e){} hosMinimapGlow  = null; }
+  if (hosMinimapRoute) { try { hosMinimapInst.removeLayer(hosMinimapRoute); } catch(e){} hosMinimapRoute = null; }
+  hosMinimapGlow  = L.polyline(coords, { color: '#3b82f6', weight: 14, opacity: 0.13 }).addTo(hosMinimapInst);
+  hosMinimapRoute = L.polyline(coords, { color: '#3b82f6', weight: 4,  opacity: 0.95 }).addTo(hosMinimapInst);
+}
 let hosMinimapTileLayer = null; // tile layer actual del mini mapa
 let dashSpeedOver     = false; // true cuando el camión supera el límite de velocidad
 let _dashCurrentStatus = 'off';
@@ -17950,7 +17964,10 @@ function _hosMaxMap() {
     wrap.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
     wrap.style.transform  = 'translateY(0)';
   }));
-  setTimeout(() => { try { hosMinimapInst.invalidateSize(); } catch(e){} }, 360);
+  setTimeout(() => {
+    try { hosMinimapInst.invalidateSize(); } catch(e){}
+    try { _hosRefreshRoute(); } catch(e){}          // ensure route line is drawn
+  }, 360);
   // Load route POIs onto the maximized map (no-op if already loaded)
   setTimeout(() => { try { _loadHosMapRoutePOIs(); } catch(e){} }, 500);
 }
