@@ -18333,8 +18333,11 @@ function initHosMinimap() {
     _cityBar.id = 'hosCityBar';
     _cityBar.innerHTML = `<div class="hcb-dot"></div><div class="hcb-text" id="hosCityText">Detectando ubicación…</div>`;
     el.appendChild(_cityBar);
-    // Disparar geocodificación inmediata con las coordenadas de origen
-    setTimeout(() => _updateHosCityBar(lat, lon, true), 1200);
+    // Usar posición GPS actual si está disponible; si no, caer en origen
+    setTimeout(() => {
+      const _fix = window.lastFixFm;
+      _updateHosCityBar(_fix?.lat || lat, _fix?.lon || lon, true);
+    }, 1200);
   }
 
   // Panel de Speed Limit + Velocímetro superpuesto al mini mapa
@@ -18560,7 +18563,7 @@ function updateHosDashMinimap(lat, lon) {
 let _hosCityBarLast = 0;
 async function _updateHosCityBar(lat, lon, force) {
   const now = Date.now();
-  if (!force && now - _hosCityBarLast < 30000) return; // throttle: 30s
+  if (!force && now - _hosCityBarLast < 15000) return; // throttle: 15s
   _hosCityBarLast = now;
   const txt = document.getElementById('hosCityText');
   if (!txt) return;
@@ -18572,7 +18575,9 @@ async function _updateHosCityBar(lat, lon, force) {
     const city  = d.addresses?.[0]?.address?.municipality || d.addresses?.[0]?.address?.municipalitySubdivision || d.addresses?.[0]?.address?.countrySecondarySubdivision || '';
     const state = d.addresses?.[0]?.address?.countrySubdivision || '';
     if (city || state) txt.textContent = [city, state].filter(Boolean).join(', ');
-  } catch(e) {}
+  } catch(e) {
+    _hosCityBarLast = 0; // allow immediate retry on failure
+  }
 }
 
 function updateDashRouteProgress(pct, remaining) {
