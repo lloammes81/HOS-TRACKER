@@ -17975,9 +17975,14 @@ function _hosInitMapGestures() {
   if (!wrap) return;
   _hosMapGesturesDone = true;
 
-  // Doble toque para maximizar / restaurar
-  let _tapTs = 0;
+  // Doble toque para maximizar / restaurar (se cancela si hay 2+ dedos = pinch)
+  let _tapTs = 0, _tapCancelled = false;
+  wrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 1) _tapCancelled = true;
+  }, { passive: true });
   wrap.addEventListener('touchend', (e) => {
+    if (e.touches.length > 0) { _tapCancelled = true; return; }
+    if (_tapCancelled) { _tapCancelled = false; _tapTs = 0; return; }
     const now = Date.now();
     if (now - _tapTs < 320) {
       _hosMapMaximized ? _hosCloseMap() : _hosMaxMap();
