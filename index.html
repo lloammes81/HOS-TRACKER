@@ -17966,8 +17966,9 @@ function showHosDashboard() {
       if (!_moving && typeof hosShiftStartTime !== 'undefined' && hosShiftStartTime) {
         _activeSecs = Math.max(0, Math.floor(14 * 3600 - (Date.now() - hosShiftStartTime) / 1000));
       }
-      _sc.textContent = String(_activeSecs % 60).padStart(2, '0');
-      _sc.style.color = '#ffffff';
+      const _ss = _activeSecs % 60;
+      _sc.textContent = String(_ss).padStart(2, '0');
+      _sc.style.color = _ss <= 5 ? '#ef4444' : _ss <= 15 ? '#f97316' : 'rgba(255,255,255,0.75)';
     }
     const dMax = Math.min(
       Math.max(0.1, parseFloat(document.getElementById('dailyHoursInput')?.value) || 11),
