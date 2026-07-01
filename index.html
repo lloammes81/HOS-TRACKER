@@ -13779,8 +13779,10 @@ window.HOSGps = (function () {
       try { if (moving && typeof _updateRestMode === 'function') _updateRestMode(); } catch (e) {}
       // 3) Velocímetro / panel de velocidad
       try { if (typeof updateSpeedometer === 'function') updateSpeedometer(mph); } catch (e) {}
+      // 4) Límite de velocidad del estado — funciona con o sin ruta activa (throttle interno 8-20s)
+      try { if (typeof detectStateAndUpdateLimit === 'function') detectStateAndUpdateLimit(c.latitude, c.longitude); } catch (e) {}
     }
-    // 4) Suscriptores externos (siempre, incluso sin velocidad fiable: pueden
+    // 5) Suscriptores externos (siempre, incluso sin velocidad fiable: pueden
     //    usar lastFixFm para actualizar posición aunque no sepan la velocidad).
     //    Se les pasa también el pos crudo para los consumidores que necesitan
     //    coords.heading/altitude/speed nativos (tracker de ruta, FleetLink).
