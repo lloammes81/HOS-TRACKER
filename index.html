@@ -17975,13 +17975,14 @@ function _hosInitMapGestures() {
   if (!wrap) return;
   _hosMapGesturesDone = true;
 
-  // Doble toque para maximizar
+  // Doble toque para maximizar / restaurar
   let _tapTs = 0;
   wrap.addEventListener('touchend', (e) => {
-    if (_hosMapMaximized) return;
     const now = Date.now();
-    if (now - _tapTs < 320) { _hosMaxMap(); _tapTs = 0; }
-    else _tapTs = now;
+    if (now - _tapTs < 320) {
+      _hosMapMaximized ? _hosCloseMap() : _hosMaxMap();
+      _tapTs = 0;
+    } else _tapTs = now;
   }, { passive: true });
 
   // Swipe-down sobre el handle para cerrar
