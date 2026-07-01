@@ -14399,8 +14399,9 @@ function isNearRoute(lat, lon, routeGeom, maxMiles = 12) {
 async function loadMiniMapPOIs() {
   if (!miniMap || !origin || !destination || !roadGeometry) return;
 
-  // Show legend with loading state
-  // poi legend bar hidden — all POIs always active
+  // Auto-enable rest areas and weigh stations so markers are added to the map
+  miniPoiActive.rest  = true;
+  miniPoiActive.weigh = true;
 
   // Clear old markers
   ['truck','rest','weigh','checkpoint'].forEach(type => {
@@ -18365,7 +18366,7 @@ function loadMiniMapTruckStops(lat, lon) {
   const r = 1.5;
   const bbox = `${lat - r},${lon - r},${lat + r},${lon + r}`;
 
-  // Busca truck stops, paradas con diesel para HGV y rest areas
+  // Busca truck stops, rest areas y básculas de peso para camiones
   const query = `[out:json][timeout:15];(
     node["amenity"="truck_stop"](${bbox});
     node["amenity"="fuel"]["hgv"="yes"](${bbox});
@@ -18373,7 +18374,10 @@ function loadMiniMapTruckStops(lat, lon) {
     node["highway"="rest_area"](${bbox});
     node["amenity"="rest_area"](${bbox});
     node["highway"="services"](${bbox});
-  );out 40;`;
+    node["amenity"="weigh_station"](${bbox});
+    node["highway"="weigh_station"](${bbox});
+    node["man_made"="weigh_scale"](${bbox});
+  );out 60;`;
 
   fetch('https://overpass-api.de/api/interpreter', {
     method: 'POST',
@@ -18392,14 +18396,18 @@ function loadMiniMapTruckStops(lat, lon) {
         const isTruck = node.tags?.amenity === 'truck_stop'
                      || node.tags?.hgv === 'yes'
                      || /Flying J|Pilot|Love|TA |Petro|Travel Center/i.test(node.tags?.name || '');
-        const isRest  = node.tags?.highway === 'rest_area'
+        const isWeigh = node.tags?.amenity === 'weigh_station'
+                     || node.tags?.highway === 'weigh_station'
+                     || node.tags?.man_made === 'weigh_scale';
+        const isRest  = !isTruck && !isWeigh && (
+                        node.tags?.highway === 'rest_area'
                      || node.tags?.amenity === 'rest_area'
-                     || node.tags?.highway === 'services';
-        const name = node.tags?.name || (isTruck ? 'Truck Stop' : 'Rest Area');
+                     || node.tags?.highway === 'services');
+        const name = node.tags?.name || (isTruck ? 'Truck Stop' : isWeigh ? 'Weigh Station' : 'Rest Area');
 
-        // Icono grande y visible: naranja para truck stop, azul para rest area
-        const bg    = isTruck ? '#f59e0b' : '#3b82f6';
-        const emoji = isTruck ? '⛽' : '🅿';
+        // Icono grande y visible: naranja truck, ámbar báscula, azul rest area
+        const bg    = isTruck ? '#f59e0b' : isWeigh ? '#d97706' : '#3b82f6';
+        const emoji = isTruck ? '⛽' : isWeigh ? '⚖️' : '🅿';
         const poiIcon = L.divIcon({
           className: '',
           html: `<div style="width:30px;height:30px;border-radius:8px;background:${bg};border:2.5px solid rgba(255,255,255,0.95);box-shadow:0 3px 10px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:15px;">${emoji}</div>`,
