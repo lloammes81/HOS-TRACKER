@@ -9358,27 +9358,29 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
 </div>
 
 <!-- ══ DOT STATE REGULATIONS NOTIFICATION ══ -->
+<div id="dotStateNotifBg" onclick="hideDOTStateNotif()" style="display:none;position:fixed;inset:0;z-index:30001;background:rgba(0,0,0,0.62);"></div>
 <div id="dotStateNotif" style="
-  position:fixed; top:calc(80px + env(safe-area-inset-top,0px));
-  left:14px; right:14px; z-index:30002;
-  background:linear-gradient(135deg,#0a1628 0%,#0d2040 100%);
-  border:1.5px solid #2563eb; border-radius:16px;
-  padding:13px 15px 12px; box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 0 1px rgba(37,99,235,.2);
-  transform:translateY(-250px); opacity:0;
-  transition:transform .4s cubic-bezier(.16,1,.3,1),opacity .4s;
-  pointer-events:all; max-width:520px; margin:0 auto;
+  position:fixed; top:50%; left:50%;
+  transform:translate(-50%,-50%) scale(0.85);
+  width:min(90vw,460px); z-index:30002;
+  background:linear-gradient(150deg,#0b1a2e 0%,#0d2545 100%);
+  border:1.5px solid rgba(37,99,235,0.7); border-radius:22px;
+  padding:22px 22px 18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.85),0 0 0 1px rgba(37,99,235,.25);
+  opacity:0; pointer-events:none;
+  transition:transform .35s cubic-bezier(.16,1,.3,1),opacity .35s;
 ">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-    <div style="display:flex;align-items:center;gap:9px;">
-      <span style="font-size:24px;line-height:1;">🏛️</span>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:32px;line-height:1;">🏛️</span>
       <div>
-        <div style="font-size:10px;font-weight:900;color:#60a5fa;letter-spacing:.8px;text-transform:uppercase;">DOT Regulaciones del Estado</div>
-        <div id="dotStateNotifName" style="font-size:17px;font-weight:800;color:#fff;line-height:1.2;"></div>
+        <div style="font-size:11px;font-weight:900;color:#60a5fa;letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">DOT Regulaciones del Estado</div>
+        <div id="dotStateNotifName" style="font-size:26px;font-weight:800;color:#fff;line-height:1.1;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;"></div>
       </div>
     </div>
-    <button aria-label="Cerrar" onclick="hideDOTStateNotif()" style="background:rgba(255,255,255,.1);border:none;border-radius:50%;width:30px;height:30px;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;">×</button>
+    <button aria-label="Cerrar" onclick="hideDOTStateNotif()" style="background:rgba(255,255,255,.12);border:none;border-radius:50%;width:36px;height:36px;color:#fff;font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;">×</button>
   </div>
-  <div id="dotStateNotifRules" style="display:flex;flex-direction:column;gap:3px;"></div>
+  <div id="dotStateNotifRules" style="display:flex;flex-direction:column;gap:0;"></div>
 </div>
 
 <!-- ══ WEATHER SCREEN EFFECTS OVERLAY ══ -->
@@ -12517,24 +12519,32 @@ const STATE_DOT_REGS = {
 };
 
 let _dotStateNotifTimer = null;
+const _dotStateShown = new Set(); // estados ya mostrados en esta sesión
 function showDOTStateNotif(code, name) {
+  if (_dotStateShown.has(code)) return; // ya se mostró para este estado
   const regs = STATE_DOT_REGS[code];
   if (!regs) return;
   const el = document.getElementById('dotStateNotif');
+  const bg = document.getElementById('dotStateNotifBg');
   if (!el) return;
+  _dotStateShown.add(code);
   document.getElementById('dotStateNotifName').textContent = name;
   document.getElementById('dotStateNotifRules').innerHTML = regs.rules.map(r =>
-    `<div style="font-size:12.5px;color:rgba(255,255,255,.88);padding:3px 0 3px 2px;border-bottom:1px solid rgba(255,255,255,.07);line-height:1.35">${r}</div>`
+    `<div style="font-size:15.5px;color:rgba(255,255,255,.92);padding:9px 0;border-bottom:1px solid rgba(255,255,255,.09);line-height:1.45;">${r}</div>`
   ).join('');
-  el.style.transform = 'translateY(0)';
+  if (bg) bg.style.display = 'block';
   el.style.opacity = '1';
+  el.style.transform = 'translate(-50%,-50%) scale(1)';
+  el.style.pointerEvents = 'all';
   if (_dotStateNotifTimer) clearTimeout(_dotStateNotifTimer);
-  _dotStateNotifTimer = setTimeout(hideDOTStateNotif, 22000);
+  _dotStateNotifTimer = setTimeout(hideDOTStateNotif, 25000);
   vibrate([80, 40, 80]);
 }
 function hideDOTStateNotif() {
   const el = document.getElementById('dotStateNotif');
-  if (el) { el.style.transform = 'translateY(-250px)'; el.style.opacity = '0'; }
+  const bg = document.getElementById('dotStateNotifBg');
+  if (el) { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-50%) scale(0.85)'; el.style.pointerEvents = 'none'; }
+  if (bg) bg.style.display = 'none';
 }
 
 let currentStateCode   = '';
