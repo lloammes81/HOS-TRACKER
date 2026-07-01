@@ -17946,6 +17946,8 @@ function _hosMaxMap() {
     wrap.style.transform  = 'translateY(0)';
   }));
   setTimeout(() => { try { hosMinimapInst.invalidateSize(); } catch(e){} }, 360);
+  // Load route POIs onto the maximized map (no-op if already loaded)
+  setTimeout(() => { try { _loadHosMapRoutePOIs(); } catch(e){} }, 500);
 }
 
 function _hosCloseMap() {
@@ -18555,6 +18557,75 @@ function loadMiniMapInterstates(lat, lon) {
       });
     })
     .catch(() => {});
+}
+
+/* ── POIs a lo largo de la ruta en el mapa maximizado del dashboard ── */
+let _hosMapPoiMarkers = [];
+let _hosMapPoiLoaded  = false;
+async function _loadHosMapRoutePOIs(force) {
+  if (!hosMinimapInst) return;
+  if (_hosMapPoiLoaded && !force) return;
+  if (typeof roadGeometry === 'undefined' || !roadGeometry?.length) return;
+  if (typeof origin === 'undefined' || !origin?.lat) return;
+  _hosMapPoiLoaded = true;
+
+  // Limpiar marcadores anteriores
+  _hosMapPoiMarkers.forEach(m => { try { hosMinimapInst.removeLayer(m); } catch(e){} });
+  _hosMapPoiMarkers = [];
+
+  // También reflejar los POIs ya cargados en el mapa completo / planificador
+  try { if (typeof syncMinimapOverlays === 'function') syncMinimapOverlays(); } catch(e){}
+
+  // Waypoints cada ~60 millas a lo largo de la ruta
+  const waypoints = [];
+  const step = Math.max(1, Math.floor(roadGeometry.length / 8));
+  for (let i = 0; i < roadGeometry.length; i += step)
+    waypoints.push({ lat: roadGeometry[i][0], lon: roadGeometry[i][1] });
+  const last = roadGeometry[roadGeometry.length - 1];
+  if (!waypoints.find(w => w.lat === last[0])) waypoints.push({ lat: last[0], lon: last[1] });
+
+  const POI_CFG = {
+    truck:      { emoji: '🚛', bg: '#2563eb', label: 'Truck Stop'   },
+    rest:       { emoji: '😴', bg: '#7c3aed', label: 'Rest Area'    },
+    weigh:      { emoji: '⚖️', bg: '#d97706', label: 'Weigh Station'},
+    checkpoint: { emoji: '🔍', bg: '#16a34a', label: 'Checkpoint'   },
+  };
+
+  for (const type of ['truck', 'rest', 'weigh', 'checkpoint']) {
+    if (typeof MINI_POI_QUERIES === 'undefined' || !MINI_POI_QUERIES[type]) continue;
+    const cfg = POI_CFG[type];
+    const seen = new Set();
+    for (const wp of waypoints) {
+      try {
+        const query = MINI_POI_QUERIES[type](wp.lat, wp.lon, 35000);
+        const res = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST', body: 'data=' + encodeURIComponent(query)
+        });
+        const data = await res.json();
+        (data.elements || []).forEach(el => {
+          const elLat = el.lat ?? el.center?.lat;
+          const elLon = el.lon ?? el.center?.lon;
+          if (!elLat || !elLon || seen.has(el.id)) return;
+          seen.add(el.id);
+          if (typeof isNearRoute === 'function' && !isNearRoute(elLat, elLon, roadGeometry, 12)) return;
+          const name = el.tags?.name || cfg.label;
+          const short = name.split(',')[0].substring(0, 14);
+          const icon = L.divIcon({
+            className: '',
+            html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div style="width:34px;height:34px;background:${cfg.bg};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 10px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;">${cfg.emoji}</div>
+              <div style="background:${cfg.bg};color:#fff;font-size:8px;font-weight:900;padding:2px 6px;border-radius:6px;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.4);max-width:72px;overflow:hidden;text-overflow:ellipsis;">${short}</div>
+            </div>`,
+            iconAnchor: [16, 16], popupAnchor: [0, -20]
+          });
+          const marker = L.marker([elLat, elLon], { icon })
+            .bindTooltip(name, { permanent: false, direction: 'top', className: 'hosMapTooltip' })
+            .addTo(hosMinimapInst);
+          _hosMapPoiMarkers.push(marker);
+        });
+      } catch(e) {}
+    }
+  }
 }
 
 function updateHosDashMinimap(lat, lon) {
