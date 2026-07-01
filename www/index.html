@@ -13779,10 +13779,12 @@ window.HOSGps = (function () {
       try { if (typeof updateSpeedometer === 'function') updateSpeedometer(mph); } catch (e) {}
       // 4) Límite de velocidad del estado — funciona con o sin ruta activa (throttle interno 8-20s)
       try { if (typeof detectStateAndUpdateLimit === 'function') detectStateAndUpdateLimit(c.latitude, c.longitude); } catch (e) {}
-      // 5) Aviso 5 millas antes de frontera de estado + bienvenida al entrar (throttle interno 30s)
+      // 5) Límite real de la vía para camiones vía OSM (throttle interno 10s)
+      try { if (typeof fetchRoadSpeedLimit === 'function') fetchRoadSpeedLimit(c.latitude, c.longitude); } catch (e) {}
+      // 6) Aviso 5 millas antes de frontera de estado + bienvenida al entrar (throttle interno 30s)
       try { if (moving && typeof checkStateBorderAhead === 'function') checkStateBorderAhead(c.latitude, c.longitude, c.heading); } catch (e) {}
     }
-    // 5) Suscriptores externos (siempre, incluso sin velocidad fiable: pueden
+    // 7) Suscriptores externos (siempre, incluso sin velocidad fiable: pueden
     //    usar lastFixFm para actualizar posición aunque no sepan la velocidad).
     //    Se les pasa también el pos crudo para los consumidores que necesitan
     //    coords.heading/altitude/speed nativos (tracker de ruta, FleetLink).
