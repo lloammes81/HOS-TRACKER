@@ -2098,40 +2098,35 @@
     overflow: hidden; text-overflow: ellipsis;
   }
 
-  /* ── BOTÓN DE REPORTES — pestaña lateral derecha ── */
+  /* ── BOTÓN DE REPORTES — esquina superior derecha de la tarjeta ── */
   #reportSideBtn {
-    position: fixed;
-    right: -6px;
-    top: 44%;
-    transform: translateY(-50%);
-    z-index: 25050;
-    width: 38px;
-    height: 120px;
-    background: linear-gradient(180deg, #fbbf24, #d97706);
-    color: #431407;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 20;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(145deg, #fbbf24, #d97706);
+    color: #fff;
     border: none;
-    border-radius: 16px;
+    border-radius: 14px;
     display: none;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: -4px 2px 18px rgba(245,158,11,.5);
-    transition: right .2s, filter .15s;
+    filter: drop-shadow(0 4px 12px rgba(245,158,11,0.55));
+    transition: filter .15s, transform .15s;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
-  #reportSideBtn .side-tab-label {
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    font-size: 9px;
-    font-weight: 900;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    font-family: 'DM Sans', sans-serif;
-    pointer-events: none;
+  #reportSideBtn .side-tab-icon { font-size: 20px; }
+  #reportSideBtn::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
   }
   #reportSideBtn.visible { display: flex; }
-  #reportSideBtn:active { right: -2px; filter: brightness(.88); }
+  #reportSideBtn:active { transform: scale(.92); filter: drop-shadow(0 2px 6px rgba(245,158,11,.3)); }
 
   /* ── VENTANA PEQUEÑA DE REPORTES ── */
   #reportPopupOverlay {
@@ -8255,7 +8250,7 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
 
   <!-- Botón de reportes — esquina superior derecha de la tarjeta -->
   <button id="reportSideBtn" onclick="openReportPopup()" aria-label="Reportar" title="Reportar">
-    <span class="side-tab-label">REPORTE</span>
+    <span class="side-tab-icon">⚠️</span>
   </button>
 
   <!-- ② BADGE DE ESTADO -->
