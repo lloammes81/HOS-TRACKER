@@ -17904,10 +17904,15 @@ let _hosWarnExpiredFired = false;
 // Centra el mini-mapa con el icono del camión en la zona inferior (≈25% desde abajo)
 function _hosMinimapFollow(lat, lon) {
   if (!hosMinimapInst) return;
-  // Dynamic zoom by speed — at >60 mph zoom reduces ~50% to show more route
+  // When maximized: preserve the user's zoom — only pan to keep truck centered
+  if (_hosMapMaximized) {
+    hosMinimapInst.panTo([lat, lon], { animate: false });
+    return;
+  }
+  // Mini mapa pequeño: zoom dinámico según velocidad
   let _miniTargetZoom;
   if (fmCurrentSpeed > 60) {
-    _miniTargetZoom = 10;           // ~50% of zoom 13 → muestra ~30 mi de ruta
+    _miniTargetZoom = 10;
   } else if (fmCurrentSpeed < 20) {
     _miniTargetZoom = 17;
   } else {
