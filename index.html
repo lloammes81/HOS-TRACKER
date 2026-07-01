@@ -12593,12 +12593,10 @@ async function checkStateBorderAhead(lat, lon, heading) {
       const _uName = (typeof currentUser !== 'undefined' && currentUser?.name) ||
                      (typeof driverProfile !== 'undefined' && driverProfile?.name) || '';
       const _stName = stateRaw || code;
-      showToast('info', '🚧',
-        `En 5 millas: ${_stName}`,
-        _uName
-          ? `${_uName}, en 5 millas entrarás a ${_stName}`
-          : `Entrando al estado de ${_stName}`,
-        8000);
+      const _bTitle = `🚧 En 5 millas: ${_stName}`;
+      const _bBody  = _uName ? `${_uName}, en 5 millas entrarás a ${_stName}` : `Entrando al estado de ${_stName}`;
+      showToast('info', '🚧', _bTitle, _bBody, 8000);
+      if (window.scheduleLocalHOSAlert) window.scheduleLocalHOSAlert(500, _bTitle, _bBody, 8001).catch(() => {});
     }
   } catch(e) {
     // Reset throttle so next GPS update can retry immediately
@@ -16862,7 +16860,16 @@ function _hosPreScheduleAlerts(driveLeft) {
   const isEs = lang === 'es';
   const MIN_DELAY = 2 * 60 * 1000; // no agendar si queda < 2 min (ruta reactiva lo maneja)
 
+  const _today = new Date().toDateString();
   const thresholds = [
+    { fired: () => !!localStorage.getItem('hos_drive_warn_4h_' + _today), hours: 4.0, id: 7014,
+      t: isEs ? '⏱️ ¡4 HORAS RESTANTES!' : '⏱️ 4 HRS LEFT',
+      b: isEs ? 'Te quedan 4 horas de manejo. Ve buscando dónde descansar.'
+              : '4 hours of driving left. Start planning your rest stop.' },
+    { fired: () => !!localStorage.getItem('hos_drive_warn_2h_' + _today), hours: 2.0, id: 7015,
+      t: isEs ? '⚠️ ¡MENOS DE 2 HORAS!' : '⚠️ LESS THAN 2 HRS!',
+      b: isEs ? 'Solo te quedan 2 horas de manejo. Busca un lugar para descansar ahora.'
+              : 'Only 2 hours of driving left. Find a rest area now.' },
     { fired: () => _hosWarn1hFired,     hours: 1.0, id: 7011,
       t: isEs ? '⚠️ 1 HORA DE MANEJO'      : '⚠️ 1 HOUR LEFT!',
       b: isEs ? 'Solo te queda 1 hora de manejo. Busca dónde estacionarte AHORA.'
@@ -17353,16 +17360,20 @@ function fmStartTracking() {
       if (driveLeft <= 4.0 && driveLeft > 2.0 && !localStorage.getItem(warnKey4h)) {
         localStorage.setItem(warnKey4h, '1');
         const msg4h = lang==='es' ? `Te quedan ${fmtH(driveLeft)} de manejo. Ve buscando descanso.` : `${fmtH(driveLeft)} of driving left. Start planning your rest stop.`;
-        showToast('warning','⏱️', lang==='es' ? '¡4 HORAS RESTANTES!' : '⏱️ 4 HRS LEFT', msg4h, 10000);
-        if (typeof sendHOSAlert === 'function') sendHOSAlert('⏱️ ' + (lang==='es' ? '¡4 HORAS RESTANTES! ' : '4 HRS LEFT! ') + msg4h);
+        const title4h = lang==='es' ? '⏱️ ¡4 HORAS RESTANTES!' : '⏱️ 4 HRS LEFT';
+        showToast('warning','⏱️', title4h, msg4h, 10000);
+        if (window.scheduleLocalHOSAlert) window.scheduleLocalHOSAlert(500, title4h, msg4h, 7014).catch(() => {});
+        else if (typeof sendHOSAlert === 'function') sendHOSAlert('⏱️ ' + (lang==='es' ? '¡4 HORAS RESTANTES! ' : '4 HRS LEFT! ') + msg4h);
         if (typeof saveHOSStateForSW === 'function') saveHOSStateForSW(driveLeft, null);
       }
       const warnKey2h = 'hos_drive_warn_2h_' + today;
       if (driveLeft <= 2.0 && driveLeft > 1.0 && !localStorage.getItem(warnKey2h)) {
         localStorage.setItem(warnKey2h, '1');
         const msg2h = lang==='es' ? `Solo te quedan ${fmtH(driveLeft)} de manejo. Busca un lugar para descansar.` : `Only ${fmtH(driveLeft)} of driving left. Find a rest area now.`;
-        showToast('danger','⚠️', lang==='es' ? '¡MENOS DE 2 HORAS!' : '⚠️ LESS THAN 2 HRS!', msg2h, 14000);
-        if (typeof sendHOSAlert === 'function') sendHOSAlert('⚠️ ' + (lang==='es' ? '¡MENOS DE 2 HORAS! ' : 'LESS THAN 2 HRS! ') + msg2h);
+        const title2h = lang==='es' ? '⚠️ ¡MENOS DE 2 HORAS!' : '⚠️ LESS THAN 2 HRS!';
+        showToast('danger','⚠️', title2h, msg2h, 14000);
+        if (window.scheduleLocalHOSAlert) window.scheduleLocalHOSAlert(500, title2h, msg2h, 7015).catch(() => {});
+        else if (typeof sendHOSAlert === 'function') sendHOSAlert('⚠️ ' + (lang==='es' ? '¡MENOS DE 2 HORAS! ' : 'LESS THAN 2 HRS! ') + msg2h);
         if (typeof saveHOSStateForSW === 'function') saveHOSStateForSW(driveLeft, null);
       }
       // ── ⏰ 1 HORA ANTES del límite — círculo ya en ROJO ──────────
