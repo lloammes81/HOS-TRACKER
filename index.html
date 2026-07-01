@@ -12558,6 +12558,7 @@ let lastRoadSpeedCheck = 0;
 let lastBorderWarnState = '';
 let lastBorderWarnCheck = 0;
 let stateBannerTimer    = null;
+const _stateBannerShown = new Set();
 
 
 function showStateBanner(name) {
@@ -12565,6 +12566,9 @@ function showStateBanner(name) {
   const nm = document.getElementById('stateBannerName');
   const gr = document.getElementById('stateBannerGreeting');
   if (!el || !nm) return;
+  const _bannerKey = (typeof currentStateCode !== 'undefined' && currentStateCode) || name;
+  if (_stateBannerShown.has(_bannerKey)) return;
+  _stateBannerShown.add(_bannerKey);
   const userName = (typeof currentUser !== 'undefined' && currentUser?.name) ||
                    (typeof driverProfile !== 'undefined' && driverProfile?.name) || '';
   if (gr) gr.textContent = userName ? `¡Hola, ${userName}!` : '';
