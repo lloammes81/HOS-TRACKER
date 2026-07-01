@@ -12820,10 +12820,9 @@ async function fetchRoadSpeedLimit(lat, lon) {
 }
 
 function updateMapSpeedSign(truckMph, carMph, code, stateName) {
-  // El letrero de velocidad sobre el mapa grande fue eliminado. Sólo se
-  // conserva el límite vigente para las alertas de exceso de velocidad y para
-  // el panel de límite del mini-dashboard (que se refresca aparte).
   currentTruckSpeedLimit = Number(truckMph) || null;
+  const _dl = document.getElementById('dashLimitNum');
+  if (_dl && currentTruckSpeedLimit) _dl.textContent = currentTruckSpeedLimit;
 }
 
 function showPoliceAlert(gpsSpeed, limit) {
