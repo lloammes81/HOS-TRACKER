@@ -17444,8 +17444,27 @@ function fmStartTracking() {
     } else {
       remaining = routeDistance || 0;
     }
-    const traveled  = Math.max(0, routeDistance - remaining);
-    const pct       = Math.min(100, Math.round(traveled / Math.max(1, routeDistance) * 100));
+    // pct: use _tripSnap (max-observed direct distance) instead of routeDistance - remaining
+    // because origin is reset to current GPS position on every app load, which makes
+    // traveled always 0 and the truck emoji never moves.
+    let pct = 0;
+    if (destination) {
+      const _sk   = destination.lat.toFixed(3) + ',' + destination.lon.toFixed(3);
+      const _dNow = haversine(lat, lon, destination.lat, destination.lon);
+      if (!window._tripSnap || window._tripSnap.key !== _sk) {
+        try {
+          const _sv = JSON.parse(localStorage.getItem('hos_trip_snap') || 'null');
+          window._tripSnap = (_sv && _sv.key === _sk) ? _sv : { key: _sk, startMi: _dNow };
+        } catch(e) { window._tripSnap = { key: _sk, startMi: _dNow }; }
+      }
+      if (_dNow > window._tripSnap.startMi) {
+        window._tripSnap.startMi = _dNow;
+        try { localStorage.setItem('hos_trip_snap', JSON.stringify(window._tripSnap)); } catch(e) {}
+      }
+      const _tot = routeDistance > 0 ? routeDistance : Math.max(0.1, window._tripSnap.startMi) * 1.25;
+      const _rm2 = Math.max(0, Math.min(_tot, _dNow * (_tot / Math.max(0.1, window._tripSnap.startMi))));
+      pct = Math.min(100, Math.round((_tot - _rm2) / _tot * 100));
+    }
 
     // Accumulate drive time ONLY when moving
     const now = Date.now();
