@@ -19535,15 +19535,13 @@ function _updateViolationCard() {
   _restStartMs = null; _shiftExpiredShown = false;
 
   const driveHrsLeft  = window._hosTracker ? window._hosTracker.driveLeft() : Math.max(0, 11);
-  // Horas conducidas reales (según GPS tracker) — el break de 30 min se basa en conducción activa, no en tiempo de turno
-  const drivenHrs     = Math.max(0, 11 - driveHrsLeft);
-  const drivenSecs    = drivenHrs * 3600;
   let secsLeft, title, label;
   const _stopped = !_isMovingNow;
 
   if (!b30Complete) {
-    // Break requerido después de 8h de conducción activa (DOT regulation)
-    const breakLeft = Math.max(0, 8 * 3600 - drivenSecs);
+    // Break requerido después de 8h de conducción activa (DOT §395.3)
+    // Usar b30DriveSecs — segundos manejados desde el último break válido, no el reloj diario
+    const breakLeft = Math.max(0, B30_DRIVE_LIMIT - (typeof b30DriveSecs !== 'undefined' ? b30DriveSecs : 0));
     if (breakLeft <= driveHrsLeft * 3600) {
       secsLeft = breakLeft;
       title    = 'Time remaining before Possible Violation';
