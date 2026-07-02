@@ -8070,44 +8070,67 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
 <!-- ══════════════════════════════════════════════════════════
      🔐  PERMISSION REQUEST SCREEN (first launch)
 ════════════════════════════════════════════════════════════ -->
-<div id="permsOverlay" style="position:fixed;inset:0;z-index:9700;background:#0a0f1e;display:none;align-items:center;justify-content:center;padding:32px 24px">
-  <div style="text-align:center;max-width:380px;width:100%">
-    <div style="width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:42px;margin:0 auto 20px;box-shadow:0 8px 32px rgba(16,185,129,.45)">🚛</div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1px;color:#f0f4ff;margin-bottom:6px">Truck Precision</div>
-    <div style="font-size:14px;color:#8896b0;margin-bottom:32px;line-height:1.5">Para funcionar necesita acceso a<br>los siguientes permisos (se piden una sola vez)</div>
+<div id="permsOverlay" style="position:fixed;inset:0;z-index:9700;background:#0a0f1e;display:none;align-items:center;justify-content:center;padding:24px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="text-align:center;max-width:380px;width:100%;padding-bottom:env(safe-area-inset-bottom,0px)">
+    <div style="width:76px;height:76px;border-radius:22px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 16px;box-shadow:0 8px 32px rgba(16,185,129,.45)">🚛</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;color:#f0f4ff;margin-bottom:4px">Truck Precision</div>
+    <div style="font-size:13px;color:#8896b0;margin-bottom:24px;line-height:1.5">Para funcionar correctamente necesita<br>acceso a los siguientes permisos</div>
 
-    <div style="background:#131929;border-radius:18px;border:1px solid #1e2d45;overflow:hidden;margin-bottom:24px;text-align:left">
-      <div style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid #1e2d45">
-        <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📍</div>
-        <div>
-          <div style="font-size:15px;font-weight:800;color:#f0f4ff">Ubicación (siempre)</div>
-          <div style="font-size:12px;color:#8896b0;margin-top:3px">Rastreo GPS y conteo de horas, activo aun con la app minimizada</div>
+    <div style="background:#131929;border-radius:18px;border:1px solid #1e2d45;overflow:hidden;margin-bottom:20px;text-align:left">
+
+      <!-- Ubicación -->
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid #1e2d45">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📍</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:800;color:#f0f4ff">Ubicación</div>
+          <div style="font-size:11px;color:#8896b0;margin-top:2px">Rastreo GPS y conteo de horas activo siempre</div>
         </div>
+        <div id="permIconLoc" style="font-size:18px;flex-shrink:0">⏳</div>
       </div>
-      <div style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid #1e2d45">
-        <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📷</div>
-        <div>
-          <div style="font-size:15px;font-weight:800;color:#f0f4ff">Cámara</div>
-          <div style="font-size:12px;color:#8896b0;margin-top:3px">Para tu foto de perfil y el detector de fatiga del conductor</div>
+
+      <!-- Bluetooth -->
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid #1e2d45">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#0369a1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔵</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:800;color:#f0f4ff">Bluetooth</div>
+          <div style="font-size:11px;color:#8896b0;margin-top:2px">Conexión con dispositivos ELD y lectores de horas</div>
         </div>
+        <div id="permIconBt" style="font-size:18px;flex-shrink:0">⏳</div>
       </div>
-      <div style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid #1e2d45">
-        <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🔔</div>
-        <div>
-          <div style="font-size:15px;font-weight:800;color:#f0f4ff">Notificaciones</div>
-          <div style="font-size:12px;color:#8896b0;margin-top:3px">Alertas de límites de manejo y recordatorios de descanso</div>
+
+      <!-- Notificaciones -->
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid #1e2d45">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔔</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:800;color:#f0f4ff">Notificaciones</div>
+          <div style="font-size:11px;color:#8896b0;margin-top:2px">Avisos, sonidos y badges de alertas HOS</div>
         </div>
+        <div id="permIconNotif" style="font-size:18px;flex-shrink:0">⏳</div>
       </div>
-      <div style="display:flex;align-items:center;gap:14px;padding:18px 20px">
-        <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#0ea5e9,#0369a1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📶</div>
-        <div>
-          <div style="font-size:15px;font-weight:800;color:#f0f4ff">Bluetooth</div>
-          <div style="font-size:12px;color:#8896b0;margin-top:3px">Para conectar dispositivos ELD y leer datos de horas de servicio</div>
+
+      <!-- Actualización en segundo plano -->
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid #1e2d45">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6b7280,#4b5563);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔄</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:800;color:#f0f4ff">Actualización en Segundo Plano</div>
+          <div style="font-size:11px;color:#8896b0;margin-top:2px">Mantiene el GPS y el conteo de horas activos con la app minimizada</div>
         </div>
+        <div id="permIconBg" style="font-size:18px;flex-shrink:0">⏳</div>
       </div>
+
+      <!-- Datos móviles -->
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 18px">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📡</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:800;color:#f0f4ff">Datos Móviles</div>
+          <div style="font-size:11px;color:#8896b0;margin-top:2px">Mapas, clima y sincronización de rutas en tiempo real</div>
+        </div>
+        <div id="permIconCell" style="font-size:18px;flex-shrink:0">⏳</div>
+      </div>
+
     </div>
 
-    <button id="permsAllowBtn" onclick="grantAppPermissions()" style="width:100%;padding:18px;border-radius:16px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:800;cursor:pointer;touch-action:manipulation;box-shadow:0 6px 24px rgba(16,185,129,.45);margin-bottom:12px">Permitir Acceso</button>
+    <button id="permsAllowBtn" onclick="grantAppPermissions()" style="width:100%;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:800;cursor:pointer;touch-action:manipulation;box-shadow:0 6px 24px rgba(16,185,129,.45);margin-bottom:10px">Permitir Acceso</button>
     <div onclick="skipPerms()" style="font-size:13px;color:#8896b0;cursor:pointer;padding:8px">Ahora no</div>
   </div>
 </div>
@@ -22802,11 +22825,17 @@ function _hidePermsOverlay() {
   if (el) { el.style.display = 'none'; document.body.style.overflow = ''; }
 }
 async function openPermsScreen() {
-  if (localStorage.getItem('hos_perms_asked')) return;       // ya concedido → default
-  if (sessionStorage.getItem('hos_perms_skipped')) return;   // "Ahora no" en esta sesión
-  // Si la ubicación ya estaba concedida de antes, queda por default y no
-  // volvemos a molestar.
-  if (await _isLocationGranted()) { localStorage.setItem('hos_perms_asked', '1'); return; }
+  if (sessionStorage.getItem('hos_perms_skipped')) return;
+  // Si ubicación Y notificaciones ya están concedidas, no volver a molestar
+  const _locOk   = await _isLocationGranted();
+  const _notifOk = ('Notification' in window) ? Notification.permission === 'granted' : true;
+  if (_locOk && _notifOk) { localStorage.setItem('hos_perms_asked', '1'); return; }
+  // Si ya aceptó antes y solo falta notificaciones, no mostrar de nuevo
+  if (localStorage.getItem('hos_perms_asked') && _locOk) return;
+  // Resetear iconos de estado a ⏳
+  ['permIconLoc','permIconBt','permIconNotif','permIconBg','permIconCell'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '⏳';
+  });
   const btn = document.getElementById('permsAllowBtn');
   if (btn) { btn.textContent = 'Permitir Acceso'; btn.disabled = false; }
   const el = document.getElementById('permsOverlay');
@@ -22823,8 +22852,10 @@ async function grantAppPermissions() {
 
   const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   const P = (window.Capacitor && window.Capacitor.Plugins) || {};
+  const _pIcon = (id, ok) => { const el = document.getElementById(id); if (el) el.textContent = ok ? '✅' : '❌'; };
 
-  // 1) Ubicación ── permiso del sistema + un fix inicial
+  // 1) Ubicación ── permiso del sistema + fix inicial (pide "Permitir siempre" en nativo)
+  let _locOk = false;
   try {
     if (isNative && P.Geolocation && P.Geolocation.requestPermissions) {
       await P.Geolocation.requestPermissions({ permissions: ['location', 'coarseLocation'] }).catch(() => {});
@@ -22832,38 +22863,61 @@ async function grantAppPermissions() {
     await new Promise((res, rej) =>
       navigator.geolocation.getCurrentPosition(res, rej, { timeout: 12000, enableHighAccuracy: true })
     );
+    _locOk = true;
   } catch {}
-  // Arrancar el GPS de segundo plano: pide "Permitir siempre" y mantiene el
-  // rastreo vivo con la app minimizada (foreground service en Android).
+  _pIcon('permIconLoc', _locOk);
+  // Arrancar GPS de segundo plano (foreground service en Android / Service Worker en web)
   try { if (window.HOSGps) window.HOSGps.start(); } catch {}
 
-  // 2) Cámara ── getUserMedia dispara el diálogo nativo en Capacitor y la web
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    stream.getTracks().forEach(t => t.stop());
-  } catch {}
-
-  // 3) Notificaciones
-  try {
-    if (isNative && P.LocalNotifications && P.LocalNotifications.requestPermissions) {
-      await P.LocalNotifications.requestPermissions().catch(() => {});
-    } else if ('Notification' in window && Notification.requestPermission) {
-      await Notification.requestPermission();
-    }
-    // Programar las notificaciones ahora que el permiso está concedido.
-    if (typeof window.scheduleHOSNotifications === 'function') {
-      try { await window.scheduleHOSNotifications(); } catch {}
-    }
-  } catch {}
-
-  // 4) Bluetooth ── initialize() pide los permisos BLUETOOTH_SCAN/CONNECT
+  // 2) Bluetooth ── initialize() pide BLUETOOTH_SCAN/CONNECT en Android nativo;
+  //    en iOS/web solicita disponibilidad vía Web Bluetooth API
+  let _btOk = false;
   try {
     if (isNative && P.BluetoothLe && P.BluetoothLe.initialize) {
       await P.BluetoothLe.initialize({ androidNeverForLocation: false }).catch(() => {});
+      _btOk = true;
     } else if (navigator.bluetooth && navigator.bluetooth.getAvailability) {
-      await navigator.bluetooth.getAvailability().catch(() => {});
+      _btOk = await navigator.bluetooth.getAvailability().catch(() => false);
+    } else {
+      _btOk = true; // iOS Safari: no requestable, marcar OK para no bloquear
     }
   } catch {}
+  _pIcon('permIconBt', _btOk);
+
+  // 3) Notificaciones (Banners, Sonidos, Badges)
+  let _notifOk = false;
+  try {
+    if (isNative && P.LocalNotifications && P.LocalNotifications.requestPermissions) {
+      const r = await P.LocalNotifications.requestPermissions().catch(() => ({}));
+      _notifOk = r.display === 'granted';
+    } else if ('Notification' in window && Notification.requestPermission) {
+      const r = await Notification.requestPermission();
+      _notifOk = r === 'granted';
+    }
+    if (_notifOk && typeof window.scheduleHOSNotifications === 'function') {
+      try { await window.scheduleHOSNotifications(); } catch {}
+    }
+  } catch {}
+  _pIcon('permIconNotif', _notifOk);
+
+  // 4) Actualización en segundo plano — Service Worker ya registrado en la carga.
+  //    En nativo: BackgroundTask plugin. En web: se activa automáticamente al
+  //    instalar la PWA; solo verificamos que el SW esté registrado.
+  let _bgOk = false;
+  try {
+    if (isNative && P.BackgroundTask) {
+      _bgOk = true; // disponible en Capacitor
+    } else if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      _bgOk = !!(reg && reg.active);
+    }
+  } catch {}
+  _pIcon('permIconBg', _bgOk);
+
+  // 5) Datos móviles — no se solicita vía API (iOS/Android lo controlan en
+  //    Configuración); verificar conectividad es suficiente como indicador.
+  const _cellOk = navigator.onLine !== false;
+  _pIcon('permIconCell', _cellOk);
 
   // Sólo lo marcamos como "concedido por default" si la ubicación realmente
   // quedó habilitada. Si el usuario la negó, NO lo fijamos: se volverá a ofrecer
