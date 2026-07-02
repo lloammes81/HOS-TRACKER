@@ -16319,6 +16319,7 @@ function b30MarkBreakSatisfied() {
   b30DriveSecs = 0; b30StopSecs = 0;
   b30Warned1h = false; b30Warned30m = false; b30Warned2m = false;
   b30ViolShown = false; b30InBreak = false; b30BreakStart = null;
+  try { localStorage.setItem('hos_b30', JSON.stringify({driveSecs:0,complete:true,warned1h:false,warned30m:false,warned2m:false,stopStart:null,date:new Date().toDateString(),ts:Date.now()})); } catch(e) {}
   _hosBreakStopName = null; _hosBreakStopFetching = false;
   if (b30TickId) { clearInterval(b30TickId); b30TickId = null; }
   if (typeof showToast === 'function') {
@@ -17219,6 +17220,25 @@ function fmStartTracking() {
   _hosPreSchedLastTs = 0;      // forzar reagendado en el primer tick GPS
   [7011, 7012, 7013].forEach(id => window.cancelLocalHOSAlert?.(id)); // limpiar alarmas del viaje anterior
   b30Reset();             // reinicia sistema de pausa 30 min
+  // Restore b30 state from previous session if same day and < 10h gap
+  try {
+    const _rb = JSON.parse(localStorage.getItem('hos_b30') || 'null');
+    if (_rb && _rb.date === new Date().toDateString()) {
+      const _gapS  = (Date.now() - (_rb.ts  || 0)) / 1000;
+      const _stopS = _rb.stopStart ? (Date.now() - _rb.stopStart) / 1000 : _gapS;
+      if (_gapS < 36000) { // < 10h — within same work period
+        if (_stopS >= 36000) { /* 10h+ rest while closed → leave fresh start */ }
+        else if (_rb.complete || _stopS >= 1800) { // break already completed
+          b30Complete = true; b30DriveSecs = 0; b30StopSecs = 0;
+        } else { // restore mid-drive state
+          b30DriveSecs = _rb.driveSecs || 0; b30Complete = false;
+          b30Warned1h  = _rb.warned1h  || false;
+          b30Warned30m = _rb.warned30m || false;
+          b30Warned2m  = _rb.warned2m  || false;
+        }
+      }
+    }
+  } catch(e) {}
   showSpeedometer();
   showDriveHoursWidget();
   // Leer horas restantes del tracker (respeta lo que el driver ingresó en el popup)
@@ -17434,6 +17454,7 @@ function fmStartTracking() {
       // Persist every 30 s so sessions survive app restarts/crashes
       if (Math.round(fmDriveSeconds) % 30 === 0) {
         try { localStorage.setItem('hos_fm_drive_secs', JSON.stringify({secs: fmDriveSeconds, date: new Date().toDateString(), ts: Date.now()})); } catch(e) {}
+        try { localStorage.setItem('hos_b30', JSON.stringify({driveSecs:b30DriveSecs,complete:b30Complete,warned1h:b30Warned1h,warned30m:b30Warned30m,warned2m:b30Warned2m,stopStart:_vehicleStopStartMs||null,date:new Date().toDateString(),ts:Date.now()})); } catch(e) {}
         _fmSaveActiveRoute();
       }
     }
@@ -22290,6 +22311,7 @@ document.addEventListener('visibilitychange', () => {
           tracking: true
         }));
       } catch(e) {}
+      try { localStorage.setItem('hos_b30', JSON.stringify({driveSecs:b30DriveSecs,complete:b30Complete,warned1h:b30Warned1h,warned30m:b30Warned30m,warned2m:b30Warned2m,stopStart:_vehicleStopStartMs||null,date:new Date().toDateString(),ts:Date.now()})); } catch(e) {}
 
       // Persistent route widget notification while app is minimized
       if (window._localNotif) {
