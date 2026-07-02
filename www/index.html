@@ -14406,6 +14406,20 @@ function getTruckBrand(name) {
   return null;
 }
 
+// Shared truck-stop pin HTML: brand logo image → emoji fallback → generic truck
+function _makeTruckPinHtml(name) {
+  const brand = getTruckBrand(name || '');
+  const bg    = brand ? brand.color : '#1d4ed8';
+  const label = brand ? brand.short : (name || 'Truck Stop').split(',')[0].substring(0, 12);
+  const inner = brand?.logoUrl
+    ? `<img src="${brand.logoUrl}" style="width:22px;height:22px;object-fit:contain;border-radius:3px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:15px">${brand.logo}</span>`
+    : (brand ? brand.logo : '🚛');
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+    <div style="width:34px;height:34px;background:${bg};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 10px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer">${inner}</div>
+    <div style="background:${bg};color:#fff;font-size:8px;font-weight:900;padding:2px 6px;border-radius:6px;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.4);max-width:72px;overflow:hidden;text-overflow:ellipsis;">${label}</div>
+  </div>`;
+}
+
 const MINI_POI_QUERIES = {
   truck: (lat, lon, r) => `
     [out:json][timeout:25];
@@ -14557,48 +14571,13 @@ async function loadMiniMapPOIs() {
           const name = el.tags?.name || el.tags?.['name:en'] || cfg.label;
           const distFromOrigin = haversine(origin.lat, origin.lon, elLat, elLon);
 
-          // Brand detection for truck stops
-          const brand = type === 'truck' ? getTruckBrand(name) : null;
-          const markerColor = brand ? brand.color : cfg.bg;
-          const rawName = brand ? brand.short : name.split(',')[0].substring(0, 14);
-
-          // POI type config for icon appearance
-          const typeIcon = type === 'truck' && brand?.logoUrl
-            ? `<img src="${brand.logoUrl}" style="width:22px;height:22px;object-fit:contain;border-radius:3px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:15px">${brand.logo}</span>`
-            : type === 'truck' ? (brand ? brand.logo : '🚛')
-            : type === 'rest' ? '😴'
-            : type === 'weigh' ? '⚖️'
-            : type === 'checkpoint' ? '🔍'
-            : cfg.emoji;
-
-          // Build clean round marker with name label below
-          const iconHtml = `
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-              <!-- Circle badge -->
-              <div style="
-                width:34px; height:34px;
-                background:${markerColor};
-                border-radius:50%;
-                border:2.5px solid rgba(255,255,255,.95);
-                box-shadow:0 3px 10px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.08);
-                display:flex; align-items:center; justify-content:center;
-                font-size:15px; line-height:1;
-                cursor:pointer;
-              ">${typeIcon}</div>
-              <!-- Name pill -->
-              <div style="
-                background:${markerColor};
-                color:#fff;
-                font-size:8px; font-weight:900;
-                padding:2px 6px; border-radius:6px;
-                white-space:nowrap;
-                font-family:'DM Sans',sans-serif;
-                box-shadow:0 2px 6px rgba(0,0,0,.4);
-                max-width:72px; overflow:hidden; text-overflow:ellipsis;
-                letter-spacing:.2px;
-                line-height:1.4;
-              ">${rawName}</div>
-            </div>`;
+          // Build icon: truck stops use brand logo, others use type emoji
+          const iconHtml = type === 'truck'
+            ? _makeTruckPinHtml(name)
+            : `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="width:34px;height:34px;background:${cfg.bg};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 10px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer">${type==='rest'?'😴':type==='weigh'?'⚖️':'🔍'}</div>
+                <div style="background:${cfg.bg};color:#fff;font-size:8px;font-weight:900;padding:2px 6px;border-radius:6px;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.4);max-width:72px;overflow:hidden;text-overflow:ellipsis;">${name.split(',')[0].substring(0,14)}</div>
+              </div>`;
 
           const icon = L.divIcon({
             className: '',
@@ -18685,14 +18664,15 @@ function loadMiniMapTruckStops(lat, lon) {
                      || node.tags?.highway === 'services');
         const name = node.tags?.name || (isTruck ? 'Truck Stop' : isWeigh ? 'Weigh Station' : 'Rest Area');
 
-        // Icono grande y visible: naranja truck, ámbar báscula, azul rest area
-        const bg    = isTruck ? '#f59e0b' : isWeigh ? '#d97706' : '#3b82f6';
-        const emoji = isTruck ? '⛽' : isWeigh ? '⚖️' : '🅿';
+        // Icono: truck stops usan logo de marca, los demás usan emoji
+        const _pinHtml = isTruck
+          ? _makeTruckPinHtml(name)
+          : `<div style="width:30px;height:30px;border-radius:8px;background:${isWeigh?'#d97706':'#3b82f6'};border:2.5px solid rgba(255,255,255,0.95);box-shadow:0 3px 10px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:15px;">${isWeigh?'⚖️':'🅿'}</div>`;
         const poiIcon = L.divIcon({
           className: '',
-          html: `<div style="width:30px;height:30px;border-radius:8px;background:${bg};border:2.5px solid rgba(255,255,255,0.95);box-shadow:0 3px 10px rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;font-size:15px;">${emoji}</div>`,
-          iconSize: [30, 30],
-          iconAnchor: [15, 15]
+          html: _pinHtml,
+          iconSize: isTruck ? [34, 50] : [30, 30],
+          iconAnchor: isTruck ? [17, 17] : [15, 15]
         });
 
         L.marker([node.lat, node.lon], { icon: poiIcon, zIndexOffset: 200 })
@@ -18782,13 +18762,14 @@ async function _loadHosMapRoutePOIs(force) {
           if (typeof isNearRoute === 'function' && !isNearRoute(elLat, elLon, roadGeometry, 12)) return;
           const name = el.tags?.name || cfg.label;
           const short = name.split(',')[0].substring(0, 14);
+          const _iHtml = type === 'truck'
+            ? _makeTruckPinHtml(name)
+            : `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="width:34px;height:34px;background:${cfg.bg};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 10px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;">${cfg.emoji}</div>
+                <div style="background:${cfg.bg};color:#fff;font-size:8px;font-weight:900;padding:2px 6px;border-radius:6px;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.4);max-width:72px;overflow:hidden;text-overflow:ellipsis;">${short}</div>
+              </div>`;
           const icon = L.divIcon({
-            className: '',
-            html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-              <div style="width:34px;height:34px;background:${cfg.bg};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 10px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;">${cfg.emoji}</div>
-              <div style="background:${cfg.bg};color:#fff;font-size:8px;font-weight:900;padding:2px 6px;border-radius:6px;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.4);max-width:72px;overflow:hidden;text-overflow:ellipsis;">${short}</div>
-            </div>`,
-            iconAnchor: [16, 16], popupAnchor: [0, -20]
+            className: '', html: _iHtml, iconAnchor: [16, 16], popupAnchor: [0, -20]
           });
           const marker = L.marker([elLat, elLon], { icon })
             .bindTooltip(name, { permanent: false, direction: 'top', className: 'hosMapTooltip' })
@@ -20817,14 +20798,7 @@ out center qt 60;`,
         <div style="background:#000;color:#f59e0b;font-size:7px;font-weight:900;padding:2px 4px;border-radius:3px;white-space:nowrap">WEIGH ST.</div>
       </div>`;
     } else if (type === 'truck') {
-      const brand = getTruckBrand(name);
-      const bg  = brand ? brand.color : cfg.color;
-      const ico = brand ? brand.logo : '🚛';
-      const sn  = brand ? brand.short : name.substring(0, 11);
-      iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-        <div style="width:34px;height:34px;background:${bg};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer">${ico}</div>
-        <div style="background:${bg};color:#fff;font-size:8px;font-weight:900;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis">${sn}</div>
-      </div>`;
+      iconHtml = _makeTruckPinHtml(name);
     } else {
       iconHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
         <div style="width:34px;height:34px;background:${cfg.color};border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 3px 12px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer">${cfg.emoji}</div>
