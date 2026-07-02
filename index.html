@@ -20935,14 +20935,20 @@ function closeCancelRouteConfirm() {
 function quickReport(type, emoji, label) {
   closeRadialMenu();
 
-  // Get exact GPS location — prefer live GPS marker, else map center
+  // Get exact GPS location — prefer live GPS marker, then central GPS fix, then any visible map center
   let lat, lon;
   if (fmGpsMarker) {
-    const ll = fmGpsMarker.getLatLng();
-    lat = ll.lat; lon = ll.lng;
+    const ll = fmGpsMarker.getLatLng(); lat = ll.lat; lon = ll.lng;
+  } else if (window.lastFixFm) {
+    lat = window.lastFixFm.lat; lon = window.lastFixFm.lon;
   } else if (fmMapInst) {
-    const c = fmMapInst.getCenter();
-    lat = c.lat; lon = c.lng;
+    const c = fmMapInst.getCenter(); lat = c.lat; lon = c.lng;
+  } else if (typeof hosMinimapInst !== 'undefined' && hosMinimapInst) {
+    const c = hosMinimapInst.getCenter(); lat = c.lat; lon = c.lng;
+  } else if (typeof miniMap !== 'undefined' && miniMap) {
+    const c = miniMap.getCenter(); lat = c.lat; lon = c.lng;
+  } else if (typeof origin !== 'undefined' && origin && origin.lat) {
+    lat = origin.lat; lon = origin.lon;
   } else {
     showToast('warning','⚠️','Sin ubicación','Activa el GPS primero.', 4000);
     return;
