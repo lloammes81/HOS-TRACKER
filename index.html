@@ -14435,7 +14435,8 @@ function isNearRoute(lat, lon, routeGeom, maxMiles = 12) {
 async function loadMiniMapPOIs() {
   if (!miniMap || !origin || !destination || !roadGeometry) return;
 
-  // Auto-enable rest areas and weigh stations so markers are added to the map
+  // Auto-enable all three POI types so markers are added to the map
+  miniPoiActive.truck = true;
   miniPoiActive.rest  = true;
   miniPoiActive.weigh = true;
 
@@ -18259,6 +18260,9 @@ function hideHosDashboard() {
     // Los clones espejados murieron con el mapa: vaciar la lista para que
     // el próximo initHosMinimap los regenere limpios.
     if (typeof _mirrorOverlays !== 'undefined') _mirrorOverlays.dash = [];
+    // Resetear flag para que los POIs se recarguen al reabrir el dashboard
+    _hosMapPoiLoaded  = false;
+    _hosMapPoiMarkers = [];
   }
 }
 
@@ -18370,9 +18374,12 @@ function initHosMinimap() {
     }
   }, 600);
 
-  // Cargar iconos de truck stops e interstates
+  // Cargar iconos de truck stops e interstates en área inicial
   loadMiniMapTruckStops(lat, lon);
   loadMiniMapInterstates(lat, lon);
+  // Cargar POIs a lo largo de toda la ruta (truck stops, rest areas, básculas)
+  // también en el modo normal del dashboard (no solo al maximizar)
+  setTimeout(() => { try { _loadHosMapRoutePOIs(); } catch(e) {} }, 1200);
 
   // Señales de carreteras interestatales y nombres de ruta en el mini mapa
   if (typeof navSteps !== 'undefined' && Array.isArray(navSteps) && navSteps.length) {
