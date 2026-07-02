@@ -8568,6 +8568,36 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
     </div>
     <button id="hosMapBackBtn" onclick="_hosCloseMap()" aria-label="Cerrar mapa" style="position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:12px;z-index:1000;width:42px;height:42px;border-radius:50%;background:rgba(8,14,28,0.88);border:2px solid rgba(255,255,255,0.3);color:#fff;font-size:22px;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.55);-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
     <div id="hosMiniMap" style="position:absolute;inset:0;background:#0f1c2e;"></div>
+
+    <!-- ── Route progress overlay — visible only when map is maximized ── -->
+    <div id="hosMaxProgressOverlay" style="display:none;position:absolute;left:0;right:0;bottom:0;z-index:900;
+      padding:18px 16px calc(16px + env(safe-area-inset-bottom,0px));
+      background:linear-gradient(to bottom,transparent 0%,rgba(8,14,28,0.88) 35%,rgba(8,14,28,0.97) 100%);
+      pointer-events:none;">
+      <!-- Origin → Destination row -->
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:9px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.50);letter-spacing:2px;text-transform:uppercase;">ORIGEN</div>
+          <div id="hosMaxOriginLbl" style="font-size:13px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.2px;color:rgba(255,255,255,0.90);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;line-height:1.15;">--</div>
+        </div>
+        <div style="font-size:15px;color:rgba(255,255,255,0.35);flex-shrink:0;padding:0 4px;">→</div>
+        <div style="flex:1;min-width:0;text-align:right;">
+          <div style="font-size:9px;font-family:'Bebas Neue',sans-serif;color:rgba(255,255,255,0.50);letter-spacing:2px;text-transform:uppercase;">DESTINO</div>
+          <div id="hosMaxDestLbl" style="font-size:13px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.2px;color:#10b981;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;text-transform:uppercase;line-height:1.15;">--</div>
+        </div>
+      </div>
+      <!-- Progress bar with truck emoji -->
+      <div style="position:relative;height:6px;background:rgba(255,255,255,0.12);border-radius:999px;overflow:visible;margin-bottom:7px;">
+        <div id="hosMaxProgFill" style="height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:999px;width:0%;transition:width 1.2s ease;position:relative;">
+          <div style="position:absolute;right:-9px;top:50%;transform:translateY(-50%);font-size:17px;line-height:1;filter:drop-shadow(0 1px 5px rgba(0,0,0,0.8));z-index:2;">🚛</div>
+        </div>
+      </div>
+      <!-- Miles remaining · ETA -->
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div id="hosMaxRemLbl" style="font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;color:rgba(255,255,255,0.60);">-- MI</div>
+        <div id="hosMaxEtaLbl" style="font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;color:rgba(255,255,255,0.60);">ETA --:--</div>
+      </div>
+    </div>
   </div>
 
   <!-- VENTANA PEQUEÑA DE REPORTES -->
@@ -8756,6 +8786,7 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
 }
 #hosMapWrap.map-max #hosMapDragHandle,
 #hosMapWrap.map-max #hosMapBackBtn { display: flex !important; }
+#hosMapWrap.map-max #hosMaxProgressOverlay { display: block !important; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
 @keyframes truckBubblePulse { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 4px rgba(16,185,129,.0)} 50%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 8px rgba(16,185,129,.35)} }
 @keyframes glowGreen { 0%,100%{box-shadow:0 0 0 3px rgba(59,130,246,.9),0 0 0 9px rgba(59,130,246,.35),0 0 0 18px rgba(59,130,246,.12),0 6px 24px rgba(0,0,0,.7)} 50%{box-shadow:0 0 0 3px rgba(59,130,246,1),0 0 0 13px rgba(59,130,246,.45),0 0 0 26px rgba(59,130,246,.18),0 6px 24px rgba(0,0,0,.7)} }
@@ -13982,8 +14013,9 @@ try {
 } catch (e) {}
 
 // ── Interstate markers (I-10, I-95, etc) ────────────────────
-let interstateMarkersMini = [];
-let interstateMarkersFull = [];
+let interstateMarkersMini     = [];
+let interstateMarkersFull     = [];
+let interstateMarkersHostMini = []; // dashboard maximized map
 let fmLastStepsHash = '';
 let fmLastRouteKey  = '';
 let showInterstateShields = localStorage.getItem('hos_show_shields') !== 'false';
@@ -17943,6 +17975,45 @@ function _hosRefreshRoute() {
   if (hosMinimapRoute) { try { hosMinimapInst.removeLayer(hosMinimapRoute); } catch(e){} hosMinimapRoute = null; }
   hosMinimapGlow  = L.polyline(coords, { color: '#3b82f6', weight: 14, opacity: 0.13 }).addTo(hosMinimapInst);
   hosMinimapRoute = L.polyline(coords, { color: '#3b82f6', weight: 4,  opacity: 0.95 }).addTo(hosMinimapInst);
+  // Interstate / US Route shields on the dashboard map
+  interstateMarkersHostMini.forEach(m => { try { hosMinimapInst.removeLayer(m); } catch(e){} });
+  interstateMarkersHostMini.length = 0;
+  if (showInterstateShields && Array.isArray(navSteps) && navSteps.length) {
+    _addShieldsToHostMini();
+  }
+}
+
+function _addShieldsToHostMini() {
+  if (!hosMinimapInst || !Array.isArray(navSteps) || !navSteps.length) return;
+  interstateMarkersHostMini.forEach(m => { try { hosMinimapInst.removeLayer(m); } catch(e){} });
+  interstateMarkersHostMini.length = 0;
+  const seenI = new Set(), seenUS = new Set();
+  let lastILat=null, lastILon=null, lastUSLat=null, lastUSLon=null;
+  for (const step of navSteps) {
+    const loc = step?.maneuver?.location;
+    if (!Array.isArray(loc) || loc.length < 2) continue;
+    const lon = loc[0], lat = loc[1];
+    const intNum = extractInterstateNumber(step);
+    if (intNum) {
+      const key = `I${intNum}-${Math.round(lat*80)}-${Math.round(lon*80)}`;
+      if (!seenI.has(key) && !(lastILat !== null && haversine(lastILat,lastILon,lat,lon) < 8)) {
+        const m = L.marker([lat,lon],{icon:makeInterstateDivIcon(intNum),interactive:true,zIndexOffset:600})
+          .bindTooltip(`Interstate ${intNum}`,{permanent:false,direction:'top',className:'hw-tooltip',offset:[0,-30]})
+          .addTo(hosMinimapInst);
+        interstateMarkersHostMini.push(m); seenI.add(key); lastILat=lat; lastILon=lon;
+      }
+    }
+    const usNum = extractUSRouteNumber(step);
+    if (usNum) {
+      const key = `US${usNum}-${Math.round(lat*80)}-${Math.round(lon*80)}`;
+      if (!seenUS.has(key) && !(lastUSLat !== null && haversine(lastUSLat,lastUSLon,lat,lon) < 8)) {
+        const m = L.marker([lat,lon],{icon:makeUSRouteDivIcon(usNum),interactive:true,zIndexOffset:500})
+          .bindTooltip(`US Route ${usNum}`,{permanent:false,direction:'top',className:'hw-tooltip',offset:[0,-24]})
+          .addTo(hosMinimapInst);
+        interstateMarkersHostMini.push(m); seenUS.add(key); lastUSLat=lat; lastUSLon=lon;
+      }
+    }
+  }
 }
 let hosMinimapTileLayer = null; // tile layer actual del mini mapa
 let dashSpeedOver     = false; // true cuando el camión supera el límite de velocidad
@@ -18808,15 +18879,27 @@ function updateDashRouteProgress(pct, remaining) {
 
   // ETA — leer del HUD del mapa (fmEta) cuando hay tracking,
   // si no, calcular usando velocidad actual / promedio
-  if (etaEl) {
-    if (hasDest && remMi > 0) {
-      const spd = (typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55;
-      const eta = new Date(Date.now() + (remMi / spd) * 3600000);
-      etaEl.textContent = eta.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}).toUpperCase();
-    } else {
-      etaEl.textContent = '--:--';
-    }
+  let etaStr = '--:--';
+  if (hasDest && remMi > 0) {
+    const spd = (typeof fmCurrentSpeed !== 'undefined' && fmCurrentSpeed > 5) ? fmCurrentSpeed : 55;
+    const eta = new Date(Date.now() + (remMi / spd) * 3600000);
+    etaStr = eta.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}).toUpperCase();
   }
+  if (etaEl) etaEl.textContent = etaStr;
+
+  // Mirror to maximized-map progress overlay
+  const _oName = hasOrigin ? ((origin.name || '').split(',')[0].trim() || 'Origen') : '--';
+  const _dName = hasDest   ? ((destination.name || '').split(',')[0].trim() || 'Destino') : '--';
+  const _maxO = document.getElementById('hosMaxOriginLbl');
+  const _maxD = document.getElementById('hosMaxDestLbl');
+  const _maxF = document.getElementById('hosMaxProgFill');
+  const _maxR = document.getElementById('hosMaxRemLbl');
+  const _maxE = document.getElementById('hosMaxEtaLbl');
+  if (_maxO) _maxO.textContent = _oName;
+  if (_maxD) _maxD.textContent = _dName;
+  if (_maxF) _maxF.style.width = hasRoute ? Math.max(1, Math.min(100, _posPct)) + '%' : '0%';
+  if (_maxR) _maxR.textContent = hasRoute ? ((remMi < 10 ? remMi.toFixed(1) : Math.round(remMi)) + ' MI · ' + Math.round(Math.max(0,Math.min(100,_posPct))) + '%') : '--';
+  if (_maxE) _maxE.textContent = 'ETA ' + etaStr;
 
   updateDashRouteHoursRow();
 }
