@@ -19561,6 +19561,19 @@ function _updateViolationCard() {
       : 'On-duty window · 10H rest required';
   }
 
+  // ── 8h continuas alcanzadas pero break aún no tomado → pausa de 30 min obligatoria ──
+  if (secsLeft <= 0 && !b30Complete) {
+    const msg = _isMovingNow
+      ? '🚨 DETENTE — VIOLACIÓN DOT §395.3'
+      : '🛑 PAUSA 30 MIN OBLIGATORIA';
+    const sub = _isMovingNow
+      ? '8 horas de conducción continua — Detén el vehículo ya'
+      : 'Estaciona y descansa 30 minutos continuos';
+    _fmtAndShow(timeEl, typeEl, titleEl, 0, msg, sub);
+    _applyViolColor(pill, timeEl, 'red_dark');
+    return;
+  }
+
   // ── Cuando el tiempo llega a 0 y el conductor está detenido → iniciar descanso 10H ──
   if (secsLeft <= 0 && _stopped) {
     if (!_restStartMs) {
