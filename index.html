@@ -14987,6 +14987,7 @@ function renderResults(hours, speed, depart) {
     window._restStopMarkers.forEach(m => {
       try { fmMapInst && fmMapInst.removeLayer(m); } catch {}
       try { miniMap && miniMap.removeLayer(m); } catch {}
+      try { hosMinimapInst && hosMinimapInst.removeLayer(m); } catch {}
     });
   }
   window._restStopMarkers = [];
@@ -15026,6 +15027,10 @@ function renderResults(hours, speed, depart) {
           if (miniMap) {
             const m2 = L.marker([pos[0], pos[1]], { icon }).addTo(miniMap).bindPopup(popupHtml);
             window._restStopMarkers.push(m2);
+          }
+          if (hosMinimapInst) {
+            const m3 = L.marker([pos[0], pos[1]], { icon }).addTo(hosMinimapInst).bindPopup(popupHtml);
+            window._restStopMarkers.push(m3);
           }
         });
       }, i * 1100);
