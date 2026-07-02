@@ -15411,7 +15411,23 @@ async function syncCommunityReports() {
     Object.values(data).forEach(remote => {
       if (!remote || remote.lat == null || remote.lon == null || !remote.ts) return;
       const local = byId.get(String(remote.id));
-      if (!local) { communityReports.push(remote); changed = true; return; }
+      if (!local) {
+        communityReports.push(remote);
+        changed = true;
+        // Notify this driver about the new incoming report from another user
+        const isOwnReport = currentUser && remote.reportedBy === currentUser.id;
+        if (!isOwnReport && remote.ts > Date.now() - 300000) { // only alerts < 5 min old
+          const who = remote.reportedByName || 'Conductor';
+          const what = remote.emoji ? `${remote.emoji} ${remote.label}` : remote.label;
+          showToast('warning', remote.emoji || '⚠️', who, what, 6000);
+          vibrate([80, 50, 160]);
+          // Also push a browser notification if granted
+          if (Notification && Notification.permission === 'granted') {
+            try { new Notification(`${who}: ${what}`, { body: 'Alerta en tu ruta', icon: 'icon-192.png', tag: `rpt-${remote.id}` }); } catch (e) {}
+          }
+        }
+        return;
+      }
       // Fusionar votos de ambos lados (unión por id de usuario)
       const conf = mergeIds(local.confirmations, remote.confirmations);
       const den  = mergeIds(local.denials, remote.denials);
