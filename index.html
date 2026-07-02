@@ -15378,8 +15378,8 @@ let   fmPoiLoaded = { scale: false, truck: false, rest: false, restrict: false, 
 
 // Community reports (stored in localStorage, shared within session)
 let communityReports = JSON.parse(localStorage.getItem('hos_reports') || '[]');
-// Remove reports older than 2 hours
-communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
+// Remove reports older than 2 minutes
+communityReports = communityReports.filter(r => Date.now() - r.ts < 120000);
 localStorage.setItem('hos_reports', JSON.stringify(communityReports));
 
 /* ── Avisos comunitarios COMPARTIDOS (Firebase RTDB vía REST) ─────────
@@ -15401,7 +15401,7 @@ async function syncCommunityReports() {
   if (_crSyncing) return;
   _crSyncing = true;
   try {
-    const res = await fetch(`${_CR_DB}.json?orderBy=%22ts%22&startAt=${Date.now() - 7200000}`);
+    const res = await fetch(`${_CR_DB}.json?orderBy=%22ts%22&startAt=${Date.now() - 120000}`);
     if (!res.ok) return;
     const data = await res.json();
     if (!data || typeof data !== 'object') return;
@@ -15436,7 +15436,7 @@ async function syncCommunityReports() {
       }
     });
     if (changed) {
-      communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
+      communityReports = communityReports.filter(r => Date.now() - r.ts < 120000);
       localStorage.setItem('hos_reports', JSON.stringify(communityReports));
       try { if (typeof renderReportMarkers === 'function') renderReportMarkers(); } catch (e) {}
       try { if (typeof renderCommunityReports === 'function') renderCommunityReports(); } catch (e) {}
@@ -15445,9 +15445,42 @@ async function syncCommunityReports() {
   } catch (e) {}
   finally { _crSyncing = false; }
 }
-// Primera sincronización al cargar y luego cada 2 minutos
+// Primera sincronización al cargar y luego cada 30 segundos (reportes duran 2 min)
 setTimeout(syncCommunityReports, 4000);
-setInterval(syncCommunityReports, 120000);
+setInterval(syncCommunityReports, 30000);
+
+// Reports we already prompted the driver about (proximity) — avoid repeat alerts
+const _reportProxNotified = new Set();
+
+function _checkReportProximity() {
+  if (!window.lastFixFm) return;
+  const { lat, lon } = window.lastFixFm;
+  communityReports.forEach(r => {
+    if (_reportProxNotified.has(String(r.id))) return;
+    if (Date.now() - r.ts > 120000) return;                           // expired
+    if (currentUser && r.reportedBy === currentUser.id) return;       // skip own
+    if (haversine(lat, lon, r.lat, r.lon) > 0.5) return;             // > 0.5 mi away
+    _reportProxNotified.add(String(r.id));
+    const who  = r.reportedByName || 'Conductor';
+    const what = `${r.emoji || '⚠️'} ${r.label}`;
+    showToast('warning', r.emoji || '⚠️', `${who} reportó en tu área`, `${what} — ¿Sigue ahí?`, 8000);
+    vibrate([100, 60, 200]);
+    if (Notification && Notification.permission === 'granted') {
+      try { new Notification(`${what} — reportado por ${who}`, { body: '¿Sigue el problema? Toca el ícono en el mapa para confirmar.', icon: 'icon-192.png', tag: `prox-${r.id}` }); } catch (e) {}
+    }
+  });
+}
+
+// Cada 20 s: alerta de proximidad + limpiar marcadores expirados del mapa
+setInterval(() => {
+  try { _checkReportProximity(); } catch (e) {}
+  const before = communityReports.length;
+  communityReports = communityReports.filter(r => Date.now() - r.ts < 120000);
+  if (communityReports.length !== before) {
+    localStorage.setItem('hos_reports', JSON.stringify(communityReports));
+    try { if (typeof renderReportMarkers === 'function') renderReportMarkers(); } catch (e) {}
+  }
+}, 20000);
 
 // Current logged-in user
 let currentUser = JSON.parse(localStorage.getItem('hos_user') || 'null');
@@ -20984,7 +21017,7 @@ function quickReport(type, emoji, label) {
   };
 
   communityReports.push(report);
-  communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
+  communityReports = communityReports.filter(r => Date.now() - r.ts < 120000);
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
   pushReportRemote(report);   // compartir con los demás choferes
 
@@ -21891,9 +21924,9 @@ function filterComm(chip, filter) {
 }
 
 function refreshCommunityReports() {
-  // Traer los avisos de los demás choferes y limpiar los vencidos (>2h)
+  // Traer los avisos de los demás choferes y limpiar los vencidos (>2 min)
   syncCommunityReports();
-  communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
+  communityReports = communityReports.filter(r => Date.now() - r.ts < 120000);
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
   renderCommunityReports();
   showToast('info','🔄','Reports Refreshed', communityReports.length + ' active reports in your area', 3000);
@@ -22121,7 +22154,7 @@ const _origPush = Array.prototype.push;
 // Update updateCommBadge on page load
 function initCommBadge() {
   communityReports = JSON.parse(localStorage.getItem('hos_reports') || '[]');
-  communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
+  communityReports = communityReports.filter(r => Date.now() - r.ts < 120000);
   // Add ids to reports that don't have them
   communityReports.forEach((r,i) => { if (!r.id) r.id = Date.now() + i; if (!r.votes) r.votes = 0; });
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
@@ -23136,7 +23169,7 @@ function getRouteInterstates() {
 
 function refreshCommPage() {
   communityReports = JSON.parse(localStorage.getItem('hos_reports') || '[]');
-  communityReports = communityReports.filter(r => Date.now() - r.ts < 7200000);
+  communityReports = communityReports.filter(r => Date.now() - r.ts < 120000);
   localStorage.setItem('hos_reports', JSON.stringify(communityReports));
   updateCommBadge(communityReports.length);
   updateCommTabBadge(communityReports.length);
@@ -24060,7 +24093,7 @@ function checkRouteAlerts() {
   const newAlerts = communityReports.filter(r => {
     if (!ALERT_TYPES.has(r.type)) return false;
     if (_dismissedAlerts.has(r.id)) return false;
-    if (Date.now() - r.ts > 7200000) return false; // older than 2h
+    if (Date.now() - r.ts > 120000) return false; // older than 2 min
     if (currentUser && r.reportedBy === currentUser.id) return false; // hide own reports
     return isReportOnRoute(r, 10); // within 10 miles of route
   });
@@ -26392,7 +26425,7 @@ async function sendScanEmail() {
       // Guardar localmente
       if (window.communityReports) {
         window.communityReports.push(report);
-        window.communityReports = window.communityReports.filter(r => Date.now() - r.ts < 7200000);
+        window.communityReports = window.communityReports.filter(r => Date.now() - r.ts < 120000);
         try { localStorage.setItem('hos_reports', JSON.stringify(window.communityReports)); } catch {}
       }
 
