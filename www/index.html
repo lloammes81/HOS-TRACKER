@@ -8567,6 +8567,14 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
       <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.38);"></div>
     </div>
     <button id="hosMapBackBtn" onclick="_hosCloseMap()" aria-label="Cerrar mapa" style="position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:12px;z-index:1000;width:42px;height:42px;border-radius:50%;background:rgba(8,14,28,0.88);border:2px solid rgba(255,255,255,0.3);color:#fff;font-size:22px;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.55);-webkit-tap-highlight-color:transparent;padding:0;">‹</button>
+    <!-- Nav instruction banner — shown only when maximized and a route is active -->
+    <div id="hosMaxNavBanner" style="display:none;position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:64px;right:76px;z-index:1001;background:rgba(8,14,28,0.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:8px 12px;box-shadow:0 4px 16px rgba(0,0,0,0.6);flex-direction:row;align-items:center;gap:10px;pointer-events:none;">
+      <span id="hosMaxNavArrow" style="font-size:24px;line-height:1;flex-shrink:0;">⬆️</span>
+      <div style="flex:1;min-width:0;">
+        <div id="hosMaxNavDist" style="font-size:13px;font-weight:900;font-family:'DM Sans',sans-serif;color:#fff;line-height:1.2;"></div>
+        <div id="hosMaxNavInst" style="font-size:11px;font-family:'DM Sans',sans-serif;color:rgba(255,255,255,0.78);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      </div>
+    </div>
     <div id="hosMiniMap" style="position:absolute;inset:0;background:#0f1c2e;"></div>
 
     <!-- ── Route progress overlay — visible only when map is maximized ── -->
@@ -8787,6 +8795,9 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
 #hosMapWrap.map-max #hosMapDragHandle,
 #hosMapWrap.map-max #hosMapBackBtn { display: flex !important; }
 #hosMapWrap.map-max #hosMaxProgressOverlay { display: block !important; }
+#hosMapWrap.map-max #dashSpeedPanel {
+  top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+}
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
 @keyframes truckBubblePulse { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 4px rgba(16,185,129,.0)} 50%{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.6),0 0 0 8px rgba(16,185,129,.35)} }
 @keyframes glowGreen { 0%,100%{box-shadow:0 0 0 3px rgba(59,130,246,.9),0 0 0 9px rgba(59,130,246,.35),0 0 0 18px rgba(59,130,246,.12),0 6px 24px rgba(0,0,0,.7)} 50%{box-shadow:0 0 0 3px rgba(59,130,246,1),0 0 0 13px rgba(59,130,246,.45),0 0 0 26px rgba(59,130,246,.18),0 6px 24px rgba(0,0,0,.7)} }
@@ -14349,7 +14360,23 @@ function _speakNav(text){
 }
 
 function updateNavInstruction(curLat, curLon){
-  // El banner de navegación (navNext) fue eliminado; no-op.
+  if (!_hosMapMaximized) return;
+  const banner = document.getElementById('hosMaxNavBanner');
+  if (!banner) return;
+  const hasRoute = Array.isArray(navSteps) && navSteps.length > 0;
+  if (!hasRoute) { banner.style.display = 'none'; return; }
+  const step  = navSteps[navStepIdx];
+  const loc   = step?.maneuver?.location;
+  const dist  = (loc && curLat != null) ? milesToPretty(haversine(curLat, curLon, loc[1], loc[0])) : '';
+  const arrow = osrmManeuverArrow(step);
+  const inst  = osrmStepText(step) || 'Continúa recto';
+  const arrowEl = document.getElementById('hosMaxNavArrow');
+  const distEl  = document.getElementById('hosMaxNavDist');
+  const instEl  = document.getElementById('hosMaxNavInst');
+  if (arrowEl) arrowEl.textContent = arrow;
+  if (distEl)  distEl.textContent  = dist;
+  if (instEl)  instEl.textContent  = inst;
+  banner.style.display = 'flex';
 }
 function fmtTime(d) {
   const dt = new Date(d); let h = dt.getHours(); const m = dt.getMinutes();
@@ -18098,6 +18125,8 @@ function _hosMaxMap() {
 function _hosCloseMap() {
   const wrap = document.getElementById('hosMapWrap');
   if (!wrap || !_hosMapMaximized) return;
+  const _nb = document.getElementById('hosMaxNavBanner');
+  if (_nb) _nb.style.display = 'none';
   wrap.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
   wrap.style.transform  = 'translateY(100%)';
   wrap.addEventListener('transitionend', function _restore() {
