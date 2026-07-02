@@ -21010,7 +21010,6 @@ function setPhotoImg(el, src, css){
 }
 
 function addReportMarker(report) {
-  if (!fmMapInst) return;
   const cfg = REPORT_ICONS[report.type] || { emoji:'⚠️', color:'#f59e0b', label: report.label };
   const age = Math.round((Date.now() - report.ts) / 60000);
   const ageStr = age < 1 ? 'Ahora' : age === 1 ? 'Hace 1 min' : `Hace ${age} min`;
@@ -21073,11 +21072,11 @@ function addReportMarker(report) {
       </div>
     </div>`;
 
-  const marker = L.marker([report.lat, report.lon], { icon })
-    .addTo(fmMapInst)          // Always add — stays on map permanently
-    .bindPopup(popupHtml);
+  const marker = L.marker([report.lat, report.lon], { icon }).bindPopup(popupHtml);
+  if (fmMapInst) marker.addTo(fmMapInst);
 
   fmPoiLayers.reports.push(marker);
+  if (typeof syncMinimapOverlays === 'function') syncMinimapOverlays();
 }
 
 // Renombrada: antes se llamaba renderCommunityReports y era pisada por la
