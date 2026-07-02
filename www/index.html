@@ -29861,9 +29861,10 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
 
   // ── Estado ─────────────────────────────────────────────────
   let _shiftStart  = null;   // Date: primer movimiento GPS detectado
-  let _driveMs     = 0;      // ms acumulados conduciendo
-  let _cycleMs     = 0;      // ms acumulados en el ciclo semanal
-  let _sessionStart= null;   // Date: inicio del segmento de movimiento actual
+  let _driveMs     = 0;      // ms acumulados conduciendo (pausa al detenerse)
+  let _cycleMs     = 0;      // ms base del ciclo 70h (antes del período de servicio actual)
+  let _dutyStartTs = null;   // ms: inicio del período de servicio actual (corre aunque esté parado)
+  let _sessionStart= null;   // Date: inicio del segmento de manejo actual
   let _isMoving    = false;
   let _lastMovingTs= 0;      // ms timestamp of last reportMoving(true) call from any source
   let _speed       = 0;      // mph calculado desde GPS
@@ -29873,11 +29874,12 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
 
   // ── Persistencia ───────────────────────────────────────────
   function _save(){
-    const extra = (_sessionStart && _isMoving) ? Date.now() - _sessionStart.getTime() : 0;
+    const dExtra = (_sessionStart && _isMoving) ? Date.now() - _sessionStart.getTime() : 0;
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      shiftTs    : _shiftStart   ? _shiftStart.getTime()   : null,
-      driveMs    : _driveMs + extra,
-      cycleMs    : _cycleMs + extra,
+      shiftTs    : _shiftStart ? _shiftStart.getTime() : null,
+      driveMs    : _driveMs + dExtra,
+      cycleMs    : _cycleMs,        // base; período actual se mide desde dutyStartTs
+      dutyStartTs: _dutyStartTs,    // null = fuera de servicio
       driveDate  : new Date().toDateString(),
       savedAt    : Date.now()
     }));
@@ -29894,8 +29896,9 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       // Resetear turno si tiene más de 24h (ventana diaria DOT)
       _shiftStart  = (d.shiftTs && Date.now() - d.shiftTs < 24 * 3600000) ? new Date(d.shiftTs) : null;
       // Reiniciar horas diarias si cambió el día calendario (el ciclo 70h sigue acumulando)
-      _driveMs = (d.driveDate && d.driveDate === new Date().toDateString()) ? (d.driveMs || 0) : 0;
-      _cycleMs = d.cycleMs || 0;
+      _driveMs     = (d.driveDate && d.driveDate === new Date().toDateString()) ? (d.driveMs || 0) : 0;
+      _cycleMs     = d.cycleMs || 0;
+      _dutyStartTs = d.dutyStartTs || null;
     } catch(e){}
   }
 
@@ -29909,6 +29912,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     if (!_isMoving){
       _isMoving     = true;
       _sessionStart = new Date();
+      if (!_dutyStartTs) _dutyStartTs = Date.now(); // inicio período de servicio (70h)
       if (!_shiftStart){ _shiftStart = new Date(); }
       if (typeof hosShiftStartTime !== 'undefined') {
         const _shiftAgeH = hosShiftStartTime ? (Date.now() - hosShiftStartTime) / 3600000 : 0;
@@ -29946,10 +29950,8 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     if (_movingRecently) return;
 
     if (_isMoving && _sessionStart){
-      const ms = Date.now() - _sessionStart.getTime();
-      _driveMs += ms;
-      _cycleMs += ms;
-      _sessionStart = null;
+      _driveMs += Date.now() - _sessionStart.getTime(); // solo manejo acumula al detenerse
+      _sessionStart = null;                              // 70h (_dutyStartTs) sigue corriendo
       _save();
     }
     _isMoving = false;
@@ -29993,7 +29995,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     return Math.max(0, DRIVE_MAX - (_driveMs + extra) / 3600000);
   }
   function _cycleLeft(){
-    const extra = (_sessionStart && _isMoving) ? Date.now() - _sessionStart.getTime() : 0;
+    const extra = _dutyStartTs ? Date.now() - _dutyStartTs : 0;
     return Math.max(0, CYCLE_MAX - (_cycleMs + extra) / 3600000);
   }
 
@@ -30126,23 +30128,15 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     }
   }, 30000);
 
-  // Cruce de medianoche: antes una sesión de 11pm-1am atribuía las 2 horas
-  // completas al día siguiente. Al cambiar el día calendario se cierra el
-  // tramo del día anterior (el ciclo 70h/8d lo conserva) y las horas
-  // diarias arrancan en 0, igual que hace _load() al reabrir la app.
+  // Cruce de medianoche: las horas diarias (11h) arrancan en 0; el ciclo
+  // 70h sigue corriendo via _dutyStartTs sin necesidad de comprometer ms aquí.
   let _sessionDay = new Date().toDateString();
   setInterval(function() {
     const today = new Date().toDateString();
     if (today === _sessionDay) return;
     _sessionDay = today;
-    if (_isMoving && _sessionStart) {
-      const ms = Date.now() - _sessionStart.getTime();
-      _cycleMs += ms;              // lo manejado antes de medianoche sigue contando al ciclo
-      _driveMs  = 0;               // las horas diarias del nuevo día empiezan en 0
-      _sessionStart = new Date();  // la sesión activa continúa, anclada al nuevo día
-    } else {
-      _driveMs = 0;
-    }
+    _driveMs = 0;                                    // horas diarias reinician
+    if (_isMoving && _sessionStart) _sessionStart = new Date(); // re-anclar al nuevo día
     _save();
   }, 60000);
 
@@ -30179,9 +30173,9 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     cycleLeft:     _cycleLeft,
     // Inicializa el tracker con las horas RESTANTES que el driver ingresó
     setInitialHours: function(dailyHrsLeft, cycleHrsLeft) {
-      _driveMs = Math.max(0, (DRIVE_MAX - dailyHrsLeft) * 3600000);
-      _cycleMs = Math.max(0, (CYCLE_MAX - cycleHrsLeft) * 3600000);
-      // Si ya va en movimiento, reanclamos la sesión ahora para que driveLeft()/cycleLeft() sigan bajando.
+      _driveMs     = Math.max(0, (DRIVE_MAX - dailyHrsLeft) * 3600000);
+      _cycleMs     = Math.max(0, (CYCLE_MAX - cycleHrsLeft) * 3600000);
+      _dutyStartTs = _isMoving ? Date.now() : null; // reiniciar reloj de servicio (70h)
       _sessionStart = _isMoving ? new Date() : null;
       if (!_shiftStart) _shiftStart = new Date();
       _save();
