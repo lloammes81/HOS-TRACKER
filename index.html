@@ -8481,7 +8481,7 @@ window.addEventListener('unhandledrejection', function(ev){ window._hosLogErr(ev
       <!-- Barra de progreso con camión -->
       <div style="position:relative;height:6px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:visible;margin-bottom:10px;">
         <div id="dashRouteProg" style="height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:999px;width:0%;transition:width 1.2s ease;position:relative;">
-          <div id="dashRouteTruck" style="position:absolute;right:-9px;top:50%;transform:translateY(-50%);font-size:16px;line-height:1;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));z-index:2;">🚛</div>
+          <div id="dashRouteTruck" style="position:absolute;right:-9px;top:50%;transform:translateY(-50%) scaleX(-1);font-size:16px;line-height:1;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));z-index:2;">🚛</div>
         </div>
         <!-- Íconos de paradas de descanso sobre la línea (⏸ pausa 30 min · 😴 descanso 10h) -->
         <div id="dashRouteStopMarks" style="position:absolute;inset:0;pointer-events:none;"></div>
@@ -17452,10 +17452,14 @@ function fmStartTracking() {
       const _sk   = destination.lat.toFixed(3) + ',' + destination.lon.toFixed(3);
       const _dNow = haversine(lat, lon, destination.lat, destination.lon);
       if (!window._tripSnap || window._tripSnap.key !== _sk) {
-        try {
-          const _sv = JSON.parse(localStorage.getItem('hos_trip_snap') || 'null');
-          window._tripSnap = (_sv && _sv.key === _sk) ? _sv : { key: _sk, startMi: _dNow };
-        } catch(e) { window._tripSnap = { key: _sk, startMi: _dNow }; }
+        let _sv = null;
+        try { _sv = JSON.parse(localStorage.getItem('hos_trip_snap') || 'null'); } catch(e) {}
+        if (_sv && _sv.key === _sk) {
+          window._tripSnap = _sv;
+        } else {
+          window._tripSnap = { key: _sk, startMi: _dNow };
+          try { localStorage.setItem('hos_trip_snap', JSON.stringify(window._tripSnap)); } catch(e) {}
+        }
       }
       if (_dNow > window._tripSnap.startMi) {
         window._tripSnap.startMi = _dNow;
