@@ -12636,7 +12636,6 @@ let lastRoadSpeedCheck = 0;
 let lastBorderWarnState = '';
 let lastBorderWarnCheck = 0;
 let stateBannerTimer    = null;
-const _stateBannerShown = new Set();
 
 
 function showStateBanner(name) {
@@ -12644,9 +12643,6 @@ function showStateBanner(name) {
   const nm = document.getElementById('stateBannerName');
   const gr = document.getElementById('stateBannerGreeting');
   if (!el || !nm) return;
-  const _bannerKey = (typeof currentStateCode !== 'undefined' && currentStateCode) || name;
-  if (_stateBannerShown.has(_bannerKey)) return;
-  _stateBannerShown.add(_bannerKey);
   const userName = (typeof currentUser !== 'undefined' && currentUser?.name) ||
                    (typeof driverProfile !== 'undefined' && driverProfile?.name) || '';
   if (gr) gr.textContent = userName ? `¡Hola, ${userName}!` : '';
@@ -12769,6 +12765,9 @@ async function detectStateAndUpdateLimit(lat, lon) {
   if (now - lastStateCheck < throttle) return;
   lastStateCheck = now;
 
+  // Save state before offline lookup so step 2 can detect the true change
+  const _prevCode = currentStateCode;
+
   // 1) Instant offline lookup — no network needed
   const offlineCode = _coordToStateCode(lat, lon);
   if (offlineCode && offlineCode !== currentStateCode) {
@@ -12784,7 +12783,7 @@ async function detectStateAndUpdateLimit(lat, lon) {
   if (!result) { lastStateCheck = 0; return; }
   const { raw: stateRaw, code } = result;
   if (!code) { lastStateCheck = 0; return; }
-  if (code !== currentStateCode) {
+  if (code !== _prevCode) {
     currentStateCode = code;
     lastBorderWarnState = ''; // reset border warning for next state
     if (speedLimitActive) {
