@@ -17958,7 +17958,12 @@ function _fmRestoreRoute(saved) {
     const destInput = document.getElementById('destInput');
     if (destInput && destination.name) destInput.value = destination.name;
     const dep = document.getElementById('departureInput');
-    if (dep && saved.departureInput) dep.value = saved.departureInput;
+    // Al restaurar una ruta activa siempre usar la hora actual como salida.
+    // El timestamp guardado es del viaje anterior → usarlo daría llegada en el pasado.
+    if (dep) {
+      if (typeof setDepartureNow === 'function') setDepartureNow();
+      else dep.value = '';
+    }
     const hi  = document.getElementById('hoursInput');
     if (hi && saved.hoursInput)  hi.value = saved.hoursInput;
     const si  = document.getElementById('speedInput');
@@ -30168,9 +30173,14 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
       }
       // Resetear turno si tiene más de 24h (ventana diaria DOT)
       _shiftStart  = (d.shiftTs && Date.now() - d.shiftTs < 24 * 3600000) ? new Date(d.shiftTs) : null;
-      // Reiniciar horas diarias si cambió el día calendario (el ciclo 70h sigue acumulando)
-      _driveMs     = (d.driveDate && d.driveDate === new Date().toDateString()) ? (d.driveMs || 0) : 0;
-      _cycleMs     = d.cycleMs || 0;
+      // Reiniciar horas diarias si cambió el día calendario; pasar las horas de manejo al base del ciclo
+      if (d.driveDate && d.driveDate !== new Date().toDateString()) {
+        _cycleMs = Math.min(CYCLE_MAX * 3600000, (d.cycleMs || 0) + (d.driveMs || 0));
+        _driveMs = 0;
+      } else {
+        _driveMs = d.driveMs || 0;
+        _cycleMs = d.cycleMs || 0;
+      }
       _dutyStartTs = d.dutyStartTs || null;
     } catch(e){}
   }
@@ -30268,8 +30278,9 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     return Math.max(0, DRIVE_MAX - (_driveMs + extra) / 3600000);
   }
   function _cycleLeft(){
-    const extra = _dutyStartTs ? Date.now() - _dutyStartTs : 0;
-    return Math.max(0, CYCLE_MAX - (_cycleMs + extra) / 3600000);
+    // Contar igual que _driveLeft: solo acumula mientras el vehículo está en movimiento.
+    const extra = (_sessionStart && _isMoving) ? Date.now() - _sessionStart.getTime() : 0;
+    return Math.max(0, CYCLE_MAX - (_cycleMs + _driveMs + extra) / 3600000);
   }
 
   // ── Actualizar los 3 anillos ──────────────────────────────
