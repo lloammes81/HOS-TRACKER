@@ -19638,8 +19638,13 @@ function _updateViolationCard() {
     const breakLeft = Math.max(0, B30_DRIVE_LIMIT - (typeof b30DriveSecs !== 'undefined' ? b30DriveSecs : 0));
     if (breakLeft <= driveHrsLeft * 3600) {
       secsLeft = breakLeft;
-      title    = 'Time remaining before Possible Violation';
-      label    = 'Possible Violation · 30 Min break required';
+      if (breakLeft > 2 * 3600) {
+        title = '30-Min Break Rule · Time Remaining';
+        label = 'Driving Status OK · Break required after 8H';
+      } else {
+        title = 'Time remaining before Possible Violation';
+        label = 'Possible Violation · 30 Min break required';
+      }
     } else {
       secsLeft = Math.min(driveHrsLeft * 3600, shiftLeftH * 3600);
       title    = 'Time remaining before Possible Violation';
