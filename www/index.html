@@ -14477,8 +14477,13 @@ const MINI_POI_QUERIES = {
       node["amenity"="weigh_station"](around:${r},${lat},${lon});
       node["highway"="weigh_station"](around:${r},${lat},${lon});
       node["man_made"="weigh_scale"](around:${r},${lat},${lon});
+      node["man_made"="weighbridge"](around:${r},${lat},${lon});
+      node["enforcement"="weight"](around:${r},${lat},${lon});
+      node["name"~"weigh station|weight station|port of entry|truck scale|check station",i](around:${r},${lat},${lon});
       way["amenity"="weigh_station"](around:${r},${lat},${lon});
       way["highway"="weigh_station"](around:${r},${lat},${lon});
+      way["man_made"="weighbridge"](around:${r},${lat},${lon});
+      way["enforcement"="weight"](around:${r},${lat},${lon});
     );
     out center;`,
 
@@ -14519,9 +14524,10 @@ async function loadMiniMapPOIs() {
     miniPoiMarkers[type] = [];
   });
 
-  // Build waypoints every ~60 miles along the route
+  // Build waypoints every ~40 miles along the route for full coverage
+  const _wptTarget = Math.max(8, Math.ceil((typeof routeDistance === 'number' && routeDistance > 0 ? routeDistance : 400) / 40));
   const waypoints = [];
-  const step = Math.max(1, Math.floor(roadGeometry.length / 8));
+  const step = Math.max(1, Math.floor(roadGeometry.length / _wptTarget));
   for (let i = 0; i < roadGeometry.length; i += step) {
     waypoints.push({ lat: roadGeometry[i][0], lon: roadGeometry[i][1] });
   }
@@ -18792,12 +18798,15 @@ function loadMiniMapInterstates(lat, lon) {
 /* ── POIs a lo largo de la ruta en el mapa maximizado del dashboard ── */
 let _hosMapPoiMarkers = [];
 let _hosMapPoiLoaded  = false;
+let _hosMapPoiDestKey = null;
 async function _loadHosMapRoutePOIs(force) {
   if (!hosMinimapInst) return;
-  if (_hosMapPoiLoaded && !force) return;
   if (typeof roadGeometry === 'undefined' || !roadGeometry?.length) return;
   if (typeof origin === 'undefined' || !origin?.lat) return;
-  _hosMapPoiLoaded = true;
+  const _destKey = (typeof destination !== 'undefined' && destination?.lat)
+    ? destination.lat.toFixed(3) + ',' + destination.lon.toFixed(3) : null;
+  if (_hosMapPoiLoaded && _hosMapPoiDestKey === _destKey && !force) return;
+  _hosMapPoiDestKey = _destKey;
 
   // Limpiar marcadores anteriores
   _hosMapPoiMarkers.forEach(m => { try { hosMinimapInst.removeLayer(m); } catch(e){} });
@@ -18806,9 +18815,10 @@ async function _loadHosMapRoutePOIs(force) {
   // También reflejar los POIs ya cargados en el mapa completo / planificador
   try { if (typeof syncMinimapOverlays === 'function') syncMinimapOverlays(); } catch(e){}
 
-  // Waypoints cada ~60 millas a lo largo de la ruta
+  // Waypoints each ~40 miles — enough density so 30km radius leaves no gaps
+  const _targetWpts = Math.max(8, Math.ceil((typeof routeDistance === 'number' && routeDistance > 0 ? routeDistance : 400) / 40));
   const waypoints = [];
-  const step = Math.max(1, Math.floor(roadGeometry.length / 8));
+  const step = Math.max(1, Math.floor(roadGeometry.length / _targetWpts));
   for (let i = 0; i < roadGeometry.length; i += step)
     waypoints.push({ lat: roadGeometry[i][0], lon: roadGeometry[i][1] });
   const last = roadGeometry[roadGeometry.length - 1];
@@ -18857,6 +18867,7 @@ async function _loadHosMapRoutePOIs(force) {
       } catch(e) {}
     }
   }
+  _hosMapPoiLoaded = true;
 }
 
 function updateHosDashMinimap(lat, lon) {
