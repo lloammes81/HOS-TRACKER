@@ -10257,7 +10257,6 @@ function _mkTile(styleKey) {
 let currentMapStyle = localStorage.getItem('hos_map_style') || 'dark';
 if (!MAP_STYLES[currentMapStyle]) { currentMapStyle = 'dark'; localStorage.setItem('hos_map_style', 'dark'); }
 let fmTileLayer = null;
-let fmTrafficLayer    = null;
 let miniTrafficLayer  = null;
 let hosMiniTrafficLayer = null;
 // Default traffic ON — only off if user explicitly disabled it
@@ -10272,30 +10271,7 @@ function _addTrafficToMap(mapInst, layerRef) {
   return L.tileLayer(_TRAFFIC_URL, _TRAFFIC_OPTS).addTo(mapInst);
 }
 
-
-
-function _syncTrafficBtn() {
-  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
-}
-
-function _addTrafficLayer() {
-  fmTrafficLayer = _addTrafficToMap(fmMapInst, fmTrafficLayer);
-}
-
-// Restore traffic state on map open
-function _restoreTrafficState() {
-  _syncTrafficBtn();
-  if (fmTrafficEnabled && fmMapInst && !fmTrafficLayer) _addTrafficLayer();
-}
-
 // Tono base del dashboard según estilo del mapa (sutil, el color real lo da el mapa de fondo)
-const DASH_BG_MAP = {
-  dark:      'rgba(4,8,16,0.68)',
-  streets:   'rgba(4,9,14,0.68)',
-  light:     'rgba(5,9,18,0.68)',
-  satellite: 'rgba(4,9,10,0.68)',
-  topo:      'rgba(10,7,4,0.68)',
-};
 
 let origin = null, destination = null;
 let routeDistance = 0, schedule = [], arrivalTime = null, totalTime = 0;
@@ -10315,7 +10291,6 @@ let miniPoiMarkers = { truck: [], rest: [], restrict: [], weigh: [], checkpoint:
 let miniPoiActive  = { truck: false, rest: false, restrict: false, weigh: false, checkpoint: false, parking: false };
 
 let watchId = null;
-let tripStart = null;
 
 /* ── Safety feature states ────────────────────── */
 let fatigueActive   = localStorage.getItem('hos_fatigue')  === 'true';
@@ -10337,7 +10312,6 @@ let truckOptions = {
 // Fatigue internals
 let fatigueStream   = null;
 let fatigueInterval = null;
-let fatigueEyeHistory = [];   // rolling window of "eyes open?" booleans
 let fatigueAlertActive = false;
 
 // Weather internals
@@ -10486,8 +10460,6 @@ let _camMinimized     = false;
 let _camPreviewOn     = localStorage.getItem('cam_preview') === 'true';
 let _camIpUrl         = localStorage.getItem('cam_ip_url') || '';
 let _camProto         = localStorage.getItem('cam_proto') || 'mjpeg';
-let _camBtScanActive  = false;
-let _camBtScanTimer   = null;
 
 /* ── helpers ─────────────────────────────────────────────── */
 function _camEl(id) { return document.getElementById(id); }
@@ -11825,7 +11797,6 @@ function adjustHeight(delta) {
 ════════════════════════════════════════════════════════════ */
 let speedoVisible = false;
 let currentTruckSpeedLimit = null; // mph from state limits
-let wasMoving = false;
 
 
 function showSpeedometer() {
@@ -13227,14 +13198,6 @@ function changeMapStyle(styleKey) {
 
 
 // Cycle through map color themes quickly
-const MAP_COLOR_THEMES = [
-  { label:'Normal',   filter:'none' },
-  { label:'Oscuro',   filter:'invert(1) hue-rotate(180deg)' },
-  { label:'Noche',    filter:'invert(1) hue-rotate(200deg) saturate(0.8)' },
-  { label:'Retro',    filter:'sepia(0.6) hue-rotate(10deg) saturate(1.2)' },
-  { label:'Alto Contraste', filter:'contrast(1.5) saturate(1.3)' },
-];
-let mapColorIdx = 0;
 
 function applyTheme() {
   document.body.classList.toggle('dark', isDark);
@@ -13335,9 +13298,6 @@ function updateSettingsChecks() {
   document.getElementById('breakToggle').classList.toggle('on', use30min);
 }
 
-function applySpeedWidgetPos() {
-  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
-}
 
 function initSpeedWidgetDrag() {
   // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
@@ -13368,7 +13328,6 @@ function initSpeedometerDrag() {
   let dragging = false;
   let startX = 0, startY = 0;
   let origLeft = 0, origTop = 0;
-  let longPressTimer = null;
 
   const getPoint = (e) => {
     const t = e.touches && e.touches[0];
@@ -14030,8 +13989,6 @@ let fmLastStepsHash = '';
 let fmLastRouteKey  = '';
 let showInterstateShields = localStorage.getItem('hos_show_shields') !== 'false';
 
-let roadNameMarkersMini = [];
-let roadNameMarkersFull = [];
 
 
 function makeInterstateDivIcon(num){
@@ -14349,14 +14306,6 @@ function osrmManeuverArrow(step){
   return '⬆️';
 }
 
-function _speakNav(text){
-  if (!window.speechSynthesis || !text) return;
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = lang === 'es' ? 'es-MX' : 'en-US';
-  utt.volume = 1; utt.rate = 0.95;
-  window.speechSynthesis.speak(utt);
-}
 
 function updateNavInstruction(curLat, curLon){
   if (!_hosMapMaximized) return;
@@ -15359,32 +15308,7 @@ async function shareRoute() {
    ============================================================ */
 let fmMapInst    = null;
 let fmMarkers    = [];
-let fmStateBoundaryLayer = null;
 
-async function loadStateBoundaries() {
-  if (fmStateBoundaryLayer || !fmMapInst) return;
-  try {
-    let data;
-    const cached = sessionStorage.getItem('hos_state_boundaries');
-    if (cached) {
-      data = JSON.parse(cached);
-    } else {
-      const res = await fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json');
-      data = await res.json();
-      try { sessionStorage.setItem('hos_state_boundaries', JSON.stringify(data)); } catch {}
-    }
-    fmStateBoundaryLayer = L.geoJSON(data, {
-      style: {
-        color: '#a78bfa',
-        weight: 1.8,
-        opacity: 0.6,
-        fill: false
-      },
-      interactive: false
-    }).addTo(fmMapInst);
-    fmStateBoundaryLayer.bringToBack();
-  } catch(e) { console.warn('State boundaries failed to load:', e); }
-}
 let fmLayer      = null;
 let fmGlowLayer  = null;  // route glow polyline
 let fmCasingLayer= null;  // route casing polyline
@@ -15397,7 +15321,6 @@ let fmSpeedoTickId = null; // refresco 1s del velocímetro (tiempo real entre fi
 let fmTripStart  = null;
 let fmDriveSeconds = 0;    // accumulated moving time in seconds
 let fmLastMoveTime = null; // timestamp of last GPS fix when moving
-let fmClockTimer = null;
 let fmIsTracking = false;
 let fmCurrentSpeed = 0;    // global current GPS speed (mph)
 let fmVehicleMoving = false; // global moving state
@@ -15406,7 +15329,6 @@ let fmLastGeocode = 0;
 
 // Auto-follow & zoom
 let fmFollowing     = true;   // whether map auto-follows truck
-let fmUserDragged   = false;  // user manually moved map
 let fmUserRotated   = false;  // user manually rotated map (pauses auto-bearing)
 let fmUserZoomed    = false;  // user manually pinched zoom (pauses auto-zoom)
 let fmCurrentZoom   = 15;     // zoom level when following
@@ -15652,11 +15574,9 @@ let truckAnimFrame = null;       // requestAnimationFrame handle
 let truckFrom = null;            // { lat, lon, heading }
 let truckTo   = null;            // { lat, lon, heading }
 let truckAnimStart  = 0;
-let fmLastSpeeding  = false;     // track speeding state for icon color
 const TRUCK_ANIM_MS = 1200;      // interpolate over 1.2 s (one GPS interval)
 
 // The static truck icon element — we reuse the same DOM, only move/rotate
-let fmTruckEl = null;  // the inner div element for rotation
 
 function buildTruckIconHTML(heading, isMoving) {
   // Marcador del mapa INVISIBLE: el único camión visible es el ícono del HUD
@@ -15967,10 +15887,6 @@ function calcHeading(lat1, lon1, lat2, lon2) {
 /* ── Búsqueda de destino desde el mapa ── */
 let mapSearchDebounce;
 
-function closeFullMapScreen() {
-  // El mapa grande fue eliminado — no-op.
-  return;
-}
 
 
 
@@ -16622,30 +16538,6 @@ function updateNextStopCard() {
   });
 }
 
-// ── Auto-resume follow after user stops touching the map ──────────────────
-let _autoResumeTimer = null;
-function _scheduleAutoResumeFollow() {
-  if (_autoResumeTimer) clearTimeout(_autoResumeTimer);
-  _autoResumeTimer = setTimeout(() => {
-    if (!fmIsTracking) return;
-    fmFollowing = true;
-    fmUserDragged = false;
-    if (fmGpsMarker && fmMapInst) {
-      const ll = fmGpsMarker.getLatLng();
-      _lastPanLat = null; _lastPanLon = null; // force immediate re-pan on next GPS tick
-      window._fmProgrammaticMove = true;
-      fmMapInst.setView(calcFollowCenter(ll.lat, ll.lng, fmLastHeading), fmCurrentZoom, { animate: true, duration: 1.0 });
-      if (window._pmClearTimer) clearTimeout(window._pmClearTimer);
-      window._pmClearTimer = setTimeout(() => { window._fmProgrammaticMove = false; }, 1500);
-    }
-  }, 5000); // reanuda seguimiento 5s después de que el usuario deja de tocar el mapa
-}
-
-// ── Auto-resume bearing after user manually rotates ───────────────────────
-let _autoResumeRotationTimer = null;
-function _scheduleAutoResumeRotation() {
-  // No auto-snap — user rotation stays until they tap the center/follow button
-}
 
 /* ══════════════════════════════════════════════════════════════
    🚦 AUTO STATUS — Conduciendo / Descanso / Espera / Sleeper
@@ -19182,7 +19074,6 @@ function _refreshDashRouteNextStop() {
 }
 
 // ── ETA inteligente HOS + próxima parada (banner del HUD del mapa) ──
-let _fmStopCache2 = { key:null, name:null, fetching:false };
 function _updateFmSmartInfo(etaH, remainingMi, driveLeft) {
   // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
@@ -20503,7 +20394,6 @@ function closeSubscribeModal() {
 }
 // (handleSubscribeSubmit original eliminada: la versión vigente marca el plan Pro)
 // Add a nearby search result as a pinned stop on the map
-let nearbyStopMarkers = []; // track added stops
 
 
 
@@ -21065,8 +20955,6 @@ function initIncidentToggles() {
    🚨  DRAGGABLE REPORT FAB — radial menu with DOT + incident reports
 ════════════════════════════════════════════════════════════ */
 let reportSheetOpen = false;
-let _fabPos = null;     // { x, y } fixed viewport center of FAB
-let _fabDragState = null;
 
 const REPORT_ITEMS = [
   { type: 'dot_police',   emoji: '🚛', label: 'DOT Police',  bg: 'linear-gradient(135deg,#1e3a5f,#1e40af)' },
@@ -21359,7 +21247,6 @@ function confirmReport(reportId, isStillThere) {
    🚨  INCIDENT BUBBLE PANEL
    Small circular bubbles on the left — activatable/deactivatable
 ════════════════════════════════════════════════════════════ */
-let incidentPanelVisible = true;
 let activeIncidentBubbles = {}; // id -> bubble element
 
 function addIncidentBubble(report, autoRemoveMs = 5000) {
@@ -21430,7 +21317,6 @@ function showIncidentDetail(report, dist) {
 }
 
 // Check if any reports are within 5 miles — show ONE bubble for closest priority alert
-let lastReportAlertId = null;
 let _shownNearbyIds = new Set();
 function checkNearbyReports(lat, lon) {
   // Find all nearby reports not yet shown (exclude own reports)
@@ -22024,12 +21910,6 @@ function toggleSideTabMenu() {
     document.getElementById('commQuickOverlay')?.classList.remove('open');
     document.getElementById('commQuickOverlay')?.classList.remove('show');
   }
-}
-let _rightPanelAutoHideTimer = null;
-
-let _leftPanelAutoHideTimer = null;
-function toggleMapLeftPanel(forceHide) {
-  // Función vinculada a una opción eliminada (elemento(s) inexistente(s)); no-op.
 }
 
 function toggleDashSideMenu() {
@@ -23241,7 +23121,6 @@ document.addEventListener('click', e => {
 /* ── 34h Reset (inline on Tools page — synced with sheet version) ── */
 
 
-let inlineResetSync = null;
 
 /* ════════════════════════════════════════════════════════════
    👥  COMMUNITY PAGE — INLINE FUNCTIONS
@@ -23285,7 +23164,6 @@ const COMM_TYPE_CFG = {
 
 let commPageFilter    = 'all';
 let commFilterByRoute = false;
-let commSelectedType  = 'police';
 
 
 
@@ -23865,21 +23743,6 @@ async function searchNearbyPOI(type) {
 }
 
 // (openGoogleMapsTruckStops antigua eliminada: la versión vigente abre Google Maps en la posición GPS)
-function showFuelOnMap(lat, lon, name, emoji) {
-  openFullMapScreen();
-  setTimeout(() => {
-    if (!fmMapInst) return;
-    fmMapInst.setView([lat, lon], 14);
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="background:#10b981;border:3px solid #fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 10px rgba(0,0,0,.45)">${emoji}</div>`,
-      iconAnchor: [18, 18]
-    });
-    L.marker([lat, lon], { icon }).addTo(fmMapInst)
-      .bindPopup(`<b>${emoji} ${name}</b>`)
-      .openPopup();
-  }, 800);
-}
 
 // Auto-fetch EIA price on load
 fetchEIAPrice();
@@ -24243,7 +24106,6 @@ function dismissLocalWarning() {
 ════════════════════════════════════════════════════════════ */
 
 const ALERT_TYPES = new Set(['police', 'inspection', 'accident', 'hazard']);
-let   _lastAlertCheckTs  = 0;
 let   _activeRouteAlerts = [];
 let   _alertCheckInterval = null;
 
@@ -24980,7 +24842,6 @@ window.addEventListener('resize', () => {
 let selectedAvatarEmoji = '🚛';
 let selectedAvatarImageData = '';
 
-let profileModalMode = 'register'; // 'register' | 'login' | 'profile'
 
 function openProfileModal() {
   const modal = document.getElementById('profileModal');
@@ -27851,7 +27712,6 @@ window._hosAutoRecalc = false;
 
   // Style from photo: clean flat icon, dark red/terracotta fill, thin dark stroke, white bg
   const RED  = '#8B3120';   // body fill color (dark terracotta)
-  const REDF = '#A63825';   // slightly brighter for top surfaces
   const GRY  = '#FFFFFF';   // cab white
   const STR  = '#2A2A2A';   // stroke color
   const WIN  = '#C8E6F5';   // windshield blue
@@ -30153,7 +30013,6 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   let _isMoving    = false;
   let _lastMovingTs= 0;      // ms timestamp of last reportMoving(true) call from any source
   let _speed       = 0;      // mph calculado desde GPS
-  let _pollId      = null;
   let _gpsWatchId  = null;  // watchPosition del teléfono (modo sin ELD)
   let _gpsActive   = false;
 
@@ -30252,16 +30111,7 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   }
 
   // ── GPS del dispositivo — siempre activo para detección de movimiento ────
-  // Velocidad por ancla adaptativa (helper global _anchorSpeedMph): 0 cuando la
-  // deriva del GPS estacionado cabe en el círculo de error; velocidad real en
-  // movimiento aunque un solo intervalo entre fixes no supere ese error.
-  const _gpsAnchorSt = {};
-  function _calcMphFromDelta(lat, lon, ts, accM) {
-    if (typeof _anchorSpeedMph === 'function') return _anchorSpeedMph(lat, lon, ts, accM, _gpsAnchorSt);
-    return 0;
-  }
 
-  let _deltaMovStreak = 0; // lecturas consecutivas de movimiento por delta de posición
   // GPS interno: delegado al servicio central HOSGps. El central llama a
   // reportMoving() (→ _onMoving/_onStopped) en cada fix con la velocidad
   // canónica, así que aquí solo aseguramos que esté corriendo y mantenemos
@@ -32247,7 +32097,6 @@ function closeLogbookSheet() {
 
 // ========== ROUTE STOP MARKERS ON MAP ==========
 let routeStopMarkers = [];
-let routeStopPopups = [];
 
 function addRouteStopToMap(hour, status, location, coords) {
   // Only add if we have valid coordinates
@@ -32519,222 +32368,6 @@ window.clearRouteStopMarkers = clearRouteStopMarkers;
 ══════════════════════════════════════════════════════════ */
 
 // (versión antigua de searchNearbyPOI eliminada: la versión con caché del bloque principal es la activa)
-function displayPOIResults(elements, userLat, userLon, type, listEl) {
-  if (!listEl) return;
-
-  let html = '';
-  const isTruck = type === 'truck';
-  const isScale = type === 'weighstation';
-
-  // REAL BRAND LOGOS - Exact company branding
-  const brandLogos = {
-    // Major Truck Stop Chains
-    'pilot': '⛽', 'pilot flying j': '⛽', 'flying j': '⛽',
-    'loves': '❤️', 'ta': '🅃🄰', 'travelcenters of america': '🅃🄰',
-    'travelcenters': '🅃🄰', 'petro': '⛽', 'petro stopping': '⛽',
-    'speedway': '🏎️', 'racetrac': '🏁', 'quiktrip': '⚡',
-    'sheetz': '🥨', 'wawa': '🦆', 'caseys': '🍕',
-
-    // Fuel Brands
-    'shell': '🐚', 'bp': '☀️', 'mobil': '🚗', 'exxon': '🚗',
-    'chevron': '⛽', 'texaco': '⭐', 'phillips 66': '66',
-    'valero': 'V', 'citgo': 'CITGO', 'marathon': 'M',
-    'sinclair': '🦕', 'conoco': '🌟', '76': '76',
-
-    // Convenience / Retail
-    'circle k': 'Ⓚ', '7-eleven': '7️⃣', 'kum & go': 'K&G',
-    'walmart': '🏪', 'costco': 'C', 'sams': 'S',
-    'target': '🎯', 'kroger': 'K', 'meijer': 'M',
-
-    // Other Truck Services
-    'blue beacon': '💧', 'idleair': '💨', 'truckomat': '🚛',
-    'petro': '⛽', 'travel plaza': '🅿️', 'rest area': '🛣️'
-  };
-
-  // REAL BRAND COLORS
-  const brandColors = {
-    // Pilot Flying J - Red/Yellow
-    'pilot': 'pilot', 'pilot flying j': 'pilot', 'flying j': 'pilot',
-    // Loves - Heart/Red
-    'loves': 'loves',
-    // TA - Blue/White
-    'ta': 'ta', 'travelcenters of america': 'ta', 'travelcenters': 'ta',
-    // Petro - Red
-    'petro': 'petro', 'petro stopping': 'petro',
-    // Speedway - Red/White
-    'speedway': 'speedway',
-    // Shell - Yellow/Red
-    'shell': 'shell',
-    // BP - Green/Yellow
-    'bp': 'bp',
-    // Mobil - Red/White
-    'mobil': 'mobil', 'exxon': 'mobil',
-    // Chevron - Blue/Red
-    'chevron': 'chevron',
-    // Texaco - Red/White
-    'texaco': 'texaco',
-    // Circle K - Red/White
-    'circle k': 'circlek',
-    // 7-Eleven - Orange/Green
-    '7-eleven': 'seveneleven',
-    // Walmart - Blue
-    'walmart': 'walmart',
-    // Others
-    'default': 'default'
-  };
-
-  elements.slice(0, 15).forEach((el, i) => {
-    const lat = el.lat || (el.center && el.center.lat);
-    const lon = el.lon || (el.center && el.center.lon);
-    if (!lat || !lon) return;
-
-    const dist = calculateDistance(userLat, userLon, lat, lon);
-    const name = el.tags && el.tags.name ? el.tags.name : (isTruck ? 'Truck Stop ' + (i+1) : isScale ? 'Weigh Station ' + (i+1) : 'Parking ' + (i+1));
-    const brand = el.tags && el.tags.brand ? el.tags.brand.toLowerCase() : '';
-    const operator = el.tags && el.tags.operator ? el.tags.operator.toLowerCase() : '';
-    const address = [el.tags && el.tags['addr:street'], el.tags && el.tags['addr:city']].filter(Boolean).join(', ');
-
-    // Detect brand from name or operator - comprehensive matching
-    let detectedBrand = '';
-    const nameLower = name.toLowerCase();
-    const searchText = nameLower + ' ' + brand + ' ' + operator;
-
-    // Priority order - major chains first
-    const brandPatterns = [
-      // Pilot Flying J variations
-      { pattern: /pilot|flying\s*j|flyingj/, brand: 'pilot' },
-      // Loves variations
-      { pattern: /love['']?s|love\s*travel/, brand: 'loves' },
-      // TA variations
-      { pattern: /travel\s*centers|travelcenters|t\s*a\s*stopping|ta\s*travel/, brand: 'ta' },
-      // Petro variations
-      { pattern: /petro|petro\s*stopping/, brand: 'petro' },
-      // Speedway
-      { pattern: /speedway/, brand: 'speedway' },
-      // Shell
-      { pattern: /shell/, brand: 'shell' },
-      // BP
-      { pattern: /bp|british\s*petroleum/, brand: 'bp' },
-      // Mobil/Exxon
-      { pattern: /mobil|exxon|exxon\s*mobil/, brand: 'mobil' },
-      // Chevron
-      { pattern: /chevron/, brand: 'chevron' },
-      // Texaco
-      { pattern: /texaco/, brand: 'texaco' },
-      // Circle K
-      { pattern: /circle\s*k|circlek/, brand: 'circle k' },
-      // 7-Eleven
-      { pattern: /7\s*eleven|7-eleven|seven\s*eleven/, brand: '7-eleven' },
-      // Walmart
-      { pattern: /walmart/, brand: 'walmart' },
-      // Costco
-      { pattern: /costco/, brand: 'costco' },
-      // Sam's Club
-      { pattern: /sam['']?s\s*club|sams\s*club/, brand: 'sams' },
-      // Phillips 66
-      { pattern: /phillips\s*66|phillips66/, brand: 'phillips66' },
-      // Sinclair
-      { pattern: /sinclair/, brand: 'sinclair' },
-      // Valero
-      { pattern: /valero/, brand: 'valero' },
-      // 76
-      { pattern: /76|union\s*76/, brand: 'seventysix' },
-      // RaceTrac
-      { pattern: /racetrac|race\s*trac/, brand: 'racetrac' },
-      // QuikTrip
-      { pattern: /quik\s*trip|quiktrip/, brand: 'quiktrip' },
-      // Sheetz
-      { pattern: /sheetz/, brand: 'sheetz' },
-      // Wawa
-      { pattern: /wawa/, brand: 'wawa' },
-      // Casey's
-      { pattern: /casey['']?s|caseys/, brand: 'caseys' },
-      // Blue Beacon
-      { pattern: /blue\s*beacon/, brand: 'bluebeacon' },
-      // IdleAir
-      { pattern: /idle\s*air|idleair/, brand: 'idleair' },
-      // Truckomat
-      { pattern: /truckomat/, brand: 'truckomat' }
-    ];
-
-    for (const bp of brandPatterns) {
-      if (bp.pattern.test(searchText)) {
-        detectedBrand = bp.brand;
-        break;
-      }
-    }
-
-    const logoClass = brandColors[detectedBrand] || 'default';
-    const logoText = brandLogos[detectedBrand] || (isTruck ? '🚛' : isScale ? '⚖️' : '🅿️');
-
-    // Format brand name for display
-    let brandDisplay = '';
-    if (detectedBrand) {
-      const brandNames = {
-        'pilot': 'PILOT FLYING J',
-        'loves': "LOVE'S",
-        'ta': 'TA TRAVEL CENTER',
-        'petro': 'PETRO',
-        'speedway': 'SPEEDWAY',
-        'shell': 'SHELL',
-        'bp': 'BP',
-        'mobil': 'MOBIL',
-        'chevron': 'CHEVRON',
-        'texaco': 'TEXACO',
-        'circle k': 'CIRCLE K',
-        '7-eleven': '7-ELEVEN',
-        'walmart': 'WALMART',
-        'costco': 'COSTCO',
-        'sams': "SAM'S CLUB",
-        'phillips66': 'PHILLIPS 66',
-        'sinclair': 'SINCLAIR',
-        'valero': 'VALERO',
-        'seventysix': '76',
-        'racetrac': 'RACETRAC',
-        'quiktrip': 'QUIK TRIP',
-        'sheetz': 'SHEETZ',
-        'wawa': 'WAWA',
-        'caseys': "CASEY'S",
-        'bluebeacon': 'BLUE BEACON',
-        'idleair': 'IDLEAIR',
-        'truckomat': 'TRUCKOMAT'
-      };
-      brandDisplay = brandNames[detectedBrand] || detectedBrand.toUpperCase();
-    } else {
-      brandDisplay = (brand || operator || 'TRUCK STOP').toUpperCase();
-    }
-
-    // Amenities
-    let amenities = [];
-    if (el.tags) {
-      if (el.tags['fuel:diesel'] === 'yes') amenities.push('⛽ Diesel');
-      if (el.tags['shower'] === 'yes') amenities.push('🚿 Shower');
-      if (el.tags['restaurant'] === 'yes') amenities.push('🍔 Food');
-      if (el.tags['laundry'] === 'yes') amenities.push('👕 Laundry');
-      if (el.tags['wifi'] === 'yes') amenities.push('📶 WiFi');
-      if (el.tags['parking'] === 'yes') amenities.push('🅿️ Parking');
-    }
-
-    html += '<div class="poi-card" onclick="openPOIInMaps(' + lat + ',' + lon + ',\'' + name.replace(/\'/g, "\'") + '\')">';
-    html += '<div class="poi-card-logo ' + logoClass + '">' + logoText + '</div>';
-    html += '<div class="poi-card-info">';
-    html += '<div class="poi-card-name">' + name + '</div>';
-    html += '<div class="poi-card-brand">' + brandDisplay + '</div>';
-    html += '<div class="poi-card-meta">' + (address || 'Sin dirección') + '</div>';
-    if (amenities.length > 0) {
-      html += '<div class="poi-card-amenities">';
-      amenities.slice(0, 4).forEach(a => {
-        html += '<span class="poi-amenity">' + a + '</span>';
-      });
-      html += '</div>';
-    }
-    html += '</div>';
-    html += '<div class="poi-card-dist"><span class="poi-card-dist-miles">' + dist.toFixed(1) + '</span><span class="poi-card-dist-label">mi</span></div>';
-    html += '</div>';
-  });
-
-  listEl.innerHTML = html;
-}
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 3959; // Earth radius in miles
