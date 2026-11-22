@@ -10229,7 +10229,6 @@ let selectedCountry = localStorage.getItem('hos_country') || '';
 let savedDrives = JSON.parse(localStorage.getItem('hos_drives') || '[]');
 let truckIconMode = localStorage.getItem('hos_truck_icon') || 'emoji:🚛';
 let truckUploadData = localStorage.getItem('hos_truck_upload') || '';
-let speedWidgetPos = JSON.parse(localStorage.getItem('hos_speed_pos') || 'null');
 localStorage.removeItem('hos_speedometer_pos');
 let speedometerPos   = null;
 let driveHoursPos    = JSON.parse(localStorage.getItem('hos_drivehours_pos')   || 'null');
@@ -12406,8 +12405,6 @@ function _updateRestNotifPills() {
   const p1h   = document.getElementById('rnPill1h');
   const p30m  = document.getElementById('rnPill30m');
   const p10m  = document.getElementById('rnPill10m');
-  const hLeft = Math.floor(remaining / 3600);
-  const mLeft = Math.floor((remaining % 3600) / 60);
   if (p1h)  p1h.textContent  = remaining > 3600  ? `–1h (a las ${_fmtAlarmTime(hosRestEndTime - 3600000)}) ⏰`  : (p1h.classList.add('fired'), p1h.textContent);
   if (p30m) p30m.textContent = remaining > 1800  ? `–30min (${_fmtAlarmTime(hosRestEndTime - 1800000)}) ⏰` : (p30m.classList.add('fired'), p30m.textContent);
   if (p10m) p10m.textContent = remaining > 600   ? `–10min (${_fmtAlarmTime(hosRestEndTime - 600000)}) ⏰`  : (p10m.classList.add('fired'), p10m.textContent);
@@ -15675,7 +15672,6 @@ function updateFixedTruckIcon(isMoving, overLimit, heading) {
   // Color del ícono del camión acorde con la línea de la ruta:
   // turquesa al ir manejando (igual que la ruta), rojo si excede, azul detenido.
   const borderColor = overLimit ? '#ef4444' : (isMoving ? '#00C8E0' : '#3b82f6');
-  const glowColor   = overLimit ? 'rgba(239,68,68,0.20)' : (isMoving ? 'rgba(0,200,224,0.28)' : 'rgba(59,130,246,0.20)');
 
   // ── Update fixed overlay marker (kept hidden but updated) ───
   const inner  = document.getElementById('fixedTruckInner');
@@ -16552,7 +16548,6 @@ let _autoStopSecs   = 0;     // segundos detenido consecutivo
 let _autoStopLastTs = null;  // timestamp último GPS fix
 let _wasMovingPrev  = false; // para detectar transición movimiento → parada
 const _AUTO_STOP_THRESHOLD  = 180;   // 3 min → auto-Descanso si pausa debida
-const _AUTO_WAIT_THRESHOLD  = 300;   // 5 min → Espera parpadea verde
 const _AUTO_SLEEP_THRESHOLD = 1800;  // 30 min → Sleeper parpadea índigo
 const _AUTO_REST_RESET_HRS  = 10;    // 10 h parado → resetea ventana de 14h
 let _vehicleStopStartMs = null;      // timestamp del primer momento que el vehículo se detuvo
@@ -17191,7 +17186,6 @@ function fmStartTracking() {
     window._fmWatchLastTs = Date.now(); // freshness: el poll de respaldo cede si este watch está vivo
     // La ventana de 14H corre ininterrumpidamente desde el inicio del turno (DOT: wall-clock).
     // Solo el reloj de 11H de manejo se pausa cuando el vehículo está detenido.
-    const _wasMoving = fmVehicleMoving;
     if (_hasReliableSpeed) {
       fmVehicleMoving = isMoving;
     }
@@ -17882,7 +17876,6 @@ function _fmRestoreRoute(saved) {
   // y saltar los popups de horas — el conductor ya los confirmó antes de cerrar la app.
   setTimeout(() => {
     const _rd = window._hosTracker ? window._hosTracker.driveLeft() : saved.driveLeft;
-    const _rc = window._hosTracker ? window._hosTracker.cycleLeft() : saved.cycleLeft;
     if (_rd != null && _rd >= 0) {
       const dh = document.getElementById('dailyHoursInput');
       if (dh) dh.value = Math.max(0.5, Math.min(11, parseFloat(_rd.toFixed(2))));
@@ -19424,7 +19417,6 @@ function _updateViolationCard() {
 
   const now           = Date.now();
   const shiftActive   = typeof hosShiftStartTime !== 'undefined' && hosShiftStartTime;
-  const _b30Done      = typeof b30Complete !== 'undefined' && b30Complete;
   const _isMovingNow  = (typeof fmVehicleMoving !== 'undefined' && fmVehicleMoving)
                      || (typeof fmCurrentSpeed   !== 'undefined' && fmCurrentSpeed >= 5);
 
@@ -19768,8 +19760,6 @@ function setDashStatus(status) {
   };
   // Update main status pill
   const mainLbl = document.getElementById('dashMainStatusLabel');
-  const mainDot = document.getElementById('dashStatusDot');
-  const pillWrap = document.getElementById('dashStatusPillWrap');
   if (mainLbl) { mainLbl.textContent = labels[status] || status; mainLbl.style.color = colors[status] || '#10b981'; }
   if (typeof _syncHeroArcStatus === 'function') _syncHeroArcStatus();
 }
@@ -22187,12 +22177,6 @@ showToast = function(type, icon, title, msg, autoDismiss) {
   }
 };
 
-/* Ensure new reports get an id and votes field */
-const _origQuickReport = typeof quickReport === 'function' ? quickReport : null;
-// Patch communityReports push to add metadata
-const _origPush = Array.prototype.push;
-// Instead patch at the quickReport level by overriding after init
-
 /* ════════════════════════════════════════════════════════════
    🅿️  PARKING POI INTEGRATION
 ════════════════════════════════════════════════════════════ */
@@ -22776,8 +22760,6 @@ document.addEventListener('click', e => {
 /* ════════════════════════════════════════════════════════════
    🔧  PATCH calculateRoute TO SUPPORT WAYPOINTS + ALT ROUTES + HISTORY
 ════════════════════════════════════════════════════════════ */
-// Store reference to original
-const _origCalculateRoute = calculateRoute;
 
 calculateRoute = async function() {
   hideError();
@@ -23229,8 +23211,6 @@ function renderCommPage() {
   const userLat = window.lastFixFm?.lat || (origin?.lat) || null;
   const userLon = window.lastFixFm?.lon || (origin?.lon) || null;
 
-  // Show no-route warning if filter is on and no route
-  const noRouteBanner = document.getElementById('commNoRouteBanner');
 
   let reports = [...communityReports]
     .filter(r => !(currentUser && r.reportedBy === currentUser.id)) // hide own reports
@@ -25755,7 +25735,6 @@ function handleSubscribeSubmit() {
 }
 
 // ── Pre-fill subscribe form with logged-in user name ──
-const _origShowSubscribeModal = window.showSubscribeModal;
 window.showSubscribeModal = function() {
   // If already Pro, open manage instead
   if (isUserPro()) { openProManageModal(); return; }
@@ -27222,7 +27201,6 @@ window._hosAutoRecalc = false;
   }
 
   // ── Override popup 1 — pre-llenado con valores del tracker ────
-  const _origOpenPopup1 = _hosOpenPopup1;
   _hosOpenPopup1 = function() {
     const saved = _hosLoadCycleState();
     let badge = document.getElementById('hosCycleSavedBadge');
@@ -29102,7 +29080,6 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
   const notC     = document.getElementById('flNotConnected');
   const yesC     = document.getElementById('flConnected');
   const inputFleet = document.getElementById('flFleetInput');
-  const statusBox  = document.getElementById('flStatusBox');
   const fleetShown = document.getElementById('flFleetNameShown');
   const plateInput = document.getElementById('flPlate');
   const phoneInput = document.getElementById('flPhone');
@@ -30196,7 +30173,6 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     // Anillo 3: Ciclo 70H disponible
     const cPct = cl / CYCLE_MAX;
     const cArcCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#10b981';
-    const cTxtCol = cl < 10 ? '#ef4444' : cl < 20 ? '#f59e0b' : '#c8d4e0';
     const arcC = document.getElementById('heroArcCycle');
     if (arcC){ arcC.style.strokeDashoffset = C * (1 - cPct); arcC.style.stroke = cArcCol; }
     const valC = document.getElementById('heroValCycle');
@@ -31733,7 +31709,6 @@ function updateHoursAvailable() {
   };
 
   const drivingUsed = counts.driving;
-  const onDutyUsed = counts.driving + counts.onduty;
   const drivingRemaining = Math.max(0, 11 - drivingUsed).toFixed(1);
 
   const hoursEl = document.getElementById('lbHoursAvailable');
@@ -32112,7 +32087,6 @@ function addRouteStopToMap(hour, status, location, coords) {
 
   // Create marker icon
   const iconEmoji = status === 'driving' ? '🚛' : status === 'onduty' ? '📋' : status === 'sleeper' ? '🛏️' : '😴';
-  const iconColor = status === 'driving' ? '#10b981' : status === 'onduty' ? '#f59e0b' : status === 'sleeper' ? '#6366f1' : '#64748b';
 
   // Create custom HTML icon for Leaflet
   const customIcon = L.divIcon({
@@ -32311,7 +32285,6 @@ function detectPreTrip(hour, status) {
 }
 
 // Override autoFillCurrentHour to include pre-trip detection
-const originalAutoFill = autoFillCurrentHour;
 autoFillCurrentHour = function() {
   const currentHour = new Date().getHours();
   const dateKey = getDateKey(lbCurrentDate);
@@ -32535,7 +32508,6 @@ function _stopRestCountdown() {
 function _interruptRest() {
   if (!_restCountdownStart) return;
   // Discard accrued rest — count that stopped time as on-shift instead
-  const restMs = Date.now() - _restCountdownStart;
   _restInterrupted = true;
   if (_restCountdownInt) { clearInterval(_restCountdownInt); _restCountdownInt = null; }
   _restCountdownStart = null;
