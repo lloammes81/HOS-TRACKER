@@ -24768,7 +24768,10 @@ try { init(); } catch(e) { console.error('init() failed:', e); }
 ══════════════════════════════════════════════════════════════ */
 (async function initLocalNotifications() {
   try {
-    const { LocalNotifications } = await import('https://esm.sh/@capacitor/local-notifications@8');
+    // El plugin nativo lo registra Capacitor en window.Capacitor.Plugins (la
+    // importación desde esm.sh la bloqueaba el CSP y nunca cargaba).
+    const LocalNotifications = window.Capacitor?.Plugins?.LocalNotifications;
+    if (!LocalNotifications) throw new Error('plugin no disponible (no es app nativa)');
 
     window._localNotif = LocalNotifications;
 
