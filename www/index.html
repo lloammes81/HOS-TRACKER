@@ -30416,15 +30416,19 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     }
   }, 30000);
 
-  // Cruce de medianoche: las horas diarias (11h) arrancan en 0; el ciclo
-  // 70h sigue corriendo via _dutyStartTs sin necesidad de comprometer ms aquí.
+  // Cruce de medianoche: las horas diarias (11h) arrancan en 0; el manejo
+  // del día (incluido el tramo en curso) pasa a la base del ciclo 70h.
   let _sessionDay = new Date().toDateString();
   setInterval(function() {
     const today = new Date().toDateString();
     if (today === _sessionDay) return;
     _sessionDay = today;
+    if (_isMoving && _sessionStart) {
+      _driveMs += Date.now() - _sessionStart.getTime(); // cerrar tramo previo a medianoche
+      _sessionStart = new Date();                        // re-anclar al nuevo día
+    }
+    _cycleMs = Math.min(CYCLE_MAX * 3600000, _cycleMs + _driveMs);
     _driveMs = 0;                                    // horas diarias reinician
-    if (_isMoving && _sessionStart) _sessionStart = new Date(); // re-anclar al nuevo día
     _save();
   }, 60000);
 
@@ -30462,7 +30466,8 @@ dialog#logbookSheet[open] { display: block; animation: lbFadeIn 0.3s ease; }
     // Inicializa el tracker con las horas RESTANTES que el driver ingresó
     setInitialHours: function(dailyHrsLeft, cycleHrsLeft) {
       _driveMs     = Math.max(0, (DRIVE_MAX - dailyHrsLeft) * 3600000);
-      _cycleMs     = Math.max(0, (CYCLE_MAX - cycleHrsLeft) * 3600000);
+      // _cycleMs es la base SIN el manejo de hoy (_cycleLeft suma _driveMs aparte)
+      _cycleMs     = Math.max(0, (CYCLE_MAX - cycleHrsLeft) * 3600000 - _driveMs);
       _dutyStartTs = _isMoving ? Date.now() : null; // reiniciar reloj de servicio (70h)
       _sessionStart = _isMoving ? new Date() : null;
       if (!_shiftStart) _shiftStart = new Date();
